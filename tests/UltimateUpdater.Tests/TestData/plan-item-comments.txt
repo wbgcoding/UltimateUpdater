@@ -1,0 +1,3 @@
+// Item 156: the three startup lines format as plain figures.
+/// <summary>item 92's own shape, byte-for-byte.</summary>
+<!-- Item 195: source list, capped by its own MaxHeight -->

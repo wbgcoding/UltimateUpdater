@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/UltimateUpdater/UltimateUpdater.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/UltimateUpdater.Tests/UltimateUpdater.Tests.csproj" />
+  </Folder>
+</Solution>

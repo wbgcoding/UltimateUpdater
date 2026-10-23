@@ -1,0 +1,116 @@
+<ui:FluentWindow x:Class="UltimateUpdater.Views.MessageDialogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:vm="clr-namespace:UltimateUpdater.ViewModels"
+        xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+        Title="{Binding Title}"
+        MinWidth="460" MaxWidth="720" MinHeight="0" SizeToContent="WidthAndHeight" MaxHeight="640"
+        ResizeMode="NoResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        ExtendsContentIntoTitleBar="True"
+        Background="{DynamicResource ApplicationBackgroundBrush}"
+        FocusManager.FocusedElement="{Binding ElementName=PrimaryButton}">
+    <ui:FluentWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <!-- MinWidth 460 less the 24 px side margins: the width the message area gets at the narrowest. -->
+        <sys:Double x:Key="DialogContentWidth">412</sys:Double>
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- title bar -->
+            <RowDefinition Height="Auto"/>   <!-- icon + headline + body -->
+            <RowDefinition Height="Auto"/>   <!-- optional details -->
+            <RowDefinition Height="Auto"/>   <!-- buttons -->
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="{Binding Title}" FontSize="16" FontWeight="SemiBold">
+            <ui:TitleBar.Icon>
+                <!-- Assembly-qualified like MainWindow's so it resolves whichever assembly is
+                     the entry point -->
+                <ui:ImageIcon Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <!-- Icon + message. The icon symbol and colour follow the dialog kind.
+             MaxWidth is what keeps the window at its minimum for ordinary dialogs: wrapping text has no
+             natural width, so without it SizeToContent would stretch the window to one long line. -->
+        <Grid Grid.Row="1" Margin="24,10,24,4" MaxWidth="{StaticResource DialogContentWidth}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <ui:SymbolIcon x:Name="KindIcon" Grid.Column="0" FontSize="28" VerticalAlignment="Top"
+                           Margin="0,2,16,0" Symbol="Info24"/>
+
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="{Binding Headline}" FontSize="16" FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                <!-- A long body (e.g. the cleanup confirmation listing every selected
+                     item) used to have no height limit of its own, so it just kept growing the window
+                     past its MaxHeight="640", WPF then clips whatever does not fit rather than reflowing
+                     it, and since the button row is the LAST thing in the Grid, the window's own Abbrechen/
+                     Bereinigen buttons were what got clipped off. Scrolling the body instead of the whole
+                     window keeps the header and buttons always on screen and visible. -->
+                <ScrollViewer MaxHeight="320" Margin="0,8,0,0"
+                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                              Visibility="{Binding HasBody, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="{Binding Body}" FontSize="13"
+                               TextWrapping="Wrap" LineHeight="19"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                </ScrollViewer>
+            </StackPanel>
+        </Grid>
+
+        <!-- Details: a stack trace or the full tool output, read-only and copyable, folded away by default. -->
+        <Expander Grid.Row="2" Margin="24,10,24,0" Padding="0" MaxWidth="{StaticResource DialogContentWidth}"
+                  Header="{Binding Loc[ErrorDetailOutput]}"
+                  Visibility="{Binding HasDetails, Converter={StaticResource BoolToVisibility}}">
+            <Grid Margin="0,8,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" CornerRadius="6" BorderThickness="1"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}"
+                        MaxHeight="260">
+                    <TextBox Text="{Binding Details, Mode=OneWay}"
+                             AutomationProperties.Name="{Binding Loc[ErrorDetailOutput]}"
+                             IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                             FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                             Background="Transparent" BorderThickness="0" Padding="12,10"
+                             Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                </Border>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+                    <ui:Button Command="{Binding CopyCommand}" Icon="{ui:SymbolIcon Copy24}"
+                               Content="{Binding Loc[ErrorDetailCopy]}"/>
+                    <TextBlock Text="{Binding Loc[ErrorDetailCopied]}" VerticalAlignment="Center" Margin="10,0,0,0"
+                               FontSize="12"
+                               Foreground="{DynamicResource SystemFillColorSuccessBrush}"
+                               Visibility="{Binding Copied, Converter={StaticResource BoolToVisibility}}"/>
+                </StackPanel>
+            </Grid>
+        </Expander>
+
+        <!-- Buttons: primary right, optional secondary to its left, optional tertiary furthest left
+             (the three-way blocker dialog, see Dialogs.ConfirmThreeWay). -->
+        <!-- Bottom margin matches the side margin (24) used throughout this window, so no
+             extra empty band sits under the buttons. -->
+        <StackPanel x:Name="ButtonRow" Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Margin="24,20,24,24">
+            <ui:Button Click="OnTertiary" Margin="0,0,10,0" MinWidth="96"
+                       Content="{Binding TertiaryText}"
+                       Visibility="{Binding HasTertiary, Converter={StaticResource BoolToVisibility}}"/>
+            <ui:Button x:Name="SecondaryButton" Click="OnSecondary" Margin="0,0,10,0" MinWidth="96"
+                       Content="{Binding SecondaryText}"
+                       Visibility="{Binding HasSecondary, Converter={StaticResource BoolToVisibility}}"/>
+            <ui:Button x:Name="PrimaryButton" Click="OnPrimary" Appearance="Primary" MinWidth="96"
+                       Content="{Binding PrimaryText}"/>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

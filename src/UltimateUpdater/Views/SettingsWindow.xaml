@@ -1,0 +1,1215 @@
+<ui:FluentWindow x:Class="UltimateUpdater.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:views="clr-namespace:UltimateUpdater.Views"
+        xmlns:services="clr-namespace:UltimateUpdater.Services"
+        Title="{Binding Loc[SettingsTitle]}"
+        Height="720" Width="800"
+        MinHeight="480" MinWidth="520"
+        ExtendsContentIntoTitleBar="True"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource ApplicationBackgroundBrush}">
+    <ui:FluentWindow.Resources>
+        <!-- One card per setting: an icon, a title and a line of explanation on the left, the control
+             on the right, the Windows 11 Settings shape, which right-sizes the window to its content. -->
+        <!-- Same tone as the app-wide "PanelSurfaceBorder" (App.xaml) that the hint banner and the
+             updates table also use, so every panel surface in the app reads as the same material. -->
+        <Style x:Key="Card" TargetType="Border" BasedOn="{StaticResource PanelSurfaceBorder}">
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <Style x:Key="CardIcon" TargetType="ui:SymbolIcon">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Margin" Value="0,0,14,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+        </Style>
+
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="CardDesc" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="2,16,0,6"/>
+        </Style>
+
+        <!-- WPF-UI's ComboBox template reads its rounding from the shared ControlCornerRadius resource
+             key (confirmed against the control template's own resource references), which otherwise
+             comes out flatter than the Card/ToggleSwitch rounding used everywhere else on this page.
+             Scoped to this window only, so it does not change WPF-UI's default anywhere else. -->
+        <CornerRadius x:Key="ControlCornerRadius">6</CornerRadius>
+
+        <!-- Source descriptions run a full sentence or two; without a width cap the tooltip would
+             stretch as one long unreadable line instead of wrapping. -->
+        <Style TargetType="ToolTip" BasedOn="{StaticResource {x:Type ToolTip}}">
+            <Setter Property="MaxWidth" Value="320"/>
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Each dropdown item tiles its OWN themed background edge to edge, so the open popup reads as
+             one solid themed surface rather than the flat light panel WPF-UI's ComboBox popup comes out
+             as in the dark theme (which left the values there but on a mismatched background). Rounded
+             hover/selected states match the cards; the accent marks the current value. -->
+        <!-- One entry of the section list beside the page: a rounded hover/selected highlight and a short
+             accent mark on the current section, the same shape as the dropdown items above. -->
+        <Style x:Key="SettingsNavItem" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="14,6,8,6"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" CornerRadius="6" BorderThickness="1" BorderBrush="Transparent"
+                                Background="Transparent" Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <Border x:Name="Mark" Width="3" Height="16" CornerRadius="2" Margin="-9,0,0,0"
+                                        HorizontalAlignment="Left" VerticalAlignment="Center" Visibility="Collapsed"
+                                        Background="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                <TextBlock Text="{TemplateBinding Content}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
+                                <Setter TargetName="Mark" Property="Visibility" Value="Visible"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- One dropdown item: a comfortable 38px-tall row with a rounded hover highlight and a checkmark
+             on the current value, rather than a coloured block. Reworked to look like a modern Fluent menu. -->
+        <Style x:Key="CardComboItem" TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="MinHeight" Value="38"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <!-- Outer fills the popup surface edge to edge (no sliver of another colour shows
+                             through); inner rounds the hover/selected highlight. Opaque on purpose. -->
+                        <Border Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}">
+                            <Border x:Name="Bd" CornerRadius="6" Margin="5,2"
+                                    Background="Transparent" Padding="{TemplateBinding Padding}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="22"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <!-- the current value is marked, so the list reads at a glance -->
+                                    <ui:SymbolIcon x:Name="Check" Grid.Column="0" Symbol="Checkmark24" FontSize="14"
+                                                   VerticalAlignment="Center" Visibility="Collapsed"
+                                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                    <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- A fully hand-built ComboBox template so the control is unambiguously themed, the WPF-UI
+             ComboBox kept coming out flat light-grey. Closed box: themed fill + stroke + card rounding,
+             a chevron, and a hover state. Open popup: one solid themed panel whose items (CardComboItem)
+             tile it edge to edge. No dependency on WPF-UI's own ComboBox chrome. -->
+        <Style x:Key="CardCombo" TargetType="ComboBox">
+            <!-- A ComboBox cannot size itself to its widest ITEM, its closed box only ever measures the
+                 SELECTED one, so with no Width set at all it visibly resizes as the value changes. A fixed
+                 Width would line every dropdown up in one right-hand column but clip the language names wider
+                 than 120px; MinWidth keeps a 120px floor (still lining most rows up) while letting a
+                 genuinely long selected option grow the box rather than being cut, accepting the occasional
+                 resize-on-selection as the lesser problem. Setting only MinWidth locally on each ComboBox below is NOT enough by itself: this
+                 Style's own Width Setter would still win over an unset local Width and pin every box back
+                 to exactly 120px regardless of the local MinWidth, so the Setter itself has to change too. -->
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource CardComboItem}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <!-- Style={x:Null} drops WPF-UI's implicit ToggleButton style. Only the Template
+                                 was being replaced, so its Padding/MinWidth/Margin still applied and the
+                                 visible box came out narrower than its slot, which is why the opening
+                                 button sat short of the window's right edge instead of on it.
+                                 Same trick the results ScrollViewer already uses. -->
+                            <!-- Foreground from the ComboBox: dropping WPF-UI's implicit style (below) also
+                                 dropped its themed text colour, so the selected value was drawn in the
+                                 default near-black instead of the page's text colour. -->
+                            <ToggleButton Focusable="False" ClickMode="Press" Style="{x:Null}"
+                                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                          Margin="0" Padding="0" MinWidth="0" MinHeight="0"
+                                          Foreground="{TemplateBinding Foreground}"
+                                          Background="Transparent" BorderThickness="0"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="Box"
+                                                Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                                BorderThickness="1" CornerRadius="8" SnapsToDevicePixels="True">
+                                            <!-- The whole box is the button. The chevron segment and its
+                                                 divider are gone, what marks the control
+                                                 as openable is its hover and open state, not a glyph. -->
+                                            <ContentPresenter Margin="13,0,13,0"
+                                                              VerticalAlignment="Center"
+                                                              Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                              ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
+                                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter Property="Opacity" Value="0.5"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+
+                            <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True"
+                                   IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                   PopupAnimation="Slide" Focusable="False">
+                                <!-- Opaque popup surface, generous rounding and a soft shadow so the open list
+                                     reads as a proper menu floating over the page. -->
+                                <Border Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
+                                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="1" CornerRadius="8" Margin="0,4,0,8" Padding="0,4"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        SnapsToDevicePixels="True">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="18" ShadowDepth="3" Opacity="0.4" Direction="270"/>
+                                    </Border.Effect>
+                                    <ScrollViewer MaxHeight="320">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </ui:FluentWindow.Resources>
+
+    <Grid x:Name="SettingsRoot" SizeChanged="OnRootSizeChanged">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <!-- The section list takes its own column from 760 px of width and collapses below that, where
+             the page is one scrolling column as before. -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Grid.ColumnSpan="2" Title="{Binding Loc[SettingsTitle]}" FontSize="16" FontWeight="SemiBold">
+            <ui:TitleBar.Icon>
+                <!-- Assembly-qualified like MainWindow's so it resolves whichever assembly is
+                     the entry point -->
+                <ui:ImageIcon Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <ListBox x:Name="SettingsNav" Grid.Row="1" Grid.Column="0" Width="180" Margin="16,8,0,12"
+                 Background="Transparent" BorderThickness="0"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ItemContainerStyle="{StaticResource SettingsNavItem}"
+                 AutomationProperties.Name="{Binding Loc[SettingsTitle]}"
+                 SelectionChanged="OnNavSelectionChanged"
+                 PreviewMouseLeftButtonUp="OnNavClicked"
+                 PreviewKeyDown="OnNavKeyDown">
+            <ListBoxItem Tag="ScanHeader" Content="{Binding Loc[SettingsScanGroup]}"/>
+            <ListBoxItem Tag="InstallHeader" Content="{Binding Loc[SettingsInstallGroup]}"/>
+            <ListBoxItem Tag="CleanupHeader" Content="{Binding Loc[SettingsRegistryBackupGroup]}"/>
+            <ListBoxItem Tag="DataHeader" Content="{Binding Loc[SettingsDataGroup]}"/>
+            <ListBoxItem Tag="NotifyHeader" Content="{Binding Loc[SettingsNotifyGroup]}"/>
+            <ListBoxItem Tag="AppearanceHeader" Content="{Binding Loc[SettingsAppearanceGroup]}"/>
+            <ListBoxItem Tag="StartupHeader" Content="{Binding Loc[SettingsStartupGroup]}"/>
+            <ListBoxItem Tag="UpdatesHeader" Content="{Binding Loc[SettingsUpdatesGroup]}"/>
+            <ListBoxItem Tag="AdvancedHeader" Content="{Binding Loc[SettingsAdvancedGroup]}"/>
+            <ListBoxItem Tag="AboutExpander" Content="{Binding Loc[AboutTitle]}"/>
+        </ListBox>
+
+        <!-- The margin lives on the CONTENT, not the ScrollViewer: a margin on the ScrollViewer itself
+             pushes its scrollbar in from the true window edge along with everything else, so it never
+             sits flush against the edge the way a native scrollbar does. -->
+        <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" Grid.Column="1" Margin="0,0,0,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="20,0,28,20">
+
+                <!-- Scan -->
+                <TextBlock x:Name="ScanHeader" Text="{Binding Loc[SettingsScanGroup]}" Style="{StaticResource SectionHeader}" Margin="2,4,0,6"/>
+
+                <!-- One card for everything that decides when a scan runs by itself: the interval, a scan
+                     at every start, and whether mobile data pauses the automatic ones. -->
+                <Border x:Name="AutoScanCard" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource CardTitle}" FontWeight="SemiBold" Margin="0,0,0,10"
+                                   Text="{Binding Loc[SettingsAutoScanTitle]}"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Timer24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsIntervalLabel]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsIntervalDesc]}"/>
+                            </StackPanel>
+                            <!-- ItemTemplate, not DisplayMemberPath, and MinWidth/alignment set HERE, not only in
+                                 the style; a MinWidth rather than a fixed Width so a long localized option is
+                                 never clipped. -->
+                            <ComboBox x:Name="IntervalCombo" AutomationProperties.Name="{Binding Loc[SettingsIntervalLabel]}" Grid.Column="2" Style="{StaticResource CardCombo}"
+                                      MinWidth="120" HorizontalAlignment="Right"
+                                      ItemsSource="{Binding IntervalOptions}"
+                                      SelectedValuePath="Minutes"
+                                      SelectedValue="{Binding ScanIntervalMinutes}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Display}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Flash24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsScanOnStart]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsScanOnStartDesc]}"/>
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="ScanOnStartToggle" Grid.Column="2" VerticalAlignment="Center"
+                                             IsChecked="{Binding ScanOnStart}"
+                                             AutomationProperties.Name="{Binding Loc[SettingsScanOnStart]}"/>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="DataUsage24" Style="{StaticResource CardIcon}"/>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource CardTitle}"
+                                       Text="{Binding Loc[SettingsMeteredTitle]}"/>
+                            <ui:ToggleSwitch x:Name="ScanMeteredToggle" Grid.Column="2" VerticalAlignment="Center"
+                                             IsChecked="{Binding ScanRespectMetered}"
+                                             AutomationProperties.Name="{Binding Loc[SettingsMeteredTitle]}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- How many sources may scan at once; the hardware auto-tune at startup picks the
+                     starting value until this (or the matching install slider below) is moved by hand. -->
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="ArrowSort24" Style="{StaticResource CardIcon}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsParallelScans]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsParallelAuto]}"
+                                       Visibility="{Binding ShowParallelismAutoNote, Converter={StaticResource BoolToVisibility}}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Slider x:Name="ParallelScansSlider" Width="140" VerticalAlignment="Center"
+                                    Minimum="1" Maximum="16" IsSnapToTickEnabled="True" TickFrequency="1"
+                                    Value="{Binding MaxParallelSources}"
+                                    AutomationProperties.Name="{Binding Loc[SettingsParallelScans]}"/>
+                            <TextBlock Text="{Binding MaxParallelSources}" Width="20" Margin="8,0,0,0"
+                                       TextAlignment="Right" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Sources: many switches, so a card that opens on demand -->
+                <Border Style="{StaticResource Card}" Margin="0,6,0,6">
+                    <!-- Right margin keeps the collapse chevron off the card edge, in line with the
+                         controls on the other cards. -->
+                    <Expander x:Name="SourcesExpander" Background="Transparent" BorderThickness="0" Padding="0"
+                              Margin="0,0,16,0" HorizontalContentAlignment="Stretch">
+                        <Expander.Header>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Grid.Column="0" Symbol="Apps24" Style="{StaticResource CardIcon}"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsSourcesGroup]}"/>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsSourcesHint]}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Expander.Header>
+                        <!-- Symmetric inset: the same distance from the right edge as from the left. -->
+                        <StackPanel Margin="34,10,34,2">
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Turn every source on or off at once; tri-state when only some are on. -->
+                                <CheckBox Grid.Column="0" Content="{Binding Loc[SettingsSourcesSelectAll]}" IsThreeState="True"
+                                          IsChecked="{Binding AllSourcesEnabled, Mode=OneWay}"
+                                          Command="{Binding ToggleAllSourcesCommand}"
+                                          FontWeight="SemiBold" VerticalAlignment="Center"
+                                          AutomationProperties.Name="{Binding Loc[SettingsSourcesSelectAll]}"/>
+                                <!-- Over 100 sources planned, a plain scroll-and-scan list stopped being
+                                     usable, so a live search narrows the chips below as it is typed,
+                                     same delayed-binding pattern as the main table's own
+                                     search box so filtering never stutters mid-word. -->
+                                <ui:TextBox Grid.Column="1" Width="200"
+                                            PlaceholderText="{Binding Loc[SettingsSourcesSearchPlaceholder]}"
+                                            Text="{Binding SourceSearchText, UpdateSourceTrigger=PropertyChanged, Delay=150}"
+                                            Icon="{ui:SymbolIcon Search24}"
+                                            AutomationProperties.Name="{Binding Loc[SettingsSourcesSearchPlaceholder]}"/>
+                            </Grid>
+                            <!-- The one switch for sources whose tool is not on this machine (the main window
+                                 never shows their pills). Only shown once there is actually one to reveal. -->
+                            <ui:ToggleSwitch Margin="0,0,0,10" HorizontalAlignment="Left"
+                                             Visibility="{Binding HasHiddenSources, Converter={StaticResource BoolToVisibility}}"
+                                             IsChecked="{Binding ShowAllSources}"
+                                             Content="{Binding ShowAllSourcesText}"/>
+                            <!-- Opens the ignore-list management dialog: the one place to manage the list,
+                                 entry by entry or all at once. -->
+                            <ui:Button HorizontalAlignment="Left" Margin="0,0,0,10" Appearance="Secondary"
+                                       Icon="{ui:SymbolIcon EyeOff24}"
+                                       Content="{Binding Loc[IgnoreListTitle]}"
+                                       Command="{Binding ShowIgnoreListCommand}"/>
+                            <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}"
+                                    Margin="0,0,0,10"/>
+                            <!-- The SAME FilterChip ToggleButton already used for history's own filters
+                                 (App.xaml): one control, one "this is on" signal, and the whole pill is
+                                 the click target, a checkbox glyph inside an already-clickable coloured
+                                 pill would say the same thing twice and give the checkbox its own,
+                                 smaller hit-target inside the larger one. -->
+                            <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                    CornerRadius="6" Padding="10">
+                                <ItemsControl ItemsSource="{Binding SourceToggleView}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <ToggleButton Style="{StaticResource FilterChip}"
+                                                          Content="{Binding Display}"
+                                                          IsChecked="{Binding IsEnabled}"
+                                                          Margin="0,0,8,8"
+                                                          ToolTip="{Binding Description}" ToolTipService.ShowDuration="30000"
+                                                          AutomationProperties.Name="{Binding Display}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+                            <!-- Shown only while a search narrows the chips to nothing, so an empty result
+                                 does not read as "every source vanished". -->
+                            <TextBlock Text="{Binding Loc[SettingsSourcesSearchEmpty]}" Margin="2,4,0,0"
+                                       FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Visibility="{Binding HasNoSourceMatches, Converter={StaticResource BoolToVisibility}}"/>
+                        </StackPanel>
+                    </Expander>
+                </Border>
+
+                <!-- Install: three switches, one card, hairline-separated rows. -->
+                <TextBlock x:Name="InstallHeader" Text="{Binding Loc[SettingsInstallGroup]}" Style="{StaticResource SectionHeader}"/>
+
+                <Border x:Name="InstallCard" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="ShieldTask24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsPreselectCritical]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsPreselectCriticalDesc]}"/>
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="InstallPreselectToggle" Grid.Column="2" VerticalAlignment="Center"
+                                             IsChecked="{Binding PreselectCritical}"
+                                             AutomationProperties.Name="{Binding Loc[SettingsPreselectCritical]}"/>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
+                            <!-- Now explains the at-most-once-per-24-hours rule, so the toggle no
+                                 longer needs to say the whole thing on its own. -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsRestorePoint]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsRestorePointDesc]}"/>
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="InstallRestorePointToggle" Grid.Column="2" VerticalAlignment="Center"
+                                             IsChecked="{Binding CreateRestorePoint}"
+                                             AutomationProperties.Name="{Binding Loc[SettingsRestorePoint]}"/>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                        <!-- Optional virus check on the files this app downloads itself. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="ShieldTask24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsScanDownloads]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsScanDownloadsDesc]}"/>
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="InstallScanDownloadsToggle" Grid.Column="2" VerticalAlignment="Center"
+                                             IsChecked="{Binding ScanDownloads}"
+                                             AutomationProperties.Name="{Binding Loc[SettingsScanDownloads]}"/>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                        <!-- How many installs may run at once; winget among itself, and every
+                             source against every other source. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="ArrowSort24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[InstallParallelLabel]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[InstallParallelHint]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsParallelAuto]}"
+                                           Visibility="{Binding ShowParallelismAutoNote, Converter={StaticResource BoolToVisibility}}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Slider x:Name="InstallParallelSlider" Width="100" VerticalAlignment="Center"
+                                        Minimum="1" Maximum="5" IsSnapToTickEnabled="True" TickFrequency="1"
+                                        Value="{Binding MaxParallelInstalls}"
+                                        AutomationProperties.Name="{Binding Loc[InstallParallelLabel]}"/>
+                                <TextBlock Text="{Binding MaxParallelInstalls}" Width="20" Margin="8,0,0,0"
+                                           TextAlignment="Right" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Cleanup: the registry-cleaner's mandatory pre-write backup (folder + retention), plus
+                     the permanently-excluded-paths manager, the categories themselves are still toggled
+                     in the cleanup dialog, not here. -->
+                <TextBlock x:Name="CleanupHeader" Text="{Binding Loc[SettingsRegistryBackupGroup]}" Style="{StaticResource SectionHeader}"/>
+
+                <Border x:Name="CleanupCard" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="FolderOpen24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsRegistryBackupFolder]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsRegistryBackupFolderDesc]}"/>
+                            </StackPanel>
+                            <StackPanel x:Name="CleanupBackupFolderLane" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Committed on LostFocus and again when the window closes (SettingsWindow.xaml.cs):
+                                     Escape or a click on the main window closes this window without any
+                                     LostFocus, which used to drop a typed folder silently. -->
+                                <ui:TextBox x:Name="CleanupBackupFolderBox" VerticalAlignment="Center" Width="220"
+                                            Text="{Binding RegistryBackupFolder, UpdateSourceTrigger=LostFocus}"
+                                            LostFocus="OnBackupFolderBoxLostFocus"
+                                            AutomationProperties.Name="{Binding Loc[SettingsRegistryBackupFolder]}"/>
+                                <ui:Button x:Name="BrowseBackupFolderButton" Margin="8,0,0,0" Icon="{ui:SymbolIcon FolderOpen24}"
+                                           ToolTip="{Binding Loc[SettingsBrowseFolder]}"
+                                           AutomationProperties.Name="{Binding Loc[SettingsBrowseFolder]}"
+                                           Command="{Binding BrowseRegistryBackupFolderCommand}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsRegistryBackupRetention]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsRegistryBackupRetentionDesc]}"/>
+                            </StackPanel>
+                            <ComboBox x:Name="CleanupRetentionCombo" AutomationProperties.Name="{Binding Loc[SettingsRegistryBackupRetention]}" Grid.Column="2" Style="{StaticResource CardCombo}"
+                                      MinWidth="120" HorizontalAlignment="Right"
+                                      ItemsSource="{Binding RetentionCountOptions}"
+                                      SelectedValuePath="Count"
+                                      SelectedValue="{Binding RegistryBackupRetentionCount}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Display}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Delete24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[CleanupRecycleInsteadOfDelete]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[CleanupRecycleInsteadOfDeleteHint]}"/>
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="CleanupRecycleToggle" Grid.Column="2" VerticalAlignment="Center"
+                                             IsChecked="{Binding CleanupRecycleInsteadOfDelete}"
+                                             AutomationProperties.Name="{Binding Loc[CleanupRecycleInsteadOfDelete]}"/>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                        <!-- Permanently-excluded cleanup paths: a right-click in the cleanup dialog adds to
+                             this list, and this is where an entry is released again. Same
+                             collapsed-by-default Expander shape as the Sources card above. -->
+                        <Expander x:Name="ExcludedPathsExpander" Background="Transparent" BorderThickness="0" Padding="0"
+                                  Margin="0,0,16,0" HorizontalContentAlignment="Stretch"
+                                  Visibility="{Binding HasExcludedPaths, Converter={StaticResource BoolToVisibility}}">
+                            <Expander.Header>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ui:SymbolIcon Grid.Column="0" Symbol="FolderOpen24" Style="{StaticResource CardIcon}"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Style="{StaticResource CardTitle}" Text="{Binding ExcludedPathsHeaderText}"/>
+                                        <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsExcludedPathsDesc]}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Expander.Header>
+                            <StackPanel Margin="34,10,34,2">
+                                <!-- Same 240 cap and the same reason as the cleanup dialog's own lists:
+                                     one row per excluded path, unbounded otherwise. -->
+                                <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                        CornerRadius="6" Padding="10">
+                                    <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding ExcludedPaths}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,4" ToolTip="{Binding Path}">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding Path}" FontSize="12"
+                                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                                   Margin="0,0,8,0"
+                                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                                        <ui:Button Grid.Column="1" Appearance="Secondary" Padding="9,6"
+                                                                   Command="{Binding ReleaseCommand}"
+                                                                   ToolTip="{Binding DataContext.Loc[SettingsExcludedPathRelease],
+                                                                             RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                   AutomationProperties.Name="{Binding DataContext.Loc[SettingsExcludedPathRelease],
+                                                                             RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                                                            <ui:SymbolIcon Symbol="Dismiss24" FontSize="14"/>
+                                                        </ui:Button>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Border>
+                                <ui:Button HorizontalAlignment="Right" Margin="0,10,0,0" Appearance="Secondary"
+                                           Content="{Binding Loc[SettingsExcludedPathReleaseAll]}"
+                                           Command="{Binding ReleaseAllExcludedPathsCommand}"/>
+                            </StackPanel>
+                        </Expander>
+
+                        <!-- Empty state: a quiet line instead of a hidden/missing row. -->
+                        <Grid Visibility="{Binding HasNoExcludedPaths, Converter={StaticResource BoolToVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="FolderOpen24" Style="{StaticResource CardIcon}"/>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource CardDesc}"
+                                       Text="{Binding Loc[SettingsExcludedPathsEmpty]}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Data and logs: where they are, how long each is kept, sharing one header, a log
+                     card with no header of its own would visually fall under the registry-backup
+                     group above it. The log folder, the error reports folder and the log's own
+                     retention now live together in ONE card (moved out of the data card below, which used
+                     to carry the log folder row); the error window keeps only a pointer to this card
+                     instead of a second copy of the same button (one visible place per action). -->
+                <TextBlock x:Name="DataHeader" Text="{Binding Loc[SettingsDataGroup]}" Style="{StaticResource SectionHeader}"/>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <!-- The actual data folder, shown as selectable text (a TextBox, never a
+                             TextBlock, that is the one difference from every other folder row here) with an
+                             open button plus a move button that runs the whole copy-and-point flow. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Folder24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsDataFolder]}"/>
+                                <TextBox x:Name="DataFolderPathText" Text="{Binding DataFolder, Mode=OneWay}"
+                                         IsReadOnly="True" BorderThickness="0" Padding="0" FontSize="12"
+                                         Background="Transparent"
+                                         Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                         TextWrapping="NoWrap" ToolTip="{Binding DataFolder}"
+                                         AutomationProperties.Name="{Binding Loc[SettingsDataFolder]}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                                <ui:Button x:Name="OpenDataFolderButton" Icon="{ui:SymbolIcon FolderOpen24}"
+                                           ToolTip="{Binding Loc[SettingsLogOpenFolder]}"
+                                           AutomationProperties.Name="{Binding Loc[SettingsLogOpenFolder]}"
+                                           Command="{Binding OpenDataFolderCommand}"/>
+                                <ui:Button x:Name="ChangeDataFolderButton" Margin="8,0,0,0" Appearance="Secondary"
+                                           Content="{Binding Loc[SettingsDataFolderChange]}"
+                                           Command="{Binding ChangeDataFolderCommand}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                        <!-- The logs block: log folder, error reports folder and the log's own retention,
+                             grouped in a nested secondary surface so they read as one "logs" tier under
+                             the data folder row above. -->
+                        <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                CornerRadius="6" Padding="10">
+                            <StackPanel>
+                                <!-- The button sits in a third column, same shape as the retention row below: a path long
+                                     enough to need wrapping would push it off the card, so it stays fixed to the
+                                     right on text height and the path is ellipsised with a tooltip. -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ui:SymbolIcon Grid.Column="0" Symbol="DocumentText24" Style="{StaticResource CardIcon}"/>
+                                    <StackPanel x:Name="LogFolderInfoPanel" Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsLogFolder]}"/>
+                                        <TextBlock x:Name="LogFolderPathText" Style="{StaticResource CardDesc}" Text="{Binding LogFolder}"
+                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                                   ToolTip="{Binding LogFolder}"/>
+                                    </StackPanel>
+                                    <ui:Button x:Name="OpenLogFolderButton" Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0"
+                                               Icon="{ui:SymbolIcon FolderOpen24}"
+                                               Content="{Binding Loc[SettingsLogOpenFolder]}"
+                                               Command="{Binding OpenLogFolderCommand}"/>
+                                </Grid>
+
+                                <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                                <!-- The last ten one-click error reports, same row shape as the log
+                                     folder above it (a card's action button lives in its own third Auto column,
+                                     never below the title/description block). -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ui:SymbolIcon Grid.Column="0" Symbol="ErrorCircle24" Style="{StaticResource CardIcon}"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsReportsFolder]}"/>
+                                        <TextBlock Style="{StaticResource CardDesc}" Text="{Binding ReportsFolder}"
+                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                                   ToolTip="{Binding ReportsFolder}"/>
+                                    </StackPanel>
+                                    <ui:Button x:Name="OpenReportsButton" Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0"
+                                               Icon="{ui:SymbolIcon FolderOpen24}"
+                                               Content="{Binding Loc[SettingsOpenReports]}"
+                                               Command="{Binding OpenReportsCommand}"/>
+                                </Grid>
+
+                                <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsLogRetention]}"/>
+                                        <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsLogRetentionDesc]}"/>
+                                    </StackPanel>
+                                    <ComboBox x:Name="LogRetentionCombo" AutomationProperties.Name="{Binding Loc[SettingsLogRetention]}" Grid.Column="2" Style="{StaticResource CardCombo}" MinWidth="120" HorizontalAlignment="Right"
+                                              ItemsSource="{Binding LogRetentionOptions}"
+                                              SelectedValuePath="Days"
+                                              SelectedValue="{Binding LogRetentionDays}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Display}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Install history's own retention is a separate concern from the diagnostic
+                     log above (the retention MECHANIC is the same shape, DayOption/nearest-offered-value
+                     snapping, but the DATA they govern is not), now its own card, no longer sharing one
+                     with the log folder row. -->
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsHistoryRetention]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsHistoryRetentionDesc]}"/>
+                        </StackPanel>
+                        <ComboBox x:Name="HistoryRetentionCombo" AutomationProperties.Name="{Binding Loc[SettingsHistoryRetention]}" Grid.Column="2" Style="{StaticResource CardCombo}"
+                                  MinWidth="120" HorizontalAlignment="Right"
+                                  ItemsSource="{Binding HistoryRetentionOptions}"
+                                  SelectedValuePath="Days"
+                                  SelectedValue="{Binding HistoryRetentionDays}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Display}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
+                </Border>
+
+                <!-- Notifications -->
+                <TextBlock x:Name="NotifyHeader" Text="{Binding Loc[SettingsNotifyGroup]}" Style="{StaticResource SectionHeader}"/>
+
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Alert24" Style="{StaticResource CardIcon}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsNotifyOnFound]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsNotifyOnFoundDesc]}"/>
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding NotifyOnFound}"
+                                         AutomationProperties.Name="{Binding Loc[SettingsNotifyOnFound]}"/>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" Style="{StaticResource CardIcon}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsNotifyCriticalOnly]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsNotifyCriticalOnlyDesc]}"/>
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="2" VerticalAlignment="Center"
+                                         IsChecked="{Binding NotifyCriticalOnly}" IsEnabled="{Binding NotifyOnFound}"
+                                         AutomationProperties.Name="{Binding Loc[SettingsNotifyCriticalOnly]}"/>
+                    </Grid>
+                </Border>
+
+                <!-- The banner's own "never again" mirrored here so it can be turned back on. -->
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Broom24" Style="{StaticResource CardIcon}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsCleanupReminder]}"/>
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding CleanupReminderEnabled}"
+                                         AutomationProperties.Name="{Binding Loc[SettingsCleanupReminder]}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Appearance: theme + language, one card, hairline-separated. -->
+                <TextBlock x:Name="AppearanceHeader" Text="{Binding Loc[SettingsAppearanceGroup]}" Style="{StaticResource SectionHeader}"/>
+
+                <Border x:Name="AppearanceCard" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Color24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[ThemeLabel]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[ThemeDesc]}"/>
+                            </StackPanel>
+                            <!-- MinWidth and alignment set HERE, not only in the style; a MinWidth rather than
+                                 a fixed Width so a long localized option is never clipped. -->
+                            <ComboBox x:Name="AppearanceThemeCombo" AutomationProperties.Name="{Binding Loc[ThemeLabel]}" Grid.Column="2" Style="{StaticResource CardCombo}"
+                                      MinWidth="120" HorizontalAlignment="Right"
+                                      SelectedValue="{Binding SelectedTheme}" SelectedValuePath="Tag">
+                                <ComboBoxItem Tag="system" Content="{Binding Loc[ThemeOptionSystem]}"/>
+                                <ComboBoxItem Tag="light" Content="{Binding Loc[ThemeOptionLight]}"/>
+                                <ComboBoxItem Tag="dark" Content="{Binding Loc[ThemeOptionDark]}"/>
+                                <!-- Two accented dark themes: a neon-green "hacker" and a
+                                     violet "AI enthusiast". Same Fluent dark base, different accent. -->
+                                <ComboBoxItem Tag="hacker" Content="{Binding Loc[ThemeOptionHacker]}"/>
+                                <ComboBoxItem Tag="neon" Content="{Binding Loc[ThemeOptionNeon]}"/>
+                            </ComboBox>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="LocalLanguage24" Style="{StaticResource CardIcon}"/>
+                            <!-- No desc: "Language" already says the whole thing. -->
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource CardTitle}"
+                                       Text="{Binding Loc[LanguageLabel]}"/>
+                            <ComboBox x:Name="AppearanceLanguageCombo" AutomationProperties.Name="{Binding Loc[LanguageLabel]}" Grid.Column="2" Style="{StaticResource CardCombo}"
+                                      MinWidth="120" HorizontalAlignment="Right"
+                                      SelectedValue="{Binding SelectedLanguage}" SelectedValuePath="Tag">
+                                <ComboBoxItem Tag="system" Content="{Binding Loc[LanguageOptionSystem]}"/>
+                                <ComboBoxItem Tag="en" Content="English"/>
+                                <ComboBoxItem Tag="de" Content="Deutsch"/>
+                                <ComboBoxItem Tag="es" Content="Español"/>
+                                <ComboBoxItem Tag="it" Content="Italiano"/>
+                                <ComboBoxItem Tag="pt" Content="Português"/>
+                                <ComboBoxItem Tag="pl" Content="Polski"/>
+                                <ComboBoxItem Tag="zh-Hans" Content="中文（简体）"/>
+                                <ComboBoxItem Tag="ja" Content="日本語"/>
+                                <ComboBoxItem Tag="nl" Content="Nederlands"/>
+                                <ComboBoxItem Tag="tr" Content="Türkçe"/>
+                                <ComboBoxItem Tag="ro" Content="Română"/>
+                            </ComboBox>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Startup -->
+                <TextBlock x:Name="StartupHeader" Text="{Binding Loc[SettingsStartupGroup]}" Style="{StaticResource SectionHeader}"/>
+
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Power24" Style="{StaticResource CardIcon}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsAutostart]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsAutostartDesc]}"/>
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding AutostartEnabled}"
+                                         AutomationProperties.Name="{Binding Loc[SettingsAutostart]}"/>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="ArrowMinimize24" Style="{StaticResource CardIcon}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsCloseToTray]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsCloseToTrayDesc]}"/>
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding CloseToTray}"
+                                         AutomationProperties.Name="{Binding Loc[SettingsCloseToTray]}"/>
+                    </Grid>
+                </Border>
+
+                <!-- App updates -->
+                <TextBlock x:Name="UpdatesHeader" Text="{Binding Loc[SettingsUpdatesGroup]}" Style="{StaticResource SectionHeader}"/>
+
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="ArrowDownload24" Style="{StaticResource CardIcon}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsCheckUpdatesDesc]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Text="{Binding VersionAndStatus}"/>
+                        </StackPanel>
+                        <ui:Button Grid.Column="2" VerticalAlignment="Center"
+                                   Content="{Binding Loc[SettingsCheckNow]}"
+                                   Command="{Binding CheckForUpdatesCommand}"
+                                   IsEnabled="{Binding IsCheckingUpdates, Converter={StaticResource InverseBool}}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Advanced -->
+                <TextBlock x:Name="AdvancedHeader" Text="{Binding Loc[SettingsAdvancedGroup]}" Style="{StaticResource SectionHeader}"/>
+
+                <!-- Factory reset: back to defaults, or defaults plus every cached file wiped.
+                     Both confirm first; deleting data warns in red. The card reads as dangerous at a
+                     glance now (icon, description and a filled danger button), not only once someone
+                     already has a hand on the button; the card's own background stays the normal one, so
+                     the page does not turn into a red block. The red confirmation dialog is still what
+                     actually guards it. -->
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="ArrowReset24" Style="{StaticResource CardIcon}"
+                                       Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsResetGroup]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsResetDesc]}"
+                                       Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+                        </StackPanel>
+                        <!-- WPF-UI's own Danger fill is a fixed #F44336 in both themes, and its own
+                             ControlTemplate flips the CONTENT to near-black in the light theme regardless
+                             of a Button.Foreground override (the same "buttons go black" template
+                             behaviour seen elsewhere); measured white-on-#F44336 at only 3.7:1 in dark
+                             besides. The Background is pinned to the same fixed, saturated red Fluent's
+                             own light-theme critical colour uses (measured 5.7:1 for white text against
+                             it), and the label is its own TextBlock with its own Foreground, so it reads
+                             white in both themes. Both colours are style setters rather than local values
+                             because a style trigger loses to a local value: under Windows high contrast
+                             the triggers hand both back to the system button colours. The binding goes
+                             through the property path so a live switch of the scheme is picked up (an
+                             x:Static reference is read once). -->
+                        <ui:Button x:Name="ResetEverythingButton" Grid.Column="2" VerticalAlignment="Center"
+                                   Command="{Binding ResetEverythingCommand}">
+                            <ui:Button.Style>
+                                <!-- No Appearance="Danger": its appearance triggers outrank a style setter, which
+                                     would turn the red back into the fixed #F44336 this button avoids. The hover
+                                     and pressed fills are set here too, or the stock ones would put a light fill
+                                     under the white label. -->
+                                <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                    <Setter Property="Background" Value="#FFC42B1C"/>
+                                    <Setter Property="MouseOverBackground" Value="#FFA92417"/>
+                                    <Setter Property="PressedBackground" Value="#FF8E1D13"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=(SystemParameters.HighContrast), Mode=OneWay}" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                                            <Setter Property="MouseOverBackground" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                                            <Setter Property="PressedBackground" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                                            <Setter Property="MouseOverBorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ui:Button.Style>
+                            <TextBlock x:Name="ResetEverythingLabel" Text="{Binding Loc[SettingsResetEverything]}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Path=(SystemParameters.HighContrast), Mode=OneWay}" Value="True">
+                                                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </ui:Button>
+                    </Grid>
+                </Border>
+
+                <!-- About: identity, version, licence, project link, and the third-party disclaimer.
+                     Collapsed by default, same Expander shape as SourcesExpander above. -->
+                <Border Style="{StaticResource Card}" Margin="0,6,0,6">
+                    <Expander x:Name="AboutExpander" Background="Transparent" BorderThickness="0" Padding="0"
+                              Margin="0,0,16,0" HorizontalContentAlignment="Stretch">
+                        <Expander.Header>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Grid.Column="0" Symbol="Info24" Style="{StaticResource CardIcon}"/>
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                           Style="{StaticResource CardTitle}" Text="{Binding Loc[AboutTitle]}"/>
+                            </Grid>
+                        </Expander.Header>
+                        <StackPanel Margin="34,10,34,2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Grid.Column="0" Symbol="Info24" Style="{StaticResource CardIcon}"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[AppTitle]}"/>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[AboutTagline]}"/>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding AboutVersionText}"/>
+                                    <!-- Only for a portable copy; AppPaths.IsPortable never changes after the process
+                                         starts, so a one-time x:Static read is enough. -->
+                                    <TextBlock x:Name="AboutPortableText" Style="{StaticResource CardDesc}" TextWrapping="Wrap"
+                                               Text="{Binding Loc[AboutPortable]}"
+                                               Visibility="{Binding Source={x:Static services:AppPaths.IsPortable}, Converter={StaticResource BoolToVisibility}}"/>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[AboutLicence]}"/>
+                                </StackPanel>
+                                <ui:Button Grid.Column="2" VerticalAlignment="Center"
+                                           Content="{Binding Loc[AboutRepository]}"
+                                           Command="{Binding OpenRepositoryCommand}"/>
+                            </Grid>
+                            <TextBlock Style="{StaticResource CardDesc}" Margin="0,12,0,0" TextWrapping="Wrap"
+                                       Text="{Binding Loc[AboutThirdParty]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Margin="0,4,0,0" TextWrapping="Wrap"
+                                       Text="{Binding Loc[AboutTrademarks]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Margin="0,4,0,0" TextWrapping="Wrap"
+                                       Text="{Binding Loc[AboutIcons]}"/>
+                        </StackPanel>
+                    </Expander>
+                </Border>
+
+                <!-- A plain factual list, no advertising copy and no privacy boilerplate, filtered
+                     to the sources that actually exist on this machine. Mirrors
+                     the outbound traffic table of the design notes; a test keeps the two from drifting apart.
+                     Collapsed by default, same Expander shape as SourcesExpander above. -->
+                <Border Style="{StaticResource Card}" Margin="0,0,0,6"
+                        Visibility="{Binding HasNetworkTargets, Converter={StaticResource BoolToVisibility}}">
+                    <Expander x:Name="NetworkTargetsExpander" Background="Transparent" BorderThickness="0" Padding="0"
+                              Margin="0,0,16,0" HorizontalContentAlignment="Stretch">
+                        <Expander.Header>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Grid.Column="0" Symbol="Server24" Style="{StaticResource CardIcon}"/>
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                           Style="{StaticResource CardTitle}" Text="{Binding Loc[AboutNetworkTargets]}"/>
+                            </Grid>
+                        </Expander.Header>
+                        <StackPanel Margin="34,10,34,2">
+                            <ItemsControl ItemsSource="{Binding NetworkTargets}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                                CornerRadius="6" Padding="10" Margin="0,0,0,10">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Hosts}" FontSize="12" FontWeight="SemiBold"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                                <TextBlock Text="{Binding Purpose}" FontSize="12" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Expander>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</ui:FluentWindow>

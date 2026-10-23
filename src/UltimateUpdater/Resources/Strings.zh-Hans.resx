@@ -1,0 +1,2188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Ultimate Updater</value>
+  </data>
+  <data name="DialogOk" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="DialogYes" xml:space="preserve">
+    <value>是</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="LanguageLabel" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="LanguageOptionSystem" xml:space="preserve">
+    <value>系统</value>
+  </data>
+  <data name="ThemeLabel" xml:space="preserve">
+    <value>主题</value>
+  </data>
+  <data name="ThemeOptionSystem" xml:space="preserve">
+    <value>系统</value>
+  </data>
+  <data name="ThemeOptionLight" xml:space="preserve">
+    <value>浅色</value>
+  </data>
+  <data name="ThemeOptionDark" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="ScanButton" xml:space="preserve">
+    <value>检查更新</value>
+  </data>
+  <data name="ScanningButton" xml:space="preserve">
+    <value>正在扫描…</value>
+  </data>
+  <data name="ColumnName" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="ColumnSource" xml:space="preserve">
+    <value>来源</value>
+  </data>
+  <data name="SelectAllButton" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="SelectAllClear" xml:space="preserve">
+    <value>清除选择</value>
+  </data>
+  <data name="InstallSelectedButton" xml:space="preserve">
+    <value>更新所选</value>
+  </data>
+  <data name="InstallButton" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="SelectionSummary" xml:space="preserve">
+    <value>已选择 {0} 项</value>
+  </data>
+  <data name="SelectionSummaryWithCritical" xml:space="preserve">
+    <value>已选择 {0} 项（{1} 项严重）</value>
+  </data>
+  <data name="OpenButton" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="ContextMenuOpenWebsite" xml:space="preserve">
+    <value>打开网站</value>
+  </data>
+  <data name="OpenFolderButton" xml:space="preserve">
+    <value>打开文件夹</value>
+  </data>
+  <data name="CategorySoftware" xml:space="preserve">
+    <value>软件</value>
+  </data>
+  <data name="CategorySystemAndDrivers" xml:space="preserve">
+    <value>系统和驱动程序</value>
+  </data>
+  <data name="CategoryGames" xml:space="preserve">
+    <value>游戏</value>
+  </data>
+  <data name="CategoryDeveloperTools" xml:space="preserve">
+    <value>开发者工具</value>
+  </data>
+  <data name="CategoryStore" xml:space="preserve">
+    <value>商店</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>搜索…</value>
+  </data>
+  <data name="FilterCriticalOnly" xml:space="preserve">
+    <value>仅严重</value>
+  </data>
+  <data name="IgnoreButton" xml:space="preserve">
+    <value>忽略此版本</value>
+  </data>
+  <data name="IgnoreAllButton" xml:space="preserve">
+    <value>忽略所有版本</value>
+  </data>
+  <data name="IgnoreSimpleButton" xml:space="preserve">
+    <value>忽略</value>
+  </data>
+  <data name="UnignoreButton" xml:space="preserve">
+    <value>重新显示</value>
+  </data>
+  <data name="IgnoredBadge" xml:space="preserve">
+    <value>已忽略</value>
+  </data>
+  <data name="IgnoreListTitle" xml:space="preserve">
+    <value>已忽略的软件包</value>
+  </data>
+  <data name="IgnoreListAllVersions" xml:space="preserve">
+    <value>所有版本</value>
+  </data>
+  <data name="IgnoreListRemoveAll" xml:space="preserve">
+    <value>全部移除</value>
+  </data>
+  <data name="IgnoreListEmpty" xml:space="preserve">
+    <value>没有被忽略的项目。</value>
+  </data>
+  <data name="SnoozeButton" xml:space="preserve">
+    <value>稍后提醒</value>
+  </data>
+  <data name="SnoozeOneDay" xml:space="preserve">
+    <value>1 天后</value>
+  </data>
+  <data name="SnoozeOneWeek" xml:space="preserve">
+    <value>1 周后</value>
+  </data>
+  <data name="SnoozeOneMonth" xml:space="preserve">
+    <value>1 个月后</value>
+  </data>
+  <data name="UnsnoozeButton" xml:space="preserve">
+    <value>立即重新显示</value>
+  </data>
+  <data name="SnoozedBadge" xml:space="preserve">
+    <value>已延后至 {0}</value>
+  </data>
+  <data name="RetryButton" xml:space="preserve">
+    <value>重试</value>
+  </data>
+  <data name="FilterHideManual" xml:space="preserve">
+    <value>隐藏需手动打开的条目</value>
+  </data>
+  <data name="FilterPersistentFailures" xml:space="preserve">
+    <value>持续失败（{0}）</value>
+  </data>
+  <data name="PersistentFailureHint" xml:space="preserve">
+    <value>已因相同原因失败 {0} 次。要忽略此软件包吗？</value>
+  </data>
+  <data name="InstallVersionUnchanged" xml:space="preserve">
+    <value>版本未变</value>
+  </data>
+  <data name="RebootRequiredBadge" xml:space="preserve">
+    <value>需要重启</value>
+  </data>
+  <data name="RebootRequiredInfo" xml:space="preserve">
+    <value>已安装 {0} 个更新。重启以完成。</value>
+  </data>
+  <data name="RebootRequiredInfoOne" xml:space="preserve">
+    <value>已安装 {0} 个更新。重启以完成。</value>
+  </data>
+  <data name="SelectionSummarySizeSuffix" xml:space="preserve">
+    <value> · 约 {0}</value>
+  </data>
+  <data name="InfoLinkButton" xml:space="preserve">
+    <value>打开项目页面</value>
+  </data>
+  <data name="ColumnDate" xml:space="preserve">
+    <value>日期</value>
+  </data>
+  <data name="ColumnSize" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="ColumnVersion" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="HistoryButton" xml:space="preserve">
+    <value>历史记录</value>
+  </data>
+  <data name="SettingsButton" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="HistoryTitle" xml:space="preserve">
+    <value>历史记录</value>
+  </data>
+  <data name="HistoryEmpty" xml:space="preserve">
+    <value>尚未记录任何安装。</value>
+  </data>
+  <data name="HistoryOnlyFailed" xml:space="preserve">
+    <value>仅显示失败项</value>
+  </data>
+  <data name="HistoryNoMatches" xml:space="preserve">
+    <value>没有符合搜索条件的条目。</value>
+  </data>
+  <data name="HistoryColumnWhen" xml:space="preserve">
+    <value>时间</value>
+  </data>
+  <data name="HistoryColumnSize" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="HistoryColumnResult" xml:space="preserve">
+    <value>结果</value>
+  </data>
+  <data name="HistoryCopy" xml:space="preserve">
+    <value>复制列表</value>
+  </data>
+  <data name="HistoryCopied" xml:space="preserve">
+    <value>已复制 {0} 条记录</value>
+  </data>
+  <data name="HistoryCopyColumnFrom" xml:space="preserve">
+    <value>从</value>
+  </data>
+  <data name="HistoryCopyColumnTo" xml:space="preserve">
+    <value>到</value>
+  </data>
+  <data name="HistorySucceeded" xml:space="preserve">
+    <value>已更新</value>
+  </data>
+  <data name="HistoryFailed" xml:space="preserve">
+    <value>失败</value>
+  </data>
+  <data name="HistoryHandedOff" xml:space="preserve">
+    <value>已转交</value>
+  </data>
+  <data name="HistoryNotApplicable" xml:space="preserve">
+    <value>无匹配版本</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="SettingsScanGroup" xml:space="preserve">
+    <value>扫描</value>
+  </data>
+  <data name="SettingsIntervalLabel" xml:space="preserve">
+    <value>自动扫描间隔</value>
+  </data>
+  <data name="SettingsIntervalOff" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="SettingsIntervalHours6" xml:space="preserve">
+    <value>6 小时</value>
+  </data>
+  <data name="SettingsIntervalHours12" xml:space="preserve">
+    <value>12 小时</value>
+  </data>
+  <data name="SettingsIntervalDaily" xml:space="preserve">
+    <value>24 小时</value>
+  </data>
+  <data name="SettingsIntervalWeekly" xml:space="preserve">
+    <value>7 天</value>
+  </data>
+  <data name="SettingsScanOnStart" xml:space="preserve">
+    <value>启动时扫描</value>
+  </data>
+  <data name="SettingsInstallGroup" xml:space="preserve">
+    <value>安装</value>
+  </data>
+  <data name="SettingsPreselectCritical" xml:space="preserve">
+    <value>预先勾选严重更新</value>
+  </data>
+  <data name="SettingsRestorePoint" xml:space="preserve">
+    <value>先创建还原点</value>
+  </data>
+  <data name="SettingsRestorePointDesc" xml:space="preserve">
+    <value>每天最多一个。Windows 本身也拒绝创建更多，且每个还原点在第一个软件包开始前都会耗费长达一分钟。</value>
+  </data>
+  <data name="InstallRetryRound" xml:space="preserve">
+    <value>第二次尝试</value>
+  </data>
+  <data name="AlreadyRunning" xml:space="preserve">
+    <value>Ultimate Updater 已在运行。请在通知区域查找它。</value>
+  </data>
+  <data name="SettingsNotifyGroup" xml:space="preserve">
+    <value>通知</value>
+  </data>
+  <data name="SettingsNotifyOnFound" xml:space="preserve">
+    <value>发现更新时通知</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnly" xml:space="preserve">
+    <value>仅严重更新</value>
+  </data>
+  <data name="SettingsAppearanceGroup" xml:space="preserve">
+    <value>外观</value>
+  </data>
+  <data name="CategoryManualUpdate" xml:space="preserve">
+    <value>自行打开</value>
+  </data>
+  <data name="CategoryGitHubManual" xml:space="preserve">
+    <value>GitHub（手动）</value>
+  </data>
+  <data name="CategoryOpenStore" xml:space="preserve">
+    <value>在商店中打开</value>
+  </data>
+  <data name="CategoryOpenGames" xml:space="preserve">
+    <value>在启动器中打开</value>
+  </data>
+  <data name="InstallProgressCount" xml:space="preserve">
+    <value>已完成 {0}/{1}</value>
+  </data>
+  <data name="InstallRunningCount" xml:space="preserve">
+    <value>正在运行 {0} 项安装</value>
+  </data>
+  <data name="InstallProgressCancel" xml:space="preserve">
+    <value>全部停止</value>
+  </data>
+  <data name="InstallProgressClose" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="InstallProgressDownloaded" xml:space="preserve">
+    <value>已下载 {0}</value>
+  </data>
+  <data name="InstallProgressTotalSize" xml:space="preserve">
+    <value>下载 {0}</value>
+  </data>
+  <data name="InstallQueueHeader" xml:space="preserve">
+    <value>另有 {0} 项排队</value>
+  </data>
+  <data name="TooltipCopyHint" xml:space="preserve">
+    <value>右键单击可复制</value>
+  </data>
+  <data name="ChangelogTitle" xml:space="preserve">
+    <value>更新日志</value>
+  </data>
+  <data name="ShortcutsTitle" xml:space="preserve">
+    <value>键盘快捷键</value>
+  </data>
+  <data name="ChangelogOpenRelease" xml:space="preserve">
+    <value>打开发布页面</value>
+  </data>
+  <data name="ChangelogNoTextDialogBody" xml:space="preserve">
+    <value>此更新没有更新日志文本。将在浏览器中打开供应商页面（{0}）。</value>
+  </data>
+  <data name="ChangelogOpenSite" xml:space="preserve">
+    <value>打开页面</value>
+  </data>
+  <data name="ChangelogButtonTooltip" xml:space="preserve">
+    <value>查看更新日志</value>
+  </data>
+  <data name="ChangelogNone" xml:space="preserve">
+    <value>未找到此版本的发行说明。</value>
+  </data>
+  <data name="InstallQueueRemoveTooltip" xml:space="preserve">
+    <value>从队列中移除</value>
+  </data>
+  <data name="QueueReorderTooltip" xml:space="preserve">
+    <value>拖动以重新排序，或使用 Alt 加方向键</value>
+  </data>
+  <data name="QueueRowPositionAutomation" xml:space="preserve">
+    <value>{0}，位置 {1}/{2}</value>
+  </data>
+  <data name="InstallQueueNeedsAdminTooltip" xml:space="preserve">
+    <value>需要管理员权限</value>
+  </data>
+  <data name="InstallQueueItemRemoved" xml:space="preserve">
+    <value>已从队列中移除</value>
+  </data>
+  <data name="UninstallFailed" xml:space="preserve">
+    <value>卸载失败。打开详情查看原因。</value>
+  </data>
+  <data name="SteamUninstallHandedOff" xml:space="preserve">
+    <value>Steam 的卸载对话框已打开。请在其中完成操作，此处无法显示结果。</value>
+  </data>
+  <data name="ErrorDetailTitle" xml:space="preserve">
+    <value>错误详情</value>
+  </data>
+  <data name="ShowErrorDetailButton" xml:space="preserve">
+    <value>详情</value>
+  </data>
+  <data name="StartButton" xml:space="preserve">
+    <value>开始</value>
+  </data>
+  <data name="UninstallButton" xml:space="preserve">
+    <value>卸载</value>
+  </data>
+  <data name="UninstallConfirmHeadline" xml:space="preserve">
+    <value>卸载“{0}”？</value>
+  </data>
+  <data name="UninstallConfirmBody" xml:space="preserve">
+    <value>该程序将从此电脑中移除。
+Ultimate Updater 无法撤销此操作。</value>
+  </data>
+  <data name="UninstallBlockedByActivity" xml:space="preserve">
+    <value>现在无法卸载：有安装正在进行。请等其完成后再试。</value>
+  </data>
+  <data name="RowDowngrade" xml:space="preserve">
+    <value>回退到 {0}</value>
+  </data>
+  <data name="DowngradeConfirmTitle" xml:space="preserve">
+    <value>安装旧版本？</value>
+  </data>
+  <data name="DowngradeConfirmBody" xml:space="preserve">
+    <value>{0} 将从 {1} 回退到 {2}。下次扫描时会再次提供更新版本。</value>
+  </data>
+  <data name="DowngradeBlockedByActivity" xml:space="preserve">
+    <value>现在无法回退：有安装正在进行。请等其完成后再试。</value>
+  </data>
+  <data name="RestorePointLast" xml:space="preserve">
+    <value>上次还原点：{0}</value>
+  </data>
+  <data name="RestorePointNone" xml:space="preserve">
+    <value>此程序尚无还原点</value>
+  </data>
+  <data name="SettingsIntervalDesc" xml:space="preserve">
+    <value>后台检查更新的频率。</value>
+  </data>
+  <data name="SettingsScanOnStartDesc" xml:space="preserve">
+    <value>每次应用启动时扫描一次。</value>
+  </data>
+  <data name="SettingsPreselectCriticalDesc" xml:space="preserve">
+    <value>自动勾选与安全相关的更新。</value>
+  </data>
+  <data name="InstallParallelLabel" xml:space="preserve">
+    <value>同时安装数</value>
+  </data>
+  <data name="InstallParallelHint" xml:space="preserve">
+    <value>同时进行更多会更快。部分安装程序拒绝与其他安装程序同时运行，那些会单独重试。</value>
+  </data>
+  <data name="SettingsParallelScans" xml:space="preserve">
+    <value>同时检查的来源数</value>
+  </data>
+  <data name="SettingsParallelAuto" xml:space="preserve">
+    <value>根据此设备自动设置</value>
+  </data>
+  <data name="SettingsScanDownloads" xml:space="preserve">
+    <value>检查已下载的文件</value>
+  </data>
+  <data name="SettingsScanDownloadsDesc" xml:space="preserve">
+    <value>此应用自行下载的文件会在运行前由 Windows 安全中心检查。</value>
+  </data>
+  <data name="ScanningDownload" xml:space="preserve">
+    <value>正在检查病毒</value>
+  </data>
+  <data name="SettingsRegistryBackupGroup" xml:space="preserve">
+    <value>清理</value>
+  </data>
+  <data name="SettingsRegistryBackupFolder" xml:space="preserve">
+    <value>备份文件夹</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDesc" xml:space="preserve">
+    <value>每次注册表清理都会先将涉及的项备份到此处，再删除任何内容。默认：%APPDATA%\UltimateUpdater\registry-backups。</value>
+  </data>
+  <data name="SettingsRegistryBackupRetention" xml:space="preserve">
+    <value>保留</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDesc" xml:space="preserve">
+    <value>保留多少个此类备份。超出数量时会移除最旧的一个。</value>
+  </data>
+  <data name="SettingsDataGroup" xml:space="preserve">
+    <value>数据和日志</value>
+  </data>
+  <data name="SettingsExcludedPathsHeader" xml:space="preserve">
+    <value>已永久排除 {0} 项</value>
+  </data>
+  <data name="SettingsExcludedPathsDesc" xml:space="preserve">
+    <value>通过清理对话框的右键菜单永久排除的路径。</value>
+  </data>
+  <data name="SettingsExcludedPathsEmpty" xml:space="preserve">
+    <value>没有永久排除的路径。</value>
+  </data>
+  <data name="SettingsExcludedPathRelease" xml:space="preserve">
+    <value>取消排除</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAll" xml:space="preserve">
+    <value>取消所有排除</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmHeadline" xml:space="preserve">
+    <value>恢复所有已排除的路径？</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmBody" xml:space="preserve">
+    <value>清理功能下次找到这些路径时会再次提供。</value>
+  </data>
+  <data name="SettingsRegistryRetentionOption" xml:space="preserve">
+    <value>{0} 个备份</value>
+  </data>
+  <data name="ScanThreatFound" xml:space="preserve">
+    <value>您的杀毒软件将下载的文件标记为恶意文件，该文件已被丢弃，未曾运行。</value>
+  </data>
+  <data name="ScanClean" xml:space="preserve">
+    <value>未发现威胁</value>
+  </data>
+  <data name="SettingsNotifyOnFoundDesc" xml:space="preserve">
+    <value>发现更新时显示系统托盘通知。</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnlyDesc" xml:space="preserve">
+    <value>仅对与安全相关的更新发出通知。</value>
+  </data>
+  <data name="ThemeDesc" xml:space="preserve">
+    <value>跟随 Windows，或强制使用浅色或深色主题。</value>
+  </data>
+  <data name="SettingsAutostartDesc" xml:space="preserve">
+    <value>随 Windows 启动，并最小化到系统托盘。</value>
+  </data>
+  <data name="SettingsCloseToTrayDesc" xml:space="preserve">
+    <value>关闭窗口后应用仍在系统托盘中运行。</value>
+  </data>
+  <data name="SettingsUpdatesGroup" xml:space="preserve">
+    <value>应用更新</value>
+  </data>
+  <data name="SettingsCheckUpdatesDesc" xml:space="preserve">
+    <value>检查 Ultimate Updater 是否有新版本。</value>
+  </data>
+  <data name="SettingsCheckNow" xml:space="preserve">
+    <value>立即检查</value>
+  </data>
+  <data name="SettingsUpToDate" xml:space="preserve">
+    <value>您使用的已是最新版本。</value>
+  </data>
+  <data name="SettingsCurrentVersion" xml:space="preserve">
+    <value>版本 {0}</value>
+  </data>
+  <data name="SettingsCheckingUpdates" xml:space="preserve">
+    <value>正在检查…</value>
+  </data>
+  <data name="SettingsSourcesGroup" xml:space="preserve">
+    <value>来源</value>
+  </data>
+  <data name="SettingsSourcesHint" xml:space="preserve">
+    <value>已关闭的来源不会被扫描。</value>
+  </data>
+  <data name="SettingsSourcesSelectAll" xml:space="preserve">
+    <value>所有来源</value>
+  </data>
+  <data name="SettingsSourcesSearchPlaceholder" xml:space="preserve">
+    <value>搜索来源…</value>
+  </data>
+  <data name="SettingsSourcesSearchEmpty" xml:space="preserve">
+    <value>没有符合搜索条件的来源。</value>
+  </data>
+  <data name="SettingsShowAllSources" xml:space="preserve">
+    <value>显示未安装的来源（{0}）</value>
+  </data>
+  <data name="SettingsStartupGroup" xml:space="preserve">
+    <value>启动</value>
+  </data>
+  <data name="SettingsAutostart" xml:space="preserve">
+    <value>随 Windows 启动</value>
+  </data>
+  <data name="SettingsCloseToTray" xml:space="preserve">
+    <value>关闭时最小化到系统托盘而非退出</value>
+  </data>
+  <data name="SettingsCleanupReminder" xml:space="preserve">
+    <value>清理逾期时提醒我</value>
+  </data>
+  <data name="SettingsAdvancedGroup" xml:space="preserve">
+    <value>高级</value>
+  </data>
+  <data name="TrayOpen" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="TrayScan" xml:space="preserve">
+    <value>检查更新</value>
+  </data>
+  <data name="TrayExit" xml:space="preserve">
+    <value>退出</value>
+  </data>
+  <data name="NotifyFound" xml:space="preserve">
+    <value>有 {0} 个可用更新</value>
+  </data>
+  <data name="NotifyFoundWithCritical" xml:space="preserve">
+    <value>有 {0} 个可用更新（{1} 个严重）</value>
+  </data>
+  <data name="SelfUpdateTitle" xml:space="preserve">
+    <value>有可用的新版本</value>
+  </data>
+  <data name="SelfUpdateInstall" xml:space="preserve">
+    <value>立即更新</value>
+  </data>
+  <data name="SelfUpdateDismiss" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="SelfUpdateWhatsNew" xml:space="preserve">
+    <value>新增内容</value>
+  </data>
+  <data name="CleanupReminderBanner" xml:space="preserve">
+    <value>上次清理是在 {0}。</value>
+  </data>
+  <data name="CleanupReminderThisTime" xml:space="preserve">
+    <value>仅此一次</value>
+  </data>
+  <data name="CleanupReminderNeverAgain" xml:space="preserve">
+    <value>不再显示</value>
+  </data>
+  <data name="SelfUpdateFailed" xml:space="preserve">
+    <value>更新无法验证，已被丢弃。</value>
+  </data>
+  <data name="HeadlineScanning" xml:space="preserve">
+    <value>正在检查更新…</value>
+  </data>
+  <data name="HeadlineUpToDate" xml:space="preserve">
+    <value>一切都是最新的</value>
+  </data>
+  <data name="HeadlineUpdates" xml:space="preserve">
+    <value>有 {0} 个可用更新</value>
+  </data>
+  <data name="SubheadlineScanning" xml:space="preserve">
+    <value>正在检查每个已配置的来源。</value>
+  </data>
+  <data name="EmptyState" xml:space="preserve">
+    <value>未找到更新。请运行扫描再次检查。</value>
+  </data>
+  <data name="ManualUpdatesSectionTitle" xml:space="preserve">
+    <value>请自行打开：此应用无法为您运行此更新</value>
+  </data>
+  <data name="CriticalBadge" xml:space="preserve">
+    <value>严重</value>
+  </data>
+  <data name="RowQueued" xml:space="preserve">
+    <value>已排队</value>
+  </data>
+  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
+    <value>{0} · {1:0} %</value>
+  </data>
+  <data name="CleanupDoneCount" xml:space="preserve">
+    <value>已完成 {0}/{1} 个区域</value>
+  </data>
+  <data name="CleanupDoneCountOne" xml:space="preserve">
+    <value>已完成 {0}/{1} 个区域</value>
+  </data>
+  <data name="CleanupRemainingCount" xml:space="preserve">
+    <value>还剩 {0} 个</value>
+  </data>
+  <data name="CleanupEmptyCount" xml:space="preserve">
+    <value>{0} 个区域未发现内容</value>
+  </data>
+  <data name="CleanupEmptyCountOne" xml:space="preserve">
+    <value>{0} 个区域未发现内容</value>
+  </data>
+  <data name="InstallRestorePointStep" xml:space="preserve">
+    <value>正在创建还原点…</value>
+  </data>
+  <data name="ActivityRestorePointSkipped" xml:space="preserve">
+    <value>已跳过创建还原点，今天已有一个。</value>
+  </data>
+  <data name="CleanupRestorePointParallel" xml:space="preserve">
+    <value>正在创建还原点，其他耗时步骤已在运行</value>
+  </data>
+  <data name="RowAlsoInSources" xml:space="preserve">
+    <value>已通过 {0} 更新；{1} 也提供了此更新。</value>
+  </data>
+  <data name="RowDone" xml:space="preserve">
+    <value>完成</value>
+  </data>
+  <data name="RowFailed" xml:space="preserve">
+    <value>失败</value>
+  </data>
+  <data name="SubheadlineScanningProgress" xml:space="preserve">
+    <value>已检查 {0}/{1} 个来源</value>
+  </data>
+  <data name="SubheadlineScanningProgressOne" xml:space="preserve">
+    <value>已检查 {0}/{1} 个来源</value>
+  </data>
+  <data name="SubheadlineScanningSources" xml:space="preserve">
+    <value>正在检查：{0}</value>
+  </data>
+  <data name="SourceDescWinget" xml:space="preserve">
+    <value>微软官方的 Windows 包管理器。列出并静默更新通过它安装的应用。</value>
+  </data>
+  <data name="SourceDescWindowsUpdate" xml:space="preserve">
+    <value>Windows 自身的更新服务：来自微软的质量、驱动程序和定义更新，从不包含功能升级。</value>
+  </data>
+  <data name="SourceDescMsStore" xml:space="preserve">
+    <value>Microsoft Store 应用。仅打开其自身的更新页面，因为该商店对其他工具隐藏了各应用的版本信息。</value>
+  </data>
+  <data name="SourceDescChocolatey" xml:space="preserve">
+    <value>Windows 的社区包管理器（choco.exe）。更新社区维护的软件包，需要管理员权限。</value>
+  </data>
+  <data name="SourceDescScoop" xml:space="preserve">
+    <value>命令行包管理器，安装到用户文件夹中，无需管理员权限。</value>
+  </data>
+  <data name="SourceDescPip" xml:space="preserve">
+    <value>Python 的包安装工具。列出并更新过时的 Python 包。</value>
+  </data>
+  <data name="SourceDescNpm" xml:space="preserve">
+    <value>Node.js 的包管理器。列出并更新全局安装的 npm 包。</value>
+  </data>
+  <data name="SourceDescPnpm" xml:space="preserve">
+    <value>pnpm 的全局包，来自 npm 自身使用的同一个 npm 注册表。未针对真实的 pnpm 安装进行验证；如果某一行看起来不对，请报告问题。</value>
+  </data>
+  <data name="SourceDescDotnetTool" xml:space="preserve">
+    <value>.NET 全局工具，通过公共 NuGet 源检查是否有更新版本。</value>
+  </data>
+  <data name="SourceNameDotnetTool" xml:space="preserve">
+    <value>.NET 工具</value>
+  </data>
+  <data name="SourceDescPsGallery" xml:space="preserve">
+    <value>安装在用户配置文件中的 PowerShell Gallery 模块。</value>
+  </data>
+  <data name="SourceDescGem" xml:space="preserve">
+    <value>Ruby 的包管理器。列出并更新过时的 RubyGems。</value>
+  </data>
+  <data name="SourceDescComposer" xml:space="preserve">
+    <value>PHP 的依赖管理器。列出并更新全局 Composer 包。</value>
+  </data>
+  <data name="SourceDescRustup" xml:space="preserve">
+    <value>Rust 工具链管理器。一次更新会刷新每个已安装的工具链以及 rustup 本身。</value>
+  </data>
+  <data name="SourceDescVcpkg" xml:space="preserve">
+    <value>通过 vcpkg（经典模式）管理的 C/C++ 库。未针对真实的 vcpkg 安装进行验证；如果某一行看起来不对，请报告问题。</value>
+  </data>
+  <data name="SourceDescMise" xml:space="preserve">
+    <value>由 mise 管理的工具版本。未针对真实的 mise 安装进行验证；如果某一行看起来不对，请报告问题。</value>
+  </data>
+  <data name="SourceDescSteam" xml:space="preserve">
+    <value>Valve 的 Steam 客户端。从 Steam 自身的文件读取真实的游戏更新状态；更新本身在 Steam 中运行。</value>
+  </data>
+  <data name="SourceDescNvidia" xml:space="preserve">
+    <value>向 NVIDIA 自身的驱动程序服务查询最新的 Game Ready 驱动程序。在验证 NVIDIA 的签名后直接安装。</value>
+  </data>
+  <data name="SourceDescGitHubRelease" xml:space="preserve">
+    <value>针对卸载条目中标明 GitHub 项目名称的程序，与其最新发行版进行比对，适用于未通过任何包管理器安装的软件。打开发行页面而非直接安装。</value>
+  </data>
+  <data name="SourceNameGitHubRelease" xml:space="preserve">
+    <value>GitHub 发行版</value>
+  </data>
+  <data name="SourceDescLauncher" xml:space="preserve">
+    <value>打开 {0} 客户端。{0} 会在启动时自行更新自身及其游戏；此应用无法查看或触发该过程。</value>
+  </data>
+  <data name="FatalErrorHeadline" xml:space="preserve">
+    <value>Ultimate Updater 遇到问题</value>
+  </data>
+  <data name="FatalError" xml:space="preserve">
+    <value>Ultimate Updater 必须关闭。详情见日志文件夹：
+{0}</value>
+  </data>
+  <data name="InstallFailed" xml:space="preserve">
+    <value>更新失败。打开详情查看原因。</value>
+  </data>
+  <data name="InstallElevationDeclined" xml:space="preserve">
+    <value>管理员权限请求被拒绝。</value>
+  </data>
+  <data name="InstallWorkerStopped" xml:space="preserve">
+    <value>管理员步骤在此更新安装前已停止。</value>
+  </data>
+  <data name="HeadlineUpdatesOne" xml:space="preserve">
+    <value>有 {0} 个可用更新</value>
+  </data>
+  <data name="NotifyFoundOne" xml:space="preserve">
+    <value>有 {0} 个可用更新</value>
+  </data>
+  <data name="NotifyFoundOneWithCritical" xml:space="preserve">
+    <value>有 {0} 个可用更新（{1} 个严重）</value>
+  </data>
+  <data name="ScanFailed" xml:space="preserve">
+    <value>无法检查此来源。打开详情查看原因。</value>
+  </data>
+  <data name="ScanStateWaiting" xml:space="preserve">
+    <value>等待中…</value>
+  </data>
+  <data name="ScanStateRunning" xml:space="preserve">
+    <value>正在运行…</value>
+  </data>
+  <data name="ScanStateSlow" xml:space="preserve">
+    <value>仍在运行…</value>
+  </data>
+  <data name="ScanStateCancelled" xml:space="preserve">
+    <value>已取消</value>
+  </data>
+  <data name="CancelSourceScanTooltip" xml:space="preserve">
+    <value>停止检查此来源</value>
+  </data>
+  <data name="EmptyStateFiltered" xml:space="preserve">
+    <value>没有符合当前搜索或筛选条件的内容。</value>
+  </data>
+  <data name="InstallCancelled" xml:space="preserve">
+    <value>在此更新安装前已取消。</value>
+  </data>
+  <data name="InstallWaitingForCleanup" xml:space="preserve">
+    <value>正在等待清理释放此区域</value>
+  </data>
+  <data name="InstallAlreadyCurrent" xml:space="preserve">
+    <value>已是版本 {0}，无需操作。</value>
+  </data>
+  <data name="ErrorDetailOutput" xml:space="preserve">
+    <value>工具报告的内容</value>
+  </data>
+  <data name="ErrorDetailLogInSettings" xml:space="preserve">
+    <value>查看设置中的日志文件夹</value>
+  </data>
+  <data name="ErrorDetailRetryInMenu" xml:space="preserve">
+    <value>从该行的右键菜单交互式重试</value>
+  </data>
+  <data name="ErrorWhatDoesThisMean" xml:space="preserve">
+    <value>这是什么意思？</value>
+  </data>
+  <data name="ErrorWindowsSaysPrefix" xml:space="preserve">
+    <value>Windows 提示：</value>
+  </data>
+  <data name="ErrorNoMeaning" xml:space="preserve">
+    <value>Windows 没有此代码的说明文字。</value>
+  </data>
+  <data name="ErrorDetailSourceLog" xml:space="preserve">
+    <value>来自此时段附近的日志（此条目未保存输出）</value>
+  </data>
+  <data name="ErrorDetailSourceShort" xml:space="preserve">
+    <value>此条目仅保存了简短消息</value>
+  </data>
+  <data name="ErrorDetailCopy" xml:space="preserve">
+    <value>复制详情</value>
+  </data>
+  <data name="ErrorCopyReport" xml:space="preserve">
+    <value>复制错误报告</value>
+  </data>
+  <data name="ErrorDetailCopied" xml:space="preserve">
+    <value>已复制到剪贴板</value>
+  </data>
+  <data name="SubListCount" xml:space="preserve">
+    <value>有 {0} 个更新待处理</value>
+  </data>
+  <data name="SubListCountOne" xml:space="preserve">
+    <value>有 {0} 个更新待处理</value>
+  </data>
+  <data name="ThemeOptionHacker" xml:space="preserve">
+    <value>极客</value>
+  </data>
+  <data name="ThemeOptionNeon" xml:space="preserve">
+    <value>霓虹</value>
+  </data>
+  <data name="SettingsResetGroup" xml:space="preserve">
+    <value>重置</value>
+  </data>
+  <data name="SettingsResetDesc" xml:space="preserve">
+    <value>将此应用恢复到出厂状态。</value>
+  </data>
+  <data name="SettingsResetDoneHeadline" xml:space="preserve">
+    <value>完成</value>
+  </data>
+  <data name="SettingsResetDoneBody" xml:space="preserve">
+    <value>应用已恢复到出厂状态。</value>
+  </data>
+  <data name="SettingsDeleteDataPartialHeadline" xml:space="preserve">
+    <value>部分文件仍在使用中</value>
+  </data>
+  <data name="SettingsDeleteDataPartialBody" xml:space="preserve">
+    <value>设置已重置。少数仍在使用的文件（例如当前日志）将在下次启动时移除。</value>
+  </data>
+  <data name="HistoryFilterSource" xml:space="preserve">
+    <value>来源：</value>
+  </data>
+  <data name="HistoryRangeAll" xml:space="preserve">
+    <value>全部</value>
+  </data>
+  <data name="HistoryRangeToday" xml:space="preserve">
+    <value>今天</value>
+  </data>
+  <data name="HistoryRangeWeek" xml:space="preserve">
+    <value>7 天</value>
+  </data>
+  <data name="HistoryRangeMonth" xml:space="preserve">
+    <value>30 天</value>
+  </data>
+  <data name="CleanupTitle" xml:space="preserve">
+    <value>释放空间</value>
+  </data>
+  <data name="CleanupStart" xml:space="preserve">
+    <value>开始清理</value>
+  </data>
+  <data name="CleanupPause" xml:space="preserve">
+    <value>暂停</value>
+  </data>
+  <data name="CleanupResume" xml:space="preserve">
+    <value>继续</value>
+  </data>
+  <data name="CleanupStop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="CleanupRescan" xml:space="preserve">
+    <value>重新扫描</value>
+  </data>
+  <data name="CleanupStoppingRepair" xml:space="preserve">
+    <value>已停止。正在运行的系统修复必须先完成；中断它可能损坏 Windows 的组件存储。</value>
+  </data>
+  <data name="CleanupNoProgressHint" xml:space="preserve">
+    <value>Windows 不为此步骤报告进度，它正在运行。</value>
+  </data>
+  <data name="CleanupDefragName" xml:space="preserve">
+    <value>优化驱动器 {0}</value>
+  </data>
+  <data name="CleanupDefragConsequence" xml:space="preserve">
+    <value>对此驱动器运行 Windows 优化：机械硬盘为碎片整理，SSD 为 Trim。不会释放空间，只是重新整理已有内容。</value>
+  </data>
+  <data name="CleanupDefragRowHdd" xml:space="preserve">
+    <value>碎片整理 {0}</value>
+  </data>
+  <data name="CleanupDefragRowSsd" xml:space="preserve">
+    <value>优化 {0}，Trim</value>
+  </data>
+  <data name="CleanupDefragRowUnspecified" xml:space="preserve">
+    <value>优化 {0}</value>
+  </data>
+  <data name="MediaTypeHdd" xml:space="preserve">
+    <value>机械硬盘</value>
+  </data>
+  <data name="MediaTypeSsd" xml:space="preserve">
+    <value>固态硬盘</value>
+  </data>
+  <data name="MediaTypeUsbDrive" xml:space="preserve">
+    <value>U 盘</value>
+  </data>
+  <data name="MediaTypeOtherDrive" xml:space="preserve">
+    <value>驱动器</value>
+  </data>
+  <data name="CleanupDriveSubline" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="CleanupDriveSublineUsb" xml:space="preserve">
+    <value>{0}，{1} · {2}</value>
+  </data>
+  <data name="DefragWarningTitle" xml:space="preserve">
+    <value>此操作可能需要数小时</value>
+  </data>
+  <data name="DefragWarningBody" xml:space="preserve">
+    <value>对大容量机械硬盘进行碎片整理需要较长时间。您可以关闭此窗口，操作会继续进行。退出程序会停止它。</value>
+  </data>
+  <data name="DefragQuitWarningTitle" xml:space="preserve">
+    <value>驱动器优化仍在运行</value>
+  </data>
+  <data name="DefragQuitWarningBody" xml:space="preserve">
+    <value>现在退出会停止该操作。驱动器仍可使用，只是优化尚未完成。</value>
+  </data>
+  <data name="DefragQuitAnyway" xml:space="preserve">
+    <value>仍要退出</value>
+  </data>
+  <data name="DefragKeepRunning" xml:space="preserve">
+    <value>继续运行</value>
+  </data>
+  <data name="WorkQuitWarningTitle" xml:space="preserve">
+    <value>更新或清理仍在运行</value>
+  </data>
+  <data name="WorkQuitWarningBody" xml:space="preserve">
+    <value>现在退出会中途停止它们：软件包可能只安装了一半，清理也可能未完成。只关闭窗口则它们会继续运行。</value>
+  </data>
+  <data name="CleanupHistoryTitle" xml:space="preserve">
+    <value>以往的清理</value>
+  </data>
+  <data name="CleanupHistoryButton" xml:space="preserve">
+    <value>清理历史记录</value>
+  </data>
+  <data name="CleanupGroupTempFiles" xml:space="preserve">
+    <value>临时文件</value>
+  </data>
+  <data name="CleanupGroupCaches" xml:space="preserve">
+    <value>缓存</value>
+  </data>
+  <data name="CleanupGroupWindowsMaintenance" xml:space="preserve">
+    <value>Windows 维护</value>
+  </data>
+  <data name="CleanupGroupRecycleBin" xml:space="preserve">
+    <value>回收站</value>
+  </data>
+  <data name="CleanupGroupSystemRepair" xml:space="preserve">
+    <value>系统修复</value>
+  </data>
+  <data name="CleanupGroupRegistry" xml:space="preserve">
+    <value>注册表</value>
+  </data>
+  <data name="CleanupHistoryEmpty" xml:space="preserve">
+    <value>尚未清理过任何内容。</value>
+  </data>
+  <data name="CleanupHistoryFreed" xml:space="preserve">
+    <value>已释放 {0}</value>
+  </data>
+  <data name="CleanupHistoryEntrySummary" xml:space="preserve">
+    <value>已清理 {0} 个区域</value>
+  </data>
+  <data name="CleanupHistoryEntrySummaryOne" xml:space="preserve">
+    <value>已清理 {0} 个区域</value>
+  </data>
+  <data name="CleanupHistorySkipped" xml:space="preserve">
+    <value>{0} 正在使用中</value>
+  </data>
+  <data name="CleanupHistoryClearAll" xml:space="preserve">
+    <value>全部删除</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmHeadline" xml:space="preserve">
+    <value>删除整个历史记录？</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmDetail" xml:space="preserve">
+    <value>仅删除历史记录，已释放的空间仍保持释放状态。</value>
+  </data>
+  <data name="CleanupHistoryDeleteEntry" xml:space="preserve">
+    <value>删除此条目</value>
+  </data>
+  <data name="CleanupHistoryTotalFreed" xml:space="preserve">
+    <value>累计已释放 {0}</value>
+  </data>
+  <data name="CleanupHistoryRunCount" xml:space="preserve">
+    <value>{0} 次运行 · 最近一次于 {1}</value>
+  </data>
+  <data name="CleanupHistoryRunCountOne" xml:space="preserve">
+    <value>{0} 次运行 · 最近一次于 {1}</value>
+  </data>
+  <data name="CleanupHistoryTopCategories" xml:space="preserve">
+    <value>占用最大的区域</value>
+  </data>
+  <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
+    <value>尚未释放任何空间。</value>
+  </data>
+  <data name="CleanupPausedNote" xml:space="preserve">
+    <value>已暂停</value>
+  </data>
+  <data name="CleanupScanning" xml:space="preserve">
+    <value>仍在测量…</value>
+  </data>
+  <data name="CleanupOfTotal" xml:space="preserve">
+    <value>共发现 {0}</value>
+  </data>
+  <data name="CleanupNeedsAdmin" xml:space="preserve">
+    <value>需要管理员权限</value>
+  </data>
+  <data name="CleanupStateWaiting" xml:space="preserve">
+    <value>等待中</value>
+  </data>
+  <data name="CleanupStateCleaning" xml:space="preserve">
+    <value>清理中</value>
+  </data>
+  <data name="CleanupStateStopped" xml:space="preserve">
+    <value>已停止</value>
+  </data>
+  <data name="CleanupStateSkipped" xml:space="preserve">
+    <value>已跳过</value>
+  </data>
+  <data name="CleanupSkippedFiles" xml:space="preserve">
+    <value>{0} 个文件正在使用中，已跳过。</value>
+  </data>
+  <data name="CleanupSkippedFilesOne" xml:space="preserve">
+    <value>{0} 个文件正在使用中，已跳过。</value>
+  </data>
+  <data name="CleanupSelectedCount" xml:space="preserve">
+    <value>已选择 {0}/{1} 个区域</value>
+  </data>
+  <data name="CleanupSelectedCountOne" xml:space="preserve">
+    <value>已选择 {0}/{1} 个区域</value>
+  </data>
+  <data name="CleanupFileCount" xml:space="preserve">
+    <value>已测量 {0} 个文件</value>
+  </data>
+  <data name="CleanupFileCountOne" xml:space="preserve">
+    <value>已测量 {0} 个文件</value>
+  </data>
+  <data name="CleanupLargestLabel" xml:space="preserve">
+    <value>最大的区域</value>
+  </data>
+  <data name="CleanupLastRunLabel" xml:space="preserve">
+    <value>上次清理</value>
+  </data>
+  <data name="CleanupFreeSpaceNow" xml:space="preserve">
+    <value>可用 {0}，清理后 +{1}</value>
+  </data>
+  <data name="CleanupCurrentLabel" xml:space="preserve">
+    <value>当前</value>
+  </data>
+  <data name="CleanupFailedHeadline" xml:space="preserve">
+    <value>清理无法完成</value>
+  </data>
+  <data name="CleanupConfirmHeadline" xml:space="preserve">
+    <value>永久删除 {0}？</value>
+  </data>
+  <data name="CleanupConfirmWarning" xml:space="preserve">
+    <value>已删除的文件无法恢复。</value>
+  </data>
+  <data name="CleanupConfirmTotal" xml:space="preserve">
+    <value>总计：{0}</value>
+  </data>
+  <data name="CleanupUserTemp" xml:space="preserve">
+    <value>您的临时文件</value>
+  </data>
+  <data name="CleanupUserTempDesc" xml:space="preserve">
+    <value>当前用户账户的临时文件夹。</value>
+  </data>
+  <data name="CleanupAllUsersTemp" xml:space="preserve">
+    <value>所有用户的临时文件</value>
+  </data>
+  <data name="CleanupAllUsersTempDesc" xml:space="preserve">
+    <value>此电脑上其他账户的临时文件夹。没有管理员权限时会跳过其文件。</value>
+  </data>
+  <data name="CleanupWindowsTemp" xml:space="preserve">
+    <value>Windows 临时文件</value>
+  </data>
+  <data name="CleanupWindowsTempDesc" xml:space="preserve">
+    <value>Windows 和安装程序写入的系统临时文件夹。</value>
+  </data>
+  <data name="CleanupUpdateCache" xml:space="preserve">
+    <value>Windows 更新缓存</value>
+  </data>
+  <data name="CleanupUpdateCacheDesc" xml:space="preserve">
+    <value>已应用更新的安装文件。</value>
+  </data>
+  <data name="CleanupDeliveryOptimization" xml:space="preserve">
+    <value>传递优化文件</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
+    <value>Windows 保留用于与其他电脑共享的更新部件。</value>
+  </data>
+  <data name="CleanupThumbnails" xml:space="preserve">
+    <value>缩略图和图标缓存</value>
+  </data>
+  <data name="CleanupThumbnailsDesc" xml:space="preserve">
+    <value>资源管理器会在需要时重新生成这些内容。</value>
+  </data>
+  <data name="CleanupCrashDumps" xml:space="preserve">
+    <value>崩溃转储</value>
+  </data>
+  <data name="CleanupCrashDumpsDesc" xml:space="preserve">
+    <value>崩溃程序留下的内存转储文件。</value>
+  </data>
+  <data name="CleanupRecycleBin" xml:space="preserve">
+    <value>清空回收站</value>
+  </data>
+  <data name="CleanupRecycleBinDesc" xml:space="preserve">
+    <value>默认关闭，因为项目在回收站清空前仍可恢复。</value>
+  </data>
+  <data name="CleanupRecycleAgeLabel" xml:space="preserve">
+    <value>仅限早于以下天数的文件</value>
+  </data>
+  <data name="CleanupRecycleAgeDays" xml:space="preserve">
+    <value>天</value>
+  </data>
+  <data name="CleanupDiskCleanup" xml:space="preserve">
+    <value>运行 Windows 磁盘清理</value>
+  </data>
+  <data name="CleanupDiskCleanupDesc" xml:space="preserve">
+    <value>打开 Windows 自带工具；由它决定删除的内容。</value>
+  </data>
+  <data name="SourceDescAndroidSdk" xml:space="preserve">
+    <value>通过 sdkmanager 管理的 Android SDK 软件包。从标准位置、ANDROID_HOME 或 PATH 更新过时的组件（平台、构建工具）。</value>
+  </data>
+  <data name="SourceDescAndroidStudio" xml:space="preserve">
+    <value>已安装 Android Studio，但未安装 SDK 命令行工具，没有它就无法更新 SDK 软件包。打开 Android Studio；其 SDK Manager 位于“设置”下的“Android SDK”。添加“Android SDK Command-line Tools”后更新即可自动运行。</value>
+  </data>
+  <data name="AndroidStudioSdkRow" xml:space="preserve">
+    <value>Android Studio SDK 管理器</value>
+  </data>
+  <data name="SourceDescGhExtension" xml:space="preserve">
+    <value>GitHub CLI 扩展。更新 gh 自身报告为过时的扩展。</value>
+  </data>
+  <data name="SourceNameGhExtension" xml:space="preserve">
+    <value>GitHub CLI 扩展</value>
+  </data>
+  <data name="SourceDescPipx" xml:space="preserve">
+    <value>使用 pipx 安装的 Python 命令行工具。每个工具都是候选项；pipx upgrade 会在请求时运行。</value>
+  </data>
+  <data name="SourceDescVsCodeExtension" xml:space="preserve">
+    <value>Visual Studio Code 扩展。每个已安装的扩展都是候选项；按请求会从扩展市场重新安装最新版本。</value>
+  </data>
+  <data name="SourceNameVsCodeExtension" xml:space="preserve">
+    <value>VS Code 扩展</value>
+  </data>
+  <data name="SourceDescDeno" xml:space="preserve">
+    <value>Deno 运行时。在 GitHub 上检查最新发行版并使用“deno upgrade”更新。当 winget、Scoop 或 Chocolatey 安装了 Deno 时会隐藏，因为它们会自行更新它。</value>
+  </data>
+  <data name="SourceDescBun" xml:space="preserve">
+    <value>Bun 运行时。在 GitHub 上检查最新发行版并使用“bun upgrade”更新。当某个包管理器安装了 Bun 时会隐藏。</value>
+  </data>
+  <data name="SourceDescUv" xml:space="preserve">
+    <value>uv，可自我更新的 Python 包管理器。当某个包管理器安装了 uv 时会隐藏，因为此时“uv self update”会拒绝执行。</value>
+  </data>
+  <data name="SourceDescUvTool" xml:space="preserve">
+    <value>使用“uv tool”安装的 Python 工具。针对 PyPI 检查每个工具，仅列出过时的版本。</value>
+  </data>
+  <data name="SourceNameUvTool" xml:space="preserve">
+    <value>uv 工具</value>
+  </data>
+  <data name="SourceDescGcloud" xml:space="preserve">
+    <value>Google Cloud CLI 组件，显示已安装版本、最新版本和下载大小。“gcloud components update”会将它们一起更新。</value>
+  </data>
+  <data name="SourceDescOllama" xml:space="preserve">
+    <value>本地拉取的 Ollama 模型。将每个清单摘要与注册表中的摘要进行比较，因此只有确实变化的标签才会成为一行。需要运行中的 Ollama 服务器；此应用不会启动它。</value>
+  </data>
+  <data name="SourceNameOllama" xml:space="preserve">
+    <value>Ollama 模型</value>
+  </data>
+  <data name="SourceDescFlutter" xml:space="preserve">
+    <value>通过 PATH 中的 flutter 检出的 Flutter SDK。将已安装版本与 Google 自身针对您的渠道的发行源进行比较。</value>
+  </data>
+  <data name="SourceDescVolta" xml:space="preserve">
+    <value>Volta 的默认 Node、npm、yarn 和 pnpm 工具链。Volta 本身没有内置的更新检查，因此此应用直接与 Node 的发行源和 npm 注册表进行比较，且只会在同一 Node 主版本内提供补丁或次要更新，绝不会跳到新的主版本。</value>
+  </data>
+  <data name="SourceDescPyenvWin" xml:space="preserve">
+    <value>pyenv-win 设置为全局默认的 Python 版本。仅在同一主版本.次版本系列内提供补丁更新（例如从 3.11.4 到 3.11.9）；切换到更新的系列是此应用刻意留给您自行决定的选择。</value>
+  </data>
+  <data name="SourceDescWsl" xml:space="preserve">
+    <value>Windows Subsystem for Linux。仅用于来源选择器，因为 wsl 无法在不应用更新的情况下检查更新，所以永远不会出现任何行。</value>
+  </data>
+  <data name="SourceNameWsl" xml:space="preserve">
+    <value>适用于 Linux 的 Windows 子系统</value>
+  </data>
+  <data name="IgnoredAllBadge" xml:space="preserve">
+    <value>已全部忽略</value>
+  </data>
+  <data name="RowUninstalled" xml:space="preserve">
+    <value>已卸载</value>
+  </data>
+  <data name="RowHandedOff" xml:space="preserve">
+    <value>已转交</value>
+  </data>
+  <data name="RowHandedOffDetail" xml:space="preserve">
+    <value>请查看供应商自身的窗口。</value>
+  </data>
+  <data name="RowStuck" xml:space="preserve">
+    <value>卡住了</value>
+  </data>
+  <data name="RowStuckDetail" xml:space="preserve">
+    <value>已卡住：没有适合此安装的版本。</value>
+  </data>
+  <data name="RowNeedsManualWork" xml:space="preserve">
+    <value>需要您处理</value>
+  </data>
+  <data name="RowNeedsManualWorkDetail" xml:space="preserve">
+    <value>已连续三次以相同方式失败。仅重试无法解决此问题。</value>
+  </data>
+  <data name="RowCancelled" xml:space="preserve">
+    <value>已取消</value>
+  </data>
+  <data name="RowCancelledTooltip" xml:space="preserve">
+    <value>您已停止此项。队列中的其余项目继续运行。</value>
+  </data>
+  <data name="StopSingleTooltip" xml:space="preserve">
+    <value>停止此项</value>
+  </data>
+  <data name="TryNormallyAgainButton" xml:space="preserve">
+    <value>正常重试</value>
+  </data>
+  <data name="WingetVendorInstallerCrashed" xml:space="preserve">
+    <value>供应商的安装程序已崩溃（{0}）。通常可以手动安装此软件包。</value>
+  </data>
+  <data name="ScanFailedToolCrashed" xml:space="preserve">
+    <value>“{0}”已崩溃（{1}），而不是报告正常错误。这通常意味着它所依赖的某个运行时（例如 Java）与其预期不符。</value>
+  </data>
+  <data name="ScanFailedNoJava" xml:space="preserve">
+    <value>sdkmanager 需要 Java {0} 或更高版本，但未找到任何 Java 安装（JAVA_HOME、PATH，或 Android Studio 自带的版本）。</value>
+  </data>
+  <data name="CleanupFreeSpaceResult" xml:space="preserve">
+    <value>{0} 当前剩余 {1}（此前为 {2}）</value>
+  </data>
+  <data name="SettingsLogFolder" xml:space="preserve">
+    <value>日志文件</value>
+  </data>
+  <data name="SettingsReportsFolder" xml:space="preserve">
+    <value>错误报告</value>
+  </data>
+  <data name="SettingsOpenReports" xml:space="preserve">
+    <value>打开错误报告</value>
+  </data>
+  <data name="SettingsDataFolder" xml:space="preserve">
+    <value>数据文件夹</value>
+  </data>
+  <data name="AboutNetworkTargets" xml:space="preserve">
+    <value>此程序联系的服务器</value>
+  </data>
+  <data name="SettingsDataFolderChange" xml:space="preserve">
+    <value>移动</value>
+  </data>
+  <data name="SettingsDataFolderMoved" xml:space="preserve">
+    <value>已复制到 {0}。旧文件夹仍然存在：{1}。重启后使用新文件夹。</value>
+  </data>
+  <data name="SettingsDataFolderCopyFailed" xml:space="preserve">
+    <value>数据文件夹无法复制到那里。未做任何更改。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedLink" xml:space="preserve">
+    <value>此文件夹是指向其他位置的链接。请选择其他文件夹。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedSystem" xml:space="preserve">
+    <value>这是一个 Windows 系统文件夹。请选择其他文件夹。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedProgram" xml:space="preserve">
+    <value>此文件夹位于程序自身的文件夹内。请选择其他文件夹。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedWritable" xml:space="preserve">
+    <value>此文件夹无法写入。请选择其他文件夹。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedNonEmpty" xml:space="preserve">
+    <value>那里已经存在一个非空的 UltimateUpdater 文件夹。请选择其他文件夹。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedCurrent" xml:space="preserve">
+    <value>这是当前的数据文件夹，或位于其中。请选择其他文件夹。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedTempOrCache" xml:space="preserve">
+    <value>此文件夹会在清理时被清空，不适合存放应用数据。请选择其他文件夹。</value>
+  </data>
+  <data name="SettingsDataFolderFilesLocked" xml:space="preserve">
+    <value>部分文件被锁定，无法移动：{0}。未做任何更改。</value>
+  </data>
+  <data name="SettingsLogOpenFolder" xml:space="preserve">
+    <value>打开文件夹</value>
+  </data>
+  <data name="SettingsLogRetention" xml:space="preserve">
+    <value>日志保留时长</value>
+  </data>
+  <data name="SettingsLogRetentionDesc" xml:space="preserve">
+    <value>较旧的文件会在应用下次启动时被移除。</value>
+  </data>
+  <data name="SettingsLogRetentionOption" xml:space="preserve">
+    <value>{0} 天</value>
+  </data>
+  <data name="SettingsHistoryRetention" xml:space="preserve">
+    <value>历史记录保留时长</value>
+  </data>
+  <data name="SettingsHistoryRetentionDesc" xml:space="preserve">
+    <value>较旧的条目会在应用下次启动时被移除。</value>
+  </data>
+  <data name="HistoryShowDetails" xml:space="preserve">
+    <value>显示详情</value>
+  </data>
+  <data name="SettingsResetEverything" xml:space="preserve">
+    <value>重置全部</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmHeadline" xml:space="preserve">
+    <value>完全重置 Ultimate Updater？</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmBody" xml:space="preserve">
+    <value>所有设置将恢复为默认值；忽略列表、历史记录、日志和缓存将被永久删除。
+此操作无法撤销。</value>
+  </data>
+  <data name="CleanupSystemRepairSfc" xml:space="preserve">
+    <value>检查系统文件（sfc）</value>
+  </data>
+  <data name="CleanupSystemRepairSfcDesc" xml:space="preserve">
+    <value>通过 sfc /scannow 替换损坏的 Windows 文件。是修复而非删除；速度较慢，需要管理员权限。</value>
+  </data>
+  <data name="CleanupComponentCleanup" xml:space="preserve">
+    <value>清理组件存储</value>
+  </data>
+  <data name="CleanupComponentCleanupDesc" xml:space="preserve">
+    <value>删除更新遗留的旧版本 Windows 组件。</value>
+  </data>
+  <data name="CleanupComponentResetBase" xml:space="preserve">
+    <value>永久删除旧的更新数据</value>
+  </data>
+  <data name="CleanupComponentResetBaseDesc" xml:space="preserve">
+    <value>释放最多空间。安装的 Windows 更新之后将无法卸载。</value>
+  </data>
+  <data name="CleanupSystemRepairDism" xml:space="preserve">
+    <value>修复组件存储（DISM）</value>
+  </data>
+  <data name="CleanupSystemRepairDismDesc" xml:space="preserve">
+    <value>对 sfc 用作修复源的组件存储运行 DISM /CheckHealth、/ScanHealth 和 /RestoreHealth。速度更慢，需要管理员权限。</value>
+  </data>
+  <data name="CleanupComponentStoreSize" xml:space="preserve">
+    <value>磁盘上占用 {0}，与 Windows 共享 {1}</value>
+  </data>
+  <data name="CleanupComponentStoreRecommended" xml:space="preserve">
+    <value>Windows 建议进行清理</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
+    <value>分析（需要管理员权限）</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
+    <value>测量 Windows 组件存储实际能释放多少空间。</value>
+  </data>
+  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
+    <value>分析需要管理员权限；权限提示已被取消。</value>
+  </data>
+  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
+    <value>目前无法进行分析，提升权限的辅助进程未运行。</value>
+  </data>
+  <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
+    <value>Windows 未报告任何大小数据。</value>
+  </data>
+  <data name="CleanupNothingToClean" xml:space="preserve">
+    <value>未发现内容</value>
+  </data>
+  <data name="CleanupRegistryEntryCount" xml:space="preserve">
+    <value>{0} 个条目</value>
+  </data>
+  <data name="CleanupRegistryEntryCountOne" xml:space="preserve">
+    <value>{0} 个条目</value>
+  </data>
+  <data name="CleanupRegistryOrphans" xml:space="preserve">
+    <value>孤立引用</value>
+  </data>
+  <data name="CleanupRegistryOrphansDesc" xml:space="preserve">
+    <value>移除目标已不存在的应用路径、共享 DLL、ActiveX/COM 和自启动条目。默认关闭，需要管理员权限；删除任何内容前会自动创建备份。</value>
+  </data>
+  <data name="CleanupRegistryUninstall" xml:space="preserve">
+    <value>孤立的卸载条目</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesDesc" xml:space="preserve">
+    <value>移除已不存在程序的卸载条目。默认关闭，需要管理员权限；删除任何内容前会自动创建备份。</value>
+  </data>
+  <data name="CleanupDrivers" xml:space="preserve">
+    <value>驱动程序</value>
+  </data>
+  <data name="CleanupDriversDesc" xml:space="preserve">
+    <value>不再连接的设备，以及驱动程序存储中遗留的旧驱动程序包。默认关闭，需要管理员权限；删除任何内容前会自动创建备份。</value>
+  </data>
+  <data name="CleanupDriversConsequence" xml:space="preserve">
+    <value>下次连接该设备时，如果 Windows 能找到驱动程序，会重新安装。每个驱动程序包的备份都保存在数据文件夹中。</value>
+  </data>
+  <data name="CleanupGroupDrivers" xml:space="preserve">
+    <value>驱动程序</value>
+  </data>
+  <data name="CleanupDriverGroupDisconnected" xml:space="preserve">
+    <value>不再连接的设备</value>
+  </data>
+  <data name="CleanupDriverGroupOldPackages" xml:space="preserve">
+    <value>旧驱动程序包</value>
+  </data>
+  <data name="CleanupDriverLastConnected" xml:space="preserve">
+    <value>上次连接时间 {0}</value>
+  </data>
+  <data name="CleanupDriverLastConnectedUnknown" xml:space="preserve">
+    <value>连接时间未知</value>
+  </data>
+  <data name="CleanupAdminHeadline" xml:space="preserve">
+    <value>部分区域需要管理员权限</value>
+  </data>
+  <data name="CleanupAdminBody" xml:space="preserve">
+    <value>Windows 临时文件、更新缓存、磁盘清理和系统修复需要管理员权限才能被完整测量和清理。
+
+是否以管理员权限继续？</value>
+  </data>
+  <data name="CleanupAdminConfirm" xml:space="preserve">
+    <value>以管理员权限</value>
+  </data>
+  <data name="CleanupAdminDecline" xml:space="preserve">
+    <value>不使用管理员权限继续</value>
+  </data>
+  <data name="CleanupAdminMissing" xml:space="preserve">
+    <value>没有管理员权限时，此区域只能被部分测量和清理。</value>
+  </data>
+  <data name="CleanupSkippedFilesSize" xml:space="preserve">
+    <value>{0} 个文件（{1}）正在使用中，已跳过。</value>
+  </data>
+  <data name="CleanupSkippedFilesSizeOne" xml:space="preserve">
+    <value>{0} 个文件（{1}）正在使用中，已跳过。</value>
+  </data>
+  <data name="CleanupInUse" xml:space="preserve">
+    <value>{0} 正在使用中</value>
+  </data>
+  <data name="CleanupShaderCache" xml:space="preserve">
+    <value>着色器缓存</value>
+  </data>
+  <data name="CleanupShaderCacheDesc" xml:space="preserve">
+    <value>显卡驱动程序保留的已编译着色器。游戏或应用再次需要时会重新生成。</value>
+  </data>
+  <data name="CleanupPackageCache" xml:space="preserve">
+    <value>包管理器缓存</value>
+  </data>
+  <data name="CleanupPackageCacheDesc" xml:space="preserve">
+    <value>pip、npm、Yarn、NuGet 和 Chocolatey 为重新安装保留的下载内容。已安装的软件包不受影响。</value>
+  </data>
+  <data name="CleanupBuildCache" xml:space="preserve">
+    <value>构建工具缓存</value>
+  </data>
+  <data name="CleanupBuildCacheDesc" xml:space="preserve">
+    <value>Gradle 的构建缓存和 Android SDK 下载缓存，会在下次构建时重新生成。</value>
+  </data>
+  <data name="CleanupAppCacheSweep" xml:space="preserve">
+    <value>其他应用的缓存和日志</value>
+  </data>
+  <data name="CleanupAppCacheSweepDesc" xml:space="preserve">
+    <value>通过扫描特征而非固定列表，查找上面未单独列出的程序的缓存和日志文件夹，绝不涉及您自己的文档或设置。默认关闭；启用前请先查看找到的内容。</value>
+  </data>
+  <data name="CleanupLeftoverWarning" xml:space="preserve">
+    <value>此软件的所有数据都将被删除！</value>
+  </data>
+  <data name="CleanupLeftoverLastUsed" xml:space="preserve">
+    <value>最后使用于 {0}</value>
+  </data>
+  <data name="CleanupEntryDateRange" xml:space="preserve">
+    <value>{0} - {1}</value>
+  </data>
+  <data name="CleanupMoreEntries" xml:space="preserve">
+    <value>……以及另外 {0} 项（{1}）</value>
+  </data>
+  <data name="CleanupMoreEntriesNotCleaned" xml:space="preserve">
+    <value>……以及另外 {0} 项（{1}），此驱动器上有未勾选的行时已隐藏且不会被移除</value>
+  </data>
+  <data name="CleanupEntryDeleted" xml:space="preserve">
+    <value>删除于 {0}</value>
+  </data>
+  <data name="CleanupShowDetails" xml:space="preserve">
+    <value>详情（{0}）</value>
+  </data>
+  <data name="CleanupEntryOpenFolder" xml:space="preserve">
+    <value>打开文件夹</value>
+  </data>
+  <data name="CleanupEntryCopyPath" xml:space="preserve">
+    <value>复制路径</value>
+  </data>
+  <data name="CleanupEntryPermanentlyExclude" xml:space="preserve">
+    <value>永久排除</value>
+  </data>
+  <data name="CleanupEntriesSelectAll" xml:space="preserve">
+    <value>选择所有文件</value>
+  </data>
+  <data name="CleanupUserTempConsequence" xml:space="preserve">
+    <value>使用过临时文件的程序会在下次需要时重新创建它。</value>
+  </data>
+  <data name="CleanupAllUsersTempConsequence" xml:space="preserve">
+    <value>与您自己的临时文件夹相同，只是针对此电脑上的其他账户。</value>
+  </data>
+  <data name="CleanupWindowsTempConsequence" xml:space="preserve">
+    <value>Windows 会在下次需要时重新创建仍需要的内容。</value>
+  </data>
+  <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
+    <value>如果 Windows 更新需要这些文件，会直接再次下载。</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
+    <value>只是用于与网络上其他电脑共享更新的缓存。没有其他用途。</value>
+  </data>
+  <data name="CleanupThumbnailsConsequence" xml:space="preserve">
+    <value>您下次打开该文件夹时，资源管理器会重新绘制缩略图。</value>
+  </data>
+  <data name="CleanupCrashDumpsConsequence" xml:space="preserve">
+    <value>仅在调查已发生的崩溃时有用。目前没有任何内容依赖它们。</value>
+  </data>
+  <data name="CleanupShaderCacheConsequence" xml:space="preserve">
+    <value>显卡驱动程序会重新生成它。受影响的游戏或应用下次启动会稍慢一些，仅此一次。</value>
+  </data>
+  <data name="CleanupPackageCacheConsequence" xml:space="preserve">
+    <value>下次安装或更新会直接重新下载该软件包。</value>
+  </data>
+  <data name="CleanupBuildCacheConsequence" xml:space="preserve">
+    <value>缓存重新填充期间，下次构建会稍慢一些。</value>
+  </data>
+  <data name="CleanupAppCacheSweepConsequence" xml:space="preserve">
+    <value>按模式而非按名称一次性覆盖许多程序，因此清理前值得先查看一下找到的内容。</value>
+  </data>
+  <data name="CleanupMemoryDumpsConsequence" xml:space="preserve">
+    <value>如果您仍需要调查已发生的崩溃，将失去这种能力。</value>
+  </data>
+  <data name="CleanupWindowsLogsConsequence" xml:space="preserve">
+    <value>这些正是诊断失败更新所需的内容，如果您仍在排查某个更新问题，请保留它们。</value>
+  </data>
+  <data name="CleanupRecycleBinConsequence" xml:space="preserve">
+    <value>其中的文件之后将无法恢复。</value>
+  </data>
+  <data name="CleanupDiskCleanupConsequence" xml:space="preserve">
+    <value>使用 Windows 自身经过验证的标准选项运行其自带清理，不会超出此范围。</value>
+  </data>
+  <data name="CleanupSystemRepairDismConsequence" xml:space="preserve">
+    <value>可能耗时较长，会就地修复系统文件，因此一旦开始，最好让其完成。</value>
+  </data>
+  <data name="CleanupSystemRepairSfcConsequence" xml:space="preserve">
+    <value>就地修复系统文件，通常较快；一旦开始，最好让其完成。</value>
+  </data>
+  <data name="CleanupRegistryOrphansConsequence" xml:space="preserve">
+    <value>移除失效的应用路径快捷方式、共享 DLL 引用计数、ActiveX/COM 注册和自启动条目；会先创建备份，且不会触及仍在使用的内容。</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesConsequence" xml:space="preserve">
+    <value>从“程序和功能”列表中移除对应程序已不存在的条目；会先创建备份。</value>
+  </data>
+  <data name="CleanupRegistryBackupNote" xml:space="preserve">
+    <value>每次注册表更改都会先导出。备份：{0}，保留 {1} 个。</value>
+  </data>
+  <data name="CleanupRiskSafe" xml:space="preserve">
+    <value>安全</value>
+  </data>
+  <data name="CleanupRiskConsidered" xml:space="preserve">
+    <value>中等</value>
+  </data>
+  <data name="CleanupRiskRisky" xml:space="preserve">
+    <value>有风险</value>
+  </data>
+  <data name="CleanupShowAllCategories" xml:space="preserve">
+    <value>显示所有区域（已隐藏 {0} 个）</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDelete" xml:space="preserve">
+    <value>移到回收站而非直接删除</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
+    <value>清空回收站后才会释放这些空间。</value>
+  </data>
+  <data name="CleanupMemoryDumps" xml:space="preserve">
+    <value>崩溃转储（系统）</value>
+  </data>
+  <data name="CleanupMemoryDumpsDesc" xml:space="preserve">
+    <value>Windows 在蓝屏后写入的内存转储文件。仅在调查蓝屏时有用。</value>
+  </data>
+  <data name="CleanupWindowsLogs" xml:space="preserve">
+    <value>Windows 日志文件</value>
+  </data>
+  <data name="CleanupWindowsLogsDesc" xml:space="preserve">
+    <value>Windows 自身用于更新、服务和安装的日志。会自动重新生成；诊断失败更新时请保留。</value>
+  </data>
+  <data name="InstallErrorVs8001What" xml:space="preserve">
+    <value>Visual Studio 安装程序报告了 ARM 机器检查失败（错误 8001）。</value>
+  </data>
+  <data name="InstallErrorVs8002What" xml:space="preserve">
+    <value>Visual Studio 安装程序的后台下载预检查失败（错误 8002）。</value>
+  </data>
+  <data name="InstallErrorVs8003What" xml:space="preserve">
+    <value>Visual Studio 安装程序报告了不受支持的组件故障（错误 8003）。</value>
+  </data>
+  <data name="InstallErrorVs8004What" xml:space="preserve">
+    <value>Visual Studio 安装程序无法使用其目标安装目录（错误 8004）。</value>
+  </data>
+  <data name="InstallErrorVs8005What" xml:space="preserve">
+    <value>Visual Studio 安装程序无法验证其源安装包（错误 8005）。</value>
+  </data>
+  <data name="InstallErrorVsGenericNow" xml:space="preserve">
+    <value>Visual Studio 自身的安装日志中有更多详情；请重试，或如果此问题持续出现，请重新安装 Visual Studio Installer。</value>
+  </data>
+  <data name="InstallErrorVs8006What" xml:space="preserve">
+    <value>由于 Visual Studio（或其某个组件）仍在运行，Visual Studio 安装程序无法继续（错误 8006）。</value>
+  </data>
+  <data name="InstallErrorVs8006Now" xml:space="preserve">
+    <value>请关闭 Visual Studio 及其相关进程后重试。此应用可以在下次尝试前为您完成此操作。</value>
+  </data>
+  <data name="InstallErrorMsi1602What" xml:space="preserve">
+    <value>安装已取消（安装程序错误 1602）。</value>
+  </data>
+  <data name="InstallErrorMsi1602Now" xml:space="preserve">
+    <value>准备好后再次运行此更新；取消很可能是有意的。</value>
+  </data>
+  <data name="InstallErrorMsi1603What" xml:space="preserve">
+    <value>安装程序报告了致命错误（安装程序错误 1603）。</value>
+  </data>
+  <data name="InstallErrorMsi1603Now" xml:space="preserve">
+    <value>请查看安装程序自身的日志，或尝试手动安装。</value>
+  </data>
+  <data name="InstallErrorMsi1618What" xml:space="preserve">
+    <value>同时有另一个安装正在运行，因此 Windows 拒绝了此次安装。</value>
+  </data>
+  <data name="InstallErrorMsi1618Now" xml:space="preserve">
+    <value>在其他安装完成后，此项已被自动重试。</value>
+  </data>
+  <data name="InstallErrorMsi1619What" xml:space="preserve">
+    <value>无法读取安装包（安装程序错误 1619/1620）。</value>
+  </data>
+  <data name="InstallErrorMsi1619Now" xml:space="preserve">
+    <value>重新下载该软件包，或从头重新安装，通常可以解决此问题。</value>
+  </data>
+  <data name="InstallErrorMsi1638What" xml:space="preserve">
+    <value>此程序的另一个版本已安装（安装程序错误 1638）。</value>
+  </data>
+  <data name="InstallErrorMsi1638Now" xml:space="preserve">
+    <value>请先移除现有版本，或使用其自身的更新工具。</value>
+  </data>
+  <data name="InstallErrorRebootWhat" xml:space="preserve">
+    <value>安装程序需要重启才能完成（代码 1641/3010）。</value>
+  </data>
+  <data name="InstallErrorRebootNow" xml:space="preserve">
+    <value>请重启 Windows。更新本身已经完成。</value>
+  </data>
+  <data name="InstallErrorCrashWhat" xml:space="preserve">
+    <value>供应商的安装程序已崩溃（属于 Windows 级别的崩溃，而非普通失败）。</value>
+  </data>
+  <data name="InstallErrorCrashNow" xml:space="preserve">
+    <value>通常可以从供应商自身的安装程序手动安装此软件包。</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableWhat" xml:space="preserve">
+    <value>winget 没有适合此安装的此软件包版本（没有适用的升级）。</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableNow" xml:space="preserve">
+    <value>未做任何更改；此应用提供的版本在此处不适用。</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeWhat" xml:space="preserve">
+    <value>winget 无法在管理员上下文中对此软件包进行操作（这是一个用户范围的安装）。</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeNow" xml:space="preserve">
+    <value>此应用已在不使用管理员权限的情况下重试过；如果那也失败了，上方的消息就是真正的原因。</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechWhat" xml:space="preserve">
+    <value>新版本的安装方式与已安装的版本不同。</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechNow" xml:space="preserve">
+    <value>请先卸载该程序，然后重新安装。</value>
+  </data>
+  <data name="InstallErrorGenericWhat" xml:space="preserve">
+    <value>供应商的安装程序以其自身的错误代码 {0} 失败。</value>
+  </data>
+  <data name="InstallErrorGenericNow" xml:space="preserve">
+    <value>请查看下方的原始输出以了解其报告的内容。</value>
+  </data>
+  <data name="InstallErrorWuBusyWhat" xml:space="preserve">
+    <value>Windows 更新当前正忙于处理另一项任务。</value>
+  </data>
+  <data name="InstallErrorWuBusyNow" xml:space="preserve">
+    <value>请稍等片刻后重试。</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingWhat" xml:space="preserve">
+    <value>此更新安装前仍有待处理的重启。</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingNow" xml:space="preserve">
+    <value>请重启 Windows，然后重试。</value>
+  </data>
+  <data name="InstallErrorWuNotStartedWhat" xml:space="preserve">
+    <value>Windows 更新实际上从未启动此安装。</value>
+  </data>
+  <data name="InstallErrorWuNotStartedNow" xml:space="preserve">
+    <value>未做任何更改；再次尝试可能有帮助。</value>
+  </data>
+  <data name="InstallErrorWuInProgressWhat" xml:space="preserve">
+    <value>Windows 更新仍将此安装报告为正在进行中。</value>
+  </data>
+  <data name="InstallErrorWuInProgressNow" xml:space="preserve">
+    <value>请稍等片刻，然后检查更新此时是否已完成。</value>
+  </data>
+  <data name="InstallErrorWuFailedWhat" xml:space="preserve">
+    <value>Windows 更新将此安装报告为失败。</value>
+  </data>
+  <data name="InstallErrorWuFailedNow" xml:space="preserve">
+    <value>确切原因通常在下方的 HRESULT 值中；重试通常会有帮助。</value>
+  </data>
+  <data name="InstallErrorWuAbortedWhat" xml:space="preserve">
+    <value>Windows 更新中止了此安装。</value>
+  </data>
+  <data name="InstallErrorWuAbortedNow" xml:space="preserve">
+    <value>重试通常会有帮助；如果一直中止，Windows 更新疑难解答工具可以进一步提供帮助。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016What" xml:space="preserve">
+    <value>已有另一个安装正在运行，或仍有待处理的重启。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016Now" xml:space="preserve">
+    <value>请稍等片刻后重试。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044What" xml:space="preserve">
+    <value>此安装需要管理员权限。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044Now" xml:space="preserve">
+    <value>此应用已使用提升的权限安装 Windows 更新；如果错误仍然存在，重启 Windows 可能有帮助。</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422What" xml:space="preserve">
+    <value>Windows 更新服务已被禁用。</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422Now" xml:space="preserve">
+    <value>请启动“Windows Update”服务（services.msc），然后重试。</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DWhat" xml:space="preserve">
+    <value>此更新需要安装介质。</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DNow" xml:space="preserve">
+    <value>请提供匹配的安装介质，或检查 Windows 更新来源。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022What" xml:space="preserve">
+    <value>此次安装运行中的每个更新都失败了。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
+    <value>稍后重试通常会有帮助。</value>
+  </data>
+  <data name="InstallErrorWuInternalWhat" xml:space="preserve">
+    <value>Windows 更新自身的服务未按此应用预期的方式响应。</value>
+  </data>
+  <data name="InstallErrorWuInternalNow" xml:space="preserve">
+    <value>请重试。如果一直失败，重启电脑通常可以解决此问题。</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedWhat" xml:space="preserve">
+    <value>Windows 更新不再提供此更新。它可能已经安装、已被更新版本替换，或正在等待其他更新先安装。</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedNow" xml:space="preserve">
+    <value>列表已自动刷新。如果该行仍在，请重新开始安装。</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedWhat" xml:space="preserve">
+    <value>此应用拒绝按原样运行该软件包或模型名称：它不是一个纯粹的标识符，可能会被误读为命令选项。</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedNow" xml:space="preserve">
+    <value>这是一项安全检查，而非软件包本身的故障；重试不会改变结果。</value>
+  </data>
+  <data name="InstallErrorMissingTargetWhat" xml:space="preserve">
+    <value>该行在安装开始前丢失了要安装的版本信息。</value>
+  </data>
+  <data name="InstallErrorMissingTargetNow" xml:space="preserve">
+    <value>请重新扫描后再试；版本列表会在每次扫描时刷新。</value>
+  </data>
+  <data name="InstallErrorPipRepairedWhat" xml:space="preserve">
+    <value>pip 自身的安装已损坏；此应用已自动修复。</value>
+  </data>
+  <data name="InstallErrorPipRepairedNow" xml:space="preserve">
+    <value>现在只需再次安装此软件包；pip 已可正常使用。</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedWhat" xml:space="preserve">
+    <value>无法验证下载的 NVIDIA 安装程序的签名，因此此应用拒绝运行它。</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedNow" xml:space="preserve">
+    <value>请改为直接从 NVIDIA 自己的页面下载驱动程序。</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainWhat" xml:space="preserve">
+    <value>下载被重定向到了 NVIDIA 自身域名以外的地方，因此此应用拒绝跟随该链接。</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainNow" xml:space="preserve">
+    <value>请改为直接从 NVIDIA 自己的页面下载驱动程序。</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitWhat" xml:space="preserve">
+    <value>此下载大小超过了此应用对驱动程序安装包允许的限制，因此已被停止。</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitNow" xml:space="preserve">
+    <value>请改为直接从 NVIDIA 自己的页面下载驱动程序。</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedWhat" xml:space="preserve">
+    <value>针对 NVIDIA 安装程序的 Windows 权限提示已被关闭或拒绝。</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedNow" xml:space="preserve">
+    <value>请重试并这次接受该提示。</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartWhat" xml:space="preserve">
+    <value>NVIDIA 安装程序无法启动。</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartNow" xml:space="preserve">
+    <value>请重试；如果持续出现，请直接从 NVIDIA 自己的页面安装驱动程序。</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningWhat" xml:space="preserve">
+    <value>此应用停止等待时，NVIDIA 安装程序仍在运行。</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningNow" xml:space="preserve">
+    <value>请查看 NVIDIA 自身的安装程序窗口，或 Windows 的已安装应用列表，以确认它是否实际已完成。</value>
+  </data>
+  <data name="InstallErrorTimeoutWhat" xml:space="preserve">
+    <value>该工具未能在此应用允许的时间内完成。</value>
+  </data>
+  <data name="InstallErrorTimeoutNow" xml:space="preserve">
+    <value>请重试；通常原因是网络较慢或设备繁忙。</value>
+  </data>
+  <data name="RetryInteractiveHeader" xml:space="preserve">
+    <value>交互式重试</value>
+  </data>
+  <data name="RowRunningInteractive" xml:space="preserve">
+    <value>正在交互式运行…</value>
+  </data>
+  <data name="InstallBlockersLine" xml:space="preserve">
+    <value>{0} 被以下内容阻止：{1}</value>
+  </data>
+  <data name="InstallBlockerCloseAndContinue" xml:space="preserve">
+    <value>关闭程序并继续</value>
+  </data>
+  <data name="InstallBlockerSkip" xml:space="preserve">
+    <value>跳过被阻止项</value>
+  </data>
+  <data name="InstallBlockerTryAnyway" xml:space="preserve">
+    <value>仍然尝试</value>
+  </data>
+  <data name="InstallBlockerForceKillHeadline" xml:space="preserve">
+    <value>强制关闭？</value>
+  </data>
+  <data name="InstallBlockerForceKillBody" xml:space="preserve">
+    <value>未保存的工作将会丢失。</value>
+  </data>
+  <data name="InstallBlockerAutoSkipped" xml:space="preserve">
+    <value>{0} 仍在运行，因此此项已自动跳过（无人值守模式）。</value>
+  </data>
+  <data name="PreflightTitle" xml:space="preserve">
+    <value>更新之前</value>
+  </data>
+  <data name="PreflightStart" xml:space="preserve">
+    <value>开始</value>
+  </data>
+  <data name="PreflightCancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="InstallSpaceShort" xml:space="preserve">
+    <value>仅剩 {0} 可用空间，大约需要 {1}。</value>
+  </data>
+  <data name="InstallSpaceUnknown" xml:space="preserve">
+    <value>{0} 个软件包未报告大小。</value>
+  </data>
+  <data name="InstallSpaceOpenCleanup" xml:space="preserve">
+    <value>打开清理</value>
+  </data>
+  <data name="SettingsMeteredTitle" xml:space="preserve">
+    <value>在按流量计费的连接上不自动扫描</value>
+  </data>
+  <data name="InstallMeteredWarn" xml:space="preserve">
+    <value>按流量计费的网络：将下载约 {0}。</value>
+  </data>
+  <data name="InstallBatteryWarn" xml:space="preserve">
+    <value>电池电量为 {0}%，且未接通电源。</value>
+  </data>
+  <data name="RebootDialogTitle" xml:space="preserve">
+    <value>需要重启</value>
+  </data>
+  <data name="RebootDialogBody" xml:space="preserve">
+    <value>以下软件包要求重启：</value>
+  </data>
+  <data name="RebootDialogNow" xml:space="preserve">
+    <value>立即重启</value>
+  </data>
+  <data name="RebootDialogLater" xml:space="preserve">
+    <value>稍后</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="AboutTagline" xml:space="preserve">
+    <value>此电脑上所有待处理更新的统一入口。</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>版本 {0}</value>
+  </data>
+  <data name="AboutLicence" xml:space="preserve">
+    <value>MIT 许可证</value>
+  </data>
+  <data name="AboutRepository" xml:space="preserve">
+    <value>GitHub 上的项目页面</value>
+  </data>
+  <data name="AboutThirdParty" xml:space="preserve">
+    <value>每次更新都来自其自身的来源，并由该来源自身的机制安装。此应用不托管、检查或修改任何软件包。</value>
+  </data>
+  <data name="AboutIcons" xml:space="preserve">
+    <value>品牌标志由 Simple Icons（CC0）提供。所有商标归其各自所有者所有。</value>
+  </data>
+  <data name="AboutTrademarks" xml:space="preserve">
+    <value>与微软、NVIDIA、AMD、英特尔、戴尔、联想、惠普、Valve、Epic Games 或此应用显示的任何其他供应商均无关联，亦未获其认可或赞助。</value>
+  </data>
+  <data name="WingetBootstrapConfirmHeadline" xml:space="preserve">
+    <value>未找到 winget</value>
+  </data>
+  <data name="WingetBootstrapConfirmBody" xml:space="preserve">
+    <value>现在安装它吗？它直接来自微软自身的 App Installer 软件包，运行前会经过验证。</value>
+  </data>
+  <data name="WingetBootstrapInstall" xml:space="preserve">
+    <value>安装 winget</value>
+  </data>
+  <data name="ColumnsButton" xml:space="preserve">
+    <value>列</value>
+  </data>
+  <data name="ColumnsReset" xml:space="preserve">
+    <value>重置列</value>
+  </data>
+  <data name="ColumnPublisher" xml:space="preserve">
+    <value>发布者</value>
+  </data>
+  <data name="ScanCachedAge" xml:space="preserve">
+    <value>结果来自 {0}，正在重新检查</value>
+  </data>
+  <data name="ScanSourceTooSlow" xml:space="preserve">
+    <value>{0} 秒内无响应</value>
+  </data>
+  <data name="ScanOfflineBanner" xml:space="preserve">
+    <value>没有网络连接。仅检查了本地来源。</value>
+  </data>
+  <data name="ScanNoConnectionBanner" xml:space="preserve">
+    <value>无法连接到互联网：所有在线来源均已失败。请检查防火墙或网络。</value>
+  </data>
+  <data name="ScanOfflineSource" xml:space="preserve">
+    <value>无连接</value>
+  </data>
+  <data name="NetProxyRefused" xml:space="preserve">
+    <value>代理拒绝了连接（{0}）。</value>
+  </data>
+  <data name="PipInterpreterTooltip" xml:space="preserve">
+    <value>Python 解释器：{0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
+    <value>+~{0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
+    <value>由 Windows 磁盘清理释放。这是一个近似值，因为它与其他任务同时运行。</value>
+  </data>
+  <data name="CleanupDefaultSelection" xml:space="preserve">
+    <value>默认选择</value>
+  </data>
+  <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
+    <value>仅选择安全项，也就是默认勾选的那些项。</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
+    <value>正在分析…</value>
+  </data>
+  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
+    <value>Windows 未及时响应，分析已停止。</value>
+  </data>
+  <data name="CleanupPipLeftovers" xml:space="preserve">
+    <value>中断的 pip 安装残留</value>
+  </data>
+  <data name="CleanupPipLeftoversDesc" xml:space="preserve">
+    <value>安装中断时 pip 留下的文件夹；pip 每次运行都会对此发出警告。</value>
+  </data>
+  <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
+    <value>pip 将不再发出此警告；此计算机上没有其他任何东西使用这些文件夹。</value>
+  </data>
+  <data name="CleanupOldPythonVersions" xml:space="preserve">
+    <value>较旧的 Python 版本</value>
+  </data>
+  <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
+    <value>已被同类型（32 位或 64 位）较新版本取代的 Python 安装。</value>
+  </data>
+  <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
+    <value>仍在使用此版本的程序和脚本将无法运行。其中安装的软件包也会一并删除。</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
+    <value>{0}（{1} 个软件包）</value>
+  </data>
+  <data name="CleanupDriverInstalledDate" xml:space="preserve">
+    <value>安装于 {0}</value>
+  </data>
+  <data name="CleanupDriverProviderLabel" xml:space="preserve">
+    <value>提供程序</value>
+  </data>
+  <data name="CleanupDriverClassLabel" xml:space="preserve">
+    <value>类别</value>
+  </data>
+  <data name="CleanupDriverInfFileLabel" xml:space="preserve">
+    <value>INF 文件</value>
+  </data>
+  <data name="CleanupDriverOriginalNameLabel" xml:space="preserve">
+    <value>原始名称</value>
+  </data>
+  <data name="CleanupDriverStorePathLabel" xml:space="preserve">
+    <value>驱动程序存储路径</value>
+  </data>
+  <data name="CleanupDriverInstalledNow" xml:space="preserve">
+    <value>当前已安装：版本 {0}，{1}</value>
+  </data>
+  <data name="CleanupDriverVersionDate" xml:space="preserve">
+    <value>版本 {0}，{1}</value>
+  </data>
+  <data name="CleanupCatalogLoadFailed" xml:space="preserve">
+    <value>无法加载清理列表。请关闭并重新打开此窗口。详细信息在日志文件夹中。</value>
+  </data>
+  <data name="NetPurposeSelfUpdate" xml:space="preserve">
+    <value>自更新(发布版 JSON、SHA256SUMS、文件)以及其他仓库的发布数据</value>
+  </data>
+  <data name="NetPurposeChangelog" xml:space="preserve">
+    <value>点击时获取更新日志文本</value>
+  </data>
+  <data name="NetPurposeNvidia" xml:space="preserve">
+    <value>GPU 产品表、驱动查询、驱动下载</value>
+  </data>
+  <data name="NetPurposePackageMeta" xml:space="preserve">
+    <value>用于丰富各行的软件包元数据(最新版本、大小、日期)</value>
+  </data>
+  <data name="NetPurposeSdkMeta" xml:space="preserve">
+    <value>Android SDK 清单、Flutter 发布版、VS Code 扩展元数据</value>
+  </data>
+  <data name="NetPurposeSteam" xml:space="preserve">
+    <value>补丁说明(请求中只包含应用 ID)</value>
+  </data>
+  <data name="NetPurposeOllamaRemote" xml:space="preserve">
+    <value>模型的远程摘要(仅限库中的模型)</value>
+  </data>
+  <data name="NetPurposeOllamaLocal" xml:space="preserve">
+    <value>本地 Ollama 模型列表,唯一使用的未加密 http:// 地址,仅限本机回环</value>
+  </data>
+  <data name="FilterShowIgnored" xml:space="preserve">
+    <value>显示已忽略项</value>
+  </data>
+  <data name="FilterButton" xml:space="preserve">
+    <value>筛选</value>
+  </data>
+  <data name="FilterButtonActive" xml:space="preserve">
+    <value>筛选 ({0})</value>
+  </data>
+  <data name="ToolbarCleanupLabel" xml:space="preserve">
+    <value>清理</value>
+  </data>
+  <data name="ScanStateError" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="AboutPortable" xml:space="preserve">
+    <value>便携模式：设置和数据保存在程序旁边。</value>
+  </data>
+  <data name="SortByTooltip" xml:space="preserve">
+    <value>按{0}排序</value>
+  </data>
+  <data name="InstallBlockerSkippedStillOpen" xml:space="preserve">
+    <value>已跳过，{0} 仍处于打开状态</value>
+  </data>
+  <data name="CleanupHeaderSelection" xml:space="preserve">
+    <value>所选内容</value>
+  </data>
+  <data name="CleanupHeaderDrive" xml:space="preserve">
+    <value>驱动器 {0}</value>
+  </data>
+  <data name="SettingsAutoScanTitle" xml:space="preserve">
+    <value>自动扫描</value>
+  </data>
+  <data name="HistoryRolledBack" xml:space="preserve">
+    <value>已回退</value>
+  </data>
+  <data name="HistoryUninstalled" xml:space="preserve">
+    <value>已卸载</value>
+  </data>
+  <data name="SelfUpdateBusyHint" xml:space="preserve">
+    <value>正在运行的更新和清理完成后即可使用。</value>
+  </data>
+  <data name="SelfUpdateDownloadFailed" xml:space="preserve">
+    <value>无法下载更新。请检查网络连接后重试。</value>
+  </data>
+  <data name="SelfUpdateApplyFailed" xml:space="preserve">
+    <value>无法安装更新。详细信息请查看日志文件夹。</value>
+  </data>
+  <data name="SelfUpdateApplyingNoInstall" xml:space="preserve">
+    <value>应用正在重启以完成自身更新。请在重启后再次开始这些更新。</value>
+  </data>
+  <data name="SettingsCheckFailed" xml:space="preserve">
+    <value>无法检查更新。请检查网络连接。</value>
+  </data>
+  <data name="RetryBlockedByActivity" xml:space="preserve">
+    <value>现在无法重试：正在进行安装。请在安装完成后再试。</value>
+  </data>
+  <data name="ErrorDetailCopyFailed" xml:space="preserve">
+    <value>无法复制。报告已保存在报告文件夹中。</value>
+  </data>
+  <data name="SettingsBrowseFolder" xml:space="preserve">
+    <value>选择文件夹</value>
+  </data>
+  <data name="SettingsRegistryBackupOutsideProfile" xml:space="preserve">
+    <value>备份文件夹必须位于您的用户配置文件内。请选择其他文件夹。</value>
+  </data>
+  <data name="CleanupConfirmHeadlineRecycle" xml:space="preserve">
+    <value>清理 {0}？</value>
+  </data>
+  <data name="CleanupConfirmWarningRecycle" xml:space="preserve">
+    <value>文件会移入回收站，在清空回收站之前可以恢复。注册表项、驱动程序和修复无法撤销。</value>
+  </data>
+  <data name="HeadlineNotChecked" xml:space="preserve">
+    <value>尚未检查</value>
+  </data>
+  <data name="EmptyStateNotChecked" xml:space="preserve">
+    <value>检查更新，看看有什么新内容。</value>
+  </data>
+  <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
+    <value>重新显示全部 {0} 个已忽略的更新？</value>
+  </data>
+  <data name="IgnoreListRemoveAllBody" xml:space="preserve">
+    <value>它们会在下次检查时重新出现在更新列表中。</value>
+  </data>
+  <data name="HeadlineNoSourceChecked" xml:space="preserve">
+    <value>无法检查任何来源</value>
+  </data>
+  <data name="InstallErrorAndroidLockedWhat" xml:space="preserve">
+    <value>此软件包的文件正在使用中，通常是被正在运行的模拟器或 Android Studio 占用。</value>
+  </data>
+  <data name="InstallErrorAndroidLockedNow" xml:space="preserve">
+    <value>请关闭模拟器和 Android Studio，然后重新运行更新。</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallWhat" xml:space="preserve">
+    <value>更新需要先移除旧版本，但旧版本没有登记卸载命令。</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallNow" xml:space="preserve">
+    <value>请在 Windows 设置的“应用”中卸载旧版本，然后重新运行更新。</value>
+  </data>
+  <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
+    <value>磁盘清理耗时超过 {0} 分钟，已被结束。</value>
+  </data>
+  <data name="SelfUpdateWaitingForWork" xml:space="preserve">
+    <value>正在运行的任务完成后，将自动安装更新。</value>
+  </data>
+  <data name="CleanupProtectedFiles" xml:space="preserve">
+    <value>{0} 个文件无法访问，已跳过。</value>
+  </data>
+  <data name="CleanupProtectedFilesOne" xml:space="preserve">
+    <value>{0} 个文件无法访问，已跳过。</value>
+  </data>
+  <data name="CleanupProtectedFilesSize" xml:space="preserve">
+    <value>{0} 个文件（{1}）无法访问，已跳过。</value>
+  </data>
+  <data name="CleanupProtectedFilesSizeOne" xml:space="preserve">
+    <value>{0} 个文件（{1}）无法访问，已跳过。</value>
+  </data>
+  <data name="CleanupProtected" xml:space="preserve">
+    <value>{0} 无法访问</value>
+  </data>
+</root>

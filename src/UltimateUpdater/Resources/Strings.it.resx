@@ -1,0 +1,2188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Ultimate Updater</value>
+  </data>
+  <data name="DialogOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="DialogYes" xml:space="preserve">
+    <value>Sì</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>Annulla</value>
+  </data>
+  <data name="LanguageLabel" xml:space="preserve">
+    <value>Lingua</value>
+  </data>
+  <data name="LanguageOptionSystem" xml:space="preserve">
+    <value>Sistema</value>
+  </data>
+  <data name="ThemeLabel" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="ThemeOptionSystem" xml:space="preserve">
+    <value>Sistema</value>
+  </data>
+  <data name="ThemeOptionLight" xml:space="preserve">
+    <value>Chiaro</value>
+  </data>
+  <data name="ThemeOptionDark" xml:space="preserve">
+    <value>Scuro</value>
+  </data>
+  <data name="ScanButton" xml:space="preserve">
+    <value>Cerca aggiornamenti</value>
+  </data>
+  <data name="ScanningButton" xml:space="preserve">
+    <value>Ricerca in corso…</value>
+  </data>
+  <data name="ColumnName" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="ColumnSource" xml:space="preserve">
+    <value>Origine</value>
+  </data>
+  <data name="SelectAllButton" xml:space="preserve">
+    <value>Seleziona tutto</value>
+  </data>
+  <data name="SelectAllClear" xml:space="preserve">
+    <value>Cancella selezione</value>
+  </data>
+  <data name="InstallSelectedButton" xml:space="preserve">
+    <value>Aggiorna selezionati</value>
+  </data>
+  <data name="InstallButton" xml:space="preserve">
+    <value>Aggiorna</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Annulla</value>
+  </data>
+  <data name="SelectionSummary" xml:space="preserve">
+    <value>{0} selezionati</value>
+  </data>
+  <data name="SelectionSummaryWithCritical" xml:space="preserve">
+    <value>{0} selezionati ({1} critici)</value>
+  </data>
+  <data name="OpenButton" xml:space="preserve">
+    <value>Apri</value>
+  </data>
+  <data name="ContextMenuOpenWebsite" xml:space="preserve">
+    <value>Apri sito web</value>
+  </data>
+  <data name="OpenFolderButton" xml:space="preserve">
+    <value>Apri cartella</value>
+  </data>
+  <data name="CategorySoftware" xml:space="preserve">
+    <value>Software</value>
+  </data>
+  <data name="CategorySystemAndDrivers" xml:space="preserve">
+    <value>Sistema e driver</value>
+  </data>
+  <data name="CategoryGames" xml:space="preserve">
+    <value>Giochi</value>
+  </data>
+  <data name="CategoryDeveloperTools" xml:space="preserve">
+    <value>Strumenti per sviluppatori</value>
+  </data>
+  <data name="CategoryStore" xml:space="preserve">
+    <value>Store</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Cerca…</value>
+  </data>
+  <data name="FilterCriticalOnly" xml:space="preserve">
+    <value>Solo critici</value>
+  </data>
+  <data name="IgnoreButton" xml:space="preserve">
+    <value>Ignora questa versione</value>
+  </data>
+  <data name="IgnoreAllButton" xml:space="preserve">
+    <value>Ignora tutte le versioni</value>
+  </data>
+  <data name="IgnoreSimpleButton" xml:space="preserve">
+    <value>Ignora</value>
+  </data>
+  <data name="UnignoreButton" xml:space="preserve">
+    <value>Mostra di nuovo</value>
+  </data>
+  <data name="IgnoredBadge" xml:space="preserve">
+    <value>Ignorato</value>
+  </data>
+  <data name="IgnoreListTitle" xml:space="preserve">
+    <value>Pacchetti ignorati</value>
+  </data>
+  <data name="IgnoreListAllVersions" xml:space="preserve">
+    <value>tutte le versioni</value>
+  </data>
+  <data name="IgnoreListRemoveAll" xml:space="preserve">
+    <value>Rimuovi tutti</value>
+  </data>
+  <data name="IgnoreListEmpty" xml:space="preserve">
+    <value>Niente è ignorato.</value>
+  </data>
+  <data name="SnoozeButton" xml:space="preserve">
+    <value>Ricordamelo più tardi</value>
+  </data>
+  <data name="SnoozeOneDay" xml:space="preserve">
+    <value>Tra 1 giorno</value>
+  </data>
+  <data name="SnoozeOneWeek" xml:space="preserve">
+    <value>Tra 1 settimana</value>
+  </data>
+  <data name="SnoozeOneMonth" xml:space="preserve">
+    <value>Tra 1 mese</value>
+  </data>
+  <data name="UnsnoozeButton" xml:space="preserve">
+    <value>Mostra di nuovo ora</value>
+  </data>
+  <data name="SnoozedBadge" xml:space="preserve">
+    <value>Posticipato fino al {0}</value>
+  </data>
+  <data name="RetryButton" xml:space="preserve">
+    <value>Riprova</value>
+  </data>
+  <data name="FilterHideManual" xml:space="preserve">
+    <value>Nascondi voci da aprire manualmente</value>
+  </data>
+  <data name="FilterPersistentFailures" xml:space="preserve">
+    <value>Continua a fallire ({0})</value>
+  </data>
+  <data name="PersistentFailureHint" xml:space="preserve">
+    <value>Fallito {0} volte per lo stesso motivo. Ignorare questo pacchetto?</value>
+  </data>
+  <data name="InstallVersionUnchanged" xml:space="preserve">
+    <value>Versione invariata</value>
+  </data>
+  <data name="RebootRequiredBadge" xml:space="preserve">
+    <value>Riavvio necessario</value>
+  </data>
+  <data name="RebootRequiredInfo" xml:space="preserve">
+    <value>{0} aggiornamenti installati. Riavvia per completare.</value>
+  </data>
+  <data name="RebootRequiredInfoOne" xml:space="preserve">
+    <value>{0} aggiornamento installato. Riavvia per completare.</value>
+  </data>
+  <data name="SelectionSummarySizeSuffix" xml:space="preserve">
+    <value> · ~{0}</value>
+  </data>
+  <data name="InfoLinkButton" xml:space="preserve">
+    <value>Apri pagina del progetto</value>
+  </data>
+  <data name="ColumnDate" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="ColumnSize" xml:space="preserve">
+    <value>Dimensione</value>
+  </data>
+  <data name="ColumnVersion" xml:space="preserve">
+    <value>Versione</value>
+  </data>
+  <data name="HistoryButton" xml:space="preserve">
+    <value>Cronologia</value>
+  </data>
+  <data name="SettingsButton" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="HistoryTitle" xml:space="preserve">
+    <value>Cronologia</value>
+  </data>
+  <data name="HistoryEmpty" xml:space="preserve">
+    <value>Nessuna installazione registrata.</value>
+  </data>
+  <data name="HistoryOnlyFailed" xml:space="preserve">
+    <value>Solo non riusciti</value>
+  </data>
+  <data name="HistoryNoMatches" xml:space="preserve">
+    <value>Nessuna voce corrisponde alla ricerca.</value>
+  </data>
+  <data name="HistoryColumnWhen" xml:space="preserve">
+    <value>Quando</value>
+  </data>
+  <data name="HistoryColumnSize" xml:space="preserve">
+    <value>Dimensione</value>
+  </data>
+  <data name="HistoryColumnResult" xml:space="preserve">
+    <value>Risultato</value>
+  </data>
+  <data name="HistoryCopy" xml:space="preserve">
+    <value>Copia elenco</value>
+  </data>
+  <data name="HistoryCopied" xml:space="preserve">
+    <value>{0} voci copiate</value>
+  </data>
+  <data name="HistoryCopyColumnFrom" xml:space="preserve">
+    <value>Da</value>
+  </data>
+  <data name="HistoryCopyColumnTo" xml:space="preserve">
+    <value>A</value>
+  </data>
+  <data name="HistorySucceeded" xml:space="preserve">
+    <value>Aggiornato</value>
+  </data>
+  <data name="HistoryFailed" xml:space="preserve">
+    <value>Non riuscito</value>
+  </data>
+  <data name="HistoryHandedOff" xml:space="preserve">
+    <value>Passato ad altra app</value>
+  </data>
+  <data name="HistoryNotApplicable" xml:space="preserve">
+    <value>Nessuna versione adatta</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="SettingsScanGroup" xml:space="preserve">
+    <value>Ricerca</value>
+  </data>
+  <data name="SettingsIntervalLabel" xml:space="preserve">
+    <value>Ricerca automatica ogni</value>
+  </data>
+  <data name="SettingsIntervalOff" xml:space="preserve">
+    <value>Disattivata</value>
+  </data>
+  <data name="SettingsIntervalHours6" xml:space="preserve">
+    <value>6 ore</value>
+  </data>
+  <data name="SettingsIntervalHours12" xml:space="preserve">
+    <value>12 ore</value>
+  </data>
+  <data name="SettingsIntervalDaily" xml:space="preserve">
+    <value>24 ore</value>
+  </data>
+  <data name="SettingsIntervalWeekly" xml:space="preserve">
+    <value>7 giorni</value>
+  </data>
+  <data name="SettingsScanOnStart" xml:space="preserve">
+    <value>Cerca all'avvio</value>
+  </data>
+  <data name="SettingsInstallGroup" xml:space="preserve">
+    <value>Installazione</value>
+  </data>
+  <data name="SettingsPreselectCritical" xml:space="preserve">
+    <value>Preseleziona aggiornamenti critici</value>
+  </data>
+  <data name="SettingsRestorePoint" xml:space="preserve">
+    <value>Crea prima un punto di ripristino</value>
+  </data>
+  <data name="SettingsRestorePointDesc" xml:space="preserve">
+    <value>Al massimo uno al giorno. Windows stesso ne rifiuta altri, e ognuno costa fino a un minuto prima che parta il primo pacchetto.</value>
+  </data>
+  <data name="InstallRetryRound" xml:space="preserve">
+    <value>Secondo tentativo</value>
+  </data>
+  <data name="AlreadyRunning" xml:space="preserve">
+    <value>Ultimate Updater è già in esecuzione. Cercalo nell'area di notifica.</value>
+  </data>
+  <data name="SettingsNotifyGroup" xml:space="preserve">
+    <value>Notifiche</value>
+  </data>
+  <data name="SettingsNotifyOnFound" xml:space="preserve">
+    <value>Avvisa quando vengono trovati aggiornamenti</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnly" xml:space="preserve">
+    <value>Solo per aggiornamenti critici</value>
+  </data>
+  <data name="SettingsAppearanceGroup" xml:space="preserve">
+    <value>Aspetto</value>
+  </data>
+  <data name="CategoryManualUpdate" xml:space="preserve">
+    <value>Apri personalmente</value>
+  </data>
+  <data name="CategoryGitHubManual" xml:space="preserve">
+    <value>GitHub (manuale)</value>
+  </data>
+  <data name="CategoryOpenStore" xml:space="preserve">
+    <value>Apri in uno store</value>
+  </data>
+  <data name="CategoryOpenGames" xml:space="preserve">
+    <value>Apri in un launcher</value>
+  </data>
+  <data name="InstallProgressCount" xml:space="preserve">
+    <value>{0} di {1} completati</value>
+  </data>
+  <data name="InstallRunningCount" xml:space="preserve">
+    <value>{0} installazioni in corso</value>
+  </data>
+  <data name="InstallProgressCancel" xml:space="preserve">
+    <value>Interrompi tutto</value>
+  </data>
+  <data name="InstallProgressClose" xml:space="preserve">
+    <value>Chiudi</value>
+  </data>
+  <data name="InstallProgressDownloaded" xml:space="preserve">
+    <value>{0} scaricati</value>
+  </data>
+  <data name="InstallProgressTotalSize" xml:space="preserve">
+    <value>Scarica {0}</value>
+  </data>
+  <data name="InstallQueueHeader" xml:space="preserve">
+    <value>Altri {0} in coda</value>
+  </data>
+  <data name="TooltipCopyHint" xml:space="preserve">
+    <value>Fai clic con il pulsante destro per copiare</value>
+  </data>
+  <data name="ChangelogTitle" xml:space="preserve">
+    <value>Registro modifiche</value>
+  </data>
+  <data name="ShortcutsTitle" xml:space="preserve">
+    <value>Scorciatoie da tastiera</value>
+  </data>
+  <data name="ChangelogOpenRelease" xml:space="preserve">
+    <value>Apri pagina della versione</value>
+  </data>
+  <data name="ChangelogNoTextDialogBody" xml:space="preserve">
+    <value>Non è disponibile alcun testo del registro modifiche per questo aggiornamento. La pagina del fornitore ({0}) si aprirà nel browser.</value>
+  </data>
+  <data name="ChangelogOpenSite" xml:space="preserve">
+    <value>Apri pagina</value>
+  </data>
+  <data name="ChangelogButtonTooltip" xml:space="preserve">
+    <value>Visualizza registro modifiche</value>
+  </data>
+  <data name="ChangelogNone" xml:space="preserve">
+    <value>Nessuna nota di rilascio trovata per questa versione.</value>
+  </data>
+  <data name="InstallQueueRemoveTooltip" xml:space="preserve">
+    <value>Rimuovi dalla coda</value>
+  </data>
+  <data name="QueueReorderTooltip" xml:space="preserve">
+    <value>Trascina per riordinare, oppure Alt con i tasti freccia</value>
+  </data>
+  <data name="QueueRowPositionAutomation" xml:space="preserve">
+    <value>{0}, posizione {1} di {2}</value>
+  </data>
+  <data name="InstallQueueNeedsAdminTooltip" xml:space="preserve">
+    <value>Richiede diritti di amministratore</value>
+  </data>
+  <data name="InstallQueueItemRemoved" xml:space="preserve">
+    <value>Rimosso dalla coda</value>
+  </data>
+  <data name="UninstallFailed" xml:space="preserve">
+    <value>Disinstallazione non riuscita. Apri i dettagli per conoscerne il motivo.</value>
+  </data>
+  <data name="SteamUninstallHandedOff" xml:space="preserve">
+    <value>La finestra di disinstallazione di Steam è aperta. Completa l'operazione lì; il risultato non è visibile qui.</value>
+  </data>
+  <data name="ErrorDetailTitle" xml:space="preserve">
+    <value>Dettagli errore</value>
+  </data>
+  <data name="ShowErrorDetailButton" xml:space="preserve">
+    <value>Dettagli</value>
+  </data>
+  <data name="StartButton" xml:space="preserve">
+    <value>Avvia</value>
+  </data>
+  <data name="UninstallButton" xml:space="preserve">
+    <value>Disinstalla</value>
+  </data>
+  <data name="UninstallConfirmHeadline" xml:space="preserve">
+    <value>Disinstallare &quot;{0}&quot;?</value>
+  </data>
+  <data name="UninstallConfirmBody" xml:space="preserve">
+    <value>Il programma verrà rimosso da questo PC.
+L'operazione non può essere annullata da Ultimate Updater.</value>
+  </data>
+  <data name="UninstallBlockedByActivity" xml:space="preserve">
+    <value>Impossibile disinstallare ora: è in corso un'installazione. Riprova al termine.</value>
+  </data>
+  <data name="RowDowngrade" xml:space="preserve">
+    <value>Torna a {0}</value>
+  </data>
+  <data name="DowngradeConfirmTitle" xml:space="preserve">
+    <value>Installare la versione precedente?</value>
+  </data>
+  <data name="DowngradeConfirmBody" xml:space="preserve">
+    <value>{0} tornerà da {1} a {2}. La versione più recente sarà riproposta alla prossima scansione.</value>
+  </data>
+  <data name="DowngradeBlockedByActivity" xml:space="preserve">
+    <value>Impossibile tornare indietro ora: un'installazione è in corso. Riprova quando sarà terminata.</value>
+  </data>
+  <data name="RestorePointLast" xml:space="preserve">
+    <value>Ultimo punto di ripristino: {0}</value>
+  </data>
+  <data name="RestorePointNone" xml:space="preserve">
+    <value>Nessun punto di ripristino di questo programma ancora</value>
+  </data>
+  <data name="SettingsIntervalDesc" xml:space="preserve">
+    <value>Frequenza del controllo degli aggiornamenti in background.</value>
+  </data>
+  <data name="SettingsScanOnStartDesc" xml:space="preserve">
+    <value>Esegui una ricerca a ogni avvio dell'app.</value>
+  </data>
+  <data name="SettingsPreselectCriticalDesc" xml:space="preserve">
+    <value>Seleziona automaticamente gli aggiornamenti rilevanti per la sicurezza.</value>
+  </data>
+  <data name="InstallParallelLabel" xml:space="preserve">
+    <value>Installazioni simultanee</value>
+  </data>
+  <data name="InstallParallelHint" xml:space="preserve">
+    <value>Farne di più insieme è più veloce. Alcuni programmi di installazione rifiutano di girare insieme a un altro; quelli vengono ritentati da soli.</value>
+  </data>
+  <data name="SettingsParallelScans" xml:space="preserve">
+    <value>Fonti controllate simultaneamente</value>
+  </data>
+  <data name="SettingsParallelAuto" xml:space="preserve">
+    <value>Imposta automaticamente per questo computer</value>
+  </data>
+  <data name="SettingsScanDownloads" xml:space="preserve">
+    <value>Analizza i download alla ricerca di virus</value>
+  </data>
+  <data name="SettingsScanDownloadsDesc" xml:space="preserve">
+    <value>Sicurezza di Windows controlla i file scaricati dall'app stessa prima che vengano eseguiti.</value>
+  </data>
+  <data name="ScanningDownload" xml:space="preserve">
+    <value>controllo virus in corso</value>
+  </data>
+  <data name="SettingsRegistryBackupGroup" xml:space="preserve">
+    <value>Pulizia</value>
+  </data>
+  <data name="SettingsRegistryBackupFolder" xml:space="preserve">
+    <value>Cartella di backup</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDesc" xml:space="preserve">
+    <value>Ogni pulizia del registro esegue prima qui il backup delle chiavi interessate, prima di eliminare qualsiasi elemento. Valore predefinito: %APPDATA%\UltimateUpdater\registry-backups.</value>
+  </data>
+  <data name="SettingsRegistryBackupRetention" xml:space="preserve">
+    <value>Conserva</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDesc" xml:space="preserve">
+    <value>Numero di backup da conservare. Il più vecchio viene rimosso quando viene raggiunto questo numero.</value>
+  </data>
+  <data name="SettingsDataGroup" xml:space="preserve">
+    <value>Dati e registri</value>
+  </data>
+  <data name="SettingsExcludedPathsHeader" xml:space="preserve">
+    <value>{0} esclusi in modo permanente</value>
+  </data>
+  <data name="SettingsExcludedPathsDesc" xml:space="preserve">
+    <value>Esclusi dalla finestra di pulizia tramite il relativo menu contestuale.</value>
+  </data>
+  <data name="SettingsExcludedPathsEmpty" xml:space="preserve">
+    <value>Nessun percorso escluso in modo permanente.</value>
+  </data>
+  <data name="SettingsExcludedPathRelease" xml:space="preserve">
+    <value>Rimuovi esclusione</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAll" xml:space="preserve">
+    <value>Rimuovi tutte le esclusioni</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmHeadline" xml:space="preserve">
+    <value>Rimuovere tutte le esclusioni dei percorsi?</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmBody" xml:space="preserve">
+    <value>La pulizia proporrà di nuovo questi percorsi la prossima volta che li trova.</value>
+  </data>
+  <data name="SettingsRegistryRetentionOption" xml:space="preserve">
+    <value>{0} backup</value>
+  </data>
+  <data name="ScanThreatFound" xml:space="preserve">
+    <value>L'antivirus ha segnalato il file scaricato come dannoso. È stato scartato, non eseguito.</value>
+  </data>
+  <data name="ScanClean" xml:space="preserve">
+    <value>nessuna minaccia trovata</value>
+  </data>
+  <data name="SettingsNotifyOnFoundDesc" xml:space="preserve">
+    <value>Mostra una notifica nell'area di notifica quando vengono trovati aggiornamenti.</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnlyDesc" xml:space="preserve">
+    <value>Notifica solo gli aggiornamenti rilevanti per la sicurezza.</value>
+  </data>
+  <data name="ThemeDesc" xml:space="preserve">
+    <value>Segui Windows oppure forza il tema chiaro o scuro.</value>
+  </data>
+  <data name="SettingsAutostartDesc" xml:space="preserve">
+    <value>Avvia con Windows, ridotto a icona nell'area di notifica.</value>
+  </data>
+  <data name="SettingsCloseToTrayDesc" xml:space="preserve">
+    <value>Chiudendo la finestra, l'app resta in esecuzione nell'area di notifica.</value>
+  </data>
+  <data name="SettingsUpdatesGroup" xml:space="preserve">
+    <value>Aggiornamenti dell'app</value>
+  </data>
+  <data name="SettingsCheckUpdatesDesc" xml:space="preserve">
+    <value>Controlla la disponibilità di una nuova versione di Ultimate Updater.</value>
+  </data>
+  <data name="SettingsCheckNow" xml:space="preserve">
+    <value>Controlla ora</value>
+  </data>
+  <data name="SettingsUpToDate" xml:space="preserve">
+    <value>Stai usando la versione più recente.</value>
+  </data>
+  <data name="SettingsCurrentVersion" xml:space="preserve">
+    <value>Versione {0}</value>
+  </data>
+  <data name="SettingsCheckingUpdates" xml:space="preserve">
+    <value>Controllo in corso…</value>
+  </data>
+  <data name="SettingsSourcesGroup" xml:space="preserve">
+    <value>Fonti</value>
+  </data>
+  <data name="SettingsSourcesHint" xml:space="preserve">
+    <value>Le fonti disattivate non vengono analizzate.</value>
+  </data>
+  <data name="SettingsSourcesSelectAll" xml:space="preserve">
+    <value>Tutte le fonti</value>
+  </data>
+  <data name="SettingsSourcesSearchPlaceholder" xml:space="preserve">
+    <value>Cerca fonti…</value>
+  </data>
+  <data name="SettingsSourcesSearchEmpty" xml:space="preserve">
+    <value>Nessuna fonte corrisponde alla ricerca.</value>
+  </data>
+  <data name="SettingsShowAllSources" xml:space="preserve">
+    <value>Mostra fonti non installate ({0})</value>
+  </data>
+  <data name="SettingsStartupGroup" xml:space="preserve">
+    <value>Avvio</value>
+  </data>
+  <data name="SettingsAutostart" xml:space="preserve">
+    <value>Avvia con Windows</value>
+  </data>
+  <data name="SettingsCloseToTray" xml:space="preserve">
+    <value>Chiudi nell'area di notifica invece di uscire</value>
+  </data>
+  <data name="SettingsCleanupReminder" xml:space="preserve">
+    <value>Avvisa quando la pulizia è in ritardo</value>
+  </data>
+  <data name="SettingsAdvancedGroup" xml:space="preserve">
+    <value>Avanzate</value>
+  </data>
+  <data name="TrayOpen" xml:space="preserve">
+    <value>Apri</value>
+  </data>
+  <data name="TrayScan" xml:space="preserve">
+    <value>Cerca aggiornamenti</value>
+  </data>
+  <data name="TrayExit" xml:space="preserve">
+    <value>Esci</value>
+  </data>
+  <data name="NotifyFound" xml:space="preserve">
+    <value>{0} aggiornamenti disponibili</value>
+  </data>
+  <data name="NotifyFoundWithCritical" xml:space="preserve">
+    <value>{0} aggiornamenti disponibili ({1} critici)</value>
+  </data>
+  <data name="SelfUpdateTitle" xml:space="preserve">
+    <value>È disponibile una nuova versione</value>
+  </data>
+  <data name="SelfUpdateInstall" xml:space="preserve">
+    <value>Aggiorna ora</value>
+  </data>
+  <data name="SelfUpdateDismiss" xml:space="preserve">
+    <value>Ignora</value>
+  </data>
+  <data name="SelfUpdateWhatsNew" xml:space="preserve">
+    <value>Novità</value>
+  </data>
+  <data name="CleanupReminderBanner" xml:space="preserve">
+    <value>L'ultima pulizia risale al {0}.</value>
+  </data>
+  <data name="CleanupReminderThisTime" xml:space="preserve">
+    <value>Solo questa volta</value>
+  </data>
+  <data name="CleanupReminderNeverAgain" xml:space="preserve">
+    <value>Non mostrare più</value>
+  </data>
+  <data name="SelfUpdateFailed" xml:space="preserve">
+    <value>Impossibile verificare l'aggiornamento, che è stato scartato.</value>
+  </data>
+  <data name="HeadlineScanning" xml:space="preserve">
+    <value>Ricerca di aggiornamenti in corso…</value>
+  </data>
+  <data name="HeadlineUpToDate" xml:space="preserve">
+    <value>Tutto è aggiornato</value>
+  </data>
+  <data name="HeadlineUpdates" xml:space="preserve">
+    <value>{0} aggiornamenti disponibili</value>
+  </data>
+  <data name="SubheadlineScanning" xml:space="preserve">
+    <value>Consultazione di ogni fonte configurata.</value>
+  </data>
+  <data name="EmptyState" xml:space="preserve">
+    <value>Nessun aggiornamento trovato. Esegui un'analisi per controllare di nuovo.</value>
+  </data>
+  <data name="ManualUpdatesSectionTitle" xml:space="preserve">
+    <value>Apri personalmente questi elementi: questa app non può aggiornarli</value>
+  </data>
+  <data name="CriticalBadge" xml:space="preserve">
+    <value>Critico</value>
+  </data>
+  <data name="RowQueued" xml:space="preserve">
+    <value>In coda</value>
+  </data>
+  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
+    <value>{0} · {1:0} %</value>
+  </data>
+  <data name="CleanupDoneCount" xml:space="preserve">
+    <value>{0} di {1} aree completate</value>
+  </data>
+  <data name="CleanupDoneCountOne" xml:space="preserve">
+    <value>{0} di {1} area completata</value>
+  </data>
+  <data name="CleanupRemainingCount" xml:space="preserve">
+    <value>ne restano {0}</value>
+  </data>
+  <data name="CleanupEmptyCount" xml:space="preserve">
+    <value>{0} aree senza elementi trovati</value>
+  </data>
+  <data name="CleanupEmptyCountOne" xml:space="preserve">
+    <value>{0} area senza elementi trovati</value>
+  </data>
+  <data name="InstallRestorePointStep" xml:space="preserve">
+    <value>Creazione di un punto di ripristino…</value>
+  </data>
+  <data name="ActivityRestorePointSkipped" xml:space="preserve">
+    <value>Punto di ripristino saltato, ne esiste già uno di oggi.</value>
+  </data>
+  <data name="CleanupRestorePointParallel" xml:space="preserve">
+    <value>Creazione del punto di ripristino, i passaggi lunghi sono già in corso</value>
+  </data>
+  <data name="RowAlsoInSources" xml:space="preserve">
+    <value>Aggiornato tramite {0}; disponibile anche da {1}.</value>
+  </data>
+  <data name="RowDone" xml:space="preserve">
+    <value>Completato</value>
+  </data>
+  <data name="RowFailed" xml:space="preserve">
+    <value>Non riuscito</value>
+  </data>
+  <data name="SubheadlineScanningProgress" xml:space="preserve">
+    <value>controllate {0} di {1} fonti</value>
+  </data>
+  <data name="SubheadlineScanningProgressOne" xml:space="preserve">
+    <value>controllata {0} di {1} fonte</value>
+  </data>
+  <data name="SubheadlineScanningSources" xml:space="preserve">
+    <value>Controllo: {0}</value>
+  </data>
+  <data name="SourceDescWinget" xml:space="preserve">
+    <value>Il gestore di pacchetti ufficiale di Microsoft per Windows. Elenca e aggiorna silenziosamente le app installate tramite esso.</value>
+  </data>
+  <data name="SourceDescWindowsUpdate" xml:space="preserve">
+    <value>Il servizio di aggiornamento di Windows: aggiornamenti di qualità, driver e definizioni di Microsoft, mai aggiornamenti delle funzionalità.</value>
+  </data>
+  <data name="SourceDescMsStore" xml:space="preserve">
+    <value>L'app Microsoft Store. Apre solo la propria pagina degli aggiornamenti, perché lo Store nasconde le versioni delle singole app agli altri strumenti.</value>
+  </data>
+  <data name="SourceDescChocolatey" xml:space="preserve">
+    <value>Gestore di pacchetti della comunità per Windows (choco.exe). Aggiorna pacchetti mantenuti dalla comunità; richiede diritti di amministratore.</value>
+  </data>
+  <data name="SourceDescScoop" xml:space="preserve">
+    <value>Gestore di pacchetti da riga di comando, installa nella cartella utente senza diritti di amministratore.</value>
+  </data>
+  <data name="SourceDescPip" xml:space="preserve">
+    <value>Il programma di installazione dei pacchetti Python. Elenca e aggiorna i pacchetti Python obsoleti.</value>
+  </data>
+  <data name="SourceDescNpm" xml:space="preserve">
+    <value>Il gestore di pacchetti di Node.js. Elenca e aggiorna i pacchetti npm installati globalmente.</value>
+  </data>
+  <data name="SourceDescPnpm" xml:space="preserve">
+    <value>Pacchetti globali di pnpm provenienti dallo stesso registro npm usato da npm. Non è stato verificato su una vera installazione di pnpm; segnala un problema se una riga sembra errata.</value>
+  </data>
+  <data name="SourceDescDotnetTool" xml:space="preserve">
+    <value>Strumenti globali .NET, controllati rispetto al feed NuGet pubblico per versioni più recenti.</value>
+  </data>
+  <data name="SourceNameDotnetTool" xml:space="preserve">
+    <value>Strumenti .NET</value>
+  </data>
+  <data name="SourceDescPsGallery" xml:space="preserve">
+    <value>Moduli PowerShell Gallery installati nel profilo utente.</value>
+  </data>
+  <data name="SourceDescGem" xml:space="preserve">
+    <value>Il gestore di pacchetti di Ruby. Elenca e aggiorna i RubyGems obsoleti.</value>
+  </data>
+  <data name="SourceDescComposer" xml:space="preserve">
+    <value>Il gestore delle dipendenze di PHP. Elenca e aggiorna i pacchetti Composer globali.</value>
+  </data>
+  <data name="SourceDescRustup" xml:space="preserve">
+    <value>Il gestore della toolchain Rust. Un aggiornamento rinnova ogni toolchain installata e rustup stesso.</value>
+  </data>
+  <data name="SourceDescVcpkg" xml:space="preserve">
+    <value>Librerie C/C++ tramite vcpkg (modalità classica). Non è stato verificato su una vera installazione di vcpkg; segnala un problema se una riga sembra errata.</value>
+  </data>
+  <data name="SourceDescMise" xml:space="preserve">
+    <value>Versioni degli strumenti gestite da mise. Non è stato verificato su una vera installazione di mise; segnala un problema se una riga sembra errata.</value>
+  </data>
+  <data name="SourceDescSteam" xml:space="preserve">
+    <value>Il client Steam di Valve. Legge lo stato reale degli aggiornamenti dei giochi dai file di Steam; l'aggiornamento stesso viene eseguito in Steam.</value>
+  </data>
+  <data name="SourceDescNvidia" xml:space="preserve">
+    <value>Richiede al servizio driver di NVIDIA il driver Game Ready più recente. Lo installa direttamente dopo aver verificato la firma di NVIDIA.</value>
+  </data>
+  <data name="SourceDescGitHubRelease" xml:space="preserve">
+    <value>Controlla i programmi la cui voce di disinstallazione indica un progetto GitHub rispetto alla sua versione più recente, per software installato al di fuori di qualsiasi gestore di pacchetti. Apre la pagina della versione invece di installare.</value>
+  </data>
+  <data name="SourceNameGitHubRelease" xml:space="preserve">
+    <value>Release di GitHub</value>
+  </data>
+  <data name="SourceDescLauncher" xml:space="preserve">
+    <value>Apre il client {0}. {0} aggiorna sé stesso e i suoi giochi all'avvio; questa app non può né vedere né avviare tale aggiornamento.</value>
+  </data>
+  <data name="FatalErrorHeadline" xml:space="preserve">
+    <value>Ultimate Updater ha riscontrato un problema</value>
+  </data>
+  <data name="FatalError" xml:space="preserve">
+    <value>Ultimate Updater deve chiudersi. I dettagli sono nella cartella dei registri:
+{0}</value>
+  </data>
+  <data name="InstallFailed" xml:space="preserve">
+    <value>Aggiornamento non riuscito. Apri i dettagli per conoscere il motivo.</value>
+  </data>
+  <data name="InstallElevationDeclined" xml:space="preserve">
+    <value>I diritti di amministratore sono stati rifiutati.</value>
+  </data>
+  <data name="InstallWorkerStopped" xml:space="preserve">
+    <value>Il passaggio amministrativo si è interrotto prima dell'installazione di questo aggiornamento.</value>
+  </data>
+  <data name="HeadlineUpdatesOne" xml:space="preserve">
+    <value>{0} aggiornamento disponibile</value>
+  </data>
+  <data name="NotifyFoundOne" xml:space="preserve">
+    <value>{0} aggiornamento disponibile</value>
+  </data>
+  <data name="NotifyFoundOneWithCritical" xml:space="preserve">
+    <value>{0} aggiornamento disponibile ({1} critico)</value>
+  </data>
+  <data name="ScanFailed" xml:space="preserve">
+    <value>Impossibile controllare questa fonte. Apri i dettagli per conoscere il motivo.</value>
+  </data>
+  <data name="ScanStateWaiting" xml:space="preserve">
+    <value>In attesa…</value>
+  </data>
+  <data name="ScanStateRunning" xml:space="preserve">
+    <value>In esecuzione…</value>
+  </data>
+  <data name="ScanStateSlow" xml:space="preserve">
+    <value>Ancora in esecuzione…</value>
+  </data>
+  <data name="ScanStateCancelled" xml:space="preserve">
+    <value>Annullato</value>
+  </data>
+  <data name="CancelSourceScanTooltip" xml:space="preserve">
+    <value>Interrompi il controllo di questa fonte</value>
+  </data>
+  <data name="EmptyStateFiltered" xml:space="preserve">
+    <value>Nessun elemento corrisponde alla ricerca o al filtro corrente.</value>
+  </data>
+  <data name="InstallCancelled" xml:space="preserve">
+    <value>Annullato prima dell'installazione di questo aggiornamento.</value>
+  </data>
+  <data name="InstallWaitingForCleanup" xml:space="preserve">
+    <value>In attesa che la pulizia rilasci quest'area</value>
+  </data>
+  <data name="InstallAlreadyCurrent" xml:space="preserve">
+    <value>Già alla versione {0}, niente da fare.</value>
+  </data>
+  <data name="ErrorDetailOutput" xml:space="preserve">
+    <value>Cosa ha segnalato lo strumento</value>
+  </data>
+  <data name="ErrorDetailLogInSettings" xml:space="preserve">
+    <value>Vedi la cartella dei registri in Impostazioni</value>
+  </data>
+  <data name="ErrorDetailRetryInMenu" xml:space="preserve">
+    <value>Riprova in modo interattivo dal menu contestuale della riga</value>
+  </data>
+  <data name="ErrorWhatDoesThisMean" xml:space="preserve">
+    <value>Cosa significa?</value>
+  </data>
+  <data name="ErrorWindowsSaysPrefix" xml:space="preserve">
+    <value>Windows dice:</value>
+  </data>
+  <data name="ErrorNoMeaning" xml:space="preserve">
+    <value>Windows non ha un testo per questo codice.</value>
+  </data>
+  <data name="ErrorDetailSourceLog" xml:space="preserve">
+    <value>Dal registro di questo momento (nessun output è stato salvato con questa voce)</value>
+  </data>
+  <data name="ErrorDetailSourceShort" xml:space="preserve">
+    <value>Con questa voce è stato salvato solo il messaggio breve</value>
+  </data>
+  <data name="ErrorDetailCopy" xml:space="preserve">
+    <value>Copia dettagli</value>
+  </data>
+  <data name="ErrorCopyReport" xml:space="preserve">
+    <value>Copia il rapporto d'errore</value>
+  </data>
+  <data name="ErrorDetailCopied" xml:space="preserve">
+    <value>Copiato negli appunti</value>
+  </data>
+  <data name="SubListCount" xml:space="preserve">
+    <value>{0} aggiornamenti in sospeso</value>
+  </data>
+  <data name="SubListCountOne" xml:space="preserve">
+    <value>{0} aggiornamento in sospeso</value>
+  </data>
+  <data name="ThemeOptionHacker" xml:space="preserve">
+    <value>Hacker</value>
+  </data>
+  <data name="ThemeOptionNeon" xml:space="preserve">
+    <value>Neon</value>
+  </data>
+  <data name="SettingsResetGroup" xml:space="preserve">
+    <value>Reimposta</value>
+  </data>
+  <data name="SettingsResetDesc" xml:space="preserve">
+    <value>Ripristina lo stato predefinito dell'app.</value>
+  </data>
+  <data name="SettingsResetDoneHeadline" xml:space="preserve">
+    <value>Completato</value>
+  </data>
+  <data name="SettingsResetDoneBody" xml:space="preserve">
+    <value>L'app è stata ripristinata allo stato predefinito.</value>
+  </data>
+  <data name="SettingsDeleteDataPartialHeadline" xml:space="preserve">
+    <value>Alcuni file sono ancora in uso</value>
+  </data>
+  <data name="SettingsDeleteDataPartialBody" xml:space="preserve">
+    <value>Le impostazioni sono state reimpostate. Alcuni file ancora in uso, ad esempio il registro corrente, verranno rimossi al prossimo avvio.</value>
+  </data>
+  <data name="HistoryFilterSource" xml:space="preserve">
+    <value>Fonte:</value>
+  </data>
+  <data name="HistoryRangeAll" xml:space="preserve">
+    <value>Tutto</value>
+  </data>
+  <data name="HistoryRangeToday" xml:space="preserve">
+    <value>Oggi</value>
+  </data>
+  <data name="HistoryRangeWeek" xml:space="preserve">
+    <value>7 giorni</value>
+  </data>
+  <data name="HistoryRangeMonth" xml:space="preserve">
+    <value>30 giorni</value>
+  </data>
+  <data name="CleanupTitle" xml:space="preserve">
+    <value>Libera spazio</value>
+  </data>
+  <data name="CleanupStart" xml:space="preserve">
+    <value>Pulisci</value>
+  </data>
+  <data name="CleanupPause" xml:space="preserve">
+    <value>Pausa</value>
+  </data>
+  <data name="CleanupResume" xml:space="preserve">
+    <value>Riprendi</value>
+  </data>
+  <data name="CleanupStop" xml:space="preserve">
+    <value>Interrompi</value>
+  </data>
+  <data name="CleanupRescan" xml:space="preserve">
+    <value>Analizza di nuovo</value>
+  </data>
+  <data name="CleanupStoppingRepair" xml:space="preserve">
+    <value>Interrotto. La riparazione del sistema in esecuzione deve terminare; interromperla potrebbe danneggiare l'archivio dei componenti di Windows.</value>
+  </data>
+  <data name="CleanupNoProgressHint" xml:space="preserve">
+    <value>Windows non segnala l'avanzamento per questo passaggio. È in corso.</value>
+  </data>
+  <data name="CleanupDefragName" xml:space="preserve">
+    <value>Ottimizza l'unità {0}</value>
+  </data>
+  <data name="CleanupDefragConsequence" xml:space="preserve">
+    <value>Esegue l'ottimizzazione di Windows per questa unità: deframmentazione su un disco rigido, retrim su un SSD. Non libera spazio, riorganizza quello che c'è.</value>
+  </data>
+  <data name="CleanupDefragRowHdd" xml:space="preserve">
+    <value>Deframmenta {0}</value>
+  </data>
+  <data name="CleanupDefragRowSsd" xml:space="preserve">
+    <value>Ottimizza {0}, Trim</value>
+  </data>
+  <data name="CleanupDefragRowUnspecified" xml:space="preserve">
+    <value>Ottimizza {0}</value>
+  </data>
+  <data name="MediaTypeHdd" xml:space="preserve">
+    <value>HDD</value>
+  </data>
+  <data name="MediaTypeSsd" xml:space="preserve">
+    <value>SSD</value>
+  </data>
+  <data name="MediaTypeUsbDrive" xml:space="preserve">
+    <value>Unità USB</value>
+  </data>
+  <data name="MediaTypeOtherDrive" xml:space="preserve">
+    <value>Unità</value>
+  </data>
+  <data name="CleanupDriveSubline" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="CleanupDriveSublineUsb" xml:space="preserve">
+    <value>{0}, {1} · {2}</value>
+  </data>
+  <data name="DefragWarningTitle" xml:space="preserve">
+    <value>Può richiedere ore</value>
+  </data>
+  <data name="DefragWarningBody" xml:space="preserve">
+    <value>Deframmentare un disco rigido grande richiede molto tempo. Puoi chiudere questa finestra, continuerà a funzionare. Uscire dal programma lo interrompe.</value>
+  </data>
+  <data name="DefragQuitWarningTitle" xml:space="preserve">
+    <value>Un'ottimizzazione dell'unità è ancora in corso</value>
+  </data>
+  <data name="DefragQuitWarningBody" xml:space="preserve">
+    <value>Uscire ora la interrompe. L'unità resta utilizzabile, l'ottimizzazione resta semplicemente incompleta.</value>
+  </data>
+  <data name="DefragQuitAnyway" xml:space="preserve">
+    <value>Esci comunque</value>
+  </data>
+  <data name="DefragKeepRunning" xml:space="preserve">
+    <value>Lasciala in corso</value>
+  </data>
+  <data name="WorkQuitWarningTitle" xml:space="preserve">
+    <value>Aggiornamenti o una pulizia sono ancora in corso</value>
+  </data>
+  <data name="WorkQuitWarningBody" xml:space="preserve">
+    <value>Uscire ora li interrompe a metà: un pacchetto può restare installato a metà e una pulizia incompleta. Chiudendo solo la finestra continuano.</value>
+  </data>
+  <data name="CleanupHistoryTitle" xml:space="preserve">
+    <value>Pulizie precedenti</value>
+  </data>
+  <data name="CleanupHistoryButton" xml:space="preserve">
+    <value>Cronologia pulizie</value>
+  </data>
+  <data name="CleanupGroupTempFiles" xml:space="preserve">
+    <value>File temporanei</value>
+  </data>
+  <data name="CleanupGroupCaches" xml:space="preserve">
+    <value>Cache</value>
+  </data>
+  <data name="CleanupGroupWindowsMaintenance" xml:space="preserve">
+    <value>Manutenzione di Windows</value>
+  </data>
+  <data name="CleanupGroupRecycleBin" xml:space="preserve">
+    <value>Cestino</value>
+  </data>
+  <data name="CleanupGroupSystemRepair" xml:space="preserve">
+    <value>Riparazione del sistema</value>
+  </data>
+  <data name="CleanupGroupRegistry" xml:space="preserve">
+    <value>Registro di sistema</value>
+  </data>
+  <data name="CleanupHistoryEmpty" xml:space="preserve">
+    <value>Non è stato ancora pulito nulla.</value>
+  </data>
+  <data name="CleanupHistoryFreed" xml:space="preserve">
+    <value>{0} liberati</value>
+  </data>
+  <data name="CleanupHistoryEntrySummary" xml:space="preserve">
+    <value>{0} aree pulite</value>
+  </data>
+  <data name="CleanupHistoryEntrySummaryOne" xml:space="preserve">
+    <value>{0} area pulita</value>
+  </data>
+  <data name="CleanupHistorySkipped" xml:space="preserve">
+    <value>{0} in uso</value>
+  </data>
+  <data name="CleanupHistoryClearAll" xml:space="preserve">
+    <value>Elimina tutto</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmHeadline" xml:space="preserve">
+    <value>Eliminare l'intera cronologia?</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmDetail" xml:space="preserve">
+    <value>Viene eliminata solo la cronologia. Lo spazio già liberato resta libero.</value>
+  </data>
+  <data name="CleanupHistoryDeleteEntry" xml:space="preserve">
+    <value>Elimina questa voce</value>
+  </data>
+  <data name="CleanupHistoryTotalFreed" xml:space="preserve">
+    <value>{0} liberati in totale</value>
+  </data>
+  <data name="CleanupHistoryRunCount" xml:space="preserve">
+    <value>{0} esecuzioni · ultima il {1}</value>
+  </data>
+  <data name="CleanupHistoryRunCountOne" xml:space="preserve">
+    <value>{0} esecuzione · ultima il {1}</value>
+  </data>
+  <data name="CleanupHistoryTopCategories" xml:space="preserve">
+    <value>Aree più grandi</value>
+  </data>
+  <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
+    <value>Non è stato ancora liberato nulla.</value>
+  </data>
+  <data name="CleanupPausedNote" xml:space="preserve">
+    <value>in sospeso</value>
+  </data>
+  <data name="CleanupScanning" xml:space="preserve">
+    <value>misurazione in corso…</value>
+  </data>
+  <data name="CleanupOfTotal" xml:space="preserve">
+    <value>su {0} trovati</value>
+  </data>
+  <data name="CleanupNeedsAdmin" xml:space="preserve">
+    <value>richiede admin</value>
+  </data>
+  <data name="CleanupStateWaiting" xml:space="preserve">
+    <value>in attesa</value>
+  </data>
+  <data name="CleanupStateCleaning" xml:space="preserve">
+    <value>pulizia in corso</value>
+  </data>
+  <data name="CleanupStateStopped" xml:space="preserve">
+    <value>interrotto</value>
+  </data>
+  <data name="CleanupStateSkipped" xml:space="preserve">
+    <value>ignorato</value>
+  </data>
+  <data name="CleanupSkippedFiles" xml:space="preserve">
+    <value>{0} file erano in uso e sono stati ignorati.</value>
+  </data>
+  <data name="CleanupSkippedFilesOne" xml:space="preserve">
+    <value>{0} file era in uso ed è stato ignorato.</value>
+  </data>
+  <data name="CleanupSelectedCount" xml:space="preserve">
+    <value>{0} di {1} aree selezionate</value>
+  </data>
+  <data name="CleanupSelectedCountOne" xml:space="preserve">
+    <value>{0} di {1} area selezionata</value>
+  </data>
+  <data name="CleanupFileCount" xml:space="preserve">
+    <value>{0} file misurati</value>
+  </data>
+  <data name="CleanupFileCountOne" xml:space="preserve">
+    <value>{0} file misurato</value>
+  </data>
+  <data name="CleanupLargestLabel" xml:space="preserve">
+    <value>Aree più grandi</value>
+  </data>
+  <data name="CleanupLastRunLabel" xml:space="preserve">
+    <value>Ultima pulizia</value>
+  </data>
+  <data name="CleanupFreeSpaceNow" xml:space="preserve">
+    <value>{0} liberi, +{1} dopo la pulizia</value>
+  </data>
+  <data name="CleanupCurrentLabel" xml:space="preserve">
+    <value>Corrente</value>
+  </data>
+  <data name="CleanupFailedHeadline" xml:space="preserve">
+    <value>Impossibile completare la pulizia</value>
+  </data>
+  <data name="CleanupConfirmHeadline" xml:space="preserve">
+    <value>Eliminare definitivamente {0}?</value>
+  </data>
+  <data name="CleanupConfirmWarning" xml:space="preserve">
+    <value>I file eliminati non possono essere recuperati.</value>
+  </data>
+  <data name="CleanupConfirmTotal" xml:space="preserve">
+    <value>Totale: {0}</value>
+  </data>
+  <data name="CleanupUserTemp" xml:space="preserve">
+    <value>File temporanei dell'utente</value>
+  </data>
+  <data name="CleanupUserTempDesc" xml:space="preserve">
+    <value>La cartella temporanea dell'account utente corrente.</value>
+  </data>
+  <data name="CleanupAllUsersTemp" xml:space="preserve">
+    <value>File temporanei di tutti gli utenti</value>
+  </data>
+  <data name="CleanupAllUsersTempDesc" xml:space="preserve">
+    <value>Cartelle temporanee degli altri account su questo PC. Senza privilegi di amministratore, i loro file vengono ignorati.</value>
+  </data>
+  <data name="CleanupWindowsTemp" xml:space="preserve">
+    <value>File temporanei di Windows</value>
+  </data>
+  <data name="CleanupWindowsTempDesc" xml:space="preserve">
+    <value>La cartella temporanea di sistema in cui Windows e i programmi di installazione scrivono.</value>
+  </data>
+  <data name="CleanupUpdateCache" xml:space="preserve">
+    <value>Cache di Windows Update</value>
+  </data>
+  <data name="CleanupUpdateCacheDesc" xml:space="preserve">
+    <value>File di installazione degli aggiornamenti già applicati.</value>
+  </data>
+  <data name="CleanupDeliveryOptimization" xml:space="preserve">
+    <value>File di Ottimizzazione recapito</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
+    <value>Parti di aggiornamenti che Windows conserva per condividerle con altri PC.</value>
+  </data>
+  <data name="CleanupThumbnails" xml:space="preserve">
+    <value>Cache di miniature e icone</value>
+  </data>
+  <data name="CleanupThumbnailsDesc" xml:space="preserve">
+    <value>Esplora file le ricrea quando necessario.</value>
+  </data>
+  <data name="CleanupCrashDumps" xml:space="preserve">
+    <value>Dump di arresto anomalo</value>
+  </data>
+  <data name="CleanupCrashDumpsDesc" xml:space="preserve">
+    <value>Dump della memoria lasciati dai programmi arrestati in modo anomalo.</value>
+  </data>
+  <data name="CleanupRecycleBin" xml:space="preserve">
+    <value>Svuota il Cestino</value>
+  </data>
+  <data name="CleanupRecycleBinDesc" xml:space="preserve">
+    <value>Disattivato per impostazione predefinita, perché gli elementi restano ripristinabili finché il Cestino non viene svuotato.</value>
+  </data>
+  <data name="CleanupRecycleAgeLabel" xml:space="preserve">
+    <value>Solo file più vecchi di</value>
+  </data>
+  <data name="CleanupRecycleAgeDays" xml:space="preserve">
+    <value>giorni</value>
+  </data>
+  <data name="CleanupDiskCleanup" xml:space="preserve">
+    <value>Esegui Pulizia disco di Windows</value>
+  </data>
+  <data name="CleanupDiskCleanupDesc" xml:space="preserve">
+    <value>Apre lo strumento di Windows; decide autonomamente cosa rimuovere.</value>
+  </data>
+  <data name="SourceDescAndroidSdk" xml:space="preserve">
+    <value>Pacchetti Android SDK tramite sdkmanager. Aggiorna i componenti obsoleti (piattaforme, strumenti di compilazione) dalla posizione standard, ANDROID_HOME o PATH.</value>
+  </data>
+  <data name="SourceDescAndroidStudio" xml:space="preserve">
+    <value>Android Studio è installato, ma gli strumenti da riga di comando dell'SDK non lo sono e senza di essi non è possibile aggiornare i pacchetti SDK. Apre Android Studio; il relativo SDK Manager si trova in Impostazioni, Android SDK. Aggiungere &quot;Android SDK Command-line Tools&quot; e gli aggiornamenti verranno eseguiti automaticamente.</value>
+  </data>
+  <data name="AndroidStudioSdkRow" xml:space="preserve">
+    <value>Android Studio SDK Manager</value>
+  </data>
+  <data name="SourceDescGhExtension" xml:space="preserve">
+    <value>Estensioni GitHub CLI. Aggiorna le estensioni gh che gh stesso segnala come obsolete.</value>
+  </data>
+  <data name="SourceNameGhExtension" xml:space="preserve">
+    <value>Estensioni di GitHub CLI</value>
+  </data>
+  <data name="SourceDescPipx" xml:space="preserve">
+    <value>Strumenti Python da riga di comando installati con pipx. Ogni strumento è un candidato; pipx upgrade viene eseguito su richiesta.</value>
+  </data>
+  <data name="SourceDescVsCodeExtension" xml:space="preserve">
+    <value>Estensioni Visual Studio Code. Ogni estensione installata è un candidato; su richiesta viene reinstallata alla versione più recente del marketplace.</value>
+  </data>
+  <data name="SourceNameVsCodeExtension" xml:space="preserve">
+    <value>Estensioni di VS Code</value>
+  </data>
+  <data name="SourceDescDeno" xml:space="preserve">
+    <value>Runtime Deno. Cerca su GitHub la versione più recente e aggiorna con &quot;deno upgrade&quot;. Nascosto quando Deno è stato installato da winget, Scoop o Chocolatey, poiché lo aggiornano direttamente.</value>
+  </data>
+  <data name="SourceDescBun" xml:space="preserve">
+    <value>Runtime Bun. Cerca su GitHub la versione più recente e aggiorna con &quot;bun upgrade&quot;. Nascosto quando Bun è stato installato da un gestore di pacchetti.</value>
+  </data>
+  <data name="SourceDescUv" xml:space="preserve">
+    <value>uv, il gestore di pacchetti Python che si aggiorna autonomamente. Nascosto quando uv è stato installato da un gestore di pacchetti, perché in quel caso &quot;uv self update&quot; viene rifiutato.</value>
+  </data>
+  <data name="SourceDescUvTool" xml:space="preserve">
+    <value>Strumenti Python installati con &quot;uv tool&quot;. Controlla ogni strumento su PyPI ed elenca solo le versioni obsolete.</value>
+  </data>
+  <data name="SourceNameUvTool" xml:space="preserve">
+    <value>Strumenti uv</value>
+  </data>
+  <data name="SourceDescGcloud" xml:space="preserve">
+    <value>Componenti Google Cloud CLI con versione installata e più recente, oltre alla dimensione del download. &quot;gcloud components update&quot; li aggiorna tutti insieme.</value>
+  </data>
+  <data name="SourceDescOllama" xml:space="preserve">
+    <value>Modelli Ollama scaricati localmente. Confronta il digest del manifesto di ciascuno con quello del registro, quindi viene mostrato come riga solo un tag che è realmente cambiato. Richiede un server Ollama in esecuzione; l'app non lo avvia mai.</value>
+  </data>
+  <data name="SourceNameOllama" xml:space="preserve">
+    <value>Modelli Ollama</value>
+  </data>
+  <data name="SourceDescFlutter" xml:space="preserve">
+    <value>SDK Flutter estratto tramite flutter nel PATH. Confronta la versione installata con il feed delle versioni di Google per il canale in uso.</value>
+  </data>
+  <data name="SourceDescVolta" xml:space="preserve">
+    <value>Toolchain predefinita di Volta per Node, npm, yarn e pnpm. Volta non dispone di un proprio controllo degli aggiornamenti, quindi viene effettuato il confronto diretto con il feed delle versioni di Node e il registro npm, offrendo soltanto aggiornamenti patch o minori all'interno della stessa versione principale di Node, mai il passaggio a una versione principale successiva.</value>
+  </data>
+  <data name="SourceDescPyenvWin" xml:space="preserve">
+    <value>La versione Python impostata come predefinita globale da pyenv-win. Offre soltanto un aggiornamento patch nella stessa linea major.minor (per esempio da 3.11.4 a 3.11.9); il passaggio a una linea più recente è una scelta consapevole lasciata all'utente.</value>
+  </data>
+  <data name="SourceDescWsl" xml:space="preserve">
+    <value>Windows Subsystem for Linux. Solo per il selettore delle origini, poiché wsl non può verificare la presenza di un aggiornamento senza applicarlo, quindi non compare mai alcuna riga.</value>
+  </data>
+  <data name="SourceNameWsl" xml:space="preserve">
+    <value>Sottosistema Windows per Linux</value>
+  </data>
+  <data name="IgnoredAllBadge" xml:space="preserve">
+    <value>Tutto ignorato</value>
+  </data>
+  <data name="RowUninstalled" xml:space="preserve">
+    <value>Disinstallato</value>
+  </data>
+  <data name="RowHandedOff" xml:space="preserve">
+    <value>Inoltrato</value>
+  </data>
+  <data name="RowHandedOffDetail" xml:space="preserve">
+    <value>Controllare la finestra del fornitore.</value>
+  </data>
+  <data name="RowStuck" xml:space="preserve">
+    <value>Bloccato</value>
+  </data>
+  <data name="RowStuckDetail" xml:space="preserve">
+    <value>Bloccato: nessuna versione è compatibile con questa installazione.</value>
+  </data>
+  <data name="RowNeedsManualWork" xml:space="preserve">
+    <value>Intervento richiesto</value>
+  </data>
+  <data name="RowNeedsManualWorkDetail" xml:space="preserve">
+    <value>Non riuscito nello stesso modo per tre volte di seguito. Un semplice nuovo tentativo non risolverà il problema.</value>
+  </data>
+  <data name="RowCancelled" xml:space="preserve">
+    <value>Annullato</value>
+  </data>
+  <data name="RowCancelledTooltip" xml:space="preserve">
+    <value>Hai interrotto questo aggiornamento. Il resto della coda ha continuato.</value>
+  </data>
+  <data name="StopSingleTooltip" xml:space="preserve">
+    <value>Ferma questo</value>
+  </data>
+  <data name="TryNormallyAgainButton" xml:space="preserve">
+    <value>Riprova normalmente</value>
+  </data>
+  <data name="WingetVendorInstallerCrashed" xml:space="preserve">
+    <value>Il programma di installazione del fornitore si è arrestato in modo anomalo ({0}). In genere il pacchetto può essere installato manualmente.</value>
+  </data>
+  <data name="ScanFailedToolCrashed" xml:space="preserve">
+    <value>'{0}' si è arrestato in modo anomalo ({1}) invece di segnalare un errore normale. Questo di solito significa che un runtime da cui dipende, ad esempio Java, non corrisponde a quello previsto.</value>
+  </data>
+  <data name="ScanFailedNoJava" xml:space="preserve">
+    <value>sdkmanager richiede Java {0} o una versione successiva e non è stata trovata alcuna installazione di Java (JAVA_HOME, PATH o quella inclusa con Android Studio).</value>
+  </data>
+  <data name="CleanupFreeSpaceResult" xml:space="preserve">
+    <value>{0} ora ha {1} liberi (prima erano {2})</value>
+  </data>
+  <data name="SettingsLogFolder" xml:space="preserve">
+    <value>File di registro</value>
+  </data>
+  <data name="SettingsReportsFolder" xml:space="preserve">
+    <value>Segnalazioni di errore</value>
+  </data>
+  <data name="SettingsOpenReports" xml:space="preserve">
+    <value>Apri segnalazioni di errore</value>
+  </data>
+  <data name="SettingsDataFolder" xml:space="preserve">
+    <value>Cartella dati</value>
+  </data>
+  <data name="AboutNetworkTargets" xml:space="preserve">
+    <value>Server contattati da questo programma</value>
+  </data>
+  <data name="SettingsDataFolderChange" xml:space="preserve">
+    <value>Sposta</value>
+  </data>
+  <data name="SettingsDataFolderMoved" xml:space="preserve">
+    <value>Copiato in {0}. La vecchia cartella è ancora lì: {1}. Riavvia per usare quella nuova.</value>
+  </data>
+  <data name="SettingsDataFolderCopyFailed" xml:space="preserve">
+    <value>Impossibile copiare la cartella dati lì. Non è stato cambiato nulla.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedLink" xml:space="preserve">
+    <value>Questa cartella è un collegamento a un'altra posizione. Scegli un'altra cartella.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedSystem" xml:space="preserve">
+    <value>Questa è una cartella di sistema di Windows. Scegli un'altra cartella.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedProgram" xml:space="preserve">
+    <value>Questa cartella si trova dentro la cartella del programma stesso. Scegli un'altra cartella.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedWritable" xml:space="preserve">
+    <value>Non è possibile scrivere in questa cartella. Scegli un'altra cartella.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedNonEmpty" xml:space="preserve">
+    <value>Lì esiste già una cartella UltimateUpdater non vuota. Scegli un'altra cartella.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedCurrent" xml:space="preserve">
+    <value>Questa è la cartella dati attuale o si trova al suo interno. Scegli un'altra cartella.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedTempOrCache" xml:space="preserve">
+    <value>Questa cartella viene svuotata dalla pulizia e non è adatta ai dati dell'app. Scegli un'altra cartella.</value>
+  </data>
+  <data name="SettingsDataFolderFilesLocked" xml:space="preserve">
+    <value>Alcuni file erano bloccati e non è stato possibile spostarli: {0}. Non è stato cambiato nulla.</value>
+  </data>
+  <data name="SettingsLogOpenFolder" xml:space="preserve">
+    <value>Apri cartella</value>
+  </data>
+  <data name="SettingsLogRetention" xml:space="preserve">
+    <value>Conserva i registri per</value>
+  </data>
+  <data name="SettingsLogRetentionDesc" xml:space="preserve">
+    <value>I file meno recenti vengono rimossi al successivo avvio dell'app.</value>
+  </data>
+  <data name="SettingsLogRetentionOption" xml:space="preserve">
+    <value>{0} giorni</value>
+  </data>
+  <data name="SettingsHistoryRetention" xml:space="preserve">
+    <value>Conserva la cronologia</value>
+  </data>
+  <data name="SettingsHistoryRetentionDesc" xml:space="preserve">
+    <value>Le voci meno recenti vengono rimosse al successivo avvio dell'app.</value>
+  </data>
+  <data name="HistoryShowDetails" xml:space="preserve">
+    <value>Mostra dettagli</value>
+  </data>
+  <data name="SettingsResetEverything" xml:space="preserve">
+    <value>Reimposta tutto</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmHeadline" xml:space="preserve">
+    <value>Reimpostare completamente Ultimate Updater?</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmBody" xml:space="preserve">
+    <value>Tutte le impostazioni tornano ai valori predefiniti; elenco delle esclusioni, cronologia, registri e cache vengono eliminati definitivamente.
+Questa operazione non può essere annullata.</value>
+  </data>
+  <data name="CleanupSystemRepairSfc" xml:space="preserve">
+    <value>Controlla i file di sistema (sfc)</value>
+  </data>
+  <data name="CleanupSystemRepairSfcDesc" xml:space="preserve">
+    <value>Sostituisce i file Windows danneggiati tramite sfc /scannow. Ripara anziché eliminare; è lento e richiede privilegi di amministratore.</value>
+  </data>
+  <data name="CleanupComponentCleanup" xml:space="preserve">
+    <value>Pulisci l'archivio componenti</value>
+  </data>
+  <data name="CleanupComponentCleanupDesc" xml:space="preserve">
+    <value>Rimuove le vecchie versioni dei componenti di Windows lasciate dagli aggiornamenti.</value>
+  </data>
+  <data name="CleanupComponentResetBase" xml:space="preserve">
+    <value>Rimuovi definitivamente i vecchi dati di aggiornamento</value>
+  </data>
+  <data name="CleanupComponentResetBaseDesc" xml:space="preserve">
+    <value>Libera più spazio possibile. Gli aggiornamenti di Windows installati non potranno più essere disinstallati.</value>
+  </data>
+  <data name="CleanupSystemRepairDism" xml:space="preserve">
+    <value>Ripara l'archivio componenti (DISM)</value>
+  </data>
+  <data name="CleanupSystemRepairDismDesc" xml:space="preserve">
+    <value>Esegue DISM /CheckHealth, /ScanHealth e /RestoreHealth sull'archivio da cui sfc ottiene i file. Ancora più lento, richiede privilegi di amministratore.</value>
+  </data>
+  <data name="CleanupComponentStoreSize" xml:space="preserve">
+    <value>{0} sul disco, {1} condivisi con Windows</value>
+  </data>
+  <data name="CleanupComponentStoreRecommended" xml:space="preserve">
+    <value>Windows consiglia una pulizia</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
+    <value>Analizza (richiede diritti di amministratore)</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
+    <value>Misura quanto spazio può davvero liberare l'archivio componenti di Windows.</value>
+  </data>
+  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
+    <value>L'analisi richiede diritti di amministratore; la richiesta è stata annullata.</value>
+  </data>
+  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
+    <value>L'analisi non è possibile in questo momento, l'helper con privilegi elevati non è in esecuzione.</value>
+  </data>
+  <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
+    <value>Windows non ha segnalato alcuna dimensione.</value>
+  </data>
+  <data name="CleanupNothingToClean" xml:space="preserve">
+    <value>non è stato trovato nulla</value>
+  </data>
+  <data name="CleanupRegistryEntryCount" xml:space="preserve">
+    <value>{0} voci</value>
+  </data>
+  <data name="CleanupRegistryEntryCountOne" xml:space="preserve">
+    <value>{0} voce</value>
+  </data>
+  <data name="CleanupRegistryOrphans" xml:space="preserve">
+    <value>Riferimenti orfani</value>
+  </data>
+  <data name="CleanupRegistryOrphansDesc" xml:space="preserve">
+    <value>Rimuove voci di App Paths, Shared DLLs, ActiveX/COM e di avvio automatico la cui destinazione non esiste più. Disattivato per impostazione predefinita, richiede diritti di amministratore; viene fatto automaticamente un backup prima di eliminare qualsiasi cosa.</value>
+  </data>
+  <data name="CleanupRegistryUninstall" xml:space="preserve">
+    <value>Voci di disinstallazione orfane</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesDesc" xml:space="preserve">
+    <value>Rimuove le voci di disinstallazione dei programmi già rimossi. Disattivato per impostazione predefinita, richiede privilegi di amministratore; viene creata automaticamente una copia di backup prima di eliminare qualsiasi elemento.</value>
+  </data>
+  <data name="CleanupDrivers" xml:space="preserve">
+    <value>Driver</value>
+  </data>
+  <data name="CleanupDriversDesc" xml:space="preserve">
+    <value>Dispositivi non più collegati e vecchi pacchetti driver rimasti nell'archivio driver. Disattivato per impostazione predefinita, richiede privilegi di amministratore; viene creata automaticamente una copia di backup prima di eliminare qualsiasi elemento.</value>
+  </data>
+  <data name="CleanupDriversConsequence" xml:space="preserve">
+    <value>Il dispositivo installerà di nuovo il driver al prossimo collegamento, se Windows ne trova uno. Una copia di backup di ogni pacchetto viene conservata nella cartella dati.</value>
+  </data>
+  <data name="CleanupGroupDrivers" xml:space="preserve">
+    <value>Driver</value>
+  </data>
+  <data name="CleanupDriverGroupDisconnected" xml:space="preserve">
+    <value>Dispositivi non più collegati</value>
+  </data>
+  <data name="CleanupDriverGroupOldPackages" xml:space="preserve">
+    <value>Vecchi pacchetti driver</value>
+  </data>
+  <data name="CleanupDriverLastConnected" xml:space="preserve">
+    <value>Ultimo collegamento: {0}</value>
+  </data>
+  <data name="CleanupDriverLastConnectedUnknown" xml:space="preserve">
+    <value>Data di collegamento sconosciuta</value>
+  </data>
+  <data name="CleanupAdminHeadline" xml:space="preserve">
+    <value>Alcune aree richiedono privilegi di amministratore</value>
+  </data>
+  <data name="CleanupAdminBody" xml:space="preserve">
+    <value>Windows Temp, la cache degli aggiornamenti, Pulizia disco e la riparazione del sistema richiedono privilegi di amministratore per essere misurati e puliti completamente.
+
+Continuare con privilegi di amministratore?</value>
+  </data>
+  <data name="CleanupAdminConfirm" xml:space="preserve">
+    <value>Con privilegi di amministratore</value>
+  </data>
+  <data name="CleanupAdminDecline" xml:space="preserve">
+    <value>Continua senza</value>
+  </data>
+  <data name="CleanupAdminMissing" xml:space="preserve">
+    <value>Senza privilegi di amministratore, quest'area viene misurata e pulita solo in parte.</value>
+  </data>
+  <data name="CleanupSkippedFilesSize" xml:space="preserve">
+    <value>{0} file ({1}) erano in uso e sono stati ignorati.</value>
+  </data>
+  <data name="CleanupSkippedFilesSizeOne" xml:space="preserve">
+    <value>{0} file ({1}) era in uso ed è stato ignorato.</value>
+  </data>
+  <data name="CleanupInUse" xml:space="preserve">
+    <value>{0} in uso</value>
+  </data>
+  <data name="CleanupShaderCache" xml:space="preserve">
+    <value>Cache degli shader</value>
+  </data>
+  <data name="CleanupShaderCacheDesc" xml:space="preserve">
+    <value>Shader compilati che il driver grafico conserva. Vengono ricreati quando ne ha bisogno un gioco o un'app.</value>
+  </data>
+  <data name="CleanupPackageCache" xml:space="preserve">
+    <value>Cache del gestore di pacchetti</value>
+  </data>
+  <data name="CleanupPackageCacheDesc" xml:space="preserve">
+    <value>Download che pip, npm, Yarn, NuGet e Chocolatey conservano per le reinstallazioni. I pacchetti installati restano invariati.</value>
+  </data>
+  <data name="CleanupBuildCache" xml:space="preserve">
+    <value>Cache degli strumenti di compilazione</value>
+  </data>
+  <data name="CleanupBuildCacheDesc" xml:space="preserve">
+    <value>La cache di compilazione di Gradle e la cache di download di Android SDK, ricreate alla compilazione successiva.</value>
+  </data>
+  <data name="CleanupAppCacheSweep" xml:space="preserve">
+    <value>Cache e registri di altre app</value>
+  </data>
+  <data name="CleanupAppCacheSweepDesc" xml:space="preserve">
+    <value>Trova cartelle di cache e registri per i programmi non elencati singolarmente sopra, in base a modelli tipici di cartelle anziché a un elenco fisso. Non include mai documenti o impostazioni personali. Disattivato per impostazione predefinita; verifica ciò che trova prima di attivarlo.</value>
+  </data>
+  <data name="CleanupLeftoverWarning" xml:space="preserve">
+    <value>Tutti i dati di questo software verranno eliminati!</value>
+  </data>
+  <data name="CleanupLeftoverLastUsed" xml:space="preserve">
+    <value>Ultima modifica {0}</value>
+  </data>
+  <data name="CleanupEntryDateRange" xml:space="preserve">
+    <value>{0} - {1}</value>
+  </data>
+  <data name="CleanupMoreEntries" xml:space="preserve">
+    <value>…e altri {0} ({1})</value>
+  </data>
+  <data name="CleanupMoreEntriesNotCleaned" xml:space="preserve">
+    <value>…e altri {0} ({1}), nascosti e non rimossi finché le righe su questa unità non sono selezionate</value>
+  </data>
+  <data name="CleanupEntryDeleted" xml:space="preserve">
+    <value>Eliminato il {0}</value>
+  </data>
+  <data name="CleanupShowDetails" xml:space="preserve">
+    <value>Dettagli ({0})</value>
+  </data>
+  <data name="CleanupEntryOpenFolder" xml:space="preserve">
+    <value>Apri cartella</value>
+  </data>
+  <data name="CleanupEntryCopyPath" xml:space="preserve">
+    <value>Copia percorso</value>
+  </data>
+  <data name="CleanupEntryPermanentlyExclude" xml:space="preserve">
+    <value>Escludi permanentemente</value>
+  </data>
+  <data name="CleanupEntriesSelectAll" xml:space="preserve">
+    <value>Seleziona tutti i file</value>
+  </data>
+  <data name="CleanupUserTempConsequence" xml:space="preserve">
+    <value>I programmi che usavano un file temporaneo lo ricreeranno la prossima volta che ne avranno bisogno.</value>
+  </data>
+  <data name="CleanupAllUsersTempConsequence" xml:space="preserve">
+    <value>Come la cartella temporanea dell'utente corrente, ma per gli altri account su questo PC.</value>
+  </data>
+  <data name="CleanupWindowsTempConsequence" xml:space="preserve">
+    <value>Windows ricrea ciò di cui ha ancora bisogno la prossima volta che gli serve.</value>
+  </data>
+  <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
+    <value>Windows Update scarica semplicemente di nuovo i file se ne ha bisogno.</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
+    <value>È solo una cache per condividere gli aggiornamenti con altri PC nella rete. Non viene usata per altro.</value>
+  </data>
+  <data name="CleanupThumbnailsConsequence" xml:space="preserve">
+    <value>Explorer ridisegna le miniature la prossima volta che si apre quella cartella.</value>
+  </data>
+  <data name="CleanupCrashDumpsConsequence" xml:space="preserve">
+    <value>Utili solo per indagare su un arresto anomalo già avvenuto. Al momento non servono a nulla.</value>
+  </data>
+  <data name="CleanupShaderCacheConsequence" xml:space="preserve">
+    <value>Il driver grafico la ricostruisce. Il prossimo avvio di un gioco o di un'app interessata sarà leggermente più lento, una sola volta.</value>
+  </data>
+  <data name="CleanupPackageCacheConsequence" xml:space="preserve">
+    <value>La prossima installazione o il prossimo aggiornamento scaricherà semplicemente di nuovo il pacchetto.</value>
+  </data>
+  <data name="CleanupBuildCacheConsequence" xml:space="preserve">
+    <value>La prossima compilazione sarà leggermente più lenta mentre la cache si riempie di nuovo.</value>
+  </data>
+  <data name="CleanupAppCacheSweepConsequence" xml:space="preserve">
+    <value>Copre molti programmi in una volta in base a uno schema anziché al nome, quindi prima della pulizia conviene controllare rapidamente cosa ha trovato.</value>
+  </data>
+  <data name="CleanupMemoryDumpsConsequence" xml:space="preserve">
+    <value>Non sarà più possibile indagare su un arresto anomalo già avvenuto, se fosse ancora necessario.</value>
+  </data>
+  <data name="CleanupWindowsLogsConsequence" xml:space="preserve">
+    <value>Sono proprio i file necessari per diagnosticare un aggiornamento non riuscito, quindi conservarli se si sta ancora risolvendo il problema.</value>
+  </data>
+  <data name="CleanupRecycleBinConsequence" xml:space="preserve">
+    <value>I file al suo interno non potranno più essere ripristinati in seguito.</value>
+  </data>
+  <data name="CleanupDiskCleanupConsequence" xml:space="preserve">
+    <value>Esegue la pulizia integrata di Windows con la sua selezione standard verificata e nient'altro.</value>
+  </data>
+  <data name="CleanupSystemRepairDismConsequence" xml:space="preserve">
+    <value>Può richiedere molto tempo e ripara i file di sistema sul posto, quindi è meglio lasciarlo terminare una volta avviato.</value>
+  </data>
+  <data name="CleanupSystemRepairSfcConsequence" xml:space="preserve">
+    <value>Ripara i file di sistema sul posto, di solito rapidamente, ed è meglio lasciarlo terminare una volta avviato.</value>
+  </data>
+  <data name="CleanupRegistryOrphansConsequence" xml:space="preserve">
+    <value>Rimuove collegamenti App Paths non funzionanti, conteggi di riferimento Shared DLLs, registrazioni ActiveX/COM e voci di avvio automatico; viene fatto prima un backup e nulla di ancora funzionante viene toccato.</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesConsequence" xml:space="preserve">
+    <value>Rimuove dall'elenco Programmi e funzionalità una voce il cui programma non è più presente; viene prima creata una copia di sicurezza.</value>
+  </data>
+  <data name="CleanupRegistryBackupNote" xml:space="preserve">
+    <value>Ogni modifica al registro viene esportata prima. Backup: {0}, conservandone {1}.</value>
+  </data>
+  <data name="CleanupRiskSafe" xml:space="preserve">
+    <value>Sicuro</value>
+  </data>
+  <data name="CleanupRiskConsidered" xml:space="preserve">
+    <value>Moderato</value>
+  </data>
+  <data name="CleanupRiskRisky" xml:space="preserve">
+    <value>Rischioso</value>
+  </data>
+  <data name="CleanupShowAllCategories" xml:space="preserve">
+    <value>Mostra tutte le aree ({0} nascoste)</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDelete" xml:space="preserve">
+    <value>Sposta nel Cestino invece di eliminare</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
+    <value>Lo spazio viene liberato quando svuoti il cestino.</value>
+  </data>
+  <data name="CleanupMemoryDumps" xml:space="preserve">
+    <value>Dump di arresto anomalo (sistema)</value>
+  </data>
+  <data name="CleanupMemoryDumpsDesc" xml:space="preserve">
+    <value>Dump della memoria che Windows scrive dopo una schermata blu. Utili solo durante l'indagine su una di esse.</value>
+  </data>
+  <data name="CleanupWindowsLogs" xml:space="preserve">
+    <value>File di registro di Windows</value>
+  </data>
+  <data name="CleanupWindowsLogsDesc" xml:space="preserve">
+    <value>Registri di Windows per aggiornamenti, manutenzione e configurazione. Vengono ricreati automaticamente; conservarli durante la diagnosi di un aggiornamento non riuscito.</value>
+  </data>
+  <data name="InstallErrorVs8001What" xml:space="preserve">
+    <value>Visual Studio Setup ha segnalato un errore nel controllo del computer ARM (errore 8001).</value>
+  </data>
+  <data name="InstallErrorVs8002What" xml:space="preserve">
+    <value>Il controllo preliminare del download in background di Visual Studio Setup non è riuscito (errore 8002).</value>
+  </data>
+  <data name="InstallErrorVs8003What" xml:space="preserve">
+    <value>Visual Studio Setup ha segnalato un errore relativo a un componente non più supportato (errore 8003).</value>
+  </data>
+  <data name="InstallErrorVs8004What" xml:space="preserve">
+    <value>Visual Studio Setup non ha potuto usare la directory di installazione di destinazione (errore 8004).</value>
+  </data>
+  <data name="InstallErrorVs8005What" xml:space="preserve">
+    <value>Visual Studio Setup non ha potuto verificare i payload di origine (errore 8005).</value>
+  </data>
+  <data name="InstallErrorVsGenericNow" xml:space="preserve">
+    <value>Il registro di installazione di Visual Studio contiene maggiori dettagli; riprovare oppure reinstallare Visual Studio Installer se continua a succedere.</value>
+  </data>
+  <data name="InstallErrorVs8006What" xml:space="preserve">
+    <value>Visual Studio Setup non ha potuto continuare perché Visual Studio, o uno dei suoi componenti, è ancora in esecuzione (errore 8006).</value>
+  </data>
+  <data name="InstallErrorVs8006Now" xml:space="preserve">
+    <value>Chiudere Visual Studio e i processi correlati, quindi riprovare. Questa app può farlo prima del prossimo tentativo.</value>
+  </data>
+  <data name="InstallErrorMsi1602What" xml:space="preserve">
+    <value>L'installazione è stata annullata (errore del programma di installazione 1602).</value>
+  </data>
+  <data name="InstallErrorMsi1602Now" xml:space="preserve">
+    <value>Eseguire di nuovo l'aggiornamento quando si è pronti; l'annullamento era probabilmente intenzionale.</value>
+  </data>
+  <data name="InstallErrorMsi1603What" xml:space="preserve">
+    <value>Il programma di installazione ha segnalato un errore irreversibile (errore del programma di installazione 1603).</value>
+  </data>
+  <data name="InstallErrorMsi1603Now" xml:space="preserve">
+    <value>Controllare il registro del programma di installazione o provare a installarlo manualmente.</value>
+  </data>
+  <data name="InstallErrorMsi1618What" xml:space="preserve">
+    <value>Era in corso un'altra installazione nello stesso momento, quindi Windows ha rifiutato questa.</value>
+  </data>
+  <data name="InstallErrorMsi1618Now" xml:space="preserve">
+    <value>È stata riprovata automaticamente al termine delle altre installazioni.</value>
+  </data>
+  <data name="InstallErrorMsi1619What" xml:space="preserve">
+    <value>Non è stato possibile leggere il pacchetto di installazione (errore del programma di installazione 1619/1620).</value>
+  </data>
+  <data name="InstallErrorMsi1619Now" xml:space="preserve">
+    <value>Scaricare di nuovo il pacchetto o reinstallare da zero di solito risolve il problema.</value>
+  </data>
+  <data name="InstallErrorMsi1638What" xml:space="preserve">
+    <value>È già installata un'altra versione di questo programma (errore del programma di installazione 1638).</value>
+  </data>
+  <data name="InstallErrorMsi1638Now" xml:space="preserve">
+    <value>Rimuovere prima la versione esistente oppure usare il suo programma di aggiornamento.</value>
+  </data>
+  <data name="InstallErrorRebootWhat" xml:space="preserve">
+    <value>Il programma di installazione richiede un riavvio per terminare (codice 1641/3010).</value>
+  </data>
+  <data name="InstallErrorRebootNow" xml:space="preserve">
+    <value>Riavviare Windows. L'aggiornamento è già stato eseguito.</value>
+  </data>
+  <data name="InstallErrorCrashWhat" xml:space="preserve">
+    <value>Il programma di installazione del fornitore si è arrestato in modo anomalo, un arresto a livello di Windows, non un errore ordinario.</value>
+  </data>
+  <data name="InstallErrorCrashNow" xml:space="preserve">
+    <value>Di solito il pacchetto può essere installato manualmente con il programma di installazione del fornitore.</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableWhat" xml:space="preserve">
+    <value>winget non dispone di una versione di questo pacchetto adatta a questa installazione (nessun aggiornamento applicabile).</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableNow" xml:space="preserve">
+    <value>Non è stato modificato nulla; la versione proposta da questa app non è applicabile qui.</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeWhat" xml:space="preserve">
+    <value>winget non ha potuto agire su questo pacchetto da un contesto di amministratore (installazione nell'ambito dell'utente).</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeNow" xml:space="preserve">
+    <value>Questa app ha già riprovato senza diritti di amministratore; se anche questo non è riuscito, il messaggio sopra indica il vero motivo.</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechWhat" xml:space="preserve">
+    <value>La nuova versione si installa in un modo diverso da quella installata.</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechNow" xml:space="preserve">
+    <value>Disinstallare il programma, quindi installarlo di nuovo.</value>
+  </data>
+  <data name="InstallErrorGenericWhat" xml:space="preserve">
+    <value>Il programma di installazione del fornitore non è riuscito con il proprio codice di errore {0}.</value>
+  </data>
+  <data name="InstallErrorGenericNow" xml:space="preserve">
+    <value>Consultare l'output non elaborato qui sotto per vedere cosa ha segnalato.</value>
+  </data>
+  <data name="InstallErrorWuBusyWhat" xml:space="preserve">
+    <value>Windows Update è attualmente occupato con un'altra attività.</value>
+  </data>
+  <data name="InstallErrorWuBusyNow" xml:space="preserve">
+    <value>Attendere un momento e riprovare.</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingWhat" xml:space="preserve">
+    <value>È ancora necessario un riavvio prima di poter installare questo aggiornamento.</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingNow" xml:space="preserve">
+    <value>Riavviare Windows, quindi riprovare.</value>
+  </data>
+  <data name="InstallErrorWuNotStartedWhat" xml:space="preserve">
+    <value>Windows Update non ha mai effettivamente avviato questa installazione.</value>
+  </data>
+  <data name="InstallErrorWuNotStartedNow" xml:space="preserve">
+    <value>Non è stato modificato nulla; riprovare può essere utile.</value>
+  </data>
+  <data name="InstallErrorWuInProgressWhat" xml:space="preserve">
+    <value>Windows Update segnala ancora questa installazione come in esecuzione.</value>
+  </data>
+  <data name="InstallErrorWuInProgressNow" xml:space="preserve">
+    <value>Attendere un momento, quindi verificare se l'aggiornamento è terminato.</value>
+  </data>
+  <data name="InstallErrorWuFailedWhat" xml:space="preserve">
+    <value>Windows Update ha segnalato che questa installazione non è riuscita.</value>
+  </data>
+  <data name="InstallErrorWuFailedNow" xml:space="preserve">
+    <value>La causa esatta è di solito nel valore HRESULT qui sotto; riprovare spesso aiuta.</value>
+  </data>
+  <data name="InstallErrorWuAbortedWhat" xml:space="preserve">
+    <value>Windows Update ha interrotto questa installazione.</value>
+  </data>
+  <data name="InstallErrorWuAbortedNow" xml:space="preserve">
+    <value>Riprovare di solito aiuta; se continua a interrompersi, lo strumento di risoluzione dei problemi di Windows Update può aiutare ulteriormente.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016What" xml:space="preserve">
+    <value>È già in esecuzione un'altra installazione oppure è ancora necessario un riavvio.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016Now" xml:space="preserve">
+    <value>Attendere un momento, quindi riprovare.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044What" xml:space="preserve">
+    <value>Questa installazione richiede diritti di amministratore.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044Now" xml:space="preserve">
+    <value>Questa app installa già gli aggiornamenti di Windows con diritti elevati; se l'errore persiste, riavviare Windows può aiutare.</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422What" xml:space="preserve">
+    <value>Il servizio Windows Update è disabilitato.</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422Now" xml:space="preserve">
+    <value>Avviare il servizio &quot;Windows Update&quot; (services.msc), quindi riprovare.</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DWhat" xml:space="preserve">
+    <value>Questo aggiornamento richiede supporti di installazione.</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DNow" xml:space="preserve">
+    <value>Fornire i supporti di installazione corrispondenti oppure controllare l'origine di Windows Update.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022What" xml:space="preserve">
+    <value>Tutti gli aggiornamenti in questa esecuzione dell'installazione non sono riusciti.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
+    <value>Riprovare più tardi di solito aiuta.</value>
+  </data>
+  <data name="InstallErrorWuInternalWhat" xml:space="preserve">
+    <value>Il servizio di Windows Update non ha risposto nel modo previsto da questa app.</value>
+  </data>
+  <data name="InstallErrorWuInternalNow" xml:space="preserve">
+    <value>Riprovare. Se continua a non riuscire, il riavvio del PC di solito risolve il problema.</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedWhat" xml:space="preserve">
+    <value>Windows Update non offre più questo aggiornamento. Potrebbe essere già installato, sostituito da uno più recente oppure in attesa che venga installato prima un altro aggiornamento.</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedNow" xml:space="preserve">
+    <value>L'elenco è stato aggiornato automaticamente. Se la riga è ancora presente, avviare di nuovo l'installazione.</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedWhat" xml:space="preserve">
+    <value>Questa app ha rifiutato di eseguire il pacchetto o il nome del modello così com'è: non è un identificatore semplice e potrebbe essere interpretato come opzione di comando.</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedNow" xml:space="preserve">
+    <value>Questo è un controllo di sicurezza, non un errore del pacchetto stesso; riprovare non lo cambierà.</value>
+  </data>
+  <data name="InstallErrorMissingTargetWhat" xml:space="preserve">
+    <value>La riga ha perso il riferimento alla versione da installare prima che l'installazione potesse iniziare.</value>
+  </data>
+  <data name="InstallErrorMissingTargetNow" xml:space="preserve">
+    <value>Eseguire di nuovo la scansione e riprovare; l'elenco delle versioni viene aggiornato a ogni scansione.</value>
+  </data>
+  <data name="InstallErrorPipRepairedWhat" xml:space="preserve">
+    <value>L'installazione di pip era danneggiata; questa app l'ha riparata automaticamente.</value>
+  </data>
+  <data name="InstallErrorPipRepairedNow" xml:space="preserve">
+    <value>Installare di nuovo questo pacchetto ora; pip funziona di nuovo.</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedWhat" xml:space="preserve">
+    <value>Non è stato possibile verificare la firma del programma di installazione NVIDIA scaricato, quindi questa app ha rifiutato di eseguirlo.</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedNow" xml:space="preserve">
+    <value>Scaricare invece il driver direttamente dalla pagina di NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainWhat" xml:space="preserve">
+    <value>Il download è stato reindirizzato al di fuori del dominio di NVIDIA, quindi questa app ha rifiutato di seguirlo.</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainNow" xml:space="preserve">
+    <value>Scaricare invece il driver direttamente dalla pagina di NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitWhat" xml:space="preserve">
+    <value>Il download era più grande di quanto questa app consenta per un programma di installazione del driver, quindi è stato interrotto.</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitNow" xml:space="preserve">
+    <value>Scaricare invece il driver direttamente dalla pagina di NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedWhat" xml:space="preserve">
+    <value>La richiesta di autorizzazione Windows per il programma di installazione NVIDIA è stata chiusa o rifiutata.</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedNow" xml:space="preserve">
+    <value>Riprovare e accettare la richiesta questa volta.</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartWhat" xml:space="preserve">
+    <value>Non è stato possibile avviare il programma di installazione NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartNow" xml:space="preserve">
+    <value>Riprovare; se continua a succedere, installare il driver direttamente dalla pagina di NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningWhat" xml:space="preserve">
+    <value>Il programma di installazione NVIDIA era ancora in esecuzione quando questa app ha smesso di attenderlo.</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningNow" xml:space="preserve">
+    <value>Controllare la finestra del programma di installazione NVIDIA oppure l'elenco delle app installate di Windows per verificare se è realmente terminato.</value>
+  </data>
+  <data name="InstallErrorTimeoutWhat" xml:space="preserve">
+    <value>Lo strumento non ha terminato entro il tempo consentito da questa app.</value>
+  </data>
+  <data name="InstallErrorTimeoutNow" xml:space="preserve">
+    <value>Riprovare; una connessione lenta o un computer occupato sono la causa abituale.</value>
+  </data>
+  <data name="RetryInteractiveHeader" xml:space="preserve">
+    <value>Riprova interattivamente</value>
+  </data>
+  <data name="RowRunningInteractive" xml:space="preserve">
+    <value>in esecuzione interattiva…</value>
+  </data>
+  <data name="InstallBlockersLine" xml:space="preserve">
+    <value>{0} è bloccato da: {1}</value>
+  </data>
+  <data name="InstallBlockerCloseAndContinue" xml:space="preserve">
+    <value>Chiudi programma e continua</value>
+  </data>
+  <data name="InstallBlockerSkip" xml:space="preserve">
+    <value>Salta i bloccati</value>
+  </data>
+  <data name="InstallBlockerTryAnyway" xml:space="preserve">
+    <value>Prova comunque</value>
+  </data>
+  <data name="InstallBlockerForceKillHeadline" xml:space="preserve">
+    <value>Forzare la chiusura?</value>
+  </data>
+  <data name="InstallBlockerForceKillBody" xml:space="preserve">
+    <value>Il lavoro non salvato andrà perso.</value>
+  </data>
+  <data name="InstallBlockerAutoSkipped" xml:space="preserve">
+    <value>{0} è ancora in esecuzione, quindi è stato ignorato automaticamente (senza supervisione).</value>
+  </data>
+  <data name="PreflightTitle" xml:space="preserve">
+    <value>Prima di aggiornare</value>
+  </data>
+  <data name="PreflightStart" xml:space="preserve">
+    <value>Avvia</value>
+  </data>
+  <data name="PreflightCancel" xml:space="preserve">
+    <value>Annulla</value>
+  </data>
+  <data name="InstallSpaceShort" xml:space="preserve">
+    <value>Solo {0} liberi, ne servono circa {1}.</value>
+  </data>
+  <data name="InstallSpaceUnknown" xml:space="preserve">
+    <value>{0} pacchetti non segnalano una dimensione.</value>
+  </data>
+  <data name="InstallSpaceOpenCleanup" xml:space="preserve">
+    <value>Apri pulizia</value>
+  </data>
+  <data name="SettingsMeteredTitle" xml:space="preserve">
+    <value>Non eseguire scansioni automatiche su una connessione a consumo</value>
+  </data>
+  <data name="InstallMeteredWarn" xml:space="preserve">
+    <value>Connessione a consumo: verranno scaricati circa {0}.</value>
+  </data>
+  <data name="InstallBatteryWarn" xml:space="preserve">
+    <value>Batteria al {0} per cento e non collegata alla corrente.</value>
+  </data>
+  <data name="RebootDialogTitle" xml:space="preserve">
+    <value>Riavvio necessario</value>
+  </data>
+  <data name="RebootDialogBody" xml:space="preserve">
+    <value>Questi pacchetti hanno richiesto un riavvio:</value>
+  </data>
+  <data name="RebootDialogNow" xml:space="preserve">
+    <value>Riavvia ora</value>
+  </data>
+  <data name="RebootDialogLater" xml:space="preserve">
+    <value>Più tardi</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>Informazioni</value>
+  </data>
+  <data name="AboutTagline" xml:space="preserve">
+    <value>Un unico posto per ogni aggiornamento in attesa su questo PC.</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>Versione {0}</value>
+  </data>
+  <data name="AboutLicence" xml:space="preserve">
+    <value>Licenza MIT</value>
+  </data>
+  <data name="AboutRepository" xml:space="preserve">
+    <value>Pagina del progetto su GitHub</value>
+  </data>
+  <data name="AboutThirdParty" xml:space="preserve">
+    <value>Ogni aggiornamento proviene dalla propria fonte ed è installato dal meccanismo di quella fonte. Questa applicazione non ospita, controlla o modifica alcun pacchetto.</value>
+  </data>
+  <data name="AboutIcons" xml:space="preserve">
+    <value>Loghi dei marchi forniti da Simple Icons (CC0). Tutti i marchi registrati appartengono ai rispettivi proprietari.</value>
+  </data>
+  <data name="AboutTrademarks" xml:space="preserve">
+    <value>Non affiliata, approvata o sponsorizzata da Microsoft, NVIDIA, AMD, Intel, Dell, Lenovo, HP, Valve, Epic Games o qualsiasi altro fornitore mostrato da questa app.</value>
+  </data>
+  <data name="WingetBootstrapConfirmHeadline" xml:space="preserve">
+    <value>winget non è stato trovato</value>
+  </data>
+  <data name="WingetBootstrapConfirmBody" xml:space="preserve">
+    <value>Installarlo ora? Proviene direttamente dal pacchetto App Installer di Microsoft ed è verificato prima di essere eseguito.</value>
+  </data>
+  <data name="WingetBootstrapInstall" xml:space="preserve">
+    <value>Installa winget</value>
+  </data>
+  <data name="ColumnsButton" xml:space="preserve">
+    <value>Colonne</value>
+  </data>
+  <data name="ColumnsReset" xml:space="preserve">
+    <value>Ripristina colonne</value>
+  </data>
+  <data name="ColumnPublisher" xml:space="preserve">
+    <value>Editore</value>
+  </data>
+  <data name="ScanCachedAge" xml:space="preserve">
+    <value>Risultato di {0}, nuova verifica in corso</value>
+  </data>
+  <data name="ScanSourceTooSlow" xml:space="preserve">
+    <value>Nessuna risposta da {0} secondi</value>
+  </data>
+  <data name="ScanOfflineBanner" xml:space="preserve">
+    <value>Nessuna connessione a internet. Sono state controllate solo le fonti locali.</value>
+  </data>
+  <data name="ScanNoConnectionBanner" xml:space="preserve">
+    <value>Nessuna connessione a internet: tutte le fonti online sono fallite. Controlla il firewall o la rete.</value>
+  </data>
+  <data name="ScanOfflineSource" xml:space="preserve">
+    <value>Nessuna connessione</value>
+  </data>
+  <data name="NetProxyRefused" xml:space="preserve">
+    <value>Il proxy ha rifiutato la connessione ({0}).</value>
+  </data>
+  <data name="PipInterpreterTooltip" xml:space="preserve">
+    <value>Interprete Python: {0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
+    <value>+~{0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
+    <value>Liberato dalla Pulizia disco di Windows. Approssimativo, perché è stata eseguita insieme alle altre attività.</value>
+  </data>
+  <data name="CleanupDefaultSelection" xml:space="preserve">
+    <value>Selezione predefinita</value>
+  </data>
+  <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
+    <value>Seleziona solo gli elementi sicuri, gli stessi selezionati per impostazione predefinita.</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
+    <value>Analisi in corso…</value>
+  </data>
+  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
+    <value>Windows non ha risposto in tempo. L'analisi è stata interrotta.</value>
+  </data>
+  <data name="CleanupPipLeftovers" xml:space="preserve">
+    <value>Residui di installazioni pip interrotte</value>
+  </data>
+  <data name="CleanupPipLeftoversDesc" xml:space="preserve">
+    <value>Cartelle che pip lascia quando un'installazione viene interrotta; pip avvisa ad ogni esecuzione.</value>
+  </data>
+  <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
+    <value>pip non avvisa più; nessun altro programma su questo computer usa queste cartelle.</value>
+  </data>
+  <data name="CleanupOldPythonVersions" xml:space="preserve">
+    <value>Versioni precedenti di Python</value>
+  </data>
+  <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
+    <value>Installazioni di Python sostituite da una versione più recente dello stesso tipo (32 o 64 bit).</value>
+  </data>
+  <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
+    <value>I programmi e gli script che usano ancora questa versione smetteranno di funzionare. I suoi pacchetti installati vengono rimossi insieme ad essa.</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
+    <value>{0} ({1} pacchetti)</value>
+  </data>
+  <data name="CleanupDriverInstalledDate" xml:space="preserve">
+    <value>Installato il {0}</value>
+  </data>
+  <data name="CleanupDriverProviderLabel" xml:space="preserve">
+    <value>Fornitore</value>
+  </data>
+  <data name="CleanupDriverClassLabel" xml:space="preserve">
+    <value>Classe</value>
+  </data>
+  <data name="CleanupDriverInfFileLabel" xml:space="preserve">
+    <value>File INF</value>
+  </data>
+  <data name="CleanupDriverOriginalNameLabel" xml:space="preserve">
+    <value>Nome originale</value>
+  </data>
+  <data name="CleanupDriverStorePathLabel" xml:space="preserve">
+    <value>Percorso archivio driver</value>
+  </data>
+  <data name="CleanupDriverInstalledNow" xml:space="preserve">
+    <value>Attualmente installato: versione {0}, {1}</value>
+  </data>
+  <data name="CleanupDriverVersionDate" xml:space="preserve">
+    <value>Versione {0}, {1}</value>
+  </data>
+  <data name="CleanupCatalogLoadFailed" xml:space="preserve">
+    <value>Impossibile caricare l'elenco di pulizia. Chiudi e riapri questa finestra. I dettagli si trovano nella cartella dei log.</value>
+  </data>
+  <data name="NetPurposeSelfUpdate" xml:space="preserve">
+    <value>Aggiornamento automatico (JSON della release, SHA256SUMS, file) e dati delle release di altri repository</value>
+  </data>
+  <data name="NetPurposeChangelog" xml:space="preserve">
+    <value>Testo del registro delle modifiche al clic</value>
+  </data>
+  <data name="NetPurposeNvidia" xml:space="preserve">
+    <value>Tabella dei prodotti GPU, ricerca e download dei driver</value>
+  </data>
+  <data name="NetPurposePackageMeta" xml:space="preserve">
+    <value>Metadati dei pacchetti (ultima versione, dimensione, data) per arricchire le righe</value>
+  </data>
+  <data name="NetPurposeSdkMeta" xml:space="preserve">
+    <value>Manifest dell'SDK Android, release di Flutter, metadati delle estensioni di VS Code</value>
+  </data>
+  <data name="NetPurposeSteam" xml:space="preserve">
+    <value>Note della patch (la richiesta contiene solo l'ID dell'app)</value>
+  </data>
+  <data name="NetPurposeOllamaRemote" xml:space="preserve">
+    <value>Digest remoto di un modello (solo modelli della libreria)</value>
+  </data>
+  <data name="NetPurposeOllamaLocal" xml:space="preserve">
+    <value>Elenco locale dei modelli Ollama, l'unico indirizzo http:// non cifrato, solo loopback</value>
+  </data>
+  <data name="FilterShowIgnored" xml:space="preserve">
+    <value>Mostra ignorati</value>
+  </data>
+  <data name="FilterButton" xml:space="preserve">
+    <value>Filtra</value>
+  </data>
+  <data name="FilterButtonActive" xml:space="preserve">
+    <value>Filtra ({0})</value>
+  </data>
+  <data name="ToolbarCleanupLabel" xml:space="preserve">
+    <value>Pulisci</value>
+  </data>
+  <data name="ScanStateError" xml:space="preserve">
+    <value>Errore</value>
+  </data>
+  <data name="AboutPortable" xml:space="preserve">
+    <value>Modalità portatile: impostazioni e dati si trovano accanto al programma.</value>
+  </data>
+  <data name="SortByTooltip" xml:space="preserve">
+    <value>Ordina per {0}</value>
+  </data>
+  <data name="InstallBlockerSkippedStillOpen" xml:space="preserve">
+    <value>Saltato, {0} è ancora aperto</value>
+  </data>
+  <data name="CleanupHeaderSelection" xml:space="preserve">
+    <value>Selezione</value>
+  </data>
+  <data name="CleanupHeaderDrive" xml:space="preserve">
+    <value>Unità {0}</value>
+  </data>
+  <data name="SettingsAutoScanTitle" xml:space="preserve">
+    <value>Scansioni automatiche</value>
+  </data>
+  <data name="HistoryRolledBack" xml:space="preserve">
+    <value>Ripristinato</value>
+  </data>
+  <data name="HistoryUninstalled" xml:space="preserve">
+    <value>Disinstallato</value>
+  </data>
+  <data name="SelfUpdateBusyHint" xml:space="preserve">
+    <value>Disponibile al termine degli aggiornamenti in corso e della pulizia.</value>
+  </data>
+  <data name="SelfUpdateDownloadFailed" xml:space="preserve">
+    <value>Impossibile scaricare l'aggiornamento. Controlla la connessione e riprova.</value>
+  </data>
+  <data name="SelfUpdateApplyFailed" xml:space="preserve">
+    <value>Impossibile installare l'aggiornamento. I dettagli si trovano nella cartella dei log.</value>
+  </data>
+  <data name="SelfUpdateApplyingNoInstall" xml:space="preserve">
+    <value>L'app si riavvia per completare il proprio aggiornamento. Avvia di nuovo questi aggiornamenti dopo il riavvio.</value>
+  </data>
+  <data name="SettingsCheckFailed" xml:space="preserve">
+    <value>Impossibile cercare aggiornamenti. Controlla la connessione.</value>
+  </data>
+  <data name="RetryBlockedByActivity" xml:space="preserve">
+    <value>Impossibile riprovare ora: è in corso un'installazione. Riprova al termine.</value>
+  </data>
+  <data name="ErrorDetailCopyFailed" xml:space="preserve">
+    <value>Impossibile copiare. Il report è salvato nella cartella dei report.</value>
+  </data>
+  <data name="SettingsBrowseFolder" xml:space="preserve">
+    <value>Scegli cartella</value>
+  </data>
+  <data name="SettingsRegistryBackupOutsideProfile" xml:space="preserve">
+    <value>La cartella di backup deve trovarsi nel tuo profilo utente. Scegli un'altra cartella.</value>
+  </data>
+  <data name="CleanupConfirmHeadlineRecycle" xml:space="preserve">
+    <value>Pulire {0}?</value>
+  </data>
+  <data name="CleanupConfirmWarningRecycle" xml:space="preserve">
+    <value>I file vanno nel Cestino e possono essere ripristinati finché non viene svuotato. Le voci del registro, i driver e le riparazioni non possono essere annullati.</value>
+  </data>
+  <data name="HeadlineNotChecked" xml:space="preserve">
+    <value>Non ancora controllato</value>
+  </data>
+  <data name="EmptyStateNotChecked" xml:space="preserve">
+    <value>Cerca aggiornamenti per vedere le novità.</value>
+  </data>
+  <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
+    <value>Mostrare di nuovo tutti i {0} aggiornamenti ignorati?</value>
+  </data>
+  <data name="IgnoreListRemoveAllBody" xml:space="preserve">
+    <value>Torneranno nell'elenco degli aggiornamenti alla prossima ricerca.</value>
+  </data>
+  <data name="HeadlineNoSourceChecked" xml:space="preserve">
+    <value>Impossibile controllare alcuna fonte</value>
+  </data>
+  <data name="InstallErrorAndroidLockedWhat" xml:space="preserve">
+    <value>Alcuni file di questo pacchetto sono in uso, di solito da un emulatore in esecuzione o da Android Studio.</value>
+  </data>
+  <data name="InstallErrorAndroidLockedNow" xml:space="preserve">
+    <value>Chiudi l'emulatore e Android Studio, poi esegui di nuovo l'aggiornamento.</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallWhat" xml:space="preserve">
+    <value>L'aggiornamento deve prima rimuovere la versione precedente, ma quella versione non ha registrato alcun comando di disinstallazione.</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallNow" xml:space="preserve">
+    <value>Disinstalla la versione precedente nelle Impostazioni di Windows, sotto App, poi esegui di nuovo l'aggiornamento.</value>
+  </data>
+  <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
+    <value>La Pulizia disco ha impiegato più di {0} minuti ed è stata terminata.</value>
+  </data>
+  <data name="SelfUpdateWaitingForWork" xml:space="preserve">
+    <value>L'aggiornamento verrà installato al termine del lavoro in corso.</value>
+  </data>
+  <data name="CleanupProtectedFiles" xml:space="preserve">
+    <value>{0} file non erano accessibili e sono stati ignorati.</value>
+  </data>
+  <data name="CleanupProtectedFilesOne" xml:space="preserve">
+    <value>{0} file non era accessibile ed è stato ignorato.</value>
+  </data>
+  <data name="CleanupProtectedFilesSize" xml:space="preserve">
+    <value>{0} file ({1}) non erano accessibili e sono stati ignorati.</value>
+  </data>
+  <data name="CleanupProtectedFilesSizeOne" xml:space="preserve">
+    <value>{0} file ({1}) non era accessibile ed è stato ignorato.</value>
+  </data>
+  <data name="CleanupProtected" xml:space="preserve">
+    <value>{0} senza accesso</value>
+  </data>
+</root>

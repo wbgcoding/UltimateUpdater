@@ -1,0 +1,2188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Ultimate Updater</value>
+  </data>
+  <data name="DialogOk" xml:space="preserve">
+    <value>Tamam</value>
+  </data>
+  <data name="DialogYes" xml:space="preserve">
+    <value>Evet</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>İptal</value>
+  </data>
+  <data name="LanguageLabel" xml:space="preserve">
+    <value>Dil</value>
+  </data>
+  <data name="LanguageOptionSystem" xml:space="preserve">
+    <value>Sistem</value>
+  </data>
+  <data name="ThemeLabel" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="ThemeOptionSystem" xml:space="preserve">
+    <value>Sistem</value>
+  </data>
+  <data name="ThemeOptionLight" xml:space="preserve">
+    <value>Açık</value>
+  </data>
+  <data name="ThemeOptionDark" xml:space="preserve">
+    <value>Koyu</value>
+  </data>
+  <data name="ScanButton" xml:space="preserve">
+    <value>Güncellemeleri denetle</value>
+  </data>
+  <data name="ScanningButton" xml:space="preserve">
+    <value>Taranıyor…</value>
+  </data>
+  <data name="ColumnName" xml:space="preserve">
+    <value>Ad</value>
+  </data>
+  <data name="ColumnSource" xml:space="preserve">
+    <value>Kaynak</value>
+  </data>
+  <data name="SelectAllButton" xml:space="preserve">
+    <value>Tümünü seç</value>
+  </data>
+  <data name="SelectAllClear" xml:space="preserve">
+    <value>Seçimi temizle</value>
+  </data>
+  <data name="InstallSelectedButton" xml:space="preserve">
+    <value>Seçilenleri güncelle</value>
+  </data>
+  <data name="InstallButton" xml:space="preserve">
+    <value>Güncelle</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>İptal</value>
+  </data>
+  <data name="SelectionSummary" xml:space="preserve">
+    <value>{0} seçildi</value>
+  </data>
+  <data name="SelectionSummaryWithCritical" xml:space="preserve">
+    <value>{0} seçildi ({1} kritik)</value>
+  </data>
+  <data name="OpenButton" xml:space="preserve">
+    <value>Aç</value>
+  </data>
+  <data name="ContextMenuOpenWebsite" xml:space="preserve">
+    <value>Web sitesini aç</value>
+  </data>
+  <data name="OpenFolderButton" xml:space="preserve">
+    <value>Klasörü aç</value>
+  </data>
+  <data name="CategorySoftware" xml:space="preserve">
+    <value>Yazılım</value>
+  </data>
+  <data name="CategorySystemAndDrivers" xml:space="preserve">
+    <value>Sistem ve sürücüler</value>
+  </data>
+  <data name="CategoryGames" xml:space="preserve">
+    <value>Oyunlar</value>
+  </data>
+  <data name="CategoryDeveloperTools" xml:space="preserve">
+    <value>Geliştirici araçları</value>
+  </data>
+  <data name="CategoryStore" xml:space="preserve">
+    <value>Mağaza</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Ara…</value>
+  </data>
+  <data name="FilterCriticalOnly" xml:space="preserve">
+    <value>Yalnızca kritik</value>
+  </data>
+  <data name="IgnoreButton" xml:space="preserve">
+    <value>Bu sürümü yoksay</value>
+  </data>
+  <data name="IgnoreAllButton" xml:space="preserve">
+    <value>Tüm sürümleri yoksay</value>
+  </data>
+  <data name="IgnoreSimpleButton" xml:space="preserve">
+    <value>Yoksay</value>
+  </data>
+  <data name="UnignoreButton" xml:space="preserve">
+    <value>Yeniden göster</value>
+  </data>
+  <data name="IgnoredBadge" xml:space="preserve">
+    <value>Yoksayıldı</value>
+  </data>
+  <data name="IgnoreListTitle" xml:space="preserve">
+    <value>Yoksayılan paketler</value>
+  </data>
+  <data name="IgnoreListAllVersions" xml:space="preserve">
+    <value>tüm sürümler</value>
+  </data>
+  <data name="IgnoreListRemoveAll" xml:space="preserve">
+    <value>Tümünü kaldır</value>
+  </data>
+  <data name="IgnoreListEmpty" xml:space="preserve">
+    <value>Yoksayılan bir şey yok.</value>
+  </data>
+  <data name="SnoozeButton" xml:space="preserve">
+    <value>Sonra hatırlat</value>
+  </data>
+  <data name="SnoozeOneDay" xml:space="preserve">
+    <value>1 gün sonra</value>
+  </data>
+  <data name="SnoozeOneWeek" xml:space="preserve">
+    <value>1 hafta sonra</value>
+  </data>
+  <data name="SnoozeOneMonth" xml:space="preserve">
+    <value>1 ay sonra</value>
+  </data>
+  <data name="UnsnoozeButton" xml:space="preserve">
+    <value>Şimdi yeniden göster</value>
+  </data>
+  <data name="SnoozedBadge" xml:space="preserve">
+    <value>{0} tarihine ertelendi</value>
+  </data>
+  <data name="RetryButton" xml:space="preserve">
+    <value>Yeniden dene</value>
+  </data>
+  <data name="FilterHideManual" xml:space="preserve">
+    <value>Elle açılacak girişleri gizle</value>
+  </data>
+  <data name="FilterPersistentFailures" xml:space="preserve">
+    <value>Sürekli başarısız oluyor ({0})</value>
+  </data>
+  <data name="PersistentFailureHint" xml:space="preserve">
+    <value>Aynı nedenle {0} kez başarısız oldu. Bu paket yoksayılsın mı?</value>
+  </data>
+  <data name="InstallVersionUnchanged" xml:space="preserve">
+    <value>Sürüm değişmedi</value>
+  </data>
+  <data name="RebootRequiredBadge" xml:space="preserve">
+    <value>Yeniden başlatın</value>
+  </data>
+  <data name="RebootRequiredInfo" xml:space="preserve">
+    <value>{0} güncelleme yüklendi. Tamamlamak için yeniden başlatın.</value>
+  </data>
+  <data name="RebootRequiredInfoOne" xml:space="preserve">
+    <value>{0} güncelleme yüklendi. Tamamlamak için yeniden başlatın.</value>
+  </data>
+  <data name="SelectionSummarySizeSuffix" xml:space="preserve">
+    <value> · ~{0}</value>
+  </data>
+  <data name="InfoLinkButton" xml:space="preserve">
+    <value>Proje sayfasını aç</value>
+  </data>
+  <data name="ColumnDate" xml:space="preserve">
+    <value>Tarih</value>
+  </data>
+  <data name="ColumnSize" xml:space="preserve">
+    <value>Boyut</value>
+  </data>
+  <data name="ColumnVersion" xml:space="preserve">
+    <value>Sürüm</value>
+  </data>
+  <data name="HistoryButton" xml:space="preserve">
+    <value>Geçmiş</value>
+  </data>
+  <data name="SettingsButton" xml:space="preserve">
+    <value>Ayarlar</value>
+  </data>
+  <data name="HistoryTitle" xml:space="preserve">
+    <value>Geçmiş</value>
+  </data>
+  <data name="HistoryEmpty" xml:space="preserve">
+    <value>Henüz kaydedilmiş bir yükleme yok.</value>
+  </data>
+  <data name="HistoryOnlyFailed" xml:space="preserve">
+    <value>Yalnızca başarısız</value>
+  </data>
+  <data name="HistoryNoMatches" xml:space="preserve">
+    <value>Aramanızla eşleşen kayıt yok.</value>
+  </data>
+  <data name="HistoryColumnWhen" xml:space="preserve">
+    <value>Ne zaman</value>
+  </data>
+  <data name="HistoryColumnSize" xml:space="preserve">
+    <value>Boyut</value>
+  </data>
+  <data name="HistoryColumnResult" xml:space="preserve">
+    <value>Sonuç</value>
+  </data>
+  <data name="HistoryCopy" xml:space="preserve">
+    <value>Listeyi kopyala</value>
+  </data>
+  <data name="HistoryCopied" xml:space="preserve">
+    <value>{0} kayıt kopyalandı</value>
+  </data>
+  <data name="HistoryCopyColumnFrom" xml:space="preserve">
+    <value>Eski</value>
+  </data>
+  <data name="HistoryCopyColumnTo" xml:space="preserve">
+    <value>Yeni</value>
+  </data>
+  <data name="HistorySucceeded" xml:space="preserve">
+    <value>Güncellendi</value>
+  </data>
+  <data name="HistoryFailed" xml:space="preserve">
+    <value>Başarısız</value>
+  </data>
+  <data name="HistoryHandedOff" xml:space="preserve">
+    <value>Devredildi</value>
+  </data>
+  <data name="HistoryNotApplicable" xml:space="preserve">
+    <value>Uygun sürüm yok</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Ayarlar</value>
+  </data>
+  <data name="SettingsScanGroup" xml:space="preserve">
+    <value>Tarama</value>
+  </data>
+  <data name="SettingsIntervalLabel" xml:space="preserve">
+    <value>Otomatik tarama sıklığı</value>
+  </data>
+  <data name="SettingsIntervalOff" xml:space="preserve">
+    <value>Kapalı</value>
+  </data>
+  <data name="SettingsIntervalHours6" xml:space="preserve">
+    <value>6 saat</value>
+  </data>
+  <data name="SettingsIntervalHours12" xml:space="preserve">
+    <value>12 saat</value>
+  </data>
+  <data name="SettingsIntervalDaily" xml:space="preserve">
+    <value>24 saat</value>
+  </data>
+  <data name="SettingsIntervalWeekly" xml:space="preserve">
+    <value>7 gün</value>
+  </data>
+  <data name="SettingsScanOnStart" xml:space="preserve">
+    <value>Başlangıçta tara</value>
+  </data>
+  <data name="SettingsInstallGroup" xml:space="preserve">
+    <value>Yükleme</value>
+  </data>
+  <data name="SettingsPreselectCritical" xml:space="preserve">
+    <value>Kritik güncellemeleri önceden seç</value>
+  </data>
+  <data name="SettingsRestorePoint" xml:space="preserve">
+    <value>Önce bir geri yükleme noktası oluştur</value>
+  </data>
+  <data name="SettingsRestorePointDesc" xml:space="preserve">
+    <value>Günde en fazla bir tane. Windows zaten daha fazlasına izin vermiyor ve her biri, ilk paket başlamadan önce bir dakikaya kadar sürebiliyor.</value>
+  </data>
+  <data name="InstallRetryRound" xml:space="preserve">
+    <value>İkinci deneme</value>
+  </data>
+  <data name="AlreadyRunning" xml:space="preserve">
+    <value>Ultimate Updater zaten çalışıyor. Bildirim alanında arayın.</value>
+  </data>
+  <data name="SettingsNotifyGroup" xml:space="preserve">
+    <value>Bildirimler</value>
+  </data>
+  <data name="SettingsNotifyOnFound" xml:space="preserve">
+    <value>Güncelleme bulunduğunda bildir</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnly" xml:space="preserve">
+    <value>Yalnızca kritik güncellemeler için</value>
+  </data>
+  <data name="SettingsAppearanceGroup" xml:space="preserve">
+    <value>Görünüm</value>
+  </data>
+  <data name="CategoryManualUpdate" xml:space="preserve">
+    <value>Kendiniz açın</value>
+  </data>
+  <data name="CategoryGitHubManual" xml:space="preserve">
+    <value>GitHub (elle)</value>
+  </data>
+  <data name="CategoryOpenStore" xml:space="preserve">
+    <value>Bir mağazada aç</value>
+  </data>
+  <data name="CategoryOpenGames" xml:space="preserve">
+    <value>Bir başlatıcıda aç</value>
+  </data>
+  <data name="InstallProgressCount" xml:space="preserve">
+    <value>{0}/{1} tamamlandı</value>
+  </data>
+  <data name="InstallRunningCount" xml:space="preserve">
+    <value>{0} yükleme sürüyor</value>
+  </data>
+  <data name="InstallProgressCancel" xml:space="preserve">
+    <value>Tümünü durdur</value>
+  </data>
+  <data name="InstallProgressClose" xml:space="preserve">
+    <value>Kapat</value>
+  </data>
+  <data name="InstallProgressDownloaded" xml:space="preserve">
+    <value>{0} indirildi</value>
+  </data>
+  <data name="InstallProgressTotalSize" xml:space="preserve">
+    <value>İndirme {0}</value>
+  </data>
+  <data name="InstallQueueHeader" xml:space="preserve">
+    <value>{0} tane daha sırada</value>
+  </data>
+  <data name="TooltipCopyHint" xml:space="preserve">
+    <value>Kopyalamak için sağ tıklayın</value>
+  </data>
+  <data name="ChangelogTitle" xml:space="preserve">
+    <value>Sürüm notları</value>
+  </data>
+  <data name="ShortcutsTitle" xml:space="preserve">
+    <value>Klavye kısayolları</value>
+  </data>
+  <data name="ChangelogOpenRelease" xml:space="preserve">
+    <value>Sürüm sayfasını aç</value>
+  </data>
+  <data name="ChangelogNoTextDialogBody" xml:space="preserve">
+    <value>Bu güncelleme için sürüm notu metni yok. Üreticinin sayfası ({0}) tarayıcınızda açılacak.</value>
+  </data>
+  <data name="ChangelogOpenSite" xml:space="preserve">
+    <value>Sayfayı aç</value>
+  </data>
+  <data name="ChangelogButtonTooltip" xml:space="preserve">
+    <value>Sürüm notlarını görüntüle</value>
+  </data>
+  <data name="ChangelogNone" xml:space="preserve">
+    <value>Bu sürüm için sürüm notu bulunamadı.</value>
+  </data>
+  <data name="InstallQueueRemoveTooltip" xml:space="preserve">
+    <value>Sıradan kaldır</value>
+  </data>
+  <data name="QueueReorderTooltip" xml:space="preserve">
+    <value>Sıralamayı değiştirmek için sürükleyin veya Alt ile ok tuşlarını kullanın</value>
+  </data>
+  <data name="QueueRowPositionAutomation" xml:space="preserve">
+    <value>{0}, konum {1}/{2}</value>
+  </data>
+  <data name="InstallQueueNeedsAdminTooltip" xml:space="preserve">
+    <value>Yönetici hakları gerekli</value>
+  </data>
+  <data name="InstallQueueItemRemoved" xml:space="preserve">
+    <value>Sıradan kaldırıldı</value>
+  </data>
+  <data name="UninstallFailed" xml:space="preserve">
+    <value>Kaldırma başarısız oldu. Nedeni için ayrıntıları açın.</value>
+  </data>
+  <data name="SteamUninstallHandedOff" xml:space="preserve">
+    <value>Steam'in kaldırma penceresi açık. İşlemi orada tamamlayın; sonuç burada görünmez.</value>
+  </data>
+  <data name="ErrorDetailTitle" xml:space="preserve">
+    <value>Hata ayrıntıları</value>
+  </data>
+  <data name="ShowErrorDetailButton" xml:space="preserve">
+    <value>Ayrıntılar</value>
+  </data>
+  <data name="StartButton" xml:space="preserve">
+    <value>Başlat</value>
+  </data>
+  <data name="UninstallButton" xml:space="preserve">
+    <value>Kaldır</value>
+  </data>
+  <data name="UninstallConfirmHeadline" xml:space="preserve">
+    <value>“{0}” kaldırılsın mı?</value>
+  </data>
+  <data name="UninstallConfirmBody" xml:space="preserve">
+    <value>Program bu bilgisayardan kaldırılacak.
+Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
+  </data>
+  <data name="UninstallBlockedByActivity" xml:space="preserve">
+    <value>Şu anda kaldırma yapılamıyor: bir yükleme devam ediyor. Tamamlandıktan sonra tekrar deneyin.</value>
+  </data>
+  <data name="RowDowngrade" xml:space="preserve">
+    <value>{0} sürümüne dön</value>
+  </data>
+  <data name="DowngradeConfirmTitle" xml:space="preserve">
+    <value>Eski sürüm yüklensin mi?</value>
+  </data>
+  <data name="DowngradeConfirmBody" xml:space="preserve">
+    <value>{0}, {1} sürümünden {2} sürümüne geri alınacak. Yeni sürüm bir sonraki taramada tekrar sunulacak.</value>
+  </data>
+  <data name="DowngradeBlockedByActivity" xml:space="preserve">
+    <value>Şu anda geri alma yapılamıyor: bir yükleme devam ediyor. Tamamlandıktan sonra tekrar deneyin.</value>
+  </data>
+  <data name="RestorePointLast" xml:space="preserve">
+    <value>Son geri yükleme noktası: {0}</value>
+  </data>
+  <data name="RestorePointNone" xml:space="preserve">
+    <value>Bu program henüz geri yükleme noktası oluşturmadı</value>
+  </data>
+  <data name="SettingsIntervalDesc" xml:space="preserve">
+    <value>Arka planda güncellemelerin ne sıklıkta kontrol edileceği.</value>
+  </data>
+  <data name="SettingsScanOnStartDesc" xml:space="preserve">
+    <value>Uygulama her başladığında bir kez tara.</value>
+  </data>
+  <data name="SettingsPreselectCriticalDesc" xml:space="preserve">
+    <value>Güvenlikle ilgili güncellemeleri otomatik olarak işaretle.</value>
+  </data>
+  <data name="InstallParallelLabel" xml:space="preserve">
+    <value>Aynı anda yapılacak yükleme sayısı</value>
+  </data>
+  <data name="InstallParallelHint" xml:space="preserve">
+    <value>Aynı anda daha fazlası daha hızlıdır. Bazı yükleyiciler başka bir yükleyicinin yanında çalışmayı reddeder; bunlar kendi başlarına yeniden denenir.</value>
+  </data>
+  <data name="SettingsParallelScans" xml:space="preserve">
+    <value>Aynı anda kontrol edilen kaynaklar</value>
+  </data>
+  <data name="SettingsParallelAuto" xml:space="preserve">
+    <value>Bu bilgisayar için otomatik ayarla</value>
+  </data>
+  <data name="SettingsScanDownloads" xml:space="preserve">
+    <value>İndirilen dosyaları kontrol et</value>
+  </data>
+  <data name="SettingsScanDownloadsDesc" xml:space="preserve">
+    <value>Windows Güvenliği, bu uygulamanın kendisinin indirdiği dosyaları çalıştırılmadan önce denetler.</value>
+  </data>
+  <data name="ScanningDownload" xml:space="preserve">
+    <value>virüs taranıyor</value>
+  </data>
+  <data name="SettingsRegistryBackupGroup" xml:space="preserve">
+    <value>Temizlik</value>
+  </data>
+  <data name="SettingsRegistryBackupFolder" xml:space="preserve">
+    <value>Yedek klasörü</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDesc" xml:space="preserve">
+    <value>Her kayıt defteri temizliği, herhangi bir şeyi silmeden önce dokunduğu anahtarları buraya yedekler. Varsayılan: %APPDATA%\UltimateUpdater\registry-backups.</value>
+  </data>
+  <data name="SettingsRegistryBackupRetention" xml:space="preserve">
+    <value>Sakla</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDesc" xml:space="preserve">
+    <value>Bu yedeklerden kaçının saklanacağı. Bu sayıya ulaşıldığında en eskisi kaldırılır.</value>
+  </data>
+  <data name="SettingsDataGroup" xml:space="preserve">
+    <value>Veriler ve günlükler</value>
+  </data>
+  <data name="SettingsExcludedPathsHeader" xml:space="preserve">
+    <value>{0} kalıcı olarak hariç tutuldu</value>
+  </data>
+  <data name="SettingsExcludedPathsDesc" xml:space="preserve">
+    <value>Sağ tık menüsü ile temizlik penceresinden hariç tutuldu.</value>
+  </data>
+  <data name="SettingsExcludedPathsEmpty" xml:space="preserve">
+    <value>Kalıcı olarak hariç tutulmuş yol yok.</value>
+  </data>
+  <data name="SettingsExcludedPathRelease" xml:space="preserve">
+    <value>Hariç tutmayı kaldır</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAll" xml:space="preserve">
+    <value>Tüm hariç tutmaları kaldır</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmHeadline" xml:space="preserve">
+    <value>Tüm hariç tutmalar kaldırılsın mı?</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmBody" xml:space="preserve">
+    <value>Temizlik, bu yolları bir sonraki bulduğunda yeniden sunacak.</value>
+  </data>
+  <data name="SettingsRegistryRetentionOption" xml:space="preserve">
+    <value>{0} yedek</value>
+  </data>
+  <data name="ScanThreatFound" xml:space="preserve">
+    <value>Antivirüsünüz indirilen dosyayı zararlı olarak işaretledi. Çalıştırılmadan silindi.</value>
+  </data>
+  <data name="ScanClean" xml:space="preserve">
+    <value>tehdit bulunamadı</value>
+  </data>
+  <data name="SettingsNotifyOnFoundDesc" xml:space="preserve">
+    <value>Güncelleme bulunduğunda bildirim alanında bir bildirim göster.</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnlyDesc" xml:space="preserve">
+    <value>Yalnızca güvenlikle ilgili güncellemeler için bildir.</value>
+  </data>
+  <data name="ThemeDesc" xml:space="preserve">
+    <value>Windows ile eşleş veya açık ya da koyuyu zorla.</value>
+  </data>
+  <data name="SettingsAutostartDesc" xml:space="preserve">
+    <value>Windows ile başlat, bildirim alanına küçültülmüş olarak.</value>
+  </data>
+  <data name="SettingsCloseToTrayDesc" xml:space="preserve">
+    <value>Pencereyi kapatmak, uygulamayı bildirim alanında çalışır durumda tutar.</value>
+  </data>
+  <data name="SettingsUpdatesGroup" xml:space="preserve">
+    <value>Uygulama güncellemeleri</value>
+  </data>
+  <data name="SettingsCheckUpdatesDesc" xml:space="preserve">
+    <value>Ultimate Updater'ın yeni bir sürümünü kontrol et.</value>
+  </data>
+  <data name="SettingsCheckNow" xml:space="preserve">
+    <value>Şimdi kontrol et</value>
+  </data>
+  <data name="SettingsUpToDate" xml:space="preserve">
+    <value>En güncel sürümü kullanıyorsunuz.</value>
+  </data>
+  <data name="SettingsCurrentVersion" xml:space="preserve">
+    <value>Sürüm {0}</value>
+  </data>
+  <data name="SettingsCheckingUpdates" xml:space="preserve">
+    <value>Kontrol ediliyor…</value>
+  </data>
+  <data name="SettingsSourcesGroup" xml:space="preserve">
+    <value>Kaynaklar</value>
+  </data>
+  <data name="SettingsSourcesHint" xml:space="preserve">
+    <value>Kapatılan kaynaklar taranmaz.</value>
+  </data>
+  <data name="SettingsSourcesSelectAll" xml:space="preserve">
+    <value>Tüm kaynaklar</value>
+  </data>
+  <data name="SettingsSourcesSearchPlaceholder" xml:space="preserve">
+    <value>Kaynaklarda ara…</value>
+  </data>
+  <data name="SettingsSourcesSearchEmpty" xml:space="preserve">
+    <value>Aramanızla eşleşen kaynak yok.</value>
+  </data>
+  <data name="SettingsShowAllSources" xml:space="preserve">
+    <value>Yüklü olmayan kaynakları göster ({0})</value>
+  </data>
+  <data name="SettingsStartupGroup" xml:space="preserve">
+    <value>Başlangıç</value>
+  </data>
+  <data name="SettingsAutostart" xml:space="preserve">
+    <value>Windows ile başlat</value>
+  </data>
+  <data name="SettingsCloseToTray" xml:space="preserve">
+    <value>Çıkmak yerine bildirim alanına kapat</value>
+  </data>
+  <data name="SettingsCleanupReminder" xml:space="preserve">
+    <value>Temizlik geciktiğinde hatırlat</value>
+  </data>
+  <data name="SettingsAdvancedGroup" xml:space="preserve">
+    <value>Gelişmiş</value>
+  </data>
+  <data name="TrayOpen" xml:space="preserve">
+    <value>Aç</value>
+  </data>
+  <data name="TrayScan" xml:space="preserve">
+    <value>Güncellemeleri denetle</value>
+  </data>
+  <data name="TrayExit" xml:space="preserve">
+    <value>Çıkış</value>
+  </data>
+  <data name="NotifyFound" xml:space="preserve">
+    <value>{0} güncelleme mevcut</value>
+  </data>
+  <data name="NotifyFoundWithCritical" xml:space="preserve">
+    <value>{0} güncelleme mevcut ({1} kritik)</value>
+  </data>
+  <data name="SelfUpdateTitle" xml:space="preserve">
+    <value>Yeni bir sürüm mevcut</value>
+  </data>
+  <data name="SelfUpdateInstall" xml:space="preserve">
+    <value>Şimdi güncelle</value>
+  </data>
+  <data name="SelfUpdateDismiss" xml:space="preserve">
+    <value>Kapat</value>
+  </data>
+  <data name="SelfUpdateWhatsNew" xml:space="preserve">
+    <value>Yenilikler</value>
+  </data>
+  <data name="CleanupReminderBanner" xml:space="preserve">
+    <value>Son temizlik {0} tarihinde yapıldı.</value>
+  </data>
+  <data name="CleanupReminderThisTime" xml:space="preserve">
+    <value>Yalnızca bu sefer</value>
+  </data>
+  <data name="CleanupReminderNeverAgain" xml:space="preserve">
+    <value>Bir daha gösterme</value>
+  </data>
+  <data name="SelfUpdateFailed" xml:space="preserve">
+    <value>Güncelleme doğrulanamadı ve silindi.</value>
+  </data>
+  <data name="HeadlineScanning" xml:space="preserve">
+    <value>Güncellemeler kontrol ediliyor…</value>
+  </data>
+  <data name="HeadlineUpToDate" xml:space="preserve">
+    <value>Her şey güncel</value>
+  </data>
+  <data name="HeadlineUpdates" xml:space="preserve">
+    <value>{0} güncelleme mevcut</value>
+  </data>
+  <data name="SubheadlineScanning" xml:space="preserve">
+    <value>Yapılandırılan her kaynağa soruluyor.</value>
+  </data>
+  <data name="EmptyState" xml:space="preserve">
+    <value>Güncelleme bulunamadı. Tekrar kontrol etmek için bir tarama çalıştırın.</value>
+  </data>
+  <data name="ManualUpdatesSectionTitle" xml:space="preserve">
+    <value>Bunları kendiniz açın: bu uygulamanın sizin için çalıştırabileceği bir güncelleme yok</value>
+  </data>
+  <data name="CriticalBadge" xml:space="preserve">
+    <value>Kritik</value>
+  </data>
+  <data name="RowQueued" xml:space="preserve">
+    <value>Sırada</value>
+  </data>
+  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
+    <value>{0} · %{1:0}</value>
+  </data>
+  <data name="CleanupDoneCount" xml:space="preserve">
+    <value>{0}/{1} alan tamamlandı</value>
+  </data>
+  <data name="CleanupDoneCountOne" xml:space="preserve">
+    <value>{0}/{1} alan tamamlandı</value>
+  </data>
+  <data name="CleanupRemainingCount" xml:space="preserve">
+    <value>{0} tane kaldı</value>
+  </data>
+  <data name="CleanupEmptyCount" xml:space="preserve">
+    <value>{0} alanda hiçbir şey bulunamadı</value>
+  </data>
+  <data name="CleanupEmptyCountOne" xml:space="preserve">
+    <value>{0} alanda hiçbir şey bulunamadı</value>
+  </data>
+  <data name="InstallRestorePointStep" xml:space="preserve">
+    <value>Geri yükleme noktası oluşturuluyor…</value>
+  </data>
+  <data name="ActivityRestorePointSkipped" xml:space="preserve">
+    <value>Geri yükleme noktası atlandı, bugünden zaten bir tane var.</value>
+  </data>
+  <data name="CleanupRestorePointParallel" xml:space="preserve">
+    <value>Geri yükleme noktası oluşturulurken uzun adımlar zaten çalışıyor</value>
+  </data>
+  <data name="RowAlsoInSources" xml:space="preserve">
+    <value>{0} üzerinden güncellendi; {1} tarafından da sunuluyor.</value>
+  </data>
+  <data name="RowDone" xml:space="preserve">
+    <value>Tamamlandı</value>
+  </data>
+  <data name="RowFailed" xml:space="preserve">
+    <value>Başarısız</value>
+  </data>
+  <data name="SubheadlineScanningProgress" xml:space="preserve">
+    <value>{0}/{1} kaynak kontrol edildi</value>
+  </data>
+  <data name="SubheadlineScanningProgressOne" xml:space="preserve">
+    <value>{0}/{1} kaynak kontrol edildi</value>
+  </data>
+  <data name="SubheadlineScanningSources" xml:space="preserve">
+    <value>Kontrol ediliyor: {0}</value>
+  </data>
+  <data name="SourceDescWinget" xml:space="preserve">
+    <value>Microsoft'un resmi Windows paket yöneticisi. Bunun üzerinden yüklenen uygulamaları listeler ve sessizce günceller.</value>
+  </data>
+  <data name="SourceDescWindowsUpdate" xml:space="preserve">
+    <value>Windows'un kendi güncelleme hizmeti: Microsoft'tan kalite, sürücü ve tanım güncellemeleri, asla özellik yükseltmeleri değil.</value>
+  </data>
+  <data name="SourceDescMsStore" xml:space="preserve">
+    <value>Microsoft Store uygulaması. Store, uygulama başına sürümleri diğer araçlardan gizlediği için yalnızca kendi güncelleme sayfasını açar.</value>
+  </data>
+  <data name="SourceDescChocolatey" xml:space="preserve">
+    <value>Windows için topluluk paket yöneticisi (choco.exe). Topluluk tarafından yönetilen paketleri günceller; yönetici hakları gerektirir.</value>
+  </data>
+  <data name="SourceDescScoop" xml:space="preserve">
+    <value>Komut satırı paket yöneticisi, yönetici hakları olmadan kullanıcı klasörüne yükler.</value>
+  </data>
+  <data name="SourceDescPip" xml:space="preserve">
+    <value>Python'un paket yükleyicisi. Eski Python paketlerini listeler ve günceller.</value>
+  </data>
+  <data name="SourceDescNpm" xml:space="preserve">
+    <value>Node.js'in paket yöneticisi. Genel olarak yüklenen npm paketlerini listeler ve günceller.</value>
+  </data>
+  <data name="SourceDescPnpm" xml:space="preserve">
+    <value>pnpm'in genel paketleri, npm'in kullandığı aynı npm kayıt deposundan alınır. Gerçek bir pnpm kurulumunda doğrulanmamıştır; bir satır yanlış görünüyorsa bir sorun bildirin.</value>
+  </data>
+  <data name="SourceDescDotnetTool" xml:space="preserve">
+    <value>Genel NuGet akışında daha yeni sürümleri denetlenen .NET genel araçları.</value>
+  </data>
+  <data name="SourceNameDotnetTool" xml:space="preserve">
+    <value>.NET araçları</value>
+  </data>
+  <data name="SourceDescPsGallery" xml:space="preserve">
+    <value>Kullanıcı profilinde yüklü PowerShell Gallery modülleri.</value>
+  </data>
+  <data name="SourceDescGem" xml:space="preserve">
+    <value>Ruby'nin paket yöneticisi. Eski RubyGems'leri listeler ve günceller.</value>
+  </data>
+  <data name="SourceDescComposer" xml:space="preserve">
+    <value>PHP'nin bağımlılık yöneticisi. Genel Composer paketlerini listeler ve günceller.</value>
+  </data>
+  <data name="SourceDescRustup" xml:space="preserve">
+    <value>Rust araç zinciri yöneticisi. Tek bir güncelleme, yüklü her araç zincirini ve rustup'ın kendisini yeniler.</value>
+  </data>
+  <data name="SourceDescVcpkg" xml:space="preserve">
+    <value>vcpkg (klasik mod) ile C/C++ kitaplıkları. Gerçek bir vcpkg kurulumuna karşı doğrulanmamıştır; bir satır yanlış görünüyorsa bir sorun bildirin.</value>
+  </data>
+  <data name="SourceDescMise" xml:space="preserve">
+    <value>mise tarafından yönetilen araç sürümleri. Gerçek bir mise kurulumuna karşı doğrulanmamıştır; bir satır yanlış görünüyorsa bir sorun bildirin.</value>
+  </data>
+  <data name="SourceDescSteam" xml:space="preserve">
+    <value>Valve'ın Steam istemcisi. Gerçek oyun güncelleme durumunu Steam'in kendi dosyalarından okur; güncellemenin kendisi Steam içinde çalışır.</value>
+  </data>
+  <data name="SourceDescNvidia" xml:space="preserve">
+    <value>NVIDIA'nın kendi sürücü hizmetinden en yeni Game Ready sürücüsünü ister. NVIDIA'nın imzasını doğruladıktan sonra doğrudan yükler.</value>
+  </data>
+  <data name="SourceDescGitHubRelease" xml:space="preserve">
+    <value>Paket yöneticisi dışında yüklenmiş ve kaldırma kaydında bir GitHub projesi adı bulunan programları en son sürümle karşılaştırır. Yüklemek yerine sürüm sayfasını açar.</value>
+  </data>
+  <data name="SourceNameGitHubRelease" xml:space="preserve">
+    <value>GitHub sürümleri</value>
+  </data>
+  <data name="SourceDescLauncher" xml:space="preserve">
+    <value>{0} istemcisini açar. {0}, başlangıçta kendisini ve oyunlarını günceller; bu uygulama bunu ne görebilir ne de tetikleyebilir.</value>
+  </data>
+  <data name="FatalErrorHeadline" xml:space="preserve">
+    <value>Ultimate Updater bir sorunla karşılaştı</value>
+  </data>
+  <data name="FatalError" xml:space="preserve">
+    <value>Ultimate Updater'ın kapatılması gerekiyor. Ayrıntılar günlük klasöründe:
+{0}</value>
+  </data>
+  <data name="InstallFailed" xml:space="preserve">
+    <value>Güncelleme başarısız oldu. Nedeni için ayrıntıları açın.</value>
+  </data>
+  <data name="InstallElevationDeclined" xml:space="preserve">
+    <value>Yönetici hakları reddedildi.</value>
+  </data>
+  <data name="InstallWorkerStopped" xml:space="preserve">
+    <value>Bu güncelleme yüklenmeden önce yönetici adımı durduruldu.</value>
+  </data>
+  <data name="HeadlineUpdatesOne" xml:space="preserve">
+    <value>{0} güncelleme mevcut</value>
+  </data>
+  <data name="NotifyFoundOne" xml:space="preserve">
+    <value>{0} güncelleme mevcut</value>
+  </data>
+  <data name="NotifyFoundOneWithCritical" xml:space="preserve">
+    <value>{0} güncelleme mevcut ({1} kritik)</value>
+  </data>
+  <data name="ScanFailed" xml:space="preserve">
+    <value>Bu kaynak kontrol edilemedi. Nedeni için ayrıntıları açın.</value>
+  </data>
+  <data name="ScanStateWaiting" xml:space="preserve">
+    <value>Bekleniyor…</value>
+  </data>
+  <data name="ScanStateRunning" xml:space="preserve">
+    <value>Çalışıyor…</value>
+  </data>
+  <data name="ScanStateSlow" xml:space="preserve">
+    <value>Hâlâ çalışıyor…</value>
+  </data>
+  <data name="ScanStateCancelled" xml:space="preserve">
+    <value>İptal edildi</value>
+  </data>
+  <data name="CancelSourceScanTooltip" xml:space="preserve">
+    <value>Bu kaynağın kontrolünü durdur</value>
+  </data>
+  <data name="EmptyStateFiltered" xml:space="preserve">
+    <value>Geçerli arama veya filtreyle eşleşen bir şey yok.</value>
+  </data>
+  <data name="InstallCancelled" xml:space="preserve">
+    <value>Bu güncelleme yüklenmeden önce iptal edildi.</value>
+  </data>
+  <data name="InstallWaitingForCleanup" xml:space="preserve">
+    <value>Temizliğin bu alanı serbest bırakması bekleniyor</value>
+  </data>
+  <data name="InstallAlreadyCurrent" xml:space="preserve">
+    <value>Zaten {0} sürümünde, yapılacak bir şey yok.</value>
+  </data>
+  <data name="ErrorDetailOutput" xml:space="preserve">
+    <value>Aracın bildirdiği</value>
+  </data>
+  <data name="ErrorDetailLogInSettings" xml:space="preserve">
+    <value>Ayarlar'daki günlük klasörüne bakın</value>
+  </data>
+  <data name="ErrorDetailRetryInMenu" xml:space="preserve">
+    <value>Satırın sağ tık menüsünden etkileşimli olarak yeniden deneyin</value>
+  </data>
+  <data name="ErrorWhatDoesThisMean" xml:space="preserve">
+    <value>Bu ne anlama geliyor?</value>
+  </data>
+  <data name="ErrorWindowsSaysPrefix" xml:space="preserve">
+    <value>Windows diyor ki:</value>
+  </data>
+  <data name="ErrorNoMeaning" xml:space="preserve">
+    <value>Windows'un bu kod için bir metni yok.</value>
+  </data>
+  <data name="ErrorDetailSourceLog" xml:space="preserve">
+    <value>Bu zaman civarındaki günlükten (bu kayıtla birlikte çıktı kaydedilmedi)</value>
+  </data>
+  <data name="ErrorDetailSourceShort" xml:space="preserve">
+    <value>Bu kayıtla yalnızca kısa mesaj kaydedildi</value>
+  </data>
+  <data name="ErrorDetailCopy" xml:space="preserve">
+    <value>Ayrıntıları kopyala</value>
+  </data>
+  <data name="ErrorCopyReport" xml:space="preserve">
+    <value>Hata raporunu kopyala</value>
+  </data>
+  <data name="ErrorDetailCopied" xml:space="preserve">
+    <value>Panoya kopyalandı</value>
+  </data>
+  <data name="SubListCount" xml:space="preserve">
+    <value>{0} güncelleme bekliyor</value>
+  </data>
+  <data name="SubListCountOne" xml:space="preserve">
+    <value>{0} güncelleme bekliyor</value>
+  </data>
+  <data name="ThemeOptionHacker" xml:space="preserve">
+    <value>Hacker</value>
+  </data>
+  <data name="ThemeOptionNeon" xml:space="preserve">
+    <value>Neon</value>
+  </data>
+  <data name="SettingsResetGroup" xml:space="preserve">
+    <value>Sıfırla</value>
+  </data>
+  <data name="SettingsResetDesc" xml:space="preserve">
+    <value>Bu uygulamanın fabrika durumunu geri yükle.</value>
+  </data>
+  <data name="SettingsResetDoneHeadline" xml:space="preserve">
+    <value>Tamamlandı</value>
+  </data>
+  <data name="SettingsResetDoneBody" xml:space="preserve">
+    <value>Uygulama varsayılan durumuna geri yüklendi.</value>
+  </data>
+  <data name="SettingsDeleteDataPartialHeadline" xml:space="preserve">
+    <value>Bazı dosyalar hâlâ kullanımda</value>
+  </data>
+  <data name="SettingsDeleteDataPartialBody" xml:space="preserve">
+    <value>Ayarlar sıfırlandı. Hâlâ kullanımda olan birkaç dosya (örneğin geçerli günlük) bir sonraki başlatmada kaldırılır.</value>
+  </data>
+  <data name="HistoryFilterSource" xml:space="preserve">
+    <value>Kaynak:</value>
+  </data>
+  <data name="HistoryRangeAll" xml:space="preserve">
+    <value>Tümü</value>
+  </data>
+  <data name="HistoryRangeToday" xml:space="preserve">
+    <value>Bugün</value>
+  </data>
+  <data name="HistoryRangeWeek" xml:space="preserve">
+    <value>7 gün</value>
+  </data>
+  <data name="HistoryRangeMonth" xml:space="preserve">
+    <value>30 gün</value>
+  </data>
+  <data name="CleanupTitle" xml:space="preserve">
+    <value>Alan boşalt</value>
+  </data>
+  <data name="CleanupStart" xml:space="preserve">
+    <value>Temizle</value>
+  </data>
+  <data name="CleanupPause" xml:space="preserve">
+    <value>Duraklat</value>
+  </data>
+  <data name="CleanupResume" xml:space="preserve">
+    <value>Devam ettir</value>
+  </data>
+  <data name="CleanupStop" xml:space="preserve">
+    <value>Durdur</value>
+  </data>
+  <data name="CleanupRescan" xml:space="preserve">
+    <value>Yeniden tara</value>
+  </data>
+  <data name="CleanupStoppingRepair" xml:space="preserve">
+    <value>Durduruldu. Çalışan sistem onarımının bitmesi gerekiyor; kesintiye uğratmak Windows'un bileşen deposuna zarar verebilir.</value>
+  </data>
+  <data name="CleanupNoProgressHint" xml:space="preserve">
+    <value>Windows bu adım için ilerleme bildirmiyor. Çalışıyor.</value>
+  </data>
+  <data name="CleanupDefragName" xml:space="preserve">
+    <value>{0} sürücüsünü optimize et</value>
+  </data>
+  <data name="CleanupDefragConsequence" xml:space="preserve">
+    <value>Bu sürücü için Windows optimizasyonunu çalıştırır: sabit diskte birleştirme, SSD'de retrim. Alan boşaltmaz, var olanı yeniden düzenler.</value>
+  </data>
+  <data name="CleanupDefragRowHdd" xml:space="preserve">
+    <value>{0} sürücüsünü birleştir</value>
+  </data>
+  <data name="CleanupDefragRowSsd" xml:space="preserve">
+    <value>{0} sürücüsünü optimize et, Trim</value>
+  </data>
+  <data name="CleanupDefragRowUnspecified" xml:space="preserve">
+    <value>{0} sürücüsünü optimize et</value>
+  </data>
+  <data name="MediaTypeHdd" xml:space="preserve">
+    <value>HDD</value>
+  </data>
+  <data name="MediaTypeSsd" xml:space="preserve">
+    <value>SSD</value>
+  </data>
+  <data name="MediaTypeUsbDrive" xml:space="preserve">
+    <value>USB sürücü</value>
+  </data>
+  <data name="MediaTypeOtherDrive" xml:space="preserve">
+    <value>Sürücü</value>
+  </data>
+  <data name="CleanupDriveSubline" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="CleanupDriveSublineUsb" xml:space="preserve">
+    <value>{0}, {1} · {2}</value>
+  </data>
+  <data name="DefragWarningTitle" xml:space="preserve">
+    <value>Bu saatler sürebilir</value>
+  </data>
+  <data name="DefragWarningBody" xml:space="preserve">
+    <value>Büyük bir sabit diski birleştirmek uzun sürer. Bu pencereyi kapatabilirsiniz, işlem devam eder. Programdan çıkmak işlemi durdurur.</value>
+  </data>
+  <data name="DefragQuitWarningTitle" xml:space="preserve">
+    <value>Bir sürücü optimizasyonu hâlâ çalışıyor</value>
+  </data>
+  <data name="DefragQuitWarningBody" xml:space="preserve">
+    <value>Şimdi çıkmak işlemi durdurur. Sürücü kullanılabilir kalır, optimizasyon yalnızca tamamlanmamış olur.</value>
+  </data>
+  <data name="DefragQuitAnyway" xml:space="preserve">
+    <value>Yine de çık</value>
+  </data>
+  <data name="DefragKeepRunning" xml:space="preserve">
+    <value>Çalışmaya devam etsin</value>
+  </data>
+  <data name="WorkQuitWarningTitle" xml:space="preserve">
+    <value>Güncellemeler veya bir temizlik hâlâ çalışıyor</value>
+  </data>
+  <data name="WorkQuitWarningBody" xml:space="preserve">
+    <value>Şimdi çıkmak bunları yarıda keser: bir paket yarım kurulmuş, bir temizlik tamamlanmamış kalabilir. Yalnızca pencereyi kapatırsanız çalışmaya devam ederler.</value>
+  </data>
+  <data name="CleanupHistoryTitle" xml:space="preserve">
+    <value>Önceki temizlikler</value>
+  </data>
+  <data name="CleanupHistoryButton" xml:space="preserve">
+    <value>Temizlik geçmişi</value>
+  </data>
+  <data name="CleanupGroupTempFiles" xml:space="preserve">
+    <value>Geçici dosyalar</value>
+  </data>
+  <data name="CleanupGroupCaches" xml:space="preserve">
+    <value>Önbellekler</value>
+  </data>
+  <data name="CleanupGroupWindowsMaintenance" xml:space="preserve">
+    <value>Windows bakımı</value>
+  </data>
+  <data name="CleanupGroupRecycleBin" xml:space="preserve">
+    <value>Geri dönüşüm kutusu</value>
+  </data>
+  <data name="CleanupGroupSystemRepair" xml:space="preserve">
+    <value>Sistem onarımı</value>
+  </data>
+  <data name="CleanupGroupRegistry" xml:space="preserve">
+    <value>Kayıt defteri</value>
+  </data>
+  <data name="CleanupHistoryEmpty" xml:space="preserve">
+    <value>Henüz hiçbir şey temizlenmedi.</value>
+  </data>
+  <data name="CleanupHistoryFreed" xml:space="preserve">
+    <value>{0} boşaltıldı</value>
+  </data>
+  <data name="CleanupHistoryEntrySummary" xml:space="preserve">
+    <value>{0} alan temizlendi</value>
+  </data>
+  <data name="CleanupHistoryEntrySummaryOne" xml:space="preserve">
+    <value>{0} alan temizlendi</value>
+  </data>
+  <data name="CleanupHistorySkipped" xml:space="preserve">
+    <value>{0} kullanımda</value>
+  </data>
+  <data name="CleanupHistoryClearAll" xml:space="preserve">
+    <value>Tümünü sil</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmHeadline" xml:space="preserve">
+    <value>Tüm geçmiş silinsin mi?</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmDetail" xml:space="preserve">
+    <value>Yalnızca geçmiş silinir. Önceden boşaltılan alan boş kalır.</value>
+  </data>
+  <data name="CleanupHistoryDeleteEntry" xml:space="preserve">
+    <value>Bu kaydı sil</value>
+  </data>
+  <data name="CleanupHistoryTotalFreed" xml:space="preserve">
+    <value>Toplam {0} boşaltıldı</value>
+  </data>
+  <data name="CleanupHistoryRunCount" xml:space="preserve">
+    <value>{0} çalıştırma · son: {1}</value>
+  </data>
+  <data name="CleanupHistoryRunCountOne" xml:space="preserve">
+    <value>{0} çalıştırma · son: {1}</value>
+  </data>
+  <data name="CleanupHistoryTopCategories" xml:space="preserve">
+    <value>En büyük alanlar</value>
+  </data>
+  <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
+    <value>Henüz hiçbir şey boşaltılmadı.</value>
+  </data>
+  <data name="CleanupPausedNote" xml:space="preserve">
+    <value>beklemede</value>
+  </data>
+  <data name="CleanupScanning" xml:space="preserve">
+    <value>hâlâ ölçülüyor…</value>
+  </data>
+  <data name="CleanupOfTotal" xml:space="preserve">
+    <value>bulunan {0} içinden</value>
+  </data>
+  <data name="CleanupNeedsAdmin" xml:space="preserve">
+    <value>yönetici gerekli</value>
+  </data>
+  <data name="CleanupStateWaiting" xml:space="preserve">
+    <value>bekliyor</value>
+  </data>
+  <data name="CleanupStateCleaning" xml:space="preserve">
+    <value>temizleniyor</value>
+  </data>
+  <data name="CleanupStateStopped" xml:space="preserve">
+    <value>durduruldu</value>
+  </data>
+  <data name="CleanupStateSkipped" xml:space="preserve">
+    <value>atlandı</value>
+  </data>
+  <data name="CleanupSkippedFiles" xml:space="preserve">
+    <value>{0} dosya kullanımda olduğu için atlandı.</value>
+  </data>
+  <data name="CleanupSkippedFilesOne" xml:space="preserve">
+    <value>{0} dosya kullanımda olduğu için atlandı.</value>
+  </data>
+  <data name="CleanupSelectedCount" xml:space="preserve">
+    <value>{0}/{1} alan seçildi</value>
+  </data>
+  <data name="CleanupSelectedCountOne" xml:space="preserve">
+    <value>{0}/{1} alan seçildi</value>
+  </data>
+  <data name="CleanupFileCount" xml:space="preserve">
+    <value>{0} dosya ölçüldü</value>
+  </data>
+  <data name="CleanupFileCountOne" xml:space="preserve">
+    <value>{0} dosya ölçüldü</value>
+  </data>
+  <data name="CleanupLargestLabel" xml:space="preserve">
+    <value>En büyük alanlar</value>
+  </data>
+  <data name="CleanupLastRunLabel" xml:space="preserve">
+    <value>Son temizlik</value>
+  </data>
+  <data name="CleanupFreeSpaceNow" xml:space="preserve">
+    <value>{0} boş, temizlikten sonra +{1}</value>
+  </data>
+  <data name="CleanupCurrentLabel" xml:space="preserve">
+    <value>Geçerli</value>
+  </data>
+  <data name="CleanupFailedHeadline" xml:space="preserve">
+    <value>Temizlik tamamlanamadı</value>
+  </data>
+  <data name="CleanupConfirmHeadline" xml:space="preserve">
+    <value>{0} kalıcı olarak silinsin mi?</value>
+  </data>
+  <data name="CleanupConfirmWarning" xml:space="preserve">
+    <value>Silinen dosyalar kurtarılamaz.</value>
+  </data>
+  <data name="CleanupConfirmTotal" xml:space="preserve">
+    <value>Toplam: {0}</value>
+  </data>
+  <data name="CleanupUserTemp" xml:space="preserve">
+    <value>Geçici dosyalarınız</value>
+  </data>
+  <data name="CleanupUserTempDesc" xml:space="preserve">
+    <value>Geçerli kullanıcı hesabının geçici klasörü.</value>
+  </data>
+  <data name="CleanupAllUsersTemp" xml:space="preserve">
+    <value>Tüm kullanıcıların geçici dosyaları</value>
+  </data>
+  <data name="CleanupAllUsersTempDesc" xml:space="preserve">
+    <value>Bu bilgisayardaki diğer hesapların geçici klasörleri. Yönetici hakları olmadan dosyaları atlanır.</value>
+  </data>
+  <data name="CleanupWindowsTemp" xml:space="preserve">
+    <value>Windows geçici dosyaları</value>
+  </data>
+  <data name="CleanupWindowsTempDesc" xml:space="preserve">
+    <value>Windows ve yükleyicilerin yazdığı sistem geçici klasörü.</value>
+  </data>
+  <data name="CleanupUpdateCache" xml:space="preserve">
+    <value>Windows Update önbelleği</value>
+  </data>
+  <data name="CleanupUpdateCacheDesc" xml:space="preserve">
+    <value>Zaten uygulanmış güncellemelerin yükleme dosyaları.</value>
+  </data>
+  <data name="CleanupDeliveryOptimization" xml:space="preserve">
+    <value>Delivery Optimization dosyaları</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
+    <value>Windows'un diğer bilgisayarlarla paylaşmak için tuttuğu güncelleme parçaları.</value>
+  </data>
+  <data name="CleanupThumbnails" xml:space="preserve">
+    <value>Küçük resim ve simge önbelleği</value>
+  </data>
+  <data name="CleanupThumbnailsDesc" xml:space="preserve">
+    <value>Gezgin bunları gerektiğinde yeniden oluşturur.</value>
+  </data>
+  <data name="CleanupCrashDumps" xml:space="preserve">
+    <value>Çökme dökümleri</value>
+  </data>
+  <data name="CleanupCrashDumpsDesc" xml:space="preserve">
+    <value>Çöken programların bıraktığı bellek dökümleri.</value>
+  </data>
+  <data name="CleanupRecycleBin" xml:space="preserve">
+    <value>Geri dönüşüm kutusunu boşalt</value>
+  </data>
+  <data name="CleanupRecycleBinDesc" xml:space="preserve">
+    <value>Öğeler kutu boşaltılana kadar kurtarılabilir kaldığından varsayılan olarak kapalıdır.</value>
+  </data>
+  <data name="CleanupRecycleAgeLabel" xml:space="preserve">
+    <value>Yalnızca şundan eski dosyalar</value>
+  </data>
+  <data name="CleanupRecycleAgeDays" xml:space="preserve">
+    <value>gün</value>
+  </data>
+  <data name="CleanupDiskCleanup" xml:space="preserve">
+    <value>Windows Disk Temizleme'yi çalıştır</value>
+  </data>
+  <data name="CleanupDiskCleanupDesc" xml:space="preserve">
+    <value>Windows'un kendi aracını açar; neyi kaldıracağına kendisi karar verir.</value>
+  </data>
+  <data name="SourceDescAndroidSdk" xml:space="preserve">
+    <value>sdkmanager üzerinden Android SDK paketleri. Standart konumdan, ANDROID_HOME veya PATH'ten eski bileşenleri (platformlar, derleme araçları) günceller.</value>
+  </data>
+  <data name="SourceDescAndroidStudio" xml:space="preserve">
+    <value>Android Studio yüklü, ancak SDK komut satırı araçları yüklü değil; bunlar olmadan SDK paketleri güncellenemez. Android Studio'yu açar; SDK Manager, Ayarlar, Android SDK altındadır. "Android SDK Command-line Tools"u eklediğinizde güncellemeler otomatik olarak çalışır.</value>
+  </data>
+  <data name="AndroidStudioSdkRow" xml:space="preserve">
+    <value>Android Studio SDK Manager</value>
+  </data>
+  <data name="SourceDescGhExtension" xml:space="preserve">
+    <value>GitHub CLI uzantıları. gh'nin kendisinin eski olarak bildirdiği gh uzantılarını günceller.</value>
+  </data>
+  <data name="SourceNameGhExtension" xml:space="preserve">
+    <value>GitHub CLI uzantıları</value>
+  </data>
+  <data name="SourceDescPipx" xml:space="preserve">
+    <value>pipx ile yüklenen Python komut satırı araçları. Her araç bir adaydır; pipx upgrade istek üzerine çalışır.</value>
+  </data>
+  <data name="SourceDescVsCodeExtension" xml:space="preserve">
+    <value>Visual Studio Code uzantıları. Yüklü her uzantı bir adaydır; istek üzerine pazar yerinin en yeni sürümüyle yeniden yüklenir.</value>
+  </data>
+  <data name="SourceNameVsCodeExtension" xml:space="preserve">
+    <value>VS Code uzantıları</value>
+  </data>
+  <data name="SourceDescDeno" xml:space="preserve">
+    <value>Deno çalışma zamanı. GitHub'da en yeni sürümü kontrol eder ve "deno upgrade" ile günceller. Deno'yu winget, Scoop veya Chocolatey yüklediyse gizlenir, çünkü onlar kendileri günceller.</value>
+  </data>
+  <data name="SourceDescBun" xml:space="preserve">
+    <value>Bun çalışma zamanı. GitHub'da en yeni sürümü kontrol eder ve “bun upgrade” ile günceller. Bun'u bir paket yöneticisi yüklediyse gizlenir.</value>
+  </data>
+  <data name="SourceDescUv" xml:space="preserve">
+    <value>uv, kendini güncelleyen Python paket yöneticisi. uv'yi bir paket yöneticisi yüklediyse gizlenir, çünkü bu durumda "uv self update" reddeder.</value>
+  </data>
+  <data name="SourceDescUvTool" xml:space="preserve">
+    <value>“uv tool” ile yüklenen Python araçları. Her aracı PyPI'ye karşı kontrol eder ve yalnızca eski sürümleri listeler.</value>
+  </data>
+  <data name="SourceNameUvTool" xml:space="preserve">
+    <value>uv araçları</value>
+  </data>
+  <data name="SourceDescGcloud" xml:space="preserve">
+    <value>Yüklü ve en yeni sürümleri ile indirme boyutları gösterilen Google Cloud CLI bileşenleri. “gcloud components update” hepsini birlikte günceller.</value>
+  </data>
+  <data name="SourceDescOllama" xml:space="preserve">
+    <value>Yerel olarak çekilmiş Ollama modelleri. Her manifest özetini kayıt deposundaki özetle karşılaştırır; böylece yalnızca gerçekten değişen bir etiket satır olarak gösterilir. Çalışan bir Ollama sunucusu gerektirir; bu uygulama onu asla başlatmaz.</value>
+  </data>
+  <data name="SourceNameOllama" xml:space="preserve">
+    <value>Ollama modelleri</value>
+  </data>
+  <data name="SourceDescFlutter" xml:space="preserve">
+    <value>PATH'te flutter üzerinden kontrol edilen Flutter SDK. Yüklü sürümü kanalınız için Google'ın kendi sürüm akışıyla karşılaştırır.</value>
+  </data>
+  <data name="SourceDescVolta" xml:space="preserve">
+    <value>Volta'nın varsayılan Node, npm, yarn ve pnpm araç zinciri. Volta'nın kendi güncelleme denetimi olmadığından bu uygulama doğrudan Node sürüm akışı ve npm kayıt deposuyla karşılaştırır. Yalnızca aynı Node ana sürümü içinde yama veya küçük güncellemeler sunar; ana sürüm sıçraması sunmaz.</value>
+  </data>
+  <data name="SourceDescPyenvWin" xml:space="preserve">
+    <value>pyenv-win'in genel varsayılan olarak ayarladığı Python sürümü. Yalnızca aynı ana.alt sürüm serisi içinde bir yama güncellemesi sunar (örneğin 3.11.4'ten 3.11.9'a); daha yeni bir sürüm serisine geçmek bilinçli olarak size bırakılmıştır.</value>
+  </data>
+  <data name="SourceDescWsl" xml:space="preserve">
+    <value>Windows Subsystem for Linux. Yalnızca kaynak seçici için, çünkü wsl bir güncellemeyi uygulamadan kontrol edemez, bu nedenle hiçbir zaman bir satır görünmez.</value>
+  </data>
+  <data name="SourceNameWsl" xml:space="preserve">
+    <value>Linux için Windows Alt Sistemi</value>
+  </data>
+  <data name="IgnoredAllBadge" xml:space="preserve">
+    <value>Tümü yoksayıldı</value>
+  </data>
+  <data name="RowUninstalled" xml:space="preserve">
+    <value>Kaldırıldı</value>
+  </data>
+  <data name="RowHandedOff" xml:space="preserve">
+    <value>Devredildi</value>
+  </data>
+  <data name="RowHandedOffDetail" xml:space="preserve">
+    <value>Üreticinin kendi penceresini kontrol edin.</value>
+  </data>
+  <data name="RowStuck" xml:space="preserve">
+    <value>Takıldı</value>
+  </data>
+  <data name="RowStuckDetail" xml:space="preserve">
+    <value>Takıldı: bu yükleme için uygun sürüm yok.</value>
+  </data>
+  <data name="RowNeedsManualWork" xml:space="preserve">
+    <value>Sizi bekliyor</value>
+  </data>
+  <data name="RowNeedsManualWorkDetail" xml:space="preserve">
+    <value>Aynı şekilde üç kez üst üste başarısız oldu. Yalnızca yeniden denemek bunu düzeltmez.</value>
+  </data>
+  <data name="RowCancelled" xml:space="preserve">
+    <value>İptal edildi</value>
+  </data>
+  <data name="RowCancelledTooltip" xml:space="preserve">
+    <value>Bunu siz durdurdunuz. Kuyruğun geri kalanı çalışmaya devam etti.</value>
+  </data>
+  <data name="StopSingleTooltip" xml:space="preserve">
+    <value>Bunu durdur</value>
+  </data>
+  <data name="TryNormallyAgainButton" xml:space="preserve">
+    <value>Normal şekilde yeniden dene</value>
+  </data>
+  <data name="WingetVendorInstallerCrashed" xml:space="preserve">
+    <value>Üreticinin yükleyicisi çöktü ({0}). Paket genellikle elle yüklenebilir.</value>
+  </data>
+  <data name="ScanFailedToolCrashed" xml:space="preserve">
+    <value>'{0}', normal bir hata bildirmek yerine çöktü ({1}). Bu genellikle bağlı olduğu bir çalışma zamanının, örneğin Java'nın, beklediğiyle uyuşmadığı anlamına gelir.</value>
+  </data>
+  <data name="ScanFailedNoJava" xml:space="preserve">
+    <value>sdkmanager, Java {0} veya daha yenisini gerektiriyor ve bir Java kurulumu bulunamadı (JAVA_HOME, PATH veya Android Studio ile birlikte gelen).</value>
+  </data>
+  <data name="CleanupFreeSpaceResult" xml:space="preserve">
+    <value>{0} şimdi {1} boş alana sahip (öncesi {2})</value>
+  </data>
+  <data name="SettingsLogFolder" xml:space="preserve">
+    <value>Günlük dosyaları</value>
+  </data>
+  <data name="SettingsReportsFolder" xml:space="preserve">
+    <value>Hata raporları</value>
+  </data>
+  <data name="SettingsOpenReports" xml:space="preserve">
+    <value>Hata raporlarını aç</value>
+  </data>
+  <data name="SettingsDataFolder" xml:space="preserve">
+    <value>Veri klasörü</value>
+  </data>
+  <data name="AboutNetworkTargets" xml:space="preserve">
+    <value>Bu programın iletişim kurduğu sunucular</value>
+  </data>
+  <data name="SettingsDataFolderChange" xml:space="preserve">
+    <value>Taşı</value>
+  </data>
+  <data name="SettingsDataFolderMoved" xml:space="preserve">
+    <value>{0} konumuna kopyalandı. Eski klasör hâlâ orada: {1}. Yeniyi kullanmak için yeniden başlatın.</value>
+  </data>
+  <data name="SettingsDataFolderCopyFailed" xml:space="preserve">
+    <value>Veri klasörü oraya kopyalanamadı. Hiçbir şey değiştirilmedi.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedLink" xml:space="preserve">
+    <value>Bu klasör başka bir yere bağlantı. Lütfen başka bir klasör seçin.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedSystem" xml:space="preserve">
+    <value>Bu bir Windows sistem klasörü. Lütfen başka bir klasör seçin.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedProgram" xml:space="preserve">
+    <value>Bu klasör programın kendi klasörünün içinde. Lütfen başka bir klasör seçin.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedWritable" xml:space="preserve">
+    <value>Bu klasöre yazılamıyor. Lütfen başka bir klasör seçin.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedNonEmpty" xml:space="preserve">
+    <value>Orada zaten boş olmayan bir UltimateUpdater klasörü var. Lütfen başka bir klasör seçin.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedCurrent" xml:space="preserve">
+    <value>Bu, geçerli veri klasörü veya onun içinde bir konum. Lütfen başka bir klasör seçin.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedTempOrCache" xml:space="preserve">
+    <value>Bu klasör temizlik sırasında boşaltılır ve uygulama verileri için uygun değildir. Lütfen başka bir klasör seçin.</value>
+  </data>
+  <data name="SettingsDataFolderFilesLocked" xml:space="preserve">
+    <value>Bazı dosyalar kilitliydi ve taşınamadı: {0}. Hiçbir şey değiştirilmedi.</value>
+  </data>
+  <data name="SettingsLogOpenFolder" xml:space="preserve">
+    <value>Klasörü aç</value>
+  </data>
+  <data name="SettingsLogRetention" xml:space="preserve">
+    <value>Günlükleri sakla</value>
+  </data>
+  <data name="SettingsLogRetentionDesc" xml:space="preserve">
+    <value>Eski dosyalar uygulamanın bir sonraki başlatılmasında kaldırılır.</value>
+  </data>
+  <data name="SettingsLogRetentionOption" xml:space="preserve">
+    <value>{0} gün</value>
+  </data>
+  <data name="SettingsHistoryRetention" xml:space="preserve">
+    <value>Geçmişi sakla</value>
+  </data>
+  <data name="SettingsHistoryRetentionDesc" xml:space="preserve">
+    <value>Eski kayıtlar uygulamanın bir sonraki başlatılmasında kaldırılır.</value>
+  </data>
+  <data name="HistoryShowDetails" xml:space="preserve">
+    <value>Ayrıntıları göster</value>
+  </data>
+  <data name="SettingsResetEverything" xml:space="preserve">
+    <value>Her şeyi sıfırla</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmHeadline" xml:space="preserve">
+    <value>Ultimate Updater tamamen sıfırlansın mı?</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmBody" xml:space="preserve">
+    <value>Tüm ayarlar varsayılana döner; yoksayma listesi, geçmiş, günlükler ve önbellekler kalıcı olarak silinir.
+Bu işlem geri alınamaz.</value>
+  </data>
+  <data name="CleanupSystemRepairSfc" xml:space="preserve">
+    <value>Sistem dosyalarını kontrol et (sfc)</value>
+  </data>
+  <data name="CleanupSystemRepairSfcDesc" xml:space="preserve">
+    <value>sfc /scannow ile hasarlı Windows dosyalarını değiştirir. Silmek yerine onarır; yavaştır, yönetici hakları gerektirir.</value>
+  </data>
+  <data name="CleanupComponentCleanup" xml:space="preserve">
+    <value>Bileşen deposunu temizle</value>
+  </data>
+  <data name="CleanupComponentCleanupDesc" xml:space="preserve">
+    <value>Güncellemelerin bıraktığı eski Windows bileşen sürümlerini kaldırır.</value>
+  </data>
+  <data name="CleanupComponentResetBase" xml:space="preserve">
+    <value>Eski güncelleme verilerini kalıcı olarak kaldır</value>
+  </data>
+  <data name="CleanupComponentResetBaseDesc" xml:space="preserve">
+    <value>En fazla alanı boşaltır. Yüklü Windows güncellemeleri artık kaldırılamaz.</value>
+  </data>
+  <data name="CleanupSystemRepairDism" xml:space="preserve">
+    <value>Bileşen deposunu onar (DISM)</value>
+  </data>
+  <data name="CleanupSystemRepairDismDesc" xml:space="preserve">
+    <value>sfc'nin onarım kaynağı olarak kullandığı bileşen deposunda DISM /CheckHealth, /ScanHealth ve /RestoreHealth çalıştırır. Bu işlem daha uzun sürer ve yönetici hakları gerektirir.</value>
+  </data>
+  <data name="CleanupComponentStoreSize" xml:space="preserve">
+    <value>diskte {0}, Windows ile paylaşılan {1}</value>
+  </data>
+  <data name="CleanupComponentStoreRecommended" xml:space="preserve">
+    <value>Windows bir temizlik öneriyor</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
+    <value>Analiz et (yönetici hakları gerekli)</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
+    <value>Windows bileşen deposunun gerçekten ne kadar alan boşaltabileceğini ölçer.</value>
+  </data>
+  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
+    <value>Analiz yönetici hakları gerektiriyor; istem iptal edildi.</value>
+  </data>
+  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
+    <value>Analiz şu anda mümkün değil, yükseltilmiş yardımcı çalışmıyor.</value>
+  </data>
+  <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
+    <value>Windows herhangi bir boyut bildirmedi.</value>
+  </data>
+  <data name="CleanupNothingToClean" xml:space="preserve">
+    <value>hiçbir şey bulunamadı</value>
+  </data>
+  <data name="CleanupRegistryEntryCount" xml:space="preserve">
+    <value>{0} kayıt</value>
+  </data>
+  <data name="CleanupRegistryEntryCountOne" xml:space="preserve">
+    <value>{0} kayıt</value>
+  </data>
+  <data name="CleanupRegistryOrphans" xml:space="preserve">
+    <value>Sahipsiz başvurular</value>
+  </data>
+  <data name="CleanupRegistryOrphansDesc" xml:space="preserve">
+    <value>Hedefi artık var olmayan App Paths, Shared DLLs, ActiveX/COM ve otomatik başlatma girişlerini kaldırır. Varsayılan olarak kapalıdır, yönetici hakları gerektirir; herhangi bir şey silinmeden önce otomatik olarak bir yedek alınır.</value>
+  </data>
+  <data name="CleanupRegistryUninstall" xml:space="preserve">
+    <value>Sahipsiz kaldırma girişleri</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesDesc" xml:space="preserve">
+    <value>Programı zaten kaldırılmış olan kaldırma girişlerini siler. Varsayılan olarak kapalıdır, yönetici hakları gerektirir; herhangi bir şey silinmeden önce otomatik olarak bir yedek alınır.</value>
+  </data>
+  <data name="CleanupDrivers" xml:space="preserve">
+    <value>Sürücüler</value>
+  </data>
+  <data name="CleanupDriversDesc" xml:space="preserve">
+    <value>Artık bağlı olmayan aygıtlar ve sürücü deposunda kalan eski sürücü paketleri. Varsayılan olarak kapalıdır, yönetici hakları gerektirir; herhangi bir şey silinmeden önce otomatik olarak bir yedek alınır.</value>
+  </data>
+  <data name="CleanupDriversConsequence" xml:space="preserve">
+    <value>Aygıt bir dahaki sefere bağlandığında, Windows bulabilirse sürücüsünü yeniden yükler. Her paketin bir yedeği veri klasöründe saklanır.</value>
+  </data>
+  <data name="CleanupGroupDrivers" xml:space="preserve">
+    <value>Sürücüler</value>
+  </data>
+  <data name="CleanupDriverGroupDisconnected" xml:space="preserve">
+    <value>Artık bağlı olmayan aygıtlar</value>
+  </data>
+  <data name="CleanupDriverGroupOldPackages" xml:space="preserve">
+    <value>Eski sürücü paketleri</value>
+  </data>
+  <data name="CleanupDriverLastConnected" xml:space="preserve">
+    <value>Son bağlantı {0}</value>
+  </data>
+  <data name="CleanupDriverLastConnectedUnknown" xml:space="preserve">
+    <value>Bağlantı tarihi bilinmiyor</value>
+  </data>
+  <data name="CleanupAdminHeadline" xml:space="preserve">
+    <value>Bazı alanlar yönetici hakları gerektiriyor</value>
+  </data>
+  <data name="CleanupAdminBody" xml:space="preserve">
+    <value>Windows Temp, güncelleme önbelleği, Disk Temizleme ve sistem onarımının tam olarak ölçülüp temizlenmesi için yönetici hakları gerekir.
+
+Yönetici haklarıyla devam edilsin mi?</value>
+  </data>
+  <data name="CleanupAdminConfirm" xml:space="preserve">
+    <value>Yönetici haklarıyla</value>
+  </data>
+  <data name="CleanupAdminDecline" xml:space="preserve">
+    <value>Olmadan devam et</value>
+  </data>
+  <data name="CleanupAdminMissing" xml:space="preserve">
+    <value>Yönetici hakları olmadan bu alan yalnızca kısmen ölçülür ve temizlenir.</value>
+  </data>
+  <data name="CleanupSkippedFilesSize" xml:space="preserve">
+    <value>{0} dosya ({1}) kullanımda olduğu için atlandı.</value>
+  </data>
+  <data name="CleanupSkippedFilesSizeOne" xml:space="preserve">
+    <value>{0} dosya ({1}) kullanımda olduğu için atlandı.</value>
+  </data>
+  <data name="CleanupInUse" xml:space="preserve">
+    <value>{0} kullanımda</value>
+  </data>
+  <data name="CleanupShaderCache" xml:space="preserve">
+    <value>Gölgelendirici önbelleği</value>
+  </data>
+  <data name="CleanupShaderCacheDesc" xml:space="preserve">
+    <value>Grafik sürücüsünün sakladığı derlenmiş gölgelendiriciler. Bir oyun veya uygulama tekrar ihtiyaç duyduğunda yeniden oluşturulur.</value>
+  </data>
+  <data name="CleanupPackageCache" xml:space="preserve">
+    <value>Paket yöneticisi önbelleği</value>
+  </data>
+  <data name="CleanupPackageCacheDesc" xml:space="preserve">
+    <value>pip, npm, Yarn, NuGet ve Chocolatey'nin yeniden yüklemeler için sakladığı indirmeler. Yüklü paketler değişmeden kalır.</value>
+  </data>
+  <data name="CleanupBuildCache" xml:space="preserve">
+    <value>Derleme aracı önbelleği</value>
+  </data>
+  <data name="CleanupBuildCacheDesc" xml:space="preserve">
+    <value>Gradle'ın derleme önbelleği ve Android SDK indirme önbelleği, bir sonraki derlemede yeniden oluşturulur.</value>
+  </data>
+  <data name="CleanupAppCacheSweep" xml:space="preserve">
+    <value>Diğer uygulamaların önbellek ve günlükleri</value>
+  </data>
+  <data name="CleanupAppCacheSweepDesc" xml:space="preserve">
+    <value>Yukarıda ayrı ayrı listelenmeyen programlar için, sabit bir liste yerine tipik klasör desenlerini tarayarak önbellek ve günlük klasörlerini bulur. Belgelerinizi veya ayarlarınızı asla içermez. Varsayılan olarak kapalıdır; açmadan önce bulduklarını inceleyin.</value>
+  </data>
+  <data name="CleanupLeftoverWarning" xml:space="preserve">
+    <value>Bu yazılıma ait tüm veriler silinecek!</value>
+  </data>
+  <data name="CleanupLeftoverLastUsed" xml:space="preserve">
+    <value>Son kullanım: {0}</value>
+  </data>
+  <data name="CleanupEntryDateRange" xml:space="preserve">
+    <value>{0} - {1}</value>
+  </data>
+  <data name="CleanupMoreEntries" xml:space="preserve">
+    <value>…ve {0} tane daha ({1})</value>
+  </data>
+  <data name="CleanupMoreEntriesNotCleaned" xml:space="preserve">
+    <value>…ve {0} tane daha ({1}), bu sürücüdeki satırlar işaretlenmediği sürece gizli ve kaldırılmamış</value>
+  </data>
+  <data name="CleanupEntryDeleted" xml:space="preserve">
+    <value>Silinme tarihi {0}</value>
+  </data>
+  <data name="CleanupShowDetails" xml:space="preserve">
+    <value>Ayrıntılar ({0})</value>
+  </data>
+  <data name="CleanupEntryOpenFolder" xml:space="preserve">
+    <value>Klasörü aç</value>
+  </data>
+  <data name="CleanupEntryCopyPath" xml:space="preserve">
+    <value>Yolu kopyala</value>
+  </data>
+  <data name="CleanupEntryPermanentlyExclude" xml:space="preserve">
+    <value>Kalıcı olarak hariç tut</value>
+  </data>
+  <data name="CleanupEntriesSelectAll" xml:space="preserve">
+    <value>Tüm dosyaları seç</value>
+  </data>
+  <data name="CleanupUserTempConsequence" xml:space="preserve">
+    <value>Bir geçici dosyayı kullanan programlar, ona tekrar ihtiyaç duyduklarında yeniden oluşturur.</value>
+  </data>
+  <data name="CleanupAllUsersTempConsequence" xml:space="preserve">
+    <value>Kendi geçici klasörünüzle aynı, yalnızca bu bilgisayardaki diğer hesaplar için.</value>
+  </data>
+  <data name="CleanupWindowsTempConsequence" xml:space="preserve">
+    <value>Windows, ihtiyaç duyduğunda hâlâ gerekli olanı yeniden oluşturur.</value>
+  </data>
+  <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
+    <value>Windows Update, ihtiyaç duyarsa dosyaları basitçe yeniden indirir.</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
+    <value>Ağdaki diğer bilgisayarlarla güncellemeleri paylaşmak için yalnızca bir önbellek. Başka hiçbir şey onu kullanmaz.</value>
+  </data>
+  <data name="CleanupThumbnailsConsequence" xml:space="preserve">
+    <value>Gezgin, o klasörü bir sonraki açışınızda küçük resimleri yeniden çizer.</value>
+  </data>
+  <data name="CleanupCrashDumpsConsequence" xml:space="preserve">
+    <value>Yalnızca daha önce yaşanmış bir çökmeyi incelemek için yararlıdır. Şu anda hiçbir şey onlara bağlı değil.</value>
+  </data>
+  <data name="CleanupShaderCacheConsequence" xml:space="preserve">
+    <value>Grafik sürücüsü onu yeniden oluşturur. Etkilenen bir oyun veya uygulama bir sonraki kez başlatıldığında, bir defaya mahsus biraz daha yavaş açılır.</value>
+  </data>
+  <data name="CleanupPackageCacheConsequence" xml:space="preserve">
+    <value>Bir sonraki yükleme veya güncelleme, paketi basitçe yeniden indirir.</value>
+  </data>
+  <data name="CleanupBuildCacheConsequence" xml:space="preserve">
+    <value>Önbellek yeniden dolarken bir sonraki derleme biraz daha yavaş olur.</value>
+  </data>
+  <data name="CleanupAppCacheSweepConsequence" xml:space="preserve">
+    <value>İsme göre değil desene göre birçok programı aynı anda kapsar, bu nedenle temizlemeden önce ne bulunduğuna kısaca bakmak faydalıdır.</value>
+  </data>
+  <data name="CleanupMemoryDumpsConsequence" xml:space="preserve">
+    <value>Hâlâ ihtiyacınız olursa, daha önce yaşanmış bir çökmeyi inceleme olanağını kaybedersiniz.</value>
+  </data>
+  <data name="CleanupWindowsLogsConsequence" xml:space="preserve">
+    <value>Bunlar başarısız bir güncellemeyi teşhis etmek için tam olarak ihtiyaç duyacağınız şeylerdir, bu yüzden hâlâ birini çözüyorsanız saklayın.</value>
+  </data>
+  <data name="CleanupRecycleBinConsequence" xml:space="preserve">
+    <value>İçindeki dosyalar bundan sonra geri yüklenemez.</value>
+  </data>
+  <data name="CleanupDiskCleanupConsequence" xml:space="preserve">
+    <value>Windows'un kendi temizliğini, standart, onaylanmış seçimiyle ve bundan fazlası olmadan çalıştırır.</value>
+  </data>
+  <data name="CleanupSystemRepairDismConsequence" xml:space="preserve">
+    <value>Uzun sürebilir ve sistem dosyalarını yerinde onarır, bu yüzden başladıktan sonra bitmesine izin vermek en iyisidir.</value>
+  </data>
+  <data name="CleanupSystemRepairSfcConsequence" xml:space="preserve">
+    <value>Sistem dosyalarını yerinde onarır, genellikle hızlıdır ve başladıktan sonra bitmesine izin vermek en iyisidir.</value>
+  </data>
+  <data name="CleanupRegistryOrphansConsequence" xml:space="preserve">
+    <value>Bozuk App Paths kısayollarını, Shared DLLs başvuru sayılarını, ActiveX/COM kayıtlarını ve otomatik başlatma girişlerini kaldırır; önce bir yedek alınır ve hâlâ çalışan hiçbir şeye dokunulmaz.</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesConsequence" xml:space="preserve">
+    <value>Programı Ekle veya Kaldır listesinden, programı zaten kaldırılmış bir girişi kaldırır; önce bir yedek alınır.</value>
+  </data>
+  <data name="CleanupRegistryBackupNote" xml:space="preserve">
+    <value>Her kayıt defteri değişikliği önce dışa aktarılır. Yedekler: {0}, {1} tanesi saklanıyor.</value>
+  </data>
+  <data name="CleanupRiskSafe" xml:space="preserve">
+    <value>Güvenli</value>
+  </data>
+  <data name="CleanupRiskConsidered" xml:space="preserve">
+    <value>Orta</value>
+  </data>
+  <data name="CleanupRiskRisky" xml:space="preserve">
+    <value>Riskli</value>
+  </data>
+  <data name="CleanupShowAllCategories" xml:space="preserve">
+    <value>Tüm alanları göster ({0} gizli)</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDelete" xml:space="preserve">
+    <value>Silmek yerine geri dönüşüm kutusuna taşı</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
+    <value>Alan, geri dönüşüm kutusunu boşalttığınızda boşalır.</value>
+  </data>
+  <data name="CleanupMemoryDumps" xml:space="preserve">
+    <value>Çökme dökümleri (sistem)</value>
+  </data>
+  <data name="CleanupMemoryDumpsDesc" xml:space="preserve">
+    <value>Windows'un bir mavi ekrandan sonra yazdığı bellek dökümleri. Yalnızca birini incelerken yararlıdır.</value>
+  </data>
+  <data name="CleanupWindowsLogs" xml:space="preserve">
+    <value>Windows günlük dosyaları</value>
+  </data>
+  <data name="CleanupWindowsLogsDesc" xml:space="preserve">
+    <value>Windows'un güncellemeler, bakım ve kurulum için kendi günlükleri. Otomatik olarak yeniden oluşturulur; başarısız bir güncellemeyi teşhis ederken saklayın.</value>
+  </data>
+  <data name="InstallErrorVs8001What" xml:space="preserve">
+    <value>Visual Studio Setup bir ARM makine kontrolü hatası bildirdi (hata 8001).</value>
+  </data>
+  <data name="InstallErrorVs8002What" xml:space="preserve">
+    <value>Visual Studio Setup'ın arka plan indirme ön kontrolü başarısız oldu (hata 8002).</value>
+  </data>
+  <data name="InstallErrorVs8003What" xml:space="preserve">
+    <value>Visual Studio Setup, desteklenmeyen bir bileşen hatası bildirdi (hata 8003).</value>
+  </data>
+  <data name="InstallErrorVs8004What" xml:space="preserve">
+    <value>Visual Studio Setup, hedef yükleme dizinini kullanamadı (hata 8004).</value>
+  </data>
+  <data name="InstallErrorVs8005What" xml:space="preserve">
+    <value>Visual Studio Setup, kaynak yüklerini doğrulayamadı (hata 8005).</value>
+  </data>
+  <data name="InstallErrorVsGenericNow" xml:space="preserve">
+    <value>Visual Studio'nun kendi kurulum günlüğünde daha fazla ayrıntı var; tekrar deneyin veya bu tekrarlanmaya devam ederse Visual Studio Installer'ı yeniden yükleyin.</value>
+  </data>
+  <data name="InstallErrorVs8006What" xml:space="preserve">
+    <value>Visual Studio (veya bileşenlerinden biri) hâlâ çalıştığı için Visual Studio Setup devam edemedi (hata 8006).</value>
+  </data>
+  <data name="InstallErrorVs8006Now" xml:space="preserve">
+    <value>Visual Studio'yu ve ilgili işlemlerini kapatın, sonra tekrar deneyin. Bu uygulama bunu bir sonraki denemeden önce sizin için yapabilir.</value>
+  </data>
+  <data name="InstallErrorMsi1602What" xml:space="preserve">
+    <value>Kurulum iptal edildi (yükleyici hatası 1602).</value>
+  </data>
+  <data name="InstallErrorMsi1602Now" xml:space="preserve">
+    <value>Hazır olduğunuzda güncellemeyi tekrar çalıştırın; iptal büyük olasılıkla kasıtlıydı.</value>
+  </data>
+  <data name="InstallErrorMsi1603What" xml:space="preserve">
+    <value>Yükleyici ölümcül bir hata bildirdi (yükleyici hatası 1603).</value>
+  </data>
+  <data name="InstallErrorMsi1603Now" xml:space="preserve">
+    <value>Yükleyicinin kendi günlüğünü kontrol edin veya elle yüklemeyi deneyin.</value>
+  </data>
+  <data name="InstallErrorMsi1618What" xml:space="preserve">
+    <value>Aynı anda başka bir yükleme çalışıyordu, bu yüzden Windows bunu reddetti.</value>
+  </data>
+  <data name="InstallErrorMsi1618Now" xml:space="preserve">
+    <value>Diğerleri tamamlandıktan sonra kendi başına yeniden denendi.</value>
+  </data>
+  <data name="InstallErrorMsi1619What" xml:space="preserve">
+    <value>Yükleme paketi okunamadı (yükleyici hatası 1619/1620).</value>
+  </data>
+  <data name="InstallErrorMsi1619Now" xml:space="preserve">
+    <value>Paketi yeniden indirmek veya sıfırdan yeniden yüklemek bunu genellikle çözer.</value>
+  </data>
+  <data name="InstallErrorMsi1638What" xml:space="preserve">
+    <value>Bu programın başka bir sürümü zaten yüklü (yükleyici hatası 1638).</value>
+  </data>
+  <data name="InstallErrorMsi1638Now" xml:space="preserve">
+    <value>Önce mevcut sürümü kaldırın veya kendi güncelleyicisini kullanın.</value>
+  </data>
+  <data name="InstallErrorRebootWhat" xml:space="preserve">
+    <value>Yükleyicinin tamamlanması için bir yeniden başlatma gerekiyor (kod 1641/3010).</value>
+  </data>
+  <data name="InstallErrorRebootNow" xml:space="preserve">
+    <value>Windows'u yeniden başlatın. Güncellemenin kendisi zaten uygulandı.</value>
+  </data>
+  <data name="InstallErrorCrashWhat" xml:space="preserve">
+    <value>Üreticinin yükleyicisi çöktü (sıradan bir hata değil, Windows düzeyinde bir çökme).</value>
+  </data>
+  <data name="InstallErrorCrashNow" xml:space="preserve">
+    <value>Paket genellikle üreticinin kendi yükleyicisinden elle yüklenebilir.</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableWhat" xml:space="preserve">
+    <value>winget'in bu yükleme için uygun bir paket sürümü yok (uygulanabilir yükseltme yok).</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableNow" xml:space="preserve">
+    <value>Hiçbir şey değişmedi; bu uygulamanın sunduğu sürüm burada geçerli değil.</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeWhat" xml:space="preserve">
+    <value>winget bu paket üzerinde yönetici bağlamında işlem yapamadı (kullanıcı kapsamlı bir yükleme).</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeNow" xml:space="preserve">
+    <value>Bu uygulama zaten yönetici hakları olmadan yeniden denedi; o da başarısız olduysa, yukarıdaki mesaj gerçek nedendir.</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechWhat" xml:space="preserve">
+    <value>Yeni sürüm, yüklü olandan farklı bir şekilde yükleniyor.</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechNow" xml:space="preserve">
+    <value>Programı kaldırın, ardından yeniden yükleyin.</value>
+  </data>
+  <data name="InstallErrorGenericWhat" xml:space="preserve">
+    <value>Üreticinin yükleyicisi kendi hata kodu {0} ile başarısız oldu.</value>
+  </data>
+  <data name="InstallErrorGenericNow" xml:space="preserve">
+    <value>Ne bildirdiğini görmek için aşağıdaki ham çıktıya bakın.</value>
+  </data>
+  <data name="InstallErrorWuBusyWhat" xml:space="preserve">
+    <value>Windows Update şu anda başka bir görevle meşgul.</value>
+  </data>
+  <data name="InstallErrorWuBusyNow" xml:space="preserve">
+    <value>Lütfen biraz bekleyip tekrar deneyin.</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingWhat" xml:space="preserve">
+    <value>Bu güncelleme yüklenmeden önce hâlâ bekleyen bir yeniden başlatma var.</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingNow" xml:space="preserve">
+    <value>Windows'u yeniden başlatın, sonra tekrar deneyin.</value>
+  </data>
+  <data name="InstallErrorWuNotStartedWhat" xml:space="preserve">
+    <value>Windows Update bu yüklemeyi hiç gerçekten başlatmadı.</value>
+  </data>
+  <data name="InstallErrorWuNotStartedNow" xml:space="preserve">
+    <value>Hiçbir şey değişmedi; tekrar denemek yardımcı olabilir.</value>
+  </data>
+  <data name="InstallErrorWuInProgressWhat" xml:space="preserve">
+    <value>Windows Update hâlâ bu yüklemeyi çalışıyor olarak bildiriyor.</value>
+  </data>
+  <data name="InstallErrorWuInProgressNow" xml:space="preserve">
+    <value>Biraz bekleyin, sonra güncellemenin şimdiye kadar bitip bitmediğini kontrol edin.</value>
+  </data>
+  <data name="InstallErrorWuFailedWhat" xml:space="preserve">
+    <value>Windows Update bu yüklemeyi başarısız olarak bildirdi.</value>
+  </data>
+  <data name="InstallErrorWuFailedNow" xml:space="preserve">
+    <value>Kesin neden genellikle aşağıdaki HRESULT değerindedir; tekrar denemek çoğu zaman yardımcı olur.</value>
+  </data>
+  <data name="InstallErrorWuAbortedWhat" xml:space="preserve">
+    <value>Windows Update bu yüklemeyi iptal etti.</value>
+  </data>
+  <data name="InstallErrorWuAbortedNow" xml:space="preserve">
+    <value>Tekrar denemek genellikle yardımcı olur; iptal etmeye devam ederse Windows Update sorun gidericisi daha fazla yardımcı olabilir.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016What" xml:space="preserve">
+    <value>Zaten başka bir yükleme çalışıyor veya hâlâ bekleyen bir yeniden başlatma var.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016Now" xml:space="preserve">
+    <value>Biraz bekleyin, sonra tekrar deneyin.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044What" xml:space="preserve">
+    <value>Bu yükleme yönetici hakları gerektiriyor.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044Now" xml:space="preserve">
+    <value>Bu uygulama Windows güncellemelerini zaten yükseltilmiş haklarla yüklüyor; hata devam ederse Windows'u yeniden başlatmak yardımcı olabilir.</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422What" xml:space="preserve">
+    <value>Windows Update hizmeti devre dışı.</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422Now" xml:space="preserve">
+    <value>“Windows Update” hizmetini başlatın (services.msc), sonra tekrar deneyin.</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DWhat" xml:space="preserve">
+    <value>Bu güncelleme kurulum ortamı gerektiriyor.</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DNow" xml:space="preserve">
+    <value>Uygun kurulum ortamını sağlayın veya Windows Update kaynağını kontrol edin.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022What" xml:space="preserve">
+    <value>Bu yükleme çalıştırmasındaki her güncelleme başarısız oldu.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
+    <value>Daha sonra tekrar denemek genellikle yardımcı olur.</value>
+  </data>
+  <data name="InstallErrorWuInternalWhat" xml:space="preserve">
+    <value>Windows Update'in kendi hizmeti bu uygulamanın beklediği şekilde yanıt vermedi.</value>
+  </data>
+  <data name="InstallErrorWuInternalNow" xml:space="preserve">
+    <value>Tekrar deneyin. Başarısız olmaya devam ederse, bilgisayarı yeniden başlatmak genellikle bunu düzeltir.</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedWhat" xml:space="preserve">
+    <value>Windows Update artık bu güncellemeyi sunmuyor. Zaten yüklenmiş, daha yenisiyle değiştirilmiş veya önce başka bir güncellemeyi bekliyor olabilir.</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedNow" xml:space="preserve">
+    <value>Liste otomatik olarak yenilendi. Satır hâlâ oradaysa, yüklemeyi yeniden başlatın.</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedWhat" xml:space="preserve">
+    <value>Bu uygulama, paket veya model adını olduğu gibi çalıştırmayı reddetti: sıradan bir tanımlayıcı değil ve bir komut seçeneği olarak okunabilirdi.</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedNow" xml:space="preserve">
+    <value>Bu bir güvenlik kontrolüdür, paketin kendisinde bir kusur değildir; yeniden deneme bunu değiştirmez.</value>
+  </data>
+  <data name="InstallErrorMissingTargetWhat" xml:space="preserve">
+    <value>Yükleme başlamadan önce satır, hangi sürümün yükleneceğinin izini kaybetti.</value>
+  </data>
+  <data name="InstallErrorMissingTargetNow" xml:space="preserve">
+    <value>Yeniden tarayın ve tekrar deneyin; sürüm listesi her taramada yenilenir.</value>
+  </data>
+  <data name="InstallErrorPipRepairedWhat" xml:space="preserve">
+    <value>pip'in kendi kurulumu bozulmuştu; bu uygulama onu otomatik olarak onardı.</value>
+  </data>
+  <data name="InstallErrorPipRepairedNow" xml:space="preserve">
+    <value>Bu paketi şimdi yeniden yükleyin; pip tekrar çalışıyor.</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedWhat" xml:space="preserve">
+    <value>İndirilen NVIDIA yükleyicisinin imzası doğrulanamadı, bu yüzden bu uygulama onu çalıştırmayı reddetti.</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedNow" xml:space="preserve">
+    <value>Sürücüyü doğrudan NVIDIA'nın kendi sayfasından indirin.</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainWhat" xml:space="preserve">
+    <value>İndirme, NVIDIA'nın kendi alan adından başka bir yere yönlendirildi, bu yüzden bu uygulama onu izlemeyi reddetti.</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainNow" xml:space="preserve">
+    <value>Sürücüyü doğrudan NVIDIA'nın kendi sayfasından indirin.</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitWhat" xml:space="preserve">
+    <value>İndirme, bu uygulamanın bir sürücü yükleyicisi için izin verdiğinden daha büyüktü, bu yüzden durduruldu.</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitNow" xml:space="preserve">
+    <value>Sürücüyü doğrudan NVIDIA'nın kendi sayfasından indirin.</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedWhat" xml:space="preserve">
+    <value>NVIDIA yükleyicisi için Windows izin istemi kapatıldı veya reddedildi.</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedNow" xml:space="preserve">
+    <value>Tekrar deneyin ve bu sefer istemi kabul edin.</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartWhat" xml:space="preserve">
+    <value>NVIDIA yükleyicisi başlatılamadı.</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartNow" xml:space="preserve">
+    <value>Tekrar deneyin; bu devam ederse, sürücüyü doğrudan NVIDIA'nın kendi sayfasından yükleyin.</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningWhat" xml:space="preserve">
+    <value>Bu uygulama beklemeyi bıraktığında NVIDIA yükleyicisi hâlâ çalışıyordu.</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningNow" xml:space="preserve">
+    <value>Gerçekten tamamlanıp tamamlanmadığını görmek için NVIDIA'nın kendi yükleyici penceresini veya Windows'un yüklü uygulamalar listesini kontrol edin.</value>
+  </data>
+  <data name="InstallErrorTimeoutWhat" xml:space="preserve">
+    <value>Araç, bu uygulamanın kendisine izin verdiği süre içinde tamamlanmadı.</value>
+  </data>
+  <data name="InstallErrorTimeoutNow" xml:space="preserve">
+    <value>Tekrar deneyin; yavaş bir bağlantı veya meşgul bir bilgisayar genellikle nedenidir.</value>
+  </data>
+  <data name="RetryInteractiveHeader" xml:space="preserve">
+    <value>Etkileşimli olarak yeniden dene</value>
+  </data>
+  <data name="RowRunningInteractive" xml:space="preserve">
+    <value>etkileşimli olarak çalışıyor…</value>
+  </data>
+  <data name="InstallBlockersLine" xml:space="preserve">
+    <value>{0}, şunlar tarafından engelleniyor: {1}</value>
+  </data>
+  <data name="InstallBlockerCloseAndContinue" xml:space="preserve">
+    <value>Programı kapat ve devam et</value>
+  </data>
+  <data name="InstallBlockerSkip" xml:space="preserve">
+    <value>Engellenenleri atla</value>
+  </data>
+  <data name="InstallBlockerTryAnyway" xml:space="preserve">
+    <value>Yine de dene</value>
+  </data>
+  <data name="InstallBlockerForceKillHeadline" xml:space="preserve">
+    <value>Zorla kapatılsın mı?</value>
+  </data>
+  <data name="InstallBlockerForceKillBody" xml:space="preserve">
+    <value>Kaydedilmemiş çalışma kaybolur.</value>
+  </data>
+  <data name="InstallBlockerAutoSkipped" xml:space="preserve">
+    <value>{0} hâlâ çalışıyor, bu yüzden otomatik olarak atlandı (gözetimsiz).</value>
+  </data>
+  <data name="PreflightTitle" xml:space="preserve">
+    <value>Güncellemeden önce</value>
+  </data>
+  <data name="PreflightStart" xml:space="preserve">
+    <value>Başlat</value>
+  </data>
+  <data name="PreflightCancel" xml:space="preserve">
+    <value>İptal</value>
+  </data>
+  <data name="InstallSpaceShort" xml:space="preserve">
+    <value>Yalnızca {0} boş, yaklaşık {1} gerekiyor.</value>
+  </data>
+  <data name="InstallSpaceUnknown" xml:space="preserve">
+    <value>{0} paket boyut bildirmiyor.</value>
+  </data>
+  <data name="InstallSpaceOpenCleanup" xml:space="preserve">
+    <value>Temizliği aç</value>
+  </data>
+  <data name="SettingsMeteredTitle" xml:space="preserve">
+    <value>Ölçülü bağlantıda otomatik tarama yapma</value>
+  </data>
+  <data name="InstallMeteredWarn" xml:space="preserve">
+    <value>Ölçülü bağlantı: yaklaşık {0} indirilecek.</value>
+  </data>
+  <data name="InstallBatteryWarn" xml:space="preserve">
+    <value>Pil %{0} ve prize takılı değil.</value>
+  </data>
+  <data name="RebootDialogTitle" xml:space="preserve">
+    <value>Yeniden başlatma gerekli</value>
+  </data>
+  <data name="RebootDialogBody" xml:space="preserve">
+    <value>Bu paketler bir yeniden başlatma istedi:</value>
+  </data>
+  <data name="RebootDialogNow" xml:space="preserve">
+    <value>Şimdi yeniden başlat</value>
+  </data>
+  <data name="RebootDialogLater" xml:space="preserve">
+    <value>Sonra</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>Hakkında</value>
+  </data>
+  <data name="AboutTagline" xml:space="preserve">
+    <value>Bu bilgisayarda bekleyen her güncelleme için tek bir yer.</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>Sürüm {0}</value>
+  </data>
+  <data name="AboutLicence" xml:space="preserve">
+    <value>MIT lisansı</value>
+  </data>
+  <data name="AboutRepository" xml:space="preserve">
+    <value>GitHub'daki proje sayfası</value>
+  </data>
+  <data name="AboutThirdParty" xml:space="preserve">
+    <value>Her güncelleme kendi kaynağından gelir ve o kaynağın kendi mekanizmasıyla yüklenir. Bu uygulama hiçbir paketi barındırmaz, kontrol etmez veya değiştirmez.</value>
+  </data>
+  <data name="AboutIcons" xml:space="preserve">
+    <value>Marka işaretleri Simple Icons (CC0) tarafından. Tüm ticari markalar sahiplerine aittir.</value>
+  </data>
+  <data name="AboutTrademarks" xml:space="preserve">
+    <value>Microsoft, NVIDIA, AMD, Intel, Dell, Lenovo, HP, Valve, Epic Games veya bu uygulamanın gösterdiği başka herhangi bir üretici ile bağlantılı, onaylı veya sponsorlu değildir.</value>
+  </data>
+  <data name="WingetBootstrapConfirmHeadline" xml:space="preserve">
+    <value>winget bulunamadı</value>
+  </data>
+  <data name="WingetBootstrapConfirmBody" xml:space="preserve">
+    <value>Şimdi yüklensin mi? Doğrudan Microsoft'un kendi App Installer paketinden gelir ve çalıştırılmadan önce doğrulanır.</value>
+  </data>
+  <data name="WingetBootstrapInstall" xml:space="preserve">
+    <value>winget'i yükle</value>
+  </data>
+  <data name="ColumnsButton" xml:space="preserve">
+    <value>Sütunlar</value>
+  </data>
+  <data name="ColumnsReset" xml:space="preserve">
+    <value>Sütunları sıfırla</value>
+  </data>
+  <data name="ColumnPublisher" xml:space="preserve">
+    <value>Yayımcı</value>
+  </data>
+  <data name="ScanCachedAge" xml:space="preserve">
+    <value>{0} tarihli sonuç, yeniden kontrol ediliyor</value>
+  </data>
+  <data name="ScanSourceTooSlow" xml:space="preserve">
+    <value>{0} saniyedir yanıt yok</value>
+  </data>
+  <data name="ScanOfflineBanner" xml:space="preserve">
+    <value>İnternet bağlantısı yok. Yalnızca yerel kaynaklar kontrol edildi.</value>
+  </data>
+  <data name="ScanNoConnectionBanner" xml:space="preserve">
+    <value>İnternete bağlantı yok: her çevrimiçi kaynak başarısız oldu. Güvenlik duvarını veya ağı kontrol edin.</value>
+  </data>
+  <data name="ScanOfflineSource" xml:space="preserve">
+    <value>Bağlantı yok</value>
+  </data>
+  <data name="NetProxyRefused" xml:space="preserve">
+    <value>Proxy bağlantıyı reddetti ({0}).</value>
+  </data>
+  <data name="PipInterpreterTooltip" xml:space="preserve">
+    <value>Python yorumlayıcısı: {0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
+    <value>+~{0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
+    <value>Windows Disk Temizleme tarafından boşaltıldı. Diğer görevlerle birlikte çalıştığı için yaklaşık bir değerdir.</value>
+  </data>
+  <data name="CleanupDefaultSelection" xml:space="preserve">
+    <value>Varsayılan seçim</value>
+  </data>
+  <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
+    <value>Yalnızca güvenli öğeleri, yani varsayılan olarak işaretli olanları seçer.</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
+    <value>Analiz ediliyor…</value>
+  </data>
+  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
+    <value>Windows zamanında yanıt vermedi. Analiz durduruldu.</value>
+  </data>
+  <data name="CleanupPipLeftovers" xml:space="preserve">
+    <value>Kesintiye uğramış pip kurulumlarının kalıntıları</value>
+  </data>
+  <data name="CleanupPipLeftoversDesc" xml:space="preserve">
+    <value>Bir kurulum kesintiye uğradığında pip'in geride bıraktığı klasörler; pip her çalıştirmada bunlar hakkında uyarır.</value>
+  </data>
+  <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
+    <value>pip artık bunlar hakkında uyarmaz; bu bilgisayarda başka hiçbir şey bu klasörleri kullanmaz.</value>
+  </data>
+  <data name="CleanupOldPythonVersions" xml:space="preserve">
+    <value>Eski Python sürümleri</value>
+  </data>
+  <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
+    <value>Aynı türden (32 bit veya 64 bit) daha yeni bir sürümle değiştirilmiş Python kurulumları.</value>
+  </data>
+  <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
+    <value>Bu sürümü hâlâ kullanan programlar ve betikler artık çalışmaz. İçindeki yüklü paketler de onunla birlikte kaldırılır.</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
+    <value>{0} ({1} paket)</value>
+  </data>
+  <data name="CleanupDriverInstalledDate" xml:space="preserve">
+    <value>Yüklenme tarihi {0}</value>
+  </data>
+  <data name="CleanupDriverProviderLabel" xml:space="preserve">
+    <value>Sağlayıcı</value>
+  </data>
+  <data name="CleanupDriverClassLabel" xml:space="preserve">
+    <value>Sınıf</value>
+  </data>
+  <data name="CleanupDriverInfFileLabel" xml:space="preserve">
+    <value>INF dosyası</value>
+  </data>
+  <data name="CleanupDriverOriginalNameLabel" xml:space="preserve">
+    <value>Özgün ad</value>
+  </data>
+  <data name="CleanupDriverStorePathLabel" xml:space="preserve">
+    <value>Sürücü deposu yolu</value>
+  </data>
+  <data name="CleanupDriverInstalledNow" xml:space="preserve">
+    <value>Şu anda yüklü: sürüm {0}, {1}</value>
+  </data>
+  <data name="CleanupDriverVersionDate" xml:space="preserve">
+    <value>Sürüm {0}, {1}</value>
+  </data>
+  <data name="CleanupCatalogLoadFailed" xml:space="preserve">
+    <value>Temizlik listesi yüklenemedi. Bu pencereyi kapatıp yeniden açın. Ayrıntılar günlük klasöründe.</value>
+  </data>
+  <data name="NetPurposeSelfUpdate" xml:space="preserve">
+    <value>Kendini güncelleme (sürüm JSON'u, SHA256SUMS, dosya) ve diğer depoların sürüm verileri</value>
+  </data>
+  <data name="NetPurposeChangelog" xml:space="preserve">
+    <value>Tıklandığında sürüm notu metni</value>
+  </data>
+  <data name="NetPurposeNvidia" xml:space="preserve">
+    <value>GPU ürün tablosu, sürücü arama ve indirme</value>
+  </data>
+  <data name="NetPurposePackageMeta" xml:space="preserve">
+    <value>Satırları zenginleştirmek için paket üst verileri (son sürüm, boyut, tarih)</value>
+  </data>
+  <data name="NetPurposeSdkMeta" xml:space="preserve">
+    <value>Android SDK bildirimi, Flutter sürümleri, VS Code uzantı üst verileri</value>
+  </data>
+  <data name="NetPurposeSteam" xml:space="preserve">
+    <value>Yama notları (sorgu yalnızca uygulama kimliğini içerir)</value>
+  </data>
+  <data name="NetPurposeOllamaRemote" xml:space="preserve">
+    <value>Bir modelin uzak özeti (yalnızca kütüphane modelleri)</value>
+  </data>
+  <data name="NetPurposeOllamaLocal" xml:space="preserve">
+    <value>Yerel Ollama model listesi, kullanılan tek şifresiz http:// adresi, yalnızca geri döngü</value>
+  </data>
+  <data name="FilterShowIgnored" xml:space="preserve">
+    <value>Yoksayılanları göster</value>
+  </data>
+  <data name="FilterButton" xml:space="preserve">
+    <value>Filtre</value>
+  </data>
+  <data name="FilterButtonActive" xml:space="preserve">
+    <value>Filtre ({0})</value>
+  </data>
+  <data name="ToolbarCleanupLabel" xml:space="preserve">
+    <value>Temizle</value>
+  </data>
+  <data name="ScanStateError" xml:space="preserve">
+    <value>Hata</value>
+  </data>
+  <data name="AboutPortable" xml:space="preserve">
+    <value>Taşınabilir mod: ayarlar ve veriler programın yanında saklanır.</value>
+  </data>
+  <data name="SortByTooltip" xml:space="preserve">
+    <value>{0} sütununa göre sırala</value>
+  </data>
+  <data name="InstallBlockerSkippedStillOpen" xml:space="preserve">
+    <value>Atlandı, {0} hâlâ açık</value>
+  </data>
+  <data name="CleanupHeaderSelection" xml:space="preserve">
+    <value>Seçim</value>
+  </data>
+  <data name="CleanupHeaderDrive" xml:space="preserve">
+    <value>Sürücü {0}</value>
+  </data>
+  <data name="SettingsAutoScanTitle" xml:space="preserve">
+    <value>Otomatik taramalar</value>
+  </data>
+  <data name="HistoryRolledBack" xml:space="preserve">
+    <value>Geri alındı</value>
+  </data>
+  <data name="HistoryUninstalled" xml:space="preserve">
+    <value>Kaldırıldı</value>
+  </data>
+  <data name="SelfUpdateBusyHint" xml:space="preserve">
+    <value>Devam eden güncellemeler ve temizlik bittiğinde kullanılabilir.</value>
+  </data>
+  <data name="SelfUpdateDownloadFailed" xml:space="preserve">
+    <value>Güncelleme indirilemedi. Bağlantıyı kontrol edip yeniden deneyin.</value>
+  </data>
+  <data name="SelfUpdateApplyFailed" xml:space="preserve">
+    <value>Güncelleme yüklenemedi. Ayrıntılar günlük klasöründe.</value>
+  </data>
+  <data name="SelfUpdateApplyingNoInstall" xml:space="preserve">
+    <value>Uygulama kendi güncellemesini tamamlamak için yeniden başlatılıyor. Uygulama yeniden başlatıldıktan sonra bu güncellemeleri tekrar başlatın.</value>
+  </data>
+  <data name="SettingsCheckFailed" xml:space="preserve">
+    <value>Güncellemeler denetlenemedi. Bağlantıyı kontrol edin.</value>
+  </data>
+  <data name="RetryBlockedByActivity" xml:space="preserve">
+    <value>Şu anda yeniden denenemiyor: bir yükleme sürüyor. Bittikten sonra tekrar deneyin.</value>
+  </data>
+  <data name="ErrorDetailCopyFailed" xml:space="preserve">
+    <value>Kopyalanamadı. Rapor, raporlar klasöründe kayıtlı.</value>
+  </data>
+  <data name="SettingsBrowseFolder" xml:space="preserve">
+    <value>Klasör seç</value>
+  </data>
+  <data name="SettingsRegistryBackupOutsideProfile" xml:space="preserve">
+    <value>Yedek klasörü kullanıcı profilinizin içinde olmalıdır. Lütfen başka bir klasör seçin.</value>
+  </data>
+  <data name="CleanupConfirmHeadlineRecycle" xml:space="preserve">
+    <value>{0} temizlensin mi?</value>
+  </data>
+  <data name="CleanupConfirmWarningRecycle" xml:space="preserve">
+    <value>Dosyalar geri dönüşüm kutusuna gider ve kutu boşaltılana kadar geri yüklenebilir. Kayıt defteri girdileri, sürücüler ve onarımlar geri alınamaz.</value>
+  </data>
+  <data name="HeadlineNotChecked" xml:space="preserve">
+    <value>Henüz denetlenmedi</value>
+  </data>
+  <data name="EmptyStateNotChecked" xml:space="preserve">
+    <value>Nelerin yeni olduğunu görmek için güncellemeleri arayın.</value>
+  </data>
+  <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
+    <value>Yoksayılan {0} güncellemenin tümü yeniden gösterilsin mi?</value>
+  </data>
+  <data name="IgnoreListRemoveAllBody" xml:space="preserve">
+    <value>Bir sonraki denetimde güncelleme listesine geri dönerler.</value>
+  </data>
+  <data name="HeadlineNoSourceChecked" xml:space="preserve">
+    <value>Hiçbir kaynak denetlenemedi</value>
+  </data>
+  <data name="InstallErrorAndroidLockedWhat" xml:space="preserve">
+    <value>Bu paketin dosyaları kullanımda, genellikle çalışan bir emülatör veya Android Studio tarafından.</value>
+  </data>
+  <data name="InstallErrorAndroidLockedNow" xml:space="preserve">
+    <value>Emülatörü ve Android Studio'yu kapatın, ardından güncellemeyi yeniden çalıştırın.</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallWhat" xml:space="preserve">
+    <value>Güncelleme önce eski sürümü kaldırmak zorunda, ancak eski sürüm bir kaldırma komutu kaydetmemiş.</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallNow" xml:space="preserve">
+    <value>Eski sürümü Windows Ayarları'nda Uygulamalar bölümünden kaldırın, ardından güncellemeyi yeniden çalıştırın.</value>
+  </data>
+  <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
+    <value>Disk Temizleme {0} dakikadan uzun sürdü ve sonlandırıldı.</value>
+  </data>
+  <data name="SelfUpdateWaitingForWork" xml:space="preserve">
+    <value>Güncelleme, çalışan işlem bittiğinde yüklenecek.</value>
+  </data>
+  <data name="CleanupProtectedFiles" xml:space="preserve">
+    <value>{0} dosyaya erişilemedi ve bunlar atlandı.</value>
+  </data>
+  <data name="CleanupProtectedFilesOne" xml:space="preserve">
+    <value>{0} dosyaya erişilemedi ve dosya atlandı.</value>
+  </data>
+  <data name="CleanupProtectedFilesSize" xml:space="preserve">
+    <value>{0} dosyaya ({1}) erişilemedi ve bunlar atlandı.</value>
+  </data>
+  <data name="CleanupProtectedFilesSizeOne" xml:space="preserve">
+    <value>{0} dosyaya ({1}) erişilemedi ve dosya atlandı.</value>
+  </data>
+  <data name="CleanupProtected" xml:space="preserve">
+    <value>{0} erişim yok</value>
+  </data>
+</root>

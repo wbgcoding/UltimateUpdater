@@ -1,0 +1,57 @@
+<UserControl x:Class="UltimateUpdater.Views.WaitSpinner"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Focusable="False" IsHitTestVisible="False"
+             AutomationProperties.AutomationId="WaitSpinner"
+             Width="14" Height="14">
+    <!-- A waiting indicator for anything queued but not yet started.
+
+         Hand-drawn rather than WPF-UI's ProgressRing: this sits inside table rows whose width is measured
+         by a star column, and a WPF-UI progress control star-measured that way recurses into an infinite
+         measure. A dashed circle with a RotateTransform costs one render pass and no layout pass at all.
+
+         StrokeDashArray is in multiples of StrokeThickness: the r=6 circle is ~37.7 px around, so at
+         thickness 2 the whole ring is ~18.9 units and "5 14" draws roughly a quarter of it.
+
+         The animation runs only while the control is actually visible, a queued row that finishes leaves
+         a clock running for nothing otherwise. -->
+    <Ellipse Width="12" Height="12" StrokeThickness="2"
+             Stroke="{DynamicResource TextFillColorTertiaryBrush}"
+             StrokeDashArray="5 14" StrokeDashCap="Round"
+             RenderTransformOrigin="0.5,0.5">
+        <Ellipse.RenderTransform>
+            <RotateTransform/>
+        </Ellipse.RenderTransform>
+        <Ellipse.Style>
+            <Style TargetType="Ellipse">
+                <Style.Triggers>
+                    <Trigger Property="IsVisible" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard Name="Spin">
+                                <Storyboard Timeline.DesiredFrameRate="60">
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle"
+                                                     From="0" To="360" Duration="0:0:1.1"
+                                                     RepeatBehavior="Forever"/>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <StopStoryboard BeginStoryboardName="Spin"/>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                    <!-- IsVisible stays True while the window is minimized, so pause the spin there too. Without
+                         a window ancestor (a popup, an offscreen render) the binding simply never matches and the
+                         spinner behaves as before. Pausing a spin that has not begun is a no-op. -->
+                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Minimized">
+                        <DataTrigger.EnterActions>
+                            <PauseStoryboard BeginStoryboardName="Spin"/>
+                        </DataTrigger.EnterActions>
+                        <DataTrigger.ExitActions>
+                            <ResumeStoryboard BeginStoryboardName="Spin"/>
+                        </DataTrigger.ExitActions>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Ellipse.Style>
+    </Ellipse>
+</UserControl>

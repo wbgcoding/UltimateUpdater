@@ -1,0 +1,187 @@
+<ui:FluentWindow x:Class="UltimateUpdater.Views.ErrorDetailWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="{Binding WindowTitle}"
+        Width="640" MinHeight="200" MinWidth="460"
+        SizeToContent="Height" MaxHeight="520"
+        WindowStartupLocation="CenterOwner"
+        ExtendsContentIntoTitleBar="True"
+        Background="{DynamicResource ApplicationBackgroundBrush}"
+        FocusManager.FocusedElement="{Binding ElementName=CloseButton}">
+    <ui:FluentWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- title bar -->
+            <RowDefinition Height="Auto"/>   <!-- what failed -->
+            <RowDefinition Height="Auto"/>   <!-- raw tool output, capped by the box's own MaxHeight -->
+            <RowDefinition Height="Auto"/>   <!-- actions -->
+        </Grid.RowDefinitions>
+
+        <!-- A ui:TitleBar does not wrap and hard-truncates once the window buttons need room,
+             the item name is shown big in the body below anyway (line ~29), so the bar itself only needs
+             the short generic title; the long combined WindowTitle stays on Window.Title for the taskbar. -->
+        <ui:TitleBar Grid.Row="0" Title="{Binding Loc[ErrorDetailTitle]}" FontSize="16" FontWeight="SemiBold">
+            <ui:TitleBar.Icon>
+                <!-- Assembly-qualified like MainWindow's so it resolves whichever assembly is
+                     the entry point -->
+                <ui:ImageIcon Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <!-- What failed: the item, its source, and the version it was moving to. -->
+        <StackPanel Grid.Row="1" Margin="20,4,20,10">
+            <!-- Grid, not a horizontal StackPanel: a StackPanel measures its children with infinite
+                 width, so TextTrimming never engaged and a long name was simply cut off mid-letter
+                 (same fix as MainWindow's row-name column). -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon Grid.Column="0" Symbol="ErrorCircle24" FontSize="18" VerticalAlignment="Center"
+                               Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+                <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
+                           VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding Name}"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </Grid>
+
+            <StackPanel Orientation="Horizontal" Margin="26,2,0,0">
+                <TextBlock Text="{Binding SourceDisplay}" FontSize="12"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <TextBlock Text="{Binding VersionChange}" FontSize="12" Margin="10,0,0,0"
+                           Visibility="{Binding HasVersionChange, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+            </StackPanel>
+
+            <!-- A plain-language explanation line, ABOVE the raw output, the raw text below is untouched
+                 and stays fully visible (it always keeps the output TAIL and is never empty), this is
+                 purely additive. Hidden outright when nothing could be recognized, never shown empty. -->
+            <Border Margin="0,10,0,0" Padding="12,8" CornerRadius="6"
+                    Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                    Visibility="{Binding HasExplanation, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{Binding Explanation}" FontSize="12" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </Border>
+
+            <!-- Offered only when this app's own explainer found nothing to say at all
+                 (mutually exclusive with the Border above - HasExplanation is never true at the same time
+                 as this button shows), and only when a code-shaped token could still be found in the raw
+                 text for the lookup to try. Resolves Windows' own system text for it, fully offline. -->
+            <ui:Button Margin="0,10,0,0" Padding="8,4" FontSize="12" Appearance="Secondary"
+                       HorizontalAlignment="Left"
+                       Command="{Binding WhatDoesThisMeanCommand}"
+                       Content="{Binding Loc[ErrorWhatDoesThisMean]}"
+                       Visibility="{Binding ShowWhatDoesThisMeanButton, Converter={StaticResource BoolToVisibility}}"/>
+
+            <Border Margin="0,10,0,0" Padding="12,8" CornerRadius="6"
+                    Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                    Visibility="{Binding HasWindowsMeaning, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                    <Run Text="{Binding Loc[ErrorWindowsSaysPrefix], Mode=OneWay}" FontWeight="SemiBold"/>
+                    <Run Text=" "/>
+                    <Run Text="{Binding WindowsMeaningText, Mode=OneWay}"/>
+                </TextBlock>
+            </Border>
+
+            <TextBlock Text="{Binding Loc[ErrorDetailOutput]}" Margin="26,14,0,0"
+                       FontSize="12" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+            <!-- Only set from the history window, whose Detail is not always this entry's own stored
+                 output (HistoryWindow.xaml.cs's three-tier fallback), a live row from the main table
+                 never sets this, so its header looks exactly as it always has. -->
+            <TextBlock Text="{Binding DetailSourceText}" Margin="26,2,0,0"
+                       FontSize="11" FontStyle="Italic" TextWrapping="Wrap"
+                       Visibility="{Binding HasDetailSource, Converter={StaticResource BoolToVisibility}}"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+        </StackPanel>
+
+        <!-- The raw tool output, selectable and read-only. Full width so its scrollbar sits flush
+             against the window's right edge; the text is padded in so it never sits under the bar.
+             A RichTextBox, not a plain TextBox: rung labels, exit codes and tool names are coloured
+             at render time (ErrorDetailFormatter) because plain output was hard to read, the
+             underlying string itself stays plain, unformatted, for the Copy button and for
+             history/log. Its FlowDocument is built once in code-behind from Detail, which never
+             changes after the window is constructed.
+
+             The app's own proportional font, not Consolas: every other number field (sizes, dates,
+             percentages) runs proportional, and the exit-code capsule carries its own tabular-figure
+             setting instead of leaning on a monospace font for the whole box. -->
+        <Border x:Name="OutputBoxBorder" Grid.Row="2" MinHeight="140" BorderThickness="0,1,0,1"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <!-- The row is Auto (same approach ChangelogWindow's own text box uses), not a star row: a star
+                 row would stretch the RichTextBox into the leftover space and leave an empty band below a
+                 short one-line failure. The box sizes to its real
+                 content, MinHeight below gives it a sensible floor so a one-line failure still shows a real
+                 box rather than a sliver, and the RichTextBox's own MaxHeight below is the cap that makes a
+                 long output scroll internally instead of growing the row without limit. -->
+            <!-- Same as ChangelogWindow: Visible, not Auto, so the scrollbar is not invisible until the first mouse move. Visible
+                 ALONE was not enough and measurably so: WPF-UI applies its own implicit Style to every
+                 plain (non ui:-prefixed) TextBox/RichTextBox app-wide, and that style's ControlTemplate
+                 hosts an overlay-style scrollbar that stayed invisible regardless of
+                 VerticalScrollBarVisibility, a render-harness screenshot with real overflowing content
+                 (ExtentHeight > ViewportHeight) showed a fully uniform-colour right edge, pixel-sampled,
+                 no track at all. Style="{x:Null}" reverts the WHOLE control to the framework's own default
+                 TextBox/RichTextBox style+template (Template="{x:Null}" alone left the Style's other
+                 setters fighting a template they no longer match, which blanked the text entirely), same
+                 idea as MainWindow's Style="{x:Null}" on an explicit ScrollViewer, just at the control
+                 level since there is no ScrollViewer element to target directly here. -->
+            <RichTextBox x:Name="OutputBox" Style="{x:Null}" MaxHeight="300"
+                         IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                         FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12"
+                         VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled"
+                         Background="Transparent" BorderThickness="0" Padding="20,12"
+                         Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                         AutomationProperties.Name="{Binding Loc[ErrorDetailOutput]}"/>
+        </Border>
+
+        <!-- Actions -->
+        <Grid x:Name="ErrorDetailActionRow" Grid.Row="3" Margin="20,12,20,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="12"
+                       Text="{Binding Loc[ErrorDetailCopied]}"
+                       Foreground="{DynamicResource SystemFillColorSuccessBrush}"
+                       Visibility="{Binding Copied, Converter={StaticResource BoolToVisibility}}"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <!-- A plain pointer to the settings window's log-folder card action instead of a second copy of
+                     it (one action, one place); the path itself is one hover away via the tooltip. -->
+                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" FontSize="11"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                           ToolTip="{Binding LogFolder}"
+                           Text="{Binding Loc[ErrorDetailLogInSettings]}"/>
+                <!-- Retrying interactively is offered only from the row's own context menu now (one
+                     visible place per action); shown only for a failure this app's own explainer
+                     classified as interactively maybe fixable, see InstallErrorExplainer.AllowsInteractiveRetry. -->
+                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" FontSize="11"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                           Text="{Binding Loc[ErrorDetailRetryInMenu]}"
+                           Visibility="{Binding CanRetryInteractive, Converter={StaticResource BoolToVisibility}}"/>
+                <!-- Relabeled from the generic ErrorDetailCopy (still used by
+                     MessageDialogWindow's own copy button) since this one now copies a whole formatted
+                     report, not just the raw output text. -->
+                <ui:Button Command="{Binding CopyCommand}" Margin="0,0,8,0"
+                           Icon="{ui:SymbolIcon Copy24}"
+                           Content="{Binding Loc[ErrorCopyReport]}"/>
+                <ui:Button x:Name="CloseButton" Click="OnCloseClicked" Appearance="Primary" IsDefault="True"
+                           Content="{Binding Loc[InstallProgressClose]}"/>
+            </StackPanel>
+
+            <!-- Inline, under the Copy button: a failed copy is not worth a dialog, and the line goes away
+                 again with the "Copied" one. -->
+            <TextBlock Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Right" FontSize="12" TextWrapping="Wrap"
+                       Text="{Binding Loc[ErrorDetailCopyFailed]}"
+                       Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                       Visibility="{Binding CopyFailed, Converter={StaticResource BoolToVisibility}}"/>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

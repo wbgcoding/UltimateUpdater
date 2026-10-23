@@ -1,0 +1,1677 @@
+<ui:FluentWindow x:Class="UltimateUpdater.Views.CleanupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:views="clr-namespace:UltimateUpdater.Views"
+        Title="{Binding Loc[CleanupTitle]}"
+        Width="980" Height="880" MinWidth="860" MinHeight="580"
+        WindowStartupLocation="CenterOwner"
+        ExtendsContentIntoTitleBar="True"
+        Background="{DynamicResource ApplicationBackgroundBrush}">
+    <ui:FluentWindow.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- The cleaning-disk body/platter/hub/arm geometry, shared with the main toolbar's
+                     cleanup button; this window's own sparkle geometry stays below, since the
+                     toolbar button never shows it. -->
+                <ResourceDictionary Source="CleaningDiskGeometries.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <views:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+        <!-- The "show all categories" expander. -->
+        <views:CleanupCardVisibilityConverter x:Key="CleanupCardVisibility"/>
+        <views:CleanupGroupVisibilityConverter x:Key="CleanupGroupVisibility"/>
+
+        <!-- Same shape as SettingsWindow's own ToolTip style: the multi-line driver detail tooltip below
+             composes its lines with embedded "\n"s (WPF's TextBlock already breaks on those), this just
+             caps the width so a long store path wraps instead of stretching the tooltip off-screen. -->
+        <Style TargetType="ToolTip" BasedOn="{StaticResource {x:Type ToolTip}}">
+            <Setter Property="MaxWidth" Value="420"/>
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- The chevron is a drawn Path, not a glyph: it rotates cleanly, stays crisp at any DPI and
+             does not depend on an icon font being present. Both expander looks below share it. -->
+
+        <!-- Card header: full width, chevron flush right, quiet hover/press/focus. Own template rather
+             than ui:CardExpander's, which framed the chevron in a circle on the LEFT of the card and
+             drew no card surface at all. Because the header presenter sits in a real "*" column here,
+             the header measures BOUNDED, that is what makes a right-aligned meta line work without the
+             bound-ActualWidth workaround the old CardExpander header needed. -->
+        <Style x:Key="CleanupCardToggle" TargetType="ToggleButton">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="14,11"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Hit" Background="Transparent" CornerRadius="7"
+                                BorderThickness="1" BorderBrush="Transparent"
+                                Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Grid.Column="0" VerticalAlignment="Center"
+                                                  HorizontalAlignment="Stretch"/>
+                                <Path x:Name="Chevron" Grid.Column="1" Margin="14,0,2,0"
+                                      Data="M0,0 L5,5 L10,0" StrokeThickness="1.5"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round" VerticalAlignment="Center"
+                                      Stroke="{DynamicResource TextFillColorTertiaryBrush}"
+                                      RenderTransformOrigin="0.5,0.5">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="0"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hit" Property="Background"
+                                        Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                <Setter TargetName="Chevron" Property="Stroke"
+                                        Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Hit" Property="Background"
+                                        Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Hit" Property="BorderBrush"
+                                        Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Chevron" To="180"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                             Duration="0:0:0.15">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Chevron" To="0"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                             Duration="0:0:0.15">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Nested disclosure inside one target's card: deliberately NOT a card. A right-pointing
+             chevron that swings down, tight to its label, so it reads as subordinate to the card it
+             sits in rather than competing with it. -->
+        <Style x:Key="CleanupInlineToggle" TargetType="ToggleButton">
+            <Setter Property="Padding" Value="6,3"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Hit" Background="Transparent" CornerRadius="4"
+                                BorderThickness="1" BorderBrush="Transparent"
+                                Padding="{TemplateBinding Padding}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path x:Name="Chevron" Margin="0,0,8,0"
+                                      Data="M0,0 L4.5,4.5 L0,9" StrokeThickness="1.4"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round" VerticalAlignment="Center"
+                                      Stroke="{DynamicResource TextFillColorTertiaryBrush}"
+                                      RenderTransformOrigin="0.5,0.5">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="0"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hit" Property="Background"
+                                        Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                <Setter TargetName="Chevron" Property="Stroke"
+                                        Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Hit" Property="BorderBrush"
+                                        Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Chevron" To="90"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                             Duration="0:0:0.15">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Chevron" To="0"
+                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                             Duration="0:0:0.15">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut"/>
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- One category = one real card: surface, hairline, rounded corners, and a content area the
+             header is separated from by that same hairline. -->
+        <Style x:Key="CleanupGroupCard" TargetType="Expander">
+            <!-- A category the finished scan found nothing in sits dimmed rather than looking
+                 indistinguishable from one with real work to offer. -->
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                    <Setter Property="Opacity" Value="0.55"/>
+                </DataTrigger>
+            </Style.Triggers>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <Border CornerRadius="8" BorderThickness="1" SnapsToDevicePixels="True"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                views:GlassCardHighlight.Show="True">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <ToggleButton Grid.Row="0" Style="{StaticResource CleanupCardToggle}"
+                                              Content="{TemplateBinding Header}"
+                                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                              IsChecked="{Binding IsExpanded, Mode=TwoWay,
+                                                          RelativeSource={RelativeSource TemplatedParent}}"/>
+                                <Border x:Name="Body" Grid.Row="1" Visibility="Collapsed"
+                                        BorderThickness="0,1,0,0" Padding="8,6,8,8"
+                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                    <ContentPresenter/>
+                                </Border>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="Body" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- The detail list inside a target: no box of its own, just the toggle and a hairline rail
+             that ties the revealed rows back to it. -->
+        <Style x:Key="CleanupDetailsExpander" TargetType="Expander">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <StackPanel>
+                            <ToggleButton HorizontalAlignment="Left"
+                                          Style="{StaticResource CleanupInlineToggle}"
+                                          Content="{TemplateBinding Header}"
+                                          ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                          IsChecked="{Binding IsExpanded, Mode=TwoWay,
+                                                      RelativeSource={RelativeSource TemplatedParent}}"/>
+                            <Border x:Name="Body" Visibility="Collapsed" Margin="8,2,0,0"
+                                    Padding="12,0,0,0" BorderThickness="1,0,0,0"
+                                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                <!-- No MaxHeight here: the 240 cap sits on the
+                                     entries ItemsControl's OWN internal ScrollViewer below, because a
+                                     StackPanel measures its children at infinite height and a plain
+                                     ItemsControl realises every row the moment it is measured at all,
+                                     however this outer ScrollViewer is capped. This one just carries the
+                                     select-all header and the "omitted" line along with whatever height the
+                                     (now internally-capped) entries list reports, and rarely needs to
+                                     scroll itself. It inherits WPF-UI's overlay scrollbar style (measured:
+                                     ViewportWidth == ActualWidth even while ScrollableHeight > 0, it does
+                                     NOT reserve a column the way the default WPF template does, the thumb
+                                     draws on TOP of the content's own right edge) - kept here in case a very
+                                     long translation of the header ever needs it. BubbleScroll hands the
+                                     wheel back to the outer target list once this one can no longer scroll
+                                     further in that direction. -->
+                                <ScrollViewer x:Name="EntriesScroll" VerticalScrollBarVisibility="Auto"
+                                              views:BubbleScroll.Enabled="True">
+                                    <ContentPresenter/>
+                                </ScrollViewer>
+                            </Border>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="Body" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Replaced the plain rounded square with a hard disk: a filled disc plus a separate stroked
+             ring plus a separate hub and centre dot, not a punched ring, with the screw holes as their
+             own filled colour rather than a cutout to whatever sits behind the body, each drawn as its
+             own geometry rather than two combined EvenOdd paths (body+holes, ring+bore). The
+             body/platter/hub/arm geometry itself moved to CleaningDiskGeometries.xaml: the main toolbar's
+             cleanup button reuses the exact same shapes for its own running-state icon, minus the
+             sparkles below, which stay local here. -->
+        <!-- Three sparkles (five before this), outside the body at the upper right, each pulsing on
+             its own phase. The draft's own four-point "spark" path, used as-is (Stretch=Uniform on each
+             Path scales it to its own Width/Height, so the path's own coordinate box does not need to
+             match the 24-unit design box above). -->
+        <Geometry x:Key="CleaningGlintGeometry">M12 3.2 C12.9 8.4 14.6 10.1 20.8 12 C14.6 13.9 12.9 15.6 12 20.8 C11.1 15.6 9.4 13.9 3.2 12 C9.4 10.1 11.1 8.4 12 3.2 Z</Geometry>
+
+        <!-- Read-only, DISM's own component store analysis, shown inside the component cleanup card (the
+             analysis state lives on the window's view model, hence this template is bound to it). No detail
+             list and nothing this dialog deletes from here; the cleanup row above it is what acts. Needs
+             administrator rights every time it runs, so the button says so plainly rather than the click
+             surprising anyone with a prompt. -->
+        <DataTemplate x:Key="ComponentStoreAnalysisTemplate">
+            <StackPanel Visibility="{Binding IsChoosing, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:Button x:Name="ComponentStoreAnalyzeButton" Appearance="Secondary"
+                               Padding="10,4" Content="{Binding ComponentStoreAnalyzeButtonText}"
+                               Command="{Binding AnalyzeComponentStoreCommand}"
+                               ToolTip="{Binding ComponentStoreAnalyzeHintText}"
+                               AutomationProperties.Name="{Binding ComponentStoreAnalyzeButtonText}"/>
+                    <!-- The button disabling itself was the only sign a press had done anything; a run
+                         queued behind an unrelated exclusive cleanup job used to look exactly like nothing
+                         happened at all for as long as that other job kept running. -->
+                    <views:WaitSpinner Margin="10,0,0,0" VerticalAlignment="Center"
+                                       Visibility="{Binding IsAnalyzingComponentStore, Converter={StaticResource BoolToVisibility}}"/>
+                </StackPanel>
+
+                <TextBlock x:Name="ComponentStoreSizeText" Text="{Binding ComponentStoreSizeText}"
+                           FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"
+                           Visibility="{Binding HasComponentStoreResult, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                <TextBlock x:Name="ComponentStoreRecommendedText" Text="{Binding ComponentStoreRecommendedText}"
+                           FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" FontWeight="SemiBold"
+                           Visibility="{Binding ShowComponentStoreRecommended, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
+
+                <!-- Distinct from a completed run that legitimately had nothing to report
+                     (CleanupComponentStoreNoNumbers): DISM itself was killed after its own deadline, which
+                     used to look identical to an empty, successful result. -->
+                <TextBlock x:Name="ComponentStoreTimedOutText" Text="{Binding ComponentStoreTimedOutText}"
+                           FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
+                           Visibility="{Binding ShowComponentStoreTimedOut, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
+
+                <!-- Says why when the prompt was declined or the elevated helper is missing, so the button
+                     never looks dead. -->
+                <TextBlock x:Name="ComponentStoreStatusText" Text="{Binding ComponentStoreStatusText}"
+                           FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"
+                           Visibility="{Binding HasComponentStoreStatus, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- One target's card, its own named resource so both the flat list and each group's own inner
+             ItemsControl (below) can use exactly the same template. -->
+        <DataTemplate x:Key="CleanupItemTemplate">
+            <!-- Each target is its own quiet card rather than a bare row: with a dozen of
+                 them the list read as one wall of text. The card only
+                 shows up on hover and while the target is working, so a resting list stays
+                 calm. -->
+            <Border CornerRadius="6" Padding="8,7" Margin="2,1">
+                <Border.Visibility>
+                    <!-- Visible when it is default-visible OR "show all categories" is open. See
+                         CleanupCardVisibilityConverter's own doc comment. -->
+                    <MultiBinding Converter="{StaticResource CleanupCardVisibility}">
+                        <Binding Path="Target.DefaultVisible"/>
+                        <Binding Path="DataContext.ShowAllCategories" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                    </MultiBinding>
+                </Border.Visibility>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background"
+                                        Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsCleaning}" Value="True">
+                                <Setter Property="Background"
+                                        Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            <Grid x:Name="ItemRoot">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Row 0 is the title line only, so the checkbox and the size/spinner column stay
+                     pinned to its height regardless of how much grows underneath, every row-0 child
+                     gets an explicit VerticalAlignment="Center" so its element centre is a true text
+                     centre. -->
+                <!-- 8px, not 10: the same checkbox-to-name gap as the detail list below and
+                     the leftover-installs list, so the three places a checkbox sits next to a name in this
+                     window all read as one consistent spacing rather than three close-but-different ones. -->
+                <CheckBox x:Name="ItemCheckBox" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0"
+                          IsChecked="{Binding IsSelected}"
+                          AutomationProperties.Name="{Binding Title}"/>
+
+                <!-- A left-aligned Grid, not a horizontal StackPanel: a StackPanel measures the title with
+                     infinite width, so a long translation pushed the capsules into the size column. Here
+                     the capsules (Auto) are measured first and the title gets what is left and trims; when
+                     everything fits, the Grid is only as wide as its content, so the capsules still sit
+                     right after the title. -->
+                <Grid Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="ItemTitle" Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <!-- Risk level: a quiet dot. Red now paints "Risky" too, its own
+                             word rather than borrowing update severity's language, so the cleanup scale never
+                             uses "Critical" - red means "this one can hurt", in updates and in cleanup alike.
+                             "Considered" keeps the caution amber. The word and the consequence sentence are
+                             one hover away, not a permanently-visible line, a resting list of ~20 rows stays
+                             as calm as the register asks for. -->
+                        <Border Width="8" Height="8" CornerRadius="4" Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                ToolTip="{Binding RiskTooltip}"
+                                AutomationProperties.Name="{Binding RiskTooltip}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Target.RiskLevel}" Value="Considered">
+                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Target.RiskLevel}" Value="Risky">
+                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+
+                        <!-- needs admin: some of it may be skipped without elevation -->
+                        <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="4"
+                                Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                ToolTip="{Binding ElevationTooltip}"
+                                Visibility="{Binding ShowsElevationCapsule, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{Binding ElevationHint}" FontSize="10"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                        </Border>
+                        <!-- Where this target stands in the run, in one word, in the same quiet capsule shape as
+                             the admin hint above. Colour is spent on exactly two of the five words, done
+                             (success) and stopped (caution), and never on red, which stays reserved for genuine
+                             Windows Update severity, exactly as the risk dot above already does. -->
+                        <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="4"
+                                Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                Visibility="{Binding ShowsRunState, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{Binding RunStateText}" FontSize="10">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RunStateIsSuccess}" Value="True">
+                                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding RunStateIsCaution}" Value="True">
+                                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                        <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="14" Margin="8,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource SystemFillColorSuccessBrush}"
+                                       Visibility="{Binding IsDone, Converter={StaticResource BoolToVisibility}}"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- The figure, or the "…" while measuring, or "nothing found", which is
+                     quiet and grey, because it is the absence of a figure rather than one.
+                     Targets that cannot report a size in advance (Disk Cleanup decides for itself, a
+                     repair pass deletes nothing) show NOTHING at all here. -->
+                <!-- Collapsed rather than merely empty for a HasUnknownSize target (Disk Cleanup, system
+                     repair, defrag) once scanning/waiting are both done: none of its four children ever
+                     show for that kind, and the MinWidth below used to keep the column's width reserved
+                     anyway, a small empty box sitting beside the row's own risk dot for no reason. -->
+                <Grid Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" MinWidth="96"
+                      Visibility="{Binding HasSizeCell, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="{Binding SizeText}" FontSize="13" FontWeight="SemiBold"
+                               HorizontalAlignment="Right"
+                               Visibility="{Binding ShowsSize, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    <TextBlock Text="{Binding NothingText}" FontSize="11"
+                               HorizontalAlignment="Right" Opacity="0.75"
+                               Visibility="{Binding ShowsNothingFound, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                    <!-- Being measured: three dots breathing in turn, rather than a static
+                         "…". Opacity only, so a list of a dozen rows costs no layout pass, and
+                         capped at 60 fps like every other animation here. -->
+                    <views:MeasuringDots HorizontalAlignment="Right" VerticalAlignment="Center"
+                                         Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}"/>
+
+                    <!-- Picked for this run, still ahead of it: a turning ring says the row
+                         is waiting its turn rather than sitting idle. It
+                         replaces the figure while it is up, because the figure is what this
+                         row is ABOUT to free and the ring already says so. -->
+                    <views:WaitSpinner HorizontalAlignment="Right" VerticalAlignment="Center"
+                                       Visibility="{Binding IsWaiting, Converter={StaticResource BoolToVisibility}}"/>
+                </Grid>
+
+                <!-- Row 1 spans under the checkbox, everything below the title indents by the checkbox's
+                     width, which makes the grouping visible, so column 0 stays empty here on purpose. -->
+                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2">
+                    <TextBlock Text="{Binding Description}" FontSize="11" TextWrapping="Wrap"
+                               Margin="0,2,12,0"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                    <!-- Only the component cleanup card gets the analysis block: a plain ContentControl whose
+                         content is set by a trigger, so the other cards never build (or name) its elements. -->
+                    <ContentControl Margin="0,6,12,0" Focusable="False">
+                        <ContentControl.Style>
+                            <Style TargetType="ContentControl">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsComponentCleanup}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Setter Property="ContentTemplate" Value="{StaticResource ComponentStoreAnalysisTemplate}"/>
+                                        <Setter Property="Content" Value="{Binding ComponentStoreHost}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
+
+                    <!-- The recycle bin's own sub-row: indented by the checkbox's own width (20px) so it
+                         reads as an option OF the row above it, not a second, equal-weight row. The checked state
+                         and the day count live on this row's own item,
+                         not the window, only the recycle bin row is ever given a non-zero value or a
+                         change callback (CleanupViewModel's constructor). -->
+                    <StackPanel Orientation="Horizontal" Margin="20,6,12,0"
+                                Visibility="{Binding IsRecycleBin, Converter={StaticResource BoolToVisibility}}">
+                        <CheckBox x:Name="RecycleAgeCheckBox" VerticalAlignment="Center"
+                                  IsChecked="{Binding RecycleBinAgeFilterEnabled}"
+                                  Content="{Binding RecycleAgeLabelText}"
+                                  AutomationProperties.Name="{Binding RecycleAgeLabelText}"/>
+                        <ui:NumberBox x:Name="RecycleAgeNumberBox" MinWidth="64" Margin="8,0,0,0" Minimum="0" Maximum="3650"
+                                      ClearButtonEnabled="False" SpinButtonPlacementMode="Hidden"
+                                      VerticalAlignment="Center"
+                                      Value="{Binding RecycleBinMinAgeDays, Mode=TwoWay}"
+                                      IsEnabled="{Binding RecycleBinAgeFilterEnabled}"
+                                      AutomationProperties.Name="{Binding RecycleAgeLabelText}"/>
+                        <TextBlock Text="{Binding RecycleAgeDaysText}" Margin="6,0,0,0" FontSize="11"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+
+                    <!-- The one target whose findings are never a single count. Every candidate is its
+                         own row with its own tick box, NONE pre-selected, and a warning that never goes
+                         away as long as anything is found, this is the one category where "select all"
+                         would mean deleting a program the user might still actually use. -->
+                    <StackPanel Margin="0,6,12,0"
+                                Visibility="{Binding IsLeftoverInstalls, Converter={StaticResource BoolToVisibility}}">
+                        <Border Padding="8,5" CornerRadius="4" Margin="0,0,0,6"
+                                Background="{DynamicResource SystemFillColorCautionBackgroundBrush}"
+                                Visibility="{Binding ShowsSize, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{Binding LeftoverWarningText}"
+                                       FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
+                        </Border>
+
+                        <TextBlock Text="{Binding NothingText}" FontSize="11" Opacity="0.75"
+                                   Visibility="{Binding ShowsNoLeftoversFound, Converter={StaticResource BoolToVisibility}}"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                        <!-- Same 240 cap and the same reason as the details expander above: this list is
+                             one candidate row per leftover install, unbounded otherwise. Style="{x:Null}"
+                             reserves the scrollbar's own column instead of floating it over the row's own
+                             right-aligned size text, same fix as the outer targets ScrollViewer above. -->
+                        <ScrollViewer Style="{x:Null}" MaxHeight="240" VerticalScrollBarVisibility="Auto"
+                                      views:BubbleScroll.Enabled="True">
+                            <ItemsControl ItemsSource="{Binding LeftoverCandidates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <!-- Checkbox centred on the name line, not on name+last-touched
+                                             together, same two-row split as the card above. -->
+                                        <Grid Margin="0,3" ToolTip="{Binding Path}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
+                                                      Margin="0,0,8,0"
+                                                      IsChecked="{Binding IsSelected}"
+                                                      AutomationProperties.Name="{Binding DisplayName}"/>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
+                                                       Text="{Binding DisplayName}" FontSize="12"
+                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SizeText}"
+                                                       FontSize="12" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                                       Text="{Binding LastTouchedText}" FontSize="10"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+
+                    <!-- The driver cleanup row: two individually selectable groups, none pre-selected,
+                         same "never select for the user" rule as the leftover-installs list above. -->
+                    <StackPanel Margin="0,6,12,0"
+                                Visibility="{Binding IsDriverCleanup, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding NothingText}" FontSize="11" Opacity="0.75"
+                                   Visibility="{Binding ShowsNoDriverFindings, Converter={StaticResource BoolToVisibility}}"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                        <TextBlock Text="{Binding DriverGroupDisconnectedText}" FontSize="11" FontWeight="SemiBold"
+                                   Margin="0,4,0,2" Opacity="0.8"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Visibility="{Binding HasDriverDeviceCandidates, Converter={StaticResource BoolToVisibility}}"/>
+                        <ScrollViewer Style="{x:Null}" MaxHeight="180" VerticalScrollBarVisibility="Auto"
+                                      views:BubbleScroll.Enabled="True">
+                            <ItemsControl ItemsSource="{Binding DriverDeviceCandidates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,3" ToolTip="{Binding DetailTooltipText}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
+                                                      Margin="0,0,8,0" IsChecked="{Binding IsSelected}"
+                                                      AutomationProperties.Name="{Binding DisplayName}"/>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
+                                                       Text="{Binding DisplayName}" FontSize="12"
+                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="1"
+                                                       Text="{Binding LastConnectedText}" FontSize="10"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                                            <!-- Same empty-line guard as the run-state capsule: a version/date
+                                                 line with nothing in it must never render at all. -->
+                                            <TextBlock Grid.Row="2" Grid.Column="1"
+                                                       Text="{Binding VersionDateText}" FontSize="10"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                       Visibility="{Binding HasVersionDateText, Converter={StaticResource BoolToVisibility}}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <TextBlock Text="{Binding DriverGroupOldPackagesText}" FontSize="11" FontWeight="SemiBold"
+                                   Margin="0,8,0,2" Opacity="0.8"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Visibility="{Binding HasDriverPackageCandidates, Converter={StaticResource BoolToVisibility}}"/>
+                        <ScrollViewer Style="{x:Null}" MaxHeight="180" VerticalScrollBarVisibility="Auto"
+                                      views:BubbleScroll.Enabled="True">
+                            <ItemsControl ItemsSource="{Binding DriverPackageCandidates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,3" ToolTip="{Binding DetailTooltipText}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
+                                                      Margin="0,0,8,0" IsChecked="{Binding IsSelected}"
+                                                      AutomationProperties.Name="{Binding DisplayName}"/>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
+                                                       Text="{Binding DisplayName}" FontSize="12"
+                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SizeText}"
+                                                       FontSize="12" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                                            <!-- Same empty-line guard as the run-state capsule: a version/date
+                                                 line with nothing in it must never render at all. -->
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                                       Text="{Binding VersionDateText}" FontSize="10"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                       Visibility="{Binding HasVersionDateText, Converter={StaticResource BoolToVisibility}}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+
+                    <!-- The old-Python-versions row: one candidate per interpreter, none pre-selected,
+                         same rule as the leftover-installs list above. -->
+                    <StackPanel Margin="0,6,12,0"
+                                Visibility="{Binding IsOldPythonVersions, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding NothingText}" FontSize="11" Opacity="0.75"
+                                   Visibility="{Binding ShowsNoOldPythonVersionsFound, Converter={StaticResource BoolToVisibility}}"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                        <ScrollViewer Style="{x:Null}" MaxHeight="240" VerticalScrollBarVisibility="Auto"
+                                      views:BubbleScroll.Enabled="True">
+                            <ItemsControl ItemsSource="{Binding OldPythonVersionCandidates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,3" ToolTip="{Binding SitePackages}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
+                                                      Margin="0,0,8,0" IsChecked="{Binding IsSelected}"
+                                                      AutomationProperties.Name="{Binding DisplayLabel}"/>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
+                                                       Text="{Binding DisplayLabel}" FontSize="12"
+                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SizeText}"
+                                                       FontSize="12" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                                       Text="{Binding DetailText}" FontSize="10"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+
+                    <!-- Live per-target progress while this one is being cleaned: a bar plus
+                         "12,4 MB / 310 MB". Hand-drawn track+fill, like the
+                         install bars, a WPF-UI ProgressBar recurses when star-measured. -->
+                    <StackPanel Margin="0,6,12,0"
+                                Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <!-- The track carries its own fixed width because the fill is
+                                 sized from that same number by the converter; letting it
+                                 stretch with the window would leave the two disagreeing. -->
+                            <Border Width="240" Height="5" CornerRadius="3" VerticalAlignment="Center"
+                                    Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                                <Border HorizontalAlignment="Left" CornerRadius="3"
+                                        Background="{DynamicResource AccentFillColorDefaultBrush}"
+                                        Width="{Binding Percent, Converter={StaticResource PercentToWidth}, ConverterParameter=240}"/>
+                            </Border>
+                            <TextBlock Margin="10,0,0,0" FontSize="11"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                <Run Text="{Binding PercentText, Mode=OneWay}"/>
+                                <Run Text=" · "/>
+                                <Run Text="{Binding ProgressText, Mode=OneWay}"/>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- Exactly what this target is doing right now: the file being
+                             deleted with its full path, or the repair command and the step
+                             it is on. Monospaced so a path stays readable;
+                             the full text is one hover away when it does not fit. -->
+                        <TextBlock Text="{Binding DetailText}" FontSize="11" Margin="0,5,0,0"
+                                   FontFamily="Consolas, Cascadia Mono, Courier New"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding DetailText}"
+                                   Visibility="{Binding HasDetail, Converter={StaticResource BoolToVisibility}}"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                    </StackPanel>
+
+                    <!-- What this target could NOT remove because it was in use, so the
+                         row's figures add up. -->
+                    <TextBlock Text="{Binding SkippedText}" FontSize="11" Margin="0,4,12,0"
+                               Visibility="{Binding HasSkipped, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                    <!-- What a target's total is actually made of, grouped by program/finding, never
+                         one row per file. Collapsed by default so a resting list still reads as a dozen
+                         quiet rows, not a wall of detail nobody asked to see yet. Un-ticking a row here
+                         adjusts THIS target's own Bytes/Files directly
+                         (CleanupItemViewModel.OnEntryToggled), so every total above it, group, dialog,
+                         confirmation text, follows the same existing propagation the top-level checkbox
+                         already relies on. -->
+                    <!-- Two-way, not a hardcoded False: whether this list is open is the first gate on the
+                         per-row marking during a run (CleanupItemViewModel.ApplyEntryProgress), closed
+                         means the run never even looks for the row a report belongs to. -->
+                    <Expander Margin="0,6,12,0" IsExpanded="{Binding IsDetailsExpanded, Mode=TwoWay}"
+                              Style="{StaticResource CleanupDetailsExpander}"
+                              Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
+                        <Expander.Header>
+                            <TextBlock Text="{Binding DetailsHeaderText}" FontSize="11"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        </Expander.Header>
+                        <StackPanel Margin="0,2,0,0">
+                            <!-- Same tri-state pattern as the dialog's own group headers
+                                 (CleanupGroupViewModel.IsSelected/ToggleSelectionCommand): OneWay IsChecked
+                                 plus a Command, never a two-way binding, so a click always resolves to a
+                                 definite all-on/all-off rather than cycling through indeterminate itself.
+                                 Left-aligned with the entry checkboxes below it (Grid.Column 0, no left
+                                 margin there either). -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4"
+                                        Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
+                                <CheckBox VerticalAlignment="Center" Margin="0,0,8,0" IsThreeState="True"
+                                          IsChecked="{Binding AllEntriesSelected, Mode=OneWay}"
+                                          Command="{Binding ToggleAllEntriesCommand}"
+                                          AutomationProperties.Name="{Binding SelectAllEntriesText}"/>
+                                <TextBlock Text="{Binding SelectAllEntriesText}"
+                                           FontSize="11" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            </StackPanel>
+                            <!-- Right margin keeps every row (and the group headers below) clear of the
+                                 overlay scrollbar this ScrollViewer inherits from WPF-UI's theme, 14px
+                                 track plus 4px air, not just cosmetic spacing (see the Border above). -->
+                            <!-- Virtualized so a target with thousands of entries does not
+                                 build every row's visual tree the moment the expander opens (measured
+                                 7256.7 ms for 3000 entries before this change). A plain ItemsControl
+                                 only virtualizes when a VirtualizingStackPanel sits DIRECTLY under a
+                                 ScrollViewer with CanContentScroll="True" - the outer EntriesScroll
+                                 above does not qualify (it wraps the select-all header and the omitted
+                                 line too, not just this list), so this control gets its own template
+                                 carrying that ScrollViewer, with the 240 cap (8 rows at this list's own
+                                 ~30px row height) moved onto it. IsVirtualizingWhenGrouping is required:
+                                 the view is grouped (recycle bin, by drive) whenever the bin's rows put
+                                 GroupDescriptions on EntriesView. -->
+                            <ItemsControl ItemsSource="{Binding EntriesView}"
+                                          VirtualizingPanel.IsVirtualizing="True"
+                                          VirtualizingPanel.VirtualizationMode="Recycling"
+                                          VirtualizingPanel.IsVirtualizingWhenGrouping="True">
+                                <ItemsControl.Template>
+                                    <ControlTemplate TargetType="ItemsControl">
+                                        <!-- No margin on the ItemsControl itself any more: its own scrollbar
+                                             now lives on THIS ScrollViewer, so a right margin here would
+                                             shift the scrollbar left along with the rows instead of only the
+                                             rows, putting both back flush against each other. The 18px
+                                             clearance moved onto the VirtualizingStackPanel below, which
+                                             insets the ROWS but leaves this ScrollViewer (and its overlay
+                                             scrollbar) spanning the full width, exactly where the old outer
+                                             EntriesScroll's own scrollbar used to sit. -->
+                                        <ScrollViewer x:Name="EntriesItemsScroll" MaxHeight="240"
+                                                      VerticalScrollBarVisibility="Auto"
+                                                      CanContentScroll="True"
+                                                      views:BubbleScroll.Enabled="True">
+                                            <ItemsPresenter/>
+                                        </ScrollViewer>
+                                    </ControlTemplate>
+                                </ItemsControl.Template>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel Margin="0,0,18,0"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <!-- Only rendered when GroupDescriptions are set on EntriesView (the recycle
+                                     bin, by drive); an empty GroupDescriptions collection renders every
+                                     item flat, with no group headers. -->
+                                <ItemsControl.GroupStyle>
+                                    <GroupStyle>
+                                        <GroupStyle.HeaderTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="0,6,0,2">
+                                                    <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                                    <!-- What this drive's bin holds beyond the rows shown for
+                                                         it. Read off the group's first row: WPF builds the
+                                                         group itself and gives it nowhere else to keep it,
+                                                         and every row of a drive carries the same note. -->
+                                                    <TextBlock Text="{Binding Items[0].GroupNoteText}" FontSize="10"
+                                                               TextWrapping="Wrap"
+                                                               Visibility="{Binding Items[0].HasGroupNote, Converter={StaticResource BoolToVisibility}}"
+                                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </GroupStyle.HeaderTemplate>
+                                    </GroupStyle>
+                                </ItemsControl.GroupStyle>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <!-- Same two-row split, checkbox centres on the name line, the
+                                             date moves to its own row underneath. -->
+                                        <Grid Margin="0,3" ToolTip="{Binding PathText}">
+                                            <!-- A row that is done steps back a little; what it freed is
+                                                 struck through below. Nothing else about the row changes,
+                                                 so the list still reads as the same list. -->
+                                            <Grid.Style>
+                                                <Style TargetType="Grid">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding State}" Value="Cleaned">
+                                                            <Setter Property="Opacity" Value="0.6"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Grid.Style>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Open folder / copy path / permanently exclude. A
+                                                 ContextMenu sits outside the visual tree, so it
+                                                 takes its DataContext from the row it was opened on, same
+                                                 pattern the main table's own row menu already uses. Open
+                                                 folder is hidden for a registry finding (HasDate false,
+                                                 same guard the size/date cells already use, its Path is a
+                                                 key, not a folder). -->
+                                            <Grid.ContextMenu>
+                                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                                    <MenuItem Header="{Binding OpenFolderHeader}" Click="OnEntryOpenFolderClick"
+                                                              Visibility="{Binding HasOpenablePath, Converter={StaticResource BoolToVisibility}}"/>
+                                                    <MenuItem Header="{Binding CopyPathHeader}" Click="OnEntryCopyPathClick"/>
+                                                    <!-- Hidden for a recycled file: its $R path in the bin is
+                                                         gone the moment the bin is emptied, so remembering it
+                                                         forever would only clutter the settings. -->
+                                                    <MenuItem Header="{Binding PermanentlyExcludeHeader}"
+                                                              Visibility="{Binding CanPermanentlyExclude, Converter={StaticResource BoolToVisibility}}"
+                                                              Command="{Binding PermanentlyExcludeCommand}"/>
+                                                </ContextMenu>
+                                            </Grid.ContextMenu>
+
+                                            <!-- The run mark shares the checkbox's OWN cell, centered on it, since the two are never
+                                                 shown at once: the checkbox is only meaningful before a run
+                                                 starts (selection can't change once it's running or done), and
+                                                 the mark only appears once it has. The name starts a flat 8px
+                                                 from the checkbox (its own right margin) either way. -->
+                                            <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
+                                                      Margin="0,0,8,0"
+                                                      Visibility="{Binding IsCheckboxVisible, Converter={StaticResource BoolToHiddenVisibility}}"
+                                                      IsChecked="{Binding IsSelected}"
+                                                      AutomationProperties.Name="{Binding DisplayName}"/>
+
+                                            <Border Grid.Row="0" Grid.Column="0" Width="6" Height="6" CornerRadius="3"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Visibility="{Binding ShowsStateDot, Converter={StaticResource BoolToVisibility}}">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding State}" Value="Skipped">
+                                                                <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            </Border>
+                                            <ui:SymbolIcon Grid.Row="0" Grid.Column="0" Symbol="Checkmark24" FontSize="12"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource SystemFillColorSuccessBrush}"
+                                                           Visibility="{Binding IsCleaned, Converter={StaticResource BoolToVisibility}}"/>
+
+                                            <!-- A Grid, not a horizontal StackPanel: a StackPanel measures its
+                                                 children with unlimited width, so the trimming never engaged and a
+                                                 long name pushed the risk dot (red for Risky) out of view. -->
+                                            <Grid Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left"
+                                                  VerticalAlignment="Center">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding DisplayName}" FontSize="12"
+                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                                <!-- Same 8x8 dot the category row uses, same two colours
+                                                     (red for Risky, caution amber for
+                                                     Considered): a safety statement about THIS row, not a
+                                                     "kind of file" label, so it never adds a column - it
+                                                     sits beside the name, like the category dot sits beside
+                                                     the target title. -->
+                                                <Border Grid.Column="1" Width="8" Height="8" CornerRadius="4" Margin="8,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        ToolTip="{Binding RiskTooltip}"
+                                                        AutomationProperties.Name="{Binding RiskTooltip}">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RiskLevel}" Value="Considered">
+                                                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding RiskLevel}" Value="Risky">
+                                                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                </Border>
+                                            </Grid>
+
+                                            <!-- Hidden either when this particular entry has no
+                                                 size to show (HasSize, unchanged) OR the window's own Size
+                                                 column is hidden from the chooser; two independent
+                                                 DataTriggers rather than one combined condition, since both
+                                                 collapse to the exact same Visibility value. -->
+                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SizeText}"
+                                                       FontSize="12" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasSize}" Value="False">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding State}" Value="Cleaned">
+                                                                <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.IsSizeColumnHidden}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+
+                                            <!-- The folder a recycled file was deleted from: trimmed to the row's
+                                                 width, the whole path is on the row's own tooltip. -->
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                                       Text="{Binding OriginalFolder}" FontSize="10"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Visibility="{Binding HasOriginalFolder, Converter={StaticResource BoolToVisibility}}"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                                       Text="{Binding DateText}" FontSize="10"
+                                                       Visibility="{Binding HasDate, Converter={StaticResource BoolToVisibility}}"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Text="{Binding OmittedEntriesText}" FontSize="10" Margin="0,3,0,0"
+                                       Visibility="{Binding HasOmittedEntries, Converter={StaticResource BoolToVisibility}}"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </Grid>
+            </Border>
+        </DataTemplate>
+        </ResourceDictionary>
+    </ui:FluentWindow.Resources>
+
+    <!-- Draggable by its whole surface, not only the thin title bar or the gauge band. Interactive
+         controls handle the press themselves, so bubbling never reaches this and a click on a checkbox
+         or button still just clicks. -->
+    <Grid Background="Transparent" MouseLeftButtonDown="OnHeaderDrag">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- title bar -->
+            <RowDefinition Height="Auto"/>   <!-- gauge -->
+            <RowDefinition Height="*"/>      <!-- targets -->
+            <RowDefinition Height="Auto"/>   <!-- actions -->
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="{Binding Loc[CleanupTitle]}" FontSize="16" FontWeight="SemiBold">
+            <ui:TitleBar.Icon>
+                <!-- Assembly-qualified like MainWindow's so it resolves whichever assembly is
+                     the entry point -->
+                <ui:ImageIcon Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <!-- The gauge: an arc whose fill is the selected share of what could be freed, and which becomes the
+             cleaning progress once a run starts. Hand-drawn (PercentToArc), there is no circular WPF
+             ProgressBar, and this project keeps WPF-UI's ProgressBar out of measured containers. -->
+        <!-- Three columns: the facts flank the ring so the top of the dialog carries information instead
+             of empty space. Dragging works anywhere in this band, not only on the thin title bar. -->
+        <!-- The band itself stretches with the window; what keeps the ring from being marooned between two
+             distant blocks of text is that each side block hugs the ring (MaxWidth + inward alignment
+             below), not a cap on the band. Capping the band was what made the window stop scaling past a
+             point. -->
+        <!-- Auto + MinHeight, not a fixed Height: a longer translation of any of the three text blocks
+             flanking the ring (German routinely runs longer than English) can wrap onto an extra line,
+             and a fixed 228 clips that. MinHeight keeps the band exactly as tall as it needs for the
+             common case; it can only grow from there, never shrink content into it. -->
+        <Grid x:Name="CleanupHeaderBand" Grid.Row="1" MinHeight="228" Margin="24,4,24,8" Background="Transparent"
+              HorizontalAlignment="Stretch"
+              MouseLeftButtonDown="OnHeaderDrag">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT: what the run is made of. Facts, one per line, most important first. -->
+            <!-- Both side blocks hug the ring instead of drifting to the window edges as it gets wider, so
+                 the three parts stay one group rather than three things far apart. -->
+            <StackPanel Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Right"
+                        MinWidth="180" MaxWidth="260" Margin="0,17,20,0">
+                <!-- Both side blocks open with the same small caption (the style of CleanupLargestLabel), so
+                     the three parts read as: what is selected, the ring, what the drive looks like. -->
+                <TextBlock Text="{Binding Loc[CleanupHeaderSelection]}" FontSize="11" Margin="0,0,0,6"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <TextBlock Text="{Binding SelectedCountText}" FontSize="13" FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                <TextBlock Text="{Binding FileCountText}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                <!-- A small bar list of the top three areas, each bar scaled against the biggest of the
+                     three so a modest selection still reads. -->
+                <TextBlock Text="{Binding Loc[CleanupLargestLabel]}" FontSize="11" Margin="0,14,0,0"
+                           Visibility="{Binding HasTopAreas, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <ItemsControl ItemsSource="{Binding TopAreas}"
+                              Visibility="{Binding HasTopAreas, Converter={StaticResource BoolToVisibility}}"
+                              Margin="0,2,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,3,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Title}" FontSize="12"
+                                           TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SizeText}" FontSize="11"
+                                           Margin="8,0,0,0" Style="{StaticResource TabularNumberText}"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Height="4"
+                                        Margin="0,3,0,0" CornerRadius="2" HorizontalAlignment="Left"
+                                        Width="{Binding BarWidth}"
+                                        Background="{DynamicResource AccentFillColorDefaultBrush}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- How many areas came back empty, only when it applies to something. The areas that are only
+                     partly measured without admin rights say so on their own cards. -->
+                <TextBlock Text="{Binding EmptyCountText}" FontSize="12" Margin="0,10,0,0" TextWrapping="Wrap"
+                           Visibility="{Binding HasEmpty, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+            </StackPanel>
+
+            <!-- RIGHT: what is happening right now, in three levels, which area, how far that area has got,
+                 and the exact command or file it is on. -->
+            <StackPanel Grid.Column="2" VerticalAlignment="Top" HorizontalAlignment="Left"
+                        MinWidth="180" MaxWidth="260" Margin="20,17,0,0">
+                <TextBlock Text="{Binding DriveCaptionText}" FontSize="11" Margin="0,0,0,6"
+                           Visibility="{Binding IsChoosing, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <!-- Free space and the last run fill this side while choosing, gone the moment cleaning
+                     starts, same as the facts below. -->
+                <TextBlock Text="{Binding FreeSpaceNowText}" FontSize="12" TextWrapping="Wrap"
+                           Style="{StaticResource TabularNumberText}"
+                           Visibility="{Binding HasFreeSpaceNow, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                <TextBlock Text="{Binding Loc[CleanupLastRunLabel]}" FontSize="11" Margin="0,14,0,0"
+                           Visibility="{Binding HasLastCleanup, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <TextBlock Text="{Binding LastCleanupText}" FontSize="12" TextWrapping="Wrap"
+                           Visibility="{Binding HasLastCleanup, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                <!-- This app cannot ask Windows directly whether a restore point exists (needs
+                     admin), so it reads back its own timestamp file instead; always shown, unlike the
+                     last-cleanup line above, since "none yet" is itself worth saying. -->
+                <!-- A Grid, not a horizontal StackPanel: that measures its children at infinite width, so the
+                     text never wrapped and the column's MaxWidth cut it off. -->
+                <Grid Margin="0,10,0,0"
+                      Visibility="{Binding IsChoosing, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="RestorePointLine" Grid.Column="0" Text="{Binding RestorePointText}" FontSize="12"
+                               TextWrapping="Wrap" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                    <ui:Button Grid.Column="1" Content="{Binding Loc[OpenButton]}" Command="{Binding OpenRestorePointDialogCommand}"
+                               Appearance="Transparent" Padding="6,2" Margin="6,0,0,0" FontSize="12"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                </Grid>
+
+                <TextBlock Text="{Binding Loc[CleanupCurrentLabel]}" FontSize="11"
+                           Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <TextBlock Text="{Binding CurrentItemText}" FontSize="12" TextWrapping="Wrap" MaxHeight="36"
+                           TextTrimming="CharacterEllipsis" ToolTip="{Binding CurrentItemText}"
+                           Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+
+                <!-- "Temporäre Windows-Dateien · 62 %", this target's own progress, which for a repair pass
+                     is the DISM/sfc step's percentage rather than a file count. -->
+                <TextBlock Text="{Binding CurrentTargetPercentText}" FontSize="12" Margin="0,3,0,0"
+                           TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding CurrentTargetPercentText}"
+                           Visibility="{Binding HasCurrentDetail, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                <!-- The command or the file, verbatim and monospaced. Two lines at most: it changes many
+                     times a second and must not push the rest of the panel around. -->
+                <TextBlock Text="{Binding CurrentDetailText}" FontSize="11" Margin="0,4,0,0"
+                           FontFamily="Consolas, Cascadia Mono, Courier New"
+                           TextWrapping="Wrap" MaxHeight="30" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding CurrentDetailText}"
+                           Visibility="{Binding HasCurrentDetail, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                <TextBlock Text="{Binding DoneCountText}" FontSize="12" Margin="0,10,0,0" TextWrapping="Wrap"
+                           Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <TextBlock Text="{Binding RemainingCountText}" FontSize="12" Margin="0,3,0,0" TextWrapping="Wrap"
+                           Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                <TextBlock Text="{Binding SkippedText}" FontSize="12" Margin="0,10,0,0" TextWrapping="Wrap"
+                           Visibility="{Binding HasSkipped, Converter={StaticResource BoolToVisibility}}"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+            </StackPanel>
+
+            <!-- Earlier cleanups get their own window, opened from top-right of this band, not on the OS
+                 title bar row, which is WPF-UI's own caption-button territory and not a safe place to add
+                 a second control. Only shown once there is something to show. -->
+            <ui:Button Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Top"
+                       Appearance="Secondary" Padding="10,6" Click="OnShowHistory"
+                       ToolTip="{Binding Loc[CleanupHistoryButton]}"
+                       AutomationProperties.Name="{Binding Loc[CleanupHistoryButton]}"
+                       Visibility="{Binding HasHistory, Converter={StaticResource BoolToVisibility}}">
+                <ui:Button.Icon><ui:SymbolIcon Symbol="History24" FontSize="18"/></ui:Button.Icon>
+            </ui:Button>
+
+            <Grid Grid.Column="1" Width="208" Height="208" HorizontalAlignment="Center"
+                  VerticalAlignment="Top" Margin="0,10,0,0">
+                <!-- Track. 194 = 2*90 (the arc's radius) + 14 (the stroke), because a Shape draws its stroke
+                     INSIDE the box it is given: Width=194 with StrokeThickness=14 puts its centre line on
+                     exactly radius 90, which is the circle the arc is drawn on. At 180 the two ran on
+                     different circles and the fill sat outside its own track. -->
+                <Ellipse Width="194" Height="194" StrokeThickness="14"
+                         Stroke="{DynamicResource ControlFillColorSecondaryBrush}"
+                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                <!-- The arc is drawn from DisplayPercent, not straight from the view model: that value is
+                     animated towards the real one, so ticking a box or a progress step GLIDES instead of
+                     snapping from one arc to the next.
+
+                     The explicit 194x194 is what keeps it STRAIGHT. Without a size, a Path's layout box is
+                     the bounds of whatever geometry it currently holds, and a part-filled arc only spans
+                     one corner of the circle, so centring the element centred that corner instead and the
+                     ring visibly leaned away from its track at every value below 100 %. Stretch=None so
+                     the geometry keeps the coordinates the converter computed.
+
+                     The geometry is assigned from the code-behind rather than bound through a RelativeSource
+                     to the window: the render harness detaches this content from its Window to photograph
+                     it, and an ancestor binding then resolves to nothing, the ring came out as a bare track
+                     in every snapshot, which is exactly the picture that was meant to prove it sits straight. -->
+                <Path x:Name="RingFill" Width="194" Height="194" Stretch="None"
+                      StrokeThickness="14" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                      Stroke="{DynamicResource AccentFillColorDefaultBrush}"
+                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                <!-- centre while choosing: selected size, and the total underneath -->
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Visibility="{Binding IsChoosing, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="{Binding SelectedText}" FontSize="34" FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                    <TextBlock Text="{Binding TotalText}" FontSize="13" HorizontalAlignment="Center"
+                               Margin="0,2,0,0"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="{Binding Loc[CleanupScanning]}" FontSize="11" HorizontalAlignment="Center"
+                               Margin="0,6,0,0"
+                               Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                </StackPanel>
+
+                <!-- Centre while cleaning ("ruhig + hochwertig", calm and high-quality): a hard disk (a real
+                     drive body, platter ring and actuator arm) with a light slowly travelling across the body, plus three small glints
+                     outside it. The light is the SAME geometry as the body underneath it used as an
+                     OpacityMask, so it can never spill past the body's own silhouette without a separate
+                     Clip or a recomputed Geometry, only the mask's own RelativeTransform (a
+                     TranslateTransform) ever moves. The platter ring and the arm are drawn once, always at
+                     full opacity, never animated. Nothing here triggers a layout pass, the ring never
+                     rotates, and the whole thing is capped at 30 fps: this is ambient background motion,
+                     not something meant to be tracked frame by frame. The percentage sits beneath, never
+                     behind the animation. -->
+                <Grid Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}">
+                    <Grid x:Name="CenterScene" Width="100" Height="100"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                          Margin="0,0,0,18" RenderTransformOrigin="0.5,0.5" IsHitTestVisible="False">
+                        <Grid.RenderTransform>
+                            <ScaleTransform x:Name="SurfaceBreathe"/>
+                        </Grid.RenderTransform>
+
+                        <!-- The drive body, platter ring and arm share one 24x24 design box (the approved
+                             reference drawing) scaled up together by this Viewbox, so the three stay aligned to each
+                             other exactly as drawn: scaling each Path on its own instead would stretch them
+                             against their own, different ink extents and throw the parts out of register. -->
+                        <Viewbox Width="72" Height="72" Stretch="Uniform">
+                            <Canvas Width="24" Height="24">
+                                <!-- The resting body, always at its own quiet fill (CardBackgroundFillColorDefaultBrush -
+                                     the same elevated-surface brush a card uses, distinct from every other
+                                     brush on this drawing and, unlike ControlFillColorSecondaryBrush used
+                                     here before, opaque enough to still read against the page in the light
+                                     theme) with a themed edge stroke so the silhouette holds even where the
+                                     fill and the page are close in tone. -->
+                                <Path x:Name="SurfaceBase" Data="{StaticResource CleaningDriveBodyOutlineGeometry}"
+                                      Fill="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                      Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" StrokeThickness="0.35"/>
+
+                                <!-- The travelling light: same shape as the body above, drawn in the accent
+                                     colour but only shown through a moving gradient mask, so its own
+                                     silhouette is what keeps the light inside the body's edge, not a Clip. -->
+                                <Path x:Name="SurfaceLight" Data="{StaticResource CleaningDriveBodyOutlineGeometry}"
+                                      Opacity="0.5" Fill="{DynamicResource AccentFillColorDefaultBrush}">
+                                    <Path.OpacityMask>
+                                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5" MappingMode="RelativeToBoundingBox">
+                                            <LinearGradientBrush.RelativeTransform>
+                                                <TranslateTransform x:Name="LightSlide" X="-0.75"/>
+                                            </LinearGradientBrush.RelativeTransform>
+                                            <GradientStop Color="Transparent" Offset="0"/>
+                                            <GradientStop Color="White" Offset="0.5"/>
+                                            <GradientStop Color="Transparent" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Path.OpacityMask>
+                                </Path>
+
+                                <!-- The four screw holes, their own colour (same edge brush as the body's
+                                     stroke) rather than a cutout showing whatever sits behind the body. -->
+                                <Path x:Name="ScrewHoles" Data="{StaticResource CleaningDriveScrewHolesGeometry}"
+                                      Fill="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+
+                                <!-- The platter: a recessed disc (ControlFillColorSecondaryBrush - the
+                                     brush the body used to carry, now free for the platter's own sunken
+                                     look now that the body sits on CardBackgroundFillColorDefaultBrush),
+                                     an accent-coloured STROKE ring drawn on top of its own edge (never
+                                     filled - the ring is not what fills with progress, that is the
+                                     separate outer RingFill arc around the whole dialog), the hub and its
+                                     centre dot. Always drawn, never masked or animated. -->
+                                <Path x:Name="PlatterDisc" Data="{StaticResource CleaningDrivePlatterDiscGeometry}"
+                                      Fill="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                <Path x:Name="PlatterRing" Data="{StaticResource CleaningDrivePlatterDiscGeometry}"
+                                      Stroke="{DynamicResource AccentFillColorDefaultBrush}" StrokeThickness="0.8"/>
+                                <Path x:Name="Hub" Data="{StaticResource CleaningDriveHubGeometry}"
+                                      Fill="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                <Path x:Name="HubDot" Data="{StaticResource CleaningDriveHubDotGeometry}"
+                                      Fill="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                <Path x:Name="ActuatorArm" Data="{StaticResource CleaningDriveArmGeometry}"
+                                      Fill="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            </Canvas>
+                        </Viewbox>
+
+                        <!-- Three glints (five before this, now outside the body at its upper right),
+                             each parked where the light passes near it and only ever fading in and out plus
+                             a small pop in place, never drifting, never spinning; each runs its own
+                             phase/period/peak in the code-behind so the three never pulse in lockstep. -->
+                        <!-- Resting opacity 0.22, never 0: a static render never
+                             runs StartSweep's Storyboard (WindowLayoutTests, the render harness in general)
+                             so the XAML-declared value here IS what shows in every snapshot - at 0 that was
+                             an invisible sparkle in every one of them. The fade animation below rests on
+                             the same floor while running, so a glint dims toward this quiet value between
+                             pulses instead of vanishing and popping back. -->
+                        <Path x:Name="Glint1" Data="{StaticResource CleaningGlintGeometry}" Width="14" Height="14"
+                              Stretch="Uniform" Opacity="0.22"
+                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="73,1,0,0"
+                              RenderTransformOrigin="0.5,0.5"
+                              Fill="{DynamicResource AccentTextFillColorPrimaryBrush}">
+                            <Path.RenderTransform>
+                                <ScaleTransform x:Name="Glint1Scale"/>
+                            </Path.RenderTransform>
+                        </Path>
+                        <Path x:Name="Glint2" Data="{StaticResource CleaningGlintGeometry}" Width="11" Height="11"
+                              Stretch="Uniform" Opacity="0.22"
+                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="86.5,16.5,0,0"
+                              RenderTransformOrigin="0.5,0.5"
+                              Fill="{DynamicResource AccentTextFillColorPrimaryBrush}">
+                            <Path.RenderTransform>
+                                <ScaleTransform x:Name="Glint2Scale"/>
+                            </Path.RenderTransform>
+                        </Path>
+                        <Path x:Name="Glint3" Data="{StaticResource CleaningGlintGeometry}" Width="8" Height="8"
+                              Stretch="Uniform" Opacity="0.22"
+                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="80,34,0,0"
+                              RenderTransformOrigin="0.5,0.5"
+                              Fill="{DynamicResource AccentTextFillColorPrimaryBrush}">
+                            <Path.RenderTransform>
+                                <ScaleTransform x:Name="Glint3Scale"/>
+                            </Path.RenderTransform>
+                        </Path>
+                    </Grid>
+
+                    <!-- Pushed down from 54 to 80: at 54 the text sat over the
+                         drive body's own lower edge, which now also carries a visible stroke that made the
+                         overlap obvious. 80 clears the body with a visible gap while staying well inside
+                         the 194px progress ring's own track. -->
+                    <TextBlock Text="{Binding CleanPercentText}" FontSize="15" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,80,0,0"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                    <!-- Held: the motion stops and this says so, rather than a frozen scene looking stuck.
+                         Margin kept 24 below the percentage text's own, same gap as before the text moved. -->
+                    <TextBlock Text="{Binding Loc[CleanupPausedNote]}" FontSize="12"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,104,0,0"
+                               Visibility="{Binding IsPaused, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                </Grid>
+
+                <!-- centre when finished: what was freed, and what the drive has left because of it -->
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Visibility="{Binding IsFinished, Converter={StaticResource BoolToVisibility}}">
+                    <!-- Written from the code-behind rather than bound: when the run ends the figure
+                         counts up to its result instead of appearing at full size, and that count is an
+                         animated window property (DisplayFreed). Same reason the arc's geometry is
+                         assigned there, an ancestor binding does not resolve once the render harness has
+                         detached this content from its window. -->
+                    <!-- Disk Cleanup never reports its own freed bytes, so its share is shown as this
+                         small approximate line above the sure total, only for a run that actually had
+                         both lanes; the total below never counts it twice, because it was never in it. -->
+                    <TextBlock Text="{Binding LaneOverlapExtraText}" FontSize="12" HorizontalAlignment="Center"
+                               Style="{StaticResource TabularNumberText}"
+                               Visibility="{Binding ShowsLaneOverlapExtra, Converter={StaticResource BoolToVisibility}}"
+                               ToolTip="{Binding LaneOverlapExtraTooltip}"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                    <TextBlock x:Name="FreedNumber" FontSize="38" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" Style="{StaticResource TabularNumberText}"
+                               Foreground="{DynamicResource SystemFillColorSuccessBrush}"/>
+                    <TextBlock Text="{Binding FreeSpaceText}" FontSize="12" HorizontalAlignment="Center"
+                               TextAlignment="Center" TextWrapping="Wrap" MaxWidth="170" Margin="0,2,0,0"
+                               Style="{StaticResource TabularNumberText}"
+                               Visibility="{Binding HasFreeSpaceResult, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- What can be cleaned. Everything on by default except the recycle bin. -->
+        <Border x:Name="CleanupTargetsCard" Grid.Row="2" Margin="24,0,24,0" CornerRadius="8" BorderThickness="1"
+                HorizontalAlignment="Stretch"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                views:GlassCardHighlight.Show="True">
+            <!-- Style="{x:Null}" drops WPF-UI's overlay scrollbar (thumb drawn on top of the content's own
+                 right edge, confirmed measured the same way EntriesScroll below documents it) for the
+                 classic ScrollViewer template, which genuinely reserves its own column for the bar instead
+                 of floating over it, themed by the app-wide ScrollBar style in App.xaml. A group card's own
+                 right-hand size text used to sit right under that overlay thumb whenever the list actually
+                 needed to scroll. -->
+            <ScrollViewer Style="{x:Null}" VerticalScrollBarVisibility="Auto" Padding="8,6">
+              <StackPanel>
+                <DockPanel Margin="4,0,4,6" LastChildFill="False"
+                           Visibility="{Binding IsChoosing, Converter={StaticResource BoolToVisibility}}">
+                    <!-- The shared column chooser for the detail lists below (Size only). -->
+                    <ui:Button DockPanel.Dock="Right" Click="OnColumnsButtonClick"
+                               Appearance="Secondary" Padding="8,4"
+                               ToolTip="{Binding Loc[ColumnsButton]}" AutomationProperties.Name="{Binding Loc[ColumnsButton]}">
+                        <ui:Button.Icon><ui:SymbolIcon Symbol="ColumnEdit24" FontSize="14"/></ui:Button.Icon>
+                    </ui:Button>
+                    <!-- Resets the ticks to exactly what a fresh scan would tick: the same rule
+                         CleanupItemViewModel's own construction already applies from Target.DefaultEnabled,
+                         reused here rather than duplicated. Up here with the other list controls; the
+                         bottom action row has no width to spare at the window's minimum size. -->
+                    <ui:Button DockPanel.Dock="Right" Appearance="Secondary" Padding="10,4" Margin="0,0,8,0"
+                               Content="{Binding Loc[CleanupDefaultSelection]}"
+                               Command="{Binding RestoreDefaultSelectionCommand}"
+                               ToolTip="{Binding Loc[CleanupDefaultSelectionTooltip]}"
+                               AutomationProperties.Name="{Binding Loc[CleanupDefaultSelection]}"/>
+                </DockPanel>
+
+                <!-- The escape hatch for whatever the (still unset, pending the two-machine
+                     measurement) DefaultVisible=false categories hide from the resting list. Only shown once
+                     there is actually something hidden, same "nothing disappears silently" rule the pill strip's own
+                     toggle already follows for the source pills. -->
+                <ui:ToggleSwitch Margin="4,0,4,10" HorizontalAlignment="Left"
+                                 Visibility="{Binding HasHiddenCategories, Converter={StaticResource BoolToVisibility}}"
+                                 IsChecked="{Binding ShowAllCategories}"
+                                 Content="{Binding ShowAllCategoriesText}"/>
+
+                <!-- Grouped: each section its own collapsed-by-default Expander with a
+                     tri-state header checkbox, the group's own total, and how many of its targets are
+                     ticked. A group the scan found nothing in, once it has actually finished, never while
+                     still measuring, sits dimmed rather than looking indistinguishable from one with real
+                     work to offer. Every target's card uses the SAME template (CleanupItemTemplate, above,
+                     kept as a resource), grouping is a new outer shell, not a new inner one. -->
+                <!-- The window shows at once, before the catalogue (drive WMI lookups and
+                     folder-existence checks) has finished building on its own background thread; this is
+                     all the list area shows until then, same plain "…" the per-row measuring state
+                     already uses, needing no translation. -->
+                <TextBlock Text="…" FontSize="20" Margin="0,24,0,0" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                           Visibility="{Binding IsCatalogLoading, Converter={StaticResource BoolToVisibility}}"/>
+
+                <!-- The catalogue build itself failing outright (not a single drive, see CleanupCatalog's
+                     own per-drive skip) used to leave the window on the "…" state above forever, or crash
+                     the app outright; this shows a plain message instead. -->
+                <TextBlock x:Name="CatalogLoadFailedText" Text="{Binding Loc[CleanupCatalogLoadFailed]}" FontSize="14" Margin="0,24,0,0"
+                           HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="360"
+                           Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                           Visibility="{Binding CatalogLoadFailed, Converter={StaticResource BoolToVisibility}}"/>
+
+                <ItemsControl ItemsSource="{Binding Groups}"
+                              Visibility="{Binding IsCatalogLoading, Converter={StaticResource InverseBoolToVisibility}}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- Own card template (CleanupGroupCard, top of this file) rather than
+                                 ui:CardExpander: that control draws no card surface here at all, frames
+                                 its chevron in a circle to the LEFT of the checkbox, and its header
+                                 presenter measures with unbounded width, an explicitly bound Width would
+                                 be needed to get a right-aligned meta line, forcing that line onto a
+                                 second row. The template's header column is a real "*" column instead, so
+                                 title and meta share ONE vertically centred line. -->
+                            <Expander x:Name="GroupCard" Margin="2,4" IsExpanded="False"
+                                      Style="{StaticResource CleanupGroupCard}">
+                                <Expander.Visibility>
+                                    <!-- A group whose every member is hidden by DefaultVisible must collapse
+                                         too, unless "show all categories" is open. See
+                                         CleanupGroupVisibilityConverter's own doc comment. -->
+                                    <MultiBinding Converter="{StaticResource CleanupGroupVisibility}">
+                                        <Binding Path="Items"/>
+                                        <Binding Path="DataContext.ShowAllCategories" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                    </MultiBinding>
+                                </Expander.Visibility>
+                                <Expander.Header>
+                                    <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Tri-state, OneWay + Command, the same shape the table's own
+                                             category checkboxes use (GroupSelectionConverter): a two-way
+                                             binding on a three-state box cycles through all three states on
+                                             repeated clicks, including indeterminate, which a click must
+                                             never be able to land on by itself. -->
+                                        <CheckBox x:Name="GroupCheckBox" Grid.Column="0" VerticalAlignment="Center"
+                                                  Margin="0,0,12,0" IsThreeState="True"
+                                                  IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                                  Command="{Binding ToggleSelectionCommand}"
+                                                  AutomationProperties.Name="{Binding Title}"/>
+
+                                        <TextBlock Grid.Column="1" Text="{Binding Title}"
+                                                   FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+
+                                        <!-- Size/count/freed on the same baseline as the title, flushed
+                                             right against the chevron. -->
+                                        <StackPanel x:Name="CleanupGroupMetaPanel" Grid.Column="2" Orientation="Horizontal"
+                                                    VerticalAlignment="Center" Margin="16,0,0,0">
+                                            <TextBlock Text="{Binding SizeText}" FontSize="11"
+                                                       FontWeight="SemiBold"
+                                                       Style="{StaticResource TabularNumberText}"
+                                                       Visibility="{Binding ShowsSize, Converter={StaticResource BoolToVisibility}}"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock Text="  ·  " FontSize="11"
+                                                       Visibility="{Binding ShowsSize, Converter={StaticResource BoolToVisibility}}"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                            <TextBlock Text="{Binding SelectedCountText}" FontSize="11"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                                            <!-- After the run each section reports its own result, so
+                                                 the outcome can be read where the work was chosen. -->
+                                            <TextBlock Text="  ·  " FontSize="11"
+                                                       Visibility="{Binding ShowsFreed, Converter={StaticResource BoolToVisibility}}"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                            <TextBlock Text="{Binding FreedText}" FontSize="11"
+                                                       FontWeight="SemiBold"
+                                                       Style="{StaticResource TabularNumberText}"
+                                                       Visibility="{Binding ShowsFreed, Converter={StaticResource BoolToVisibility}}"
+                                                       Foreground="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- The registry group's own mandatory-backup note. No on/off
+                                         switch for it exists anywhere in the app; this line, and the button
+                                         to see the folder, are the only mention of it. -->
+                                    <DockPanel Margin="28,4,0,0" LastChildFill="False"
+                                               Visibility="{Binding IsRegistryGroup, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock x:Name="RegistryBackupNoteText" DockPanel.Dock="Left"
+                                                   Text="{Binding RegistryBackupNoteText}"
+                                                   FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                        <ui:Button x:Name="RegistryBackupFolderButton" DockPanel.Dock="Left"
+                                                   Margin="8,0,0,0" Padding="6,2" Appearance="Secondary"
+                                                   Command="{Binding OpenRegistryBackupFolderCommand}"
+                                                   ToolTip="{Binding DataContext.Loc[CleanupEntryOpenFolder], RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                   AutomationProperties.Name="{Binding DataContext.Loc[CleanupEntryOpenFolder], RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                                            <ui:SymbolIcon Symbol="FolderOpen24" FontSize="12"/>
+                                        </ui:Button>
+                                    </DockPanel>
+                                    </StackPanel>
+                                </Expander.Header>
+
+                                <ItemsControl ItemsSource="{Binding Items}"
+                                              ItemTemplate="{StaticResource CleanupItemTemplate}"/>
+                            </Expander>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <StackPanel Grid.Row="3" Margin="24,12,24,18">
+            <!-- A repair step cannot be cut short, and saying nothing about that made a stopped run look
+                 like it was still going behind the user's back. -->
+            <TextBlock Text="{Binding StoppingRepairText}" FontSize="12" Margin="0,0,0,8" TextWrapping="Wrap"
+                       Visibility="{Binding IsStoppingRepair, Converter={StaticResource BoolToVisibility}}"
+                       Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
+
+            <Grid>
+                <StackPanel x:Name="ActionRowLeftPanel" Orientation="Horizontal" HorizontalAlignment="Left"
+                            Visibility="{Binding ShowRescanButton, Converter={StaticResource BoolToVisibility}}">
+                    <!-- The figures are a snapshot of a machine that keeps working, so the user can ask for
+                         a fresh one without closing the dialog; after a run it is also the way to another one. -->
+                    <ui:Button x:Name="RescanButton" Appearance="Secondary" Icon="{ui:SymbolIcon ArrowClockwise24}"
+                               Content="{Binding Loc[CleanupRescan]}" Command="{Binding RescanCommand}"/>
+                </StackPanel>
+
+                <StackPanel x:Name="ActionRowRightPanel" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <!-- While a run is going: hold it, or stop it outright. Stop takes effect at once, see
+                         CleanupViewModel.Stop for the one step it cannot cut short.
+                         TWO buttons rather than one with a bound icon: ui:Button.Icon takes an icon ELEMENT,
+                         so swapping the glyph on a state change means swapping the button. -->
+                    <ui:Button Appearance="Secondary" Margin="0,0,8,0" MinWidth="112"
+                               Icon="{ui:SymbolIcon Pause24}"
+                               Content="{Binding Loc[CleanupPause]}" Command="{Binding TogglePauseCommand}"
+                               Visibility="{Binding ShowPauseButton, Converter={StaticResource BoolToVisibility}}"/>
+                    <ui:Button Appearance="Secondary" Margin="0,0,8,0" MinWidth="112"
+                               Icon="{ui:SymbolIcon Play24}"
+                               Content="{Binding Loc[CleanupResume]}" Command="{Binding TogglePauseCommand}"
+                               Visibility="{Binding ShowResumeButton, Converter={StaticResource BoolToVisibility}}"/>
+                    <ui:Button Appearance="Secondary" Margin="0,0,8,0" MinWidth="104"
+                               Icon="{ui:SymbolIcon Stop24}"
+                               Content="{Binding Loc[CleanupStop]}" Command="{Binding StopCommand}"
+                               Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}"/>
+
+                    <!-- The only path to a cleanup: this button, and then the red confirmation. No icon,
+                         the word is the button. -->
+                    <ui:Button x:Name="CleanButton" Click="OnClean" Appearance="Primary" Padding="18,8" MinWidth="130"
+                               IsEnabled="{Binding CanClean}"
+                               Content="{Binding Loc[CleanupStart]}"
+                               Visibility="{Binding IsChoosing, Converter={StaticResource BoolToVisibility}}"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

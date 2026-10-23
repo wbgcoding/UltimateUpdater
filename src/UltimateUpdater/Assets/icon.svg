@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!--
+    Ultimate Updater app icon. Functional, hand-built, one design.
+    EDITABLE DESIGN REFERENCE. The shipped .ico is produced by tools/make-icon.py, which mirrors
+    this design; change both together.
+    A circular glass disc (near-black, lit from the top), a thin blue ring running the product's one
+    reserved accent from deep at the bottom left to bright at the top right, and a download arrow
+    over a base bar centred in the disc.
+  -->
+  <defs>
+    <linearGradient id="glassGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#15181D"/>
+      <stop offset="100%" stop-color="#05070A"/>
+    </linearGradient>
+    <linearGradient id="ringGradient" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0A54AD"/>
+      <stop offset="50%" stop-color="#3D9EF0"/>
+      <stop offset="100%" stop-color="#6FD3FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 1. Glass disc. -->
+  <circle cx="128" cy="128" r="128" fill="url(#glassGradient)"/>
+
+  <!-- 2. Ring: 15 units wide at the very edge. -->
+  <circle cx="128" cy="128" r="120.5" fill="none" stroke="url(#ringGradient)" stroke-width="15"/>
+
+  <!-- 3. Download arrow: white shaft and head, base bar in the ring's bright end. -->
+  <line x1="128" y1="56" x2="128" y2="132" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round"/>
+  <polygon points="76,122 128,180 180,122" fill="#FFFFFF"/>
+  <line x1="84" y1="202" x2="172" y2="202" stroke="#6FD3FF" stroke-width="16" stroke-linecap="round"/>
+</svg>

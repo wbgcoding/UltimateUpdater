@@ -1,0 +1,19 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- The cleaning-disk drawing's own 24x24 geometry, shared between the cleanup dialog's centre
+         animation (CleanupWindow.xaml) and the main toolbar's cleanup button (the button shows
+         this same disk, animated, while a cleanup runs, instead of a plain broom glyph). Kept in one place
+         so the two never drift apart; the sparkle/glint geometry stays local to CleanupWindow.xaml, since
+         the toolbar button deliberately never shows it: the disk keeps its animation, minus the stars. -->
+    <Geometry x:Key="CleaningDriveBodyOutlineGeometry">M4.6 2 L19.4 2 A1.6,1.6 0 0 1 21 3.6 L21 20.4 A1.6,1.6 0 0 1 19.4 22 L4.6 22 A1.6,1.6 0 0 1 3 20.4 L3 3.6 A1.6,1.6 0 0 1 4.6 2 Z</Geometry>
+
+    <Geometry x:Key="CleaningDriveScrewHolesGeometry">M6.05 4.2 A0.85,0.85 0 1 1 4.35 4.2 A0.85,0.85 0 1 1 6.05 4.2 Z M19.65 4.2 A0.85,0.85 0 1 1 17.95 4.2 A0.85,0.85 0 1 1 19.65 4.2 Z M6.05 19.8 A0.85,0.85 0 1 1 4.35 19.8 A0.85,0.85 0 1 1 6.05 19.8 Z M19.65 19.8 A0.85,0.85 0 1 1 17.95 19.8 A0.85,0.85 0 1 1 19.65 19.8 Z</Geometry>
+
+    <Geometry x:Key="CleaningDrivePlatterDiscGeometry">M18.25 11.2 A6.25,6.25 0 1 1 5.75 11.2 A6.25,6.25 0 1 1 18.25 11.2 Z</Geometry>
+
+    <Geometry x:Key="CleaningDriveHubGeometry">M14 11.2 A2,2 0 1 1 10 11.2 A2,2 0 1 1 14 11.2 Z</Geometry>
+
+    <Geometry x:Key="CleaningDriveHubDotGeometry">M12.75 11.2 A0.75,0.75 0 1 1 11.25 11.2 A0.75,0.75 0 1 1 12.75 11.2 Z</Geometry>
+
+    <Geometry x:Key="CleaningDriveArmGeometry">M18.731 16.815 L13.654 11.743 A1,1 0 0 1 12.146 13.057 L16.469 18.785 A1.5,1.5 0 0 1 18.731 16.815 Z</Geometry>
+</ResourceDictionary>

@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- NotifyIcon (tray) has no WPF equivalent; WinForms is used for that alone -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- WFO0003 tells WinForms apps to move DPI settings out of the manifest. This is a
+         WPF app: the PerMonitorV2 manifest entry is the correct mechanism here and is
+         required by the project's own EXE rules, so the WinForms advice does not apply. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/app.ico</ApplicationIcon>
+    <AssemblyName>UltimateUpdater</AssemblyName>
+    <RootNamespace>UltimateUpdater</RootNamespace>
+    <Version>1.1.0</Version>
+    <Product>Ultimate Updater</Product>
+    <Company>BGCoding</Company>
+    <Copyright>© 2026 BGCoding</Copyright>
+    <!-- A full Win32 version block, not the bare minimum. An executable whose FileDescription is just its
+         file name and which carries no product description reads as anonymous to the reputation and
+         machine-learning heuristics every scanner runs, and that is half of what produces a false positive
+         on an unsigned binary. AssemblyTitle becomes FileDescription, Description becomes Comments and
+         InformationalVersion becomes ProductVersion. -->
+    <AssemblyTitle>Ultimate Updater</AssemblyTitle>
+    <Description>Finds available updates from winget, Windows Update, package managers and game launchers, and installs the ones you choose.</Description>
+    <InformationalVersion>$(Version)</InformationalVersion>
+    <!-- Derived from Version above so the two can never drift apart again.
+         Without IncludeSourceRevisionInInformationalVersion=false the SDK appends the git commit, so the
+         file properties would read "0.3.0+50e12e2b2f…". A version string with a 40-character hash glued to
+         it is not what a shipped product looks like. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <NeutralLanguage>en</NeutralLanguage>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- The same executable runs as the elevated helper, which inherits the user's environment from
+       HKCU\Environment. DOTNET_STARTUP_HOOKS there would load any DLL the user's programs name into an
+       administrator process, so shipped builds turn startup hooks off. Debug keeps them for Hot Reload.
+       Profiler and standalone GC variables are not covered by this switch: the app removes them from its own
+       environment before starting the helper, and the helper refuses to work when any of them is set. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <StartupHookSupport>false</StartupHookSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Raffinert.FuzzySharp" Version="5.0.3" />
+    <PackageReference Include="System.Management" Version="10.0.11" />
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="UltimateUpdater.Tests" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- embedded so the title bar can reference it via a pack:// URI -->
+    <Resource Include="Assets/icon.png" />
+  </ItemGroup>
+
+</Project>

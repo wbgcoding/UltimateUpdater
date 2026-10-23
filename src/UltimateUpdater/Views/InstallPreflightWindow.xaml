@@ -1,0 +1,103 @@
+<ui:FluentWindow x:Class="UltimateUpdater.Views.InstallPreflightWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:views="clr-namespace:UltimateUpdater.Views"
+        Title="{Binding Loc[PreflightTitle]}"
+        MinWidth="460" MaxWidth="720" MinHeight="0" SizeToContent="WidthAndHeight" MaxHeight="640"
+        ResizeMode="NoResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        ExtendsContentIntoTitleBar="True"
+        Background="{DynamicResource ApplicationBackgroundBrush}">
+    <ui:FluentWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+        <views:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- title bar -->
+            <RowDefinition Height="Auto"/>   <!-- lines -->
+            <RowDefinition Height="Auto"/>   <!-- last restore point -->
+            <RowDefinition Height="Auto"/>   <!-- start/cancel -->
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="{Binding Loc[PreflightTitle]}" FontSize="16" FontWeight="SemiBold">
+            <ui:TitleBar.Icon>
+                <!-- Assembly-qualified like MainWindow's so it resolves whichever assembly is
+                     the entry point -->
+                <ui:ImageIcon Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <!-- Each line is either a plain warning (optionally with one side action, e.g. "Open cleanup"),
+             or a blocker line naming the packages and the program holding them. Blocker lines carry no
+             buttons of their own: the bottom row asks once for all of them. -->
+        <ScrollViewer Grid.Row="1" MaxHeight="400" Margin="24,10,24,4"
+                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Lines}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,0,0,14">
+                            <TextBlock Text="{Binding Text}" FontSize="13" TextWrapping="Wrap" LineHeight="19">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCritical}" Value="True">
+                                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <ui:Button Margin="0,6,0,0" HorizontalAlignment="Left"
+                                       Content="{Binding ActionText}"
+                                       Command="{Binding ActCommand}"
+                                       Visibility="{Binding HasAction, Converter={StaticResource BoolToVisibility}}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- The app cannot ask Windows for this directly (needs admin), so it reads back its
+             own timestamp file instead; "Open" lets the user check or create one themselves. -->
+        <StackPanel x:Name="RestorePointRow" Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center"
+                    Margin="24,0,24,0"
+                    Visibility="{Binding HasRestorePointText, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding RestorePointText}" FontSize="12" VerticalAlignment="Center"
+                       TextWrapping="Wrap" MaxWidth="320"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+            <ui:Button Content="{Binding Loc[OpenButton]}" Command="{Binding OpenRestorePointDialogCommand}"
+                       Appearance="Transparent" Padding="8,3" Margin="8,0,0,0" FontSize="12"
+                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+        </StackPanel>
+
+        <!-- With blocked updates the start buttons themselves carry the answer, once for every blocked
+             group, so no per-line choice is left unanswered and nothing needs a second click. A WrapPanel
+             so the long blocker labels move to a second line in a narrow window instead of clipping. -->
+        <WrapPanel x:Name="ButtonRow" Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right"
+                   Margin="24,20,24,18">
+            <ui:Button Command="{Binding CancelCommand}" Margin="0,0,10,6" MinWidth="96"
+                       Content="{Binding Loc[PreflightCancel]}"/>
+            <ui:Button x:Name="StartButton" Command="{Binding StartCommand}" Appearance="Primary" MinWidth="96"
+                       Margin="0,0,0,6"
+                       Visibility="{Binding HasBlockers, Converter={StaticResource InverseBoolToVisibility}}"
+                       Content="{Binding Loc[PreflightStart]}"/>
+            <ui:Button x:Name="SkipBlockedButton" Command="{Binding StartSkippingBlockedCommand}"
+                       Margin="0,0,10,6" MinWidth="96"
+                       Visibility="{Binding HasBlockers, Converter={StaticResource BoolToVisibility}}"
+                       Content="{Binding Loc[InstallBlockerSkip]}"/>
+            <ui:Button x:Name="TryAnywayButton" Command="{Binding StartTryingAnywayCommand}"
+                       Margin="0,0,10,6" MinWidth="96"
+                       Visibility="{Binding HasBlockers, Converter={StaticResource BoolToVisibility}}"
+                       Content="{Binding Loc[InstallBlockerTryAnyway]}"/>
+            <ui:Button x:Name="CloseProgramsButton" Command="{Binding StartClosingProgramsCommand}"
+                       Appearance="Primary" MinWidth="96" Margin="0,0,0,6"
+                       Visibility="{Binding HasBlockers, Converter={StaticResource BoolToVisibility}}"
+                       Content="{Binding Loc[InstallBlockerCloseAndContinue]}"/>
+        </WrapPanel>
+    </Grid>
+</ui:FluentWindow>

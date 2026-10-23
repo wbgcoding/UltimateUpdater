@@ -1,0 +1,32 @@
+# .NET
+bin/
+obj/
+publish/
+*.user
+.vs/
+dist/
+build/
+TestResults/
+__pycache__/
+
+# generated tooling output
+docs/review/
+.tmp/
+
+.worktrees/
+
+.env
+.env.*
+!.env.example
+*.log
+*.bak
+*.tmp
+*.orig
+*.pyc
+.venv/
+venv/
+node_modules/
+coverage/
+.signing/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,2188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Ultimate Updater</value>
+  </data>
+  <data name="DialogOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="DialogYes" xml:space="preserve">
+    <value>はい</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="LanguageLabel" xml:space="preserve">
+    <value>言語</value>
+  </data>
+  <data name="LanguageOptionSystem" xml:space="preserve">
+    <value>システム</value>
+  </data>
+  <data name="ThemeLabel" xml:space="preserve">
+    <value>テーマ</value>
+  </data>
+  <data name="ThemeOptionSystem" xml:space="preserve">
+    <value>システム</value>
+  </data>
+  <data name="ThemeOptionLight" xml:space="preserve">
+    <value>ライト</value>
+  </data>
+  <data name="ThemeOptionDark" xml:space="preserve">
+    <value>ダーク</value>
+  </data>
+  <data name="ScanButton" xml:space="preserve">
+    <value>更新を確認</value>
+  </data>
+  <data name="ScanningButton" xml:space="preserve">
+    <value>スキャン中…</value>
+  </data>
+  <data name="ColumnName" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="ColumnSource" xml:space="preserve">
+    <value>ソース</value>
+  </data>
+  <data name="SelectAllButton" xml:space="preserve">
+    <value>すべて選択</value>
+  </data>
+  <data name="SelectAllClear" xml:space="preserve">
+    <value>選択を解除</value>
+  </data>
+  <data name="InstallSelectedButton" xml:space="preserve">
+    <value>選択項目を更新</value>
+  </data>
+  <data name="InstallButton" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="SelectionSummary" xml:space="preserve">
+    <value>{0} 件選択中</value>
+  </data>
+  <data name="SelectionSummaryWithCritical" xml:space="preserve">
+    <value>{0} 件選択中（重要 {1} 件）</value>
+  </data>
+  <data name="OpenButton" xml:space="preserve">
+    <value>開く</value>
+  </data>
+  <data name="ContextMenuOpenWebsite" xml:space="preserve">
+    <value>ウェブサイトを開く</value>
+  </data>
+  <data name="OpenFolderButton" xml:space="preserve">
+    <value>フォルダーを開く</value>
+  </data>
+  <data name="CategorySoftware" xml:space="preserve">
+    <value>ソフトウェア</value>
+  </data>
+  <data name="CategorySystemAndDrivers" xml:space="preserve">
+    <value>システムとドライバー</value>
+  </data>
+  <data name="CategoryGames" xml:space="preserve">
+    <value>ゲーム</value>
+  </data>
+  <data name="CategoryDeveloperTools" xml:space="preserve">
+    <value>開発者向けツール</value>
+  </data>
+  <data name="CategoryStore" xml:space="preserve">
+    <value>ストア</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>検索…</value>
+  </data>
+  <data name="FilterCriticalOnly" xml:space="preserve">
+    <value>重要のみ</value>
+  </data>
+  <data name="IgnoreButton" xml:space="preserve">
+    <value>このバージョンを無視</value>
+  </data>
+  <data name="IgnoreAllButton" xml:space="preserve">
+    <value>すべてのバージョンを無視</value>
+  </data>
+  <data name="IgnoreSimpleButton" xml:space="preserve">
+    <value>無視</value>
+  </data>
+  <data name="UnignoreButton" xml:space="preserve">
+    <value>再表示</value>
+  </data>
+  <data name="IgnoredBadge" xml:space="preserve">
+    <value>無視済み</value>
+  </data>
+  <data name="IgnoreListTitle" xml:space="preserve">
+    <value>無視したパッケージ</value>
+  </data>
+  <data name="IgnoreListAllVersions" xml:space="preserve">
+    <value>すべてのバージョン</value>
+  </data>
+  <data name="IgnoreListRemoveAll" xml:space="preserve">
+    <value>すべて削除</value>
+  </data>
+  <data name="IgnoreListEmpty" xml:space="preserve">
+    <value>無視した項目はありません。</value>
+  </data>
+  <data name="SnoozeButton" xml:space="preserve">
+    <value>後で通知</value>
+  </data>
+  <data name="SnoozeOneDay" xml:space="preserve">
+    <value>1 日後</value>
+  </data>
+  <data name="SnoozeOneWeek" xml:space="preserve">
+    <value>1 週間後</value>
+  </data>
+  <data name="SnoozeOneMonth" xml:space="preserve">
+    <value>1 か月後</value>
+  </data>
+  <data name="UnsnoozeButton" xml:space="preserve">
+    <value>今すぐ再表示</value>
+  </data>
+  <data name="SnoozedBadge" xml:space="preserve">
+    <value>{0} まで延期中</value>
+  </data>
+  <data name="RetryButton" xml:space="preserve">
+    <value>再試行</value>
+  </data>
+  <data name="FilterHideManual" xml:space="preserve">
+    <value>手動で開く項目を非表示</value>
+  </data>
+  <data name="FilterPersistentFailures" xml:space="preserve">
+    <value>失敗が続いています（{0}）</value>
+  </data>
+  <data name="PersistentFailureHint" xml:space="preserve">
+    <value>同じ原因で {0} 回失敗しました。このパッケージを無視しますか？</value>
+  </data>
+  <data name="InstallVersionUnchanged" xml:space="preserve">
+    <value>バージョンは変更されていません</value>
+  </data>
+  <data name="RebootRequiredBadge" xml:space="preserve">
+    <value>再起動が必要</value>
+  </data>
+  <data name="RebootRequiredInfo" xml:space="preserve">
+    <value>{0} 件の更新をインストールしました。完了するには再起動してください。</value>
+  </data>
+  <data name="RebootRequiredInfoOne" xml:space="preserve">
+    <value>{0} 件の更新をインストールしました。完了するには再起動してください。</value>
+  </data>
+  <data name="SelectionSummarySizeSuffix" xml:space="preserve">
+    <value> · 約 {0}</value>
+  </data>
+  <data name="InfoLinkButton" xml:space="preserve">
+    <value>プロジェクトページを開く</value>
+  </data>
+  <data name="ColumnDate" xml:space="preserve">
+    <value>日付</value>
+  </data>
+  <data name="ColumnSize" xml:space="preserve">
+    <value>サイズ</value>
+  </data>
+  <data name="ColumnVersion" xml:space="preserve">
+    <value>バージョン</value>
+  </data>
+  <data name="HistoryButton" xml:space="preserve">
+    <value>履歴</value>
+  </data>
+  <data name="SettingsButton" xml:space="preserve">
+    <value>設定</value>
+  </data>
+  <data name="HistoryTitle" xml:space="preserve">
+    <value>履歴</value>
+  </data>
+  <data name="HistoryEmpty" xml:space="preserve">
+    <value>まだインストール記録がありません。</value>
+  </data>
+  <data name="HistoryOnlyFailed" xml:space="preserve">
+    <value>失敗のみ</value>
+  </data>
+  <data name="HistoryNoMatches" xml:space="preserve">
+    <value>検索条件に一致する項目がありません。</value>
+  </data>
+  <data name="HistoryColumnWhen" xml:space="preserve">
+    <value>日時</value>
+  </data>
+  <data name="HistoryColumnSize" xml:space="preserve">
+    <value>サイズ</value>
+  </data>
+  <data name="HistoryColumnResult" xml:space="preserve">
+    <value>結果</value>
+  </data>
+  <data name="HistoryCopy" xml:space="preserve">
+    <value>リストをコピー</value>
+  </data>
+  <data name="HistoryCopied" xml:space="preserve">
+    <value>{0} 件をコピーしました</value>
+  </data>
+  <data name="HistoryCopyColumnFrom" xml:space="preserve">
+    <value>変更前</value>
+  </data>
+  <data name="HistoryCopyColumnTo" xml:space="preserve">
+    <value>変更後</value>
+  </data>
+  <data name="HistorySucceeded" xml:space="preserve">
+    <value>更新済み</value>
+  </data>
+  <data name="HistoryFailed" xml:space="preserve">
+    <value>失敗</value>
+  </data>
+  <data name="HistoryHandedOff" xml:space="preserve">
+    <value>引き渡し済み</value>
+  </data>
+  <data name="HistoryNotApplicable" xml:space="preserve">
+    <value>適合するバージョンなし</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>設定</value>
+  </data>
+  <data name="SettingsScanGroup" xml:space="preserve">
+    <value>スキャン</value>
+  </data>
+  <data name="SettingsIntervalLabel" xml:space="preserve">
+    <value>自動スキャンの間隔</value>
+  </data>
+  <data name="SettingsIntervalOff" xml:space="preserve">
+    <value>オフ</value>
+  </data>
+  <data name="SettingsIntervalHours6" xml:space="preserve">
+    <value>6 時間</value>
+  </data>
+  <data name="SettingsIntervalHours12" xml:space="preserve">
+    <value>12 時間</value>
+  </data>
+  <data name="SettingsIntervalDaily" xml:space="preserve">
+    <value>24 時間</value>
+  </data>
+  <data name="SettingsIntervalWeekly" xml:space="preserve">
+    <value>7 日</value>
+  </data>
+  <data name="SettingsScanOnStart" xml:space="preserve">
+    <value>起動時にスキャン</value>
+  </data>
+  <data name="SettingsInstallGroup" xml:space="preserve">
+    <value>インストール</value>
+  </data>
+  <data name="SettingsPreselectCritical" xml:space="preserve">
+    <value>重要な更新を自動的に選択</value>
+  </data>
+  <data name="SettingsRestorePoint" xml:space="preserve">
+    <value>先に復元ポイントを作成する</value>
+  </data>
+  <data name="SettingsRestorePointDesc" xml:space="preserve">
+    <value>1 日に最大 1 個まで。Windows 自体もそれ以上の作成を拒否し、最初のパッケージが始まるまで毎回最大 1 分かかります。</value>
+  </data>
+  <data name="InstallRetryRound" xml:space="preserve">
+    <value>2 回目の試行</value>
+  </data>
+  <data name="AlreadyRunning" xml:space="preserve">
+    <value>Ultimate Updater はすでに実行中です。通知領域を確認してください。</value>
+  </data>
+  <data name="SettingsNotifyGroup" xml:space="preserve">
+    <value>通知</value>
+  </data>
+  <data name="SettingsNotifyOnFound" xml:space="preserve">
+    <value>更新が見つかったら通知する</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnly" xml:space="preserve">
+    <value>重要な更新のみ</value>
+  </data>
+  <data name="SettingsAppearanceGroup" xml:space="preserve">
+    <value>外観</value>
+  </data>
+  <data name="CategoryManualUpdate" xml:space="preserve">
+    <value>手動で開く</value>
+  </data>
+  <data name="CategoryGitHubManual" xml:space="preserve">
+    <value>GitHub（手動）</value>
+  </data>
+  <data name="CategoryOpenStore" xml:space="preserve">
+    <value>ストアで開く</value>
+  </data>
+  <data name="CategoryOpenGames" xml:space="preserve">
+    <value>ランチャーで開く</value>
+  </data>
+  <data name="InstallProgressCount" xml:space="preserve">
+    <value>{0}/{1} 件完了</value>
+  </data>
+  <data name="InstallRunningCount" xml:space="preserve">
+    <value>{0} 件のインストールを実行中</value>
+  </data>
+  <data name="InstallProgressCancel" xml:space="preserve">
+    <value>すべて停止</value>
+  </data>
+  <data name="InstallProgressClose" xml:space="preserve">
+    <value>閉じる</value>
+  </data>
+  <data name="InstallProgressDownloaded" xml:space="preserve">
+    <value>{0} ダウンロード済み</value>
+  </data>
+  <data name="InstallProgressTotalSize" xml:space="preserve">
+    <value>ダウンロード {0}</value>
+  </data>
+  <data name="InstallQueueHeader" xml:space="preserve">
+    <value>さらに {0} 件が待機中</value>
+  </data>
+  <data name="TooltipCopyHint" xml:space="preserve">
+    <value>右クリックでコピー</value>
+  </data>
+  <data name="ChangelogTitle" xml:space="preserve">
+    <value>変更履歴</value>
+  </data>
+  <data name="ShortcutsTitle" xml:space="preserve">
+    <value>キーボードショートカット</value>
+  </data>
+  <data name="ChangelogOpenRelease" xml:space="preserve">
+    <value>リリースページを開く</value>
+  </data>
+  <data name="ChangelogNoTextDialogBody" xml:space="preserve">
+    <value>この更新には変更履歴のテキストがありません。ブラウザーで提供元のページ（{0}）が開きます。</value>
+  </data>
+  <data name="ChangelogOpenSite" xml:space="preserve">
+    <value>ページを開く</value>
+  </data>
+  <data name="ChangelogButtonTooltip" xml:space="preserve">
+    <value>変更履歴を表示</value>
+  </data>
+  <data name="ChangelogNone" xml:space="preserve">
+    <value>このバージョンのリリースノートは見つかりませんでした。</value>
+  </data>
+  <data name="InstallQueueRemoveTooltip" xml:space="preserve">
+    <value>キューから削除</value>
+  </data>
+  <data name="QueueReorderTooltip" xml:space="preserve">
+    <value>ドラッグで並べ替え、または Alt と矢印キー</value>
+  </data>
+  <data name="QueueRowPositionAutomation" xml:space="preserve">
+    <value>{0}、{1}/{2} 番目</value>
+  </data>
+  <data name="InstallQueueNeedsAdminTooltip" xml:space="preserve">
+    <value>管理者権限が必要です</value>
+  </data>
+  <data name="InstallQueueItemRemoved" xml:space="preserve">
+    <value>キューから削除されました</value>
+  </data>
+  <data name="UninstallFailed" xml:space="preserve">
+    <value>アンインストールに失敗しました。詳細を開いて原因を確認してください。</value>
+  </data>
+  <data name="SteamUninstallHandedOff" xml:space="preserve">
+    <value>Steam のアンインストールダイアログが開いています。そちらで操作を完了してください。結果はここには表示されません。</value>
+  </data>
+  <data name="ErrorDetailTitle" xml:space="preserve">
+    <value>エラーの詳細</value>
+  </data>
+  <data name="ShowErrorDetailButton" xml:space="preserve">
+    <value>詳細</value>
+  </data>
+  <data name="StartButton" xml:space="preserve">
+    <value>開始</value>
+  </data>
+  <data name="UninstallButton" xml:space="preserve">
+    <value>アンインストール</value>
+  </data>
+  <data name="UninstallConfirmHeadline" xml:space="preserve">
+    <value>「{0}」をアンインストールしますか？</value>
+  </data>
+  <data name="UninstallConfirmBody" xml:space="preserve">
+    <value>このプログラムはこの PC から削除されます。
+Ultimate Updater ではこの操作を元に戻せません。</value>
+  </data>
+  <data name="UninstallBlockedByActivity" xml:space="preserve">
+    <value>現在アンインストールできません：インストールが進行中です。完了後にもう一度お試しください。</value>
+  </data>
+  <data name="RowDowngrade" xml:space="preserve">
+    <value>{0} に戻す</value>
+  </data>
+  <data name="DowngradeConfirmTitle" xml:space="preserve">
+    <value>古いバージョンをインストールしますか？</value>
+  </data>
+  <data name="DowngradeConfirmBody" xml:space="preserve">
+    <value>{0} は {1} から {2} に戻されます。新しいバージョンは次回のスキャン時に再度提供されます。</value>
+  </data>
+  <data name="DowngradeBlockedByActivity" xml:space="preserve">
+    <value>現在ロールバックできません：インストールが進行中です。完了後にもう一度お試しください。</value>
+  </data>
+  <data name="RestorePointLast" xml:space="preserve">
+    <value>前回の復元ポイント：{0}</value>
+  </data>
+  <data name="RestorePointNone" xml:space="preserve">
+    <value>このプログラムによる復元ポイントはまだありません</value>
+  </data>
+  <data name="SettingsIntervalDesc" xml:space="preserve">
+    <value>バックグラウンドで更新を確認する頻度です。</value>
+  </data>
+  <data name="SettingsScanOnStartDesc" xml:space="preserve">
+    <value>アプリ起動のたびに 1 回スキャンします。</value>
+  </data>
+  <data name="SettingsPreselectCriticalDesc" xml:space="preserve">
+    <value>セキュリティに関連する更新を自動的にチェックします。</value>
+  </data>
+  <data name="InstallParallelLabel" xml:space="preserve">
+    <value>同時インストール数</value>
+  </data>
+  <data name="InstallParallelHint" xml:space="preserve">
+    <value>同時に多く実行するほど速くなります。一部のインストーラーは他のインストーラーと同時実行を拒否するため、それらは個別に再試行されます。</value>
+  </data>
+  <data name="SettingsParallelScans" xml:space="preserve">
+    <value>同時にチェックするソース数</value>
+  </data>
+  <data name="SettingsParallelAuto" xml:space="preserve">
+    <value>この端末に合わせて自動設定</value>
+  </data>
+  <data name="SettingsScanDownloads" xml:space="preserve">
+    <value>ダウンロードしたファイルを確認する</value>
+  </data>
+  <data name="SettingsScanDownloadsDesc" xml:space="preserve">
+    <value>アプリ自身がダウンロードしたファイルは、実行前に Windows セキュリティで検査されます。</value>
+  </data>
+  <data name="ScanningDownload" xml:space="preserve">
+    <value>ウイルスを確認しています</value>
+  </data>
+  <data name="SettingsRegistryBackupGroup" xml:space="preserve">
+    <value>クリーンアップ</value>
+  </data>
+  <data name="SettingsRegistryBackupFolder" xml:space="preserve">
+    <value>バックアップフォルダー</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDesc" xml:space="preserve">
+    <value>レジストリのクリーンアップを行うたびに、削除前にここに対象のキーをバックアップします。既定：%APPDATA%\UltimateUpdater\registry-backups。</value>
+  </data>
+  <data name="SettingsRegistryBackupRetention" xml:space="preserve">
+    <value>保持数</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDesc" xml:space="preserve">
+    <value>保持するバックアップの数です。この数を超えると最も古いものが削除されます。</value>
+  </data>
+  <data name="SettingsDataGroup" xml:space="preserve">
+    <value>データとログ</value>
+  </data>
+  <data name="SettingsExcludedPathsHeader" xml:space="preserve">
+    <value>{0} 件を恒久的に除外中</value>
+  </data>
+  <data name="SettingsExcludedPathsDesc" xml:space="preserve">
+    <value>右クリックメニューからクリーンアップダイアログの対象外にされました。</value>
+  </data>
+  <data name="SettingsExcludedPathsEmpty" xml:space="preserve">
+    <value>恒久的に除外されたパスはありません。</value>
+  </data>
+  <data name="SettingsExcludedPathRelease" xml:space="preserve">
+    <value>解除</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAll" xml:space="preserve">
+    <value>すべて解除</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmHeadline" xml:space="preserve">
+    <value>除外したすべてのパスを解除しますか？</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmBody" xml:space="preserve">
+    <value>次回これらのパスが見つかった際に、クリーンアップで再度提示されます。</value>
+  </data>
+  <data name="SettingsRegistryRetentionOption" xml:space="preserve">
+    <value>{0} 件のバックアップ</value>
+  </data>
+  <data name="ScanThreatFound" xml:space="preserve">
+    <value>ダウンロードしたファイルはウイルス対策ソフトによって悪意のあるものと判定されました。実行されずに破棄されました。</value>
+  </data>
+  <data name="ScanClean" xml:space="preserve">
+    <value>脅威は見つかりませんでした</value>
+  </data>
+  <data name="SettingsNotifyOnFoundDesc" xml:space="preserve">
+    <value>更新が見つかったときにトレイ通知を表示します。</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnlyDesc" xml:space="preserve">
+    <value>セキュリティに関連する更新のみ通知します。</value>
+  </data>
+  <data name="ThemeDesc" xml:space="preserve">
+    <value>Windows に合わせるか、ライトまたはダークを強制します。</value>
+  </data>
+  <data name="SettingsAutostartDesc" xml:space="preserve">
+    <value>Windows 起動時にトレイに最小化した状態で開始します。</value>
+  </data>
+  <data name="SettingsCloseToTrayDesc" xml:space="preserve">
+    <value>ウィンドウを閉じてもトレイで実行し続けます。</value>
+  </data>
+  <data name="SettingsUpdatesGroup" xml:space="preserve">
+    <value>アプリの更新</value>
+  </data>
+  <data name="SettingsCheckUpdatesDesc" xml:space="preserve">
+    <value>Ultimate Updater の新しいバージョンを確認します。</value>
+  </data>
+  <data name="SettingsCheckNow" xml:space="preserve">
+    <value>今すぐ確認</value>
+  </data>
+  <data name="SettingsUpToDate" xml:space="preserve">
+    <value>最新バージョンを使用しています。</value>
+  </data>
+  <data name="SettingsCurrentVersion" xml:space="preserve">
+    <value>バージョン {0}</value>
+  </data>
+  <data name="SettingsCheckingUpdates" xml:space="preserve">
+    <value>確認中…</value>
+  </data>
+  <data name="SettingsSourcesGroup" xml:space="preserve">
+    <value>ソース</value>
+  </data>
+  <data name="SettingsSourcesHint" xml:space="preserve">
+    <value>オフにしたソースはスキャンされません。</value>
+  </data>
+  <data name="SettingsSourcesSelectAll" xml:space="preserve">
+    <value>すべてのソース</value>
+  </data>
+  <data name="SettingsSourcesSearchPlaceholder" xml:space="preserve">
+    <value>ソースを検索…</value>
+  </data>
+  <data name="SettingsSourcesSearchEmpty" xml:space="preserve">
+    <value>検索条件に一致するソースがありません。</value>
+  </data>
+  <data name="SettingsShowAllSources" xml:space="preserve">
+    <value>インストールされていないソースを表示（{0}）</value>
+  </data>
+  <data name="SettingsStartupGroup" xml:space="preserve">
+    <value>スタートアップ</value>
+  </data>
+  <data name="SettingsAutostart" xml:space="preserve">
+    <value>Windows 起動時に開始</value>
+  </data>
+  <data name="SettingsCloseToTray" xml:space="preserve">
+    <value>終了せずにトレイへ最小化する</value>
+  </data>
+  <data name="SettingsCleanupReminder" xml:space="preserve">
+    <value>クリーンアップの期限を過ぎたときに通知する</value>
+  </data>
+  <data name="SettingsAdvancedGroup" xml:space="preserve">
+    <value>詳細設定</value>
+  </data>
+  <data name="TrayOpen" xml:space="preserve">
+    <value>開く</value>
+  </data>
+  <data name="TrayScan" xml:space="preserve">
+    <value>更新を確認</value>
+  </data>
+  <data name="TrayExit" xml:space="preserve">
+    <value>終了</value>
+  </data>
+  <data name="NotifyFound" xml:space="preserve">
+    <value>{0} 件の更新があります</value>
+  </data>
+  <data name="NotifyFoundWithCritical" xml:space="preserve">
+    <value>{0} 件の更新があります（重要 {1} 件）</value>
+  </data>
+  <data name="SelfUpdateTitle" xml:space="preserve">
+    <value>新しいバージョンが利用可能です</value>
+  </data>
+  <data name="SelfUpdateInstall" xml:space="preserve">
+    <value>今すぐ更新</value>
+  </data>
+  <data name="SelfUpdateDismiss" xml:space="preserve">
+    <value>閉じる</value>
+  </data>
+  <data name="SelfUpdateWhatsNew" xml:space="preserve">
+    <value>新機能</value>
+  </data>
+  <data name="CleanupReminderBanner" xml:space="preserve">
+    <value>前回のクリーンアップは {0} でした。</value>
+  </data>
+  <data name="CleanupReminderThisTime" xml:space="preserve">
+    <value>今回だけ</value>
+  </data>
+  <data name="CleanupReminderNeverAgain" xml:space="preserve">
+    <value>今後表示しない</value>
+  </data>
+  <data name="SelfUpdateFailed" xml:space="preserve">
+    <value>更新を検証できなかったため破棄しました。</value>
+  </data>
+  <data name="HeadlineScanning" xml:space="preserve">
+    <value>更新を確認しています…</value>
+  </data>
+  <data name="HeadlineUpToDate" xml:space="preserve">
+    <value>すべて最新の状態です</value>
+  </data>
+  <data name="HeadlineUpdates" xml:space="preserve">
+    <value>{0} 件の更新があります</value>
+  </data>
+  <data name="SubheadlineScanning" xml:space="preserve">
+    <value>設定済みの各ソースに問い合わせています。</value>
+  </data>
+  <data name="EmptyState" xml:space="preserve">
+    <value>更新は見つかりませんでした。もう一度確認するにはスキャンを実行してください。</value>
+  </data>
+  <data name="ManualUpdatesSectionTitle" xml:space="preserve">
+    <value>手動で開く項目：このアプリで実行できない更新</value>
+  </data>
+  <data name="CriticalBadge" xml:space="preserve">
+    <value>重要</value>
+  </data>
+  <data name="RowQueued" xml:space="preserve">
+    <value>待機中</value>
+  </data>
+  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
+    <value>{0} · {1:0}%</value>
+  </data>
+  <data name="CleanupDoneCount" xml:space="preserve">
+    <value>{0}/{1} 領域が完了</value>
+  </data>
+  <data name="CleanupDoneCountOne" xml:space="preserve">
+    <value>{0}/{1} 領域が完了</value>
+  </data>
+  <data name="CleanupRemainingCount" xml:space="preserve">
+    <value>残り {0} 件</value>
+  </data>
+  <data name="CleanupEmptyCount" xml:space="preserve">
+    <value>{0} 領域で何も見つかりませんでした</value>
+  </data>
+  <data name="CleanupEmptyCountOne" xml:space="preserve">
+    <value>{0} 領域で何も見つかりませんでした</value>
+  </data>
+  <data name="InstallRestorePointStep" xml:space="preserve">
+    <value>復元ポイントを作成しています…</value>
+  </data>
+  <data name="ActivityRestorePointSkipped" xml:space="preserve">
+    <value>復元ポイントの作成をスキップしました。今日すでに作成済みです。</value>
+  </data>
+  <data name="CleanupRestorePointParallel" xml:space="preserve">
+    <value>復元ポイントを作成中です。時間のかかる他の処理はすでに実行されています</value>
+  </data>
+  <data name="RowAlsoInSources" xml:space="preserve">
+    <value>{0} 経由で更新済みです。{1} でも提供されています。</value>
+  </data>
+  <data name="RowDone" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="RowFailed" xml:space="preserve">
+    <value>失敗</value>
+  </data>
+  <data name="SubheadlineScanningProgress" xml:space="preserve">
+    <value>{0}/{1} ソースを確認済み</value>
+  </data>
+  <data name="SubheadlineScanningProgressOne" xml:space="preserve">
+    <value>{0}/{1} ソースを確認済み</value>
+  </data>
+  <data name="SubheadlineScanningSources" xml:space="preserve">
+    <value>確認中：{0}</value>
+  </data>
+  <data name="SourceDescWinget" xml:space="preserve">
+    <value>Microsoft 公式の Windows パッケージマネージャーです。これでインストールされたアプリを一覧表示し、サイレントに更新します。</value>
+  </data>
+  <data name="SourceDescWindowsUpdate" xml:space="preserve">
+    <value>Windows 自体の更新サービスです。Microsoft からの品質更新、ドライバー更新、定義更新のみで、機能アップグレードは含まれません。</value>
+  </data>
+  <data name="SourceDescMsStore" xml:space="preserve">
+    <value>Microsoft Store アプリです。ストアは他のツールに対してアプリごとのバージョンを隠すため、独自の更新ページを開くだけです。</value>
+  </data>
+  <data name="SourceDescChocolatey" xml:space="preserve">
+    <value>Windows 向けのコミュニティパッケージマネージャー（choco.exe）です。コミュニティが管理するパッケージを更新し、管理者権限が必要です。</value>
+  </data>
+  <data name="SourceDescScoop" xml:space="preserve">
+    <value>コマンドラインパッケージマネージャーで、管理者権限なしでユーザーフォルダーにインストールされます。</value>
+  </data>
+  <data name="SourceDescPip" xml:space="preserve">
+    <value>Python のパッケージインストーラーです。古くなった Python パッケージを一覧表示して更新します。</value>
+  </data>
+  <data name="SourceDescNpm" xml:space="preserve">
+    <value>Node.js のパッケージマネージャーです。グローバルにインストールされた npm パッケージを一覧表示して更新します。</value>
+  </data>
+  <data name="SourceDescPnpm" xml:space="preserve">
+    <value>npm 自体が使用しているのと同じ npm レジストリからの pnpm のグローバルパッケージです。実際の pnpm インストールで検証されていません。表示がおかしい場合は問題を報告してください。</value>
+  </data>
+  <data name="SourceDescDotnetTool" xml:space="preserve">
+    <value>.NET のグローバルツールで、公開 NuGet フィードに対して新しいバージョンを確認します。</value>
+  </data>
+  <data name="SourceNameDotnetTool" xml:space="preserve">
+    <value>.NET ツール</value>
+  </data>
+  <data name="SourceDescPsGallery" xml:space="preserve">
+    <value>ユーザープロファイルにインストールされた PowerShell Gallery モジュールです。</value>
+  </data>
+  <data name="SourceDescGem" xml:space="preserve">
+    <value>Ruby のパッケージマネージャーです。古くなった RubyGems を一覧表示して更新します。</value>
+  </data>
+  <data name="SourceDescComposer" xml:space="preserve">
+    <value>PHP の依存関係マネージャーです。グローバルな Composer パッケージを一覧表示して更新します。</value>
+  </data>
+  <data name="SourceDescRustup" xml:space="preserve">
+    <value>Rust ツールチェーンマネージャーです。1 回の更新でインストール済みのすべてのツールチェーンと rustup 自体が更新されます。</value>
+  </data>
+  <data name="SourceDescVcpkg" xml:space="preserve">
+    <value>vcpkg（クラシックモード）経由の C/C++ ライブラリです。実際の vcpkg インストールで検証されていません。表示がおかしい場合は問題を報告してください。</value>
+  </data>
+  <data name="SourceDescMise" xml:space="preserve">
+    <value>mise が管理するツールバージョンです。実際の mise インストールで検証されていません。表示がおかしい場合は問題を報告してください。</value>
+  </data>
+  <data name="SourceDescSteam" xml:space="preserve">
+    <value>Valve の Steam クライアントです。Steam 自体のファイルから実際のゲーム更新状況を読み取り、更新自体は Steam 内で実行されます。</value>
+  </data>
+  <data name="SourceDescNvidia" xml:space="preserve">
+    <value>NVIDIA 自体のドライバーサービスに最新の Game Ready ドライバーを問い合わせます。NVIDIA の署名を検証した後、直接インストールします。</value>
+  </data>
+  <data name="SourceDescGitHubRelease" xml:space="preserve">
+    <value>アンインストール項目に GitHub プロジェクト名が記載されているプログラムを最新のリリースと照合します。対象はパッケージマネージャー以外の方法でインストールされたソフトウェアです。インストールではなくリリースページを開きます。</value>
+  </data>
+  <data name="SourceNameGitHubRelease" xml:space="preserve">
+    <value>GitHub リリース</value>
+  </data>
+  <data name="SourceDescLauncher" xml:space="preserve">
+    <value>{0} クライアントを開きます。{0} は起動時に自身とゲームを更新しますが、このアプリはそれを確認したり実行したりできません。</value>
+  </data>
+  <data name="FatalErrorHeadline" xml:space="preserve">
+    <value>Ultimate Updater に問題が発生しました</value>
+  </data>
+  <data name="FatalError" xml:space="preserve">
+    <value>Ultimate Updater を終了する必要があります。詳細はログフォルダーにあります：
+{0}</value>
+  </data>
+  <data name="InstallFailed" xml:space="preserve">
+    <value>更新に失敗しました。詳細を開いて原因を確認してください。</value>
+  </data>
+  <data name="InstallElevationDeclined" xml:space="preserve">
+    <value>管理者権限の要求が拒否されました。</value>
+  </data>
+  <data name="InstallWorkerStopped" xml:space="preserve">
+    <value>この更新がインストールされる前に管理者処理が停止しました。</value>
+  </data>
+  <data name="HeadlineUpdatesOne" xml:space="preserve">
+    <value>{0} 件の更新があります</value>
+  </data>
+  <data name="NotifyFoundOne" xml:space="preserve">
+    <value>{0} 件の更新があります</value>
+  </data>
+  <data name="NotifyFoundOneWithCritical" xml:space="preserve">
+    <value>{0} 件の更新があります（重要 {1} 件）</value>
+  </data>
+  <data name="ScanFailed" xml:space="preserve">
+    <value>このソースを確認できませんでした。詳細を開いて原因を確認してください。</value>
+  </data>
+  <data name="ScanStateWaiting" xml:space="preserve">
+    <value>待機中…</value>
+  </data>
+  <data name="ScanStateRunning" xml:space="preserve">
+    <value>実行中…</value>
+  </data>
+  <data name="ScanStateSlow" xml:space="preserve">
+    <value>まだ実行中…</value>
+  </data>
+  <data name="ScanStateCancelled" xml:space="preserve">
+    <value>キャンセルされました</value>
+  </data>
+  <data name="CancelSourceScanTooltip" xml:space="preserve">
+    <value>このソースの確認を停止</value>
+  </data>
+  <data name="EmptyStateFiltered" xml:space="preserve">
+    <value>現在の検索または絞り込みに一致する項目がありません。</value>
+  </data>
+  <data name="InstallCancelled" xml:space="preserve">
+    <value>この更新がインストールされる前にキャンセルされました。</value>
+  </data>
+  <data name="InstallWaitingForCleanup" xml:space="preserve">
+    <value>クリーンアップがこの領域を解放するのを待っています</value>
+  </data>
+  <data name="InstallAlreadyCurrent" xml:space="preserve">
+    <value>すでにバージョン {0} です。操作は不要です。</value>
+  </data>
+  <data name="ErrorDetailOutput" xml:space="preserve">
+    <value>ツールが報告した内容</value>
+  </data>
+  <data name="ErrorDetailLogInSettings" xml:space="preserve">
+    <value>設定内のログフォルダーを確認</value>
+  </data>
+  <data name="ErrorDetailRetryInMenu" xml:space="preserve">
+    <value>この行の右クリックメニューから対話的に再試行</value>
+  </data>
+  <data name="ErrorWhatDoesThisMean" xml:space="preserve">
+    <value>これはどういう意味ですか？</value>
+  </data>
+  <data name="ErrorWindowsSaysPrefix" xml:space="preserve">
+    <value>Windows のメッセージ：</value>
+  </data>
+  <data name="ErrorNoMeaning" xml:space="preserve">
+    <value>Windows にはこのコードに対する説明がありません。</value>
+  </data>
+  <data name="ErrorDetailSourceLog" xml:space="preserve">
+    <value>この時刻付近のログから（この項目には出力が保存されていません）</value>
+  </data>
+  <data name="ErrorDetailSourceShort" xml:space="preserve">
+    <value>この項目には短いメッセージのみが保存されています</value>
+  </data>
+  <data name="ErrorDetailCopy" xml:space="preserve">
+    <value>詳細をコピー</value>
+  </data>
+  <data name="ErrorCopyReport" xml:space="preserve">
+    <value>エラーレポートをコピー</value>
+  </data>
+  <data name="ErrorDetailCopied" xml:space="preserve">
+    <value>クリップボードにコピーしました</value>
+  </data>
+  <data name="SubListCount" xml:space="preserve">
+    <value>{0} 件の更新が保留中</value>
+  </data>
+  <data name="SubListCountOne" xml:space="preserve">
+    <value>{0} 件の更新が保留中</value>
+  </data>
+  <data name="ThemeOptionHacker" xml:space="preserve">
+    <value>ハッカー</value>
+  </data>
+  <data name="ThemeOptionNeon" xml:space="preserve">
+    <value>ネオン</value>
+  </data>
+  <data name="SettingsResetGroup" xml:space="preserve">
+    <value>リセット</value>
+  </data>
+  <data name="SettingsResetDesc" xml:space="preserve">
+    <value>このアプリを工場出荷時の状態に戻します。</value>
+  </data>
+  <data name="SettingsResetDoneHeadline" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="SettingsResetDoneBody" xml:space="preserve">
+    <value>アプリは工場出荷時の状態に戻りました。</value>
+  </data>
+  <data name="SettingsDeleteDataPartialHeadline" xml:space="preserve">
+    <value>一部のファイルはまだ使用中です</value>
+  </data>
+  <data name="SettingsDeleteDataPartialBody" xml:space="preserve">
+    <value>設定はリセットされました。まだ使用中の一部のファイル（現在のログなど）は次回起動時に削除されます。</value>
+  </data>
+  <data name="HistoryFilterSource" xml:space="preserve">
+    <value>ソース：</value>
+  </data>
+  <data name="HistoryRangeAll" xml:space="preserve">
+    <value>すべて</value>
+  </data>
+  <data name="HistoryRangeToday" xml:space="preserve">
+    <value>今日</value>
+  </data>
+  <data name="HistoryRangeWeek" xml:space="preserve">
+    <value>7 日間</value>
+  </data>
+  <data name="HistoryRangeMonth" xml:space="preserve">
+    <value>30 日間</value>
+  </data>
+  <data name="CleanupTitle" xml:space="preserve">
+    <value>空き容量を増やす</value>
+  </data>
+  <data name="CleanupStart" xml:space="preserve">
+    <value>クリーンアップを開始</value>
+  </data>
+  <data name="CleanupPause" xml:space="preserve">
+    <value>一時停止</value>
+  </data>
+  <data name="CleanupResume" xml:space="preserve">
+    <value>再開</value>
+  </data>
+  <data name="CleanupStop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="CleanupRescan" xml:space="preserve">
+    <value>再スキャン</value>
+  </data>
+  <data name="CleanupStoppingRepair" xml:space="preserve">
+    <value>停止しました。実行中のシステム修復は完了させる必要があります。中断すると Windows のコンポーネントストアが破損する可能性があります。</value>
+  </data>
+  <data name="CleanupNoProgressHint" xml:space="preserve">
+    <value>この処理について Windows は進行状況を報告しません。実行中です。</value>
+  </data>
+  <data name="CleanupDefragName" xml:space="preserve">
+    <value>ドライブ {0} を最適化</value>
+  </data>
+  <data name="CleanupDefragConsequence" xml:space="preserve">
+    <value>このドライブに対して Windows の最適化を実行します。ハードディスクではデフラグ、SSD では再トリムを行います。空き容量は増えず、既存のデータを整理するだけです。</value>
+  </data>
+  <data name="CleanupDefragRowHdd" xml:space="preserve">
+    <value>{0} をデフラグ</value>
+  </data>
+  <data name="CleanupDefragRowSsd" xml:space="preserve">
+    <value>{0} を最適化、トリム</value>
+  </data>
+  <data name="CleanupDefragRowUnspecified" xml:space="preserve">
+    <value>{0} を最適化</value>
+  </data>
+  <data name="MediaTypeHdd" xml:space="preserve">
+    <value>HDD</value>
+  </data>
+  <data name="MediaTypeSsd" xml:space="preserve">
+    <value>SSD</value>
+  </data>
+  <data name="MediaTypeUsbDrive" xml:space="preserve">
+    <value>USB ドライブ</value>
+  </data>
+  <data name="MediaTypeOtherDrive" xml:space="preserve">
+    <value>ドライブ</value>
+  </data>
+  <data name="CleanupDriveSubline" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="CleanupDriveSublineUsb" xml:space="preserve">
+    <value>{0}、{1} · {2}</value>
+  </data>
+  <data name="DefragWarningTitle" xml:space="preserve">
+    <value>数時間かかる場合があります</value>
+  </data>
+  <data name="DefragWarningBody" xml:space="preserve">
+    <value>大容量のハードディスクのデフラグには長時間かかります。このウィンドウを閉じても処理は継続されます。プログラムを終了すると停止します。</value>
+  </data>
+  <data name="DefragQuitWarningTitle" xml:space="preserve">
+    <value>ドライブの最適化がまだ実行中です</value>
+  </data>
+  <data name="DefragQuitWarningBody" xml:space="preserve">
+    <value>今終了すると処理は停止します。ドライブは引き続き使用できますが、最適化は未完了のままになります。</value>
+  </data>
+  <data name="DefragQuitAnyway" xml:space="preserve">
+    <value>終了する</value>
+  </data>
+  <data name="DefragKeepRunning" xml:space="preserve">
+    <value>実行を継続</value>
+  </data>
+  <data name="WorkQuitWarningTitle" xml:space="preserve">
+    <value>更新またはクリーンアップがまだ実行中です</value>
+  </data>
+  <data name="WorkQuitWarningBody" xml:space="preserve">
+    <value>今終了すると途中で停止します。パッケージが中途半端にインストールされたり、クリーンアップが未完了になったりする可能性があります。ウィンドウを閉じるだけなら処理は続行されます。</value>
+  </data>
+  <data name="CleanupHistoryTitle" xml:space="preserve">
+    <value>過去のクリーンアップ</value>
+  </data>
+  <data name="CleanupHistoryButton" xml:space="preserve">
+    <value>クリーンアップ履歴</value>
+  </data>
+  <data name="CleanupGroupTempFiles" xml:space="preserve">
+    <value>一時ファイル</value>
+  </data>
+  <data name="CleanupGroupCaches" xml:space="preserve">
+    <value>キャッシュ</value>
+  </data>
+  <data name="CleanupGroupWindowsMaintenance" xml:space="preserve">
+    <value>Windows のメンテナンス</value>
+  </data>
+  <data name="CleanupGroupRecycleBin" xml:space="preserve">
+    <value>ごみ箱</value>
+  </data>
+  <data name="CleanupGroupSystemRepair" xml:space="preserve">
+    <value>システム修復</value>
+  </data>
+  <data name="CleanupGroupRegistry" xml:space="preserve">
+    <value>レジストリ</value>
+  </data>
+  <data name="CleanupHistoryEmpty" xml:space="preserve">
+    <value>まだクリーンアップは実行されていません。</value>
+  </data>
+  <data name="CleanupHistoryFreed" xml:space="preserve">
+    <value>{0} を解放しました</value>
+  </data>
+  <data name="CleanupHistoryEntrySummary" xml:space="preserve">
+    <value>{0} 領域をクリーンアップしました</value>
+  </data>
+  <data name="CleanupHistoryEntrySummaryOne" xml:space="preserve">
+    <value>{0} 領域をクリーンアップしました</value>
+  </data>
+  <data name="CleanupHistorySkipped" xml:space="preserve">
+    <value>{0} は使用中です</value>
+  </data>
+  <data name="CleanupHistoryClearAll" xml:space="preserve">
+    <value>すべて削除</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmHeadline" xml:space="preserve">
+    <value>履歴をすべて削除しますか？</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmDetail" xml:space="preserve">
+    <value>削除されるのは履歴のみです。すでに解放された容量はそのまま維持されます。</value>
+  </data>
+  <data name="CleanupHistoryDeleteEntry" xml:space="preserve">
+    <value>この項目を削除</value>
+  </data>
+  <data name="CleanupHistoryTotalFreed" xml:space="preserve">
+    <value>合計 {0} を解放しました</value>
+  </data>
+  <data name="CleanupHistoryRunCount" xml:space="preserve">
+    <value>{0} 回実行 · 最終実行 {1}</value>
+  </data>
+  <data name="CleanupHistoryRunCountOne" xml:space="preserve">
+    <value>{0} 回実行 · 最終実行 {1}</value>
+  </data>
+  <data name="CleanupHistoryTopCategories" xml:space="preserve">
+    <value>容量の大きい領域</value>
+  </data>
+  <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
+    <value>まだ何も解放されていません。</value>
+  </data>
+  <data name="CleanupPausedNote" xml:space="preserve">
+    <value>保留中</value>
+  </data>
+  <data name="CleanupScanning" xml:space="preserve">
+    <value>測定中…</value>
+  </data>
+  <data name="CleanupOfTotal" xml:space="preserve">
+    <value>検出された {0} 中</value>
+  </data>
+  <data name="CleanupNeedsAdmin" xml:space="preserve">
+    <value>管理者権限が必要</value>
+  </data>
+  <data name="CleanupStateWaiting" xml:space="preserve">
+    <value>待機中</value>
+  </data>
+  <data name="CleanupStateCleaning" xml:space="preserve">
+    <value>クリーンアップ中</value>
+  </data>
+  <data name="CleanupStateStopped" xml:space="preserve">
+    <value>停止済み</value>
+  </data>
+  <data name="CleanupStateSkipped" xml:space="preserve">
+    <value>スキップ済み</value>
+  </data>
+  <data name="CleanupSkippedFiles" xml:space="preserve">
+    <value>{0} 件のファイルが使用中のためスキップされました。</value>
+  </data>
+  <data name="CleanupSkippedFilesOne" xml:space="preserve">
+    <value>{0} 件のファイルが使用中のためスキップされました。</value>
+  </data>
+  <data name="CleanupSelectedCount" xml:space="preserve">
+    <value>{0}/{1} 領域を選択中</value>
+  </data>
+  <data name="CleanupSelectedCountOne" xml:space="preserve">
+    <value>{0}/{1} 領域を選択中</value>
+  </data>
+  <data name="CleanupFileCount" xml:space="preserve">
+    <value>{0} 件のファイルを測定しました</value>
+  </data>
+  <data name="CleanupFileCountOne" xml:space="preserve">
+    <value>{0} 件のファイルを測定しました</value>
+  </data>
+  <data name="CleanupLargestLabel" xml:space="preserve">
+    <value>最大の領域</value>
+  </data>
+  <data name="CleanupLastRunLabel" xml:space="preserve">
+    <value>前回のクリーンアップ</value>
+  </data>
+  <data name="CleanupFreeSpaceNow" xml:space="preserve">
+    <value>空き {0}、クリーンアップ後は +{1}</value>
+  </data>
+  <data name="CleanupCurrentLabel" xml:space="preserve">
+    <value>現在</value>
+  </data>
+  <data name="CleanupFailedHeadline" xml:space="preserve">
+    <value>クリーンアップを完了できませんでした</value>
+  </data>
+  <data name="CleanupConfirmHeadline" xml:space="preserve">
+    <value>{0} を完全に削除しますか？</value>
+  </data>
+  <data name="CleanupConfirmWarning" xml:space="preserve">
+    <value>削除したファイルは復元できません。</value>
+  </data>
+  <data name="CleanupConfirmTotal" xml:space="preserve">
+    <value>合計：{0}</value>
+  </data>
+  <data name="CleanupUserTemp" xml:space="preserve">
+    <value>自分の一時ファイル</value>
+  </data>
+  <data name="CleanupUserTempDesc" xml:space="preserve">
+    <value>現在のユーザーアカウントの一時フォルダーです。</value>
+  </data>
+  <data name="CleanupAllUsersTemp" xml:space="preserve">
+    <value>すべてのユーザーの一時ファイル</value>
+  </data>
+  <data name="CleanupAllUsersTempDesc" xml:space="preserve">
+    <value>この PC の他のアカウントの一時フォルダーです。管理者権限がない場合、それらのファイルはスキップされます。</value>
+  </data>
+  <data name="CleanupWindowsTemp" xml:space="preserve">
+    <value>Windows の一時ファイル</value>
+  </data>
+  <data name="CleanupWindowsTempDesc" xml:space="preserve">
+    <value>Windows やインストーラーが書き込むシステム一時フォルダーです。</value>
+  </data>
+  <data name="CleanupUpdateCache" xml:space="preserve">
+    <value>Windows Update のキャッシュ</value>
+  </data>
+  <data name="CleanupUpdateCacheDesc" xml:space="preserve">
+    <value>すでに適用された更新のインストールファイルです。</value>
+  </data>
+  <data name="CleanupDeliveryOptimization" xml:space="preserve">
+    <value>配信の最適化ファイル</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
+    <value>Windows が他の PC と共有するために保持する更新の一部です。</value>
+  </data>
+  <data name="CleanupThumbnails" xml:space="preserve">
+    <value>サムネイルとアイコンのキャッシュ</value>
+  </data>
+  <data name="CleanupThumbnailsDesc" xml:space="preserve">
+    <value>必要に応じてエクスプローラーが再構築します。</value>
+  </data>
+  <data name="CleanupCrashDumps" xml:space="preserve">
+    <value>クラッシュダンプ</value>
+  </data>
+  <data name="CleanupCrashDumpsDesc" xml:space="preserve">
+    <value>クラッシュしたプログラムが残したメモリダンプです。</value>
+  </data>
+  <data name="CleanupRecycleBin" xml:space="preserve">
+    <value>ごみ箱を空にする</value>
+  </data>
+  <data name="CleanupRecycleBinDesc" xml:space="preserve">
+    <value>既定ではオフです。ごみ箱を空にするまでアイテムは復元可能なままだからです。</value>
+  </data>
+  <data name="CleanupRecycleAgeLabel" xml:space="preserve">
+    <value>次より古いファイルのみ</value>
+  </data>
+  <data name="CleanupRecycleAgeDays" xml:space="preserve">
+    <value>日</value>
+  </data>
+  <data name="CleanupDiskCleanup" xml:space="preserve">
+    <value>Windows ディスク クリーンアップを実行</value>
+  </data>
+  <data name="CleanupDiskCleanupDesc" xml:space="preserve">
+    <value>Windows 自体のツールを開きます。削除する内容はそのツールが判断します。</value>
+  </data>
+  <data name="SourceDescAndroidSdk" xml:space="preserve">
+    <value>sdkmanager 経由の Android SDK パッケージです。標準の場所、ANDROID_HOME、または PATH から古くなったコンポーネント（プラットフォーム、ビルドツール）を更新します。</value>
+  </data>
+  <data name="SourceDescAndroidStudio" xml:space="preserve">
+    <value>Android Studio はインストールされていますが SDK コマンドラインツールがなく、それなしでは SDK パッケージを更新できません。Android Studio を開きます。SDK Manager は「設定」の「Android SDK」にあります。「Android SDK Command-line Tools」を追加すると更新が自動的に実行されるようになります。</value>
+  </data>
+  <data name="AndroidStudioSdkRow" xml:space="preserve">
+    <value>Android Studio SDK Manager</value>
+  </data>
+  <data name="SourceDescGhExtension" xml:space="preserve">
+    <value>GitHub CLI 拡張機能です。gh 自体が古いと報告する拡張機能を更新します。</value>
+  </data>
+  <data name="SourceNameGhExtension" xml:space="preserve">
+    <value>GitHub CLI 拡張機能</value>
+  </data>
+  <data name="SourceDescPipx" xml:space="preserve">
+    <value>pipx でインストールされた Python コマンドラインツールです。すべてのツールが対象となり、要求に応じて pipx upgrade が実行されます。</value>
+  </data>
+  <data name="SourceDescVsCodeExtension" xml:space="preserve">
+    <value>Visual Studio Code の拡張機能です。インストール済みの各拡張機能が対象となり、要求に応じてマーケットプレイスの最新バージョンで再インストールされます。</value>
+  </data>
+  <data name="SourceNameVsCodeExtension" xml:space="preserve">
+    <value>VS Code 拡張機能</value>
+  </data>
+  <data name="SourceDescDeno" xml:space="preserve">
+    <value>Deno ランタイムです。GitHub で最新リリースを確認し、「deno upgrade」で更新します。winget、Scoop、または Chocolatey で Deno をインストールした場合は非表示になります。それらが自身で更新するためです。</value>
+  </data>
+  <data name="SourceDescBun" xml:space="preserve">
+    <value>Bun ランタイムです。GitHub で最新リリースを確認し、「bun upgrade」で更新します。パッケージマネージャーで Bun をインストールした場合は非表示になります。</value>
+  </data>
+  <data name="SourceDescUv" xml:space="preserve">
+    <value>uv、自己更新機能を持つ Python パッケージマネージャーです。パッケージマネージャーで uv をインストールした場合は非表示になります。その場合「uv self update」が拒否されるためです。</value>
+  </data>
+  <data name="SourceDescUvTool" xml:space="preserve">
+    <value>「uv tool」でインストールされた Python ツールです。各ツールを PyPI と照合し、古くなったバージョンのみを一覧表示します。</value>
+  </data>
+  <data name="SourceNameUvTool" xml:space="preserve">
+    <value>uv ツール</value>
+  </data>
+  <data name="SourceDescGcloud" xml:space="preserve">
+    <value>インストール済みバージョン、最新バージョン、ダウンロードサイズを表示する Google Cloud CLI コンポーネントです。「gcloud components update」ですべてまとめて更新します。</value>
+  </data>
+  <data name="SourceDescOllama" xml:space="preserve">
+    <value>ローカルに取得済みの Ollama モデルです。各マニフェストのダイジェストをレジストリのものと比較するため、実際に変更されたタグのみが行として表示されます。実行中の Ollama サーバーが必要です。このアプリはそれを起動しません。</value>
+  </data>
+  <data name="SourceNameOllama" xml:space="preserve">
+    <value>Ollama モデル</value>
+  </data>
+  <data name="SourceDescFlutter" xml:space="preserve">
+    <value>PATH 上の flutter でチェックアウトされた Flutter SDK です。インストール済みバージョンを、お使いのチャンネル向けの Google 自体のリリースフィードと比較します。</value>
+  </data>
+  <data name="SourceDescVolta" xml:space="preserve">
+    <value>Volta の既定の Node、npm、yarn、pnpm ツールチェーンです。Volta 自体には更新確認機能がないため、Node のリリースフィードと npm レジストリを直接比較し、同じ Node メジャーバージョン内のパッチまたはマイナー更新のみを提供します。メジャーバージョンの変更は提供しません。</value>
+  </data>
+  <data name="SourceDescPyenvWin" xml:space="preserve">
+    <value>pyenv-win でグローバルの既定に設定されている Python バージョンです。同じメジャー.マイナー系列内のパッチ更新のみを提供します（例：3.11.4 から 3.11.9）。新しい系列への切り替えは、このアプリがあえてユーザーの判断に委ねています。</value>
+  </data>
+  <data name="SourceDescWsl" xml:space="preserve">
+    <value>Windows Subsystem for Linux です。wsl は更新を適用せずに確認することができないため、ソース選択画面でのみ使用され、行が表示されることはありません。</value>
+  </data>
+  <data name="SourceNameWsl" xml:space="preserve">
+    <value>Linux 用 Windows サブシステム</value>
+  </data>
+  <data name="IgnoredAllBadge" xml:space="preserve">
+    <value>すべて無視済み</value>
+  </data>
+  <data name="RowUninstalled" xml:space="preserve">
+    <value>アンインストール済み</value>
+  </data>
+  <data name="RowHandedOff" xml:space="preserve">
+    <value>引き渡し済み</value>
+  </data>
+  <data name="RowHandedOffDetail" xml:space="preserve">
+    <value>提供元自体のウィンドウを確認してください。</value>
+  </data>
+  <data name="RowStuck" xml:space="preserve">
+    <value>停止中</value>
+  </data>
+  <data name="RowStuckDetail" xml:space="preserve">
+    <value>行き詰まりました：このインストールに適合するバージョンがありません。</value>
+  </data>
+  <data name="RowNeedsManualWork" xml:space="preserve">
+    <value>操作が必要</value>
+  </data>
+  <data name="RowNeedsManualWorkDetail" xml:space="preserve">
+    <value>同じ理由で 3 回連続して失敗しました。再試行だけでは解決しません。</value>
+  </data>
+  <data name="RowCancelled" xml:space="preserve">
+    <value>キャンセル済み</value>
+  </data>
+  <data name="RowCancelledTooltip" xml:space="preserve">
+    <value>これを停止しました。キューの残りは実行を継続しました。</value>
+  </data>
+  <data name="StopSingleTooltip" xml:space="preserve">
+    <value>これを停止</value>
+  </data>
+  <data name="TryNormallyAgainButton" xml:space="preserve">
+    <value>通常の方法で再試行</value>
+  </data>
+  <data name="WingetVendorInstallerCrashed" xml:space="preserve">
+    <value>提供元のインストーラーがクラッシュしました（{0}）。通常このパッケージは手動でインストールできます。</value>
+  </data>
+  <data name="ScanFailedToolCrashed" xml:space="preserve">
+    <value>「{0}」は通常のエラーを報告する代わりにクラッシュしました（{1}）。これは通常、Java などの依存するランタイムが期待どおりでないことを意味します。</value>
+  </data>
+  <data name="ScanFailedNoJava" xml:space="preserve">
+    <value>sdkmanager には Java {0} 以降が必要ですが、Java のインストールが見つかりませんでした（JAVA_HOME、PATH、または Android Studio に同梱されたもの）。</value>
+  </data>
+  <data name="CleanupFreeSpaceResult" xml:space="preserve">
+    <value>{0} は現在 {1} の空き容量があります（以前は {2}）</value>
+  </data>
+  <data name="SettingsLogFolder" xml:space="preserve">
+    <value>ログファイル</value>
+  </data>
+  <data name="SettingsReportsFolder" xml:space="preserve">
+    <value>エラーレポート</value>
+  </data>
+  <data name="SettingsOpenReports" xml:space="preserve">
+    <value>エラーレポートを開く</value>
+  </data>
+  <data name="SettingsDataFolder" xml:space="preserve">
+    <value>データフォルダー</value>
+  </data>
+  <data name="AboutNetworkTargets" xml:space="preserve">
+    <value>このプログラムが通信するサーバー</value>
+  </data>
+  <data name="SettingsDataFolderChange" xml:space="preserve">
+    <value>移動</value>
+  </data>
+  <data name="SettingsDataFolderMoved" xml:space="preserve">
+    <value>{0} にコピーしました。古いフォルダーはまだ存在します：{1}。新しいフォルダーを使用するには再起動してください。</value>
+  </data>
+  <data name="SettingsDataFolderCopyFailed" xml:space="preserve">
+    <value>データフォルダーをそこにコピーできませんでした。何も変更されていません。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedLink" xml:space="preserve">
+    <value>このフォルダーは他の場所へのリンクです。別のフォルダーを選んでください。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedSystem" xml:space="preserve">
+    <value>これは Windows のシステムフォルダーです。別のフォルダーを選んでください。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedProgram" xml:space="preserve">
+    <value>このフォルダーはプログラム自体のフォルダー内にあります。別のフォルダーを選んでください。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedWritable" xml:space="preserve">
+    <value>このフォルダーには書き込みできません。別のフォルダーを選んでください。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedNonEmpty" xml:space="preserve">
+    <value>そこにはすでに空でないUltimateUpdaterフォルダーがあります。別のフォルダーを選んでください。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedCurrent" xml:space="preserve">
+    <value>それは現在のデータフォルダー、またはその中にあります。別のフォルダーを選んでください。</value>
+  </data>
+  <data name="SettingsDataFolderRejectedTempOrCache" xml:space="preserve">
+    <value>このフォルダーはクリーンアップで空にされるため、アプリデータには適していません。別のフォルダーを選んでください。</value>
+  </data>
+  <data name="SettingsDataFolderFilesLocked" xml:space="preserve">
+    <value>一部のファイルがロックされていたため移動できませんでした：{0}。何も変更されていません。</value>
+  </data>
+  <data name="SettingsLogOpenFolder" xml:space="preserve">
+    <value>フォルダーを開く</value>
+  </data>
+  <data name="SettingsLogRetention" xml:space="preserve">
+    <value>ログの保持期間</value>
+  </data>
+  <data name="SettingsLogRetentionDesc" xml:space="preserve">
+    <value>古いファイルはアプリの次回起動時に削除されます。</value>
+  </data>
+  <data name="SettingsLogRetentionOption" xml:space="preserve">
+    <value>{0} 日</value>
+  </data>
+  <data name="SettingsHistoryRetention" xml:space="preserve">
+    <value>履歴の保持期間</value>
+  </data>
+  <data name="SettingsHistoryRetentionDesc" xml:space="preserve">
+    <value>古い項目はアプリの次回起動時に削除されます。</value>
+  </data>
+  <data name="HistoryShowDetails" xml:space="preserve">
+    <value>詳細を表示</value>
+  </data>
+  <data name="SettingsResetEverything" xml:space="preserve">
+    <value>すべてリセット</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmHeadline" xml:space="preserve">
+    <value>Ultimate Updater を完全にリセットしますか？</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmBody" xml:space="preserve">
+    <value>すべての設定が既定値に戻ります。無視リスト、履歴、ログ、キャッシュは完全に削除されます。
+この操作は元に戻せません。</value>
+  </data>
+  <data name="CleanupSystemRepairSfc" xml:space="preserve">
+    <value>システムファイルを確認（sfc）</value>
+  </data>
+  <data name="CleanupSystemRepairSfcDesc" xml:space="preserve">
+    <value>sfc /scannow で破損した Windows ファイルを置き換えます。削除ではなく修復です。時間がかかり、管理者権限が必要です。</value>
+  </data>
+  <data name="CleanupComponentCleanup" xml:space="preserve">
+    <value>コンポーネント ストアを整理</value>
+  </data>
+  <data name="CleanupComponentCleanupDesc" xml:space="preserve">
+    <value>更新プログラムが残した古いバージョンの Windows コンポーネントを削除します。</value>
+  </data>
+  <data name="CleanupComponentResetBase" xml:space="preserve">
+    <value>古い更新データを完全に削除</value>
+  </data>
+  <data name="CleanupComponentResetBaseDesc" xml:space="preserve">
+    <value>最も多くの容量を解放します。インストール済みの Windows 更新プログラムは、その後アンインストールできなくなります。</value>
+  </data>
+  <data name="CleanupSystemRepairDism" xml:space="preserve">
+    <value>コンポーネントストアを修復（DISM）</value>
+  </data>
+  <data name="CleanupSystemRepairDismDesc" xml:space="preserve">
+    <value>sfc がファイルを取得するストアに対して DISM /CheckHealth、/ScanHealth、/RestoreHealth を実行します。さらに時間がかかり、管理者権限が必要です。</value>
+  </data>
+  <data name="CleanupComponentStoreSize" xml:space="preserve">
+    <value>ディスク上 {0}、Windows と共有 {1}</value>
+  </data>
+  <data name="CleanupComponentStoreRecommended" xml:space="preserve">
+    <value>Windows がクリーンアップを推奨しています</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
+    <value>分析する（管理者権限が必要）</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
+    <value>Windows コンポーネントストアが実際にどれだけの容量を解放できるかを測定します。</value>
+  </data>
+  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
+    <value>分析には管理者権限が必要です。プロンプトはキャンセルされました。</value>
+  </data>
+  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
+    <value>現在分析を実行できません。管理者権限で実行するヘルパーが動作していません。</value>
+  </data>
+  <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
+    <value>Windows はサイズを報告しませんでした。</value>
+  </data>
+  <data name="CleanupNothingToClean" xml:space="preserve">
+    <value>何も見つかりませんでした</value>
+  </data>
+  <data name="CleanupRegistryEntryCount" xml:space="preserve">
+    <value>{0} 件</value>
+  </data>
+  <data name="CleanupRegistryEntryCountOne" xml:space="preserve">
+    <value>{0} 件</value>
+  </data>
+  <data name="CleanupRegistryOrphans" xml:space="preserve">
+    <value>孤立した参照</value>
+  </data>
+  <data name="CleanupRegistryOrphansDesc" xml:space="preserve">
+    <value>対象が存在しなくなった App Paths、Shared DLLs、ActiveX/COM、および自動起動の項目を削除します。既定ではオフで、管理者権限が必要です。削除前に自動的にバックアップが作成されます。</value>
+  </data>
+  <data name="CleanupRegistryUninstall" xml:space="preserve">
+    <value>孤立したアンインストール項目</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesDesc" xml:space="preserve">
+    <value>すでに存在しないプログラムのアンインストール項目を削除します。既定ではオフで、管理者権限が必要です。削除前に自動的にバックアップが作成されます。</value>
+  </data>
+  <data name="CleanupDrivers" xml:space="preserve">
+    <value>ドライバー</value>
+  </data>
+  <data name="CleanupDriversDesc" xml:space="preserve">
+    <value>接続されなくなったデバイスと、ドライバーストアに残った古いドライバーパッケージです。既定ではオフで、管理者権限が必要です。削除前に自動的にバックアップが作成されます。</value>
+  </data>
+  <data name="CleanupDriversConsequence" xml:space="preserve">
+    <value>次に接続したとき、Windows が見つけられればドライバーが再インストールされます。各パッケージのバックアップはデータフォルダーに保存されます。</value>
+  </data>
+  <data name="CleanupGroupDrivers" xml:space="preserve">
+    <value>ドライバー</value>
+  </data>
+  <data name="CleanupDriverGroupDisconnected" xml:space="preserve">
+    <value>接続されなくなったデバイス</value>
+  </data>
+  <data name="CleanupDriverGroupOldPackages" xml:space="preserve">
+    <value>古いドライバーパッケージ</value>
+  </data>
+  <data name="CleanupDriverLastConnected" xml:space="preserve">
+    <value>最終接続日 {0}</value>
+  </data>
+  <data name="CleanupDriverLastConnectedUnknown" xml:space="preserve">
+    <value>接続日時不明</value>
+  </data>
+  <data name="CleanupAdminHeadline" xml:space="preserve">
+    <value>一部の領域には管理者権限が必要です</value>
+  </data>
+  <data name="CleanupAdminBody" xml:space="preserve">
+    <value>Windows の一時ファイル、更新キャッシュ、ディスク クリーンアップ、システム修復を完全に測定・クリーンアップするには管理者権限が必要です。
+
+管理者権限で続行しますか？</value>
+  </data>
+  <data name="CleanupAdminConfirm" xml:space="preserve">
+    <value>管理者権限で</value>
+  </data>
+  <data name="CleanupAdminDecline" xml:space="preserve">
+    <value>権限なしで続行</value>
+  </data>
+  <data name="CleanupAdminMissing" xml:space="preserve">
+    <value>管理者権限がない場合、この領域は一部のみ測定・クリーンアップされます。</value>
+  </data>
+  <data name="CleanupSkippedFilesSize" xml:space="preserve">
+    <value>{0} 件のファイル（{1}）が使用中のためスキップされました。</value>
+  </data>
+  <data name="CleanupSkippedFilesSizeOne" xml:space="preserve">
+    <value>{0} 件のファイル（{1}）が使用中のためスキップされました。</value>
+  </data>
+  <data name="CleanupInUse" xml:space="preserve">
+    <value>{0} は使用中です</value>
+  </data>
+  <data name="CleanupShaderCache" xml:space="preserve">
+    <value>シェーダーキャッシュ</value>
+  </data>
+  <data name="CleanupShaderCacheDesc" xml:space="preserve">
+    <value>グラフィックドライバーが保持するコンパイル済みシェーダーです。再度必要になった際に再構築されます。</value>
+  </data>
+  <data name="CleanupPackageCache" xml:space="preserve">
+    <value>パッケージマネージャーのキャッシュ</value>
+  </data>
+  <data name="CleanupPackageCacheDesc" xml:space="preserve">
+    <value>pip、npm、Yarn、NuGet、Chocolatey が再インストール用に保持するダウンロードファイルです。インストール済みのパッケージには影響しません。</value>
+  </data>
+  <data name="CleanupBuildCache" xml:space="preserve">
+    <value>ビルドツールのキャッシュ</value>
+  </data>
+  <data name="CleanupBuildCacheDesc" xml:space="preserve">
+    <value>Gradle のビルドキャッシュと Android SDK のダウンロードキャッシュです。次回のビルドで再構築されます。</value>
+  </data>
+  <data name="CleanupAppCacheSweep" xml:space="preserve">
+    <value>他のアプリのキャッシュとログ</value>
+  </data>
+  <data name="CleanupAppCacheSweepDesc" xml:space="preserve">
+    <value>固定リストではなく一般的なフォルダーパターンに照らして検索することで、上記に個別に記載されていないプログラムのキャッシュとログフォルダーを見つけます。自分のドキュメントや設定が対象になることはありません。既定ではオフです。オンにする前に検出結果を確認してください。</value>
+  </data>
+  <data name="CleanupLeftoverWarning" xml:space="preserve">
+    <value>このソフトウェアのすべてのデータが削除されます！</value>
+  </data>
+  <data name="CleanupLeftoverLastUsed" xml:space="preserve">
+    <value>最終使用日 {0}</value>
+  </data>
+  <data name="CleanupEntryDateRange" xml:space="preserve">
+    <value>{0} - {1}</value>
+  </data>
+  <data name="CleanupMoreEntries" xml:space="preserve">
+    <value>…他 {0} 件（{1}）</value>
+  </data>
+  <data name="CleanupMoreEntriesNotCleaned" xml:space="preserve">
+    <value>…他 {0} 件（{1}）、このドライブに未選択の行がある間は非表示になり削除されません</value>
+  </data>
+  <data name="CleanupEntryDeleted" xml:space="preserve">
+    <value>削除日 {0}</value>
+  </data>
+  <data name="CleanupShowDetails" xml:space="preserve">
+    <value>詳細（{0}）</value>
+  </data>
+  <data name="CleanupEntryOpenFolder" xml:space="preserve">
+    <value>フォルダーを開く</value>
+  </data>
+  <data name="CleanupEntryCopyPath" xml:space="preserve">
+    <value>パスをコピー</value>
+  </data>
+  <data name="CleanupEntryPermanentlyExclude" xml:space="preserve">
+    <value>恒久的に除外</value>
+  </data>
+  <data name="CleanupEntriesSelectAll" xml:space="preserve">
+    <value>すべてのファイルを選択</value>
+  </data>
+  <data name="CleanupUserTempConsequence" xml:space="preserve">
+    <value>一時ファイルを使用していたプログラムは、次に必要になったときに再作成します。</value>
+  </data>
+  <data name="CleanupAllUsersTempConsequence" xml:space="preserve">
+    <value>自分の一時フォルダーと同じですが、この PC の他のアカウント向けです。</value>
+  </data>
+  <data name="CleanupWindowsTempConsequence" xml:space="preserve">
+    <value>Windows は次に必要になったときに、まだ必要なものを再作成します。</value>
+  </data>
+  <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
+    <value>必要になれば Windows Update はファイルを単純に再度ダウンロードします。</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
+    <value>ネットワーク上の他の PC と更新を共有するためのキャッシュにすぎません。他には使用されません。</value>
+  </data>
+  <data name="CleanupThumbnailsConsequence" xml:space="preserve">
+    <value>次にそのフォルダーを開いたときに、エクスプローラーがサムネイルを再描画します。</value>
+  </data>
+  <data name="CleanupCrashDumpsConsequence" xml:space="preserve">
+    <value>すでに発生したクラッシュの調査にのみ役立ちます。現在これらに依存しているものはありません。</value>
+  </data>
+  <data name="CleanupShaderCacheConsequence" xml:space="preserve">
+    <value>グラフィックドライバーが再構築します。影響を受けるゲームやアプリの次回起動が一度だけ少し遅くなります。</value>
+  </data>
+  <data name="CleanupPackageCacheConsequence" xml:space="preserve">
+    <value>次回のインストールまたは更新では、パッケージが単純に再度ダウンロードされます。</value>
+  </data>
+  <data name="CleanupBuildCacheConsequence" xml:space="preserve">
+    <value>キャッシュが再構築される間、次回のビルドが少し遅くなります。</value>
+  </data>
+  <data name="CleanupAppCacheSweepConsequence" xml:space="preserve">
+    <value>名前ではなくパターンに基づいて多数のプログラムを対象にするため、クリーンアップ前に検出結果を一度確認する価値があります。</value>
+  </data>
+  <data name="CleanupMemoryDumpsConsequence" xml:space="preserve">
+    <value>すでに発生したクラッシュを調査する必要がまだある場合、その機能を失います。</value>
+  </data>
+  <data name="CleanupWindowsLogsConsequence" xml:space="preserve">
+    <value>これらはまさに失敗した更新を診断するために必要なものです。まだトラブルシューティング中であれば保持してください。</value>
+  </data>
+  <data name="CleanupRecycleBinConsequence" xml:space="preserve">
+    <value>その後、中のファイルは復元できなくなります。</value>
+  </data>
+  <data name="CleanupDiskCleanupConsequence" xml:space="preserve">
+    <value>Windows 自体のクリーンアップを、標準の検証済み選択内容のみで実行します。それ以上のことは行いません。</value>
+  </data>
+  <data name="CleanupSystemRepairDismConsequence" xml:space="preserve">
+    <value>時間がかかる場合があり、システムファイルをその場で修復するため、開始したら完了させるのが最善です。</value>
+  </data>
+  <data name="CleanupSystemRepairSfcConsequence" xml:space="preserve">
+    <value>システムファイルをその場で修復します。通常は速く、開始したら完了させるのが最善です。</value>
+  </data>
+  <data name="CleanupRegistryOrphansConsequence" xml:space="preserve">
+    <value>壊れた App Paths のショートカット、Shared DLLs の参照カウント、ActiveX/COM の登録、自動起動項目を削除します。まずバックアップが作成され、まだ機能しているものには触れません。</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesConsequence" xml:space="preserve">
+    <value>対応するプログラムがすでに存在しない「プログラムと機能」の項目を削除します。まずバックアップが作成されます。</value>
+  </data>
+  <data name="CleanupRegistryBackupNote" xml:space="preserve">
+    <value>レジストリの変更は毎回先にエクスポートされます。バックアップ数：{0}、保持数：{1}。</value>
+  </data>
+  <data name="CleanupRiskSafe" xml:space="preserve">
+    <value>安全</value>
+  </data>
+  <data name="CleanupRiskConsidered" xml:space="preserve">
+    <value>中程度</value>
+  </data>
+  <data name="CleanupRiskRisky" xml:space="preserve">
+    <value>リスクあり</value>
+  </data>
+  <data name="CleanupShowAllCategories" xml:space="preserve">
+    <value>すべての領域を表示（{0} 件を非表示中）</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDelete" xml:space="preserve">
+    <value>削除せずにごみ箱へ移動する</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
+    <value>ごみ箱を空にすると、その分の容量が解放されます。</value>
+  </data>
+  <data name="CleanupMemoryDumps" xml:space="preserve">
+    <value>クラッシュダンプ（システム）</value>
+  </data>
+  <data name="CleanupMemoryDumpsDesc" xml:space="preserve">
+    <value>ブルースクリーン後に Windows が書き込むメモリダンプです。調査中にのみ役立ちます。</value>
+  </data>
+  <data name="CleanupWindowsLogs" xml:space="preserve">
+    <value>Windows のログファイル</value>
+  </data>
+  <data name="CleanupWindowsLogsDesc" xml:space="preserve">
+    <value>更新、サービス、セットアップに関する Windows 自体のログです。自動的に再作成されます。失敗した更新の診断中は保持してください。</value>
+  </data>
+  <data name="InstallErrorVs8001What" xml:space="preserve">
+    <value>Visual Studio セットアップが ARM マシンチェックの失敗を報告しました（エラー 8001）。</value>
+  </data>
+  <data name="InstallErrorVs8002What" xml:space="preserve">
+    <value>Visual Studio セットアップのバックグラウンドダウンロード事前チェックが失敗しました（エラー 8002）。</value>
+  </data>
+  <data name="InstallErrorVs8003What" xml:space="preserve">
+    <value>Visual Studio セットアップがサポート対象外のコンポーネントの失敗を報告しました（エラー 8003）。</value>
+  </data>
+  <data name="InstallErrorVs8004What" xml:space="preserve">
+    <value>Visual Studio セットアップがインストール先のディレクトリを使用できませんでした（エラー 8004）。</value>
+  </data>
+  <data name="InstallErrorVs8005What" xml:space="preserve">
+    <value>Visual Studio セットアップがソースペイロードを検証できませんでした（エラー 8005）。</value>
+  </data>
+  <data name="InstallErrorVsGenericNow" xml:space="preserve">
+    <value>Visual Studio 自体のセットアップログに詳細があります。再試行するか、この問題が繰り返す場合は Visual Studio Installer を再インストールしてください。</value>
+  </data>
+  <data name="InstallErrorVs8006What" xml:space="preserve">
+    <value>Visual Studio（またはそのコンポーネント）がまだ実行中のため、Visual Studio セットアップを続行できませんでした（エラー 8006）。</value>
+  </data>
+  <data name="InstallErrorVs8006Now" xml:space="preserve">
+    <value>Visual Studio と関連プロセスを終了してから再試行してください。このアプリは次回の試行前にそれを代行できます。</value>
+  </data>
+  <data name="InstallErrorMsi1602What" xml:space="preserve">
+    <value>セットアップがキャンセルされました（インストーラーエラー 1602）。</value>
+  </data>
+  <data name="InstallErrorMsi1602Now" xml:space="preserve">
+    <value>準備ができたら更新を再度実行してください。キャンセルはおそらく意図的なものです。</value>
+  </data>
+  <data name="InstallErrorMsi1603What" xml:space="preserve">
+    <value>インストーラーが致命的なエラーを報告しました（インストーラーエラー 1603）。</value>
+  </data>
+  <data name="InstallErrorMsi1603Now" xml:space="preserve">
+    <value>インストーラー自体のログを確認するか、手動でのインストールを試してください。</value>
+  </data>
+  <data name="InstallErrorMsi1618What" xml:space="preserve">
+    <value>同時に別のインストールが実行されていたため、Windows がこのインストールを拒否しました。</value>
+  </data>
+  <data name="InstallErrorMsi1618Now" xml:space="preserve">
+    <value>他のインストールが完了した後、自動的に再試行されました。</value>
+  </data>
+  <data name="InstallErrorMsi1619What" xml:space="preserve">
+    <value>インストールパッケージを読み込めませんでした（インストーラーエラー 1619/1620）。</value>
+  </data>
+  <data name="InstallErrorMsi1619Now" xml:space="preserve">
+    <value>パッケージを再度ダウンロードするか、最初からやり直すと通常解決します。</value>
+  </data>
+  <data name="InstallErrorMsi1638What" xml:space="preserve">
+    <value>このプログラムの別のバージョンがすでにインストールされています（インストーラーエラー 1638）。</value>
+  </data>
+  <data name="InstallErrorMsi1638Now" xml:space="preserve">
+    <value>既存のバージョンを先に削除するか、そのプログラム自体の更新機能を使用してください。</value>
+  </data>
+  <data name="InstallErrorRebootWhat" xml:space="preserve">
+    <value>インストーラーの完了には再起動が必要です（コード 1641/3010）。</value>
+  </data>
+  <data name="InstallErrorRebootNow" xml:space="preserve">
+    <value>Windows を再起動してください。更新自体はすでに完了しています。</value>
+  </data>
+  <data name="InstallErrorCrashWhat" xml:space="preserve">
+    <value>提供元のインストーラーがクラッシュしました（通常の失敗ではなく Windows レベルのクラッシュです）。</value>
+  </data>
+  <data name="InstallErrorCrashNow" xml:space="preserve">
+    <value>通常このパッケージは提供元自体のインストーラーから手動でインストールできます。</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableWhat" xml:space="preserve">
+    <value>winget にはこのインストールに適合するこのパッケージのバージョンがありません（適用可能な更新がありません）。</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableNow" xml:space="preserve">
+    <value>何も変更されていません。このアプリが提供していたバージョンはここには適用されません。</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeWhat" xml:space="preserve">
+    <value>winget は管理者コンテキストからこのパッケージを操作できませんでした（ユーザースコープのインストールです）。</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeNow" xml:space="preserve">
+    <value>このアプリはすでに管理者権限なしで再試行済みです。それでも失敗した場合、上記のメッセージが本当の原因です。</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechWhat" xml:space="preserve">
+    <value>新しいバージョンは、インストール済みのバージョンとは異なる方法でインストールされます。</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechNow" xml:space="preserve">
+    <value>プログラムをアンインストールしてから、もう一度インストールしてください。</value>
+  </data>
+  <data name="InstallErrorGenericWhat" xml:space="preserve">
+    <value>提供元のインストーラーが独自のエラーコード {0} で失敗しました。</value>
+  </data>
+  <data name="InstallErrorGenericNow" xml:space="preserve">
+    <value>報告内容については下の元の出力を確認してください。</value>
+  </data>
+  <data name="InstallErrorWuBusyWhat" xml:space="preserve">
+    <value>Windows Update は現在別のタスクで処理中です。</value>
+  </data>
+  <data name="InstallErrorWuBusyNow" xml:space="preserve">
+    <value>しばらく待ってから再試行してください。</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingWhat" xml:space="preserve">
+    <value>この更新をインストールする前に、保留中の再起動があります。</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingNow" xml:space="preserve">
+    <value>Windows を再起動してから再試行してください。</value>
+  </data>
+  <data name="InstallErrorWuNotStartedWhat" xml:space="preserve">
+    <value>Windows Update はこのインストールを実際には開始していません。</value>
+  </data>
+  <data name="InstallErrorWuNotStartedNow" xml:space="preserve">
+    <value>何も変更されていません。再試行すると解決する場合があります。</value>
+  </data>
+  <data name="InstallErrorWuInProgressWhat" xml:space="preserve">
+    <value>Windows Update はこのインストールを引き続き実行中として報告しています。</value>
+  </data>
+  <data name="InstallErrorWuInProgressNow" xml:space="preserve">
+    <value>少し待ってから、更新が完了しているかどうかを確認してください。</value>
+  </data>
+  <data name="InstallErrorWuFailedWhat" xml:space="preserve">
+    <value>Windows Update はこのインストールを失敗として報告しました。</value>
+  </data>
+  <data name="InstallErrorWuFailedNow" xml:space="preserve">
+    <value>正確な原因は通常、下の HRESULT 値にあります。再試行するとうまくいくことがよくあります。</value>
+  </data>
+  <data name="InstallErrorWuAbortedWhat" xml:space="preserve">
+    <value>Windows Update がこのインストールを中止しました。</value>
+  </data>
+  <data name="InstallErrorWuAbortedNow" xml:space="preserve">
+    <value>再試行すると通常うまくいきます。それでも中止が続く場合は、Windows Update のトラブルシューティングツールがさらに役立ちます。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016What" xml:space="preserve">
+    <value>別のインストールがすでに実行中か、保留中の再起動があります。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016Now" xml:space="preserve">
+    <value>しばらく待ってから再試行してください。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044What" xml:space="preserve">
+    <value>このインストールには管理者権限が必要です。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044Now" xml:space="preserve">
+    <value>このアプリはすでに昇格された権限で Windows の更新をインストールしています。エラーが続く場合は、Windows を再起動すると解決することがあります。</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422What" xml:space="preserve">
+    <value>Windows Update サービスが無効になっています。</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422Now" xml:space="preserve">
+    <value>「Windows Update」サービス（services.msc）を開始してから再試行してください。</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DWhat" xml:space="preserve">
+    <value>この更新にはインストールメディアが必要です。</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DNow" xml:space="preserve">
+    <value>対応するインストールメディアを用意するか、Windows Update のソースを確認してください。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022What" xml:space="preserve">
+    <value>このインストール実行内のすべての更新が失敗しました。</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
+    <value>後でもう一度試すと通常うまくいきます。</value>
+  </data>
+  <data name="InstallErrorWuInternalWhat" xml:space="preserve">
+    <value>Windows Update 自体のサービスがこのアプリの想定どおりに応答しませんでした。</value>
+  </data>
+  <data name="InstallErrorWuInternalNow" xml:space="preserve">
+    <value>再試行してください。それでも失敗が続く場合、通常は PC の再起動で解決します。</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedWhat" xml:space="preserve">
+    <value>Windows Update はこの更新をもう提供していません。すでにインストール済みか、新しいものに置き換えられたか、他の更新を先に待っている可能性があります。</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedNow" xml:space="preserve">
+    <value>リストは自動的に更新されました。それでもその行が残っている場合は、インストールを再度開始してください。</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedWhat" xml:space="preserve">
+    <value>このアプリはパッケージ名またはモデル名をそのまま実行することを拒否しました。単純な識別子ではなく、コマンドオプションとして解釈される可能性があったためです。</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedNow" xml:space="preserve">
+    <value>これはパッケージ自体の不具合ではなく、安全のためのチェックです。再試行しても結果は変わりません。</value>
+  </data>
+  <data name="InstallErrorMissingTargetWhat" xml:space="preserve">
+    <value>この行は、インストールを開始する前にインストールするバージョンの情報を見失いました。</value>
+  </data>
+  <data name="InstallErrorMissingTargetNow" xml:space="preserve">
+    <value>再スキャンしてから再試行してください。バージョン一覧はスキャンのたびに更新されます。</value>
+  </data>
+  <data name="InstallErrorPipRepairedWhat" xml:space="preserve">
+    <value>pip 自体のインストールが壊れていましたが、このアプリが自動的に修復しました。</value>
+  </data>
+  <data name="InstallErrorPipRepairedNow" xml:space="preserve">
+    <value>今すぐこのパッケージを再度インストールしてください。pip は正常に動作します。</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedWhat" xml:space="preserve">
+    <value>ダウンロードした NVIDIA インストーラーの署名を検証できなかったため、このアプリは実行を拒否しました。</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedNow" xml:space="preserve">
+    <value>代わりに NVIDIA 自体のページから直接ドライバーをダウンロードしてください。</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainWhat" xml:space="preserve">
+    <value>ダウンロードが NVIDIA 自体のドメイン以外にリダイレクトされたため、このアプリはそれに従うことを拒否しました。</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainNow" xml:space="preserve">
+    <value>代わりに NVIDIA 自体のページから直接ドライバーをダウンロードしてください。</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitWhat" xml:space="preserve">
+    <value>ダウンロードサイズがこのアプリがドライバーインストーラーに許可するサイズを超えたため停止しました。</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitNow" xml:space="preserve">
+    <value>代わりに NVIDIA 自体のページから直接ドライバーをダウンロードしてください。</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedWhat" xml:space="preserve">
+    <value>NVIDIA インストーラーに対する Windows の権限プロンプトが閉じられたか、拒否されました。</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedNow" xml:space="preserve">
+    <value>再試行して、今度はプロンプトを承認してください。</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartWhat" xml:space="preserve">
+    <value>NVIDIA インストーラーを起動できませんでした。</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartNow" xml:space="preserve">
+    <value>再試行してください。それでも繰り返し発生する場合は、NVIDIA 自体のページから直接ドライバーをインストールしてください。</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningWhat" xml:space="preserve">
+    <value>このアプリが待機を終了した時点で、NVIDIA インストーラーはまだ実行中でした。</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningNow" xml:space="preserve">
+    <value>NVIDIA 自体のインストーラーウィンドウ、または Windows のインストール済みアプリ一覧を確認して、実際に完了したかどうかを確認してください。</value>
+  </data>
+  <data name="InstallErrorTimeoutWhat" xml:space="preserve">
+    <value>このツールはこのアプリが許容する時間内に完了しませんでした。</value>
+  </data>
+  <data name="InstallErrorTimeoutNow" xml:space="preserve">
+    <value>再試行してください。通常の原因は回線が遅いか、端末が高負荷になっていることです。</value>
+  </data>
+  <data name="RetryInteractiveHeader" xml:space="preserve">
+    <value>対話的に再試行</value>
+  </data>
+  <data name="RowRunningInteractive" xml:space="preserve">
+    <value>対話的に実行中…</value>
+  </data>
+  <data name="InstallBlockersLine" xml:space="preserve">
+    <value>{0} は次によってブロックされています：{1}</value>
+  </data>
+  <data name="InstallBlockerCloseAndContinue" xml:space="preserve">
+    <value>プログラムを閉じて続行</value>
+  </data>
+  <data name="InstallBlockerSkip" xml:space="preserve">
+    <value>ブロックされたものをスキップ</value>
+  </data>
+  <data name="InstallBlockerTryAnyway" xml:space="preserve">
+    <value>それでも試す</value>
+  </data>
+  <data name="InstallBlockerForceKillHeadline" xml:space="preserve">
+    <value>強制終了しますか？</value>
+  </data>
+  <data name="InstallBlockerForceKillBody" xml:space="preserve">
+    <value>保存されていない作業内容は失われます。</value>
+  </data>
+  <data name="InstallBlockerAutoSkipped" xml:space="preserve">
+    <value>{0} はまだ実行中のため、自動的にスキップされました（無人モード）。</value>
+  </data>
+  <data name="PreflightTitle" xml:space="preserve">
+    <value>更新の前に</value>
+  </data>
+  <data name="PreflightStart" xml:space="preserve">
+    <value>開始</value>
+  </data>
+  <data name="PreflightCancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="InstallSpaceShort" xml:space="preserve">
+    <value>空き容量は {0} のみで、約 {1} が必要です。</value>
+  </data>
+  <data name="InstallSpaceUnknown" xml:space="preserve">
+    <value>{0} 件のパッケージはサイズを報告していません。</value>
+  </data>
+  <data name="InstallSpaceOpenCleanup" xml:space="preserve">
+    <value>クリーンアップを開く</value>
+  </data>
+  <data name="SettingsMeteredTitle" xml:space="preserve">
+    <value>従量制課金接続では自動スキャンしない</value>
+  </data>
+  <data name="InstallMeteredWarn" xml:space="preserve">
+    <value>従量制接続：約 {0} がダウンロードされます。</value>
+  </data>
+  <data name="InstallBatteryWarn" xml:space="preserve">
+    <value>バッテリー残量 {0}%、電源に接続されていません。</value>
+  </data>
+  <data name="RebootDialogTitle" xml:space="preserve">
+    <value>再起動が必要です</value>
+  </data>
+  <data name="RebootDialogBody" xml:space="preserve">
+    <value>次のパッケージが再起動を要求しました：</value>
+  </data>
+  <data name="RebootDialogNow" xml:space="preserve">
+    <value>今すぐ再起動</value>
+  </data>
+  <data name="RebootDialogLater" xml:space="preserve">
+    <value>後で</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>このアプリについて</value>
+  </data>
+  <data name="AboutTagline" xml:space="preserve">
+    <value>この PC の保留中のすべての更新をまとめて確認できます。</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>バージョン {0}</value>
+  </data>
+  <data name="AboutLicence" xml:space="preserve">
+    <value>MIT ライセンス</value>
+  </data>
+  <data name="AboutRepository" xml:space="preserve">
+    <value>GitHub のプロジェクトページ</value>
+  </data>
+  <data name="AboutThirdParty" xml:space="preserve">
+    <value>すべての更新はそれぞれのソースから取得され、そのソース自体の仕組みでインストールされます。このアプリはどのパッケージもホスト、確認、変更しません。</value>
+  </data>
+  <data name="AboutIcons" xml:space="preserve">
+    <value>ブランドマークは Simple Icons（CC0）によるものです。すべての商標はそれぞれの所有者に帰属します。</value>
+  </data>
+  <data name="AboutTrademarks" xml:space="preserve">
+    <value>Microsoft、NVIDIA、AMD、Intel、Dell、Lenovo、HP、Valve、Epic Games、またはこのアプリが表示するその他のベンダーとは提携、承認、後援の関係はありません。</value>
+  </data>
+  <data name="WingetBootstrapConfirmHeadline" xml:space="preserve">
+    <value>winget が見つかりませんでした</value>
+  </data>
+  <data name="WingetBootstrapConfirmBody" xml:space="preserve">
+    <value>今すぐインストールしますか？これは Microsoft 自体の App Installer パッケージから直接提供され、実行前に検証されます。</value>
+  </data>
+  <data name="WingetBootstrapInstall" xml:space="preserve">
+    <value>winget をインストール</value>
+  </data>
+  <data name="ColumnsButton" xml:space="preserve">
+    <value>列</value>
+  </data>
+  <data name="ColumnsReset" xml:space="preserve">
+    <value>列をリセット</value>
+  </data>
+  <data name="ColumnPublisher" xml:space="preserve">
+    <value>発行元</value>
+  </data>
+  <data name="ScanCachedAge" xml:space="preserve">
+    <value>{0} の結果です。再確認中</value>
+  </data>
+  <data name="ScanSourceTooSlow" xml:space="preserve">
+    <value>{0} 秒間応答がありません</value>
+  </data>
+  <data name="ScanOfflineBanner" xml:space="preserve">
+    <value>インターネット接続がありません。ローカルのソースのみ確認しました。</value>
+  </data>
+  <data name="ScanNoConnectionBanner" xml:space="preserve">
+    <value>インターネットに接続できません：すべてのオンラインソースが失敗しました。ファイアウォールまたはネットワークを確認してください。</value>
+  </data>
+  <data name="ScanOfflineSource" xml:space="preserve">
+    <value>接続なし</value>
+  </data>
+  <data name="NetProxyRefused" xml:space="preserve">
+    <value>プロキシが接続を拒否しました（{0}）。</value>
+  </data>
+  <data name="PipInterpreterTooltip" xml:space="preserve">
+    <value>Python インタープリター: {0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
+    <value>+~{0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
+    <value>Windows のディスククリーンアップによって解放されました。他のタスクと同時に実行されたため、概算値です。</value>
+  </data>
+  <data name="CleanupDefaultSelection" xml:space="preserve">
+    <value>既定の選択</value>
+  </data>
+  <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
+    <value>安全な項目だけを選択します。既定でオンになっている項目と同じです。</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
+    <value>解析中…</value>
+  </data>
+  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
+    <value>Windows が時間内に応答しませんでした。解析は中止されました。</value>
+  </data>
+  <data name="CleanupPipLeftovers" xml:space="preserve">
+    <value>中断された pip インストールの残骸</value>
+  </data>
+  <data name="CleanupPipLeftoversDesc" xml:space="preserve">
+    <value>インストールが中断されたときにpipが残すフォルダー。pipは実行ごとに警告します。</value>
+  </data>
+  <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
+    <value>pipの警告がなくなります。このフォルダーを使用しているものは他にありません。</value>
+  </data>
+  <data name="CleanupOldPythonVersions" xml:space="preserve">
+    <value>古いPythonバージョン</value>
+  </data>
+  <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
+    <value>同じ種類（32ビットまたは64ビット）のより新しいバージョンに置き換えられたPythonインストール。</value>
+  </data>
+  <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
+    <value>このバージョンをまだ使用しているプログラムやスクリプトは動作しなくなります。インストール済みのパッケージも一緒に削除されます。</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
+    <value>{0}（パッケージ{1}個）</value>
+  </data>
+  <data name="CleanupDriverInstalledDate" xml:space="preserve">
+    <value>インストール日 {0}</value>
+  </data>
+  <data name="CleanupDriverProviderLabel" xml:space="preserve">
+    <value>プロバイダー</value>
+  </data>
+  <data name="CleanupDriverClassLabel" xml:space="preserve">
+    <value>クラス</value>
+  </data>
+  <data name="CleanupDriverInfFileLabel" xml:space="preserve">
+    <value>INF ファイル</value>
+  </data>
+  <data name="CleanupDriverOriginalNameLabel" xml:space="preserve">
+    <value>元の名前</value>
+  </data>
+  <data name="CleanupDriverStorePathLabel" xml:space="preserve">
+    <value>ドライバー ストアのパス</value>
+  </data>
+  <data name="CleanupDriverInstalledNow" xml:space="preserve">
+    <value>現在インストール済み：バージョン {0}、{1}</value>
+  </data>
+  <data name="CleanupDriverVersionDate" xml:space="preserve">
+    <value>バージョン {0}、{1}</value>
+  </data>
+  <data name="CleanupCatalogLoadFailed" xml:space="preserve">
+    <value>クリーンアップ一覧を読み込めませんでした。このウィンドウを閉じて、もう一度開いてください。詳細はログフォルダーにあります。</value>
+  </data>
+  <data name="NetPurposeSelfUpdate" xml:space="preserve">
+    <value>自己更新(リリースJSON、SHA256SUMS、ファイル)と他のリポジトリのリリース情報</value>
+  </data>
+  <data name="NetPurposeChangelog" xml:space="preserve">
+    <value>クリック時の変更履歴テキスト</value>
+  </data>
+  <data name="NetPurposeNvidia" xml:space="preserve">
+    <value>GPU製品表、ドライバー検索、ドライバーのダウンロード</value>
+  </data>
+  <data name="NetPurposePackageMeta" xml:space="preserve">
+    <value>行を補うためのパッケージのメタデータ(最新バージョン、サイズ、日付)</value>
+  </data>
+  <data name="NetPurposeSdkMeta" xml:space="preserve">
+    <value>Android SDKマニフェスト、Flutterのリリース、VS Code拡張機能のメタデータ</value>
+  </data>
+  <data name="NetPurposeSteam" xml:space="preserve">
+    <value>パッチノート(問い合わせにはアプリIDのみを含む)</value>
+  </data>
+  <data name="NetPurposeOllamaRemote" xml:space="preserve">
+    <value>モデルのリモートダイジェスト(ライブラリのモデルのみ)</value>
+  </data>
+  <data name="NetPurposeOllamaLocal" xml:space="preserve">
+    <value>ローカルの Ollama モデル一覧。使用中で唯一暗号化されていない http:// アドレスですが、ループバックでのみ使用します。</value>
+  </data>
+  <data name="FilterShowIgnored" xml:space="preserve">
+    <value>無視した項目を表示</value>
+  </data>
+  <data name="FilterButton" xml:space="preserve">
+    <value>フィルター</value>
+  </data>
+  <data name="FilterButtonActive" xml:space="preserve">
+    <value>フィルター ({0})</value>
+  </data>
+  <data name="ToolbarCleanupLabel" xml:space="preserve">
+    <value>クリーンアップ</value>
+  </data>
+  <data name="ScanStateError" xml:space="preserve">
+    <value>エラー</value>
+  </data>
+  <data name="AboutPortable" xml:space="preserve">
+    <value>ポータブルモード: 設定とデータはプログラムと同じ場所に保存されます。</value>
+  </data>
+  <data name="SortByTooltip" xml:space="preserve">
+    <value>{0}で並べ替え</value>
+  </data>
+  <data name="InstallBlockerSkippedStillOpen" xml:space="preserve">
+    <value>スキップしました。{0} がまだ開いています</value>
+  </data>
+  <data name="CleanupHeaderSelection" xml:space="preserve">
+    <value>選択</value>
+  </data>
+  <data name="CleanupHeaderDrive" xml:space="preserve">
+    <value>ドライブ {0}</value>
+  </data>
+  <data name="SettingsAutoScanTitle" xml:space="preserve">
+    <value>自動スキャン</value>
+  </data>
+  <data name="HistoryRolledBack" xml:space="preserve">
+    <value>ロールバック済み</value>
+  </data>
+  <data name="HistoryUninstalled" xml:space="preserve">
+    <value>アンインストール済み</value>
+  </data>
+  <data name="SelfUpdateBusyHint" xml:space="preserve">
+    <value>実行中の更新とクリーンアップが完了すると利用できます。</value>
+  </data>
+  <data name="SelfUpdateDownloadFailed" xml:space="preserve">
+    <value>更新をダウンロードできませんでした。接続を確認して、もう一度お試しください。</value>
+  </data>
+  <data name="SelfUpdateApplyFailed" xml:space="preserve">
+    <value>更新をインストールできませんでした。詳細はログフォルダーにあります。</value>
+  </data>
+  <data name="SelfUpdateApplyingNoInstall" xml:space="preserve">
+    <value>アプリは自身の更新を完了するために再起動します。再起動後に、これらの更新をもう一度開始してください。</value>
+  </data>
+  <data name="SettingsCheckFailed" xml:space="preserve">
+    <value>更新を確認できませんでした。接続を確認してください。</value>
+  </data>
+  <data name="RetryBlockedByActivity" xml:space="preserve">
+    <value>今は再試行できません。インストールを実行中です。完了してからもう一度お試しください。</value>
+  </data>
+  <data name="ErrorDetailCopyFailed" xml:space="preserve">
+    <value>コピーできませんでした。レポートはレポートフォルダーに保存されています。</value>
+  </data>
+  <data name="SettingsBrowseFolder" xml:space="preserve">
+    <value>フォルダーを選択</value>
+  </data>
+  <data name="SettingsRegistryBackupOutsideProfile" xml:space="preserve">
+    <value>バックアップフォルダーはユーザープロファイル内にある必要があります。別のフォルダーを選択してください。</value>
+  </data>
+  <data name="CleanupConfirmHeadlineRecycle" xml:space="preserve">
+    <value>{0} をクリーンアップしますか？</value>
+  </data>
+  <data name="CleanupConfirmWarningRecycle" xml:space="preserve">
+    <value>ファイルはごみ箱に移動され、ごみ箱を空にするまで復元できます。レジストリエントリ、ドライバー、修復は元に戻せません。</value>
+  </data>
+  <data name="HeadlineNotChecked" xml:space="preserve">
+    <value>まだ確認していません</value>
+  </data>
+  <data name="EmptyStateNotChecked" xml:space="preserve">
+    <value>更新を確認して、新しい情報を見てみましょう。</value>
+  </data>
+  <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
+    <value>無視した {0} 件の更新をすべて再表示しますか？</value>
+  </data>
+  <data name="IgnoreListRemoveAllBody" xml:space="preserve">
+    <value>次回の確認で更新の一覧に戻ります。</value>
+  </data>
+  <data name="HeadlineNoSourceChecked" xml:space="preserve">
+    <value>どのソースも確認できませんでした</value>
+  </data>
+  <data name="InstallErrorAndroidLockedWhat" xml:space="preserve">
+    <value>このパッケージのファイルが使用中です。多くの場合、実行中のエミュレーターまたは Android Studio が原因です。</value>
+  </data>
+  <data name="InstallErrorAndroidLockedNow" xml:space="preserve">
+    <value>エミュレーターと Android Studio を閉じてから、もう一度更新を実行してください。</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallWhat" xml:space="preserve">
+    <value>更新するには先に古いバージョンを削除する必要がありますが、古いバージョンにはアンインストール用のコマンドが登録されていません。</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallNow" xml:space="preserve">
+    <value>Windows の設定の「アプリ」で古いバージョンをアンインストールしてから、もう一度更新を実行してください。</value>
+  </data>
+  <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
+    <value>ディスク クリーンアップが{0}分を超えたため、終了しました。</value>
+  </data>
+  <data name="SelfUpdateWaitingForWork" xml:space="preserve">
+    <value>実行中の処理が終わり次第、更新をインストールします。</value>
+  </data>
+  <data name="CleanupProtectedFiles" xml:space="preserve">
+    <value>{0} 件のファイルにアクセスできなかったためスキップされました。</value>
+  </data>
+  <data name="CleanupProtectedFilesOne" xml:space="preserve">
+    <value>{0} 件のファイルにアクセスできなかったためスキップされました。</value>
+  </data>
+  <data name="CleanupProtectedFilesSize" xml:space="preserve">
+    <value>{0} 件のファイル（{1}）にアクセスできなかったためスキップされました。</value>
+  </data>
+  <data name="CleanupProtectedFilesSizeOne" xml:space="preserve">
+    <value>{0} 件のファイル（{1}）にアクセスできなかったためスキップされました。</value>
+  </data>
+  <data name="CleanupProtected" xml:space="preserve">
+    <value>{0} はアクセス不可</value>
+  </data>
+</root>

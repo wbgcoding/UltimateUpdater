@@ -1,0 +1,444 @@
+<ui:FluentWindow x:Class="UltimateUpdater.Views.HistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="{Binding Loc[HistoryTitle]}"
+        Width="1040"
+        MinHeight="320" MinWidth="790"
+        SizeToContent="Height" MaxHeight="640"
+        ExtendsContentIntoTitleBar="True"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource ApplicationBackgroundBrush}">
+    <!-- Deliberately a ListBox with an explicit header row rather than ListView + GridView: WPF-UI
+         ships no style for GridView, so it falls back to the classic Win32 look, a white panel with
+         3D column headers sitting inside a dark Fluent window. -->
+    <ui:FluentWindow.Resources>
+        <Style x:Key="HistoryColumnHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="HistoryCell" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        </Style>
+
+        <!-- Cells of the When/Source/Version/Result columns are centred in their lane; only Name stays
+             left-aligned. -->
+        <Style x:Key="HistoryCellCentered" TargetType="TextBlock" BasedOn="{StaticResource HistoryCell}">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+
+        <!-- The clickable label+sort-glyph group for the same four centred columns, so the header's
+             own centering comes from one place instead of a HorizontalAlignment="Center" copied onto
+             every StackPanel by hand. -->
+        <Style x:Key="HistoryHeaderGroup" TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="True"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- FilterChip lives in App.xaml, shared with the Settings sources list rather than local to
+             this window. StaticResource lookups below still resolve it via the normal
+             Application-resources fallback. -->
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="{Binding Loc[HistoryTitle]}" FontSize="16" FontWeight="SemiBold">
+            <ui:TitleBar.Icon>
+                <!-- Assembly-qualified like MainWindow's so it resolves whichever assembly is
+                     the entry point -->
+                <ui:ImageIcon Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <!-- Search plus filters that read as buttons: time range, failed-only, and one per source. -->
+        <StackPanel Grid.Row="1" Margin="16,4,28,10"
+                    Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
+            <!-- Search and the range chips share one line: the row beside the search box was empty while
+                 the filters sat underneath it, so the panel was two lines tall for one line of content.
+                 The chips WRAP, so a narrow window still gets its second line rather than clipping them. -->
+            <DockPanel LastChildFill="True">
+                <ui:TextBox DockPanel.Dock="Left" Width="280" Margin="0,0,12,0"
+                            VerticalAlignment="Center"
+                            AutomationProperties.Name="{Binding Loc[SearchPlaceholder]}"
+                            PlaceholderText="{Binding Loc[SearchPlaceholder]}"
+                            Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged, Delay=180}"
+                            Icon="{ui:SymbolIcon Search24}"/>
+
+                <!-- Copies the rows the filters currently show as tab-separated text. Its own
+                     StackPanel, docked right in one piece, so the confirmation text always sits right of
+                     the button rather than between it and the wrap panel (DockPanel assigns space to each
+                     Dock="Right" child in the order they appear, outermost first). -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <TextBlock VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12"
+                               Foreground="{DynamicResource SystemFillColorSuccessBrush}"
+                               Text="{Binding CopiedMessage}"
+                               Visibility="{Binding HasCopiedMessage, Converter={StaticResource BoolToVisibility}}"/>
+                    <ui:Button Appearance="Secondary" Padding="8,4" FontSize="12"
+                               Command="{Binding CopyListCommand}"
+                               Icon="{ui:SymbolIcon Copy24}"
+                               Content="{Binding Loc[HistoryCopy]}"
+                               ToolTip="{Binding Loc[HistoryCopy]}"
+                               AutomationProperties.Name="{Binding Loc[HistoryCopy]}"/>
+                </StackPanel>
+
+                <WrapPanel VerticalAlignment="Center">
+                <!-- Radio buttons: clicking the active range chip again must not leave no chip checked
+                     (the view model's value does not change, so the binding never put the tick back). -->
+                <RadioButton GroupName="HistoryRange" Style="{StaticResource FilterChip}" Content="{Binding Loc[HistoryRangeAll]}"
+                              IsChecked="{Binding IsRangeAll, Mode=OneWay}"
+                              Command="{Binding SetTimeRangeCommand}" CommandParameter="all"/>
+                <RadioButton GroupName="HistoryRange" Style="{StaticResource FilterChip}" Content="{Binding Loc[HistoryRangeToday]}"
+                              IsChecked="{Binding IsRangeToday, Mode=OneWay}"
+                              Command="{Binding SetTimeRangeCommand}" CommandParameter="today"/>
+                <RadioButton GroupName="HistoryRange" Style="{StaticResource FilterChip}" Content="{Binding Loc[HistoryRangeWeek]}"
+                              IsChecked="{Binding IsRangeWeek, Mode=OneWay}"
+                              Command="{Binding SetTimeRangeCommand}" CommandParameter="week"/>
+                <RadioButton GroupName="HistoryRange" Style="{StaticResource FilterChip}" Content="{Binding Loc[HistoryRangeMonth]}"
+                              IsChecked="{Binding IsRangeMonth, Mode=OneWay}"
+                              Command="{Binding SetTimeRangeCommand}" CommandParameter="month"/>
+
+                <Border Width="1" Margin="6,2,10,2"
+                        Background="{DynamicResource CardStrokeColorDefaultBrush}"/>
+
+                    <ToggleButton Style="{StaticResource FilterChip}" Content="{Binding Loc[HistoryOnlyFailed]}"
+                                  IsChecked="{Binding ShowOnlyFailed}"/>
+                </WrapPanel>
+            </DockPanel>
+
+            <!-- One button per source that actually appears in the history; none pressed = all sources. -->
+            <WrapPanel Margin="0,8,0,0"
+                       Visibility="{Binding HasSourceFilters, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{Binding Loc[HistoryFilterSource]}" FontSize="12" VerticalAlignment="Center"
+                           Margin="0,0,8,0"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <ItemsControl ItemsSource="{Binding SourceFilters}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ToggleButton Style="{StaticResource FilterChip}" Content="{Binding Display}"
+                                          IsChecked="{Binding IsActive}"
+                                          AutomationProperties.Name="{Binding Display}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </WrapPanel>
+        </StackPanel>
+
+        <!-- Full-bleed so the list's scrollbar sits flush against the window's right edge; the header
+             and rows keep their own inset, and top/bottom hairlines stand in for the card outline. -->
+        <Grid Grid.Row="2" Margin="0,0,0,0">
+            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="0,1,0,1" CornerRadius="0"
+                    Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header columns must stay in step with the row template below, both pull from the
+                         same App.xaml GridLength resources, so the two can never drift apart again. The
+                         five fixed ones (When/Source/Version/Size/Result: 130+110+170+90+110) add up to
+                         610, plus the trailing 28px details column, 638; that is why the window's MinWidth
+                         is 790 and not 638, the extra 152 is the star Name column's own minimum, and at 638
+                         it was squeezed to nothing with the right-hand cells clipped, horizontal scrollbar
+                         disabled, leaving no way to read them. The trailing details column carries no
+                         header content of its own; it exists only so the row template's details-button
+                         column doesn't shift columns 0-5 out of step with the header above them. -->
+                    <Grid x:Name="HistoryHeaderRow" Grid.Row="0" Margin="16,12,16,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{DynamicResource HistoryColWidthWhen}"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="{DynamicResource HistoryColWidthSource}"/>
+                            <ColumnDefinition Width="{DynamicResource HistoryColWidthVersion}"/>
+                            <ColumnDefinition Width="{DynamicResource HistoryColWidthSize}"/>
+                            <ColumnDefinition Width="{DynamicResource HistoryColWidthResult}"/>
+                            <ColumnDefinition Width="{StaticResource HistoryColWidthDetails}"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Every header sorts on click and flips direction on a second click; When,
+                             Source, Version, Size and Result are centred in their lane, Name stays left. -->
+                        <StackPanel Grid.Column="0" Style="{StaticResource HistoryHeaderGroup}"
+                                    Focusable="True" KeyDown="OnClickTargetKeyDown"
+                                    AutomationProperties.Name="{Binding Loc[HistoryColumnWhen]}">
+                            <StackPanel.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="when"/>
+                            </StackPanel.InputBindings>
+                            <TextBlock Style="{StaticResource HistoryColumnHeader}" Text="{Binding Loc[HistoryColumnWhen]}"/>
+                            <TextBlock Text="{Binding WhenSortGlyph}" Width="14" FontSize="11" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Cursor="Hand"
+                                    Focusable="True" KeyDown="OnClickTargetKeyDown"
+                                    AutomationProperties.Name="{Binding Loc[ColumnName]}">
+                            <StackPanel.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="name"/>
+                            </StackPanel.InputBindings>
+                            <TextBlock Style="{StaticResource HistoryColumnHeader}" Text="{Binding Loc[ColumnName]}"/>
+                            <TextBlock Text="{Binding NameSortGlyph}" Width="14" FontSize="11" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Style="{StaticResource HistoryHeaderGroup}"
+                                    Focusable="True" KeyDown="OnClickTargetKeyDown"
+                                    AutomationProperties.Name="{Binding Loc[ColumnSource]}">
+                            <StackPanel.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="source"/>
+                            </StackPanel.InputBindings>
+                            <TextBlock Style="{StaticResource HistoryColumnHeader}" Text="{Binding Loc[ColumnSource]}"/>
+                            <TextBlock Text="{Binding SourceSortGlyph}" Width="14" FontSize="11" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="3" Style="{StaticResource HistoryHeaderGroup}"
+                                    Focusable="True" KeyDown="OnClickTargetKeyDown"
+                                    AutomationProperties.Name="{Binding Loc[ColumnVersion]}">
+                            <StackPanel.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="version"/>
+                            </StackPanel.InputBindings>
+                            <TextBlock Style="{StaticResource HistoryColumnHeader}" Text="{Binding Loc[ColumnVersion]}"/>
+                            <TextBlock Text="{Binding VersionSortGlyph}" Width="14" FontSize="11" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="4" Style="{StaticResource HistoryHeaderGroup}"
+                                    Focusable="True" KeyDown="OnClickTargetKeyDown"
+                                    AutomationProperties.Name="{Binding Loc[HistoryColumnSize]}">
+                            <StackPanel.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="size"/>
+                            </StackPanel.InputBindings>
+                            <TextBlock Style="{StaticResource HistoryColumnHeader}" Text="{Binding Loc[HistoryColumnSize]}"/>
+                            <TextBlock Text="{Binding SizeSortGlyph}" Width="14" FontSize="11" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="5" Style="{StaticResource HistoryHeaderGroup}"
+                                    Focusable="True" KeyDown="OnClickTargetKeyDown"
+                                    AutomationProperties.Name="{Binding Loc[HistoryColumnResult]}">
+                            <StackPanel.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="result"/>
+                            </StackPanel.InputBindings>
+                            <TextBlock Style="{StaticResource HistoryColumnHeader}" Text="{Binding Loc[HistoryColumnResult]}"/>
+                            <TextBlock Text="{Binding ResultSortGlyph}" Width="14" FontSize="11" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="1" Height="1" VerticalAlignment="Top"
+                            Background="{DynamicResource CardStrokeColorDefaultBrush}"/>
+
+                    <ListBox Grid.Row="1" ItemsSource="{Binding EntriesView}" Margin="0,1,0,0"
+                             Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             HorizontalContentAlignment="Stretch"
+                             VirtualizingPanel.IsVirtualizing="True"
+                             VirtualizingPanel.VirtualizationMode="Recycling">
+                        <!-- The row's own inset lives ONLY here (16 each side, matching the header
+                             Grid's own 16/16 margin exactly) so the two grids get the identical available
+                             width for the star Name column; the row template below carries no horizontal
+                             margin of its own, which would add a second, unequal inset and throw
+                             columns 2-4 out of step with the header. -->
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="16,0"/>
+                                <!-- Focusable so the arrow keys walk the entries; an entry without a details
+                                     button holds nothing else to focus. The template draws its own focus
+                                     rectangle (the stock one is a dotted line, and the stock selected state a
+                                     heavy blue block that does not belong on a read-only list). -->
+                                <Setter Property="Focusable" Value="True"/>
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                <Setter Property="AutomationProperties.Name" Value="{Binding AutomationName}"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="EntryChrome" CornerRadius="6" BorderThickness="1"
+                                                    BorderBrush="Transparent" Background="Transparent" SnapsToDevicePixels="True">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                                    <Setter TargetName="EntryChrome" Property="BorderBrush"
+                                                            Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                                    <Setter TargetName="EntryChrome" Property="Background"
+                                                            Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <!-- Columns 0-5 mirror the header grid's own widths exactly (same
+                                     StaticResource keys) so their offsets never drift apart. The details
+                                     button sits in its own trailing column instead of sharing the Result
+                                     cell with the text, a shared StackPanel used to recentre the whole
+                                     group whenever the button appeared, so the text itself moved between
+                                     a failed row and a successful one. -->
+                                <Grid x:Name="HistoryRow" Margin="0,7,0,7">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="{DynamicResource HistoryColWidthWhen}"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="{DynamicResource HistoryColWidthSource}"/>
+                                        <ColumnDefinition Width="{DynamicResource HistoryColWidthVersion}"/>
+                                        <ColumnDefinition Width="{DynamicResource HistoryColWidthSize}"/>
+                                        <ColumnDefinition Width="{DynamicResource HistoryColWidthResult}"/>
+                                        <ColumnDefinition Width="{StaticResource HistoryColWidthDetails}"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Style="{StaticResource HistoryCellCentered}" Text="{Binding When}"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock Grid.Column="1" Style="{StaticResource HistoryCell}" Margin="0,0,12,0"
+                                               Text="{Binding Name}" ToolTip="{Binding Name}"/>
+                                    <TextBlock Grid.Column="2" Style="{StaticResource HistoryCellCentered}" Text="{Binding SourceDisplay}"
+                                               ToolTip="{Binding SourceDisplay}"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                    <!-- Three-column lane mirroring the main table's own version lane:
+                                         from version right aligned, a fixed-width arrow cell, to version
+                                         left aligned, so the arrow sits at the same x position whatever
+                                         either version string looks like. Sized to the sum of the three
+                                         inner columns (62+14+62=138) and centred within the wider 170px
+                                         outer lane, same overall placement the single combined string
+                                         used to have. -->
+                                    <Grid Grid.Column="3" x:Name="HistoryVersionLane" Width="138" HorizontalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="{StaticResource HistoryVersionColWidthNumber}"/>
+                                            <ColumnDefinition Width="{StaticResource HistoryVersionColWidthArrow}"/>
+                                            <ColumnDefinition Width="{StaticResource HistoryVersionColWidthNumber}"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" x:Name="HistoryFromVersionText" Text="{Binding FromVersionText}"
+                                                   FontSize="13" TextTrimming="CharacterEllipsis" TextAlignment="Right"
+                                                   VerticalAlignment="Center" ToolTip="{Binding FromVersionText}"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                   Visibility="{Binding HasFromVersion, Converter={StaticResource BoolToVisibility}}"/>
+                                        <TextBlock Grid.Column="1" x:Name="HistoryVersionArrow" Text="→" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                   Visibility="{Binding HasFromVersion, Converter={StaticResource BoolToVisibility}}"/>
+                                        <!-- No from version to point an arrow away from: spans all three
+                                             columns and centres in the whole lane instead of sitting in
+                                             its own column. Column/span/alignment come from the Style
+                                             below, not a local value, since a local value always outranks
+                                             a Style Setter/Trigger regardless of which is written last. -->
+                                        <TextBlock x:Name="HistoryToVersionText" Text="{Binding ToVersionText}" FontSize="13"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   ToolTip="{Binding ToVersionText}"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Grid.Column" Value="2"/>
+                                                    <Setter Property="TextAlignment" Value="Left"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasFromVersion}" Value="False">
+                                                            <Setter Property="Grid.Column" Value="0"/>
+                                                            <Setter Property="Grid.ColumnSpan" Value="3"/>
+                                                            <Setter Property="TextAlignment" Value="Center"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+
+                                    <TextBlock Grid.Column="4" Style="{StaticResource TabularNumberText}" Text="{Binding SizeText}"
+                                               ToolTip="{Binding SizeText}" FontSize="13" VerticalAlignment="Center"
+                                               HorizontalAlignment="Right" TextAlignment="Right" Margin="0,0,4,0"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                                    <TextBlock x:Name="HistoryResultText" Grid.Column="5"
+                                               Text="{Binding Result}" ToolTip="{Binding Error}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource HistoryCellCentered}">
+                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Succeeded}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Failed}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsManualHandoff}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+
+                                    <!-- The tooltip alone needs a log file to read past its first line,
+                                         this opens the same colourised, copy-button detail view a failed
+                                         row in the main table already offers. Mutually exclusive with the
+                                         downgrade button below (Failed and CanDowngrade never both hold:
+                                         a rollback candidate is by definition a SUCCEEDED install), so
+                                         both can safely share this one trailing column. -->
+                                    <ui:Button x:Name="HistoryDetailsButton" Grid.Column="6" Margin="4,0,0,0" Padding="4" Appearance="Transparent"
+                                               VerticalAlignment="Center"
+                                               Click="OnShowErrorDetail"
+                                               Visibility="{Binding Failed, Converter={StaticResource BoolToVisibility}}"
+                                               ToolTip="{Binding ShowDetailsTooltip}"
+                                               AutomationProperties.Name="{Binding ShowDetailsTooltip}">
+                                        <ui:SymbolIcon Symbol="Info24" FontSize="14"/>
+                                    </ui:Button>
+
+                                    <!-- "back to the previous version", offered only on the
+                                         entry that produced the currently installed version. -->
+                                    <ui:Button x:Name="HistoryDowngradeButton"
+                                               Grid.Column="6" Margin="4,0,0,0" Padding="4" Appearance="Transparent"
+                                               VerticalAlignment="Center"
+                                               Command="{Binding DowngradeCommand}"
+                                               Visibility="{Binding CanDowngrade, Converter={StaticResource BoolToVisibility}}"
+                                               ToolTip="{Binding DowngradeHeader}"
+                                               AutomationProperties.Name="{Binding DowngradeHeader}">
+                                        <ui:SymbolIcon Symbol="ArrowReset24" FontSize="14"/>
+                                    </ui:Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <StackPanel x:Name="HistoryEmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="380"
+                        Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+                <ui:SymbolIcon Symbol="History24" FontSize="44" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <TextBlock Text="{Binding Loc[HistoryEmpty]}" Margin="0,12,0,0"
+                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="380"
+                        Visibility="{Binding NoMatches, Converter={StaticResource BoolToVisibility}}">
+                <ui:SymbolIcon Symbol="Search24" FontSize="44" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <TextBlock Text="{Binding Loc[HistoryNoMatches]}" Margin="0,12,0,0"
+                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

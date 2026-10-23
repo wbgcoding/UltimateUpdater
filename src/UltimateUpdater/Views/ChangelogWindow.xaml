@@ -1,0 +1,93 @@
+<ui:FluentWindow x:Class="UltimateUpdater.Views.ChangelogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="{Binding WindowTitle}"
+        Width="600" MinHeight="220" MinWidth="420"
+        SizeToContent="Height" MaxHeight="520"
+        WindowStartupLocation="CenterOwner"
+        ExtendsContentIntoTitleBar="True"
+        Background="{DynamicResource ApplicationBackgroundBrush}"
+        FocusManager.FocusedElement="{Binding ElementName=CloseButton}">
+    <ui:FluentWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- title bar -->
+            <RowDefinition Height="Auto"/>   <!-- name + version -->
+            <RowDefinition Height="Auto"/>   <!-- changelog text -->
+            <RowDefinition Height="Auto"/>   <!-- actions -->
+        </Grid.RowDefinitions>
+
+        <!-- Same as ErrorDetailWindow: a ui:TitleBar hard-truncates instead of wrapping,
+             and the item name is already shown big in the body below, so the bar itself only needs the
+             short generic title; the combined WindowTitle stays on Window.Title for the taskbar. -->
+        <ui:TitleBar Grid.Row="0" Title="{Binding Loc[ChangelogTitle]}" FontSize="16" FontWeight="SemiBold">
+            <ui:TitleBar.Icon>
+                <!-- Assembly-qualified like MainWindow's so it resolves whichever assembly is
+                     the entry point -->
+                <ui:ImageIcon Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <StackPanel Grid.Row="1" Margin="20,4,20,10">
+            <!-- Grid, not a horizontal StackPanel: a StackPanel measures its children with infinite
+                 width, so TextTrimming never engaged and a long name was simply cut off mid-letter
+                 (same fix as MainWindow's row-name column / ErrorDetailWindow). -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon Grid.Column="0" Symbol="DocumentText24" FontSize="18" VerticalAlignment="Center"
+                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
+                           VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding Name}"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </Grid>
+            <TextBlock Text="{Binding VersionText}" FontSize="12" Margin="26,2,0,0"
+                       Visibility="{Binding HasVersionText, Converter={StaticResource BoolToVisibility}}"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+
+        <!-- The changelog text, selectable and read-only, same surface treatment as the error-detail
+             dialog. This window is only ever opened when there IS text (a link with no text gets the
+             small confirmation dialog instead), so HasText is always true here; the Visibility binding
+             is kept as a defensive fallback rather than an assumed guarantee. -->
+        <Border Grid.Row="2" BorderThickness="0,1,0,1"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                Background="{DynamicResource ControlFillColorDefaultBrush}"
+                Visibility="{Binding HasText, Converter={StaticResource BoolToVisibility}}">
+            <!-- Visible, not Auto, a scrollbar invisible until the first mouse move
+                 gave no hint the text kept going. Visible ALONE measurably did not work: WPF-UI applies
+                 its own implicit Style to every plain TextBox app-wide, whose ControlTemplate hosts an
+                 overlay-style scrollbar that stayed invisible regardless of VerticalScrollBarVisibility,
+                 a render-harness screenshot with real overflowing content (ExtentHeight > ViewportHeight)
+                 came back with a fully uniform-colour right edge, pixel-sampled, no track at all.
+                 Style="{x:Null}" reverts the WHOLE control to the framework's own default TextBox style
+                 and template together (Template="{x:Null}" alone left the Style's other setters fighting
+                 a template they no longer match, which blanked the text entirely), same idea as
+                 MainWindow's Style="{x:Null}" on an explicit ScrollViewer, just at the control level since
+                 there is no ScrollViewer element to target directly here. -->
+            <TextBox x:Name="ChangelogTextBox" Style="{x:Null}" Text="{Binding Text, Mode=OneWay}"
+                     IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                     FontSize="13" TextWrapping="Wrap" MaxHeight="373"
+                     VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled"
+                     Background="Transparent" BorderThickness="0" Padding="20,12"
+                     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                     AutomationProperties.Name="{Binding WindowTitle}"/>
+        </Border>
+
+        <Grid x:Name="ChangelogActionRow" Grid.Row="3" Margin="20,12,20,20">
+            <ui:Button Command="{Binding OpenReleaseCommand}" HorizontalAlignment="Left"
+                       Icon="{ui:SymbolIcon Open24}"
+                       Content="{Binding Loc[ChangelogOpenRelease]}"
+                       Visibility="{Binding HasUrl, Converter={StaticResource BoolToVisibility}}"/>
+            <ui:Button x:Name="CloseButton" Click="OnCloseClicked" Appearance="Primary" HorizontalAlignment="Right" IsDefault="True"
+                       Content="{Binding Loc[InstallProgressClose]}"/>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

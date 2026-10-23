@@ -1,0 +1,2188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Ultimate Updater</value>
+  </data>
+  <data name="DialogOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="DialogYes" xml:space="preserve">
+    <value>Da</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>Anulare</value>
+  </data>
+  <data name="LanguageLabel" xml:space="preserve">
+    <value>Limbă</value>
+  </data>
+  <data name="LanguageOptionSystem" xml:space="preserve">
+    <value>Sistem</value>
+  </data>
+  <data name="ThemeLabel" xml:space="preserve">
+    <value>Temă</value>
+  </data>
+  <data name="ThemeOptionSystem" xml:space="preserve">
+    <value>Sistem</value>
+  </data>
+  <data name="ThemeOptionLight" xml:space="preserve">
+    <value>Deschisă</value>
+  </data>
+  <data name="ThemeOptionDark" xml:space="preserve">
+    <value>Întunecată</value>
+  </data>
+  <data name="ScanButton" xml:space="preserve">
+    <value>Caută actualizări</value>
+  </data>
+  <data name="ScanningButton" xml:space="preserve">
+    <value>Se scanează…</value>
+  </data>
+  <data name="ColumnName" xml:space="preserve">
+    <value>Nume</value>
+  </data>
+  <data name="ColumnSource" xml:space="preserve">
+    <value>Sursă</value>
+  </data>
+  <data name="SelectAllButton" xml:space="preserve">
+    <value>Selectează tot</value>
+  </data>
+  <data name="SelectAllClear" xml:space="preserve">
+    <value>Golește selecția</value>
+  </data>
+  <data name="InstallSelectedButton" xml:space="preserve">
+    <value>Actualizează selecția</value>
+  </data>
+  <data name="InstallButton" xml:space="preserve">
+    <value>Actualizare</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Anulare</value>
+  </data>
+  <data name="SelectionSummary" xml:space="preserve">
+    <value>{0} selectate</value>
+  </data>
+  <data name="SelectionSummaryWithCritical" xml:space="preserve">
+    <value>{0} selectate ({1} critice)</value>
+  </data>
+  <data name="OpenButton" xml:space="preserve">
+    <value>Deschide</value>
+  </data>
+  <data name="ContextMenuOpenWebsite" xml:space="preserve">
+    <value>Deschide site-ul</value>
+  </data>
+  <data name="OpenFolderButton" xml:space="preserve">
+    <value>Deschide folderul</value>
+  </data>
+  <data name="CategorySoftware" xml:space="preserve">
+    <value>Software</value>
+  </data>
+  <data name="CategorySystemAndDrivers" xml:space="preserve">
+    <value>Sistem și drivere</value>
+  </data>
+  <data name="CategoryGames" xml:space="preserve">
+    <value>Jocuri</value>
+  </data>
+  <data name="CategoryDeveloperTools" xml:space="preserve">
+    <value>Instrumente pentru dezvoltatori</value>
+  </data>
+  <data name="CategoryStore" xml:space="preserve">
+    <value>Magazin</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Căutare…</value>
+  </data>
+  <data name="FilterCriticalOnly" xml:space="preserve">
+    <value>Doar critice</value>
+  </data>
+  <data name="IgnoreButton" xml:space="preserve">
+    <value>Ignoră această versiune</value>
+  </data>
+  <data name="IgnoreAllButton" xml:space="preserve">
+    <value>Ignoră toate versiunile</value>
+  </data>
+  <data name="IgnoreSimpleButton" xml:space="preserve">
+    <value>Ignoră</value>
+  </data>
+  <data name="UnignoreButton" xml:space="preserve">
+    <value>Arată din nou</value>
+  </data>
+  <data name="IgnoredBadge" xml:space="preserve">
+    <value>Ignorat</value>
+  </data>
+  <data name="IgnoreListTitle" xml:space="preserve">
+    <value>Pachete ignorate</value>
+  </data>
+  <data name="IgnoreListAllVersions" xml:space="preserve">
+    <value>toate versiunile</value>
+  </data>
+  <data name="IgnoreListRemoveAll" xml:space="preserve">
+    <value>Elimină tot</value>
+  </data>
+  <data name="IgnoreListEmpty" xml:space="preserve">
+    <value>Nimic nu este ignorat.</value>
+  </data>
+  <data name="SnoozeButton" xml:space="preserve">
+    <value>Amintește-mi mai târziu</value>
+  </data>
+  <data name="SnoozeOneDay" xml:space="preserve">
+    <value>Peste 1 zi</value>
+  </data>
+  <data name="SnoozeOneWeek" xml:space="preserve">
+    <value>Peste 1 săptămână</value>
+  </data>
+  <data name="SnoozeOneMonth" xml:space="preserve">
+    <value>Peste 1 lună</value>
+  </data>
+  <data name="UnsnoozeButton" xml:space="preserve">
+    <value>Arată acum</value>
+  </data>
+  <data name="SnoozedBadge" xml:space="preserve">
+    <value>Amânat până la {0}</value>
+  </data>
+  <data name="RetryButton" xml:space="preserve">
+    <value>Reîncearcă</value>
+  </data>
+  <data name="FilterHideManual" xml:space="preserve">
+    <value>Ascunde intrările de deschis manual</value>
+  </data>
+  <data name="FilterPersistentFailures" xml:space="preserve">
+    <value>Eșuează constant ({0})</value>
+  </data>
+  <data name="PersistentFailureHint" xml:space="preserve">
+    <value>A eșuat de {0} ori din același motiv. Ignori acest pachet?</value>
+  </data>
+  <data name="InstallVersionUnchanged" xml:space="preserve">
+    <value>Versiune neschimbată</value>
+  </data>
+  <data name="RebootRequiredBadge" xml:space="preserve">
+    <value>Repornire necesară</value>
+  </data>
+  <data name="RebootRequiredInfo" xml:space="preserve">
+    <value>{0} actualizări instalate. Reporniți pentru a finaliza.</value>
+  </data>
+  <data name="RebootRequiredInfoOne" xml:space="preserve">
+    <value>{0} actualizare instalată. Reporniți pentru a finaliza.</value>
+  </data>
+  <data name="SelectionSummarySizeSuffix" xml:space="preserve">
+    <value> · ~{0}</value>
+  </data>
+  <data name="InfoLinkButton" xml:space="preserve">
+    <value>Deschide pagina proiectului</value>
+  </data>
+  <data name="ColumnDate" xml:space="preserve">
+    <value>Dată</value>
+  </data>
+  <data name="ColumnSize" xml:space="preserve">
+    <value>Dimensiune</value>
+  </data>
+  <data name="ColumnVersion" xml:space="preserve">
+    <value>Versiune</value>
+  </data>
+  <data name="HistoryButton" xml:space="preserve">
+    <value>Istoric</value>
+  </data>
+  <data name="SettingsButton" xml:space="preserve">
+    <value>Setări</value>
+  </data>
+  <data name="HistoryTitle" xml:space="preserve">
+    <value>Istoric</value>
+  </data>
+  <data name="HistoryEmpty" xml:space="preserve">
+    <value>Nicio instalare înregistrată încă.</value>
+  </data>
+  <data name="HistoryOnlyFailed" xml:space="preserve">
+    <value>Doar cele eșuate</value>
+  </data>
+  <data name="HistoryNoMatches" xml:space="preserve">
+    <value>Nicio intrare nu corespunde căutării.</value>
+  </data>
+  <data name="HistoryColumnWhen" xml:space="preserve">
+    <value>Când</value>
+  </data>
+  <data name="HistoryColumnSize" xml:space="preserve">
+    <value>Dimensiune</value>
+  </data>
+  <data name="HistoryColumnResult" xml:space="preserve">
+    <value>Rezultat</value>
+  </data>
+  <data name="HistoryCopy" xml:space="preserve">
+    <value>Copiază lista</value>
+  </data>
+  <data name="HistoryCopied" xml:space="preserve">
+    <value>{0} intrări copiate</value>
+  </data>
+  <data name="HistoryCopyColumnFrom" xml:space="preserve">
+    <value>De la</value>
+  </data>
+  <data name="HistoryCopyColumnTo" xml:space="preserve">
+    <value>La</value>
+  </data>
+  <data name="HistorySucceeded" xml:space="preserve">
+    <value>Actualizat</value>
+  </data>
+  <data name="HistoryFailed" xml:space="preserve">
+    <value>Eșuat</value>
+  </data>
+  <data name="HistoryHandedOff" xml:space="preserve">
+    <value>Predat</value>
+  </data>
+  <data name="HistoryNotApplicable" xml:space="preserve">
+    <value>Nicio versiune potrivită</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Setări</value>
+  </data>
+  <data name="SettingsScanGroup" xml:space="preserve">
+    <value>Scanare</value>
+  </data>
+  <data name="SettingsIntervalLabel" xml:space="preserve">
+    <value>Scanare automată la fiecare</value>
+  </data>
+  <data name="SettingsIntervalOff" xml:space="preserve">
+    <value>Dezactivat</value>
+  </data>
+  <data name="SettingsIntervalHours6" xml:space="preserve">
+    <value>6 ore</value>
+  </data>
+  <data name="SettingsIntervalHours12" xml:space="preserve">
+    <value>12 ore</value>
+  </data>
+  <data name="SettingsIntervalDaily" xml:space="preserve">
+    <value>24 ore</value>
+  </data>
+  <data name="SettingsIntervalWeekly" xml:space="preserve">
+    <value>7 zile</value>
+  </data>
+  <data name="SettingsScanOnStart" xml:space="preserve">
+    <value>Scanare la pornire</value>
+  </data>
+  <data name="SettingsInstallGroup" xml:space="preserve">
+    <value>Instalare</value>
+  </data>
+  <data name="SettingsPreselectCritical" xml:space="preserve">
+    <value>Preselectează actualizările critice</value>
+  </data>
+  <data name="SettingsRestorePoint" xml:space="preserve">
+    <value>Creează mai întâi un punct de restaurare</value>
+  </data>
+  <data name="SettingsRestorePointDesc" xml:space="preserve">
+    <value>Cel mult unul pe zi. Windows însuși nu permite mai multe, iar fiecare costă până la un minut înainte ca primul pachet să înceapă.</value>
+  </data>
+  <data name="InstallRetryRound" xml:space="preserve">
+    <value>A doua încercare</value>
+  </data>
+  <data name="AlreadyRunning" xml:space="preserve">
+    <value>Ultimate Updater rulează deja. Căutați-l în zona de notificare.</value>
+  </data>
+  <data name="SettingsNotifyGroup" xml:space="preserve">
+    <value>Notificări</value>
+  </data>
+  <data name="SettingsNotifyOnFound" xml:space="preserve">
+    <value>Notifică atunci când se găsesc actualizări</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnly" xml:space="preserve">
+    <value>Doar pentru actualizările critice</value>
+  </data>
+  <data name="SettingsAppearanceGroup" xml:space="preserve">
+    <value>Aspect</value>
+  </data>
+  <data name="CategoryManualUpdate" xml:space="preserve">
+    <value>De deschis manual</value>
+  </data>
+  <data name="CategoryGitHubManual" xml:space="preserve">
+    <value>GitHub (manual)</value>
+  </data>
+  <data name="CategoryOpenStore" xml:space="preserve">
+    <value>Deschide într-un magazin</value>
+  </data>
+  <data name="CategoryOpenGames" xml:space="preserve">
+    <value>Deschide într-un launcher</value>
+  </data>
+  <data name="InstallProgressCount" xml:space="preserve">
+    <value>{0} din {1} finalizate</value>
+  </data>
+  <data name="InstallRunningCount" xml:space="preserve">
+    <value>{0} instalări în curs</value>
+  </data>
+  <data name="InstallProgressCancel" xml:space="preserve">
+    <value>Oprește tot</value>
+  </data>
+  <data name="InstallProgressClose" xml:space="preserve">
+    <value>Închide</value>
+  </data>
+  <data name="InstallProgressDownloaded" xml:space="preserve">
+    <value>{0} descărcat</value>
+  </data>
+  <data name="InstallProgressTotalSize" xml:space="preserve">
+    <value>Descărcare {0}</value>
+  </data>
+  <data name="InstallQueueHeader" xml:space="preserve">
+    <value>{0} încă în coadă</value>
+  </data>
+  <data name="TooltipCopyHint" xml:space="preserve">
+    <value>Clic dreapta pentru a copia</value>
+  </data>
+  <data name="ChangelogTitle" xml:space="preserve">
+    <value>Jurnal de modificări</value>
+  </data>
+  <data name="ShortcutsTitle" xml:space="preserve">
+    <value>Comenzi rapide de la tastatură</value>
+  </data>
+  <data name="ChangelogOpenRelease" xml:space="preserve">
+    <value>Deschide pagina versiunii</value>
+  </data>
+  <data name="ChangelogNoTextDialogBody" xml:space="preserve">
+    <value>Nu există text de jurnal de modificări pentru această actualizare. Pagina furnizorului ({0}) se va deschide în browser.</value>
+  </data>
+  <data name="ChangelogOpenSite" xml:space="preserve">
+    <value>Deschide pagina</value>
+  </data>
+  <data name="ChangelogButtonTooltip" xml:space="preserve">
+    <value>Vezi jurnalul de modificări</value>
+  </data>
+  <data name="ChangelogNone" xml:space="preserve">
+    <value>Nu s-au găsit note de lansare pentru această versiune.</value>
+  </data>
+  <data name="InstallQueueRemoveTooltip" xml:space="preserve">
+    <value>Elimină din coadă</value>
+  </data>
+  <data name="QueueReorderTooltip" xml:space="preserve">
+    <value>Trageți pentru a reordona, sau Alt cu tastele săgeată</value>
+  </data>
+  <data name="QueueRowPositionAutomation" xml:space="preserve">
+    <value>{0}, poziția {1} din {2}</value>
+  </data>
+  <data name="InstallQueueNeedsAdminTooltip" xml:space="preserve">
+    <value>Necesită drepturi de administrator</value>
+  </data>
+  <data name="InstallQueueItemRemoved" xml:space="preserve">
+    <value>Eliminat din coadă</value>
+  </data>
+  <data name="UninstallFailed" xml:space="preserve">
+    <value>Dezinstalarea a eșuat. Deschideți detaliile pentru motiv.</value>
+  </data>
+  <data name="SteamUninstallHandedOff" xml:space="preserve">
+    <value>Fereastra de dezinstalare Steam este deschisă. Finalizați acolo; rezultatul nu este vizibil aici.</value>
+  </data>
+  <data name="ErrorDetailTitle" xml:space="preserve">
+    <value>Detalii eroare</value>
+  </data>
+  <data name="ShowErrorDetailButton" xml:space="preserve">
+    <value>Detalii</value>
+  </data>
+  <data name="StartButton" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="UninstallButton" xml:space="preserve">
+    <value>Dezinstalare</value>
+  </data>
+  <data name="UninstallConfirmHeadline" xml:space="preserve">
+    <value>Dezinstalați „{0}”?</value>
+  </data>
+  <data name="UninstallConfirmBody" xml:space="preserve">
+    <value>Programul va fi eliminat de pe acest PC.
+Această acțiune nu poate fi anulată de Ultimate Updater.</value>
+  </data>
+  <data name="UninstallBlockedByActivity" xml:space="preserve">
+    <value>Nu se poate dezinstala acum: o instalare este în curs. Încercați din nou după ce s-a terminat.</value>
+  </data>
+  <data name="RowDowngrade" xml:space="preserve">
+    <value>Revenire la {0}</value>
+  </data>
+  <data name="DowngradeConfirmTitle" xml:space="preserve">
+    <value>Instalați versiunea mai veche?</value>
+  </data>
+  <data name="DowngradeConfirmBody" xml:space="preserve">
+    <value>{0} va fi readus de la {1} la {2}. Versiunea mai nouă va fi oferită din nou la următoarea scanare.</value>
+  </data>
+  <data name="DowngradeBlockedByActivity" xml:space="preserve">
+    <value>Nu se poate reveni acum: o instalare este în curs. Încercați din nou după ce s-a terminat.</value>
+  </data>
+  <data name="RestorePointLast" xml:space="preserve">
+    <value>Ultimul punct de restaurare: {0}</value>
+  </data>
+  <data name="RestorePointNone" xml:space="preserve">
+    <value>Niciun punct de restaurare de la acest program încă</value>
+  </data>
+  <data name="SettingsIntervalDesc" xml:space="preserve">
+    <value>Cât de des se verifică actualizările în fundal.</value>
+  </data>
+  <data name="SettingsScanOnStartDesc" xml:space="preserve">
+    <value>Scanează o dată la fiecare pornire a aplicației.</value>
+  </data>
+  <data name="SettingsPreselectCriticalDesc" xml:space="preserve">
+    <value>Bifează automat actualizările relevante pentru securitate.</value>
+  </data>
+  <data name="InstallParallelLabel" xml:space="preserve">
+    <value>Instalări simultane</value>
+  </data>
+  <data name="InstallParallelHint" xml:space="preserve">
+    <value>Mai multe instalări simultane sunt mai rapide. Unele programe de instalare refuză să ruleze alături de altul; acelea sunt reîncercate separat.</value>
+  </data>
+  <data name="SettingsParallelScans" xml:space="preserve">
+    <value>Surse verificate simultan</value>
+  </data>
+  <data name="SettingsParallelAuto" xml:space="preserve">
+    <value>Setează automat pentru acest computer</value>
+  </data>
+  <data name="SettingsScanDownloads" xml:space="preserve">
+    <value>Verifică fișierele descărcate</value>
+  </data>
+  <data name="SettingsScanDownloadsDesc" xml:space="preserve">
+    <value>Windows Security verifică fișierele pe care această aplicație le descarcă ea însăși, înainte de a le rula.</value>
+  </data>
+  <data name="ScanningDownload" xml:space="preserve">
+    <value>se scanează pentru viruși</value>
+  </data>
+  <data name="SettingsRegistryBackupGroup" xml:space="preserve">
+    <value>Curățare</value>
+  </data>
+  <data name="SettingsRegistryBackupFolder" xml:space="preserve">
+    <value>Folder de backup</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDesc" xml:space="preserve">
+    <value>Fiecare curățare a registrului face mai întâi backup cheilor pe care le atinge aici, înainte de a șterge ceva. Implicit: %APPDATA%\UltimateUpdater\registry-backups.</value>
+  </data>
+  <data name="SettingsRegistryBackupRetention" xml:space="preserve">
+    <value>Păstrare</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDesc" xml:space="preserve">
+    <value>Câte dintre aceste backupuri să fie păstrate. Cel mai vechi este eliminat de îndată ce se atinge acest număr.</value>
+  </data>
+  <data name="SettingsDataGroup" xml:space="preserve">
+    <value>Date și jurnale</value>
+  </data>
+  <data name="SettingsExcludedPathsHeader" xml:space="preserve">
+    <value>{0} excluse permanent</value>
+  </data>
+  <data name="SettingsExcludedPathsDesc" xml:space="preserve">
+    <value>Excluse din fereastra de curățare prin meniul de clic dreapta al acesteia.</value>
+  </data>
+  <data name="SettingsExcludedPathsEmpty" xml:space="preserve">
+    <value>Nicio cale exclusă permanent.</value>
+  </data>
+  <data name="SettingsExcludedPathRelease" xml:space="preserve">
+    <value>Elimină excluderea</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAll" xml:space="preserve">
+    <value>Elimină toate excluderile</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmHeadline" xml:space="preserve">
+    <value>Elimini toate excluderile?</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmBody" xml:space="preserve">
+    <value>Curățarea va oferi din nou aceste căi data viitoare când le va găsi.</value>
+  </data>
+  <data name="SettingsRegistryRetentionOption" xml:space="preserve">
+    <value>{0} backupuri</value>
+  </data>
+  <data name="ScanThreatFound" xml:space="preserve">
+    <value>Antivirusul dvs. a marcat fișierul descărcat ca fiind rău intenționat. A fost eliminat, nu executat.</value>
+  </data>
+  <data name="ScanClean" xml:space="preserve">
+    <value>nicio amenințare găsită</value>
+  </data>
+  <data name="SettingsNotifyOnFoundDesc" xml:space="preserve">
+    <value>Afișează o notificare în zona de notificare când se găsesc actualizări.</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnlyDesc" xml:space="preserve">
+    <value>Notifică doar pentru actualizările relevante pentru securitate.</value>
+  </data>
+  <data name="ThemeDesc" xml:space="preserve">
+    <value>Se potrivește cu Windows sau forțează modul deschis ori întunecat.</value>
+  </data>
+  <data name="SettingsAutostartDesc" xml:space="preserve">
+    <value>Pornește cu Windows, minimizat în zona de notificare.</value>
+  </data>
+  <data name="SettingsCloseToTrayDesc" xml:space="preserve">
+    <value>Închiderea ferestrei păstrează aplicația activă în zona de notificare.</value>
+  </data>
+  <data name="SettingsUpdatesGroup" xml:space="preserve">
+    <value>Actualizări ale aplicației</value>
+  </data>
+  <data name="SettingsCheckUpdatesDesc" xml:space="preserve">
+    <value>Verifică dacă există o versiune nouă de Ultimate Updater.</value>
+  </data>
+  <data name="SettingsCheckNow" xml:space="preserve">
+    <value>Verifică acum</value>
+  </data>
+  <data name="SettingsUpToDate" xml:space="preserve">
+    <value>Aveți cea mai recentă versiune.</value>
+  </data>
+  <data name="SettingsCurrentVersion" xml:space="preserve">
+    <value>Versiunea {0}</value>
+  </data>
+  <data name="SettingsCheckingUpdates" xml:space="preserve">
+    <value>Se verifică…</value>
+  </data>
+  <data name="SettingsSourcesGroup" xml:space="preserve">
+    <value>Surse</value>
+  </data>
+  <data name="SettingsSourcesHint" xml:space="preserve">
+    <value>Sursele dezactivate nu sunt scanate.</value>
+  </data>
+  <data name="SettingsSourcesSelectAll" xml:space="preserve">
+    <value>Toate sursele</value>
+  </data>
+  <data name="SettingsSourcesSearchPlaceholder" xml:space="preserve">
+    <value>Căutare surse…</value>
+  </data>
+  <data name="SettingsSourcesSearchEmpty" xml:space="preserve">
+    <value>Nicio sursă nu corespunde căutării.</value>
+  </data>
+  <data name="SettingsShowAllSources" xml:space="preserve">
+    <value>Arată sursele care nu sunt instalate ({0})</value>
+  </data>
+  <data name="SettingsStartupGroup" xml:space="preserve">
+    <value>Pornire</value>
+  </data>
+  <data name="SettingsAutostart" xml:space="preserve">
+    <value>Pornește cu Windows</value>
+  </data>
+  <data name="SettingsCloseToTray" xml:space="preserve">
+    <value>Închide în zona de notificare în loc să iasă</value>
+  </data>
+  <data name="SettingsCleanupReminder" xml:space="preserve">
+    <value>Amintește-mi când curățarea întârzie</value>
+  </data>
+  <data name="SettingsAdvancedGroup" xml:space="preserve">
+    <value>Avansat</value>
+  </data>
+  <data name="TrayOpen" xml:space="preserve">
+    <value>Deschide</value>
+  </data>
+  <data name="TrayScan" xml:space="preserve">
+    <value>Caută actualizări</value>
+  </data>
+  <data name="TrayExit" xml:space="preserve">
+    <value>Ieșire</value>
+  </data>
+  <data name="NotifyFound" xml:space="preserve">
+    <value>Actualizări disponibile: {0}</value>
+  </data>
+  <data name="NotifyFoundWithCritical" xml:space="preserve">
+    <value>Actualizări disponibile: {0} (critice: {1})</value>
+  </data>
+  <data name="SelfUpdateTitle" xml:space="preserve">
+    <value>Este disponibilă o versiune nouă</value>
+  </data>
+  <data name="SelfUpdateInstall" xml:space="preserve">
+    <value>Actualizează acum</value>
+  </data>
+  <data name="SelfUpdateDismiss" xml:space="preserve">
+    <value>Închide</value>
+  </data>
+  <data name="SelfUpdateWhatsNew" xml:space="preserve">
+    <value>Ce este nou</value>
+  </data>
+  <data name="CleanupReminderBanner" xml:space="preserve">
+    <value>Ultima curățare a avut loc pe {0}.</value>
+  </data>
+  <data name="CleanupReminderThisTime" xml:space="preserve">
+    <value>Doar de data aceasta</value>
+  </data>
+  <data name="CleanupReminderNeverAgain" xml:space="preserve">
+    <value>Nu mai afișa</value>
+  </data>
+  <data name="SelfUpdateFailed" xml:space="preserve">
+    <value>Actualizarea nu a putut fi verificată și a fost eliminată.</value>
+  </data>
+  <data name="HeadlineScanning" xml:space="preserve">
+    <value>Se verifică actualizările…</value>
+  </data>
+  <data name="HeadlineUpToDate" xml:space="preserve">
+    <value>Totul este la zi</value>
+  </data>
+  <data name="HeadlineUpdates" xml:space="preserve">
+    <value>Actualizări disponibile: {0}</value>
+  </data>
+  <data name="SubheadlineScanning" xml:space="preserve">
+    <value>Se interoghează fiecare sursă configurată.</value>
+  </data>
+  <data name="EmptyState" xml:space="preserve">
+    <value>Nu s-au găsit actualizări. Rulați o scanare pentru a verifica din nou.</value>
+  </data>
+  <data name="ManualUpdatesSectionTitle" xml:space="preserve">
+    <value>De deschis manual: această aplicație nu poate rula aceste actualizări</value>
+  </data>
+  <data name="CriticalBadge" xml:space="preserve">
+    <value>Critic</value>
+  </data>
+  <data name="RowQueued" xml:space="preserve">
+    <value>În coadă</value>
+  </data>
+  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
+    <value>{0} · {1:0} %</value>
+  </data>
+  <data name="CleanupDoneCount" xml:space="preserve">
+    <value>{0} din {1} zone finalizate</value>
+  </data>
+  <data name="CleanupDoneCountOne" xml:space="preserve">
+    <value>{0} din {1} zonă finalizată</value>
+  </data>
+  <data name="CleanupRemainingCount" xml:space="preserve">
+    <value>{0} rămase</value>
+  </data>
+  <data name="CleanupEmptyCount" xml:space="preserve">
+    <value>Zone fără rezultate: {0}</value>
+  </data>
+  <data name="CleanupEmptyCountOne" xml:space="preserve">
+    <value>{0} zonă fără rezultate</value>
+  </data>
+  <data name="InstallRestorePointStep" xml:space="preserve">
+    <value>Se creează un punct de restaurare…</value>
+  </data>
+  <data name="ActivityRestorePointSkipped" xml:space="preserve">
+    <value>Punct de restaurare omis, unul de azi există deja.</value>
+  </data>
+  <data name="CleanupRestorePointParallel" xml:space="preserve">
+    <value>Se creează punctul de restaurare, pașii lungi rulează deja</value>
+  </data>
+  <data name="RowAlsoInSources" xml:space="preserve">
+    <value>Actualizat prin {0}; oferit și de {1}.</value>
+  </data>
+  <data name="RowDone" xml:space="preserve">
+    <value>Finalizat</value>
+  </data>
+  <data name="RowFailed" xml:space="preserve">
+    <value>Eșuat</value>
+  </data>
+  <data name="SubheadlineScanningProgress" xml:space="preserve">
+    <value>{0} din {1} surse verificate</value>
+  </data>
+  <data name="SubheadlineScanningProgressOne" xml:space="preserve">
+    <value>{0} din {1} sursă verificată</value>
+  </data>
+  <data name="SubheadlineScanningSources" xml:space="preserve">
+    <value>Se verifică: {0}</value>
+  </data>
+  <data name="SourceDescWinget" xml:space="preserve">
+    <value>Managerul oficial de pachete Windows al Microsoft. Listează și actualizează silențios aplicațiile instalate prin el.</value>
+  </data>
+  <data name="SourceDescWindowsUpdate" xml:space="preserve">
+    <value>Propriul serviciu de actualizare Windows: actualizări de calitate, drivere și definiții de la Microsoft, niciodată upgrade-uri de funcții.</value>
+  </data>
+  <data name="SourceDescMsStore" xml:space="preserve">
+    <value>Aplicația Microsoft Store. Deschide doar propria pagină de actualizare, deoarece Store-ul ascunde versiunile per aplicație de alte instrumente.</value>
+  </data>
+  <data name="SourceDescChocolatey" xml:space="preserve">
+    <value>Manager de pachete al comunității pentru Windows (choco.exe). Actualizează pachete întreținute de comunitate; necesită drepturi de administrator.</value>
+  </data>
+  <data name="SourceDescScoop" xml:space="preserve">
+    <value>Manager de pachete pentru linia de comandă, instalează în folderul utilizatorului fără drepturi de administrator.</value>
+  </data>
+  <data name="SourceDescPip" xml:space="preserve">
+    <value>Instalatorul de pachete al Python. Listează și actualizează pachetele Python învechite.</value>
+  </data>
+  <data name="SourceDescNpm" xml:space="preserve">
+    <value>Managerul de pachete al Node.js. Listează și actualizează pachetele npm instalate global.</value>
+  </data>
+  <data name="SourceDescPnpm" xml:space="preserve">
+    <value>Pachetele globale ale pnpm din același registru npm pe care îl folosește npm însuși. Nu a fost verificat cu o instalare pnpm reală; raportați o problemă dacă un rând pare greșit.</value>
+  </data>
+  <data name="SourceDescDotnetTool" xml:space="preserve">
+    <value>Instrumente globale .NET, verificate cu fluxul public NuGet pentru versiuni mai noi.</value>
+  </data>
+  <data name="SourceNameDotnetTool" xml:space="preserve">
+    <value>Instrumente .NET</value>
+  </data>
+  <data name="SourceDescPsGallery" xml:space="preserve">
+    <value>Module PowerShell Gallery instalate în profilul utilizatorului.</value>
+  </data>
+  <data name="SourceDescGem" xml:space="preserve">
+    <value>Managerul de pachete al Ruby. Listează și actualizează RubyGems învechite.</value>
+  </data>
+  <data name="SourceDescComposer" xml:space="preserve">
+    <value>Managerul de dependențe al PHP. Listează și actualizează pachetele Composer globale.</value>
+  </data>
+  <data name="SourceDescRustup" xml:space="preserve">
+    <value>Managerul lanțurilor de instrumente Rust. O singură actualizare reînnoiește fiecare lanț de instrumente instalat și rustup însuși.</value>
+  </data>
+  <data name="SourceDescVcpkg" xml:space="preserve">
+    <value>Biblioteci C/C++ prin vcpkg (mod clasic). Nu a fost verificat cu o instalare vcpkg reală; raportați o problemă dacă un rând pare greșit.</value>
+  </data>
+  <data name="SourceDescMise" xml:space="preserve">
+    <value>Versiuni de instrumente gestionate de mise. Nu a fost verificat cu o instalare mise reală; raportați o problemă dacă un rând pare greșit.</value>
+  </data>
+  <data name="SourceDescSteam" xml:space="preserve">
+    <value>Clientul Steam al Valve. Citește starea reală de actualizare a jocurilor din propriile fișiere ale Steam; actualizarea în sine rulează în Steam.</value>
+  </data>
+  <data name="SourceDescNvidia" xml:space="preserve">
+    <value>Interoghează propriul serviciu de drivere al NVIDIA pentru cel mai recent driver Game Ready. Îl instalează direct după verificarea semnăturii NVIDIA.</value>
+  </data>
+  <data name="SourceDescGitHubRelease" xml:space="preserve">
+    <value>Verifică programele instalate în afara unui manager de pachete ale căror intrări de dezinstalare indică un proiect GitHub, comparând fiecare program cu cea mai recentă lansare. Deschide pagina lansării în loc să instaleze.</value>
+  </data>
+  <data name="SourceNameGitHubRelease" xml:space="preserve">
+    <value>Lansări GitHub</value>
+  </data>
+  <data name="SourceDescLauncher" xml:space="preserve">
+    <value>Deschide clientul {0}. {0} se actualizează pe sine și jocurile la pornire; această aplicație nu poate nici vedea, nici declanșa acest lucru.</value>
+  </data>
+  <data name="FatalErrorHeadline" xml:space="preserve">
+    <value>Ultimate Updater a întâmpinat o problemă</value>
+  </data>
+  <data name="FatalError" xml:space="preserve">
+    <value>Ultimate Updater trebuie să se închidă. Detaliile sunt în folderul de jurnale:
+{0}</value>
+  </data>
+  <data name="InstallFailed" xml:space="preserve">
+    <value>Actualizarea a eșuat. Deschideți detaliile pentru motiv.</value>
+  </data>
+  <data name="InstallElevationDeclined" xml:space="preserve">
+    <value>Drepturile de administrator au fost refuzate.</value>
+  </data>
+  <data name="InstallWorkerStopped" xml:space="preserve">
+    <value>Pasul de administrare s-a oprit înainte ca această actualizare să fie instalată.</value>
+  </data>
+  <data name="HeadlineUpdatesOne" xml:space="preserve">
+    <value>{0} actualizare disponibilă</value>
+  </data>
+  <data name="NotifyFoundOne" xml:space="preserve">
+    <value>{0} actualizare disponibilă</value>
+  </data>
+  <data name="NotifyFoundOneWithCritical" xml:space="preserve">
+    <value>{0} actualizare disponibilă ({1} critică)</value>
+  </data>
+  <data name="ScanFailed" xml:space="preserve">
+    <value>Această sursă nu a putut fi verificată. Deschideți detaliile pentru motiv.</value>
+  </data>
+  <data name="ScanStateWaiting" xml:space="preserve">
+    <value>Se așteaptă…</value>
+  </data>
+  <data name="ScanStateRunning" xml:space="preserve">
+    <value>În curs…</value>
+  </data>
+  <data name="ScanStateSlow" xml:space="preserve">
+    <value>Încă în curs…</value>
+  </data>
+  <data name="ScanStateCancelled" xml:space="preserve">
+    <value>Anulat</value>
+  </data>
+  <data name="CancelSourceScanTooltip" xml:space="preserve">
+    <value>Oprește verificarea acestei surse</value>
+  </data>
+  <data name="EmptyStateFiltered" xml:space="preserve">
+    <value>Nimic nu corespunde căutării sau filtrului curent.</value>
+  </data>
+  <data name="InstallCancelled" xml:space="preserve">
+    <value>Anulat înainte ca această actualizare să fie instalată.</value>
+  </data>
+  <data name="InstallWaitingForCleanup" xml:space="preserve">
+    <value>Se așteaptă ca această zonă să fie eliberată de curățare</value>
+  </data>
+  <data name="InstallAlreadyCurrent" xml:space="preserve">
+    <value>Deja la versiunea {0}, nimic de făcut.</value>
+  </data>
+  <data name="ErrorDetailOutput" xml:space="preserve">
+    <value>Ce a raportat instrumentul</value>
+  </data>
+  <data name="ErrorDetailLogInSettings" xml:space="preserve">
+    <value>Vezi folderul de jurnale din Setări</value>
+  </data>
+  <data name="ErrorDetailRetryInMenu" xml:space="preserve">
+    <value>Reîncercați interactiv din meniul de clic dreapta al rândului</value>
+  </data>
+  <data name="ErrorWhatDoesThisMean" xml:space="preserve">
+    <value>Ce înseamnă asta?</value>
+  </data>
+  <data name="ErrorWindowsSaysPrefix" xml:space="preserve">
+    <value>Windows spune:</value>
+  </data>
+  <data name="ErrorNoMeaning" xml:space="preserve">
+    <value>Windows nu are text pentru acest cod.</value>
+  </data>
+  <data name="ErrorDetailSourceLog" xml:space="preserve">
+    <value>Din jurnal în jurul acestei ore (nu s-a salvat nicio ieșire cu această intrare)</value>
+  </data>
+  <data name="ErrorDetailSourceShort" xml:space="preserve">
+    <value>Doar mesajul scurt a fost salvat cu această intrare</value>
+  </data>
+  <data name="ErrorDetailCopy" xml:space="preserve">
+    <value>Copiază detaliile</value>
+  </data>
+  <data name="ErrorCopyReport" xml:space="preserve">
+    <value>Copiază raportul de eroare</value>
+  </data>
+  <data name="ErrorDetailCopied" xml:space="preserve">
+    <value>Copiat în clipboard</value>
+  </data>
+  <data name="SubListCount" xml:space="preserve">
+    <value>Actualizări în așteptare: {0}</value>
+  </data>
+  <data name="SubListCountOne" xml:space="preserve">
+    <value>{0} actualizare în așteptare</value>
+  </data>
+  <data name="ThemeOptionHacker" xml:space="preserve">
+    <value>Hacker</value>
+  </data>
+  <data name="ThemeOptionNeon" xml:space="preserve">
+    <value>Neon</value>
+  </data>
+  <data name="SettingsResetGroup" xml:space="preserve">
+    <value>Resetare</value>
+  </data>
+  <data name="SettingsResetDesc" xml:space="preserve">
+    <value>Restabilește starea din fabrică a acestei aplicații.</value>
+  </data>
+  <data name="SettingsResetDoneHeadline" xml:space="preserve">
+    <value>Finalizat</value>
+  </data>
+  <data name="SettingsResetDoneBody" xml:space="preserve">
+    <value>Aplicația este din nou în starea din fabrică.</value>
+  </data>
+  <data name="SettingsDeleteDataPartialHeadline" xml:space="preserve">
+    <value>Unele fișiere sunt încă în uz</value>
+  </data>
+  <data name="SettingsDeleteDataPartialBody" xml:space="preserve">
+    <value>Setările au fost resetate. Câteva fișiere încă în uz (de exemplu jurnalul curent) sunt eliminate la următoarea pornire.</value>
+  </data>
+  <data name="HistoryFilterSource" xml:space="preserve">
+    <value>Sursă:</value>
+  </data>
+  <data name="HistoryRangeAll" xml:space="preserve">
+    <value>Toate</value>
+  </data>
+  <data name="HistoryRangeToday" xml:space="preserve">
+    <value>Astăzi</value>
+  </data>
+  <data name="HistoryRangeWeek" xml:space="preserve">
+    <value>7 zile</value>
+  </data>
+  <data name="HistoryRangeMonth" xml:space="preserve">
+    <value>30 zile</value>
+  </data>
+  <data name="CleanupTitle" xml:space="preserve">
+    <value>Eliberează spațiu</value>
+  </data>
+  <data name="CleanupStart" xml:space="preserve">
+    <value>Curăță</value>
+  </data>
+  <data name="CleanupPause" xml:space="preserve">
+    <value>Pauză</value>
+  </data>
+  <data name="CleanupResume" xml:space="preserve">
+    <value>Reia</value>
+  </data>
+  <data name="CleanupStop" xml:space="preserve">
+    <value>Oprește</value>
+  </data>
+  <data name="CleanupRescan" xml:space="preserve">
+    <value>Rescanare</value>
+  </data>
+  <data name="CleanupStoppingRepair" xml:space="preserve">
+    <value>Oprit. Reparația de sistem în curs trebuie să se termine; întreruperea ei ar putea deteriora depozitul de componente al Windows.</value>
+  </data>
+  <data name="CleanupNoProgressHint" xml:space="preserve">
+    <value>Windows nu raportează progres pentru acest pas. Rulează.</value>
+  </data>
+  <data name="CleanupDefragName" xml:space="preserve">
+    <value>Optimizează unitatea {0}</value>
+  </data>
+  <data name="CleanupDefragConsequence" xml:space="preserve">
+    <value>Rulează optimizarea Windows pentru această unitate: defragmentare pe un hard disk, retrim pe un SSD. Nu eliberează spațiu, reorganizează ce există deja.</value>
+  </data>
+  <data name="CleanupDefragRowHdd" xml:space="preserve">
+    <value>Defragmentează {0}</value>
+  </data>
+  <data name="CleanupDefragRowSsd" xml:space="preserve">
+    <value>Optimizează {0}, Trim</value>
+  </data>
+  <data name="CleanupDefragRowUnspecified" xml:space="preserve">
+    <value>Optimizează {0}</value>
+  </data>
+  <data name="MediaTypeHdd" xml:space="preserve">
+    <value>HDD</value>
+  </data>
+  <data name="MediaTypeSsd" xml:space="preserve">
+    <value>SSD</value>
+  </data>
+  <data name="MediaTypeUsbDrive" xml:space="preserve">
+    <value>Unitate USB</value>
+  </data>
+  <data name="MediaTypeOtherDrive" xml:space="preserve">
+    <value>Unitate</value>
+  </data>
+  <data name="CleanupDriveSubline" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="CleanupDriveSublineUsb" xml:space="preserve">
+    <value>{0}, {1} · {2}</value>
+  </data>
+  <data name="DefragWarningTitle" xml:space="preserve">
+    <value>Aceasta poate dura ore</value>
+  </data>
+  <data name="DefragWarningBody" xml:space="preserve">
+    <value>Defragmentarea unui hard disk mare durează mult. Puteți închide această fereastră, procesul continuă. Ieșirea din program îl oprește.</value>
+  </data>
+  <data name="DefragQuitWarningTitle" xml:space="preserve">
+    <value>O optimizare a unității încă rulează</value>
+  </data>
+  <data name="DefragQuitWarningBody" xml:space="preserve">
+    <value>Ieșirea acum o oprește. Unitatea rămâne utilizabilă, optimizarea rămâne pur și simplu neterminată.</value>
+  </data>
+  <data name="DefragQuitAnyway" xml:space="preserve">
+    <value>Ieși oricum</value>
+  </data>
+  <data name="DefragKeepRunning" xml:space="preserve">
+    <value>Lasă să continue</value>
+  </data>
+  <data name="WorkQuitWarningTitle" xml:space="preserve">
+    <value>Actualizări sau o curățare încă rulează</value>
+  </data>
+  <data name="WorkQuitWarningBody" xml:space="preserve">
+    <value>Ieșirea acum le oprește la jumătate: un pachet poate rămâne instalat pe jumătate, iar o curățare neterminată. Dacă închizi doar fereastra, ele continuă.</value>
+  </data>
+  <data name="CleanupHistoryTitle" xml:space="preserve">
+    <value>Curățări anterioare</value>
+  </data>
+  <data name="CleanupHistoryButton" xml:space="preserve">
+    <value>Istoricul curățării</value>
+  </data>
+  <data name="CleanupGroupTempFiles" xml:space="preserve">
+    <value>Fișiere temporare</value>
+  </data>
+  <data name="CleanupGroupCaches" xml:space="preserve">
+    <value>Cache-uri</value>
+  </data>
+  <data name="CleanupGroupWindowsMaintenance" xml:space="preserve">
+    <value>Întreținere Windows</value>
+  </data>
+  <data name="CleanupGroupRecycleBin" xml:space="preserve">
+    <value>Coș de reciclare</value>
+  </data>
+  <data name="CleanupGroupSystemRepair" xml:space="preserve">
+    <value>Reparație de sistem</value>
+  </data>
+  <data name="CleanupGroupRegistry" xml:space="preserve">
+    <value>Registru</value>
+  </data>
+  <data name="CleanupHistoryEmpty" xml:space="preserve">
+    <value>Nimic curățat încă.</value>
+  </data>
+  <data name="CleanupHistoryFreed" xml:space="preserve">
+    <value>{0} eliberați</value>
+  </data>
+  <data name="CleanupHistoryEntrySummary" xml:space="preserve">
+    <value>Zone curățate: {0}</value>
+  </data>
+  <data name="CleanupHistoryEntrySummaryOne" xml:space="preserve">
+    <value>{0} zonă curățată</value>
+  </data>
+  <data name="CleanupHistorySkipped" xml:space="preserve">
+    <value>{0} în uz</value>
+  </data>
+  <data name="CleanupHistoryClearAll" xml:space="preserve">
+    <value>Șterge tot</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmHeadline" xml:space="preserve">
+    <value>Ștergeți întregul istoric?</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmDetail" xml:space="preserve">
+    <value>Doar istoricul este șters. Spațiul deja eliberat rămâne eliberat.</value>
+  </data>
+  <data name="CleanupHistoryDeleteEntry" xml:space="preserve">
+    <value>Șterge această intrare</value>
+  </data>
+  <data name="CleanupHistoryTotalFreed" xml:space="preserve">
+    <value>{0} eliberați în total</value>
+  </data>
+  <data name="CleanupHistoryRunCount" xml:space="preserve">
+    <value>Rulări: {0} · ultima pe {1}</value>
+  </data>
+  <data name="CleanupHistoryRunCountOne" xml:space="preserve">
+    <value>{0} rulare · ultima pe {1}</value>
+  </data>
+  <data name="CleanupHistoryTopCategories" xml:space="preserve">
+    <value>Cele mai mari zone</value>
+  </data>
+  <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
+    <value>Nu s-a eliberat încă nimic.</value>
+  </data>
+  <data name="CleanupPausedNote" xml:space="preserve">
+    <value>în așteptare</value>
+  </data>
+  <data name="CleanupScanning" xml:space="preserve">
+    <value>încă se măsoară…</value>
+  </data>
+  <data name="CleanupOfTotal" xml:space="preserve">
+    <value>din {0} găsiți</value>
+  </data>
+  <data name="CleanupNeedsAdmin" xml:space="preserve">
+    <value>necesită administrator</value>
+  </data>
+  <data name="CleanupStateWaiting" xml:space="preserve">
+    <value>așteaptă</value>
+  </data>
+  <data name="CleanupStateCleaning" xml:space="preserve">
+    <value>se curăță</value>
+  </data>
+  <data name="CleanupStateStopped" xml:space="preserve">
+    <value>oprit</value>
+  </data>
+  <data name="CleanupStateSkipped" xml:space="preserve">
+    <value>omis</value>
+  </data>
+  <data name="CleanupSkippedFiles" xml:space="preserve">
+    <value>Fișiere omise (în uz): {0}.</value>
+  </data>
+  <data name="CleanupSkippedFilesOne" xml:space="preserve">
+    <value>{0} fișier era în uz și a fost omis.</value>
+  </data>
+  <data name="CleanupSelectedCount" xml:space="preserve">
+    <value>{0} din {1} zone selectate</value>
+  </data>
+  <data name="CleanupSelectedCountOne" xml:space="preserve">
+    <value>{0} din {1} zonă selectată</value>
+  </data>
+  <data name="CleanupFileCount" xml:space="preserve">
+    <value>Fișiere măsurate: {0}</value>
+  </data>
+  <data name="CleanupFileCountOne" xml:space="preserve">
+    <value>{0} fișier măsurat</value>
+  </data>
+  <data name="CleanupLargestLabel" xml:space="preserve">
+    <value>Cele mai mari zone</value>
+  </data>
+  <data name="CleanupLastRunLabel" xml:space="preserve">
+    <value>Ultima curățare</value>
+  </data>
+  <data name="CleanupFreeSpaceNow" xml:space="preserve">
+    <value>{0} liberi, +{1} după curățare</value>
+  </data>
+  <data name="CleanupCurrentLabel" xml:space="preserve">
+    <value>Curent</value>
+  </data>
+  <data name="CleanupFailedHeadline" xml:space="preserve">
+    <value>Curățarea nu a putut fi finalizată</value>
+  </data>
+  <data name="CleanupConfirmHeadline" xml:space="preserve">
+    <value>Ștergeți definitiv {0}?</value>
+  </data>
+  <data name="CleanupConfirmWarning" xml:space="preserve">
+    <value>Fișierele șterse nu pot fi recuperate.</value>
+  </data>
+  <data name="CleanupConfirmTotal" xml:space="preserve">
+    <value>Total: {0}</value>
+  </data>
+  <data name="CleanupUserTemp" xml:space="preserve">
+    <value>Fișierele dvs. temporare</value>
+  </data>
+  <data name="CleanupUserTempDesc" xml:space="preserve">
+    <value>Folderul temporar al contului de utilizator curent.</value>
+  </data>
+  <data name="CleanupAllUsersTemp" xml:space="preserve">
+    <value>Fișiere temporare ale tuturor utilizatorilor</value>
+  </data>
+  <data name="CleanupAllUsersTempDesc" xml:space="preserve">
+    <value>Foldere temporare ale celorlalte conturi de pe acest PC. Fără drepturi de administrator, fișierele lor sunt omise.</value>
+  </data>
+  <data name="CleanupWindowsTemp" xml:space="preserve">
+    <value>Fișiere temporare Windows</value>
+  </data>
+  <data name="CleanupWindowsTempDesc" xml:space="preserve">
+    <value>Folderul temporar de sistem în care scriu Windows și programele de instalare.</value>
+  </data>
+  <data name="CleanupUpdateCache" xml:space="preserve">
+    <value>Cache Windows Update</value>
+  </data>
+  <data name="CleanupUpdateCacheDesc" xml:space="preserve">
+    <value>Fișiere de instalare ale actualizărilor deja aplicate.</value>
+  </data>
+  <data name="CleanupDeliveryOptimization" xml:space="preserve">
+    <value>Fișiere Delivery Optimization</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
+    <value>Părți de actualizare pe care Windows le păstrează pentru a le partaja cu alte PC-uri.</value>
+  </data>
+  <data name="CleanupThumbnails" xml:space="preserve">
+    <value>Cache de miniaturi și pictograme</value>
+  </data>
+  <data name="CleanupThumbnailsDesc" xml:space="preserve">
+    <value>Explorer le reconstruiește când este nevoie.</value>
+  </data>
+  <data name="CleanupCrashDumps" xml:space="preserve">
+    <value>Dump-uri de eroare</value>
+  </data>
+  <data name="CleanupCrashDumpsDesc" xml:space="preserve">
+    <value>Dump-uri de memorie lăsate de programele blocate.</value>
+  </data>
+  <data name="CleanupRecycleBin" xml:space="preserve">
+    <value>Golește coșul de reciclare</value>
+  </data>
+  <data name="CleanupRecycleBinDesc" xml:space="preserve">
+    <value>Dezactivat implicit, deoarece elementele rămân restaurabile până când coșul este golit.</value>
+  </data>
+  <data name="CleanupRecycleAgeLabel" xml:space="preserve">
+    <value>Doar fișiere mai vechi de</value>
+  </data>
+  <data name="CleanupRecycleAgeDays" xml:space="preserve">
+    <value>zile</value>
+  </data>
+  <data name="CleanupDiskCleanup" xml:space="preserve">
+    <value>Rulează Curățarea de disc Windows</value>
+  </data>
+  <data name="CleanupDiskCleanupDesc" xml:space="preserve">
+    <value>Deschide propriul instrument al Windows; el decide ce elimină.</value>
+  </data>
+  <data name="SourceDescAndroidSdk" xml:space="preserve">
+    <value>Pachete Android SDK prin sdkmanager. Actualizează componentele învechite (platforme, instrumente de build) din locația standard, ANDROID_HOME sau PATH.</value>
+  </data>
+  <data name="SourceDescAndroidStudio" xml:space="preserve">
+    <value>Android Studio este instalat, dar instrumentele SDK pentru linia de comandă lipsesc, iar fără ele pachetele SDK nu pot fi actualizate. Se deschide Android Studio; SDK Manager se află în Setări, Android SDK. După adăugarea componentei „Android SDK Command-line Tools”, actualizările rulează automat.</value>
+  </data>
+  <data name="AndroidStudioSdkRow" xml:space="preserve">
+    <value>Android Studio SDK Manager</value>
+  </data>
+  <data name="SourceDescGhExtension" xml:space="preserve">
+    <value>Extensii GitHub CLI. Actualizează extensiile gh pe care gh însuși le raportează ca învechite.</value>
+  </data>
+  <data name="SourceNameGhExtension" xml:space="preserve">
+    <value>Extensii GitHub CLI</value>
+  </data>
+  <data name="SourceDescPipx" xml:space="preserve">
+    <value>Instrumente de linie de comandă Python instalate cu pipx. Fiecare instrument este un candidat; pipx upgrade rulează la cerere.</value>
+  </data>
+  <data name="SourceDescVsCodeExtension" xml:space="preserve">
+    <value>Extensii Visual Studio Code. Fiecare extensie instalată este eligibilă; la cerere, aceasta este reinstalată la cea mai recentă versiune din marketplace.</value>
+  </data>
+  <data name="SourceNameVsCodeExtension" xml:space="preserve">
+    <value>Extensii VS Code</value>
+  </data>
+  <data name="SourceDescDeno" xml:space="preserve">
+    <value>Mediul de rulare Deno. Verifică GitHub pentru cea mai recentă versiune și actualizează cu „deno upgrade”. Ascuns când winget, Scoop sau Chocolatey au instalat Deno, deoarece acestea îl actualizează singure.</value>
+  </data>
+  <data name="SourceDescBun" xml:space="preserve">
+    <value>Mediul de rulare Bun. Verifică GitHub pentru cea mai recentă versiune și actualizează cu „bun upgrade”. Ascuns când un manager de pachete a instalat Bun.</value>
+  </data>
+  <data name="SourceDescUv" xml:space="preserve">
+    <value>uv, managerul de pachete Python care se actualizează singur. Ascuns când un manager de pachete a instalat uv, deoarece „uv self update” refuză în acest caz.</value>
+  </data>
+  <data name="SourceDescUvTool" xml:space="preserve">
+    <value>Instrumente Python instalate cu „uv tool”. Verifică fiecare instrument față de PyPI și listează doar versiunile învechite.</value>
+  </data>
+  <data name="SourceNameUvTool" xml:space="preserve">
+    <value>Instrumente uv</value>
+  </data>
+  <data name="SourceDescGcloud" xml:space="preserve">
+    <value>Componente Google Cloud CLI cu versiunea instalată și cea mai recentă, plus dimensiunea de descărcare. gcloud components update le actualizează pe toate împreună.</value>
+  </data>
+  <data name="SourceDescOllama" xml:space="preserve">
+    <value>Modele Ollama preluate local. Compară hash-ul fiecărui manifest cu cel din registru, astfel încât doar o etichetă care s-a schimbat cu adevărat devine un rând. Necesită un server Ollama activ; această aplicație nu îl pornește niciodată.</value>
+  </data>
+  <data name="SourceNameOllama" xml:space="preserve">
+    <value>Modele Ollama</value>
+  </data>
+  <data name="SourceDescFlutter" xml:space="preserve">
+    <value>SDK-ul Flutter găsit prin comanda flutter din PATH. Compară versiunea instalată cu fluxul de lansări Google pentru canalul dvs.</value>
+  </data>
+  <data name="SourceDescVolta" xml:space="preserve">
+    <value>Lanțul implicit de instrumente Node, npm, yarn și pnpm al Volta. Volta nu are o verificare de actualizare proprie, de aceea această aplicație compară direct cu fluxul de lansări Node și registrul npm și oferă doar actualizări patch sau minore în cadrul aceleiași versiuni majore Node.</value>
+  </data>
+  <data name="SourceDescPyenvWin" xml:space="preserve">
+    <value>Versiunea Python pe care pyenv-win a setat-o ca implicită globală. Oferă mereu doar o actualizare de tip patch în cadrul aceleiași linii major.minor (de exemplu de la 3.11.4 la 3.11.9); trecerea la o linie mai nouă este o alegere deliberată pe care această aplicație v-o lasă dvs.</value>
+  </data>
+  <data name="SourceDescWsl" xml:space="preserve">
+    <value>Windows Subsystem for Linux. Doar pentru selectorul de surse, deoarece wsl nu poate verifica o actualizare fără a o aplica, astfel încât nu apare niciodată un rând.</value>
+  </data>
+  <data name="SourceNameWsl" xml:space="preserve">
+    <value>Subsistem Windows pentru Linux</value>
+  </data>
+  <data name="IgnoredAllBadge" xml:space="preserve">
+    <value>Toate ignorate</value>
+  </data>
+  <data name="RowUninstalled" xml:space="preserve">
+    <value>Dezinstalat</value>
+  </data>
+  <data name="RowHandedOff" xml:space="preserve">
+    <value>Predat</value>
+  </data>
+  <data name="RowHandedOffDetail" xml:space="preserve">
+    <value>Verificați propria fereastră a furnizorului.</value>
+  </data>
+  <data name="RowStuck" xml:space="preserve">
+    <value>Blocat</value>
+  </data>
+  <data name="RowStuckDetail" xml:space="preserve">
+    <value>Blocat: nicio versiune nu se potrivește acestei instalări.</value>
+  </data>
+  <data name="RowNeedsManualWork" xml:space="preserve">
+    <value>Necesită ajutor</value>
+  </data>
+  <data name="RowNeedsManualWorkDetail" xml:space="preserve">
+    <value>A eșuat la fel de trei ori consecutiv. Doar reîncercarea nu va rezolva asta.</value>
+  </data>
+  <data name="RowCancelled" xml:space="preserve">
+    <value>Anulat</value>
+  </data>
+  <data name="RowCancelledTooltip" xml:space="preserve">
+    <value>Ați oprit acesta. Restul cozii a continuat să ruleze.</value>
+  </data>
+  <data name="StopSingleTooltip" xml:space="preserve">
+    <value>Oprește acesta</value>
+  </data>
+  <data name="TryNormallyAgainButton" xml:space="preserve">
+    <value>Încearcă din nou normal</value>
+  </data>
+  <data name="WingetVendorInstallerCrashed" xml:space="preserve">
+    <value>Programul de instalare al furnizorului s-a blocat ({0}). Pachetul poate fi de obicei instalat manual.</value>
+  </data>
+  <data name="ScanFailedToolCrashed" xml:space="preserve">
+    <value>„{0}” s-a blocat ({1}) în loc să raporteze o eroare normală. Aceasta înseamnă de obicei că un mediu de rulare de care depinde, cum ar fi Java, nu corespunde cu ce se așteaptă.</value>
+  </data>
+  <data name="ScanFailedNoJava" xml:space="preserve">
+    <value>sdkmanager necesită Java {0} sau mai nou, iar nicio instalare Java nu a fost găsită (JAVA_HOME, PATH, sau cea inclusă cu Android Studio).</value>
+  </data>
+  <data name="CleanupFreeSpaceResult" xml:space="preserve">
+    <value>{0} are acum {1} liberi (era {2})</value>
+  </data>
+  <data name="SettingsLogFolder" xml:space="preserve">
+    <value>Fișiere de jurnal</value>
+  </data>
+  <data name="SettingsReportsFolder" xml:space="preserve">
+    <value>Rapoarte de erori</value>
+  </data>
+  <data name="SettingsOpenReports" xml:space="preserve">
+    <value>Deschide rapoartele de erori</value>
+  </data>
+  <data name="SettingsDataFolder" xml:space="preserve">
+    <value>Folder de date</value>
+  </data>
+  <data name="AboutNetworkTargets" xml:space="preserve">
+    <value>Servere contactate de acest program</value>
+  </data>
+  <data name="SettingsDataFolderChange" xml:space="preserve">
+    <value>Mută</value>
+  </data>
+  <data name="SettingsDataFolderMoved" xml:space="preserve">
+    <value>Copiat în {0}. Folderul vechi este încă acolo: {1}. Reporniți pentru a-l folosi pe cel nou.</value>
+  </data>
+  <data name="SettingsDataFolderCopyFailed" xml:space="preserve">
+    <value>Folderul de date nu a putut fi copiat acolo. Nimic nu a fost schimbat.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedLink" xml:space="preserve">
+    <value>Acest folder este o legătură către altundeva. Alegeți alt folder.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedSystem" xml:space="preserve">
+    <value>Acesta este un folder de sistem Windows. Alegeți alt folder.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedProgram" xml:space="preserve">
+    <value>Acest folder este în interiorul propriului folder al programului. Alegeți alt folder.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedWritable" xml:space="preserve">
+    <value>Nu se poate scrie în acest folder. Alegeți alt folder.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedNonEmpty" xml:space="preserve">
+    <value>Acolo există deja un folder UltimateUpdater care nu este gol. Alegeți alt folder.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedCurrent" xml:space="preserve">
+    <value>Acesta este folderul de date curent sau se află în interiorul lui. Alegeți alt folder.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedTempOrCache" xml:space="preserve">
+    <value>Acest folder este golit la curățare și nu este potrivit pentru datele aplicației. Alegeți alt folder.</value>
+  </data>
+  <data name="SettingsDataFolderFilesLocked" xml:space="preserve">
+    <value>Unele fișiere erau blocate și nu au putut fi mutate: {0}. Nimic nu a fost schimbat.</value>
+  </data>
+  <data name="SettingsLogOpenFolder" xml:space="preserve">
+    <value>Deschide folderul</value>
+  </data>
+  <data name="SettingsLogRetention" xml:space="preserve">
+    <value>Păstrează jurnalele</value>
+  </data>
+  <data name="SettingsLogRetentionDesc" xml:space="preserve">
+    <value>Fișierele mai vechi sunt eliminate la următoarea pornire a aplicației.</value>
+  </data>
+  <data name="SettingsLogRetentionOption" xml:space="preserve">
+    <value>{0} zile</value>
+  </data>
+  <data name="SettingsHistoryRetention" xml:space="preserve">
+    <value>Păstrează istoricul</value>
+  </data>
+  <data name="SettingsHistoryRetentionDesc" xml:space="preserve">
+    <value>Intrările mai vechi sunt eliminate la următoarea pornire a aplicației.</value>
+  </data>
+  <data name="HistoryShowDetails" xml:space="preserve">
+    <value>Arată detaliile</value>
+  </data>
+  <data name="SettingsResetEverything" xml:space="preserve">
+    <value>Resetează totul</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmHeadline" xml:space="preserve">
+    <value>Resetați complet Ultimate Updater?</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmBody" xml:space="preserve">
+    <value>Toate setările revin la valorile implicite; lista de ignorare, istoricul, jurnalele și cache-urile sunt șterse definitiv.
+Această acțiune nu poate fi anulată.</value>
+  </data>
+  <data name="CleanupSystemRepairSfc" xml:space="preserve">
+    <value>Verifică fișierele de sistem (sfc)</value>
+  </data>
+  <data name="CleanupSystemRepairSfcDesc" xml:space="preserve">
+    <value>Înlocuiește fișierele Windows deteriorate prin sfc /scannow. Repară în loc să șteargă; lent, necesită drepturi de administrator.</value>
+  </data>
+  <data name="CleanupComponentCleanup" xml:space="preserve">
+    <value>Curăță depozitul de componente</value>
+  </data>
+  <data name="CleanupComponentCleanupDesc" xml:space="preserve">
+    <value>Elimină versiunile vechi ale componentelor Windows lăsate de actualizări.</value>
+  </data>
+  <data name="CleanupComponentResetBase" xml:space="preserve">
+    <value>Elimină definitiv datele vechi de actualizare</value>
+  </data>
+  <data name="CleanupComponentResetBaseDesc" xml:space="preserve">
+    <value>Eliberează cel mai mult spațiu. Actualizările Windows instalate nu vor mai putea fi dezinstalate după aceea.</value>
+  </data>
+  <data name="CleanupSystemRepairDism" xml:space="preserve">
+    <value>Repară depozitul de componente (DISM)</value>
+  </data>
+  <data name="CleanupSystemRepairDismDesc" xml:space="preserve">
+    <value>Rulează DISM /CheckHealth, /ScanHealth și /RestoreHealth pe depozitul din care sfc își ia fișierele. Și mai lent, necesită drepturi de administrator.</value>
+  </data>
+  <data name="CleanupComponentStoreSize" xml:space="preserve">
+    <value>{0} pe disc, {1} partajați cu Windows</value>
+  </data>
+  <data name="CleanupComponentStoreRecommended" xml:space="preserve">
+    <value>Windows recomandă o curățare</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
+    <value>Analizează (necesită drepturi de administrator)</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
+    <value>Măsoară cât spațiu poate elibera cu adevărat depozitul de componente Windows.</value>
+  </data>
+  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
+    <value>Analiza necesită drepturi de administrator; solicitarea a fost anulată.</value>
+  </data>
+  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
+    <value>Analiza nu este posibilă acum, ajutorul cu privilegii ridicate nu rulează.</value>
+  </data>
+  <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
+    <value>Windows nu a raportat nicio dimensiune.</value>
+  </data>
+  <data name="CleanupNothingToClean" xml:space="preserve">
+    <value>nimic găsit</value>
+  </data>
+  <data name="CleanupRegistryEntryCount" xml:space="preserve">
+    <value>Intrări: {0}</value>
+  </data>
+  <data name="CleanupRegistryEntryCountOne" xml:space="preserve">
+    <value>{0} intrare</value>
+  </data>
+  <data name="CleanupRegistryOrphans" xml:space="preserve">
+    <value>Referințe orfane</value>
+  </data>
+  <data name="CleanupRegistryOrphansDesc" xml:space="preserve">
+    <value>Elimină intrările App Paths, Shared DLLs, ActiveX/COM și de pornire automată a căror țintă nu mai există. Dezactivat implicit, necesită drepturi de administrator; se face automat un backup înainte de a șterge ceva.</value>
+  </data>
+  <data name="CleanupRegistryUninstall" xml:space="preserve">
+    <value>Intrări de dezinstalare orfane</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesDesc" xml:space="preserve">
+    <value>Elimină intrările de dezinstalare pentru programe care au dispărut deja. Dezactivat implicit, necesită drepturi de administrator; se face automat un backup înainte de a șterge ceva.</value>
+  </data>
+  <data name="CleanupDrivers" xml:space="preserve">
+    <value>Drivere</value>
+  </data>
+  <data name="CleanupDriversDesc" xml:space="preserve">
+    <value>Dispozitive care nu mai sunt conectate și pachete de drivere vechi rămase în magazinul de drivere. Dezactivat implicit, necesită drepturi de administrator; se face automat un backup înainte de a șterge ceva.</value>
+  </data>
+  <data name="CleanupDriversConsequence" xml:space="preserve">
+    <value>Dispozitivul își va instala din nou driverul data viitoare când este conectat, dacă Windows găsește unul. O copie de rezervă a fiecărui pachet este păstrată în folderul de date.</value>
+  </data>
+  <data name="CleanupGroupDrivers" xml:space="preserve">
+    <value>Drivere</value>
+  </data>
+  <data name="CleanupDriverGroupDisconnected" xml:space="preserve">
+    <value>Dispozitive care nu mai sunt conectate</value>
+  </data>
+  <data name="CleanupDriverGroupOldPackages" xml:space="preserve">
+    <value>Pachete de drivere vechi</value>
+  </data>
+  <data name="CleanupDriverLastConnected" xml:space="preserve">
+    <value>Conectat ultima dată la {0}</value>
+  </data>
+  <data name="CleanupDriverLastConnectedUnknown" xml:space="preserve">
+    <value>Data conectării necunoscută</value>
+  </data>
+  <data name="CleanupAdminHeadline" xml:space="preserve">
+    <value>Unele zone necesită drepturi de administrator</value>
+  </data>
+  <data name="CleanupAdminBody" xml:space="preserve">
+    <value>Windows Temp, cache-ul de actualizări, Curățarea de disc și reparația de sistem necesită drepturi de administrator pentru a fi măsurate și curățate complet.
+
+Continuați cu drepturi de administrator?</value>
+  </data>
+  <data name="CleanupAdminConfirm" xml:space="preserve">
+    <value>Cu drepturi de administrator</value>
+  </data>
+  <data name="CleanupAdminDecline" xml:space="preserve">
+    <value>Continuă fără</value>
+  </data>
+  <data name="CleanupAdminMissing" xml:space="preserve">
+    <value>Fără drepturi de administrator, această zonă este măsurată și curățată doar parțial.</value>
+  </data>
+  <data name="CleanupSkippedFilesSize" xml:space="preserve">
+    <value>Fișiere omise (în uz): {0} ({1}).</value>
+  </data>
+  <data name="CleanupSkippedFilesSizeOne" xml:space="preserve">
+    <value>{0} fișier ({1}) era în uz și a fost omis.</value>
+  </data>
+  <data name="CleanupInUse" xml:space="preserve">
+    <value>{0} în uz</value>
+  </data>
+  <data name="CleanupShaderCache" xml:space="preserve">
+    <value>Cache de shadere</value>
+  </data>
+  <data name="CleanupShaderCacheDesc" xml:space="preserve">
+    <value>Shadere compilate pe care le păstrează driverul grafic. Reconstruite când un joc sau o aplicație are nevoie din nou de ele.</value>
+  </data>
+  <data name="CleanupPackageCache" xml:space="preserve">
+    <value>Cache al managerilor de pachete</value>
+  </data>
+  <data name="CleanupPackageCacheDesc" xml:space="preserve">
+    <value>Descărcări pe care pip, npm, Yarn, NuGet și Chocolatey le păstrează pentru reinstalări. Pachetele instalate rămân neatinse.</value>
+  </data>
+  <data name="CleanupBuildCache" xml:space="preserve">
+    <value>Cache al instrumentelor de build</value>
+  </data>
+  <data name="CleanupBuildCacheDesc" xml:space="preserve">
+    <value>Cache-ul de build al Gradle și cache-ul de descărcare al Android SDK, reconstruite la următorul build.</value>
+  </data>
+  <data name="CleanupAppCacheSweep" xml:space="preserve">
+    <value>Cache-uri și jurnale ale altor aplicații</value>
+  </data>
+  <data name="CleanupAppCacheSweepDesc" xml:space="preserve">
+    <value>Găsește foldere de cache și jurnal pentru programele care nu sunt listate individual mai sus, comparând cu tipare obișnuite de foldere în loc să folosească o listă fixă. Nu include niciodată documentele sau setările dvs. Dezactivat implicit; examinați rezultatele înainte de activare.</value>
+  </data>
+  <data name="CleanupLeftoverWarning" xml:space="preserve">
+    <value>Toate datele acestui software vor fi șterse!</value>
+  </data>
+  <data name="CleanupLeftoverLastUsed" xml:space="preserve">
+    <value>Ultima utilizare {0}</value>
+  </data>
+  <data name="CleanupEntryDateRange" xml:space="preserve">
+    <value>{0} - {1}</value>
+  </data>
+  <data name="CleanupMoreEntries" xml:space="preserve">
+    <value>…și încă {0} ({1})</value>
+  </data>
+  <data name="CleanupMoreEntriesNotCleaned" xml:space="preserve">
+    <value>…și încă {0} ({1}), ascunse și neeliminate cât timp rândurile de pe această unitate sunt debifate</value>
+  </data>
+  <data name="CleanupEntryDeleted" xml:space="preserve">
+    <value>Șters la {0}</value>
+  </data>
+  <data name="CleanupShowDetails" xml:space="preserve">
+    <value>Detalii ({0})</value>
+  </data>
+  <data name="CleanupEntryOpenFolder" xml:space="preserve">
+    <value>Deschide folderul</value>
+  </data>
+  <data name="CleanupEntryCopyPath" xml:space="preserve">
+    <value>Copiază calea</value>
+  </data>
+  <data name="CleanupEntryPermanentlyExclude" xml:space="preserve">
+    <value>Exclude permanent</value>
+  </data>
+  <data name="CleanupEntriesSelectAll" xml:space="preserve">
+    <value>Selectează toate fișierele</value>
+  </data>
+  <data name="CleanupUserTempConsequence" xml:space="preserve">
+    <value>Programele care foloseau un fișier temporar îl recreează data viitoare când au nevoie de el.</value>
+  </data>
+  <data name="CleanupAllUsersTempConsequence" xml:space="preserve">
+    <value>La fel ca propriul dvs. folder temporar, doar pentru celelalte conturi de pe acest PC.</value>
+  </data>
+  <data name="CleanupWindowsTempConsequence" xml:space="preserve">
+    <value>Windows recreează ceea ce îi mai trebuie atunci când are nevoie.</value>
+  </data>
+  <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
+    <value>Windows Update descarcă pur și simplu fișierele din nou dacă are nevoie de ele.</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
+    <value>Doar un cache pentru partajarea actualizărilor cu alte PC-uri din rețea. Nimic altceva nu îl folosește.</value>
+  </data>
+  <data name="CleanupThumbnailsConsequence" xml:space="preserve">
+    <value>Explorer redesenează miniaturile data viitoare când deschideți acel folder.</value>
+  </data>
+  <data name="CleanupCrashDumpsConsequence" xml:space="preserve">
+    <value>Util doar pentru investigarea unei erori care s-a produs deja. Nimic nu depinde momentan de ele.</value>
+  </data>
+  <data name="CleanupShaderCacheConsequence" xml:space="preserve">
+    <value>Driverul grafic îl reconstruiește. Următoarea lansare a unui joc sau aplicații afectate va fi puțin mai lentă, o singură dată.</value>
+  </data>
+  <data name="CleanupPackageCacheConsequence" xml:space="preserve">
+    <value>Următoarea instalare sau actualizare descarcă pur și simplu pachetul din nou.</value>
+  </data>
+  <data name="CleanupBuildCacheConsequence" xml:space="preserve">
+    <value>Următorul build este puțin mai lent în timp ce cache-ul se reumple.</value>
+  </data>
+  <data name="CleanupAppCacheSweepConsequence" xml:space="preserve">
+    <value>Acoperă multe programe deodată după tipar, nu după nume, așa că merită o privire rapidă asupra a ceea ce a găsit înainte de curățare.</value>
+  </data>
+  <data name="CleanupMemoryDumpsConsequence" xml:space="preserve">
+    <value>Pierdeți posibilitatea de a investiga o eroare care s-a produs deja, dacă mai aveați nevoie de asta.</value>
+  </data>
+  <data name="CleanupWindowsLogsConsequence" xml:space="preserve">
+    <value>Acestea sunt exact lucrurile de care ați avea nevoie pentru a diagnostica o actualizare eșuată, așa că păstrați-le dacă încă investigați una.</value>
+  </data>
+  <data name="CleanupRecycleBinConsequence" xml:space="preserve">
+    <value>Fișierele din el nu mai pot fi restaurate după aceea.</value>
+  </data>
+  <data name="CleanupDiskCleanupConsequence" xml:space="preserve">
+    <value>Rulează propria curățare a Windows cu selecția sa standard, verificată, și nimic în plus.</value>
+  </data>
+  <data name="CleanupSystemRepairDismConsequence" xml:space="preserve">
+    <value>Poate dura mult și repară fișierele de sistem pe loc, așa că este bine să lăsați procesul să se termine odată pornit.</value>
+  </data>
+  <data name="CleanupSystemRepairSfcConsequence" xml:space="preserve">
+    <value>Repară fișierele de sistem pe loc, de obicei rapid, și este bine să lăsați procesul să se termine odată pornit.</value>
+  </data>
+  <data name="CleanupRegistryOrphansConsequence" xml:space="preserve">
+    <value>Elimină comenzile rapide App Paths defecte, numărătorile de referință Shared DLLs, înregistrările ActiveX/COM și intrările de pornire automată; se face mai întâi un backup și nimic care încă funcționează nu este atins.</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesConsequence" xml:space="preserve">
+    <value>Elimină o intrare din lista Programe și caracteristici al cărei program a dispărut deja; se face mai întâi un backup.</value>
+  </data>
+  <data name="CleanupRegistryBackupNote" xml:space="preserve">
+    <value>Fiecare modificare de registru este exportată mai întâi. Backupuri: {0}, se păstrează {1}.</value>
+  </data>
+  <data name="CleanupRiskSafe" xml:space="preserve">
+    <value>Sigur</value>
+  </data>
+  <data name="CleanupRiskConsidered" xml:space="preserve">
+    <value>Moderat</value>
+  </data>
+  <data name="CleanupRiskRisky" xml:space="preserve">
+    <value>Riscant</value>
+  </data>
+  <data name="CleanupShowAllCategories" xml:space="preserve">
+    <value>Arată toate zonele ({0} ascunse)</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDelete" xml:space="preserve">
+    <value>Mută în coșul de reciclare în loc să ștergi</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
+    <value>Spațiul se eliberează abia când golești coșul de reciclare.</value>
+  </data>
+  <data name="CleanupMemoryDumps" xml:space="preserve">
+    <value>Dump-uri de eroare (sistem)</value>
+  </data>
+  <data name="CleanupMemoryDumpsDesc" xml:space="preserve">
+    <value>Dump-uri de memorie pe care Windows le scrie după un ecran albastru. Utile doar în timpul investigării unuia.</value>
+  </data>
+  <data name="CleanupWindowsLogs" xml:space="preserve">
+    <value>Fișiere de jurnal Windows</value>
+  </data>
+  <data name="CleanupWindowsLogsDesc" xml:space="preserve">
+    <value>Propriile jurnale ale Windows pentru actualizări, întreținere și instalare. Recreate automat; păstrați-le cât timp diagnosticați o actualizare eșuată.</value>
+  </data>
+  <data name="InstallErrorVs8001What" xml:space="preserve">
+    <value>Visual Studio Setup a raportat o eroare de verificare a mașinii ARM (eroare 8001).</value>
+  </data>
+  <data name="InstallErrorVs8002What" xml:space="preserve">
+    <value>Verificarea prealabilă de descărcare în fundal a Visual Studio Setup a eșuat (eroare 8002).</value>
+  </data>
+  <data name="InstallErrorVs8003What" xml:space="preserve">
+    <value>Visual Studio Setup a raportat o eroare de componentă nesuportată (eroare 8003).</value>
+  </data>
+  <data name="InstallErrorVs8004What" xml:space="preserve">
+    <value>Visual Studio Setup nu a putut folosi directorul de instalare țintă (eroare 8004).</value>
+  </data>
+  <data name="InstallErrorVs8005What" xml:space="preserve">
+    <value>Visual Studio Setup nu a putut verifica sursele de instalare (eroare 8005).</value>
+  </data>
+  <data name="InstallErrorVsGenericNow" xml:space="preserve">
+    <value>Propriul jurnal de instalare al Visual Studio conține mai multe detalii; încercați din nou, sau reinstalați Visual Studio Installer dacă asta continuă să se întâmple.</value>
+  </data>
+  <data name="InstallErrorVs8006What" xml:space="preserve">
+    <value>Visual Studio Setup nu a putut continua deoarece Visual Studio (sau una dintre componentele sale) încă rulează (eroare 8006).</value>
+  </data>
+  <data name="InstallErrorVs8006Now" xml:space="preserve">
+    <value>Închideți Visual Studio și procesele sale asociate, apoi încercați din nou. Această aplicație poate face asta pentru dvs. înainte de următoarea încercare.</value>
+  </data>
+  <data name="InstallErrorMsi1602What" xml:space="preserve">
+    <value>Instalarea a fost anulată (eroare de instalare 1602).</value>
+  </data>
+  <data name="InstallErrorMsi1602Now" xml:space="preserve">
+    <value>Rulați actualizarea din nou când sunteți gata; anularea a fost cel mai probabil intenționată.</value>
+  </data>
+  <data name="InstallErrorMsi1603What" xml:space="preserve">
+    <value>Programul de instalare a raportat o eroare fatală (eroare de instalare 1603).</value>
+  </data>
+  <data name="InstallErrorMsi1603Now" xml:space="preserve">
+    <value>Verificați propriul jurnal al programului de instalare, sau încercați instalarea manuală.</value>
+  </data>
+  <data name="InstallErrorMsi1618What" xml:space="preserve">
+    <value>O altă instalare rula în același timp, așa că Windows a refuzat-o pe aceasta.</value>
+  </data>
+  <data name="InstallErrorMsi1618Now" xml:space="preserve">
+    <value>A fost reîncercată automat după ce celelalte s-au terminat.</value>
+  </data>
+  <data name="InstallErrorMsi1619What" xml:space="preserve">
+    <value>Pachetul de instalare nu a putut fi citit (eroare de instalare 1619/1620).</value>
+  </data>
+  <data name="InstallErrorMsi1619Now" xml:space="preserve">
+    <value>Descărcarea pachetului din nou, sau reinstalarea de la zero, rezolvă de obicei asta.</value>
+  </data>
+  <data name="InstallErrorMsi1638What" xml:space="preserve">
+    <value>O altă versiune a acestui program este deja instalată (eroare de instalare 1638).</value>
+  </data>
+  <data name="InstallErrorMsi1638Now" xml:space="preserve">
+    <value>Eliminați mai întâi versiunea existentă sau folosiți propriul său program de actualizare.</value>
+  </data>
+  <data name="InstallErrorRebootWhat" xml:space="preserve">
+    <value>Programul de instalare are nevoie de o repornire pentru a finaliza (cod 1641/3010).</value>
+  </data>
+  <data name="InstallErrorRebootNow" xml:space="preserve">
+    <value>Reporniți Windows. Actualizarea în sine a trecut deja.</value>
+  </data>
+  <data name="InstallErrorCrashWhat" xml:space="preserve">
+    <value>Programul de instalare al furnizorului s-a blocat (o eroare la nivel de Windows, nu o eroare obișnuită).</value>
+  </data>
+  <data name="InstallErrorCrashNow" xml:space="preserve">
+    <value>Pachetul poate fi de obicei instalat manual din propriul program de instalare al furnizorului.</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableWhat" xml:space="preserve">
+    <value>winget nu are nicio versiune a acestui pachet care să se potrivească acestei instalări (niciun upgrade aplicabil).</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableNow" xml:space="preserve">
+    <value>Nimic nu a fost schimbat; versiunea pe care o oferea această aplicație nu se aplică aici.</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeWhat" xml:space="preserve">
+    <value>winget nu a putut acționa asupra acestui pachet dintr-un context de administrator (o instalare la nivel de utilizator).</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeNow" xml:space="preserve">
+    <value>Această aplicație a reîncercat deja fără drepturi de administrator; dacă și asta a eșuat, mesajul de mai sus este motivul real.</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechWhat" xml:space="preserve">
+    <value>Versiunea nouă se instalează într-un mod diferit față de cea instalată.</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechNow" xml:space="preserve">
+    <value>Dezinstalați programul, apoi instalați-l din nou.</value>
+  </data>
+  <data name="InstallErrorGenericWhat" xml:space="preserve">
+    <value>Programul de instalare al furnizorului a eșuat cu propriul său cod de eroare {0}.</value>
+  </data>
+  <data name="InstallErrorGenericNow" xml:space="preserve">
+    <value>Vedeți ieșirea brută de mai jos pentru ce a raportat.</value>
+  </data>
+  <data name="InstallErrorWuBusyWhat" xml:space="preserve">
+    <value>Windows Update este momentan ocupat cu o altă sarcină.</value>
+  </data>
+  <data name="InstallErrorWuBusyNow" xml:space="preserve">
+    <value>Așteptați un moment și încercați din nou.</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingWhat" xml:space="preserve">
+    <value>O repornire este încă în așteptare înainte ca această actualizare să poată fi instalată.</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingNow" xml:space="preserve">
+    <value>Reporniți Windows, apoi încercați din nou.</value>
+  </data>
+  <data name="InstallErrorWuNotStartedWhat" xml:space="preserve">
+    <value>Windows Update nu a pornit niciodată cu adevărat această instalare.</value>
+  </data>
+  <data name="InstallErrorWuNotStartedNow" xml:space="preserve">
+    <value>Nimic nu a fost schimbat; a încerca din nou poate ajuta.</value>
+  </data>
+  <data name="InstallErrorWuInProgressWhat" xml:space="preserve">
+    <value>Windows Update încă raportează această instalare ca fiind în curs.</value>
+  </data>
+  <data name="InstallErrorWuInProgressNow" xml:space="preserve">
+    <value>Așteptați un moment, apoi verificați dacă actualizarea s-a terminat între timp.</value>
+  </data>
+  <data name="InstallErrorWuFailedWhat" xml:space="preserve">
+    <value>Windows Update a raportat că această instalare a eșuat.</value>
+  </data>
+  <data name="InstallErrorWuFailedNow" xml:space="preserve">
+    <value>Cauza exactă se află de obicei în valoarea HRESULT de mai jos; a încerca din nou ajută adesea.</value>
+  </data>
+  <data name="InstallErrorWuAbortedWhat" xml:space="preserve">
+    <value>Windows Update a întrerupt această instalare.</value>
+  </data>
+  <data name="InstallErrorWuAbortedNow" xml:space="preserve">
+    <value>A încerca din nou ajută de obicei; dacă tot se întrerupe, depanatorul Windows Update poate ajuta în continuare.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016What" xml:space="preserve">
+    <value>O altă instalare rulează deja, sau o repornire este încă în așteptare.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016Now" xml:space="preserve">
+    <value>Așteptați un moment, apoi încercați din nou.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044What" xml:space="preserve">
+    <value>Această instalare necesită drepturi de administrator.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044Now" xml:space="preserve">
+    <value>Această aplicație instalează deja actualizările Windows cu drepturi ridicate; dacă eroarea persistă, repornirea Windows poate ajuta.</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422What" xml:space="preserve">
+    <value>Serviciul Windows Update este dezactivat.</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422Now" xml:space="preserve">
+    <value>Porniți serviciul „Windows Update” (services.msc), apoi încercați din nou.</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DWhat" xml:space="preserve">
+    <value>Această actualizare necesită suport de instalare.</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DNow" xml:space="preserve">
+    <value>Furnizați suportul de instalare potrivit, sau verificați sursa Windows Update.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022What" xml:space="preserve">
+    <value>Fiecare actualizare din această rulare de instalare a eșuat.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
+    <value>A încerca din nou mai târziu ajută de obicei.</value>
+  </data>
+  <data name="InstallErrorWuInternalWhat" xml:space="preserve">
+    <value>Propriul serviciu al Windows Update nu a răspuns așa cum se aștepta această aplicație.</value>
+  </data>
+  <data name="InstallErrorWuInternalNow" xml:space="preserve">
+    <value>Încercați din nou. Dacă tot eșuează, repornirea PC-ului rezolvă de obicei asta.</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedWhat" xml:space="preserve">
+    <value>Windows Update nu mai oferă această actualizare. Poate fi deja instalată, înlocuită cu una mai nouă, sau așteaptă mai întâi o altă actualizare.</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedNow" xml:space="preserve">
+    <value>Lista a fost reîmprospătată automat. Dacă rândul este încă acolo, porniți din nou instalarea.</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedWhat" xml:space="preserve">
+    <value>Această aplicație a refuzat să ruleze numele pachetului sau modelului așa cum este: nu este un identificator simplu și ar fi putut fi interpretat ca o opțiune de comandă.</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedNow" xml:space="preserve">
+    <value>Aceasta este o verificare de siguranță, nu un defect în pachetul în sine; o reîncercare nu va schimba asta.</value>
+  </data>
+  <data name="InstallErrorMissingTargetWhat" xml:space="preserve">
+    <value>Rândul a pierdut evidența versiunii de instalat înainte ca instalarea să poată începe.</value>
+  </data>
+  <data name="InstallErrorMissingTargetNow" xml:space="preserve">
+    <value>Rescanați și încercați din nou; lista de versiuni este reîmprospătată la fiecare scanare.</value>
+  </data>
+  <data name="InstallErrorPipRepairedWhat" xml:space="preserve">
+    <value>Propria instalare a pip era defectă; această aplicație a reparat-o automat.</value>
+  </data>
+  <data name="InstallErrorPipRepairedNow" xml:space="preserve">
+    <value>Instalați acest pachet din nou acum; pip funcționează din nou.</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedWhat" xml:space="preserve">
+    <value>Semnătura programului de instalare NVIDIA descărcat nu a putut fi verificată, așa că această aplicație a refuzat să îl ruleze.</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedNow" xml:space="preserve">
+    <value>Descărcați driverul direct de pe propria pagină a NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainWhat" xml:space="preserve">
+    <value>Descărcarea a fost redirecționată departe de propriul domeniu al NVIDIA, așa că această aplicație a refuzat să îl urmeze.</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainNow" xml:space="preserve">
+    <value>Descărcați driverul direct de pe propria pagină a NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitWhat" xml:space="preserve">
+    <value>Descărcarea a fost mai mare decât permite această aplicație pentru un program de instalare a driverului, așa că a fost oprită.</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitNow" xml:space="preserve">
+    <value>Descărcați driverul direct de pe propria pagină a NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedWhat" xml:space="preserve">
+    <value>Solicitarea de permisiune Windows pentru programul de instalare NVIDIA a fost închisă sau refuzată.</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedNow" xml:space="preserve">
+    <value>Încercați din nou și acceptați solicitarea de data aceasta.</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartWhat" xml:space="preserve">
+    <value>Programul de instalare NVIDIA nu a putut fi pornit.</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartNow" xml:space="preserve">
+    <value>Încercați din nou; dacă asta continuă, instalați driverul direct de pe propria pagină a NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningWhat" xml:space="preserve">
+    <value>Programul de instalare NVIDIA încă rula când această aplicație a încetat să mai aștepte.</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningNow" xml:space="preserve">
+    <value>Verificați propria fereastră a programului de instalare NVIDIA, sau lista de aplicații instalate a Windows, pentru a vedea dacă s-a terminat cu adevărat.</value>
+  </data>
+  <data name="InstallErrorTimeoutWhat" xml:space="preserve">
+    <value>Instrumentul nu s-a terminat în timpul pe care i-l permite această aplicație.</value>
+  </data>
+  <data name="InstallErrorTimeoutNow" xml:space="preserve">
+    <value>Cauza obișnuită este o conexiune lentă sau un computer ocupat; încercați din nou.</value>
+  </data>
+  <data name="RetryInteractiveHeader" xml:space="preserve">
+    <value>Reîncearcă interactiv</value>
+  </data>
+  <data name="RowRunningInteractive" xml:space="preserve">
+    <value>rulează interactiv…</value>
+  </data>
+  <data name="InstallBlockersLine" xml:space="preserve">
+    <value>{0} este blocat de: {1}</value>
+  </data>
+  <data name="InstallBlockerCloseAndContinue" xml:space="preserve">
+    <value>Închide programul și continuă</value>
+  </data>
+  <data name="InstallBlockerSkip" xml:space="preserve">
+    <value>Omite cele blocate</value>
+  </data>
+  <data name="InstallBlockerTryAnyway" xml:space="preserve">
+    <value>Încearcă oricum</value>
+  </data>
+  <data name="InstallBlockerForceKillHeadline" xml:space="preserve">
+    <value>Închidere forțată?</value>
+  </data>
+  <data name="InstallBlockerForceKillBody" xml:space="preserve">
+    <value>Munca nesalvată se va pierde.</value>
+  </data>
+  <data name="InstallBlockerAutoSkipped" xml:space="preserve">
+    <value>{0} încă rulează, așa că acesta a fost omis automat (nesupravegheat).</value>
+  </data>
+  <data name="PreflightTitle" xml:space="preserve">
+    <value>Înainte de actualizare</value>
+  </data>
+  <data name="PreflightStart" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="PreflightCancel" xml:space="preserve">
+    <value>Anulare</value>
+  </data>
+  <data name="InstallSpaceShort" xml:space="preserve">
+    <value>Doar {0} liberi, este nevoie de aproximativ {1}.</value>
+  </data>
+  <data name="InstallSpaceUnknown" xml:space="preserve">
+    <value>{0} pachete nu raportează o dimensiune.</value>
+  </data>
+  <data name="InstallSpaceOpenCleanup" xml:space="preserve">
+    <value>Deschide curățarea</value>
+  </data>
+  <data name="SettingsMeteredTitle" xml:space="preserve">
+    <value>Nu scana automat pe o conexiune contorizată</value>
+  </data>
+  <data name="InstallMeteredWarn" xml:space="preserve">
+    <value>Conexiune cu date limitate: se vor descărca aproximativ {0}.</value>
+  </data>
+  <data name="InstallBatteryWarn" xml:space="preserve">
+    <value>Bateria este la {0} procente și nu este conectată la alimentare.</value>
+  </data>
+  <data name="RebootDialogTitle" xml:space="preserve">
+    <value>Repornire necesară</value>
+  </data>
+  <data name="RebootDialogBody" xml:space="preserve">
+    <value>Aceste pachete au cerut o repornire:</value>
+  </data>
+  <data name="RebootDialogNow" xml:space="preserve">
+    <value>Repornește acum</value>
+  </data>
+  <data name="RebootDialogLater" xml:space="preserve">
+    <value>Mai târziu</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>Despre</value>
+  </data>
+  <data name="AboutTagline" xml:space="preserve">
+    <value>Un singur loc pentru fiecare actualizare care așteaptă pe acest PC.</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>Versiunea {0}</value>
+  </data>
+  <data name="AboutLicence" xml:space="preserve">
+    <value>Licență MIT</value>
+  </data>
+  <data name="AboutRepository" xml:space="preserve">
+    <value>Pagina proiectului pe GitHub</value>
+  </data>
+  <data name="AboutThirdParty" xml:space="preserve">
+    <value>Fiecare actualizare provine din propria sursă și este instalată prin propriul mecanism al acelei surse. Această aplicație nu găzduiește, nu verifică și nu modifică niciun pachet.</value>
+  </data>
+  <data name="AboutIcons" xml:space="preserve">
+    <value>Sigle de la Simple Icons (CC0). Toate mărcile comerciale aparțin proprietarilor lor.</value>
+  </data>
+  <data name="AboutTrademarks" xml:space="preserve">
+    <value>Nu este afiliată, aprobată sau sponsorizată de Microsoft, NVIDIA, AMD, Intel, Dell, Lenovo, HP, Valve, Epic Games, sau orice alt furnizor pe care îl arată această aplicație.</value>
+  </data>
+  <data name="WingetBootstrapConfirmHeadline" xml:space="preserve">
+    <value>winget nu a fost găsit</value>
+  </data>
+  <data name="WingetBootstrapConfirmBody" xml:space="preserve">
+    <value>Îl instalați acum? Provine direct din propriul pachet App Installer al Microsoft și este verificat înainte de a rula.</value>
+  </data>
+  <data name="WingetBootstrapInstall" xml:space="preserve">
+    <value>Instalează winget</value>
+  </data>
+  <data name="ColumnsButton" xml:space="preserve">
+    <value>Coloane</value>
+  </data>
+  <data name="ColumnsReset" xml:space="preserve">
+    <value>Resetează coloanele</value>
+  </data>
+  <data name="ColumnPublisher" xml:space="preserve">
+    <value>Editor</value>
+  </data>
+  <data name="ScanCachedAge" xml:space="preserve">
+    <value>Rezultat din {0}, se verifică din nou</value>
+  </data>
+  <data name="ScanSourceTooSlow" xml:space="preserve">
+    <value>Niciun răspuns de {0} secunde</value>
+  </data>
+  <data name="ScanOfflineBanner" xml:space="preserve">
+    <value>Nicio conexiune la internet. Doar sursele locale au fost verificate.</value>
+  </data>
+  <data name="ScanNoConnectionBanner" xml:space="preserve">
+    <value>Nicio conexiune la internet: fiecare sursă online a eșuat. Verificați firewall-ul sau rețeaua.</value>
+  </data>
+  <data name="ScanOfflineSource" xml:space="preserve">
+    <value>Nicio conexiune</value>
+  </data>
+  <data name="NetProxyRefused" xml:space="preserve">
+    <value>Proxy-ul a refuzat conexiunea ({0}).</value>
+  </data>
+  <data name="PipInterpreterTooltip" xml:space="preserve">
+    <value>Interpretor Python: {0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
+    <value>+~{0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
+    <value>Eliberat de Curățare disc Windows. Aproximativ, deoarece a rulat alături de celelalte sarcini.</value>
+  </data>
+  <data name="CleanupDefaultSelection" xml:space="preserve">
+    <value>Selecție implicită</value>
+  </data>
+  <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
+    <value>Selectează doar elementele sigure, aceleași care sunt bifate implicit.</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
+    <value>Se analizează…</value>
+  </data>
+  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
+    <value>Windows nu a răspuns la timp. Analiza a fost întreruptă.</value>
+  </data>
+  <data name="CleanupPipLeftovers" xml:space="preserve">
+    <value>Resturi ale instalărilor pip întrerupte</value>
+  </data>
+  <data name="CleanupPipLeftoversDesc" xml:space="preserve">
+    <value>Foldere lăsate de pip atunci când o instalare este întreruptă; pip avertizează despre ele la fiecare rulare.</value>
+  </data>
+  <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
+    <value>pip nu mai avertizează despre ele; nimic altceva de pe acest calculator nu folosește aceste foldere.</value>
+  </data>
+  <data name="CleanupOldPythonVersions" xml:space="preserve">
+    <value>Versiuni Python mai vechi</value>
+  </data>
+  <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
+    <value>Instalări Python înlocuite de o versiune mai nouă de același tip (32 sau 64 de biți).</value>
+  </data>
+  <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
+    <value>Programele și scripturile care încă folosesc această versiune nu vor mai funcționa. Pachetele instalate în ea sunt eliminate împreună cu ea.</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
+    <value>{0} ({1} pachete)</value>
+  </data>
+  <data name="CleanupDriverInstalledDate" xml:space="preserve">
+    <value>Instalat la {0}</value>
+  </data>
+  <data name="CleanupDriverProviderLabel" xml:space="preserve">
+    <value>Furnizor</value>
+  </data>
+  <data name="CleanupDriverClassLabel" xml:space="preserve">
+    <value>Clasă</value>
+  </data>
+  <data name="CleanupDriverInfFileLabel" xml:space="preserve">
+    <value>Fișier INF</value>
+  </data>
+  <data name="CleanupDriverOriginalNameLabel" xml:space="preserve">
+    <value>Nume original</value>
+  </data>
+  <data name="CleanupDriverStorePathLabel" xml:space="preserve">
+    <value>Cale în depozitul de drivere</value>
+  </data>
+  <data name="CleanupDriverInstalledNow" xml:space="preserve">
+    <value>Instalat acum: versiunea {0}, {1}</value>
+  </data>
+  <data name="CleanupDriverVersionDate" xml:space="preserve">
+    <value>Versiunea {0}, {1}</value>
+  </data>
+  <data name="CleanupCatalogLoadFailed" xml:space="preserve">
+    <value>Lista de curățare nu a putut fi încărcată. Închide fereastra și deschide-o din nou. Detaliile se află în folderul de jurnale.</value>
+  </data>
+  <data name="NetPurposeSelfUpdate" xml:space="preserve">
+    <value>Autoactualizare (JSON al versiunii, SHA256SUMS, fișier) și date despre versiuni ale altor depozite</value>
+  </data>
+  <data name="NetPurposeChangelog" xml:space="preserve">
+    <value>Textul jurnalului de modificări la clic</value>
+  </data>
+  <data name="NetPurposeNvidia" xml:space="preserve">
+    <value>Tabel de produse GPU, căutare și descărcare de drivere</value>
+  </data>
+  <data name="NetPurposePackageMeta" xml:space="preserve">
+    <value>Metadate de pachete (ultima versiune, dimensiune, dată) pentru completarea rândurilor</value>
+  </data>
+  <data name="NetPurposeSdkMeta" xml:space="preserve">
+    <value>Manifestul Android SDK, versiuni Flutter, metadate ale extensiilor VS Code</value>
+  </data>
+  <data name="NetPurposeSteam" xml:space="preserve">
+    <value>Note de patch (cererea conține doar ID-ul aplicației)</value>
+  </data>
+  <data name="NetPurposeOllamaRemote" xml:space="preserve">
+    <value>Hash la distanță al unui model (doar modele din bibliotecă)</value>
+  </data>
+  <data name="NetPurposeOllamaLocal" xml:space="preserve">
+    <value>Lista locală de modele Ollama, singura adresă http:// necriptată, doar loopback</value>
+  </data>
+  <data name="FilterShowIgnored" xml:space="preserve">
+    <value>Arată cele ignorate</value>
+  </data>
+  <data name="FilterButton" xml:space="preserve">
+    <value>Filtru</value>
+  </data>
+  <data name="FilterButtonActive" xml:space="preserve">
+    <value>Filtru ({0})</value>
+  </data>
+  <data name="ToolbarCleanupLabel" xml:space="preserve">
+    <value>Curăță</value>
+  </data>
+  <data name="ScanStateError" xml:space="preserve">
+    <value>Eroare</value>
+  </data>
+  <data name="AboutPortable" xml:space="preserve">
+    <value>Mod portabil: setările și datele se află lângă program.</value>
+  </data>
+  <data name="SortByTooltip" xml:space="preserve">
+    <value>Sortează după {0}</value>
+  </data>
+  <data name="InstallBlockerSkippedStillOpen" xml:space="preserve">
+    <value>Omis, {0} este încă deschis</value>
+  </data>
+  <data name="CleanupHeaderSelection" xml:space="preserve">
+    <value>Selecție</value>
+  </data>
+  <data name="CleanupHeaderDrive" xml:space="preserve">
+    <value>Unitate {0}</value>
+  </data>
+  <data name="SettingsAutoScanTitle" xml:space="preserve">
+    <value>Scanări automate</value>
+  </data>
+  <data name="HistoryRolledBack" xml:space="preserve">
+    <value>Revenit</value>
+  </data>
+  <data name="HistoryUninstalled" xml:space="preserve">
+    <value>Dezinstalat</value>
+  </data>
+  <data name="SelfUpdateBusyHint" xml:space="preserve">
+    <value>Disponibil după ce se termină actualizările în curs și curățarea.</value>
+  </data>
+  <data name="SelfUpdateDownloadFailed" xml:space="preserve">
+    <value>Actualizarea nu a putut fi descărcată. Verifică conexiunea și încearcă din nou.</value>
+  </data>
+  <data name="SelfUpdateApplyFailed" xml:space="preserve">
+    <value>Actualizarea nu a putut fi instalată. Detaliile se află în folderul de jurnale.</value>
+  </data>
+  <data name="SelfUpdateApplyingNoInstall" xml:space="preserve">
+    <value>Aplicația se repornește pentru a termina propria actualizare. Pornește din nou aceste actualizări după repornire.</value>
+  </data>
+  <data name="SettingsCheckFailed" xml:space="preserve">
+    <value>Nu s-a putut verifica dacă există actualizări. Verifică conexiunea.</value>
+  </data>
+  <data name="RetryBlockedByActivity" xml:space="preserve">
+    <value>Nu se poate reîncerca acum: o instalare este în curs. Încearcă din nou după ce se termină.</value>
+  </data>
+  <data name="ErrorDetailCopyFailed" xml:space="preserve">
+    <value>Nu s-a putut copia. Raportul este salvat în folderul de rapoarte.</value>
+  </data>
+  <data name="SettingsBrowseFolder" xml:space="preserve">
+    <value>Alege folderul</value>
+  </data>
+  <data name="SettingsRegistryBackupOutsideProfile" xml:space="preserve">
+    <value>Folderul de backup trebuie să se afle în profilul dvs. de utilizator. Alegeți alt folder.</value>
+  </data>
+  <data name="CleanupConfirmHeadlineRecycle" xml:space="preserve">
+    <value>Curățați {0}?</value>
+  </data>
+  <data name="CleanupConfirmWarningRecycle" xml:space="preserve">
+    <value>Fișierele merg în coșul de reciclare și pot fi restaurate până când acesta este golit. Intrările din registru, driverele și reparațiile nu pot fi anulate.</value>
+  </data>
+  <data name="HeadlineNotChecked" xml:space="preserve">
+    <value>Neverificat încă</value>
+  </data>
+  <data name="EmptyStateNotChecked" xml:space="preserve">
+    <value>Căutați actualizări pentru a vedea ce este nou.</value>
+  </data>
+  <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
+    <value>Afișați din nou toate cele {0} actualizări ignorate?</value>
+  </data>
+  <data name="IgnoreListRemoveAllBody" xml:space="preserve">
+    <value>Vor reapărea în lista de actualizări la următoarea căutare.</value>
+  </data>
+  <data name="HeadlineNoSourceChecked" xml:space="preserve">
+    <value>Nicio sursă nu a putut fi verificată</value>
+  </data>
+  <data name="InstallErrorAndroidLockedWhat" xml:space="preserve">
+    <value>Fișiere ale acestui pachet sunt în uz, de obicei de către un emulator care rulează sau de Android Studio.</value>
+  </data>
+  <data name="InstallErrorAndroidLockedNow" xml:space="preserve">
+    <value>Închide emulatorul și Android Studio, apoi rulează din nou actualizarea.</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallWhat" xml:space="preserve">
+    <value>Actualizarea trebuie să elimine mai întâi versiunea veche, dar versiunea veche nu a înregistrat nicio comandă de dezinstalare.</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallNow" xml:space="preserve">
+    <value>Dezinstalează versiunea veche din Setările Windows, la Aplicații, apoi rulează din nou actualizarea.</value>
+  </data>
+  <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
+    <value>Curățarea discului a durat mai mult de {0} de minute și a fost încheiată.</value>
+  </data>
+  <data name="SelfUpdateWaitingForWork" xml:space="preserve">
+    <value>Actualizarea va fi instalată după ce se termină lucrul în curs.</value>
+  </data>
+  <data name="CleanupProtectedFiles" xml:space="preserve">
+    <value>Fișiere omise (fără acces): {0}.</value>
+  </data>
+  <data name="CleanupProtectedFilesOne" xml:space="preserve">
+    <value>{0} fișier nu a fost accesibil și a fost omis.</value>
+  </data>
+  <data name="CleanupProtectedFilesSize" xml:space="preserve">
+    <value>Fișiere omise (fără acces): {0} ({1}).</value>
+  </data>
+  <data name="CleanupProtectedFilesSizeOne" xml:space="preserve">
+    <value>{0} fișier ({1}) nu a fost accesibil și a fost omis.</value>
+  </data>
+  <data name="CleanupProtected" xml:space="preserve">
+    <value>{0} fără acces</value>
+  </data>
+</root>

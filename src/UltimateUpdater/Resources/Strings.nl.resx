@@ -1,0 +1,2188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Ultimate Updater</value>
+  </data>
+  <data name="DialogOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="DialogYes" xml:space="preserve">
+    <value>Ja</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>Annuleren</value>
+  </data>
+  <data name="LanguageLabel" xml:space="preserve">
+    <value>Taal</value>
+  </data>
+  <data name="LanguageOptionSystem" xml:space="preserve">
+    <value>Systeem</value>
+  </data>
+  <data name="ThemeLabel" xml:space="preserve">
+    <value>Thema</value>
+  </data>
+  <data name="ThemeOptionSystem" xml:space="preserve">
+    <value>Systeem</value>
+  </data>
+  <data name="ThemeOptionLight" xml:space="preserve">
+    <value>Licht</value>
+  </data>
+  <data name="ThemeOptionDark" xml:space="preserve">
+    <value>Donker</value>
+  </data>
+  <data name="ScanButton" xml:space="preserve">
+    <value>Controleren op updates</value>
+  </data>
+  <data name="ScanningButton" xml:space="preserve">
+    <value>Bezig met scannen…</value>
+  </data>
+  <data name="ColumnName" xml:space="preserve">
+    <value>Naam</value>
+  </data>
+  <data name="ColumnSource" xml:space="preserve">
+    <value>Bron</value>
+  </data>
+  <data name="SelectAllButton" xml:space="preserve">
+    <value>Alles selecteren</value>
+  </data>
+  <data name="SelectAllClear" xml:space="preserve">
+    <value>Selectie wissen</value>
+  </data>
+  <data name="InstallSelectedButton" xml:space="preserve">
+    <value>Selectie bijwerken</value>
+  </data>
+  <data name="InstallButton" xml:space="preserve">
+    <value>Bijwerken</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Annuleren</value>
+  </data>
+  <data name="SelectionSummary" xml:space="preserve">
+    <value>{0} geselecteerd</value>
+  </data>
+  <data name="SelectionSummaryWithCritical" xml:space="preserve">
+    <value>{0} geselecteerd ({1} kritiek)</value>
+  </data>
+  <data name="OpenButton" xml:space="preserve">
+    <value>Openen</value>
+  </data>
+  <data name="ContextMenuOpenWebsite" xml:space="preserve">
+    <value>Website openen</value>
+  </data>
+  <data name="OpenFolderButton" xml:space="preserve">
+    <value>Map openen</value>
+  </data>
+  <data name="CategorySoftware" xml:space="preserve">
+    <value>Software</value>
+  </data>
+  <data name="CategorySystemAndDrivers" xml:space="preserve">
+    <value>Systeem en stuurprogramma's</value>
+  </data>
+  <data name="CategoryGames" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="CategoryDeveloperTools" xml:space="preserve">
+    <value>Ontwikkelaarstools</value>
+  </data>
+  <data name="CategoryStore" xml:space="preserve">
+    <value>Store</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Zoeken…</value>
+  </data>
+  <data name="FilterCriticalOnly" xml:space="preserve">
+    <value>Alleen kritiek</value>
+  </data>
+  <data name="IgnoreButton" xml:space="preserve">
+    <value>Deze versie negeren</value>
+  </data>
+  <data name="IgnoreAllButton" xml:space="preserve">
+    <value>Alle versies negeren</value>
+  </data>
+  <data name="IgnoreSimpleButton" xml:space="preserve">
+    <value>Negeren</value>
+  </data>
+  <data name="UnignoreButton" xml:space="preserve">
+    <value>Opnieuw tonen</value>
+  </data>
+  <data name="IgnoredBadge" xml:space="preserve">
+    <value>Genegeerd</value>
+  </data>
+  <data name="IgnoreListTitle" xml:space="preserve">
+    <value>Genegeerde pakketten</value>
+  </data>
+  <data name="IgnoreListAllVersions" xml:space="preserve">
+    <value>alle versies</value>
+  </data>
+  <data name="IgnoreListRemoveAll" xml:space="preserve">
+    <value>Alles verwijderen</value>
+  </data>
+  <data name="IgnoreListEmpty" xml:space="preserve">
+    <value>Niets wordt genegeerd.</value>
+  </data>
+  <data name="SnoozeButton" xml:space="preserve">
+    <value>Later herinneren</value>
+  </data>
+  <data name="SnoozeOneDay" xml:space="preserve">
+    <value>Over 1 dag</value>
+  </data>
+  <data name="SnoozeOneWeek" xml:space="preserve">
+    <value>Over 1 week</value>
+  </data>
+  <data name="SnoozeOneMonth" xml:space="preserve">
+    <value>Over 1 maand</value>
+  </data>
+  <data name="UnsnoozeButton" xml:space="preserve">
+    <value>Nu weer tonen</value>
+  </data>
+  <data name="SnoozedBadge" xml:space="preserve">
+    <value>Uitgesteld tot {0}</value>
+  </data>
+  <data name="RetryButton" xml:space="preserve">
+    <value>Opnieuw</value>
+  </data>
+  <data name="FilterHideManual" xml:space="preserve">
+    <value>Zelf te openen items verbergen</value>
+  </data>
+  <data name="FilterPersistentFailures" xml:space="preserve">
+    <value>Blijft mislukken ({0})</value>
+  </data>
+  <data name="PersistentFailureHint" xml:space="preserve">
+    <value>{0} keer om dezelfde reden mislukt. Dit pakket negeren?</value>
+  </data>
+  <data name="InstallVersionUnchanged" xml:space="preserve">
+    <value>Versie ongewijzigd</value>
+  </data>
+  <data name="RebootRequiredBadge" xml:space="preserve">
+    <value>Herstart nodig</value>
+  </data>
+  <data name="RebootRequiredInfo" xml:space="preserve">
+    <value>{0} updates geïnstalleerd. Herstart om te voltooien.</value>
+  </data>
+  <data name="RebootRequiredInfoOne" xml:space="preserve">
+    <value>{0} update geïnstalleerd. Herstart om te voltooien.</value>
+  </data>
+  <data name="SelectionSummarySizeSuffix" xml:space="preserve">
+    <value> · ~{0}</value>
+  </data>
+  <data name="InfoLinkButton" xml:space="preserve">
+    <value>Projectpagina openen</value>
+  </data>
+  <data name="ColumnDate" xml:space="preserve">
+    <value>Datum</value>
+  </data>
+  <data name="ColumnSize" xml:space="preserve">
+    <value>Grootte</value>
+  </data>
+  <data name="ColumnVersion" xml:space="preserve">
+    <value>Versie</value>
+  </data>
+  <data name="HistoryButton" xml:space="preserve">
+    <value>Geschiedenis</value>
+  </data>
+  <data name="SettingsButton" xml:space="preserve">
+    <value>Instellingen</value>
+  </data>
+  <data name="HistoryTitle" xml:space="preserve">
+    <value>Geschiedenis</value>
+  </data>
+  <data name="HistoryEmpty" xml:space="preserve">
+    <value>Nog geen installaties geregistreerd.</value>
+  </data>
+  <data name="HistoryOnlyFailed" xml:space="preserve">
+    <value>Alleen mislukt</value>
+  </data>
+  <data name="HistoryNoMatches" xml:space="preserve">
+    <value>Geen items komen overeen met uw zoekopdracht.</value>
+  </data>
+  <data name="HistoryColumnWhen" xml:space="preserve">
+    <value>Wanneer</value>
+  </data>
+  <data name="HistoryColumnSize" xml:space="preserve">
+    <value>Grootte</value>
+  </data>
+  <data name="HistoryColumnResult" xml:space="preserve">
+    <value>Resultaat</value>
+  </data>
+  <data name="HistoryCopy" xml:space="preserve">
+    <value>Lijst kopiëren</value>
+  </data>
+  <data name="HistoryCopied" xml:space="preserve">
+    <value>{0} items gekopieerd</value>
+  </data>
+  <data name="HistoryCopyColumnFrom" xml:space="preserve">
+    <value>Van</value>
+  </data>
+  <data name="HistoryCopyColumnTo" xml:space="preserve">
+    <value>Naar</value>
+  </data>
+  <data name="HistorySucceeded" xml:space="preserve">
+    <value>Bijgewerkt</value>
+  </data>
+  <data name="HistoryFailed" xml:space="preserve">
+    <value>Mislukt</value>
+  </data>
+  <data name="HistoryHandedOff" xml:space="preserve">
+    <value>Overgedragen</value>
+  </data>
+  <data name="HistoryNotApplicable" xml:space="preserve">
+    <value>Geen passende versie</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Instellingen</value>
+  </data>
+  <data name="SettingsScanGroup" xml:space="preserve">
+    <value>Scannen</value>
+  </data>
+  <data name="SettingsIntervalLabel" xml:space="preserve">
+    <value>Automatisch scannen elke</value>
+  </data>
+  <data name="SettingsIntervalOff" xml:space="preserve">
+    <value>Uit</value>
+  </data>
+  <data name="SettingsIntervalHours6" xml:space="preserve">
+    <value>6 uur</value>
+  </data>
+  <data name="SettingsIntervalHours12" xml:space="preserve">
+    <value>12 uur</value>
+  </data>
+  <data name="SettingsIntervalDaily" xml:space="preserve">
+    <value>24 uur</value>
+  </data>
+  <data name="SettingsIntervalWeekly" xml:space="preserve">
+    <value>7 dagen</value>
+  </data>
+  <data name="SettingsScanOnStart" xml:space="preserve">
+    <value>Scannen bij opstarten</value>
+  </data>
+  <data name="SettingsInstallGroup" xml:space="preserve">
+    <value>Installatie</value>
+  </data>
+  <data name="SettingsPreselectCritical" xml:space="preserve">
+    <value>Kritieke updates vooraf selecteren</value>
+  </data>
+  <data name="SettingsRestorePoint" xml:space="preserve">
+    <value>Eerst een herstelpunt maken</value>
+  </data>
+  <data name="SettingsRestorePointDesc" xml:space="preserve">
+    <value>Maximaal één per dag. Windows zelf staat er niet meer toe, en elk herstelpunt kost tot een minuut voordat het eerste pakket start.</value>
+  </data>
+  <data name="InstallRetryRound" xml:space="preserve">
+    <value>Tweede poging</value>
+  </data>
+  <data name="AlreadyRunning" xml:space="preserve">
+    <value>Ultimate Updater draait al. Kijk in het systeemvak.</value>
+  </data>
+  <data name="SettingsNotifyGroup" xml:space="preserve">
+    <value>Meldingen</value>
+  </data>
+  <data name="SettingsNotifyOnFound" xml:space="preserve">
+    <value>Melden wanneer updates worden gevonden</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnly" xml:space="preserve">
+    <value>Alleen voor kritieke updates</value>
+  </data>
+  <data name="SettingsAppearanceGroup" xml:space="preserve">
+    <value>Weergave</value>
+  </data>
+  <data name="CategoryManualUpdate" xml:space="preserve">
+    <value>Zelf openen</value>
+  </data>
+  <data name="CategoryGitHubManual" xml:space="preserve">
+    <value>GitHub (handmatig)</value>
+  </data>
+  <data name="CategoryOpenStore" xml:space="preserve">
+    <value>Openen in een store</value>
+  </data>
+  <data name="CategoryOpenGames" xml:space="preserve">
+    <value>Openen in een launcher</value>
+  </data>
+  <data name="InstallProgressCount" xml:space="preserve">
+    <value>{0} van {1} voltooid</value>
+  </data>
+  <data name="InstallRunningCount" xml:space="preserve">
+    <value>{0} installaties actief</value>
+  </data>
+  <data name="InstallProgressCancel" xml:space="preserve">
+    <value>Alles stoppen</value>
+  </data>
+  <data name="InstallProgressClose" xml:space="preserve">
+    <value>Sluiten</value>
+  </data>
+  <data name="InstallProgressDownloaded" xml:space="preserve">
+    <value>{0} gedownload</value>
+  </data>
+  <data name="InstallProgressTotalSize" xml:space="preserve">
+    <value>Download {0}</value>
+  </data>
+  <data name="InstallQueueHeader" xml:space="preserve">
+    <value>{0} nog in de wachtrij</value>
+  </data>
+  <data name="TooltipCopyHint" xml:space="preserve">
+    <value>Rechtsklikken om te kopiëren</value>
+  </data>
+  <data name="ChangelogTitle" xml:space="preserve">
+    <value>Wijzigingslogboek</value>
+  </data>
+  <data name="ShortcutsTitle" xml:space="preserve">
+    <value>Sneltoetsen</value>
+  </data>
+  <data name="ChangelogOpenRelease" xml:space="preserve">
+    <value>Releasepagina openen</value>
+  </data>
+  <data name="ChangelogNoTextDialogBody" xml:space="preserve">
+    <value>Er is geen wijzigingslogboek voor deze update. De pagina van de leverancier ({0}) wordt in uw browser geopend.</value>
+  </data>
+  <data name="ChangelogOpenSite" xml:space="preserve">
+    <value>Pagina openen</value>
+  </data>
+  <data name="ChangelogButtonTooltip" xml:space="preserve">
+    <value>Wijzigingslogboek bekijken</value>
+  </data>
+  <data name="ChangelogNone" xml:space="preserve">
+    <value>Geen releaseopmerkingen gevonden voor deze versie.</value>
+  </data>
+  <data name="InstallQueueRemoveTooltip" xml:space="preserve">
+    <value>Verwijderen uit de wachtrij</value>
+  </data>
+  <data name="QueueReorderTooltip" xml:space="preserve">
+    <value>Sleep om te herschikken, of Alt met de pijltjestoetsen</value>
+  </data>
+  <data name="QueueRowPositionAutomation" xml:space="preserve">
+    <value>{0}, positie {1} van {2}</value>
+  </data>
+  <data name="InstallQueueNeedsAdminTooltip" xml:space="preserve">
+    <value>Beheerdersrechten nodig</value>
+  </data>
+  <data name="InstallQueueItemRemoved" xml:space="preserve">
+    <value>Verwijderd uit de wachtrij</value>
+  </data>
+  <data name="UninstallFailed" xml:space="preserve">
+    <value>Verwijderen mislukt. Open de details voor de oorzaak.</value>
+  </data>
+  <data name="SteamUninstallHandedOff" xml:space="preserve">
+    <value>Het verwijderdialoogvenster van Steam is geopend. Voltooi het daar; het resultaat is hier niet zichtbaar.</value>
+  </data>
+  <data name="ErrorDetailTitle" xml:space="preserve">
+    <value>Foutdetails</value>
+  </data>
+  <data name="ShowErrorDetailButton" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="StartButton" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="UninstallButton" xml:space="preserve">
+    <value>Verwijderen</value>
+  </data>
+  <data name="UninstallConfirmHeadline" xml:space="preserve">
+    <value>“{0}” verwijderen?</value>
+  </data>
+  <data name="UninstallConfirmBody" xml:space="preserve">
+    <value>Het programma wordt van deze pc verwijderd.
+Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
+  </data>
+  <data name="UninstallBlockedByActivity" xml:space="preserve">
+    <value>Nu niet mogelijk om te verwijderen: er loopt een installatie. Probeer het opnieuw zodra deze is voltooid.</value>
+  </data>
+  <data name="RowDowngrade" xml:space="preserve">
+    <value>Terug naar {0}</value>
+  </data>
+  <data name="DowngradeConfirmTitle" xml:space="preserve">
+    <value>De oudere versie installeren?</value>
+  </data>
+  <data name="DowngradeConfirmBody" xml:space="preserve">
+    <value>{0} wordt teruggezet van {1} naar {2}. De nieuwere versie wordt bij de volgende scan opnieuw aangeboden.</value>
+  </data>
+  <data name="DowngradeBlockedByActivity" xml:space="preserve">
+    <value>Nu niet mogelijk om terug te zetten: er loopt een installatie. Probeer het opnieuw zodra deze is voltooid.</value>
+  </data>
+  <data name="RestorePointLast" xml:space="preserve">
+    <value>Laatste herstelpunt: {0}</value>
+  </data>
+  <data name="RestorePointNone" xml:space="preserve">
+    <value>Nog geen herstelpunt van dit programma</value>
+  </data>
+  <data name="SettingsIntervalDesc" xml:space="preserve">
+    <value>Hoe vaak op de achtergrond naar updates wordt gezocht.</value>
+  </data>
+  <data name="SettingsScanOnStartDesc" xml:space="preserve">
+    <value>Eenmalig scannen bij elke start van de app.</value>
+  </data>
+  <data name="SettingsPreselectCriticalDesc" xml:space="preserve">
+    <value>Vink beveiligingsrelevante updates automatisch aan.</value>
+  </data>
+  <data name="InstallParallelLabel" xml:space="preserve">
+    <value>Installaties tegelijk</value>
+  </data>
+  <data name="InstallParallelHint" xml:space="preserve">
+    <value>Meer tegelijk is sneller. Sommige installatieprogramma's weigeren naast een ander te draaien; die worden apart opnieuw geprobeerd.</value>
+  </data>
+  <data name="SettingsParallelScans" xml:space="preserve">
+    <value>Bronnen tegelijk controleren</value>
+  </data>
+  <data name="SettingsParallelAuto" xml:space="preserve">
+    <value>Automatisch instellen voor deze computer</value>
+  </data>
+  <data name="SettingsScanDownloads" xml:space="preserve">
+    <value>Gedownloade bestanden controleren</value>
+  </data>
+  <data name="SettingsScanDownloadsDesc" xml:space="preserve">
+    <value>Windows Beveiliging controleert de bestanden die deze app zelf downloadt voordat ze worden uitgevoerd.</value>
+  </data>
+  <data name="ScanningDownload" xml:space="preserve">
+    <value>controleren op virussen</value>
+  </data>
+  <data name="SettingsRegistryBackupGroup" xml:space="preserve">
+    <value>Opschonen</value>
+  </data>
+  <data name="SettingsRegistryBackupFolder" xml:space="preserve">
+    <value>Back-upmap</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDesc" xml:space="preserve">
+    <value>Elke registeropschoning maakt eerst een back-up van de sleutels die worden aangeraakt, voordat er iets wordt verwijderd. Standaard: %APPDATA%\UltimateUpdater\registry-backups.</value>
+  </data>
+  <data name="SettingsRegistryBackupRetention" xml:space="preserve">
+    <value>Bewaren</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDesc" xml:space="preserve">
+    <value>Hoeveel van die back-ups worden bewaard. De oudste wordt verwijderd zodra dit aantal is bereikt.</value>
+  </data>
+  <data name="SettingsDataGroup" xml:space="preserve">
+    <value>Gegevens en logboeken</value>
+  </data>
+  <data name="SettingsExcludedPathsHeader" xml:space="preserve">
+    <value>{0} permanent uitgesloten</value>
+  </data>
+  <data name="SettingsExcludedPathsDesc" xml:space="preserve">
+    <value>Uitgesloten van het opschoondialoogvenster via het rechtsklikmenu.</value>
+  </data>
+  <data name="SettingsExcludedPathsEmpty" xml:space="preserve">
+    <value>Geen permanent uitgesloten paden.</value>
+  </data>
+  <data name="SettingsExcludedPathRelease" xml:space="preserve">
+    <value>Uitsluiting opheffen</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAll" xml:space="preserve">
+    <value>Alle uitsluitingen opheffen</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmHeadline" xml:space="preserve">
+    <value>Alle uitsluitingen opheffen?</value>
+  </data>
+  <data name="SettingsExcludedPathReleaseAllConfirmBody" xml:space="preserve">
+    <value>De opschoning biedt deze paden opnieuw aan wanneer ze de volgende keer worden gevonden.</value>
+  </data>
+  <data name="SettingsRegistryRetentionOption" xml:space="preserve">
+    <value>{0} back-ups</value>
+  </data>
+  <data name="ScanThreatFound" xml:space="preserve">
+    <value>Uw antivirus heeft het gedownloade bestand als schadelijk gemarkeerd. Het is verwijderd, niet uitgevoerd.</value>
+  </data>
+  <data name="ScanClean" xml:space="preserve">
+    <value>geen bedreiging gevonden</value>
+  </data>
+  <data name="SettingsNotifyOnFoundDesc" xml:space="preserve">
+    <value>Toon een melding in het systeemvak wanneer updates worden gevonden.</value>
+  </data>
+  <data name="SettingsNotifyCriticalOnlyDesc" xml:space="preserve">
+    <value>Alleen melden voor beveiligingsrelevante updates.</value>
+  </data>
+  <data name="ThemeDesc" xml:space="preserve">
+    <value>Windows volgen, of licht of donker forceren.</value>
+  </data>
+  <data name="SettingsAutostartDesc" xml:space="preserve">
+    <value>Starten met Windows, geminimaliseerd naar het systeemvak.</value>
+  </data>
+  <data name="SettingsCloseToTrayDesc" xml:space="preserve">
+    <value>Het venster sluiten laat de app in het systeemvak actief blijven.</value>
+  </data>
+  <data name="SettingsUpdatesGroup" xml:space="preserve">
+    <value>App-updates</value>
+  </data>
+  <data name="SettingsCheckUpdatesDesc" xml:space="preserve">
+    <value>Controleren op een nieuwe versie van Ultimate Updater.</value>
+  </data>
+  <data name="SettingsCheckNow" xml:space="preserve">
+    <value>Nu controleren</value>
+  </data>
+  <data name="SettingsUpToDate" xml:space="preserve">
+    <value>U gebruikt de nieuwste versie.</value>
+  </data>
+  <data name="SettingsCurrentVersion" xml:space="preserve">
+    <value>Versie {0}</value>
+  </data>
+  <data name="SettingsCheckingUpdates" xml:space="preserve">
+    <value>Bezig met controleren…</value>
+  </data>
+  <data name="SettingsSourcesGroup" xml:space="preserve">
+    <value>Bronnen</value>
+  </data>
+  <data name="SettingsSourcesHint" xml:space="preserve">
+    <value>Uitgeschakelde bronnen worden niet gescand.</value>
+  </data>
+  <data name="SettingsSourcesSelectAll" xml:space="preserve">
+    <value>Alle bronnen</value>
+  </data>
+  <data name="SettingsSourcesSearchPlaceholder" xml:space="preserve">
+    <value>Bronnen zoeken…</value>
+  </data>
+  <data name="SettingsSourcesSearchEmpty" xml:space="preserve">
+    <value>Geen bronnen komen overeen met uw zoekopdracht.</value>
+  </data>
+  <data name="SettingsShowAllSources" xml:space="preserve">
+    <value>Bronnen tonen die niet zijn geïnstalleerd ({0})</value>
+  </data>
+  <data name="SettingsStartupGroup" xml:space="preserve">
+    <value>Opstarten</value>
+  </data>
+  <data name="SettingsAutostart" xml:space="preserve">
+    <value>Starten met Windows</value>
+  </data>
+  <data name="SettingsCloseToTray" xml:space="preserve">
+    <value>Naar systeemvak sluiten in plaats van afsluiten</value>
+  </data>
+  <data name="SettingsCleanupReminder" xml:space="preserve">
+    <value>Herinneren wanneer opschonen achterstallig is</value>
+  </data>
+  <data name="SettingsAdvancedGroup" xml:space="preserve">
+    <value>Geavanceerd</value>
+  </data>
+  <data name="TrayOpen" xml:space="preserve">
+    <value>Openen</value>
+  </data>
+  <data name="TrayScan" xml:space="preserve">
+    <value>Controleren op updates</value>
+  </data>
+  <data name="TrayExit" xml:space="preserve">
+    <value>Afsluiten</value>
+  </data>
+  <data name="NotifyFound" xml:space="preserve">
+    <value>{0} updates beschikbaar</value>
+  </data>
+  <data name="NotifyFoundWithCritical" xml:space="preserve">
+    <value>{0} updates beschikbaar ({1} kritiek)</value>
+  </data>
+  <data name="SelfUpdateTitle" xml:space="preserve">
+    <value>Er is een nieuwe versie beschikbaar</value>
+  </data>
+  <data name="SelfUpdateInstall" xml:space="preserve">
+    <value>Nu bijwerken</value>
+  </data>
+  <data name="SelfUpdateDismiss" xml:space="preserve">
+    <value>Negeren</value>
+  </data>
+  <data name="SelfUpdateWhatsNew" xml:space="preserve">
+    <value>Wat is nieuw</value>
+  </data>
+  <data name="CleanupReminderBanner" xml:space="preserve">
+    <value>De laatste opschoning was op {0}.</value>
+  </data>
+  <data name="CleanupReminderThisTime" xml:space="preserve">
+    <value>Alleen deze keer</value>
+  </data>
+  <data name="CleanupReminderNeverAgain" xml:space="preserve">
+    <value>Nooit meer tonen</value>
+  </data>
+  <data name="SelfUpdateFailed" xml:space="preserve">
+    <value>De update kon niet worden geverifieerd en is verwijderd.</value>
+  </data>
+  <data name="HeadlineScanning" xml:space="preserve">
+    <value>Controleren op updates…</value>
+  </data>
+  <data name="HeadlineUpToDate" xml:space="preserve">
+    <value>Alles is up-to-date</value>
+  </data>
+  <data name="HeadlineUpdates" xml:space="preserve">
+    <value>{0} updates beschikbaar</value>
+  </data>
+  <data name="SubheadlineScanning" xml:space="preserve">
+    <value>Elke geconfigureerde bron wordt geraadpleegd.</value>
+  </data>
+  <data name="EmptyState" xml:space="preserve">
+    <value>Geen updates gevonden. Voer een scan uit om opnieuw te controleren.</value>
+  </data>
+  <data name="ManualUpdatesSectionTitle" xml:space="preserve">
+    <value>Open deze zelf: deze app kan hiervoor geen update uitvoeren</value>
+  </data>
+  <data name="CriticalBadge" xml:space="preserve">
+    <value>Kritiek</value>
+  </data>
+  <data name="RowQueued" xml:space="preserve">
+    <value>In wachtrij</value>
+  </data>
+  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
+    <value>{0} · {1:0} %</value>
+  </data>
+  <data name="CleanupDoneCount" xml:space="preserve">
+    <value>{0} van {1} gebieden voltooid</value>
+  </data>
+  <data name="CleanupDoneCountOne" xml:space="preserve">
+    <value>{0} van {1} gebied voltooid</value>
+  </data>
+  <data name="CleanupRemainingCount" xml:space="preserve">
+    <value>{0} nog te gaan</value>
+  </data>
+  <data name="CleanupEmptyCount" xml:space="preserve">
+    <value>{0} gebieden zonder resultaat</value>
+  </data>
+  <data name="CleanupEmptyCountOne" xml:space="preserve">
+    <value>{0} gebied zonder resultaat</value>
+  </data>
+  <data name="InstallRestorePointStep" xml:space="preserve">
+    <value>Herstelpunt wordt gemaakt…</value>
+  </data>
+  <data name="ActivityRestorePointSkipped" xml:space="preserve">
+    <value>Herstelpunt overgeslagen, er bestaat al één van vandaag.</value>
+  </data>
+  <data name="CleanupRestorePointParallel" xml:space="preserve">
+    <value>Het herstelpunt wordt gemaakt, de lange stappen lopen al</value>
+  </data>
+  <data name="RowAlsoInSources" xml:space="preserve">
+    <value>Bijgewerkt via {0}; ook aangeboden door {1}.</value>
+  </data>
+  <data name="RowDone" xml:space="preserve">
+    <value>Voltooid</value>
+  </data>
+  <data name="RowFailed" xml:space="preserve">
+    <value>Mislukt</value>
+  </data>
+  <data name="SubheadlineScanningProgress" xml:space="preserve">
+    <value>{0} van {1} bronnen gecontroleerd</value>
+  </data>
+  <data name="SubheadlineScanningProgressOne" xml:space="preserve">
+    <value>{0} van {1} bron gecontroleerd</value>
+  </data>
+  <data name="SubheadlineScanningSources" xml:space="preserve">
+    <value>Bezig met controleren: {0}</value>
+  </data>
+  <data name="SourceDescWinget" xml:space="preserve">
+    <value>Microsofts officiële pakketbeheerder voor Windows. Vermeldt en werkt stilzwijgend apps bij die hiermee zijn geïnstalleerd.</value>
+  </data>
+  <data name="SourceDescWindowsUpdate" xml:space="preserve">
+    <value>De eigen updateservice van Windows: kwaliteits-, stuurprogramma- en definitie-updates van Microsoft, nooit functie-upgrades.</value>
+  </data>
+  <data name="SourceDescMsStore" xml:space="preserve">
+    <value>De Microsoft Store-app. Opent alleen de eigen updatepagina, omdat de Store versies per app verbergt voor andere tools.</value>
+  </data>
+  <data name="SourceDescChocolatey" xml:space="preserve">
+    <value>Communitypakketbeheerder voor Windows (choco.exe). Werkt door de community onderhouden pakketten bij; vereist beheerdersrechten.</value>
+  </data>
+  <data name="SourceDescScoop" xml:space="preserve">
+    <value>Pakketbeheerder voor de opdrachtregel, installeert in de gebruikersmap zonder beheerdersrechten.</value>
+  </data>
+  <data name="SourceDescPip" xml:space="preserve">
+    <value>De pakketinstaller van Python. Vermeldt en werkt verouderde Python-pakketten bij.</value>
+  </data>
+  <data name="SourceDescNpm" xml:space="preserve">
+    <value>De pakketbeheerder van Node.js. Vermeldt en werkt globaal geïnstalleerde npm-pakketten bij.</value>
+  </data>
+  <data name="SourceDescPnpm" xml:space="preserve">
+    <value>De globale pakketten van pnpm uit hetzelfde npm-register dat npm zelf gebruikt. Niet geverifieerd tegen een echte pnpm-installatie; meld een probleem als een rij onjuist lijkt.</value>
+  </data>
+  <data name="SourceDescDotnetTool" xml:space="preserve">
+    <value>Globale .NET-tools, gecontroleerd tegen de openbare NuGet-feed op nieuwere versies.</value>
+  </data>
+  <data name="SourceNameDotnetTool" xml:space="preserve">
+    <value>.NET-tools</value>
+  </data>
+  <data name="SourceDescPsGallery" xml:space="preserve">
+    <value>PowerShell Gallery-modules geïnstalleerd in het gebruikersprofiel.</value>
+  </data>
+  <data name="SourceDescGem" xml:space="preserve">
+    <value>De pakketbeheerder van Ruby. Vermeldt en werkt verouderde RubyGems bij.</value>
+  </data>
+  <data name="SourceDescComposer" xml:space="preserve">
+    <value>De afhankelijkheidsbeheerder van PHP. Vermeldt en werkt globale Composer-pakketten bij.</value>
+  </data>
+  <data name="SourceDescRustup" xml:space="preserve">
+    <value>De toolchainbeheerder van Rust. Eén update werkt elke geïnstalleerde toolchain en rustup zelf bij.</value>
+  </data>
+  <data name="SourceDescVcpkg" xml:space="preserve">
+    <value>C/C++-bibliotheken via vcpkg (klassieke modus). Niet geverifieerd tegen een echte vcpkg-installatie; meld een probleem als een rij onjuist lijkt.</value>
+  </data>
+  <data name="SourceDescMise" xml:space="preserve">
+    <value>Toolversies beheerd door mise. Niet geverifieerd tegen een echte mise-installatie; meld een probleem als een rij onjuist lijkt.</value>
+  </data>
+  <data name="SourceDescSteam" xml:space="preserve">
+    <value>De Steam-client van Valve. Leest de echte update-status van games uit de eigen bestanden van Steam; de update zelf verloopt in Steam.</value>
+  </data>
+  <data name="SourceDescNvidia" xml:space="preserve">
+    <value>Vraagt de eigen stuurprogrammaservice van NVIDIA naar het nieuwste Game Ready-stuurprogramma. Installeert het direct na verificatie van de handtekening van NVIDIA.</value>
+  </data>
+  <data name="SourceDescGitHubRelease" xml:space="preserve">
+    <value>Controleert programma's waarvan de verwijderregistratie een GitHub-project vermeldt tegen de nieuwste release, voor software die buiten elke pakketbeheerder om is geïnstalleerd. Opent de releasepagina in plaats van te installeren.</value>
+  </data>
+  <data name="SourceNameGitHubRelease" xml:space="preserve">
+    <value>GitHub-releases</value>
+  </data>
+  <data name="SourceDescLauncher" xml:space="preserve">
+    <value>Opent de {0}-client. {0} werkt zichzelf en de games bij het opstarten bij; deze app kan dat niet zien en niet starten.</value>
+  </data>
+  <data name="FatalErrorHeadline" xml:space="preserve">
+    <value>Ultimate Updater is op een probleem gestuit</value>
+  </data>
+  <data name="FatalError" xml:space="preserve">
+    <value>Ultimate Updater moet worden afgesloten. Details staan in de logmap:
+{0}</value>
+  </data>
+  <data name="InstallFailed" xml:space="preserve">
+    <value>Update mislukt. Open de details voor de oorzaak.</value>
+  </data>
+  <data name="InstallElevationDeclined" xml:space="preserve">
+    <value>Beheerdersrechten zijn geweigerd.</value>
+  </data>
+  <data name="InstallWorkerStopped" xml:space="preserve">
+    <value>De beheerdersstap is gestopt voordat deze update was geïnstalleerd.</value>
+  </data>
+  <data name="HeadlineUpdatesOne" xml:space="preserve">
+    <value>{0} update beschikbaar</value>
+  </data>
+  <data name="NotifyFoundOne" xml:space="preserve">
+    <value>{0} update beschikbaar</value>
+  </data>
+  <data name="NotifyFoundOneWithCritical" xml:space="preserve">
+    <value>{0} update beschikbaar ({1} kritiek)</value>
+  </data>
+  <data name="ScanFailed" xml:space="preserve">
+    <value>Deze bron kon niet worden gecontroleerd. Open de details voor de oorzaak.</value>
+  </data>
+  <data name="ScanStateWaiting" xml:space="preserve">
+    <value>Wachten…</value>
+  </data>
+  <data name="ScanStateRunning" xml:space="preserve">
+    <value>Bezig…</value>
+  </data>
+  <data name="ScanStateSlow" xml:space="preserve">
+    <value>Nog steeds bezig…</value>
+  </data>
+  <data name="ScanStateCancelled" xml:space="preserve">
+    <value>Geannuleerd</value>
+  </data>
+  <data name="CancelSourceScanTooltip" xml:space="preserve">
+    <value>Controle van deze bron stoppen</value>
+  </data>
+  <data name="EmptyStateFiltered" xml:space="preserve">
+    <value>Niets komt overeen met de huidige zoekopdracht of filter.</value>
+  </data>
+  <data name="InstallCancelled" xml:space="preserve">
+    <value>Geannuleerd voordat deze update was geïnstalleerd.</value>
+  </data>
+  <data name="InstallWaitingForCleanup" xml:space="preserve">
+    <value>Wachten tot het opschonen dit gebied vrijgeeft</value>
+  </data>
+  <data name="InstallAlreadyCurrent" xml:space="preserve">
+    <value>Al op versie {0}, niets te doen.</value>
+  </data>
+  <data name="ErrorDetailOutput" xml:space="preserve">
+    <value>Wat de tool heeft gemeld</value>
+  </data>
+  <data name="ErrorDetailLogInSettings" xml:space="preserve">
+    <value>Zie de logmap in Instellingen</value>
+  </data>
+  <data name="ErrorDetailRetryInMenu" xml:space="preserve">
+    <value>Interactief opnieuw proberen via het rechtsklikmenu van de rij</value>
+  </data>
+  <data name="ErrorWhatDoesThisMean" xml:space="preserve">
+    <value>Wat betekent dit?</value>
+  </data>
+  <data name="ErrorWindowsSaysPrefix" xml:space="preserve">
+    <value>Windows meldt:</value>
+  </data>
+  <data name="ErrorNoMeaning" xml:space="preserve">
+    <value>Windows heeft geen tekst voor deze code.</value>
+  </data>
+  <data name="ErrorDetailSourceLog" xml:space="preserve">
+    <value>Uit het logboek rond dit tijdstip (bij dit item is geen uitvoer opgeslagen)</value>
+  </data>
+  <data name="ErrorDetailSourceShort" xml:space="preserve">
+    <value>Bij dit item is alleen het korte bericht opgeslagen</value>
+  </data>
+  <data name="ErrorDetailCopy" xml:space="preserve">
+    <value>Details kopiëren</value>
+  </data>
+  <data name="ErrorCopyReport" xml:space="preserve">
+    <value>Foutrapport kopiëren</value>
+  </data>
+  <data name="ErrorDetailCopied" xml:space="preserve">
+    <value>Gekopieerd naar klembord</value>
+  </data>
+  <data name="SubListCount" xml:space="preserve">
+    <value>{0} updates in behandeling</value>
+  </data>
+  <data name="SubListCountOne" xml:space="preserve">
+    <value>{0} update in behandeling</value>
+  </data>
+  <data name="ThemeOptionHacker" xml:space="preserve">
+    <value>Hacker</value>
+  </data>
+  <data name="ThemeOptionNeon" xml:space="preserve">
+    <value>Neon</value>
+  </data>
+  <data name="SettingsResetGroup" xml:space="preserve">
+    <value>Herstellen</value>
+  </data>
+  <data name="SettingsResetDesc" xml:space="preserve">
+    <value>De fabrieksstatus van deze app herstellen.</value>
+  </data>
+  <data name="SettingsResetDoneHeadline" xml:space="preserve">
+    <value>Voltooid</value>
+  </data>
+  <data name="SettingsResetDoneBody" xml:space="preserve">
+    <value>De app staat weer in de fabrieksstatus.</value>
+  </data>
+  <data name="SettingsDeleteDataPartialHeadline" xml:space="preserve">
+    <value>Sommige bestanden zijn nog in gebruik</value>
+  </data>
+  <data name="SettingsDeleteDataPartialBody" xml:space="preserve">
+    <value>Instellingen zijn hersteld. Enkele bestanden die nog in gebruik zijn (bijvoorbeeld het huidige logboek) worden bij de volgende start verwijderd.</value>
+  </data>
+  <data name="HistoryFilterSource" xml:space="preserve">
+    <value>Bron:</value>
+  </data>
+  <data name="HistoryRangeAll" xml:space="preserve">
+    <value>Alles</value>
+  </data>
+  <data name="HistoryRangeToday" xml:space="preserve">
+    <value>Vandaag</value>
+  </data>
+  <data name="HistoryRangeWeek" xml:space="preserve">
+    <value>7 dagen</value>
+  </data>
+  <data name="HistoryRangeMonth" xml:space="preserve">
+    <value>30 dagen</value>
+  </data>
+  <data name="CleanupTitle" xml:space="preserve">
+    <value>Ruimte vrijmaken</value>
+  </data>
+  <data name="CleanupStart" xml:space="preserve">
+    <value>Opschonen</value>
+  </data>
+  <data name="CleanupPause" xml:space="preserve">
+    <value>Pauzeren</value>
+  </data>
+  <data name="CleanupResume" xml:space="preserve">
+    <value>Hervatten</value>
+  </data>
+  <data name="CleanupStop" xml:space="preserve">
+    <value>Stoppen</value>
+  </data>
+  <data name="CleanupRescan" xml:space="preserve">
+    <value>Opnieuw scannen</value>
+  </data>
+  <data name="CleanupStoppingRepair" xml:space="preserve">
+    <value>Gestopt. De lopende systeemreparatie moet eerst voltooid worden; onderbreken kan het onderdelenarchief van Windows beschadigen.</value>
+  </data>
+  <data name="CleanupNoProgressHint" xml:space="preserve">
+    <value>Windows meldt geen voortgang voor deze stap. Deze wordt uitgevoerd.</value>
+  </data>
+  <data name="CleanupDefragName" xml:space="preserve">
+    <value>Station {0} optimaliseren</value>
+  </data>
+  <data name="CleanupDefragConsequence" xml:space="preserve">
+    <value>Voert de Windows-optimalisatie voor dit station uit: defragmentatie op een harde schijf, retrim op een SSD. Maakt geen ruimte vrij, herschikt alleen wat er al is.</value>
+  </data>
+  <data name="CleanupDefragRowHdd" xml:space="preserve">
+    <value>{0} defragmenteren</value>
+  </data>
+  <data name="CleanupDefragRowSsd" xml:space="preserve">
+    <value>{0} optimaliseren, Trim</value>
+  </data>
+  <data name="CleanupDefragRowUnspecified" xml:space="preserve">
+    <value>{0} optimaliseren</value>
+  </data>
+  <data name="MediaTypeHdd" xml:space="preserve">
+    <value>HDD</value>
+  </data>
+  <data name="MediaTypeSsd" xml:space="preserve">
+    <value>SSD</value>
+  </data>
+  <data name="MediaTypeUsbDrive" xml:space="preserve">
+    <value>USB-station</value>
+  </data>
+  <data name="MediaTypeOtherDrive" xml:space="preserve">
+    <value>Station</value>
+  </data>
+  <data name="CleanupDriveSubline" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="CleanupDriveSublineUsb" xml:space="preserve">
+    <value>{0}, {1} · {2}</value>
+  </data>
+  <data name="DefragWarningTitle" xml:space="preserve">
+    <value>Dit kan uren duren</value>
+  </data>
+  <data name="DefragWarningBody" xml:space="preserve">
+    <value>Het defragmenteren van een grote harde schijf duurt lang. U kunt dit venster sluiten, het proces gaat door. Het programma afsluiten stopt het.</value>
+  </data>
+  <data name="DefragQuitWarningTitle" xml:space="preserve">
+    <value>Er loopt nog een stationsoptimalisatie</value>
+  </data>
+  <data name="DefragQuitWarningBody" xml:space="preserve">
+    <value>Nu afsluiten stopt de optimalisatie. Het station blijft bruikbaar, de optimalisatie is dan gewoon onvoltooid.</value>
+  </data>
+  <data name="DefragQuitAnyway" xml:space="preserve">
+    <value>Toch afsluiten</value>
+  </data>
+  <data name="DefragKeepRunning" xml:space="preserve">
+    <value>Laten doorlopen</value>
+  </data>
+  <data name="WorkQuitWarningTitle" xml:space="preserve">
+    <value>Er lopen nog updates of een opschoonactie</value>
+  </data>
+  <data name="WorkQuitWarningBody" xml:space="preserve">
+    <value>Nu afsluiten stopt ze halverwege: een pakket kan half geïnstalleerd blijven en een opschoonactie onvoltooid. Sluit u alleen het venster, dan lopen ze door.</value>
+  </data>
+  <data name="CleanupHistoryTitle" xml:space="preserve">
+    <value>Eerdere opschoningen</value>
+  </data>
+  <data name="CleanupHistoryButton" xml:space="preserve">
+    <value>Opschoningsgeschiedenis</value>
+  </data>
+  <data name="CleanupGroupTempFiles" xml:space="preserve">
+    <value>Tijdelijke bestanden</value>
+  </data>
+  <data name="CleanupGroupCaches" xml:space="preserve">
+    <value>Caches</value>
+  </data>
+  <data name="CleanupGroupWindowsMaintenance" xml:space="preserve">
+    <value>Windows-onderhoud</value>
+  </data>
+  <data name="CleanupGroupRecycleBin" xml:space="preserve">
+    <value>Prullenbak</value>
+  </data>
+  <data name="CleanupGroupSystemRepair" xml:space="preserve">
+    <value>Systeemreparatie</value>
+  </data>
+  <data name="CleanupGroupRegistry" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  <data name="CleanupHistoryEmpty" xml:space="preserve">
+    <value>Nog niets opgeschoond.</value>
+  </data>
+  <data name="CleanupHistoryFreed" xml:space="preserve">
+    <value>{0} vrijgemaakt</value>
+  </data>
+  <data name="CleanupHistoryEntrySummary" xml:space="preserve">
+    <value>{0} gebieden opgeschoond</value>
+  </data>
+  <data name="CleanupHistoryEntrySummaryOne" xml:space="preserve">
+    <value>{0} gebied opgeschoond</value>
+  </data>
+  <data name="CleanupHistorySkipped" xml:space="preserve">
+    <value>{0} in gebruik</value>
+  </data>
+  <data name="CleanupHistoryClearAll" xml:space="preserve">
+    <value>Alles verwijderen</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmHeadline" xml:space="preserve">
+    <value>De volledige geschiedenis verwijderen?</value>
+  </data>
+  <data name="CleanupHistoryClearAllConfirmDetail" xml:space="preserve">
+    <value>Alleen de geschiedenis wordt verwijderd. Reeds vrijgemaakte ruimte blijft vrij.</value>
+  </data>
+  <data name="CleanupHistoryDeleteEntry" xml:space="preserve">
+    <value>Dit item verwijderen</value>
+  </data>
+  <data name="CleanupHistoryTotalFreed" xml:space="preserve">
+    <value>{0} in totaal vrijgemaakt</value>
+  </data>
+  <data name="CleanupHistoryRunCount" xml:space="preserve">
+    <value>{0} keer uitgevoerd · laatst op {1}</value>
+  </data>
+  <data name="CleanupHistoryRunCountOne" xml:space="preserve">
+    <value>{0} keer uitgevoerd · laatst op {1}</value>
+  </data>
+  <data name="CleanupHistoryTopCategories" xml:space="preserve">
+    <value>Grootste gebieden</value>
+  </data>
+  <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
+    <value>Er is nog niets vrijgemaakt.</value>
+  </data>
+  <data name="CleanupPausedNote" xml:space="preserve">
+    <value>onderbroken</value>
+  </data>
+  <data name="CleanupScanning" xml:space="preserve">
+    <value>nog aan het meten…</value>
+  </data>
+  <data name="CleanupOfTotal" xml:space="preserve">
+    <value>van {0} gevonden</value>
+  </data>
+  <data name="CleanupNeedsAdmin" xml:space="preserve">
+    <value>beheerdersrechten nodig</value>
+  </data>
+  <data name="CleanupStateWaiting" xml:space="preserve">
+    <value>wachten</value>
+  </data>
+  <data name="CleanupStateCleaning" xml:space="preserve">
+    <value>bezig met opschonen</value>
+  </data>
+  <data name="CleanupStateStopped" xml:space="preserve">
+    <value>gestopt</value>
+  </data>
+  <data name="CleanupStateSkipped" xml:space="preserve">
+    <value>overgeslagen</value>
+  </data>
+  <data name="CleanupSkippedFiles" xml:space="preserve">
+    <value>{0} bestanden waren in gebruik en zijn overgeslagen.</value>
+  </data>
+  <data name="CleanupSkippedFilesOne" xml:space="preserve">
+    <value>{0} bestand was in gebruik en is overgeslagen.</value>
+  </data>
+  <data name="CleanupSelectedCount" xml:space="preserve">
+    <value>{0} van {1} gebieden geselecteerd</value>
+  </data>
+  <data name="CleanupSelectedCountOne" xml:space="preserve">
+    <value>{0} van {1} gebied geselecteerd</value>
+  </data>
+  <data name="CleanupFileCount" xml:space="preserve">
+    <value>{0} bestanden gemeten</value>
+  </data>
+  <data name="CleanupFileCountOne" xml:space="preserve">
+    <value>{0} bestand gemeten</value>
+  </data>
+  <data name="CleanupLargestLabel" xml:space="preserve">
+    <value>Grootste gebieden</value>
+  </data>
+  <data name="CleanupLastRunLabel" xml:space="preserve">
+    <value>Laatste opschoning</value>
+  </data>
+  <data name="CleanupFreeSpaceNow" xml:space="preserve">
+    <value>{0} vrij, +{1} na het opruimen</value>
+  </data>
+  <data name="CleanupCurrentLabel" xml:space="preserve">
+    <value>Huidig</value>
+  </data>
+  <data name="CleanupFailedHeadline" xml:space="preserve">
+    <value>Het opschonen kon niet worden voltooid</value>
+  </data>
+  <data name="CleanupConfirmHeadline" xml:space="preserve">
+    <value>{0} permanent verwijderen?</value>
+  </data>
+  <data name="CleanupConfirmWarning" xml:space="preserve">
+    <value>Verwijderde bestanden kunnen niet worden hersteld.</value>
+  </data>
+  <data name="CleanupConfirmTotal" xml:space="preserve">
+    <value>Totaal: {0}</value>
+  </data>
+  <data name="CleanupUserTemp" xml:space="preserve">
+    <value>Uw tijdelijke bestanden</value>
+  </data>
+  <data name="CleanupUserTempDesc" xml:space="preserve">
+    <value>De tijdelijke map van het huidige gebruikersaccount.</value>
+  </data>
+  <data name="CleanupAllUsersTemp" xml:space="preserve">
+    <value>Tijdelijke bestanden van alle gebruikers</value>
+  </data>
+  <data name="CleanupAllUsersTempDesc" xml:space="preserve">
+    <value>Tijdelijke mappen van de andere accounts op deze pc. Zonder beheerdersrechten worden hun bestanden overgeslagen.</value>
+  </data>
+  <data name="CleanupWindowsTemp" xml:space="preserve">
+    <value>Tijdelijke bestanden van Windows</value>
+  </data>
+  <data name="CleanupWindowsTempDesc" xml:space="preserve">
+    <value>De tijdelijke systeemmap waarin Windows en installatieprogramma's schrijven.</value>
+  </data>
+  <data name="CleanupUpdateCache" xml:space="preserve">
+    <value>Cache van Windows Update</value>
+  </data>
+  <data name="CleanupUpdateCacheDesc" xml:space="preserve">
+    <value>Installatiebestanden van updates die al zijn toegepast.</value>
+  </data>
+  <data name="CleanupDeliveryOptimization" xml:space="preserve">
+    <value>Bestanden van Delivery Optimization</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
+    <value>Updateonderdelen die Windows bewaart om te delen met andere pc's.</value>
+  </data>
+  <data name="CleanupThumbnails" xml:space="preserve">
+    <value>Miniatuur- en pictogramcache</value>
+  </data>
+  <data name="CleanupThumbnailsDesc" xml:space="preserve">
+    <value>Verkenner bouwt deze opnieuw op wanneer nodig.</value>
+  </data>
+  <data name="CleanupCrashDumps" xml:space="preserve">
+    <value>Crashdumps</value>
+  </data>
+  <data name="CleanupCrashDumpsDesc" xml:space="preserve">
+    <value>Geheugendumps achtergelaten door vastgelopen programma's.</value>
+  </data>
+  <data name="CleanupRecycleBin" xml:space="preserve">
+    <value>Prullenbak legen</value>
+  </data>
+  <data name="CleanupRecycleBinDesc" xml:space="preserve">
+    <value>Standaard uit, omdat items herstelbaar blijven totdat de prullenbak is geleegd.</value>
+  </data>
+  <data name="CleanupRecycleAgeLabel" xml:space="preserve">
+    <value>Alleen bestanden ouder dan</value>
+  </data>
+  <data name="CleanupRecycleAgeDays" xml:space="preserve">
+    <value>dagen</value>
+  </data>
+  <data name="CleanupDiskCleanup" xml:space="preserve">
+    <value>Schijfopruiming van Windows uitvoeren</value>
+  </data>
+  <data name="CleanupDiskCleanupDesc" xml:space="preserve">
+    <value>Opent de eigen tool van Windows; die bepaalt zelf wat wordt verwijderd.</value>
+  </data>
+  <data name="SourceDescAndroidSdk" xml:space="preserve">
+    <value>Android SDK-pakketten via sdkmanager. Werkt verouderde onderdelen (platforms, buildtools) bij vanaf de standaardlocatie, ANDROID_HOME of PATH.</value>
+  </data>
+  <data name="SourceDescAndroidStudio" xml:space="preserve">
+    <value>Android Studio is geïnstalleerd, maar de SDK-opdrachtregeltools niet. Zonder die kunnen de SDK-pakketten niet worden bijgewerkt. Opent Android Studio; de SDK Manager staat onder Instellingen, Android SDK. Voeg "Android SDK Command-line Tools" toe en updates verlopen automatisch.</value>
+  </data>
+  <data name="AndroidStudioSdkRow" xml:space="preserve">
+    <value>Android Studio SDK Manager</value>
+  </data>
+  <data name="SourceDescGhExtension" xml:space="preserve">
+    <value>GitHub CLI-extensies. Werkt de gh-extensies bij die gh zelf als verouderd meldt.</value>
+  </data>
+  <data name="SourceNameGhExtension" xml:space="preserve">
+    <value>GitHub CLI-extensies</value>
+  </data>
+  <data name="SourceDescPipx" xml:space="preserve">
+    <value>Python-opdrachtregeltools geïnstalleerd met pipx. Elke tool is een kandidaat; pipx upgrade draait op verzoek.</value>
+  </data>
+  <data name="SourceDescVsCodeExtension" xml:space="preserve">
+    <value>Visual Studio Code-extensies. Elke geïnstalleerde extensie is een kandidaat; op verzoek wordt deze opnieuw geïnstalleerd op de nieuwste marketplace-versie.</value>
+  </data>
+  <data name="SourceNameVsCodeExtension" xml:space="preserve">
+    <value>VS Code-extensies</value>
+  </data>
+  <data name="SourceDescDeno" xml:space="preserve">
+    <value>De Deno-runtime. Controleert GitHub op de nieuwste release en werkt bij met "deno upgrade". Verborgen wanneer winget, Scoop of Chocolatey Deno hebben geïnstalleerd, omdat die het zelf bijwerken.</value>
+  </data>
+  <data name="SourceDescBun" xml:space="preserve">
+    <value>De Bun-runtime. Controleert GitHub op de nieuwste release en werkt bij met “bun upgrade”. Verborgen wanneer een pakketbeheerder Bun heeft geïnstalleerd.</value>
+  </data>
+  <data name="SourceDescUv" xml:space="preserve">
+    <value>uv, de zichzelf bijwerkende pakketbeheerder van Python. Verborgen wanneer een pakketbeheerder uv heeft geïnstalleerd, omdat "uv self update" dan weigert.</value>
+  </data>
+  <data name="SourceDescUvTool" xml:space="preserve">
+    <value>Python-tools geïnstalleerd met “uv tool”. Controleert elke tool tegen PyPI en toont alleen verouderde versies.</value>
+  </data>
+  <data name="SourceNameUvTool" xml:space="preserve">
+    <value>uv-tools</value>
+  </data>
+  <data name="SourceDescGcloud" xml:space="preserve">
+    <value>Google Cloud CLI-onderdelen met geïnstalleerde en nieuwste versie plus downloadgrootte. "gcloud components update" werkt ze allemaal in één keer bij.</value>
+  </data>
+  <data name="SourceDescOllama" xml:space="preserve">
+    <value>Lokaal opgehaalde Ollama-modellen. Vergelijkt elke manifest-digest met die van het register, zodat alleen een tag die echt is veranderd een rij wordt. Vereist een actieve Ollama-server; deze app start die nooit zelf.</value>
+  </data>
+  <data name="SourceNameOllama" xml:space="preserve">
+    <value>Ollama-modellen</value>
+  </data>
+  <data name="SourceDescFlutter" xml:space="preserve">
+    <value>De Flutter SDK, uitgecheckt via flutter op PATH. Vergelijkt de geïnstalleerde versie met de eigen releasefeed van Google voor uw kanaal.</value>
+  </data>
+  <data name="SourceDescVolta" xml:space="preserve">
+    <value>De standaardtoolchain van Volta voor Node, npm, yarn en pnpm. Volta heeft geen eigen ingebouwde updatecontrole, dus dit vergelijkt rechtstreeks met de releasefeed van Node en het npm-register en biedt uitsluitend patch- of minor-updates binnen dezelfde hoofdversie van Node aan, nooit een sprong naar een nieuwe hoofdversie.</value>
+  </data>
+  <data name="SourceDescPyenvWin" xml:space="preserve">
+    <value>De Python-versie die pyenv-win als globale standaard heeft ingesteld. Biedt alleen ooit een patchupdate binnen dezelfde major.minor-lijn (bijvoorbeeld 3.11.4 naar 3.11.9); overschakelen naar een nieuwere lijn is een bewuste keuze die deze app aan u overlaat.</value>
+  </data>
+  <data name="SourceDescWsl" xml:space="preserve">
+    <value>Windows Subsystem for Linux. Alleen voor de bronkeuze, omdat wsl niet op een update kan controleren zonder deze toe te passen, dus er verschijnt nooit een rij.</value>
+  </data>
+  <data name="SourceNameWsl" xml:space="preserve">
+    <value>Windows-subsysteem voor Linux</value>
+  </data>
+  <data name="IgnoredAllBadge" xml:space="preserve">
+    <value>Alles genegeerd</value>
+  </data>
+  <data name="RowUninstalled" xml:space="preserve">
+    <value>Verwijderd</value>
+  </data>
+  <data name="RowHandedOff" xml:space="preserve">
+    <value>Overgedragen</value>
+  </data>
+  <data name="RowHandedOffDetail" xml:space="preserve">
+    <value>Controleer het eigen venster van de leverancier.</value>
+  </data>
+  <data name="RowStuck" xml:space="preserve">
+    <value>Vastgelopen</value>
+  </data>
+  <data name="RowStuckDetail" xml:space="preserve">
+    <value>Vastgelopen: geen versie past bij deze installatie.</value>
+  </data>
+  <data name="RowNeedsManualWork" xml:space="preserve">
+    <value>Uw actie is nodig</value>
+  </data>
+  <data name="RowNeedsManualWorkDetail" xml:space="preserve">
+    <value>Drie keer achter elkaar op dezelfde manier mislukt. Alleen opnieuw proberen lost dit niet op.</value>
+  </data>
+  <data name="RowCancelled" xml:space="preserve">
+    <value>Geannuleerd</value>
+  </data>
+  <data name="RowCancelledTooltip" xml:space="preserve">
+    <value>U heeft deze gestopt. De rest van de wachtrij bleef doorlopen.</value>
+  </data>
+  <data name="StopSingleTooltip" xml:space="preserve">
+    <value>Deze stoppen</value>
+  </data>
+  <data name="TryNormallyAgainButton" xml:space="preserve">
+    <value>Normaal opnieuw proberen</value>
+  </data>
+  <data name="WingetVendorInstallerCrashed" xml:space="preserve">
+    <value>Het installatieprogramma van de leverancier is vastgelopen ({0}). Het pakket kan meestal handmatig worden geïnstalleerd.</value>
+  </data>
+  <data name="ScanFailedToolCrashed" xml:space="preserve">
+    <value>'{0}' is vastgelopen ({1}) in plaats van een normale fout te melden. Dit betekent meestal dat een runtime waarvan het afhankelijk is, zoals Java, niet overeenkomt met wat het verwacht.</value>
+  </data>
+  <data name="ScanFailedNoJava" xml:space="preserve">
+    <value>sdkmanager vereist Java {0} of nieuwer, en er is geen Java-installatie gevonden (JAVA_HOME, PATH, of de versie die met Android Studio wordt meegeleverd).</value>
+  </data>
+  <data name="CleanupFreeSpaceResult" xml:space="preserve">
+    <value>{0} heeft nu {1} vrij (was {2})</value>
+  </data>
+  <data name="SettingsLogFolder" xml:space="preserve">
+    <value>Logbestanden</value>
+  </data>
+  <data name="SettingsReportsFolder" xml:space="preserve">
+    <value>Foutrapporten</value>
+  </data>
+  <data name="SettingsOpenReports" xml:space="preserve">
+    <value>Foutrapporten openen</value>
+  </data>
+  <data name="SettingsDataFolder" xml:space="preserve">
+    <value>Gegevensmap</value>
+  </data>
+  <data name="AboutNetworkTargets" xml:space="preserve">
+    <value>Servers waarmee dit programma contact opneemt</value>
+  </data>
+  <data name="SettingsDataFolderChange" xml:space="preserve">
+    <value>Verplaatsen</value>
+  </data>
+  <data name="SettingsDataFolderMoved" xml:space="preserve">
+    <value>Gekopieerd naar {0}. De oude map bestaat nog: {1}. Herstart om de nieuwe te gebruiken.</value>
+  </data>
+  <data name="SettingsDataFolderCopyFailed" xml:space="preserve">
+    <value>De gegevensmap kon daar niet naartoe worden gekopieerd. Er is niets gewijzigd.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedLink" xml:space="preserve">
+    <value>Deze map is een koppeling naar een andere locatie. Kies een andere map.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedSystem" xml:space="preserve">
+    <value>Dit is een Windows-systeemmap. Kies een andere map.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedProgram" xml:space="preserve">
+    <value>Deze map bevindt zich in de eigen map van het programma. Kies een andere map.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedWritable" xml:space="preserve">
+    <value>Naar deze map kan niet worden geschreven. Kies een andere map.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedNonEmpty" xml:space="preserve">
+    <value>Daar bestaat al een niet-lege map UltimateUpdater. Kies een andere map.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedCurrent" xml:space="preserve">
+    <value>Dat is de huidige gegevensmap of ligt daarin. Kies een andere map.</value>
+  </data>
+  <data name="SettingsDataFolderRejectedTempOrCache" xml:space="preserve">
+    <value>Deze map wordt geleegd bij het opschonen en is niet geschikt voor app-gegevens. Kies een andere map.</value>
+  </data>
+  <data name="SettingsDataFolderFilesLocked" xml:space="preserve">
+    <value>Sommige bestanden waren vergrendeld en konden niet worden verplaatst: {0}. Er is niets gewijzigd.</value>
+  </data>
+  <data name="SettingsLogOpenFolder" xml:space="preserve">
+    <value>Map openen</value>
+  </data>
+  <data name="SettingsLogRetention" xml:space="preserve">
+    <value>Logboeken bewaren</value>
+  </data>
+  <data name="SettingsLogRetentionDesc" xml:space="preserve">
+    <value>Oudere bestanden worden verwijderd bij de volgende start van de app.</value>
+  </data>
+  <data name="SettingsLogRetentionOption" xml:space="preserve">
+    <value>{0} dagen</value>
+  </data>
+  <data name="SettingsHistoryRetention" xml:space="preserve">
+    <value>Geschiedenis bewaren</value>
+  </data>
+  <data name="SettingsHistoryRetentionDesc" xml:space="preserve">
+    <value>Oudere items worden verwijderd bij de volgende start van de app.</value>
+  </data>
+  <data name="HistoryShowDetails" xml:space="preserve">
+    <value>Details tonen</value>
+  </data>
+  <data name="SettingsResetEverything" xml:space="preserve">
+    <value>Alles herstellen</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmHeadline" xml:space="preserve">
+    <value>Ultimate Updater volledig herstellen?</value>
+  </data>
+  <data name="SettingsResetEverythingConfirmBody" xml:space="preserve">
+    <value>Alle instellingen gaan terug naar standaard; negeerlijst, geschiedenis, logboeken en caches worden permanent verwijderd.
+Dit kan niet ongedaan worden gemaakt.</value>
+  </data>
+  <data name="CleanupSystemRepairSfc" xml:space="preserve">
+    <value>Systeembestanden controleren (sfc)</value>
+  </data>
+  <data name="CleanupSystemRepairSfcDesc" xml:space="preserve">
+    <value>Vervangt beschadigde Windows-bestanden via sfc /scannow. Repareert in plaats van te verwijderen; traag, vereist beheerdersrechten.</value>
+  </data>
+  <data name="CleanupComponentCleanup" xml:space="preserve">
+    <value>Onderdelenarchief opschonen</value>
+  </data>
+  <data name="CleanupComponentCleanupDesc" xml:space="preserve">
+    <value>Verwijdert oude versies van Windows-onderdelen die updates hebben achtergelaten.</value>
+  </data>
+  <data name="CleanupComponentResetBase" xml:space="preserve">
+    <value>Oude updategegevens definitief verwijderen</value>
+  </data>
+  <data name="CleanupComponentResetBaseDesc" xml:space="preserve">
+    <value>Maakt de meeste ruimte vrij. Geïnstalleerde Windows-updates kunnen daarna niet meer worden verwijderd.</value>
+  </data>
+  <data name="CleanupSystemRepairDism" xml:space="preserve">
+    <value>Het onderdelenarchief repareren (DISM)</value>
+  </data>
+  <data name="CleanupSystemRepairDismDesc" xml:space="preserve">
+    <value>Voert DISM /CheckHealth, /ScanHealth en /RestoreHealth uit op het archief waaruit sfc zijn bestanden haalt. Nog trager, vereist beheerdersrechten.</value>
+  </data>
+  <data name="CleanupComponentStoreSize" xml:space="preserve">
+    <value>{0} op schijf, {1} gedeeld met Windows</value>
+  </data>
+  <data name="CleanupComponentStoreRecommended" xml:space="preserve">
+    <value>Windows adviseert een opschoning</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
+    <value>Analyseren (vereist beheerdersrechten)</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
+    <value>Meet hoeveel ruimte het Windows-onderdelenarchief echt kan vrijmaken.</value>
+  </data>
+  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
+    <value>De analyse vereist beheerdersrechten; de aanvraag is geannuleerd.</value>
+  </data>
+  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
+    <value>De analyse is nu niet mogelijk, omdat de helper met beheerdersrechten niet actief is.</value>
+  </data>
+  <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
+    <value>Windows heeft geen grootten gemeld.</value>
+  </data>
+  <data name="CleanupNothingToClean" xml:space="preserve">
+    <value>niets gevonden</value>
+  </data>
+  <data name="CleanupRegistryEntryCount" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="CleanupRegistryEntryCountOne" xml:space="preserve">
+    <value>{0} item</value>
+  </data>
+  <data name="CleanupRegistryOrphans" xml:space="preserve">
+    <value>Verweesde verwijzingen</value>
+  </data>
+  <data name="CleanupRegistryOrphansDesc" xml:space="preserve">
+    <value>Verwijdert App Paths-, Shared DLLs-, ActiveX/COM- en autostart-items waarvan het doel niet meer bestaat. Standaard uit, vereist beheerdersrechten; er wordt automatisch een back-up gemaakt voordat er iets wordt verwijderd.</value>
+  </data>
+  <data name="CleanupRegistryUninstall" xml:space="preserve">
+    <value>Verweesde verwijderitems</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesDesc" xml:space="preserve">
+    <value>Verwijdert verwijderitems voor programma's die al weg zijn. Standaard uit, vereist beheerdersrechten; er wordt automatisch een back-up gemaakt voordat er iets wordt verwijderd.</value>
+  </data>
+  <data name="CleanupDrivers" xml:space="preserve">
+    <value>Stuurprogramma's</value>
+  </data>
+  <data name="CleanupDriversDesc" xml:space="preserve">
+    <value>Apparaten die niet meer zijn aangesloten, en oude stuurprogrammapakketten die zijn achtergebleven in het stuurprogrammaarchief. Standaard uit, vereist beheerdersrechten; er wordt automatisch een back-up gemaakt voordat er iets wordt verwijderd.</value>
+  </data>
+  <data name="CleanupDriversConsequence" xml:space="preserve">
+    <value>Het apparaat installeert het stuurprogramma opnieuw zodra het weer wordt aangesloten, als Windows er een kan vinden. Van elk pakket wordt een back-up bewaard in de gegevensmap.</value>
+  </data>
+  <data name="CleanupGroupDrivers" xml:space="preserve">
+    <value>Stuurprogramma's</value>
+  </data>
+  <data name="CleanupDriverGroupDisconnected" xml:space="preserve">
+    <value>Apparaten die niet meer zijn aangesloten</value>
+  </data>
+  <data name="CleanupDriverGroupOldPackages" xml:space="preserve">
+    <value>Oude stuurprogrammapakketten</value>
+  </data>
+  <data name="CleanupDriverLastConnected" xml:space="preserve">
+    <value>Laatst aangesloten op {0}</value>
+  </data>
+  <data name="CleanupDriverLastConnectedUnknown" xml:space="preserve">
+    <value>Laatste verbinding onbekend</value>
+  </data>
+  <data name="CleanupAdminHeadline" xml:space="preserve">
+    <value>Sommige gebieden vereisen beheerdersrechten</value>
+  </data>
+  <data name="CleanupAdminBody" xml:space="preserve">
+    <value>Windows Temp, de updatecache, Schijfopruiming en systeemreparatie vereisen beheerdersrechten om volledig te worden gemeten en opgeschoond.
+
+Doorgaan met beheerdersrechten?</value>
+  </data>
+  <data name="CleanupAdminConfirm" xml:space="preserve">
+    <value>Met beheerdersrechten</value>
+  </data>
+  <data name="CleanupAdminDecline" xml:space="preserve">
+    <value>Doorgaan zonder</value>
+  </data>
+  <data name="CleanupAdminMissing" xml:space="preserve">
+    <value>Zonder beheerdersrechten wordt dit gebied slechts gedeeltelijk gemeten en opgeschoond.</value>
+  </data>
+  <data name="CleanupSkippedFilesSize" xml:space="preserve">
+    <value>{0} bestanden ({1}) waren in gebruik en zijn overgeslagen.</value>
+  </data>
+  <data name="CleanupSkippedFilesSizeOne" xml:space="preserve">
+    <value>{0} bestand ({1}) was in gebruik en is overgeslagen.</value>
+  </data>
+  <data name="CleanupInUse" xml:space="preserve">
+    <value>{0} in gebruik</value>
+  </data>
+  <data name="CleanupShaderCache" xml:space="preserve">
+    <value>Shadercache</value>
+  </data>
+  <data name="CleanupShaderCacheDesc" xml:space="preserve">
+    <value>Gecompileerde shaders die het grafische stuurprogramma bewaart. Wordt opnieuw opgebouwd wanneer een game of app ze weer nodig heeft.</value>
+  </data>
+  <data name="CleanupPackageCache" xml:space="preserve">
+    <value>Cache van pakketbeheerders</value>
+  </data>
+  <data name="CleanupPackageCacheDesc" xml:space="preserve">
+    <value>Downloads die pip, npm, Yarn, NuGet en Chocolatey bewaren voor herinstallaties. Geïnstalleerde pakketten blijven ongewijzigd.</value>
+  </data>
+  <data name="CleanupBuildCache" xml:space="preserve">
+    <value>Cache van buildtools</value>
+  </data>
+  <data name="CleanupBuildCacheDesc" xml:space="preserve">
+    <value>De buildcache van Gradle en de downloadcache van de Android SDK, opnieuw opgebouwd bij de volgende build.</value>
+  </data>
+  <data name="CleanupAppCacheSweep" xml:space="preserve">
+    <value>Caches en logboeken van andere apps</value>
+  </data>
+  <data name="CleanupAppCacheSweepDesc" xml:space="preserve">
+    <value>Zoekt op basis van mapkenmerken, niet via een vaste lijst, naar cache- en logmappen van programma's die hierboven niet apart staan. Persoonlijke documenten en instellingen worden nooit meegenomen. Standaard uitgeschakeld; controleer de resultaten vóór inschakeling.</value>
+  </data>
+  <data name="CleanupLeftoverWarning" xml:space="preserve">
+    <value>Alle gegevens van deze software worden verwijderd!</value>
+  </data>
+  <data name="CleanupLeftoverLastUsed" xml:space="preserve">
+    <value>Laatst gebruikt op {0}</value>
+  </data>
+  <data name="CleanupEntryDateRange" xml:space="preserve">
+    <value>{0} - {1}</value>
+  </data>
+  <data name="CleanupMoreEntries" xml:space="preserve">
+    <value>…en {0} meer ({1})</value>
+  </data>
+  <data name="CleanupMoreEntriesNotCleaned" xml:space="preserve">
+    <value>…en {0} meer ({1}), verborgen en niet verwijderd zolang rijen op dit station niet zijn aangevinkt</value>
+  </data>
+  <data name="CleanupEntryDeleted" xml:space="preserve">
+    <value>Verwijderd op {0}</value>
+  </data>
+  <data name="CleanupShowDetails" xml:space="preserve">
+    <value>Details ({0})</value>
+  </data>
+  <data name="CleanupEntryOpenFolder" xml:space="preserve">
+    <value>Map openen</value>
+  </data>
+  <data name="CleanupEntryCopyPath" xml:space="preserve">
+    <value>Pad kopiëren</value>
+  </data>
+  <data name="CleanupEntryPermanentlyExclude" xml:space="preserve">
+    <value>Permanent uitsluiten</value>
+  </data>
+  <data name="CleanupEntriesSelectAll" xml:space="preserve">
+    <value>Alle bestanden selecteren</value>
+  </data>
+  <data name="CleanupUserTempConsequence" xml:space="preserve">
+    <value>Programma's die een tijdelijk bestand gebruikten, maken het opnieuw aan zodra ze het weer nodig hebben.</value>
+  </data>
+  <data name="CleanupAllUsersTempConsequence" xml:space="preserve">
+    <value>Hetzelfde als uw eigen tijdelijke map, maar dan voor de andere accounts op deze pc.</value>
+  </data>
+  <data name="CleanupWindowsTempConsequence" xml:space="preserve">
+    <value>Windows maakt opnieuw aan wat het nog nodig heeft zodra het dat weer nodig heeft.</value>
+  </data>
+  <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
+    <value>Windows Update downloadt de bestanden gewoon opnieuw als het ze nodig heeft.</value>
+  </data>
+  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
+    <value>Slechts een cache om updates te delen met andere pc's op het netwerk. Niets anders gebruikt hem.</value>
+  </data>
+  <data name="CleanupThumbnailsConsequence" xml:space="preserve">
+    <value>Verkenner tekent miniaturen opnieuw de volgende keer dat u die map opent.</value>
+  </data>
+  <data name="CleanupCrashDumpsConsequence" xml:space="preserve">
+    <value>Alleen nuttig om een crash te onderzoeken die al is gebeurd. Niets is er momenteel van afhankelijk.</value>
+  </data>
+  <data name="CleanupShaderCacheConsequence" xml:space="preserve">
+    <value>Het grafische stuurprogramma bouwt hem opnieuw op. De volgende keer dat een betrokken game of app start, is dat eenmalig iets trager.</value>
+  </data>
+  <data name="CleanupPackageCacheConsequence" xml:space="preserve">
+    <value>De volgende installatie of update downloadt het pakket gewoon opnieuw.</value>
+  </data>
+  <data name="CleanupBuildCacheConsequence" xml:space="preserve">
+    <value>De volgende build is iets trager terwijl de cache zich weer vult.</value>
+  </data>
+  <data name="CleanupAppCacheSweepConsequence" xml:space="preserve">
+    <value>Behandelt veel programma's tegelijk op basis van patroon in plaats van naam, dus het is de moeite waard om even te bekijken wat er is gevonden voordat u opschoont.</value>
+  </data>
+  <data name="CleanupMemoryDumpsConsequence" xml:space="preserve">
+    <value>U verliest de mogelijkheid om een crash te onderzoeken die al is gebeurd, mocht dat nog nodig zijn.</value>
+  </data>
+  <data name="CleanupWindowsLogsConsequence" xml:space="preserve">
+    <value>Dit is precies wat u nodig zou hebben om een mislukte update te diagnosticeren, bewaar ze dus als u er nog eentje aan het oplossen bent.</value>
+  </data>
+  <data name="CleanupRecycleBinConsequence" xml:space="preserve">
+    <value>Bestanden erin kunnen daarna niet meer worden hersteld.</value>
+  </data>
+  <data name="CleanupDiskCleanupConsequence" xml:space="preserve">
+    <value>Voert de eigen opschoning van Windows uit met de standaard, geverifieerde selectie en niets meer dan dat.</value>
+  </data>
+  <data name="CleanupSystemRepairDismConsequence" xml:space="preserve">
+    <value>Kan lang duren en repareert systeembestanden ter plekke, dus laat het na het starten bij voorkeur voltooien.</value>
+  </data>
+  <data name="CleanupSystemRepairSfcConsequence" xml:space="preserve">
+    <value>Repareert systeembestanden ter plekke, meestal snel, dus laat het na het starten bij voorkeur voltooien.</value>
+  </data>
+  <data name="CleanupRegistryOrphansConsequence" xml:space="preserve">
+    <value>Verwijdert kapotte App Paths-snelkoppelingen, Shared DLLs-referentietellingen, ActiveX/COM-registraties en autostart-items; er wordt eerst een back-up gemaakt en niets dat nog werkt wordt aangeraakt.</value>
+  </data>
+  <data name="CleanupRegistryUninstallEntriesConsequence" xml:space="preserve">
+    <value>Verwijdert een item uit de lijst Programma's en onderdelen waarvan het programma al weg is; er wordt eerst een back-up gemaakt.</value>
+  </data>
+  <data name="CleanupRegistryBackupNote" xml:space="preserve">
+    <value>Elke registerwijziging wordt eerst geëxporteerd. Back-ups: {0}, waarvan {1} worden bewaard.</value>
+  </data>
+  <data name="CleanupRiskSafe" xml:space="preserve">
+    <value>Veilig</value>
+  </data>
+  <data name="CleanupRiskConsidered" xml:space="preserve">
+    <value>Matig</value>
+  </data>
+  <data name="CleanupRiskRisky" xml:space="preserve">
+    <value>Riskant</value>
+  </data>
+  <data name="CleanupShowAllCategories" xml:space="preserve">
+    <value>Alle gebieden tonen ({0} verborgen)</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDelete" xml:space="preserve">
+    <value>Naar de prullenbak verplaatsen in plaats van verwijderen</value>
+  </data>
+  <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
+    <value>De ruimte komt pas vrij wanneer u de prullenbak leegt.</value>
+  </data>
+  <data name="CleanupMemoryDumps" xml:space="preserve">
+    <value>Crashdumps (systeem)</value>
+  </data>
+  <data name="CleanupMemoryDumpsDesc" xml:space="preserve">
+    <value>Geheugendumps die Windows schrijft na een blauw scherm. Alleen nuttig tijdens het onderzoeken van zo'n crash.</value>
+  </data>
+  <data name="CleanupWindowsLogs" xml:space="preserve">
+    <value>Logbestanden van Windows</value>
+  </data>
+  <data name="CleanupWindowsLogsDesc" xml:space="preserve">
+    <value>De eigen logboeken van Windows voor updates, onderhoud en installatie. Worden automatisch opnieuw aangemaakt; bewaar ze tijdens het diagnosticeren van een mislukte update.</value>
+  </data>
+  <data name="InstallErrorVs8001What" xml:space="preserve">
+    <value>Visual Studio Setup meldde een fout bij de ARM-machinecontrole (fout 8001).</value>
+  </data>
+  <data name="InstallErrorVs8002What" xml:space="preserve">
+    <value>De achtergrondcontrole van Visual Studio Setup voor het downloaden is mislukt (fout 8002).</value>
+  </data>
+  <data name="InstallErrorVs8003What" xml:space="preserve">
+    <value>Visual Studio Setup meldde een fout met een niet-ondersteund onderdeel (fout 8003).</value>
+  </data>
+  <data name="InstallErrorVs8004What" xml:space="preserve">
+    <value>Visual Studio Setup kon de doelinstallatiemap niet gebruiken (fout 8004).</value>
+  </data>
+  <data name="InstallErrorVs8005What" xml:space="preserve">
+    <value>Visual Studio Setup kon de bronbestanden niet verifiëren (fout 8005).</value>
+  </data>
+  <data name="InstallErrorVsGenericNow" xml:space="preserve">
+    <value>Het eigen installatielogboek van Visual Studio bevat meer details; probeer het opnieuw, of installeer Visual Studio Installer opnieuw als dit blijft gebeuren.</value>
+  </data>
+  <data name="InstallErrorVs8006What" xml:space="preserve">
+    <value>Visual Studio Setup kon niet doorgaan omdat Visual Studio (of een van de onderdelen) nog actief is (fout 8006).</value>
+  </data>
+  <data name="InstallErrorVs8006Now" xml:space="preserve">
+    <value>Sluit Visual Studio en de bijbehorende processen af en probeer het opnieuw. Deze app kan dat voor u doen vóór de volgende poging.</value>
+  </data>
+  <data name="InstallErrorMsi1602What" xml:space="preserve">
+    <value>Setup is geannuleerd (installatiefout 1602).</value>
+  </data>
+  <data name="InstallErrorMsi1602Now" xml:space="preserve">
+    <value>Voer de update opnieuw uit wanneer u zover bent; annuleren was vermoedelijk bewust.</value>
+  </data>
+  <data name="InstallErrorMsi1603What" xml:space="preserve">
+    <value>Het installatieprogramma meldde een fatale fout (installatiefout 1603).</value>
+  </data>
+  <data name="InstallErrorMsi1603Now" xml:space="preserve">
+    <value>Controleer het eigen logboek van het installatieprogramma, of installeer het handmatig.</value>
+  </data>
+  <data name="InstallErrorMsi1618What" xml:space="preserve">
+    <value>Er liep tegelijk een andere installatie, dus Windows weigerde deze.</value>
+  </data>
+  <data name="InstallErrorMsi1618Now" xml:space="preserve">
+    <value>Het is automatisch opnieuw geprobeerd nadat de andere installaties waren voltooid.</value>
+  </data>
+  <data name="InstallErrorMsi1619What" xml:space="preserve">
+    <value>Het installatiepakket kon niet worden gelezen (installatiefout 1619/1620).</value>
+  </data>
+  <data name="InstallErrorMsi1619Now" xml:space="preserve">
+    <value>Het pakket opnieuw downloaden, of opnieuw vanaf nul installeren, lost dit meestal op.</value>
+  </data>
+  <data name="InstallErrorMsi1638What" xml:space="preserve">
+    <value>Er is al een andere versie van dit programma geïnstalleerd (installatiefout 1638).</value>
+  </data>
+  <data name="InstallErrorMsi1638Now" xml:space="preserve">
+    <value>Verwijder eerst de bestaande versie, of gebruik de eigen updater ervan.</value>
+  </data>
+  <data name="InstallErrorRebootWhat" xml:space="preserve">
+    <value>Het installatieprogramma heeft een herstart nodig om te voltooien (code 1641/3010).</value>
+  </data>
+  <data name="InstallErrorRebootNow" xml:space="preserve">
+    <value>Herstart Windows. De update zelf is al doorgevoerd.</value>
+  </data>
+  <data name="InstallErrorCrashWhat" xml:space="preserve">
+    <value>Het installatieprogramma van de leverancier is vastgelopen (een Windows-crash, geen gewone fout).</value>
+  </data>
+  <data name="InstallErrorCrashNow" xml:space="preserve">
+    <value>Het pakket kan meestal handmatig worden geïnstalleerd vanaf het eigen installatieprogramma van de leverancier.</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableWhat" xml:space="preserve">
+    <value>winget heeft geen versie van dit pakket die bij deze installatie past (geen toepasselijke upgrade).</value>
+  </data>
+  <data name="InstallErrorWingetNoApplicableNow" xml:space="preserve">
+    <value>Er is niets gewijzigd; de versie die deze app aanbood, is hier niet van toepassing.</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeWhat" xml:space="preserve">
+    <value>winget kon vanuit een beheerderscontext niets doen met dit pakket (een installatie op gebruikersniveau).</value>
+  </data>
+  <data name="InstallErrorWingetUserScopeNow" xml:space="preserve">
+    <value>Deze app heeft het al opnieuw geprobeerd zonder beheerdersrechten; als dat ook mislukte, is het bericht hierboven de echte reden.</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechWhat" xml:space="preserve">
+    <value>De nieuwe versie wordt op een andere manier geïnstalleerd dan de geïnstalleerde versie.</value>
+  </data>
+  <data name="InstallErrorWingetDifferentTechNow" xml:space="preserve">
+    <value>Verwijder het programma en installeer het daarna opnieuw.</value>
+  </data>
+  <data name="InstallErrorGenericWhat" xml:space="preserve">
+    <value>Het installatieprogramma van de leverancier mislukte met eigen foutcode {0}.</value>
+  </data>
+  <data name="InstallErrorGenericNow" xml:space="preserve">
+    <value>Zie de ruwe uitvoer hieronder voor wat het meldde.</value>
+  </data>
+  <data name="InstallErrorWuBusyWhat" xml:space="preserve">
+    <value>Windows Update is momenteel bezig met een andere taak.</value>
+  </data>
+  <data name="InstallErrorWuBusyNow" xml:space="preserve">
+    <value>Wacht even en probeer het opnieuw.</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingWhat" xml:space="preserve">
+    <value>Er staat nog een herstart uit voordat deze update kan worden geïnstalleerd.</value>
+  </data>
+  <data name="InstallErrorWuRebootPendingNow" xml:space="preserve">
+    <value>Herstart Windows en probeer het opnieuw.</value>
+  </data>
+  <data name="InstallErrorWuNotStartedWhat" xml:space="preserve">
+    <value>Windows Update is deze installatie nooit daadwerkelijk gestart.</value>
+  </data>
+  <data name="InstallErrorWuNotStartedNow" xml:space="preserve">
+    <value>Er is niets gewijzigd; opnieuw proberen kan helpen.</value>
+  </data>
+  <data name="InstallErrorWuInProgressWhat" xml:space="preserve">
+    <value>Windows Update meldt deze installatie nog steeds als bezig.</value>
+  </data>
+  <data name="InstallErrorWuInProgressNow" xml:space="preserve">
+    <value>Wacht even en controleer daarna of de update inmiddels is voltooid.</value>
+  </data>
+  <data name="InstallErrorWuFailedWhat" xml:space="preserve">
+    <value>Windows Update meldde dat deze installatie is mislukt.</value>
+  </data>
+  <data name="InstallErrorWuFailedNow" xml:space="preserve">
+    <value>De precieze oorzaak staat meestal in de HRESULT-waarde hieronder; opnieuw proberen helpt vaak.</value>
+  </data>
+  <data name="InstallErrorWuAbortedWhat" xml:space="preserve">
+    <value>Windows Update heeft deze installatie afgebroken.</value>
+  </data>
+  <data name="InstallErrorWuAbortedNow" xml:space="preserve">
+    <value>Opnieuw proberen helpt meestal; als het blijft afbreken, kan de probleemoplosser voor Windows Update verder helpen.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016What" xml:space="preserve">
+    <value>Er loopt al een andere installatie, of er staat nog een herstart uit.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240016Now" xml:space="preserve">
+    <value>Wacht even en probeer het dan opnieuw.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044What" xml:space="preserve">
+    <value>Deze installatie vereist beheerdersrechten.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240044Now" xml:space="preserve">
+    <value>Deze app installeert Windows-updates al met verhoogde rechten; als de fout aanhoudt, kan het herstarten van Windows helpen.</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422What" xml:space="preserve">
+    <value>De service Windows Update is uitgeschakeld.</value>
+  </data>
+  <data name="InstallErrorWuHresult80070422Now" xml:space="preserve">
+    <value>Start de service “Windows Update” (services.msc) en probeer het opnieuw.</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DWhat" xml:space="preserve">
+    <value>Deze update vereist installatiemedia.</value>
+  </data>
+  <data name="InstallErrorWuHresult8024002DNow" xml:space="preserve">
+    <value>Zorg voor de passende installatiemedia, of controleer de bron van Windows Update.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022What" xml:space="preserve">
+    <value>Elke update in deze installatiereeks is mislukt.</value>
+  </data>
+  <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
+    <value>Het later opnieuw proberen helpt meestal.</value>
+  </data>
+  <data name="InstallErrorWuInternalWhat" xml:space="preserve">
+    <value>De eigen service van Windows Update reageerde niet zoals deze app verwachtte.</value>
+  </data>
+  <data name="InstallErrorWuInternalNow" xml:space="preserve">
+    <value>Probeer het opnieuw. Blijft het mislukken, dan lost een herstart van de pc dit meestal op.</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedWhat" xml:space="preserve">
+    <value>Windows Update biedt deze update niet meer aan. Deze is mogelijk al geïnstalleerd, vervangen door een nieuwere, of wacht eerst op een andere update.</value>
+  </data>
+  <data name="InstallErrorWuNoLongerOfferedNow" xml:space="preserve">
+    <value>De lijst is automatisch vernieuwd. Staat de rij er nog steeds, start de installatie dan opnieuw.</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedWhat" xml:space="preserve">
+    <value>Deze app weigerde de pakket- of modelnaam ongewijzigd uit te voeren: dit is geen gewone identifier en had als opdrachtoptie kunnen worden gelezen.</value>
+  </data>
+  <data name="InstallErrorPackageIdRefusedNow" xml:space="preserve">
+    <value>Dit is een veiligheidscontrole, geen fout in het pakket zelf; opnieuw proberen verandert daar niets aan.</value>
+  </data>
+  <data name="InstallErrorMissingTargetWhat" xml:space="preserve">
+    <value>De rij raakte kwijt welke versie moest worden geïnstalleerd voordat de installatie kon beginnen.</value>
+  </data>
+  <data name="InstallErrorMissingTargetNow" xml:space="preserve">
+    <value>Scan opnieuw en probeer het nogmaals; de versielijst wordt bij elke scan vernieuwd.</value>
+  </data>
+  <data name="InstallErrorPipRepairedWhat" xml:space="preserve">
+    <value>De eigen installatie van pip was beschadigd; deze app heeft dit automatisch gerepareerd.</value>
+  </data>
+  <data name="InstallErrorPipRepairedNow" xml:space="preserve">
+    <value>Installeer dit pakket nu gewoon opnieuw; pip werkt weer.</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedWhat" xml:space="preserve">
+    <value>De handtekening van het gedownloade NVIDIA-installatieprogramma kon niet worden geverifieerd, dus weigerde deze app het uit te voeren.</value>
+  </data>
+  <data name="InstallErrorNvidiaNotSignedNow" xml:space="preserve">
+    <value>Download het stuurprogramma rechtstreeks van de eigen pagina van NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainWhat" xml:space="preserve">
+    <value>De download werd naar een ander domein dan dat van NVIDIA omgeleid, dus weigerde deze app de omleiding te volgen.</value>
+  </data>
+  <data name="InstallErrorNvidiaOffDomainNow" xml:space="preserve">
+    <value>Download het stuurprogramma rechtstreeks van de eigen pagina van NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitWhat" xml:space="preserve">
+    <value>De download was groter dan deze app toestaat voor een stuurprogramma-installatie, dus is deze gestopt.</value>
+  </data>
+  <data name="InstallErrorNvidiaSizeLimitNow" xml:space="preserve">
+    <value>Download het stuurprogramma rechtstreeks van de eigen pagina van NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedWhat" xml:space="preserve">
+    <value>De Windows-toestemmingsaanvraag voor het NVIDIA-installatieprogramma is gesloten of geweigerd.</value>
+  </data>
+  <data name="InstallErrorNvidiaElevationDeclinedNow" xml:space="preserve">
+    <value>Probeer het opnieuw en accepteer de aanvraag deze keer.</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartWhat" xml:space="preserve">
+    <value>Het NVIDIA-installatieprogramma kon niet worden gestart.</value>
+  </data>
+  <data name="InstallErrorNvidiaDidNotStartNow" xml:space="preserve">
+    <value>Probeer het opnieuw; blijft dit gebeuren, installeer het stuurprogramma dan rechtstreeks van de eigen pagina van NVIDIA.</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningWhat" xml:space="preserve">
+    <value>Het NVIDIA-installatieprogramma draaide nog toen deze app stopte met wachten.</value>
+  </data>
+  <data name="InstallErrorNvidiaStillRunningNow" xml:space="preserve">
+    <value>Controleer het eigen installatievenster van NVIDIA, of de lijst geïnstalleerde apps van Windows, om te zien of het daadwerkelijk is voltooid.</value>
+  </data>
+  <data name="InstallErrorTimeoutWhat" xml:space="preserve">
+    <value>De tool is niet binnen de tijd voltooid die deze app ervoor toestaat.</value>
+  </data>
+  <data name="InstallErrorTimeoutNow" xml:space="preserve">
+    <value>Probeer het opnieuw; een trage verbinding of een drukke computer is meestal de oorzaak.</value>
+  </data>
+  <data name="RetryInteractiveHeader" xml:space="preserve">
+    <value>Interactief opnieuw proberen</value>
+  </data>
+  <data name="RowRunningInteractive" xml:space="preserve">
+    <value>interactief bezig…</value>
+  </data>
+  <data name="InstallBlockersLine" xml:space="preserve">
+    <value>{0} wordt geblokkeerd door: {1}</value>
+  </data>
+  <data name="InstallBlockerCloseAndContinue" xml:space="preserve">
+    <value>Programma sluiten en doorgaan</value>
+  </data>
+  <data name="InstallBlockerSkip" xml:space="preserve">
+    <value>Geblokkeerde overslaan</value>
+  </data>
+  <data name="InstallBlockerTryAnyway" xml:space="preserve">
+    <value>Toch proberen</value>
+  </data>
+  <data name="InstallBlockerForceKillHeadline" xml:space="preserve">
+    <value>Geforceerd afsluiten?</value>
+  </data>
+  <data name="InstallBlockerForceKillBody" xml:space="preserve">
+    <value>Niet-opgeslagen werk gaat verloren.</value>
+  </data>
+  <data name="InstallBlockerAutoSkipped" xml:space="preserve">
+    <value>{0} draait nog, dus dit is automatisch overgeslagen (onbeheerd).</value>
+  </data>
+  <data name="PreflightTitle" xml:space="preserve">
+    <value>Voor het bijwerken</value>
+  </data>
+  <data name="PreflightStart" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="PreflightCancel" xml:space="preserve">
+    <value>Annuleren</value>
+  </data>
+  <data name="InstallSpaceShort" xml:space="preserve">
+    <value>Slechts {0} vrij, ongeveer {1} nodig.</value>
+  </data>
+  <data name="InstallSpaceUnknown" xml:space="preserve">
+    <value>{0} pakketten melden geen grootte.</value>
+  </data>
+  <data name="InstallSpaceOpenCleanup" xml:space="preserve">
+    <value>Opschonen openen</value>
+  </data>
+  <data name="SettingsMeteredTitle" xml:space="preserve">
+    <value>Niet automatisch scannen bij een verbinding met datalimiet</value>
+  </data>
+  <data name="InstallMeteredWarn" xml:space="preserve">
+    <value>Verbinding met datalimiet: ongeveer {0} wordt gedownload.</value>
+  </data>
+  <data name="InstallBatteryWarn" xml:space="preserve">
+    <value>Batterij op {0} procent en niet aangesloten.</value>
+  </data>
+  <data name="RebootDialogTitle" xml:space="preserve">
+    <value>Herstart vereist</value>
+  </data>
+  <data name="RebootDialogBody" xml:space="preserve">
+    <value>Deze pakketten vroegen om een herstart:</value>
+  </data>
+  <data name="RebootDialogNow" xml:space="preserve">
+    <value>Nu herstarten</value>
+  </data>
+  <data name="RebootDialogLater" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>Over</value>
+  </data>
+  <data name="AboutTagline" xml:space="preserve">
+    <value>Eén plek voor elke update die op deze pc wacht.</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>Versie {0}</value>
+  </data>
+  <data name="AboutLicence" xml:space="preserve">
+    <value>MIT-licentie</value>
+  </data>
+  <data name="AboutRepository" xml:space="preserve">
+    <value>Projectpagina op GitHub</value>
+  </data>
+  <data name="AboutThirdParty" xml:space="preserve">
+    <value>Elke update komt uit een eigen bron en wordt geïnstalleerd via het eigen mechanisme van die bron. Deze app host, controleert of wijzigt geen enkel pakket.</value>
+  </data>
+  <data name="AboutIcons" xml:space="preserve">
+    <value>Merktekens door Simple Icons (CC0). Alle handelsmerken zijn eigendom van hun eigenaars.</value>
+  </data>
+  <data name="AboutTrademarks" xml:space="preserve">
+    <value>Niet gelieerd aan, goedgekeurd of gesponsord door Microsoft, NVIDIA, AMD, Intel, Dell, Lenovo, HP, Valve, Epic Games of enige andere leverancier die in deze app wordt vermeld.</value>
+  </data>
+  <data name="WingetBootstrapConfirmHeadline" xml:space="preserve">
+    <value>winget is niet gevonden</value>
+  </data>
+  <data name="WingetBootstrapConfirmBody" xml:space="preserve">
+    <value>Nu installeren? Het komt rechtstreeks van het eigen App Installer-pakket van Microsoft en wordt geverifieerd voordat het wordt uitgevoerd.</value>
+  </data>
+  <data name="WingetBootstrapInstall" xml:space="preserve">
+    <value>winget installeren</value>
+  </data>
+  <data name="ColumnsButton" xml:space="preserve">
+    <value>Kolommen</value>
+  </data>
+  <data name="ColumnsReset" xml:space="preserve">
+    <value>Kolommen herstellen</value>
+  </data>
+  <data name="ColumnPublisher" xml:space="preserve">
+    <value>Uitgever</value>
+  </data>
+  <data name="ScanCachedAge" xml:space="preserve">
+    <value>Resultaat van {0}, wordt opnieuw gecontroleerd</value>
+  </data>
+  <data name="ScanSourceTooSlow" xml:space="preserve">
+    <value>Geen reactie gedurende {0} seconden</value>
+  </data>
+  <data name="ScanOfflineBanner" xml:space="preserve">
+    <value>Geen internetverbinding. Alleen lokale bronnen zijn gecontroleerd.</value>
+  </data>
+  <data name="ScanNoConnectionBanner" xml:space="preserve">
+    <value>Geen verbinding met internet: elke online bron is mislukt. Controleer de firewall of het netwerk.</value>
+  </data>
+  <data name="ScanOfflineSource" xml:space="preserve">
+    <value>Geen verbinding</value>
+  </data>
+  <data name="NetProxyRefused" xml:space="preserve">
+    <value>De proxy heeft de verbinding geweigerd ({0}).</value>
+  </data>
+  <data name="PipInterpreterTooltip" xml:space="preserve">
+    <value>Python-interpreter: {0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
+    <value>+~{0}</value>
+  </data>
+  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
+    <value>Vrijgemaakt door Schijfopruiming van Windows. Bij benadering, omdat het gelijktijdig met de andere taken werd uitgevoerd.</value>
+  </data>
+  <data name="CleanupDefaultSelection" xml:space="preserve">
+    <value>Standaardselectie</value>
+  </data>
+  <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
+    <value>Alleen de veilige items selecteren, dezelfde die standaard zijn aangevinkt.</value>
+  </data>
+  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
+    <value>Analyseren…</value>
+  </data>
+  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
+    <value>Windows heeft niet tijdig gereageerd. De analyse is gestopt.</value>
+  </data>
+  <data name="CleanupPipLeftovers" xml:space="preserve">
+    <value>Restanten van onderbroken pip-installaties</value>
+  </data>
+  <data name="CleanupPipLeftoversDesc" xml:space="preserve">
+    <value>Mappen die pip achterlaat wanneer een installatie wordt onderbroken; pip waarschuwt hierover bij elke uitvoering.</value>
+  </data>
+  <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
+    <value>pip waarschuwt hier niet meer over; niets anders op deze computer gebruikt deze mappen.</value>
+  </data>
+  <data name="CleanupOldPythonVersions" xml:space="preserve">
+    <value>Oudere Python-versies</value>
+  </data>
+  <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
+    <value>Python-installaties die zijn vervangen door een nieuwere versie van dezelfde soort (32-bit of 64-bit).</value>
+  </data>
+  <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
+    <value>Programma's en scripts die deze versie nog gebruiken, werken daarna niet meer. De geïnstalleerde pakketten worden er samen mee verwijderd.</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
+    <value>{0} ({1} pakketten)</value>
+  </data>
+  <data name="CleanupDriverInstalledDate" xml:space="preserve">
+    <value>Geïnstalleerd op {0}</value>
+  </data>
+  <data name="CleanupDriverProviderLabel" xml:space="preserve">
+    <value>Provider</value>
+  </data>
+  <data name="CleanupDriverClassLabel" xml:space="preserve">
+    <value>Klasse</value>
+  </data>
+  <data name="CleanupDriverInfFileLabel" xml:space="preserve">
+    <value>INF-bestand</value>
+  </data>
+  <data name="CleanupDriverOriginalNameLabel" xml:space="preserve">
+    <value>Oorspronkelijke naam</value>
+  </data>
+  <data name="CleanupDriverStorePathLabel" xml:space="preserve">
+    <value>Pad in het stuurprogrammaarchief</value>
+  </data>
+  <data name="CleanupDriverInstalledNow" xml:space="preserve">
+    <value>Nu geïnstalleerd: versie {0}, {1}</value>
+  </data>
+  <data name="CleanupDriverVersionDate" xml:space="preserve">
+    <value>Versie {0}, {1}</value>
+  </data>
+  <data name="CleanupCatalogLoadFailed" xml:space="preserve">
+    <value>De opschoonlijst kon niet worden geladen. Sluit dit venster en open het opnieuw. Details staan in de logmap.</value>
+  </data>
+  <data name="NetPurposeSelfUpdate" xml:space="preserve">
+    <value>Zelfupdate (release-JSON, SHA256SUMS, bestand) en releasegegevens van andere repositories</value>
+  </data>
+  <data name="NetPurposeChangelog" xml:space="preserve">
+    <value>Wijzigingslogtekst bij klikken</value>
+  </data>
+  <data name="NetPurposeNvidia" xml:space="preserve">
+    <value>GPU-producttabel, stuurprogramma zoeken en downloaden</value>
+  </data>
+  <data name="NetPurposePackageMeta" xml:space="preserve">
+    <value>Pakketmetagegevens (nieuwste versie, grootte, datum) om de rijen aan te vullen</value>
+  </data>
+  <data name="NetPurposeSdkMeta" xml:space="preserve">
+    <value>Android-SDK-manifest, Flutter-releases, metagegevens van VS Code-extensies</value>
+  </data>
+  <data name="NetPurposeSteam" xml:space="preserve">
+    <value>Patchnotities (de aanvraag bevat alleen de app-ID)</value>
+  </data>
+  <data name="NetPurposeOllamaRemote" xml:space="preserve">
+    <value>Externe digest van een model (alleen bibliotheekmodellen)</value>
+  </data>
+  <data name="NetPurposeOllamaLocal" xml:space="preserve">
+    <value>Lokale Ollama-modellijst, het enige onversleutelde http://-adres, alleen loopback</value>
+  </data>
+  <data name="FilterShowIgnored" xml:space="preserve">
+    <value>Genegeerde tonen</value>
+  </data>
+  <data name="FilterButton" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="FilterButtonActive" xml:space="preserve">
+    <value>Filter ({0})</value>
+  </data>
+  <data name="ToolbarCleanupLabel" xml:space="preserve">
+    <value>Opruimen</value>
+  </data>
+  <data name="ScanStateError" xml:space="preserve">
+    <value>Fout</value>
+  </data>
+  <data name="AboutPortable" xml:space="preserve">
+    <value>Draagbare modus: instellingen en gegevens staan naast het programma.</value>
+  </data>
+  <data name="SortByTooltip" xml:space="preserve">
+    <value>Sorteren op {0}</value>
+  </data>
+  <data name="InstallBlockerSkippedStillOpen" xml:space="preserve">
+    <value>Overgeslagen, {0} is nog open</value>
+  </data>
+  <data name="CleanupHeaderSelection" xml:space="preserve">
+    <value>Selectie</value>
+  </data>
+  <data name="CleanupHeaderDrive" xml:space="preserve">
+    <value>Schijf {0}</value>
+  </data>
+  <data name="SettingsAutoScanTitle" xml:space="preserve">
+    <value>Automatische scans</value>
+  </data>
+  <data name="HistoryRolledBack" xml:space="preserve">
+    <value>Teruggezet</value>
+  </data>
+  <data name="HistoryUninstalled" xml:space="preserve">
+    <value>Verwijderd</value>
+  </data>
+  <data name="SelfUpdateBusyHint" xml:space="preserve">
+    <value>Beschikbaar zodra de lopende updates en de opschoning klaar zijn.</value>
+  </data>
+  <data name="SelfUpdateDownloadFailed" xml:space="preserve">
+    <value>De update kon niet worden gedownload. Controleer de verbinding en probeer het opnieuw.</value>
+  </data>
+  <data name="SelfUpdateApplyFailed" xml:space="preserve">
+    <value>De update kon niet worden geïnstalleerd. Details staan in de logmap.</value>
+  </data>
+  <data name="SelfUpdateApplyingNoInstall" xml:space="preserve">
+    <value>De app wordt opnieuw gestart om haar eigen update af te ronden. Start deze updates opnieuw nadat de app is herstart.</value>
+  </data>
+  <data name="SettingsCheckFailed" xml:space="preserve">
+    <value>Zoeken naar updates mislukt. Controleer de verbinding.</value>
+  </data>
+  <data name="RetryBlockedByActivity" xml:space="preserve">
+    <value>Opnieuw proberen kan nu niet: er loopt een installatie. Probeer het opnieuw zodra die klaar is.</value>
+  </data>
+  <data name="ErrorDetailCopyFailed" xml:space="preserve">
+    <value>Kopiëren is niet gelukt. Het rapport staat in de map met rapporten.</value>
+  </data>
+  <data name="SettingsBrowseFolder" xml:space="preserve">
+    <value>Map kiezen</value>
+  </data>
+  <data name="SettingsRegistryBackupOutsideProfile" xml:space="preserve">
+    <value>De back-upmap moet in uw gebruikersprofiel staan. Kies een andere map.</value>
+  </data>
+  <data name="CleanupConfirmHeadlineRecycle" xml:space="preserve">
+    <value>{0} opruimen?</value>
+  </data>
+  <data name="CleanupConfirmWarningRecycle" xml:space="preserve">
+    <value>Bestanden gaan naar de prullenbak en kunnen worden hersteld totdat deze wordt geleegd. Registervermeldingen, stuurprogramma's en herstelacties kunnen niet ongedaan worden gemaakt.</value>
+  </data>
+  <data name="HeadlineNotChecked" xml:space="preserve">
+    <value>Nog niet gecontroleerd</value>
+  </data>
+  <data name="EmptyStateNotChecked" xml:space="preserve">
+    <value>Zoek naar updates om te zien wat er nieuw is.</value>
+  </data>
+  <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
+    <value>Alle {0} genegeerde updates weer tonen?</value>
+  </data>
+  <data name="IgnoreListRemoveAllBody" xml:space="preserve">
+    <value>Ze verschijnen bij de volgende controle weer in de updatelijst.</value>
+  </data>
+  <data name="HeadlineNoSourceChecked" xml:space="preserve">
+    <value>Geen enkele bron kon worden gecontroleerd</value>
+  </data>
+  <data name="InstallErrorAndroidLockedWhat" xml:space="preserve">
+    <value>Bestanden van dit pakket zijn in gebruik, meestal door een draaiende emulator of Android Studio.</value>
+  </data>
+  <data name="InstallErrorAndroidLockedNow" xml:space="preserve">
+    <value>Sluit de emulator en Android Studio en voer de update daarna opnieuw uit.</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallWhat" xml:space="preserve">
+    <value>De update moet eerst de oude versie verwijderen, maar de oude versie heeft geen verwijdercommando geregistreerd.</value>
+  </data>
+  <data name="InstallErrorWingetNoUninstallNow" xml:space="preserve">
+    <value>Verwijder de oude versie in de Windows-instellingen onder Apps en voer de update daarna opnieuw uit.</value>
+  </data>
+  <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
+    <value>Schijfopruiming duurde langer dan {0} minuten en is beëindigd.</value>
+  </data>
+  <data name="SelfUpdateWaitingForWork" xml:space="preserve">
+    <value>De update wordt geïnstalleerd zodra het lopende werk klaar is.</value>
+  </data>
+  <data name="CleanupProtectedFiles" xml:space="preserve">
+    <value>{0} bestanden waren niet toegankelijk en zijn overgeslagen.</value>
+  </data>
+  <data name="CleanupProtectedFilesOne" xml:space="preserve">
+    <value>{0} bestand was niet toegankelijk en is overgeslagen.</value>
+  </data>
+  <data name="CleanupProtectedFilesSize" xml:space="preserve">
+    <value>{0} bestanden ({1}) waren niet toegankelijk en zijn overgeslagen.</value>
+  </data>
+  <data name="CleanupProtectedFilesSizeOne" xml:space="preserve">
+    <value>{0} bestand ({1}) was niet toegankelijk en is overgeslagen.</value>
+  </data>
+  <data name="CleanupProtected" xml:space="preserve">
+    <value>{0} geen toegang</value>
+  </data>
+</root>

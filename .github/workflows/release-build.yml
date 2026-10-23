@@ -1,0 +1,51 @@
+name: Release build
+
+# Deliberately only two triggers: a manual run, and a push of a version tag. NOT on push to a
+# branch and NOT on pull requests, on purpose: this is a release proof, not a per-commit check, so
+# it never eats the free minutes on ordinary work and never gates or slows down local work.
+# Nobody should "helpfully" widen this to on: push without a tag filter.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # The only GitHub-hosted runner, on the free tier. No self-hosted runner, no larger runner, no
+    # paid service, and one job on one platform, since the app itself only targets Windows.
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build
+        run: |
+          dotnet build UltimateUpdater.slnx -c Release 2>&1 | Tee-Object -FilePath build.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Test
+        run: |
+          dotnet test tests/UltimateUpdater.Tests/UltimateUpdater.Tests.csproj -c Release --filter "FullyQualifiedName!~WindowLayoutTests&FullyQualifiedName!~LiveButtonContrastTests&FullyQualifiedName!~PressedPixelTests" --logger "trx;LogFileName=tests.trx"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # No publish, signing, release upload or secret of any kind here, and nothing above is wired
+      # up as a required check or a branch protection rule: a run that fails, or never runs because
+      # the minutes are gone, changes nothing about committing, building or releasing locally.
+      - name: Upload build log and test results
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: build-and-test-output
+          path: |
+            build.log
+            tests/UltimateUpdater.Tests/TestResults/tests.trx
+          retention-days: 7

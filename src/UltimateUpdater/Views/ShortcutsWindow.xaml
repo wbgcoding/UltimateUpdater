@@ -1,0 +1,56 @@
+<ui:FluentWindow x:Class="UltimateUpdater.Views.ShortcutsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="{Binding Loc[ShortcutsTitle]}"
+        Width="420" MinHeight="200" MinWidth="360"
+        SizeToContent="Height" MaxHeight="560"
+        WindowStartupLocation="CenterOwner"
+        ExtendsContentIntoTitleBar="True"
+        Background="{DynamicResource ApplicationBackgroundBrush}"
+        FocusManager.FocusedElement="{Binding ElementName=CloseButton}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- title bar -->
+            <RowDefinition Height="*"/>      <!-- shortcut list -->
+            <RowDefinition Height="Auto"/>   <!-- close -->
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="{Binding Loc[ShortcutsTitle]}" FontSize="16" FontWeight="SemiBold">
+            <ui:TitleBar.Icon>
+                <!-- Assembly-qualified like MainWindow's so it resolves whichever assembly is
+                     the entry point -->
+                <ui:ImageIcon Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <ItemsControl Grid.Row="1" Margin="20,4,20,10" ItemsSource="{Binding Rows}"
+                      AutomationProperties.Name="{Binding Loc[ShortcutsTitle]}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="0,4,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Label}" VerticalAlignment="Center"
+                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,0,12,0"
+                                   ToolTip="{Binding Label}"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        <Border Grid.Column="1" Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1"
+                                CornerRadius="4" Padding="8,2">
+                            <TextBlock Text="{Binding Gesture}" FontSize="12" FontFamily="Consolas"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Grid x:Name="ShortcutsActionRow" Grid.Row="2" Margin="20,0,20,20">
+            <ui:Button x:Name="CloseButton" Click="OnCloseClicked" Appearance="Primary" HorizontalAlignment="Right" IsDefault="True"
+                       Content="{Binding Loc[InstallProgressClose]}"/>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>
