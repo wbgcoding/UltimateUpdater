@@ -687,7 +687,8 @@ public sealed partial class SelfUpdateService
         // The portable download is x64-only, so there is nothing to disambiguate by
         // architecture any more. An ARM64 machine running a portable copy is not a supported shape:
         // ARM64 users take the installer, which is the only place that architecture is offered.
-        return release.Assets.FirstOrDefault(a => UpdateManifest.AssetNameComparer.Equals(a.Name, PortableAssetName));
+        return release.Assets.FirstOrDefault(a =>
+            string.Equals(a.Name, PortableAssetName, StringComparison.OrdinalIgnoreCase));
     }
 
     private static string ChooseUrl(ReleaseAsset asset) =>
