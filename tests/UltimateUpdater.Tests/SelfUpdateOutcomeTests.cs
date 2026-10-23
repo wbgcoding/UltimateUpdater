@@ -104,6 +104,47 @@ public class SelfUpdateOutcomeTests
         Assert.Equal(SelfUpdateDownloadOutcome.NetworkFailed, result.Outcome);
     }
 
+    /// <summary>GitHub stores an uploaded "Ultimate Updater.exe" as "Ultimate.Updater.exe".</summary>
+    [Fact]
+    public async Task A_release_whose_portable_asset_github_renamed_with_dots_is_found()
+    {
+        var release = NewerRelease.Replace("\"name\":\"Ultimate Updater.exe\"", "\"name\":\"Ultimate.Updater.exe\"");
+
+        var result = await Service(new ScriptedChannel { Get = (_, _) => Task.FromResult<string?>(release) })
+            .CheckAsync(CancellationToken.None);
+
+        Assert.Equal(SelfUpdateCheckOutcome.Found, result.Outcome);
+        Assert.Equal("Ultimate.Updater.exe", result.Update!.Asset.Name);
+    }
+
+    [Fact]
+    public async Task A_dotted_asset_name_finds_its_checksum_under_the_spaced_name()
+    {
+        var update = Update() with { Asset = new ReleaseAsset("Ultimate.Updater.exe", "https://github.com/x/y/a.exe", "", 10) };
+        var channel = new ScriptedChannel
+        {
+            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  Ultimate Updater.exe"),
+            Download = (_, _) => Task.FromResult(false),
+        };
+
+        var result = await Service(channel).DownloadVerifiedAsync(update, CancellationToken.None);
+
+        // NetworkFailed comes from the refused download, so the checksum lookup before it succeeded;
+        // a missing checksum would have stopped at VerificationFailed.
+        Assert.Equal(SelfUpdateDownloadOutcome.NetworkFailed, result.Outcome);
+    }
+
+    [Fact]
+    public void Checksum_names_match_across_spaces_and_dots_but_nothing_else()
+    {
+        var sums = UpdateManifest.ParseChecksums($"{new string('b', 64)}  Ultimate Updater.exe");
+
+        Assert.True(sums.ContainsKey("Ultimate.Updater.exe"));
+        Assert.True(sums.ContainsKey("ultimate updater.EXE"));
+        Assert.False(sums.ContainsKey("UltimateUpdater.exe"));
+        Assert.False(sums.ContainsKey("Ultimate_Updater.exe"));
+    }
+
     [Fact]
     public async Task The_download_is_staged_in_its_own_folder_that_a_failed_download_removes()
     {

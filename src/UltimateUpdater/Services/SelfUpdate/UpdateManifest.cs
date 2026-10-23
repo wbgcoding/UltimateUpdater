@@ -117,10 +117,26 @@ public static class UpdateManifest
         return new ReleaseInfo(NormalizeVersion(tag), assets, GetString(element, "body"));
     }
 
+    /// <summary>
+    /// Compares release file names the way GitHub stores them: an uploaded asset's spaces become dots
+    /// ("Ultimate Updater.exe" is served as "Ultimate.Updater.exe"), while SHA256SUMS.txt keeps the
+    /// name build.bat wrote. Both spellings must find the same entry, case-insensitively.
+    /// </summary>
+    public static readonly IEqualityComparer<string> AssetNameComparer = new GitHubAssetNameComparer();
+
+    private sealed class GitHubAssetNameComparer : IEqualityComparer<string>
+    {
+        public bool Equals(string? x, string? y) =>
+            string.Equals(x?.Replace(' ', '.'), y?.Replace(' ', '.'), StringComparison.OrdinalIgnoreCase);
+
+        public int GetHashCode(string obj) =>
+            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Replace(' ', '.'));
+    }
+
     /// <summary>Parses a SHA256SUMS.txt body into filename → lowercase hex digest.</summary>
     public static IReadOnlyDictionary<string, string> ParseChecksums(string content)
     {
-        var checksums = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var checksums = new Dictionary<string, string>(AssetNameComparer);
         if (string.IsNullOrWhiteSpace(content))
             return checksums;
 
