@@ -9,6 +9,11 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/wbgcoding/UltimateUpdater/releases/latest"><strong>Download the latest release</strong></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/wbgcoding/UltimateUpdater/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/wbgcoding/UltimateUpdater?label=download&color=2EA043"></a>
   <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0A54AD?logo=windows&logoColor=white">
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white">
   <img alt="x64 and ARM64" src="https://img.shields.io/badge/arch-x64%20%7C%20ARM64-3D9EF0">
