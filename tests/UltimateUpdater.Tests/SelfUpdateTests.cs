@@ -386,7 +386,7 @@ public class SelfUpdateTests
     public void A_rolled_back_portable_update_puts_the_image_back_and_locks_it_again()
     {
         var directory = Directory.CreateTempSubdirectory("wu-selfupdate-rollback-").FullName;
-        var currentPath = Path.Combine(directory, "Ultimate Updater.exe");
+        var currentPath = Path.Combine(directory, "UltimateUpdater.exe");
         var backupPath = currentPath + ".old";
 
         // The state a failed swap leaves behind: the old image parked as .old, an unusable new one in place.
@@ -419,7 +419,7 @@ public class SelfUpdateTests
     public void A_failed_move_aside_returns_false_and_holds_the_image_locked_again()
     {
         var directory = Directory.CreateTempSubdirectory("wu-selfupdate-move-").FullName;
-        var currentPath = Path.Combine(directory, "Ultimate Updater.exe");
+        var currentPath = Path.Combine(directory, "UltimateUpdater.exe");
         var verifiedPath = Path.Combine(directory, "new.bin");
         File.WriteAllBytes(currentPath, [1]);
         File.WriteAllBytes(verifiedPath, [2]);
@@ -449,7 +449,7 @@ public class SelfUpdateTests
     public void A_copy_that_does_not_match_the_verified_digest_is_rolled_back_and_the_image_is_locked_again()
     {
         var directory = Directory.CreateTempSubdirectory("wu-selfupdate-digest-").FullName;
-        var currentPath = Path.Combine(directory, "Ultimate Updater.exe");
+        var currentPath = Path.Combine(directory, "UltimateUpdater.exe");
         var verifiedPath = Path.Combine(directory, "new.bin");
         File.WriteAllBytes(currentPath, [1]);
         File.WriteAllBytes(verifiedPath, [2]);
@@ -500,7 +500,7 @@ public class SelfUpdateTests
     public void A_rollback_that_cannot_restore_the_image_refuses_elevation_instead_of_locking()
     {
         var directory = Directory.CreateTempSubdirectory("wu-selfupdate-norestore-").FullName;
-        var currentPath = Path.Combine(directory, "Ultimate Updater.exe");
+        var currentPath = Path.Combine(directory, "UltimateUpdater.exe");
         File.WriteAllBytes(currentPath, [2]);
 
         try

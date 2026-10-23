@@ -15,7 +15,7 @@
 #define AppExeName "UltimateUpdater.exe"
 ; Same fixed name build.bat gives the standalone portable download, so both routes to a portable
 ; copy end up with an identically-named, recognisable file.
-#define PortableExeName "Ultimate Updater.exe"
+#define PortableExeName "UltimateUpdater.exe"
 #define AppUrl "https://github.com/wbgcoding/UltimateUpdater"
 
 ; An installed copy takes the non-extracting publish (the exe plus WPF's native DLLs beside it); portable

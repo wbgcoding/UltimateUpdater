@@ -8,7 +8,7 @@ public partial class MainViewModelTests
 {
     private static AvailableUpdate OfferedUpdate() => new(
         "999.0.0",
-        new ReleaseAsset("Ultimate Updater.exe", "https://github.com/x/y/a.exe", "https://api.github.com/a", 10),
+        new ReleaseAsset("UltimateUpdater.exe", "https://github.com/x/y/a.exe", "https://api.github.com/a", 10),
         new ReleaseAsset("SHA256SUMS.txt", "https://github.com/x/y/s.txt", "https://api.github.com/s", 10),
         string.Empty);
 

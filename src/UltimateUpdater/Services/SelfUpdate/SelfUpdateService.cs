@@ -668,9 +668,10 @@ public sealed partial class SelfUpdateService
     /// <summary>
     /// The fixed portable artifact name build.bat produces: no version, no architecture, and no
     /// "Portable" in it. It must match dist\ exactly: if these drift apart, a portable build can
-    /// never find its own update asset.
+    /// never find its own update asset. No spaces either: GitHub turns a space in an uploaded file
+    /// name into a dot, so the asset would no longer carry this name.
     /// </summary>
-    private const string PortableAssetName = "Ultimate Updater.exe";
+    private const string PortableAssetName = "UltimateUpdater.exe";
 
     private ReleaseAsset? SelectAssetForThisMachine(ReleaseInfo release)
     {

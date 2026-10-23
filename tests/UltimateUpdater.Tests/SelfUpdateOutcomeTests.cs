@@ -14,7 +14,7 @@ public class SelfUpdateOutcomeTests
 {
     private const string NewerRelease = """
         {"tag_name":"v999.0.0","draft":false,"body":"","assets":[
-          {"name":"Ultimate Updater.exe","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/a.exe","url":"https://api.github.com/repos/x/y/releases/assets/1","size":10},
+          {"name":"UltimateUpdater.exe","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/a.exe","url":"https://api.github.com/repos/x/y/releases/assets/1","size":10},
           {"name":"SHA256SUMS.txt","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/SHA256SUMS.txt","url":"https://api.github.com/repos/x/y/releases/assets/3","size":10}
         ]}
         """;
@@ -76,7 +76,7 @@ public class SelfUpdateOutcomeTests
 
     private static AvailableUpdate Update(long size = 10) => new(
         "999.0.0",
-        new ReleaseAsset("Ultimate Updater.exe", "https://github.com/x/y/a.exe", "", size),
+        new ReleaseAsset("UltimateUpdater.exe", "https://github.com/x/y/a.exe", "", size),
         new ReleaseAsset("SHA256SUMS.txt", "https://github.com/x/y/SHA256SUMS.txt", "", 10),
         string.Empty);
 
@@ -95,7 +95,7 @@ public class SelfUpdateOutcomeTests
     {
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  Ultimate Updater.exe"),
+            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  UltimateUpdater.exe"),
             Download = (_, _) => Task.FromResult(false),
         };
 
@@ -110,7 +110,7 @@ public class SelfUpdateOutcomeTests
         string? staged = null;
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  Ultimate Updater.exe"),
+            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  UltimateUpdater.exe"),
             Download = (target, _) =>
             {
                 staged = target;
@@ -135,7 +135,7 @@ public class SelfUpdateOutcomeTests
     {
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  Ultimate Updater.exe"),
+            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  UltimateUpdater.exe"),
             Download = (_, _) => throw new HttpRequestException("reset"),
         };
 
@@ -180,7 +180,7 @@ public class SelfUpdateOutcomeTests
     {
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  Ultimate Updater.exe"),
+            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  UltimateUpdater.exe"),
         };
 
         var result = await Service(channel)
@@ -195,7 +195,7 @@ public class SelfUpdateOutcomeTests
         string? written = null;
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  Ultimate Updater.exe"),
+            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  UltimateUpdater.exe"),
             Download = (path, _) =>
             {
                 written = path;
@@ -213,7 +213,7 @@ public class SelfUpdateOutcomeTests
 
     /// <summary>The checksum line for <paramref name="content"/> under the portable asset name.</summary>
     internal static string ChecksumLine(byte[] content) =>
-        $"{Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant()}  Ultimate Updater.exe";
+        $"{Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant()}  UltimateUpdater.exe";
 
     internal sealed class ScriptedChannel : IUpdateChannel
     {

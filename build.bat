@@ -149,11 +149,11 @@ for %%a in (x64 arm64) do (
     rem dist\ ships ONE portable exe, and it is x64: Windows 11 is 64-bit only and
     rem ARM64 users take the installer, which bundles both. The arm64 publish still happens above so the
     rem installer can carry it, but it is sourced straight from build\publish\ and never lands in dist\.
-    rem Named "Ultimate Updater.exe" - fixed, no version, architecture or "Portable" in the name:
+    rem Named "UltimateUpdater.exe" - fixed, no version, architecture or "Portable" in the name:
     rem it is always x64, and each GitHub Release keeps its own copy under its own tag, so
     rem nothing collides across versions.
     if /i "%%a"=="x64" (
-        copy /y "%STAGE%\win-%%a\UltimateUpdater.exe" "%DIST%\Ultimate Updater.exe" >nul
+        copy /y "%STAGE%\win-%%a\UltimateUpdater.exe" "%DIST%\UltimateUpdater.exe" >nul
         if errorlevel 1 (
             echo ERROR: could not copy the win-%%a executable into dist.
             goto :error
@@ -195,7 +195,7 @@ if errorlevel 1 goto :error
 
 rem dist\ took its copy inside the publish loop, before this ran - refresh it so the shipped portable
 rem executable is the signed one.
-copy /y "%STAGE%\win-x64\UltimateUpdater.exe" "%DIST%\Ultimate Updater.exe" >nul
+copy /y "%STAGE%\win-x64\UltimateUpdater.exe" "%DIST%\UltimateUpdater.exe" >nul
 if errorlevel 1 goto :error
 goto :signdone
 

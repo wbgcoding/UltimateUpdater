@@ -146,8 +146,8 @@ public class ActivityLogTests
     {
         Assert.Equal("found 0.2.0", ActivityLog.SelfUpdateFound("0.2.0"));
         Assert.Equal(
-            "downloaded Ultimate Updater.exe 60.0 MB",
-            ActivityLog.SelfUpdateDownloaded("Ultimate Updater.exe", 60 * 1024 * 1024));
+            "downloaded UltimateUpdater.exe 60.0 MB",
+            ActivityLog.SelfUpdateDownloaded("UltimateUpdater.exe", 60 * 1024 * 1024));
         Assert.Equal("verified 0.2.0", ActivityLog.SelfUpdateVerified("0.2.0"));
         Assert.Equal("applied 0.2.0 portable", ActivityLog.SelfUpdateApplied("0.2.0", portable: true));
         Assert.Equal("applied 0.2.0 installer", ActivityLog.SelfUpdateApplied("0.2.0", portable: false));

@@ -93,16 +93,15 @@ tiers and the cleanup categories in detail.
 
 | Download | What it is |
 | --- | --- |
-| `Ultimate.Updater.exe` | Portable, x64, no installation, keeps its data in `data\` next to itself |
+| `UltimateUpdater.exe` | Portable, x64, no installation, keeps its data in `data\` next to itself |
 | `Setup-UltimateUpdater-<version>.exe` | Installer for x64 and ARM64: all users, just you, or a portable copy |
 
 Requirements: Windows 10 1809 or newer. The .NET runtime is included, nothing else is needed.
 
-Check a download against `SHA256SUMS.txt` from the same release. It lists the portable file under its
-original name, `Ultimate Updater.exe`; GitHub replaces the space with a dot.
+Check a download against `SHA256SUMS.txt` from the same release:
 
 ```powershell
-(Get-FileHash ".\Ultimate.Updater.exe" -Algorithm SHA256).Hash.ToLower()
+(Get-FileHash ".\UltimateUpdater.exe" -Algorithm SHA256).Hash.ToLower()
 ```
 
 Until the app is code-signed, SmartScreen warns on first start: *More info*, then *Run anyway*, once the
@@ -170,7 +169,7 @@ self-contained executables for x64 and ARM64, the installer and checksums. `dist
 
 | File | What it is |
 | --- | --- |
-| `Ultimate Updater.exe` | portable build (x64) |
+| `UltimateUpdater.exe` | portable build (x64) |
 | `Setup-UltimateUpdater-<version>.exe` | installer with both architectures |
 | `SHA256SUMS.txt` | checksums for both |
 | `sbom.json` | bundled libraries and versions, for licence and vulnerability checks, not shipped |
