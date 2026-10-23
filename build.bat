@@ -63,22 +63,6 @@ rem errorlevel survives until something else sets it, so a failed snapshot run w
 rem "if errorlevel 1 goto :error" fire and abort a perfectly good build. Clear it deliberately.
 ver > nul
 
-rem A running copy locks its own file, and dist\ then cannot be replaced. Two DIFFERENT image names
-rem are in play - "UltimateUpdater.exe" (the raw publish/installed output) and "Ultimate
-rem Updater.exe" (the renamed dist\ artifact people actually run) - so both are matched; matching
-rem only the first exactly missed the portable copy and the build failed halfway with the previous
-rem artifacts still sitting there. tokens=* (not tokens=1) captures the whole matched line, since
-rem tokens=1 alone would stop at the first space inside "Ultimate Updater.exe".
-set RUNNING=
-for /f "tokens=*" %%p in ('tasklist /nh 2^>nul ^| findstr /i /c:"UltimateUpdater" /c:"Ultimate Updater"') do set RUNNING=%%p
-if defined RUNNING (
-    echo.
-    echo ERROR: %RUNNING% is still running.
-    echo        Close it and run this again - while it runs its file cannot be replaced,
-    echo        and dist\ would be left holding the previous build.
-    goto :error
-)
-
 echo.
 echo === icon ===
 python "%ROOT%tools\make-icon.py"
@@ -98,11 +82,16 @@ rem Inlined rather than a CALL'd subroutine: CALL to a label defined later in th
 rem unreliable in this exact script after the tasklist/version FOR /F loops above it (a known
 rem cmd.exe quirk around CALL following command-substitution FOR /F) - GOTO :error, used
 rem everywhere else in this file, is unaffected and keeps working normally.
+rem A copy started from dist\ or build\publish\ keeps its exe locked: Windows refuses to delete a
+rem running image but allows renaming it. So whatever cannot be deleted is moved into build\stale\
+rem (same drive, so the move is a rename) and the folder is cleared anyway; the running copy keeps
+rem working from its new place. build\stale\ is swept at the next build, minus anything still running.
+if exist "%ROOT%build\stale" rmdir /s /q "%ROOT%build\stale" 2>nul
 for %%d in ("%STAGE%" "%DIST%") do (
-    if exist %%d rmdir /s /q %%d
-    if exist %%d (
+    powershell -NoProfile -Command "$d='%%~d'; $s='%ROOT%build\stale'; if (Test-Path -LiteralPath $d) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue }; if (Test-Path -LiteralPath $d) { New-Item -ItemType Directory -Force -Path $s | Out-Null; Get-ChildItem -LiteralPath $d -Recurse -File | ForEach-Object { Move-Item -LiteralPath $_.FullName -Destination (Join-Path $s ([guid]::NewGuid().ToString('N') + '-' + $_.Name)) -ErrorAction SilentlyContinue }; Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue }; if (Test-Path -LiteralPath $d) { exit 1 }"
+    if errorlevel 1 (
         echo ERROR: could not clear %%d
-        echo        Something is still using it - close any running app or Explorer window there.
+        echo        A file there is open in another program, for example an Explorer preview.
         goto :error
     )
     mkdir %%d
