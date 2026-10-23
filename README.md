@@ -93,15 +93,16 @@ tiers and the cleanup categories in detail.
 
 | Download | What it is |
 | --- | --- |
-| `Ultimate Updater.exe` | Portable, x64, no installation, keeps its data in `data\` next to itself |
+| `Ultimate.Updater.exe` | Portable, x64, no installation, keeps its data in `data\` next to itself |
 | `Setup-UltimateUpdater-<version>.exe` | Installer for x64 and ARM64: all users, just you, or a portable copy |
 
 Requirements: Windows 10 1809 or newer. The .NET runtime is included, nothing else is needed.
 
-Check a download against `SHA256SUMS.txt` from the same release:
+Check a download against `SHA256SUMS.txt` from the same release. It lists the portable file under its
+original name, `Ultimate Updater.exe`; GitHub replaces the space with a dot.
 
 ```powershell
-(Get-FileHash ".\Ultimate Updater.exe" -Algorithm SHA256).Hash.ToLower()
+(Get-FileHash ".\Ultimate.Updater.exe" -Algorithm SHA256).Hash.ToLower()
 ```
 
 Until the app is code-signed, SmartScreen warns on first start: *More info*, then *Run anyway*, once the
