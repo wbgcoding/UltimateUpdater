@@ -13,7 +13,6 @@
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white">
   <img alt="x64 and ARM64" src="https://img.shields.io/badge/arch-x64%20%7C%20ARM64-3D9EF0">
   <img alt="MIT licence" src="https://img.shields.io/badge/licence-MIT-6FD3FF">
-  <img alt="No telemetry" src="https://img.shields.io/badge/telemetry-none-2EA043">
 </p>
 
 <p align="center">
@@ -21,27 +20,27 @@
 </p>
 
 Ultimate Updater checks winget, Windows Update, drivers, the Microsoft Store, developer package managers
-and game launchers, and lists everything that is out of date in one table. Tick what you want and install
+and game launchers, and lists everything that is out of date in one table. Tick what you want and update
 it in one go. A separate cleanup window frees disk space and runs Windows' own maintenance tools.
 
 ## What it does
 
 - Lists updates from more than 50 sources in one table: apps, Windows and driver updates, developer tools,
-  games and Store apps, grouped by category, searchable and sortable. A Filter menu narrows the table, for
-  example to critical updates only; ignored updates stay hidden until you ask for them.
-- Installs whatever you tick. Admin installs in the same batch share one UAC prompt. Click the available
-  version of a row to read its release notes.
+  games and Store apps, grouped by category, searchable and sortable. The Filter menu narrows the table,
+  for example to critical updates only. Ignored updates stay hidden until you ask for them.
+- Installs whatever you tick. Admin installs in the same batch share one UAC prompt. Click the new version
+  of a row to read its release notes.
 - Uses each source's own install mechanism, so winget's manifest hashes, Windows Update's signatures and
   each package manager's checks still apply.
-- The scheduled scan only notifies. Nothing is installed until you click. The one exception is Scoop:
-  it refreshes its buckets before listing, and that refresh can also update Scoop itself.
-- Shows no made-up version numbers. Game launchers and the Store get an "Open" button that takes you to
+- Scheduled scans only notify: nothing is installed until you click. The one exception is Scoop, which
+  refreshes its buckets before listing; that refresh can also update Scoop itself.
+- Never invents a version number. Game launchers and the Store get an "Open" button that takes you to
   their own update page.
-- Includes a cleanup window: temp files, caches, old drivers, old Python versions, the component store,
-  drive optimisation and system repair, each with its size and a risk level.
-- Can undo: an optional restore point before the first admin batch, a registry backup before registry
-  cleanup, a driver export before a driver package is removed, and a rollback to the previous version
-  for winget packages.
+- Comes with a cleanup window for temp files, caches, old drivers, old Python versions, the component
+  store, drive optimisation and system repair, each with its size and a risk level.
+- Lets you undo: an optional restore point before the first admin batch, a registry backup before
+  registry cleanup, a driver export before a driver package is removed, and a rollback to the previous
+  version for winget packages.
 - Follows the Windows light or dark theme, sits in the tray and speaks eleven languages (English, German,
   Spanish, Italian, Portuguese, Polish, Simplified Chinese, Japanese, Dutch, Turkish, Romanian).
 
@@ -51,10 +50,10 @@ it in one go. A separate cleanup window frees disk space and runs Windows' own m
   <img src="docs/images/cleanup-window.png" width="780" alt="Cleanup window with categories, sizes and risk levels">
 </p>
 
-Every entry shows its size and a risk level (safe, worth a look, risky). Safe entries are ticked by default,
-plus the standard Windows component store cleanup; the rest never are, and "Default selection" puts that set back
-at any time. System repair (`sfc`,
-DISM) starts unticked too: it frees no space and takes a long time, so you opt in when you want it.
+Every entry shows its size and a risk level: safe, moderate or risky. Safe entries start ticked, together
+with Windows' standard component store cleanup; nothing else ever is, and "Default selection" restores
+that set at any time. System repair (`sfc`, DISM) starts unticked as well: it frees no space and takes a
+long time, so you opt in when you want it.
 
 - Temporary files, crash dumps, thumbnail and shader caches, package-manager and build-tool caches
 - Recycle bin, by default only files deleted more than 30 days ago (adjustable); a switch in Settings sends cleaned
@@ -90,7 +89,7 @@ tiers and the cleanup categories in detail.
 
 ## Install
 
-Download the latest release and choose one:
+[Download the latest release](https://github.com/wbgcoding/UltimateUpdater/releases/latest) and choose one:
 
 | Download | What it is |
 | --- | --- |

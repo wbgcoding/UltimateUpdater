@@ -4,15 +4,15 @@ What the app shows and what each part does.
 
 ## The table
 
-Every row is one available update, from one source, grouped by category (Software, System and
-Drivers, Games, Developer Tools, Store) and sortable by any column. A row shows the installed
+Every row is one available update, from one source, grouped by category (Software, System &
+drivers, Games, Developer tools, Store) and sortable by any column. A row shows the installed
 version and the available one where both are known; some sources only ever report the available
-one. Rows can carry children of their own: Steam's row expands into the individual game updates
-it found pending. Every other source's rows stand on their own.
+one. Steam's row expands into the individual game updates it found pending; every other row stands on
+its own.
 
 The Filter button above the table opens a menu that narrows the list, for example to critical updates
-only. Ignored updates are hidden by default; the menu can show them again. Click the available version of
-a row to read its release notes.
+only. Ignored updates are hidden by default; the menu can show them again. Click the new version of a row
+to read its release notes.
 
 ## First start
 
@@ -23,7 +23,7 @@ Settings, Sources, and the scan at every start can be turned off under Settings,
 ## Rows you can install and rows you can open
 
 - **Installable rows** have a checkbox: winget, Windows Update, Chocolatey, Scoop, pip, npm, .NET tools,
-  the PowerShell Gallery, the NVIDIA driver and the other package managers. Tick them and press Install.
+  the PowerShell Gallery, the NVIDIA driver and the other package managers. Tick them and press Update selected.
 - **Open rows** have no checkbox: the Microsoft Store, Xbox, Steam and the other game launchers. The app
   can see that an update is waiting but cannot install it, and it does not invent a version number it was
   never given. The only action is "Open", which takes you to the launcher's own update page.
@@ -66,4 +66,5 @@ and nothing runs until you press the button and confirm.
 Installed: `%APPDATA%\UltimateUpdater`. Portable: a `data` folder next to the executable. If that
 folder cannot be written to (Program Files, a read-only share), the portable copy uses `%APPDATA%`
 instead. Settings, install history, cleanup history and logs all live in that one folder, and
-uninstalling the app leaves it behind. You can move it in Settings.
+uninstalling the app leaves it behind. You can move it in Settings, and Reset everything in Settings
+clears caches, history and logs.
