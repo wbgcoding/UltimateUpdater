@@ -402,6 +402,9 @@ public partial class CleanupViewModel : ObservableObject
     /// call again on a freshly constructed instance, whose constructor already subscribed once.</summary>
     internal void WindowAttached()
     {
+        // A reused instance would otherwise time the reopened window from the FIRST open and log minutes.
+        _openStopwatch.Restart();
+
         if (_elevated is null)
             return;
 
@@ -450,5 +453,7 @@ public partial class CleanupViewModel : ObservableObject
     /// actually took, catalogue load included, so a slow open shows up in the log rather than only as a
     /// feeling.</summary>
     internal void LogFirstFrame() =>
-        _logging.Info($"cleanup window first frame after {_openStopwatch.ElapsedMilliseconds} ms");
+        _logging.Info($"cleanup window first frame after {OpenElapsedMilliseconds} ms");
+
+    internal long OpenElapsedMilliseconds => _openStopwatch.ElapsedMilliseconds;
 }

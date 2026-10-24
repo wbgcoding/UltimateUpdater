@@ -158,6 +158,20 @@ public partial class CleanupViewModelTests
         Assert.True(row.ShowsElevationHint);
     }
 
+    /// <summary>A dialog reopened onto a still-busy, reused view model logged "first frame after 90898 ms":
+    /// the open timer ran from the first open. Attaching a window starts it over.</summary>
+    [Fact]
+    public void Reattaching_a_window_restarts_the_open_timer()
+    {
+        var viewModel = Create(CreateSettings());
+        WpfHarness.WaitForCleanupCatalog(viewModel);
+        Thread.Sleep(300);
+
+        viewModel.WindowAttached();
+
+        Assert.True(viewModel.OpenElapsedMilliseconds < 200, $"open timer at {viewModel.OpenElapsedMilliseconds} ms");
+    }
+
     /// <summary>The helper's pipe thread raises the state change while the UI thread may be waiting on that very
     /// thread (app exit shutting the helper down). The notification must be posted, not waited on.</summary>
     [Fact]
