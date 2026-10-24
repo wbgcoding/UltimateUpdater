@@ -97,6 +97,19 @@ public sealed class ChocolateySource(LoggingService logging, HttpClient httpClie
 
     protected override IReadOnlyList<string> InstallArguments(UpdateItem item) => UpgradeArguments(item.Id);
 
+    protected override bool IsInstallSuccess(ProcessResult result) => IsSuccessExitCode(result.ExitCode);
+
+    protected override bool IsRebootRequired(ProcessResult result) => IsRebootExitCode(result.ExitCode);
+
+    /// <summary>
+    /// Chocolatey's own exit codes: 1605 (nothing to upgrade) and 1614 (already uninstalled) are the tool
+    /// finding the work already done, 1641 and 3010 are the package installer's "done, restart pending".
+    /// None of them is a failure.
+    /// </summary>
+    internal static bool IsSuccessExitCode(int exitCode) => exitCode is 0 or 1605 or 1614 or 1641 or 3010;
+
+    internal static bool IsRebootExitCode(int exitCode) => exitCode is 1641 or 3010;
+
     protected override IReadOnlyList<string>? UninstallArguments(UpdateItem item) =>
         ["uninstall", item.Id, "-y", "--limit-output"];
 

@@ -108,7 +108,7 @@ public abstract class CliUpdateSource : IUpdateSource
             throw new InvalidOperationException($"{Id}: install failed for '{item.Id}'. {detail}");
         }
 
-        progress.Report(new Models.InstallProgress { PercentComplete = 100, StatusText = item.Name });
+        progress.Report(new Models.InstallProgress { PercentComplete = 100, StatusText = item.Name, RebootRequired = IsRebootRequired(result) });
     }
 
     /// <summary>
@@ -218,7 +218,7 @@ public abstract class CliUpdateSource : IUpdateSource
             throw new InvalidOperationException($"{Id}: uninstall failed for '{item.Id}'. {detail}");
         }
 
-        progress.Report(new Models.InstallProgress { PercentComplete = 100, StatusText = item.Name });
+        progress.Report(new Models.InstallProgress { PercentComplete = 100, StatusText = item.Name, RebootRequired = IsRebootRequired(result) });
     }
 
     protected abstract Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken);
@@ -233,6 +233,9 @@ public abstract class CliUpdateSource : IUpdateSource
     protected virtual IReadOnlyList<string>? RetryInstallArguments(UpdateItem item, ProcessResult firstAttempt) => null;
 
     protected virtual bool IsInstallSuccess(ProcessResult result) => result.ExitCode == 0;
+
+    /// <summary>A successful run that still wants a restart to finish; false unless the tool has such an exit code.</summary>
+    protected virtual bool IsRebootRequired(ProcessResult result) => false;
 
     protected UpdateItem CreateItem(
         string id, string name, string? installed, string? available, IReadOnlyDictionary<string, string>? meta = null) => new()
