@@ -65,7 +65,13 @@ ver > nul
 
 echo.
 echo === icon ===
-python "%ROOT%tools\make-icon.py"
+rem The py launcher picks the newest installed Python; plain python is whatever PATH finds first.
+where py >nul 2>nul
+if errorlevel 1 (
+    python "%ROOT%tools\make-icon.py"
+) else (
+    py -3 "%ROOT%tools\make-icon.py"
+)
 if errorlevel 1 goto :error
 
 rem Version comes from the csproj alone, so it is read back rather than repeated.

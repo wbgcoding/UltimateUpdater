@@ -54,7 +54,7 @@ public static class UpdateFilter
             return 0;
 
         // partial ratio: a short query should score well against a long product name
-        return Fuzz.PartialRatio(query.ToLowerInvariant(), candidate.ToLowerInvariant());
+        return (int)Math.Round(Fuzz.PartialRatio(query.ToLowerInvariant(), candidate.ToLowerInvariant()));
     }
 
     private static bool Contains(string? haystack, string needle) =>
