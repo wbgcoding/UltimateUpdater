@@ -1385,18 +1385,6 @@ Das kann nicht rückgängig gemacht werden.</value>
   <data name="CleanupComponentStoreRecommended" xml:space="preserve">
     <value>Windows empfiehlt eine Bereinigung</value>
   </data>
-  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
-    <value>Analysieren (benötigt Admin-Rechte)</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
-    <value>Misst, wie viel Platz der Windows-Komponentenspeicher wirklich freigeben kann.</value>
-  </data>
-  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
-    <value>Für die Analyse werden Admin-Rechte gebraucht; die Abfrage wurde abgebrochen.</value>
-  </data>
-  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
-    <value>Die Analyse ist gerade nicht möglich, der erhöhte Helfer läuft nicht.</value>
-  </data>
   <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
     <value>Windows hat keine Größen gemeldet.</value>
   </data>
@@ -1995,9 +1983,6 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Nur die unkritischen Einträge auswählen, also genau die, die standardmäßig angehakt sind.</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
-    <value>Wird analysiert…</value>
   </data>
   <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
     <value>Windows hat nicht rechtzeitig geantwortet. Die Analyse wurde abgebrochen.</value>

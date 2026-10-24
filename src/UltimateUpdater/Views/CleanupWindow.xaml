@@ -297,25 +297,12 @@
         <Geometry x:Key="CleaningGlintGeometry">M12 3.2 C12.9 8.4 14.6 10.1 20.8 12 C14.6 13.9 12.9 15.6 12 20.8 C11.1 15.6 9.4 13.9 3.2 12 C9.4 10.1 11.1 8.4 12 3.2 Z</Geometry>
 
         <!-- Read-only, DISM's own component store analysis, shown inside the component cleanup card (the
-             analysis state lives on the window's view model, hence this template is bound to it). No detail
-             list and nothing this dialog deletes from here; the cleanup row above it is what acts. Needs
-             administrator rights every time it runs, so the button says so plainly rather than the click
-             surprising anyone with a prompt. -->
+             analysis state lives on the window's view model, hence this template is bound to it). It runs
+             on its own whenever administrator rights exist; the row's size cell shows the measuring dots
+             meanwhile. No detail list and nothing this dialog deletes from here; the cleanup row above it
+             is what acts. -->
         <DataTemplate x:Key="ComponentStoreAnalysisTemplate">
             <StackPanel Visibility="{Binding IsChoosing, Converter={StaticResource BoolToVisibility}}">
-                <StackPanel Orientation="Horizontal">
-                    <ui:Button x:Name="ComponentStoreAnalyzeButton" Appearance="Secondary"
-                               Padding="10,4" Content="{Binding ComponentStoreAnalyzeButtonText}"
-                               Command="{Binding AnalyzeComponentStoreCommand}"
-                               ToolTip="{Binding ComponentStoreAnalyzeHintText}"
-                               AutomationProperties.Name="{Binding ComponentStoreAnalyzeButtonText}"/>
-                    <!-- The button disabling itself was the only sign a press had done anything; a run
-                         queued behind an unrelated exclusive cleanup job used to look exactly like nothing
-                         happened at all for as long as that other job kept running. -->
-                    <views:WaitSpinner Margin="10,0,0,0" VerticalAlignment="Center"
-                                       Visibility="{Binding IsAnalyzingComponentStore, Converter={StaticResource BoolToVisibility}}"/>
-                </StackPanel>
-
                 <TextBlock x:Name="ComponentStoreSizeText" Text="{Binding ComponentStoreSizeText}"
                            FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"
                            Visibility="{Binding HasComponentStoreResult, Converter={StaticResource BoolToVisibility}}"
@@ -332,13 +319,6 @@
                 <TextBlock x:Name="ComponentStoreTimedOutText" Text="{Binding ComponentStoreTimedOutText}"
                            FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
                            Visibility="{Binding ShowComponentStoreTimedOut, Converter={StaticResource BoolToVisibility}}"
-                           Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
-
-                <!-- Says why when the prompt was declined or the elevated helper is missing, so the button
-                     never looks dead. -->
-                <TextBlock x:Name="ComponentStoreStatusText" Text="{Binding ComponentStoreStatusText}"
-                           FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"
-                           Visibility="{Binding HasComponentStoreStatus, Converter={StaticResource BoolToVisibility}}"
                            Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
             </StackPanel>
         </DataTemplate>
@@ -498,6 +478,9 @@
                          capped at 60 fps like every other animation here. -->
                     <views:MeasuringDots HorizontalAlignment="Right" VerticalAlignment="Center"
                                          Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}"/>
+                    <!-- The component cleanup card's own analysis (DISM, started by itself): the same dots. -->
+                    <views:MeasuringDots x:Name="ComponentStoreMeasuringDots" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                         Visibility="{Binding IsAnalyzingComponentStore, Converter={StaticResource BoolToVisibility}}"/>
 
                     <!-- Picked for this run, still ahead of it: a turning ring says the row
                          is waiting its turn rather than sitting idle. It

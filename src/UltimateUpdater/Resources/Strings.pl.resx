@@ -1385,18 +1385,6 @@ Nie można tego cofnąć.</value>
   <data name="CleanupComponentStoreRecommended" xml:space="preserve">
     <value>Windows zaleca czyszczenie</value>
   </data>
-  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
-    <value>Analizuj (wymaga uprawnień administratora)</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
-    <value>Mierzy, ile miejsca magazyn komponentów Windows może faktycznie zwolnić.</value>
-  </data>
-  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
-    <value>Analiza wymaga uprawnień administratora; monit został anulowany.</value>
-  </data>
-  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
-    <value>Analiza nie jest teraz możliwa, ponieważ pomocnik z podwyższonymi uprawnieniami nie jest uruchomiony.</value>
-  </data>
   <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
     <value>Windows nie podał żadnych rozmiarów.</value>
   </data>
@@ -1995,9 +1983,6 @@ Kontynuować z uprawnieniami administratora?</value>
   </data>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Zaznacz tylko bezpieczne elementy, czyli te, które są domyślnie zaznaczone.</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
-    <value>Analizowanie…</value>
   </data>
   <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
     <value>Windows nie odpowiedział w wyznaczonym czasie. Analiza została zatrzymana.</value>

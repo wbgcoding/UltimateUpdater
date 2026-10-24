@@ -1385,18 +1385,6 @@ This cannot be undone.</value>
   <data name="CleanupComponentStoreRecommended" xml:space="preserve">
     <value>Windows recommends a cleanup</value>
   </data>
-  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
-    <value>Analyse (needs admin rights)</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
-    <value>Measures how much space the Windows component store can really free.</value>
-  </data>
-  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
-    <value>The analysis needs admin rights; the prompt was cancelled.</value>
-  </data>
-  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
-    <value>The analysis is not possible right now, the elevated helper is not running.</value>
-  </data>
   <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
     <value>Windows reported no sizes.</value>
   </data>
@@ -1995,9 +1983,6 @@ Continue with admin rights?</value>
   </data>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Select only the safe items, the same ones that are ticked by default.</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
-    <value>Analysing…</value>
   </data>
   <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
     <value>Windows did not respond in time. The analysis was stopped.</value>

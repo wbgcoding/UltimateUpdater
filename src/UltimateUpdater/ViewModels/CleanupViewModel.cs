@@ -352,7 +352,6 @@ public partial class CleanupViewModel : ObservableObject
         OnPropertyChanged(nameof(RemainingCountText));
         OnPropertyChanged(nameof(HistoryEmptyOverviewText));
         OnPropertyChanged(nameof(RestorePointText));
-        OnPropertyChanged(nameof(ComponentStoreStatusText));
         OnPropertyChanged(nameof(MeasuredAtText));
 
         foreach (var item in Items)

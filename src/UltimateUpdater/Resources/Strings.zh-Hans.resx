@@ -1385,18 +1385,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupComponentStoreRecommended" xml:space="preserve">
     <value>Windows 建议进行清理</value>
   </data>
-  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
-    <value>分析（需要管理员权限）</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
-    <value>测量 Windows 组件存储实际能释放多少空间。</value>
-  </data>
-  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
-    <value>分析需要管理员权限；权限提示已被取消。</value>
-  </data>
-  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
-    <value>目前无法进行分析，提升权限的辅助进程未运行。</value>
-  </data>
   <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
     <value>Windows 未报告任何大小数据。</value>
   </data>
@@ -1995,9 +1983,6 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>仅选择安全项，也就是默认勾选的那些项。</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
-    <value>正在分析…</value>
   </data>
   <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
     <value>Windows 未及时响应，分析已停止。</value>

@@ -5606,8 +5606,8 @@ public class WindowLayoutTests
     }
 
     /// <summary>
-    /// This fix's read-only component store card: the title and the "needs administrator rights" button
-    /// render before any analysis ever ran, the size and recommendation lines stay collapsed until a
+    /// The read-only component store card: the title renders and no analyze button exists (the analysis
+    /// runs on its own), the size and recommendation lines stay collapsed until a
     /// result actually arrives, and once one does (set directly on the view model, exactly what the
     /// elevated reply's dispatch does after <c>ApplyComponentStoreMessage</c>) both become visible with the
     /// figures formatted through the card's own text.
@@ -5645,11 +5645,10 @@ public class WindowLayoutTests
             ForceExpandAllGroupCards(content);
             content.UpdateLayout();
 
-            var button = FindAllByName<Wpf.Ui.Controls.Button>(content, "ComponentStoreAnalyzeButton").SingleOrDefault();
             var sizeTextBefore = FindAllByName<TextBlock>(content, "ComponentStoreSizeText").SingleOrDefault();
             var recommendedTextBefore = FindAllByName<TextBlock>(content, "ComponentStoreRecommendedText").SingleOrDefault();
 
-            if (button is null || sizeTextBefore is null || recommendedTextBefore is null)
+            if (sizeTextBefore is null || recommendedTextBefore is null)
                 return;
 
             foundBeforeAnalysis = true;
@@ -5676,7 +5675,7 @@ public class WindowLayoutTests
         });
 
         AssertRendered(result);
-        Assert.True(foundBeforeAnalysis, "the component store card's button and text lines must all render.");
+        Assert.True(foundBeforeAnalysis, "the component store card's text lines must all render.");
         Assert.False(sizeVisibleBeforeAnalysis, "the size line must stay hidden before any analysis ran.");
         Assert.False(recommendedVisibleBeforeAnalysis, "the recommendation line must stay hidden before any analysis ran.");
         Assert.True(sizeVisibleAfterAnalysis, "the size line must show once a result has arrived.");
@@ -5687,8 +5686,8 @@ public class WindowLayoutTests
 
     /// <summary>
     /// The component store analysis sits inside the component cleanup card, below its description, and no
-    /// other card carries it: the Analyze button's own card is the one whose title is the component
-    /// cleanup target's, and the figures show up there once a result has arrived. A second row in the
+    /// other card carries it: the figures' own card is the one whose title is the component
+    /// cleanup target's, and they show up there once a result has arrived. A second row in the
     /// same Windows maintenance group is given entries so the harness expands the group for the snapshot.
     /// </summary>
     [Fact]
@@ -5696,7 +5695,6 @@ public class WindowLayoutTests
     {
         RenderResult? result = null;
         string ownerTitle = string.Empty;
-        var analyzeButtons = 0;
         var figuresVisible = false;
 
         WpfHarness.OnUiThread(() =>
@@ -5730,26 +5728,80 @@ public class WindowLayoutTests
             var content = (FrameworkElement)window.Content;
             result = WpfHarness.RenderWindow(window, "cleanup-component-store-card-de", (int)window.Width, 1400);
 
-            var buttons = FindAllByName<Wpf.Ui.Controls.Button>(content, "ComponentStoreAnalyzeButton");
-            analyzeButtons = buttons.Count;
-            if (buttons.Count == 1)
-            {
-                DependencyObject? node = buttons[0];
-                while (node is not null && !(node is Grid { Name: "ItemRoot" }))
-                    node = System.Windows.Media.VisualTreeHelper.GetParent(node);
-
-                if (node is Grid { DataContext: CleanupItemViewModel owner })
-                    ownerTitle = owner.Target.Id;
-            }
-
             var size = FindAllByName<TextBlock>(content, "ComponentStoreSizeText").SingleOrDefault();
+            DependencyObject? node = size;
+            while (node is not null && !(node is Grid { Name: "ItemRoot" }))
+                node = System.Windows.Media.VisualTreeHelper.GetParent(node);
+
+            if (node is Grid { DataContext: CleanupItemViewModel owner })
+                ownerTitle = owner.Target.Id;
+
             figuresVisible = size is { ActualWidth: > 0, ActualHeight: > 0 };
         });
 
         AssertRendered(result);
-        Assert.Equal(1, analyzeButtons);
         Assert.Equal("component-cleanup", ownerTitle);
         Assert.True(figuresVisible, "the analysis figures must show inside the card once a result exists.");
+    }
+
+    /// <summary>
+    /// While the component store analysis runs, the component cleanup row's size cell shows the same
+    /// measuring dots every measured row shows; no other row gets them and no analyze button exists.
+    /// </summary>
+    [Fact]
+    public void Cleanup_component_row_shows_the_measuring_dots_while_the_analysis_runs()
+    {
+        RenderResult? result = null;
+        var dotsOnComponentRow = false;
+        var dotsElsewhere = 0;
+        var buttons = -1;
+
+        WpfHarness.OnUiThread(() =>
+        {
+            LocalizationService.Instance.Apply("de");
+
+            var logging = new LoggingService();
+            var settings = new SettingsService(logging, Path.Combine(Path.GetTempPath(), $"wu-test-settings-{Guid.NewGuid():N}.json"));
+            var viewModel = new CleanupViewModel(new CleanupService(logging), logging, settings);
+            WpfHarness.WaitForCleanupCatalog(viewModel);
+
+            foreach (var item in viewModel.Items)
+                item.IsScanning = false;
+
+            var cache = viewModel.Items.First(i => i.Target.Id == "windows-update-cache");
+            cache.Bytes = 300L * 1024 * 1024;
+            cache.Files = 3;
+            cache.SetEntries([new CleanupEntry(@"C:\Windows\SoftwareDistribution\Download\A", "A", 300L * 1024 * 1024, 3,
+                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero), CleanupEntryType.Cache)]);
+
+            viewModel.IsAnalyzingComponentStore = true;
+
+            var window = new CleanupWindow(viewModel) { DisplayPercent = 0 };
+            var content = (FrameworkElement)window.Content;
+            result = WpfHarness.RenderWindow(window, "cleanup-component-store-dots-de", (int)window.Width, 1400);
+
+            buttons = FindAllByName<Wpf.Ui.Controls.Button>(content, "ComponentStoreAnalyzeButton").Count;
+            foreach (var dots in FindAllByName<UltimateUpdater.Views.MeasuringDots>(content, "ComponentStoreMeasuringDots"))
+            {
+                if (dots.ActualWidth <= 0 || dots.ActualHeight <= 0)
+                    continue;
+
+                DependencyObject? node = dots;
+                while (node is not null && !(node is Grid { Name: "ItemRoot" }))
+                    node = System.Windows.Media.VisualTreeHelper.GetParent(node);
+
+                if (node is Grid { DataContext: CleanupItemViewModel { IsComponentCleanup: true } })
+                    dotsOnComponentRow = true;
+                else
+                    dotsElsewhere++;
+            }
+        });
+
+        AssertRendered(result);
+        Assert.Equal(0, buttons);
+        Assert.True(dotsOnComponentRow, "the component cleanup row must show the measuring dots while the analysis runs.");
+        Assert.Equal(0, dotsElsewhere);
     }
 
     /// <summary>

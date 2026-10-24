@@ -19,8 +19,6 @@ public class ConsistentWordingTests
     [InlineData("Strings.de.resx", "CleanupRescan", "Neu prüfen")]
     [InlineData("Strings.resx", "TrayScan", "Check for updates")]
     [InlineData("Strings.de.resx", "SettingsCheckNow", "Jetzt prüfen")]
-    [InlineData("Strings.resx", "CleanupComponentStoreAnalyzing", "Analysing…")]
-    [InlineData("Strings.de.resx", "CleanupComponentStoreAnalyzing", "Wird analysiert…")]
     [InlineData("Strings.de.resx", "SettingsResetDesc", "Die App auf den Werkszustand zurücksetzen.")]
     [InlineData("Strings.de.resx", "SettingsResetDoneBody", "Die App ist wieder im Werkszustand.")]
     [InlineData("Strings.resx", "SettingsMeteredTitle", "Don't search automatically on a metered connection")]

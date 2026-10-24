@@ -1385,18 +1385,6 @@ Questa operazione non può essere annullata.</value>
   <data name="CleanupComponentStoreRecommended" xml:space="preserve">
     <value>Windows consiglia una pulizia</value>
   </data>
-  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
-    <value>Analizza (richiede diritti di amministratore)</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
-    <value>Misura quanto spazio può davvero liberare l'archivio componenti di Windows.</value>
-  </data>
-  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
-    <value>L'analisi richiede diritti di amministratore; la richiesta è stata annullata.</value>
-  </data>
-  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
-    <value>L'analisi non è possibile in questo momento, l'helper con privilegi elevati non è in esecuzione.</value>
-  </data>
   <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
     <value>Windows non ha segnalato alcuna dimensione.</value>
   </data>
@@ -1995,9 +1983,6 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Seleziona solo gli elementi sicuri, gli stessi selezionati per impostazione predefinita.</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
-    <value>Analisi in corso…</value>
   </data>
   <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
     <value>Windows non ha risposto in tempo. L'analisi è stata interrotta.</value>

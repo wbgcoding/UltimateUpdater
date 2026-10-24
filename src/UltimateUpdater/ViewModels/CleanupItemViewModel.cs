@@ -240,13 +240,51 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     /// <summary>The one row that carries the age-filter sub-row.</summary>
     public bool IsRecycleBin => Target.Kind == CleanupKind.RecycleBin;
 
-    /// <summary>The one card that carries the component store analysis (button, figures, status): the
-    /// analysis state lives on the window's view model, only this card shows it.</summary>
+    /// <summary>The one card that carries the component store analysis (figures below the description, the
+    /// measuring dots in the size cell): the analysis state lives on the window's view model, only this card
+    /// shows it.</summary>
     public bool IsComponentCleanup => Target.Id == "component-cleanup";
 
     /// <summary>The window's view model, set only on the component cleanup card: the analysis block inside
     /// that card binds to it (the analysis state lives there, not on the row).</summary>
-    public CleanupViewModel? ComponentStoreHost { get; set; }
+    public CleanupViewModel? ComponentStoreHost
+    {
+        get => _componentStoreHost;
+        set
+        {
+            if (ReferenceEquals(_componentStoreHost, value))
+                return;
+
+            if (_componentStoreHost is not null)
+                _componentStoreHost.PropertyChanged -= OnComponentStoreHostPropertyChanged;
+
+            _componentStoreHost = value;
+            if (value is not null)
+                value.PropertyChanged += OnComponentStoreHostPropertyChanged;
+
+            RaiseAnalyzingChanged();
+        }
+    }
+
+    private CleanupViewModel? _componentStoreHost;
+
+    /// <summary>The component cleanup card's analysis is running: the size cell shows the measuring dots
+    /// then, like any row being measured. Always false on every other row.</summary>
+    public bool IsAnalyzingComponentStore => IsComponentCleanup && ComponentStoreHost?.IsAnalyzingComponentStore == true;
+
+    private void OnComponentStoreHostPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(CleanupViewModel.IsAnalyzingComponentStore))
+            RaiseAnalyzingChanged();
+    }
+
+    private void RaiseAnalyzingChanged()
+    {
+        OnPropertyChanged(nameof(IsAnalyzingComponentStore));
+        OnPropertyChanged(nameof(ShowsSize));
+        OnPropertyChanged(nameof(ShowsNothingFound));
+        OnPropertyChanged(nameof(HasSizeCell));
+    }
 
     public string RecycleAgeLabelText => LocalizationService.Instance["CleanupRecycleAgeLabel"];
 
@@ -774,12 +812,12 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     public string NothingText => LocalizationService.Instance["CleanupNothingToClean"];
 
     /// <summary>A real figure, once there is one to show, and not while the waiting ring has the cell.</summary>
-    public bool ShowsSize => !HasUnknownSize && !IsScanning && !IsWaiting && (IsRegistryCleanup ? Files > 0 : Bytes > 0);
+    public bool ShowsSize => !HasUnknownSize && !IsScanning && !IsWaiting && !IsAnalyzingComponentStore && (IsRegistryCleanup ? Files > 0 : Bytes > 0);
 
     /// <summary>Not on the driver and old Python rows: they list their findings as candidates without a byte
     /// total and say "nothing found" in their own list, so the size cell would contradict a filled list and
     /// repeat itself on an empty one.</summary>
-    public bool ShowsNothingFound => !HasUnknownSize && !IsScanning && !IsWaiting && !IsDriverCleanup && !IsOldPythonVersions
+    public bool ShowsNothingFound => !HasUnknownSize && !IsScanning && !IsWaiting && !IsAnalyzingComponentStore && !IsDriverCleanup && !IsOldPythonVersions
         && (IsRegistryCleanup ? Files <= 0 : Bytes <= 0);
 
     /// <summary>
@@ -788,7 +826,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     /// is neither scanning nor waiting its turn. The column collapses then, so its MinWidth is not
     /// reserved as an empty box beside the row's risk dot for a figure that kind never has.
     /// </summary>
-    public bool HasSizeCell => ShowsSize || ShowsNothingFound || IsScanning || IsWaiting;
+    public bool HasSizeCell => ShowsSize || ShowsNothingFound || IsScanning || IsWaiting || IsAnalyzingComponentStore;
 
     /// <summary>
     /// Targets that cannot report a size in advance: Disk Cleanup decides for itself what it will remove,

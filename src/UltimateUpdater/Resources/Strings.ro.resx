@@ -1385,18 +1385,6 @@ Această acțiune nu poate fi anulată.</value>
   <data name="CleanupComponentStoreRecommended" xml:space="preserve">
     <value>Windows recomandă o curățare</value>
   </data>
-  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
-    <value>Analizează (necesită drepturi de administrator)</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
-    <value>Măsoară cât spațiu poate elibera cu adevărat depozitul de componente Windows.</value>
-  </data>
-  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
-    <value>Analiza necesită drepturi de administrator; solicitarea a fost anulată.</value>
-  </data>
-  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
-    <value>Analiza nu este posibilă acum, ajutorul cu privilegii ridicate nu rulează.</value>
-  </data>
   <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
     <value>Windows nu a raportat nicio dimensiune.</value>
   </data>
@@ -1995,9 +1983,6 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Selectează doar elementele sigure, aceleași care sunt bifate implicit.</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
-    <value>Se analizează…</value>
   </data>
   <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
     <value>Windows nu a răspuns la timp. Analiza a fost întreruptă.</value>

@@ -1385,18 +1385,6 @@ Esto no se puede deshacer.</value>
   <data name="CleanupComponentStoreRecommended" xml:space="preserve">
     <value>Windows recomienda una limpieza</value>
   </data>
-  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
-    <value>Analizar (requiere derechos de administrador)</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
-    <value>Mide cuánto espacio puede liberar realmente el almacén de componentes de Windows.</value>
-  </data>
-  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
-    <value>El análisis requiere derechos de administrador; se canceló el aviso.</value>
-  </data>
-  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
-    <value>El análisis no es posible ahora mismo; el asistente con privilegios elevados no está en ejecución.</value>
-  </data>
   <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
     <value>Windows no informó ningún tamaño.</value>
   </data>
@@ -1995,9 +1983,6 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Seleccionar solo los elementos seguros, los mismos que están marcados de forma predeterminada.</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
-    <value>Analizando…</value>
   </data>
   <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
     <value>Windows no respondió a tiempo. Se detuvo el análisis.</value>

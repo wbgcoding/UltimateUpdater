@@ -20,104 +20,6 @@ public partial class CleanupViewModelTests
         throw new DirectoryNotFoundException("Could not locate the Views directory from the test output path.");
     }
 
-    /// <summary>No elevation service at all (the exact case originally reported) must leave
-    /// a status line behind instead of the button silently doing nothing.</summary>
-    [Fact]
-    public async Task AnalyzeComponentStore_with_no_elevation_service_shows_the_unavailable_status()
-    {
-        var viewModel = Create(CreateSettings());
-
-        await viewModel.AnalyzeComponentStoreCommand.ExecuteAsync(null);
-
-        Assert.Equal(LocalizationService.Instance["CleanupComponentStoreUnavailable"], viewModel.ComponentStoreStatusText);
-    }
-
-    /// <summary>The status line is shown while Settings (non-modal) can switch the language; it must
-    /// follow the switch like every other text in this dialog.</summary>
-    [Fact]
-    public async Task The_component_store_status_follows_a_language_switch()
-    {
-        LocalizationService.Instance.Apply("de");
-        var viewModel = Create(CreateSettings());
-        await viewModel.AnalyzeComponentStoreCommand.ExecuteAsync(null);
-        var raised = new List<string?>();
-        viewModel.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
-
-        LocalizationService.Instance.Apply("en");
-        viewModel.RefreshLocalizedText();
-
-        try
-        {
-            Assert.Contains(nameof(viewModel.ComponentStoreStatusText), raised);
-            Assert.Equal(LocalizationService.Instance["CleanupComponentStoreUnavailable"], viewModel.ComponentStoreStatusText);
-        }
-        finally
-        {
-            LocalizationService.Instance.Apply("de");
-        }
-    }
-
-    /// <summary>Declining the UAC prompt (headless tests always decline, see
-    /// <c>Dialogs.SuppressInteractiveDialogs</c>) must leave the OTHER status line behind, distinct from
-    /// "helper not running".</summary>
-    [Fact]
-    public async Task AnalyzeComponentStore_with_a_declined_prompt_shows_the_needs_admin_status()
-    {
-        // An elevated test runner would otherwise skip the prompt and never show the hint.
-        ElevationService.IsElevatedForTest.Value = false;
-        Dialogs.SuppressInteractiveDialogs = true;
-
-        var logging = new LoggingService();
-        var elevated = new ElevatedHost(logging);
-        var viewModel = new CleanupViewModel(new CleanupService(logging), logging, CreateSettings(), elevated: elevated);
-        WpfHarness.WaitForCleanupCatalog(viewModel);
-
-        await viewModel.AnalyzeComponentStoreCommand.ExecuteAsync(null);
-
-        Assert.Equal(LocalizationService.Instance["CleanupComponentStoreNeedsAdmin"], viewModel.ComponentStoreStatusText);
-    }
-
-    /// <summary>A worker launch that fails for a reason other than a declined prompt must end as the
-    /// unavailable status and a cleared busy flag, never as an exception out of the fire-and-forget command.</summary>
-    [Fact]
-    public async Task AnalyzeComponentStore_swallows_a_launch_failure_and_shows_the_unavailable_status()
-    {
-        var logging = new LoggingService();
-        var elevated = new ElevatedHost(logging);
-        elevated.SetRunningForTest(true);
-        elevated.EnsureStartedOverrideForTest = _ => throw new InvalidOperationException("launch failed");
-        var viewModel = new CleanupViewModel(new CleanupService(logging), logging, CreateSettings(), elevated: elevated);
-        WpfHarness.WaitForCleanupCatalog(viewModel);
-
-        await viewModel.AnalyzeComponentStoreCommand.ExecuteAsync(null);
-
-        Assert.Equal(LocalizationService.Instance["CleanupComponentStoreUnavailable"], viewModel.ComponentStoreStatusText);
-        Assert.False(viewModel.IsAnalyzingComponentStore);
-    }
-
-    /// <summary>A running component store analysis is work of this view model: reopening the dialog must
-    /// reuse it rather than start a second analysis, so IsBusy has to cover it from start to end.</summary>
-    [Fact]
-    public async Task IsBusy_covers_a_running_component_store_analysis()
-    {
-        var logging = new LoggingService();
-        var elevated = new ElevatedHost(logging);
-        elevated.SetRunningForTest(true);
-        var release = new TaskCompletionSource<bool>();
-        elevated.EnsureStartedOverrideForTest = _ => release.Task;
-        var viewModel = new CleanupViewModel(new CleanupService(logging), logging, CreateSettings(), elevated: elevated);
-        WpfHarness.WaitForCleanupCatalog(viewModel);
-
-        var running = viewModel.AnalyzeComponentStoreCommand.ExecuteAsync(null);
-
-        Assert.True(viewModel.IsBusy);
-
-        release.SetResult(false);
-        await running;
-
-        Assert.False(viewModel.IsBusy);
-    }
-
     /// <summary>An elevation-needing row must not say "needs admin rights" while the app-wide
     /// elevated helper is already running from an earlier action in the same session, and the state must
     /// be read live rather than only fixed once by the scan's own elevation step.</summary>
@@ -462,7 +364,6 @@ public partial class CleanupViewModelTests
         await viewModel.StartScanAsync();
 
         Assert.Equal(0, starts());
-        Assert.Null(viewModel.ComponentStoreStatusText);
     }
 
     /// <summary>A result that is already there is never re-measured automatically.</summary>

@@ -1385,18 +1385,6 @@ Bu işlem geri alınamaz.</value>
   <data name="CleanupComponentStoreRecommended" xml:space="preserve">
     <value>Windows bir temizlik öneriyor</value>
   </data>
-  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
-    <value>Analiz et (yönetici hakları gerekli)</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
-    <value>Windows bileşen deposunun gerçekten ne kadar alan boşaltabileceğini ölçer.</value>
-  </data>
-  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
-    <value>Analiz yönetici hakları gerektiriyor; istem iptal edildi.</value>
-  </data>
-  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
-    <value>Analiz şu anda mümkün değil, yükseltilmiş yardımcı çalışmıyor.</value>
-  </data>
   <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
     <value>Windows herhangi bir boyut bildirmedi.</value>
   </data>
@@ -1995,9 +1983,6 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Yalnızca güvenli öğeleri, yani varsayılan olarak işaretli olanları seçer.</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
-    <value>Analiz ediliyor…</value>
   </data>
   <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
     <value>Windows zamanında yanıt vermedi. Analiz durduruldu.</value>

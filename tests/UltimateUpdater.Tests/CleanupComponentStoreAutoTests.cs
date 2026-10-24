@@ -39,9 +39,17 @@ public class CleanupComponentStoreAutoTests
 
         public void ReleaseScans() => _scanGate.TrySetResult();
 
+        private volatile TaskCompletionSource _analyzeGate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        /// <summary>From now on, analyze jobs are only answered after <see cref="ReleaseAnalyses"/>.</summary>
+        public void HoldAnalyses() => _analyzeGate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void ReleaseAnalyses() => _analyzeGate.TrySetResult();
+
         public FakeWorker()
         {
             _scanGate.SetResult();
+            _analyzeGate.SetResult();
             var workerEnd = new AnonymousPipeClientStream(PipeDirection.Out, _workerToApp.ClientSafePipeHandle);
             _replies = new StreamWriter(workerEnd, new UTF8Encoding(false)) { AutoFlush = true };
             _commands = new StreamReader(
@@ -85,6 +93,8 @@ public class CleanupComponentStoreAutoTests
         {
             if (command == "scan")
                 await _scanGate.Task;
+            else if (command == "analyze")
+                await _analyzeGate.Task;
 
             lock (_replyLock)
             {
@@ -102,6 +112,7 @@ public class CleanupComponentStoreAutoTests
         public void Dispose()
         {
             ReleaseScans();
+            ReleaseAnalyses();
             _replies.Dispose();
             _workerToApp.Dispose();
             _appToWorker.Dispose();
@@ -181,7 +192,6 @@ public class CleanupComponentStoreAutoTests
         Assert.True(rig.Worker.Saw("analyze"));
         Assert.Equal(0, rig.StartRequests());
         Assert.False(rig.Host.WasDeclined);
-        Assert.False(rig.ViewModel.HasComponentStoreStatus);
     }
 
     [Fact]
@@ -206,7 +216,6 @@ public class CleanupComponentStoreAutoTests
         await Task.Delay(300);
 
         Assert.Null(rig.ViewModel.ComponentStoreResult);
-        Assert.False(rig.ViewModel.HasComponentStoreStatus);
         Assert.Equal(0, rig.StartRequests());
         Assert.False(rig.Host.IsRunning);
         Assert.False(rig.Host.WasDeclined);
@@ -283,7 +292,7 @@ public class CleanupComponentStoreAutoTests
     }
 
     [Fact]
-    public async Task A_quiet_analysis_that_cannot_reach_the_helper_leaves_no_status_and_no_prompt()
+    public async Task A_quiet_analysis_that_cannot_reach_the_helper_asks_for_nothing()
     {
         using var rig = CreateRig(helperRunning: false);
 
@@ -292,7 +301,27 @@ public class CleanupComponentStoreAutoTests
 
         await Task.Delay(600);
         Assert.Null(rig.ViewModel.ComponentStoreResult);
-        Assert.False(rig.ViewModel.HasComponentStoreStatus);
         Assert.False(rig.Host.WasDeclined);
+    }
+
+    [Fact]
+    public async Task A_running_analysis_is_busy_and_marks_only_the_component_row()
+    {
+        using var rig = CreateRig(helperRunning: true);
+        rig.Worker.HoldAnalyses();
+
+        await OnUi(() => rig.ViewModel.PrescanAsync());
+        await WaitUntil(() => rig.ViewModel.IsAnalyzingComponentStore, "the analysis started");
+
+        Assert.True(rig.ViewModel.IsBusy);
+        Assert.True(rig.ViewModel.Items.Single(i => i.IsComponentCleanup).IsAnalyzingComponentStore);
+        Assert.True(rig.ViewModel.Items.Single(i => i.IsComponentCleanup).HasSizeCell);
+        Assert.DoesNotContain(rig.ViewModel.Items.Where(i => !i.IsComponentCleanup), i => i.IsAnalyzingComponentStore);
+
+        rig.Worker.ReleaseAnalyses();
+        await WaitUntil(() => rig.ViewModel.ComponentStoreResult is not null, "the analysis finished");
+
+        Assert.False(rig.ViewModel.IsAnalyzingComponentStore);
+        Assert.False(rig.ViewModel.Items.Single(i => i.IsComponentCleanup).IsAnalyzingComponentStore);
     }
 }

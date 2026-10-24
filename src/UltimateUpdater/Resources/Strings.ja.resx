@@ -1385,18 +1385,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupComponentStoreRecommended" xml:space="preserve">
     <value>Windows がクリーンアップを推奨しています</value>
   </data>
-  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
-    <value>分析する（管理者権限が必要）</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
-    <value>Windows コンポーネントストアが実際にどれだけの容量を解放できるかを測定します。</value>
-  </data>
-  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
-    <value>分析には管理者権限が必要です。プロンプトはキャンセルされました。</value>
-  </data>
-  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
-    <value>現在分析を実行できません。管理者権限で実行するヘルパーが動作していません。</value>
-  </data>
   <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
     <value>Windows はサイズを報告しませんでした。</value>
   </data>
@@ -1995,9 +1983,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>安全な項目だけを選択します。既定でオンになっている項目と同じです。</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
-    <value>解析中…</value>
   </data>
   <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
     <value>Windows が時間内に応答しませんでした。解析は中止されました。</value>

@@ -1385,18 +1385,6 @@ Dit kan niet ongedaan worden gemaakt.</value>
   <data name="CleanupComponentStoreRecommended" xml:space="preserve">
     <value>Windows adviseert een opschoning</value>
   </data>
-  <data name="CleanupComponentStoreAnalyze" xml:space="preserve">
-    <value>Analyseren (vereist beheerdersrechten)</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzeHint" xml:space="preserve">
-    <value>Meet hoeveel ruimte het Windows-onderdelenarchief echt kan vrijmaken.</value>
-  </data>
-  <data name="CleanupComponentStoreNeedsAdmin" xml:space="preserve">
-    <value>De analyse vereist beheerdersrechten; de aanvraag is geannuleerd.</value>
-  </data>
-  <data name="CleanupComponentStoreUnavailable" xml:space="preserve">
-    <value>De analyse is nu niet mogelijk, omdat de helper met beheerdersrechten niet actief is.</value>
-  </data>
   <data name="CleanupComponentStoreNoNumbers" xml:space="preserve">
     <value>Windows heeft geen grootten gemeld.</value>
   </data>
@@ -1995,9 +1983,6 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Alleen de veilige items selecteren, dezelfde die standaard zijn aangevinkt.</value>
-  </data>
-  <data name="CleanupComponentStoreAnalyzing" xml:space="preserve">
-    <value>Analyseren…</value>
   </data>
   <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
     <value>Windows heeft niet tijdig gereageerd. De analyse is gestopt.</value>
