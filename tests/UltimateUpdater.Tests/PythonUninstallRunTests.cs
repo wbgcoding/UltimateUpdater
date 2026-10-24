@@ -75,4 +75,22 @@ public class PythonUninstallRunTests : IDisposable
         Assert.True(completed);
         Assert.False(seen.CanBeCanceled);
     }
+
+    /// <summary>The Python installer reports a finished uninstall that still wants a restart as 3010 or 1641.</summary>
+    [Theory]
+    [InlineData(3010, true)]
+    [InlineData(1641, true)]
+    [InlineData(1603, false)]
+    [InlineData(1, false)]
+    public async Task An_uninstall_that_leaves_a_restart_pending_still_counts_as_done(int exitCode, bool expected)
+    {
+        var exe = Path.Combine(_folder, "uninstall.exe");
+        File.WriteAllText(exe, "x");
+        PythonVersionCleanupExecutor.RunnerForTest.Value = (_, _, _, _) => Task.FromResult(new ProcessResult(exitCode, "", ""));
+        var candidate = new PythonVersionCandidate(@"C:\Py\python.exe", "Python 3.9", null, 0, 0, $"\"{exe}\" /quiet", PerUser: true);
+
+        var ok = await PythonVersionCleanupExecutor.RunUninstallAsync(candidate, new LoggingService(), CancellationToken.None);
+
+        Assert.Equal(expected, ok);
+    }
 }

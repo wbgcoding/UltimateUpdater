@@ -136,8 +136,14 @@ public static class PythonVersionCleanupExecutor
                 return false;
             }
 
-            if (result.ExitCode == 0)
+            // 3010 and 1641 are the installer's "finished, restart pending" codes: the version is gone.
+            if (result.ExitCode is 0 or 3010 or 1641)
+            {
+                if (result.ExitCode != 0)
+                    logging.Info($"Python version cleanup: '{candidate.DisplayLabel}' was uninstalled; a restart is needed to finish it (exit code {result.ExitCode}).");
+
                 return true;
+            }
 
             logging.Warn($"Python version cleanup: uninstalling '{candidate.DisplayLabel}' exited with code {result.ExitCode}.");
             return false;
