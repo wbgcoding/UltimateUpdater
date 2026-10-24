@@ -2196,6 +2196,14 @@
                                                        ToolTipService.InitialShowDelay="150"
                                                        AutomationProperties.Name="{Binding InstallFailedTooltip}"
                                                        Visibility="{Binding IsInstallFailed, Converter={StaticResource BoolToVisibility}}"/>
+                                        <!-- needs manual work, with its retry button beside: the word moves into the
+                                             hover text so the button fits -->
+                                        <ui:SymbolIcon Symbol="Warning24" FontSize="16" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                                       ToolTip="{Binding InstallStateText}"
+                                                       ToolTipService.InitialShowDelay="150"
+                                                       AutomationProperties.Name="{Binding InstallStateText}"
+                                                       Visibility="{Binding ShowResetAndRetryButton, Converter={StaticResource BoolToVisibility}}"/>
                                         <!-- installed, but a reboot is pending -->
                                         <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12"
                                                    TextTrimming="CharacterEllipsis"
@@ -2223,6 +2231,11 @@
                                         <ui:Button Margin="6,0,0,0" Padding="10,3" FontSize="12" Appearance="Secondary"
                                                    Content="{Binding RetryHeader}" Command="{Binding RetryCommand}"
                                                    Visibility="{Binding ShowRetryButton, Converter={StaticResource BoolToVisibility}}"/>
+                                        <!-- a row that needs manual work gets the same retry, clearing the flag first -->
+                                        <ui:Button Margin="6,0,0,0" Padding="10,3" FontSize="12" Appearance="Secondary"
+                                                   AutomationProperties.AutomationId="RowResetAndRetry"
+                                                   Content="{Binding RetryHeader}" Command="{Binding ResetAndRetryCommand}"
+                                                   Visibility="{Binding ShowResetAndRetryButton, Converter={StaticResource BoolToVisibility}}"/>
                                     </DockPanel>
 
                                     <!-- Ignored rows offer an inline "show again" where their Install

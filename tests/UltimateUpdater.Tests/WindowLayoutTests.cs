@@ -6721,7 +6721,8 @@ public class WindowLayoutTests
             var (viewModel, theme, settings) = CreateMainViewModel(language);
             Populate(viewModel);
 
-            // Failed shows an icon instead of a word; Running and Idle show none.
+            // Failed and an installable NeedsManualWork row show an icon instead of a word; Running and
+            // Idle show none.
             var states = new (RowInstallState State, bool Uninstalled)[]
             {
                 (RowInstallState.Queued, false),
@@ -6729,7 +6730,6 @@ public class WindowLayoutTests
                 (RowInstallState.Succeeded, true),
                 (RowInstallState.HandedOff, false),
                 (RowInstallState.Stuck, false),
-                (RowInstallState.NeedsManualWork, false),
                 (RowInstallState.Cancelled, false),
             };
 
@@ -6888,6 +6888,17 @@ public class WindowLayoutTests
             Assert.DoesNotContain("…", vm2.InstallStateText);
             Assert.True(vm2.HasInstallError, "should have a working error-detail button");
             Assert.False(vm2.IsInstallFailed, "must not show the red failed-triangle icon");
+
+            // the way back is a visible button in the row, not only the context menu
+            var retry = FindAllDescendants<Button>(row)
+                .Single(b => System.Windows.Automation.AutomationProperties.GetAutomationId(b) == "RowResetAndRetry");
+            Assert.Equal(Visibility.Visible, retry.Visibility);
+            Assert.True(retry.ActualWidth > 0, "a needs-manual-work row should show its retry button");
+            Assert.False(vm2.ShowStateWord, "the state word moves into the caution icon's hover text");
+            Assert.Equal(LocalizationService.Instance["RetryButton"], retry.Content);
+            var left = retry.TransformToAncestor(row).Transform(new Point(0, 0)).X;
+            Assert.True(left >= 0 && left + retry.ActualWidth <= row.ActualWidth + 0.5,
+                $"retry button runs outside the row: {left}+{retry.ActualWidth} of {row.ActualWidth}");
         });
 
         AssertRendered(result);

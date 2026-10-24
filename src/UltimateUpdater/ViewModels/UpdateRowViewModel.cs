@@ -844,7 +844,9 @@ public partial class UpdateRowViewModel : ObservableObject
     /// The state word ("queued"/"done") is shown for those states; a failure shows a red warning icon
     /// instead of the easily-missed "failed" text, since the retry/details buttons already sit beside it.
     /// </summary>
-    public bool ShowStateWord => ShowStateLabel && !IsInstallFailed;
+    /// <summary>A failed row shows its icon instead of the word; so does a row with the visible retry
+    /// (<see cref="ShowResetAndRetryButton"/>), whose word, details button and retry would not fit together.</summary>
+    public bool ShowStateWord => ShowStateLabel && !IsInstallFailed && !ShowResetAndRetryButton;
 
     /// <summary>
     /// Hover text for the failure icon: a plain-language line when a code was recognized in
@@ -956,7 +958,21 @@ public partial class UpdateRowViewModel : ObservableObject
     /// install, or the row would end up reporting "Uninstalled" for a package it just reinstalled.
     /// </summary>
     [RelayCommand(CanExecute = nameof(ShowRetryButton))]
-    private void Retry()
+    private void Retry() => RunRetry();
+
+    /// <summary>The visible way out of <see cref="RowInstallState.NeedsManualWork"/>: the context menu's
+    /// "try normally again" alone left the row idle and needed a second click to install.</summary>
+    public bool ShowResetAndRetryButton => ShowResetPersistentFailureEntry && Item.CanInstall && !IsIgnored;
+
+    /// <summary>Clears the persistent-failure flag, then runs the same retry as a Failed row.</summary>
+    [RelayCommand(CanExecute = nameof(ShowResetAndRetryButton))]
+    private void ResetAndRetry()
+    {
+        _actions?.ResetPersistentFailure(this);
+        RunRetry();
+    }
+
+    private void RunRetry()
     {
         if (WasUninstalled)
             _actions?.Uninstall(this);
@@ -1391,6 +1407,9 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowSnoozeMenu));
         InstallCommand.NotifyCanExecuteChanged();
         RetryCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ShowResetAndRetryButton));
+        OnPropertyChanged(nameof(ShowStateWord));
+        ResetAndRetryCommand.NotifyCanExecuteChanged();
         DowngradeCommand.NotifyCanExecuteChanged();
         if (value)
             IsSelected = false;
@@ -1467,6 +1486,9 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowRunningProgress));
         RetryInteractiveCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ShowResetPersistentFailureEntry));
+        OnPropertyChanged(nameof(ShowResetAndRetryButton));
+        OnPropertyChanged(nameof(ShowStateWord));
+        ResetAndRetryCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ShowPersistentFailureHint));
         OnPropertyChanged(nameof(ShowStopSingleButton));
         StopSingleCommand.NotifyCanExecuteChanged();

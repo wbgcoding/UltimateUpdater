@@ -304,6 +304,38 @@ public partial class MainViewModelTests
         });
     }
 
+    /// <summary>The visible retry on a NeedsManualWork row clears the flag AND reruns the install in one
+    /// click; the row ends Failed (a fresh streak of one) instead of idling after the reset. A plain Failed
+    /// row keeps its ordinary Retry and never shows this one.</summary>
+    [Fact]
+    public void ResetAndRetry_clears_the_needs_manual_work_flag_and_reruns_the_install()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var source = new FailingSource();
+            var viewModel = CreateWithSettings([source], out var settings);
+            var row = new UpdateRowViewModel(Item("Persist.Tool", "Persistent Tool", source.Id), actions: viewModel);
+            viewModel.Updates.Add(row);
+
+            RunInstallToTerminal(viewModel, row);
+            Assert.Equal(RowInstallState.Failed, row.InstallState);
+            Assert.False(row.ShowResetAndRetryButton);
+            Assert.True(row.ShowRetryButton);
+
+            RunInstallToTerminal(viewModel, row);
+            RunInstallToTerminal(viewModel, row);
+            Assert.Equal(RowInstallState.NeedsManualWork, row.InstallState);
+            Assert.True(row.ShowResetAndRetryButton);
+            Assert.False(row.ShowRetryButton);
+
+            row.ResetAndRetryCommand.Execute(null);
+            Pump(WaitForRowToSettleAsync(row, RowInstallState.Idle));
+
+            Assert.Equal(RowInstallState.Failed, row.InstallState);
+            Assert.Equal(1, settings.Current.PersistentFailures[$"{source.Id}:Persist.Tool"].Count);
+        });
+    }
+
     /// <summary>Regression for a review finding: <see cref="InstallItemStatus"/> carries no action, so the
     /// shared status dispatch cannot itself tell an install's terminal status from an uninstall's, the fix
     /// is a package-key set (populated only while an uninstall is in flight) that TrackPersistentFailure
