@@ -21,17 +21,26 @@ public class CleanupService(LoggingService logging)
     /// on a live dev machine can run for minutes, far past a test's own patience.</summary>
     public virtual Task<CleanupScanResult> ScanAsync(
         CleanupTarget target, CancellationToken cancellationToken, int recycleBinMinAgeDays = 0) =>
-        Task.Run(() => target.Kind switch
+        Task.Run(() =>
         {
-            CleanupKind.Directories or CleanupKind.AppCacheSweep => ScanDirectories(target, cancellationToken),
-            CleanupKind.RecycleBin => ScanRecycleBin(cancellationToken, recycleBinMinAgeDays),
-            CleanupKind.RegistryCleanup => ScanRegistry(target, cancellationToken),
-            CleanupKind.LeftoverInstalls => ScanLeftovers(cancellationToken),
-            CleanupKind.DriverCleanup => ScanDrivers(cancellationToken),
-            CleanupKind.PipInstallLeftovers => ScanPipLeftovers(cancellationToken),
-            CleanupKind.OldPythonVersions => ScanOldPythonVersions(cancellationToken),
-            // Disk Cleanup reports nothing before it runs, and guessing a figure would be a lie.
-            _ => new CleanupScanResult(0, 0, 0),
+            // Measuring is a long disk walk nobody is waiting on, so it runs in background thread mode to
+            // keep the rest of the machine responsive. The walks are fully synchronous, so the mode ends
+            // on the same pool thread before it is handed back.
+            using (BackgroundWork.Enter())
+            {
+                return target.Kind switch
+                {
+                    CleanupKind.Directories or CleanupKind.AppCacheSweep => ScanDirectories(target, cancellationToken),
+                    CleanupKind.RecycleBin => ScanRecycleBin(cancellationToken, recycleBinMinAgeDays),
+                    CleanupKind.RegistryCleanup => ScanRegistry(target, cancellationToken),
+                    CleanupKind.LeftoverInstalls => ScanLeftovers(cancellationToken),
+                    CleanupKind.DriverCleanup => ScanDrivers(cancellationToken),
+                    CleanupKind.PipInstallLeftovers => ScanPipLeftovers(cancellationToken),
+                    CleanupKind.OldPythonVersions => ScanOldPythonVersions(cancellationToken),
+                    // Disk Cleanup reports nothing before it runs, and guessing a figure would be a lie.
+                    _ => new CleanupScanResult(0, 0, 0),
+                };
+            }
         }, cancellationToken);
 
     /// <summary>
