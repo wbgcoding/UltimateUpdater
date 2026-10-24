@@ -42,6 +42,60 @@ public class DiskCleanupProfileTests
     }
 }
 
+/// <summary>The machine-wide profile must not outlive the run, whichever way the run ends.</summary>
+public class DiskCleanupProfileLifetimeTests
+{
+    private static readonly CleanupOutcome Done = new(0, 0, 0);
+
+    [Fact]
+    public async Task The_profile_is_removed_after_a_normal_run()
+    {
+        var removed = 0;
+
+        var outcome = await CleanupService.RunUnderSagesetProfileAsync(() => true, () => removed++, () => Task.FromResult(Done));
+
+        Assert.NotNull(outcome);
+        Assert.Equal(1, removed);
+    }
+
+    [Fact]
+    public async Task The_profile_is_removed_after_a_stop_or_timeout_outcome()
+    {
+        var removed = 0;
+
+        var outcome = await CleanupService.RunUnderSagesetProfileAsync(
+            () => true, () => removed++, () => Task.FromResult(new CleanupOutcome(0, 0, 0, WasStopped: true)));
+
+        Assert.True(outcome!.Value.WasStopped);
+        Assert.Equal(1, removed);
+    }
+
+    [Fact]
+    public async Task The_profile_is_removed_when_the_run_throws()
+    {
+        var removed = 0;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => CleanupService.RunUnderSagesetProfileAsync(
+            () => true, () => removed++, () => throw new InvalidOperationException("cleanmgr could not start")));
+
+        Assert.Equal(1, removed);
+    }
+
+    [Fact]
+    public async Task A_profile_that_could_not_be_written_skips_the_run_and_still_clears_what_was_set()
+    {
+        var removed = 0;
+        var ran = false;
+
+        var outcome = await CleanupService.RunUnderSagesetProfileAsync(
+            () => false, () => removed++, () => { ran = true; return Task.FromResult(Done); });
+
+        Assert.Null(outcome);
+        Assert.False(ran);
+        Assert.Equal(1, removed);
+    }
+}
+
 /// <summary>The time limit on Disk Cleanup is a failure of its own, not the user's Stop.</summary>
 public class DiskCleanupTimeLimitTests
 {

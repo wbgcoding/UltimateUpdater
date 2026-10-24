@@ -1638,40 +1638,99 @@ public class CleanupService(LoggingService logging)
         // Without admin the profile cannot be written, and starting cleanmgr with its OWN dialogs would
         // leave this dialog waiting on a window the user did not ask for, and unable to cancel it.
         // Skip the target instead and say why.
-        if (!TryWriteSagesetProfile())
+        var outcome = await RunUnderSagesetProfileAsync(TryWriteSagesetProfile, RemoveSagesetProfile, async () =>
+        {
+            try
+            {
+                using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = cleanmgr,
+                    // /sagerun processes the saved profile with no prompts; /verylowdisk is not used because it
+                    // silently includes handlers we did not choose.
+                    Arguments = $"/sagerun:{SagesetNumber}",
+                    UseShellExecute = true,
+                    CreateNoWindow = true,
+                    WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
+                });
+
+                // Bounded AND cancellable: closing the dialog must not leave it waiting for the full limit.
+                if (process is not null)
+                {
+                    var waited = await WaitForDiskCleanupAsync(process, DiskCleanupLimit, cancellationToken);
+                    if (waited is { } early)
+                        return early;
+                }
+
+                // cleanmgr reports nothing about what it freed, and guessing a figure would be a lie.
+                return new CleanupOutcome(0, 0, 0);
+            }
+            catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or InvalidOperationException)
+            {
+                logging.Warn($"Cleanup: Disk Cleanup could not be started: {ex.Message}");
+                return new CleanupOutcome(0, 0, 0);
+            }
+        });
+
+        if (outcome is null)
         {
             logging.Info("Cleanup: Disk Cleanup skipped: an unattended run needs administrator rights.");
             return new CleanupOutcome(0, 0, 0);
         }
 
+        return outcome.Value;
+    }
+
+    /// <summary>
+    /// Keeps the machine-wide profile only for the run itself: a flag left behind would make any later
+    /// <c>cleanmgr /sagerun:4711</c> (by hand or another tool) silently run the whole selection again. It is
+    /// removed however the run ends (finished, stopped, timed out, failed to start). Returns null when the
+    /// profile could not be written, so the caller skips the target.
+    /// </summary>
+    internal static async Task<CleanupOutcome?> RunUnderSagesetProfileAsync(
+        Func<bool> writeProfile, Action removeProfile, Func<Task<CleanupOutcome>> run)
+    {
         try
         {
-            using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = cleanmgr,
-                // /sagerun processes the saved profile with no prompts; /verylowdisk is not used because it
-                // silently includes handlers we did not choose.
-                Arguments = $"/sagerun:{SagesetNumber}",
-                UseShellExecute = true,
-                CreateNoWindow = true,
-                WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
-            });
+            if (!writeProfile())
+                return null;
 
-            // Bounded AND cancellable: closing the dialog must not leave it waiting for the full limit.
-            if (process is not null)
-            {
-                var waited = await WaitForDiskCleanupAsync(process, DiskCleanupLimit, cancellationToken);
-                if (waited is { } early)
-                    return early;
-            }
-
-            // cleanmgr reports nothing about what it freed, and guessing a figure would be a lie.
-            return new CleanupOutcome(0, 0, 0);
+            return await run();
         }
-        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or InvalidOperationException)
+        finally
         {
-            logging.Warn($"Cleanup: Disk Cleanup could not be started: {ex.Message}");
-            return new CleanupOutcome(0, 0, 0);
+            removeProfile();
+        }
+    }
+
+    /// <summary>Takes our flag off every handler it may have been set on: the counterpart of the write, so
+    /// this code stays the only writer of the profile.</summary>
+    private void RemoveSagesetProfile()
+    {
+        const string root = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches";
+        var flagName = $"StateFlags{SagesetNumber:0000}";
+
+        try
+        {
+            using var caches = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(root, writable: true);
+            if (caches is null)
+                return;
+
+            foreach (var handler in SafeVolumeCaches)
+            {
+                try
+                {
+                    using var key = caches.OpenSubKey(handler, writable: true);
+                    key?.DeleteValue(flagName, throwOnMissingValue: false);
+                }
+                catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+                {
+                    logging.Info($"Cleanup: could not remove the Disk Cleanup selection from \"{handler}\": {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+        {
+            logging.Info($"Cleanup: could not remove the Disk Cleanup profile: {ex.Message}");
         }
     }
 
