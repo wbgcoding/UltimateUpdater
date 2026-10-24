@@ -674,8 +674,21 @@ public partial class CleanupViewModel
         item.Percent = 0;
         item.FreedBytes = 0;
 
+        // What this target has told the run total so far. The total is always the finished targets' outcomes
+        // plus this live part of every target still running, so it climbs while a target works and lands on
+        // exactly the sum of the outcomes once they are all in.
+        long liveFreed = 0;
+        var settled = false;
+
         var progress = new Progress<CleanupProgress>(report =>
         {
+            // A report is posted, so a last one can arrive after the target has settled its figure.
+            if (!settled && report.FreedBytes > liveFreed)
+            {
+                FreedBytes += report.FreedBytes - liveFreed;
+                liveFreed = report.FreedBytes;
+            }
+
             // Never backwards, defense in depth: the elevated worker forwards its targets' own reports
             // over the pipe unchanged, and a repair step's percentage already resets between DISM phases
             // (CleanupService.RunSystemRepair guards its own figure too). item.Percent is reset to 0
@@ -732,7 +745,11 @@ public partial class CleanupViewModel
                     ProtectedBytes: outcome.ProtectedBytes + localOutcome.ProtectedBytes);
             }
 
-            FreedBytes += outcome.FreedBytes;
+            // The live part already counted is swapped for the outcome's own figure, so the total ends
+            // exactly where it did when only finished targets counted.
+            settled = true;
+            FreedBytes += outcome.FreedBytes - liveFreed;
+            liveFreed = 0;
             SkippedFiles += outcome.SkippedFiles;
             SkippedBytes += outcome.SkippedBytes;
             ProtectedFiles += outcome.ProtectedFiles;
@@ -779,8 +796,9 @@ public partial class CleanupViewModel
         {
             item.RunState = CleanupTargetState.Stopped;
             // A stop mid-target throws away the outcome, but what the progress reports already confirmed as
-            // gone is gone: counted, so the ring and the history agree with the row's own "+2 GB".
-            FreedBytes += item.FreedBytes;
+            // gone is gone: it is in the total already (the live part), so the ring and the history agree
+            // with the row's own "+2 GB".
+            settled = true;
             throw;
         }
         catch (Exception ex)
@@ -789,6 +807,12 @@ public partial class CleanupViewModel
             // rather than "stopped": nobody stopped it, and it must not read as finished either.
             item.RunState = CleanupTargetState.Skipped;
             _logging.Error($"Cleanup failed for '{item.Target.Id}'", ex);
+
+            // Its outcome never arrived and counted nothing before live figures existed: take its live part
+            // back out, so the failed target still adds nothing.
+            settled = true;
+            FreedBytes -= liveFreed;
+            liveFreed = 0;
         }
         finally
         {

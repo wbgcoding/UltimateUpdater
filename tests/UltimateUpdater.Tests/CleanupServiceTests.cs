@@ -122,7 +122,7 @@ public class CleanupServiceTests : IDisposable
         };
 
         var progress = new SyncProgress<CleanupProgress>();
-        var service = new CleanupService(_logging);
+        var service = new CleanupService(_logging) { ProgressInterval = TimeSpan.Zero };
         await service.CleanAsync(target, progress, CancellationToken.None);
 
         Assert.NotEmpty(progress.Reports);

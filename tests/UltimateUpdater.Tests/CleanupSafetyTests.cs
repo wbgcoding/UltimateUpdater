@@ -641,7 +641,7 @@ public class CleanupAdversarialAuditTests : IDisposable
             File.WriteAllText(lateFile, "late arrival, never in the snapshot");
         });
 
-        var service = new CleanupService(_logging);
+        var service = new CleanupService(_logging) { ProgressInterval = TimeSpan.Zero };
         await service.CleanAsync(DirTarget("test-target", _root), progress, CancellationToken.None);
 
         Assert.True(injected, "the test setup itself failed to trigger, not a finding about the product");

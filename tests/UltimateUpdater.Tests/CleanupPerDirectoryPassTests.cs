@@ -25,7 +25,8 @@ public class CleanupPerDirectoryPassTests : IDisposable
         };
 
     private static Task<CleanupOutcome> Clean(CleanupTarget target, IProgress<CleanupProgress>? progress = null) =>
-        new CleanupService(new LoggingService()).CleanAsync(target, progress, CancellationToken.None);
+        new CleanupService(new LoggingService()) { ProgressInterval = TimeSpan.Zero }
+            .CleanAsync(target, progress, CancellationToken.None);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     private static extern uint GetShortPathNameW(string longPath, StringBuilder shortPath, uint bufferSize);

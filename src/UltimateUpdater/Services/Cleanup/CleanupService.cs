@@ -50,6 +50,9 @@ public class CleanupService(LoggingService logging)
     /// thread's context.</summary>
     private static readonly AsyncLocal<bool> BackgroundScan = new();
 
+    /// <summary>How often a file pass reports what it has freed so far: about four times a second.</summary>
+    internal TimeSpan ProgressInterval { get; set; } = TimeSpan.FromMilliseconds(250);
+
     /// <summary>Test seam: what the caller asked for, readable from inside an overridden
     /// <see cref="ScanAsync(CleanupTarget, CancellationToken, int)"/> that stands in for the real walk.</summary>
     internal static bool BackgroundRequestedForTest => BackgroundScan.Value;
@@ -421,6 +424,7 @@ public class CleanupService(LoggingService logging)
             var directory = candidate;
             var files = EnumerateFiles(candidate, target.ExcludedDirectories, cancellationToken).ToList();
             var filesDone = 0;
+            var lastReport = System.Diagnostics.Stopwatch.GetTimestamp();
 
             foreach (var file in files)
             {
@@ -501,13 +505,18 @@ public class CleanupService(LoggingService logging)
                     skippedBytes += size;
                 }
 
-                // Often enough for the row's bar to move visibly, rarely enough not to flood the dispatcher.
+                // On a clock, not a file count: about four reports a second whether the folder holds a million
+                // tiny files (a count would flood the dispatcher and the pipe) or a few huge ones (a count would
+                // stay silent for minutes while the freed figure sits still). The figure in each report is
+                // what is gone so far.
                 // The FULL path, not just the file name: the dialog states exactly what is being deleted,
                 // and a bare name says nothing about which of a dozen temp folders it came from.
-                if (filesDone % 10 == 0)
+                if (progress is not null
+                    && System.Diagnostics.Stopwatch.GetElapsedTime(lastReport) >= ProgressInterval)
                 {
+                    lastReport = System.Diagnostics.Stopwatch.GetTimestamp();
                     var share = (thisDirectory + filesDone / (double)Math.Max(1, files.Count)) / directoryCount * 100.0;
-                    progress?.Report(new CleanupProgress(file, Math.Min(100.0, share), freed));
+                    progress.Report(new CleanupProgress(file, Math.Min(100.0, share), freed));
                 }
             }
 
