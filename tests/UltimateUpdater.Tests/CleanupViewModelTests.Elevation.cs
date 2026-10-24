@@ -171,7 +171,10 @@ public partial class CleanupViewModelTests
         var row = viewModel.Items.First(i => i.NeedsElevation);
 
         // This thread plays the UI thread: it blocks right here while the other thread raises the change.
+        // The block is the point of the test, so an awaiting async test would not reproduce it.
+#pragma warning disable xUnit1031
         var raised = Task.Run(() => elevated.SetRunningForTest(true)).Wait(TimeSpan.FromSeconds(10));
+#pragma warning restore xUnit1031
 
         Assert.True(raised, "raising the state change blocked on the UI thread");
         WpfHarness.DrainViewModelDispatcher();

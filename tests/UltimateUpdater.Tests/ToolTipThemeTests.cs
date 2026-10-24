@@ -27,6 +27,10 @@ public class ToolTipThemeTests
 
                 foreach (var (name, window) in AccessibilityWalkTests.BuildWindows())
                 {
+                    // MainWindow attaches to its ThemeService, which applies the "system" theme: light on a
+                    // build server, so the dark theme is put back before every lookup.
+                    WpfHarness.ApplyTheme(ApplicationTheme.Dark);
+
                     var style = window.TryFindResource(typeof(ToolTip)) as Style;
                     var tip = new ToolTip { Content = "x", Style = style };
 
