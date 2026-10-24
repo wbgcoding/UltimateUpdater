@@ -174,8 +174,8 @@ public static class InstallWorker
             // is what keeps the TOTAL in flight at any moment within the budget, whichever groups it comes
             // from.
             var groupTasks = job.Items
-                .GroupBy(i => i.SourceId ?? string.Empty, StringComparer.Ordinal)
-                .Select(group => RunGroupAsync(group.Key, group.ToList(), state, throttle))
+                .GroupBy(i => InstallQueue.LaneKey(i.SourceId ?? string.Empty, i.ItemId ?? string.Empty), StringComparer.Ordinal)
+                .Select(group => RunGroupAsync(group.First().SourceId ?? string.Empty, group.ToList(), state, throttle))
                 .ToList();
 
             await Task.WhenAll(groupTasks);

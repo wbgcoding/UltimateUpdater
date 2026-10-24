@@ -652,6 +652,109 @@ public class InstallQueueTests
         Assert.Equal(2, shared.Max);
     }
 
+    private const string Python313 = @"C:\Python313\python.exe";
+    private const string Python314 = @"C:\Python314\python.exe";
+
+    /// <summary>A pip row the way a multi-interpreter scan builds it: id <c>package#interpreter</c> plus the
+    /// interpreter in Meta.</summary>
+    private static UpdateItem PipItem(string package, string interpreter, bool withMeta = true) => new()
+    {
+        Id = $"{package}#{interpreter}",
+        SourceId = "pip",
+        Category = UpdateCategory.DeveloperTools,
+        Name = package,
+        InstalledVersion = "1.0",
+        AvailableVersion = "2.0",
+        Meta = withMeta
+            ? new Dictionary<string, string> { ["pipPackage"] = package, ["pythonPath"] = interpreter }
+            : new Dictionary<string, string>(),
+    };
+
+    /// <summary>Two interpreters keep separate site-packages, so pip runs for different interpreters may
+    /// overlap; one interpreter alone stays strictly sequential.</summary>
+    [Fact]
+    public async Task Pip_items_of_two_interpreters_overlap()
+    {
+        var shared = new SharedConcurrencyCounter();
+        var pip = new ConcurrencyTrackingSource("pip", TimeSpan.FromMilliseconds(150), shared);
+        var (queue, _, _) = Create(pip);
+
+        await queue.RunAsync([PipItem("a", Python313), PipItem("b", Python314)], CancellationToken.None);
+
+        Assert.Equal(2, shared.Max);
+    }
+
+    [Fact]
+    public async Task Pip_items_of_one_interpreter_never_overlap()
+    {
+        var shared = new SharedConcurrencyCounter();
+        var pip = new ConcurrencyTrackingSource("pip", TimeSpan.FromMilliseconds(100), shared);
+        var (queue, _, statuses) = Create(pip);
+
+        // Same interpreter, spelled with different case: still one lane.
+        await queue.RunAsync(
+            [PipItem("a", Python313), PipItem("b", Python313.ToUpperInvariant()), PipItem("c", Python313)],
+            CancellationToken.None);
+
+        Assert.Equal(1, shared.Max);
+        Assert.Equal(3, statuses.Count(s => s.Success == true));
+    }
+
+    /// <summary>Two interpreters with two packages each: each interpreter's pair stays sequential, the two
+    /// interpreters run side by side (peak 2, never 3 or 4).</summary>
+    [Fact]
+    public async Task Pip_lanes_overlap_across_interpreters_but_stay_sequential_within_one()
+    {
+        var shared = new SharedConcurrencyCounter();
+        var pip = new ConcurrencyTrackingSource("pip", TimeSpan.FromMilliseconds(150), shared);
+        var (queue, _, statuses) = Create(pip);
+
+        await queue.RunAsync(
+            [PipItem("a", Python313), PipItem("b", Python313), PipItem("c", Python314), PipItem("d", Python314)],
+            CancellationToken.None);
+
+        Assert.Equal(2, shared.Max);
+        Assert.Equal(4, statuses.Count(s => s.Success == true));
+    }
+
+    /// <summary>A pip row built without interpreter metadata still lanes by the interpreter in its id.</summary>
+    [Fact]
+    public async Task Pip_lane_falls_back_to_the_interpreter_in_the_item_id()
+    {
+        var shared = new SharedConcurrencyCounter();
+        var pip = new ConcurrencyTrackingSource("pip", TimeSpan.FromMilliseconds(150), shared);
+        var (queue, _, _) = Create(pip);
+
+        await queue.RunAsync(
+            [PipItem("a", Python313, withMeta: false), PipItem("b", Python314, withMeta: false)],
+            CancellationToken.None);
+
+        Assert.Equal(2, shared.Max);
+    }
+
+    /// <summary>Every other source keeps its single lane: two npm items never overlap, whatever their ids look
+    /// like.</summary>
+    [Fact]
+    public async Task Other_sources_stay_one_lane_each()
+    {
+        var shared = new SharedConcurrencyCounter();
+        var npm = new ConcurrencyTrackingSource("npm", TimeSpan.FromMilliseconds(100), shared);
+        var (queue, _, _) = Create(npm);
+
+        await queue.RunAsync([Item($"a#{Python313}", "npm"), Item($"b#{Python314}", "npm")], CancellationToken.None);
+
+        Assert.Equal(1, shared.Max);
+    }
+
+    [Fact]
+    public void LaneKey_is_the_source_id_except_for_pip_which_adds_the_interpreter()
+    {
+        Assert.Equal("npm", InstallQueue.LaneKey(Item("x", "npm")));
+        Assert.Equal(InstallQueue.LaneKey(PipItem("a", Python313)), InstallQueue.LaneKey(PipItem("b", Python313.ToUpperInvariant())));
+        Assert.NotEqual(InstallQueue.LaneKey(PipItem("a", Python313)), InstallQueue.LaneKey(PipItem("a", Python314)));
+        Assert.Equal(InstallQueue.LaneKey(PipItem("a", Python313)), InstallQueue.LaneKey(PipItem("a", Python313, withMeta: false)));
+    }
+
     /// <summary>
     /// The bug this fix fixes: <c>RunAsync</c> used to assign its own snapshot to one shared <c>_pending</c>
     /// field and null it out again in its own <c>finally</c>, so a second concurrent call on the SAME

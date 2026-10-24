@@ -65,9 +65,11 @@ public sealed record InstallItemStatus(string SourceId, string ItemId, double Pe
 /// <summary>
 /// Items are split by whether their source needs admin; the user-scope batch runs in-process, the admin
 /// batch is handed to a single elevated worker so the user sees ONE UAC prompt for the whole batch.
-/// Within the user-scope batch, different source ids run CONCURRENTLY; only two installs from the SAME
-/// source serialize against each other, since that is where a package manager's own global state could
-/// collide (see <see cref="InstallSourceSequentiallyAsync"/>). The one exception: winget may run several
+/// Within the user-scope batch, different lanes run CONCURRENTLY; only two installs from the SAME
+/// lane serialize against each other, since that is where a package manager's own global state could
+/// collide (see <see cref="InstallLaneSequentiallyAsync"/>). A lane is a source id, except pip, which has
+/// one lane per Python interpreter (<see cref="LaneKey(string, string, IReadOnlyDictionary{string, string}?)"/>).
+/// The one exception: winget may run several
 /// of its own items at once, bounded like everything else by
 /// <see cref="Models.Settings.InstallSettings.MaxParallelInstalls"/>.
 /// The admin batch itself always stays one connection, one job, one UAC prompt; the items
@@ -365,6 +367,18 @@ public sealed class InstallQueue
         sourceId is "winget" or "chocolatey" or "windowsupdate";
 
     /// <summary>
+    /// Installs sharing a lane key run strictly one after another. It is the source id, except pip: each
+    /// Python interpreter has its own packages, so pip is one lane per interpreter (path compared without
+    /// regard to case).
+    /// </summary>
+    internal static string LaneKey(string sourceId, string itemId, IReadOnlyDictionary<string, string>? meta = null) =>
+        string.Equals(sourceId, "pip", StringComparison.OrdinalIgnoreCase)
+            ? $"{sourceId}|{Sources.PackageManagers.PipSource.LaneInterpreter(itemId, meta).ToLowerInvariant()}"
+            : sourceId;
+
+    internal static string LaneKey(UpdateItem item) => LaneKey(item.SourceId, item.Id, item.Meta);
+
+    /// <summary>
     /// What THIS queue does with a source id, as opposed to what <see cref="NeedsElevation"/> says about
     /// the id in the abstract. Identical outside a mock session; a mock session never elevates (see the
     /// constructor's note on <c>isMockSession</c>). Every internal split goes through this, never the bare
@@ -406,9 +420,9 @@ public sealed class InstallQueue
             using var throttle = new SemaphoreSlim(maxParallel, maxParallel);
 
             var userScopeTask = Task.WhenAll(userScope
-                .Select(i => i.SourceId)
+                .Select(LaneKey)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Select(sourceId => InstallSourceSequentiallyAsync(sourceId, action, reported, throttle, run, cancellationToken)));
+                .Select(laneKey => InstallLaneSequentiallyAsync(laneKey, action, reported, throttle, run, cancellationToken)));
 
             // Started together and awaited together: a slow user-scope package must never delay
             // an admin batch that cannot possibly collide with it, the two halves only ever share a
@@ -479,9 +493,9 @@ public sealed class InstallQueue
 
         var retryUserScopeTask = Task.WhenAll(retryItems
             .Where(i => !RequiresElevation(i.SourceId))
-            .Select(i => i.SourceId)
+            .Select(LaneKey)
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Select(sourceId => InstallSourceSequentiallyAsync(sourceId, action, reported, throttle, run, cancellationToken, isRetryRound: true)));
+            .Select(laneKey => InstallLaneSequentiallyAsync(laneKey, action, reported, throttle, run, cancellationToken, isRetryRound: true)));
 
         var retryAdminScopeTask = retryAdminScope.Count > 0
             ? RunElevatedBatchAsync(retryAdminScope, action, reported, throttle, run, cancellationToken, isRetryRound: true)
@@ -490,8 +504,8 @@ public sealed class InstallQueue
         await Task.WhenAll(retryUserScopeTask, retryAdminScopeTask);
     }
 
-    private async Task InstallSourceSequentiallyAsync(
-        string sourceId, InstallAction action, ISet<string> reported, SemaphoreSlim throttle,
+    private async Task InstallLaneSequentiallyAsync(
+        string laneKey, InstallAction action, ISet<string> reported, SemaphoreSlim throttle,
         RunState run, CancellationToken cancellationToken, bool isRetryRound = false)
     {
         while (true)
@@ -509,7 +523,7 @@ public sealed class InstallQueue
             {
                 lock (_queueLock)
                 {
-                    var index = run.Pending.FindIndex(i => string.Equals(i.SourceId, sourceId, StringComparison.OrdinalIgnoreCase));
+                    var index = run.Pending.FindIndex(i => string.Equals(LaneKey(i), laneKey, StringComparison.OrdinalIgnoreCase));
                     if (index < 0)
                         return;
 

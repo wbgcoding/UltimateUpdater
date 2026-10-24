@@ -256,6 +256,13 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
     internal static string InterpreterPath(UpdateItem item) =>
         item.Meta.TryGetValue(InterpreterMetaKey, out var path) ? path : OwnPython();
 
+    /// <summary>The interpreter a pip install runs against, for deciding which installs may overlap: the
+    /// Meta value when present, else the one in a composite Id, else empty. Pure; never probes the machine.</summary>
+    internal static string LaneInterpreter(string itemId, IReadOnlyDictionary<string, string>? meta) =>
+        meta is not null && meta.TryGetValue(InterpreterMetaKey, out var path) && !string.IsNullOrEmpty(path)
+            ? path
+            : ParseId(itemId).InterpreterPath ?? string.Empty;
+
     /// <summary>
     /// Parses a row Id back into its package name and (when the Id is the composite, multi-interpreter
     /// form) interpreter path. Kept for callers that only have the Id string; <see cref="GetInstalledVersionAsync"/>
