@@ -159,7 +159,7 @@ public partial class MainViewModel
 
     /// <summary>
     /// Adds rows to the install queue. If nothing is running it starts the queue; if a batch is already
-    /// running the rows join it and install after the current chunk; the per-row Install button feeds
+    /// running the rows start at once beside it (only a lane already busy makes them wait); the per-row Install button feeds
     /// the queue of running updates. Rows already done or in flight are skipped.
     /// </summary>
     private async Task EnqueueInstallAsync(IReadOnlyList<UpdateRowViewModel> rows)
@@ -551,12 +551,31 @@ public partial class MainViewModel
         }
     }
 
+    /// <summary>True when the process's image lies under the Windows folder. A path that cannot be read
+    /// counts as false, so such a process is handled exactly as before.</summary>
+    internal static bool RunsFromWindowsFolder(System.Diagnostics.Process process)
+    {
+        try
+        {
+            return IsUnderWindowsFolder(process.MainModule?.FileName, Environment.GetFolderPath(Environment.SpecialFolder.Windows));
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException)
+        {
+            return false;
+        }
+    }
+
+    internal static bool IsUnderWindowsFolder(string? path, string? windowsFolder) =>
+        !string.IsNullOrEmpty(path) && !string.IsNullOrEmpty(windowsFolder)
+        && path.StartsWith(windowsFolder.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase);
+
     private static async Task<bool> CloseBlockingProcessesCoreAsync(
         IReadOnlyList<string> processNames,
         List<System.Diagnostics.Process> stillRunning,
         Func<string, IReadOnlyList<System.Diagnostics.Process>> processLookup,
         TimeSpan gracePeriod)
     {
+        var exempt = new List<System.Diagnostics.Process>();
         foreach (var name in processNames)
         {
             // Re-checked HERE, not only where the names were detected: this is the step that actually
@@ -573,6 +592,14 @@ public partial class MainViewModel
                 if (process.Id == Environment.ProcessId)
                     continue;
 
+                // A short, common name ("ssh", "bash") also belongs to Windows' own OpenSSH and WSL: those run
+                // from the Windows folder, which no update writes to, so they are never in the way and never closed.
+                if (RunsFromWindowsFolder(process))
+                {
+                    exempt.Add(process);
+                    continue;
+                }
+
                 try
                 {
                     if (!process.HasExited)
@@ -587,7 +614,7 @@ public partial class MainViewModel
         }
 
         // This app's own process was only collected for disposal, never asked to close.
-        var closing = stillRunning.Where(p => !IsThisProcess(p)).ToList();
+        var closing = stillRunning.Where(p => !IsThisProcess(p) && !exempt.Contains(p)).ToList();
         if (closing.Count == 0)
             return true;
 
@@ -737,14 +764,24 @@ public partial class MainViewModel
         }
     }
 
+    /// <summary>Completed when rows join the queue while <see cref="RunInstallLoopAsync"/> runs, so they start
+    /// right away. Null while no loop runs.</summary>
+    private TaskCompletionSource? _installWake;
+
     private async Task RunInstallLoopAsync()
     {
-        if (_installActivityRunning)
+        // The batch that owned the shared state has ended and only a side uninstall keeps it up: this loop
+        // takes ownership back instead of leaving the new rows waiting for that uninstall to finish.
+        var takingOver = _installActivityRunning && _ownerEnded && _installWake is null;
+        if (_installActivityRunning && !takingOver)
         {
+            // A running loop starts the new rows at once, beside the run already going.
+            _installWake?.TrySetResult();
             RefreshInstallProgress();
             return;
         }
 
+        _ownerEnded = false;
         _installActivityRunning = true;
         _installCts?.Dispose();
         _installCts = new CancellationTokenSource();
@@ -759,28 +796,65 @@ public partial class MainViewModel
 
         try
         {
+            // Rows queued while a run is going start their own run straight away instead of waiting for the
+            // first one to finish: the queue's lanes are shared across runs, so a package manager still never
+            // runs two of its own installs at once, while every other lane gets going immediately.
+            var running = new List<Task>();
             while (!_installCts.IsCancellationRequested)
             {
+                // Set up before the pending rows are taken, so a row queued from here on wakes the wait below.
+                _installWake = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
                 var snapshot = _installPending.ToList();
                 _installPending.Clear();
 
-                // Admin (winget/choco/Windows Update) rows of one turn go out together in ONE elevated batch,
-                // concurrently with the user-scope rows of the same turn; rows queued during the run are
-                // picked up by the next turn.
-                var adminBatch = snapshot.Where(r => InstallQueue.NeedsElevation(r.SourceId)).ToList();
-                var userScope = snapshot.Where(r => !InstallQueue.NeedsElevation(r.SourceId)).ToList();
+                if (snapshot.Count > 0)
+                {
+                    // ONE call per turn, not one per elevation half: InstallQueue.RunAsync already splits by
+                    // elevation and starts both halves together internally, and its automatic retry round runs
+                    // once, after both halves of that same turn. Admin rows of one turn go out in ONE elevated batch.
+                    var adminBatch = snapshot.Where(r => InstallQueue.NeedsElevation(r.SourceId));
+                    var userScope = snapshot.Where(r => !InstallQueue.NeedsElevation(r.SourceId));
+                    var items = userScope.Select(r => r.Item).Concat(adminBatch.Select(r => r.Item)).ToList();
+                    running.Add(_installQueue.RunAsync(items, _installCts.Token));
+                }
 
-                if (userScope.Count == 0 && adminBatch.Count == 0)
+                if (running.Count == 0)
                     break;
 
-                // ONE call, not two: InstallQueue.RunAsync already splits by elevation and starts both
-                // halves together internally (a slow user-scope package still never holds up an admin
-                // batch that is ready to go), but its own automatic retry round only runs once, after ITS
-                // OWN Task.WhenAll of both halves. Two separate calls would give each half its own
-                // retry round, so a fast half could retry before the other half of the SAME batch had even
-                // finished its first attempt. The retry belongs at the end of the batch, not at the end of a half.
-                var items = userScope.Select(r => r.Item).Concat(adminBatch.Select(r => r.Item)).ToList();
-                await _installQueue.RunAsync(items, _installCts.Token);
+                await Task.WhenAny(running.Append(_installWake.Task));
+                foreach (var done in running.Where(t => t.IsCompleted).ToList())
+                {
+                    running.Remove(done);
+                    try
+                    {
+                        await done;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
+                    catch (Exception ex)
+                    {
+                        // One turn failing must not end the others still running beside it.
+                        _logging.Error("Install batch failed", ex);
+                    }
+                }
+            }
+
+            // Stopped: the runs still going unwind on the same token; their rows close out before this one ends.
+            foreach (var task in running)
+            {
+                try
+                {
+                    await task;
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logging.Error("Install batch failed", ex);
+                }
+                catch (OperationCanceledException)
+                {
+                }
             }
         }
         catch (OperationCanceledException)
@@ -794,6 +868,8 @@ public partial class MainViewModel
         }
         finally
         {
+            _installWake = null;
+
             // Rows that were still waiting when Stop was pressed never ran, and clearing the list silently
             // left them showing "queued" for ever. They are closed out here; the only
             // place that knows they never reached the queue. Admin-scope rows held back for the elevated

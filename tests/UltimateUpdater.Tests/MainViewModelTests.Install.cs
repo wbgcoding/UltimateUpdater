@@ -235,6 +235,70 @@ public partial class MainViewModelTests
         });
     }
 
+    /// <summary>A row queued while another row is still installing starts at once on its own lane; it
+    /// used to wait for the whole first run (retry round included) before it even began.</summary>
+    [Fact]
+    public void A_row_queued_while_another_installs_starts_at_once_on_its_own_lane()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var slowGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var slowStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var order = new List<string>();
+            void Record(string what)
+            {
+                lock (order)
+                    order.Add(what);
+            }
+
+            var slow = new GatedAdminSource("slow-test-source", slowStarted, slowGate, Record);
+            var viewModel = Create(sources: [slow, new InstantSource()]);
+            var slowRow = new UpdateRowViewModel(Item("slow", "Slow", "slow-test-source"));
+            var fastRow = new UpdateRowViewModel(Item("fast", "Fast", "instant-test-source"));
+            viewModel.Updates.AddRange([slowRow, fastRow]);
+
+            var fastDone = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            fastRow.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(UpdateRowViewModel.InstallState) && fastRow.InstallState == RowInstallState.Succeeded)
+                    fastDone.TrySetResult();
+            };
+
+            InvokeEnqueueInstall(viewModel, [slowRow]);
+            Pump(slowStarted.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+
+            InvokeEnqueueInstall(viewModel, [fastRow]);
+            try
+            {
+                Pump(fastDone.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+                Assert.DoesNotContain("winget-done", order);
+                Assert.NotEqual(RowInstallState.Succeeded, slowRow.InstallState);
+            }
+            finally
+            {
+                slowGate.TrySetResult();
+            }
+
+            Pump(Task.Run(async () =>
+            {
+                while (viewModel.IsInstalling)
+                    await Task.Delay(20);
+            }).WaitAsync(TimeSpan.FromSeconds(10)));
+            Assert.Contains("winget-done", order);
+        });
+    }
+
+    /// <summary>Windows' own OpenSSH and WSL share Git's short process names; closing for Git's setup
+    /// leaves anything that runs from the Windows folder alone.</summary>
+    [Theory]
+    [InlineData(@"C:\Windows\System32\OpenSSH\ssh.exe", true)]
+    [InlineData(@"C:\Windows\System32\bash.exe", true)]
+    [InlineData(@"C:\Program Files\Git\usr\bin\ssh.exe", false)]
+    [InlineData(@"C:\WindowsApps\bash.exe", false)]
+    [InlineData(null, false)]
+    public void Only_processes_from_the_windows_folder_are_exempt_from_closing(string? path, bool exempt) =>
+        Assert.Equal(exempt, MainViewModel.IsUnderWindowsFolder(path, @"C:\Windows"));
+
     /// <summary>A process that cannot be queried is not proof that it is gone: the blocker check fails
     /// closed so the row stays blocked instead of installing over a live program.</summary>
     [Fact]

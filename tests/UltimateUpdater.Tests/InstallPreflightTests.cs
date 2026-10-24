@@ -637,11 +637,12 @@ public class InstallPreflightTests
     public async Task Closing_blockers_reports_a_survivor_when_the_force_kill_is_declined()
     {
         Dialogs.SuppressInteractiveDialogs = true;
-        using var child = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ping.exe", "-n 30 127.0.0.1")
-        {
-            CreateNoWindow = true,
-            UseShellExecute = false,
-        })!;
+
+        // A copy outside the Windows folder: ping from System32 itself is exempt from closing.
+        var folder = Directory.CreateTempSubdirectory("uu-ping-test-").FullName;
+        var ping = Path.Combine(folder, "ping.exe");
+        File.Copy(Path.Combine(Environment.SystemDirectory, "ping.exe"), ping);
+        using var child = StartPing(ping);
         var pid = child.Id;
         try
         {
@@ -654,9 +655,41 @@ public class InstallPreflightTests
         }
         finally
         {
+            try { child.Kill(); child.WaitForExit(5000); } catch (InvalidOperationException) { }
+            try { Directory.Delete(folder, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+    }
+
+    /// <summary>A program from the Windows folder (Windows' own OpenSSH, WSL's bash) shares a blocker's short
+    /// name but is never in an update's way: it is neither asked to close nor killed.</summary>
+    [Fact]
+    public async Task Closing_blockers_leaves_a_process_from_the_windows_folder_alone()
+    {
+        Dialogs.SuppressInteractiveDialogs = true;
+        using var child = StartPing(Path.Combine(Environment.SystemDirectory, "ping.exe"));
+        var pid = child.Id;
+        try
+        {
+            var cleared = await MainViewModel.CloseBlockingProcessesAsync(
+                ["ping-test"],
+                _ => [System.Diagnostics.Process.GetProcessById(pid)],
+                TimeSpan.FromMilliseconds(300));
+
+            Assert.True(cleared);
+            Assert.False(child.HasExited);
+        }
+        finally
+        {
             try { child.Kill(); } catch (InvalidOperationException) { }
         }
     }
+
+    private static System.Diagnostics.Process StartPing(string path) =>
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path, "-n 30 127.0.0.1")
+        {
+            CreateNoWindow = true,
+            UseShellExecute = false,
+        })!;
 
     /// <summary>Nothing running under the blocking name means there is nothing left to wait for.</summary>
     [Fact]

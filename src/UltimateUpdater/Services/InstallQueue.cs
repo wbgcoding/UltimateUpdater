@@ -289,6 +289,7 @@ public sealed class InstallQueue
         List<ElevatedJobHandle> handles;
         RunState? retryRun = null;
         UpdateItem? retryItem = null;
+        var waitingForLane = false;
         lock (_queueLock)
         {
             foreach (var run in _activeRuns)
@@ -349,6 +350,21 @@ public sealed class InstallQueue
                 break;
             }
 
+            // Still in a run's pending list, waiting for its lane (busy in another run) or a slot: it never
+            // started, so taking it out and settling it as stopped is the whole stop.
+            foreach (var run in retryRun is null ? _activeRuns : Enumerable.Empty<RunState>())
+            {
+                var pendingIndex = run.Pending.FindIndex(i => string.Equals(Key(i), key, StringComparison.OrdinalIgnoreCase));
+                if (pendingIndex < 0)
+                    continue;
+
+                retryRun = run;
+                retryItem = run.Pending[pendingIndex];
+                run.Pending.RemoveAt(pendingIndex);
+                waitingForLane = true;
+                break;
+            }
+
             handles = _activeRuns.Where(r => r.ElevatedHandle is not null).Select(r => r.ElevatedHandle!).ToList();
         }
 
@@ -357,7 +373,9 @@ public sealed class InstallQueue
             lock (_reportLock)
                 retryRun.Reported?.Add(key);
 
-            _logging.Info($"{retryRun.Action} for '{retryItem.Id}' was stopped while waiting for its automatic retry.");
+            _logging.Info(waitingForLane
+                ? $"{retryRun.Action} for '{retryItem.Id}' was stopped before it started."
+                : $"{retryRun.Action} for '{retryItem.Id}' was stopped while waiting for its automatic retry.");
             Report(new InstallItemStatus(retryItem.SourceId, retryItem.Id, 100, null, null, null) { IsCancelled = true });
             RecordHistory(retryItem, retryRun.Action, success: false, error: null, isCancelled: true);
             return;
@@ -512,6 +530,14 @@ public sealed class InstallQueue
         await Task.WhenAll(retryUserScopeTask, retryAdminScopeTask);
     }
 
+    private static readonly TimeSpan LaneRecheckInterval = TimeSpan.FromMilliseconds(250);
+
+    private bool HasPendingOnLane(RunState run, string laneKey)
+    {
+        lock (_queueLock)
+            return run.Pending.Exists(i => string.Equals(LaneKey(i), laneKey, StringComparison.OrdinalIgnoreCase));
+    }
+
     private async Task InstallLaneSequentiallyAsync(
         string laneKey, InstallAction action, ISet<string> reported, SemaphoreSlim throttle,
         RunState run, CancellationToken cancellationToken, bool isRetryRound = false)
@@ -525,25 +551,44 @@ public sealed class InstallQueue
             // of three slots), so its row could not be removed, reordered or stopped, and installed anyway.
             // InstallInProcessAsync registers its stop token before its first await, so from here on the
             // item is always reachable.
-            await throttle.WaitAsync(cancellationToken);
+            // The lane before the slot: the lane is queue-wide, so another run (a batch started a moment
+            // earlier, an uninstall beside it) may hold it for minutes. Waiting for it here keeps the item in
+            // Pending, where Remove, reorder and Stop still reach it, and holds none of this run's slots, so
+            // the run's other lanes keep going meanwhile. Always lane, then slot: no cycle between the two.
+            // Checked again while waiting: an item removed or stopped while it waited must not keep this run
+            // open until the other run lets go of the lane.
+            var lane = _laneGates.GetOrAdd(laneKey, _ => new SemaphoreSlim(1, 1));
+            if (!HasPendingOnLane(run, laneKey))
+                return;
+            if (!await lane.WaitAsync(LaneRecheckInterval, cancellationToken))
+                continue;
+
             UpdateItem item;
             try
             {
-                lock (_queueLock)
+                await throttle.WaitAsync(cancellationToken);
+                try
                 {
-                    var index = run.Pending.FindIndex(i => string.Equals(LaneKey(i), laneKey, StringComparison.OrdinalIgnoreCase));
-                    if (index < 0)
-                        return;
+                    lock (_queueLock)
+                    {
+                        var index = run.Pending.FindIndex(i => string.Equals(LaneKey(i), laneKey, StringComparison.OrdinalIgnoreCase));
+                        if (index < 0)
+                            return;
 
-                    item = run.Pending[index];
-                    run.Pending.RemoveAt(index);
+                        item = run.Pending[index];
+                        run.Pending.RemoveAt(index);
+                    }
+
+                    await InstallInProcessAsync(item, action, run, cancellationToken, isRetryRound, laneHeld: true);
                 }
-
-                await InstallInProcessAsync(item, action, run, cancellationToken, isRetryRound);
+                finally
+                {
+                    throttle.Release();
+                }
             }
             finally
             {
-                throttle.Release();
+                lane.Release();
             }
 
             // A first-round failure waiting for the retry round has no final outcome yet. Left out of
@@ -556,8 +601,10 @@ public sealed class InstallQueue
         }
     }
 
+    /// <param name="laneHeld">True when the caller already holds the item's lane (the batch path does).</param>
     private async Task InstallInProcessAsync(
-        UpdateItem item, InstallAction action, RunState run, CancellationToken cancellationToken, bool isRetryRound = false)
+        UpdateItem item, InstallAction action, RunState run, CancellationToken cancellationToken, bool isRetryRound = false,
+        bool laneHeld = false)
     {
         // This item's own stop button, layered on top of the run's whole-batch token via a linked
         // CTS, so either one ends the same await; registered under the same key CancelItem looks up, and
@@ -569,7 +616,7 @@ public sealed class InstallQueue
 
         try
         {
-            await InstallInProcessCoreAsync(item, action, cancellationToken, itemToken, run, isRetryRound);
+            await InstallInProcessCoreAsync(item, action, cancellationToken, itemToken, run, isRetryRound, laneHeld);
         }
         finally
         {
@@ -585,7 +632,7 @@ public sealed class InstallQueue
 
     private async Task InstallInProcessCoreAsync(
         UpdateItem item, InstallAction action, CancellationToken batchToken, CancellationToken cancellationToken,
-        RunState run, bool isRetryRound = false)
+        RunState run, bool isRetryRound = false, bool callerHoldsLane = false)
     {
         // A fresh attempt of this item (the retry round, the user-scope retry after the admin
         // side refuses it) must not inherit a transfer entry an earlier attempt already marked finished.
@@ -637,9 +684,14 @@ public sealed class InstallQueue
             // the package manager's global state with the batch, so it waits here for the batch's item on
             // the same lane. Waited for inside this try, on the item's own stop token, so a row waiting for
             // its lane still reads queued and Stop / its stop button end it like any other cancellation.
+            // The batch path takes the lane itself before it takes the item (InstallLaneSequentiallyAsync).
             // (The elevated half needs no gate: the worker runs its jobs one at a time, an exclusive slot.)
-            await laneGate.WaitAsync(cancellationToken);
-            laneHeld = true;
+            if (!callerHoldsLane)
+            {
+                await laneGate.WaitAsync(cancellationToken);
+                laneHeld = true;
+            }
+
             started.Restart();
             _logging.Event(ActivityLog.Install, ActivityLog.InstallStarted(item, action, elevated: false));
 

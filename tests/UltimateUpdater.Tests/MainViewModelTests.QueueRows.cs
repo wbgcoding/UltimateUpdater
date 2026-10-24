@@ -9,7 +9,7 @@ public partial class MainViewModelTests
 {
     /// <summary>Blocks the FIRST install it receives until the test releases it and records every item that
     /// reaches <c>InstallAsync</c>, so a test can prove which queued rows really ran and in what order.</summary>
-    private sealed class FirstInstallGatedSource : IUpdateSource
+    private sealed class FirstInstallGatedSource(string id = "gated-first-source") : IUpdateSource
     {
         private readonly TaskCompletionSource _gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource _firstStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -21,7 +21,7 @@ public partial class MainViewModelTests
 
         public void Release() => _gate.TrySetResult();
 
-        public string Id => "gated-first-source";
+        public string Id => id;
 
         public UpdateCategory Category => UpdateCategory.Software;
 
@@ -85,14 +85,18 @@ public partial class MainViewModelTests
     {
         WpfHarness.OnUiThread(() =>
         {
+            // Both lanes busy, so the folded row's two copies wait in the queue instead of starting at once.
             var source = new FirstInstallGatedSource();
-            var viewModel = Create(sources: [source]);
+            var pip = new FirstInstallGatedSource("pip");
+            var viewModel = Create(sources: [source, pip]);
             var first = new UpdateRowViewModel(Item("a", "A", source.Id));
+            var pipBusy = new UpdateRowViewModel(Item("busy", "Busy", "pip"));
             var copies = new[] { new UpdateRowViewModel(Item("d", "D", source.Id)), new UpdateRowViewModel(Item("d", "D", "pip")) };
-            viewModel.Updates.AddRange([first, .. copies]);
+            viewModel.Updates.AddRange([first, pipBusy, .. copies]);
 
-            InvokeEnqueueInstall(viewModel, [first]);
+            InvokeEnqueueInstall(viewModel, [first, pipBusy]);
             Pump(source.FirstStarted.WaitAsync(TimeSpan.FromSeconds(10)));
+            Pump(pip.FirstStarted.WaitAsync(TimeSpan.FromSeconds(10)));
 
             var shown = Assert.Single(viewModel.UpdatesView.Cast<UpdateRowViewModel>(), r => copies.Contains(r));
             var hidden = copies.Single(r => r != shown);
@@ -106,9 +110,11 @@ public partial class MainViewModelTests
             Assert.Equal(RowInstallState.Idle, hidden.InstallState);
 
             source.Release();
+            pip.Release();
             Pump(WaitUntilAsync(() => !viewModel.IsInstalling, TimeSpan.FromSeconds(10)));
 
             Assert.Equal(["a"], source.Installed);
+            Assert.Equal(["busy"], pip.Installed);
             Assert.Equal(RowInstallState.Idle, hidden.InstallState);
         });
     }
