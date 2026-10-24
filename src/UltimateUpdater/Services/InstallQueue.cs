@@ -143,6 +143,11 @@ public sealed class InstallQueue
     /// </summary>
     private readonly object _queueLock = new();
 
+    /// <summary>One gate per lane key (case-insensitive), shared by every concurrent run, so two runs never
+    /// touch the same package manager's global state at once. See <see cref="LaneKey(UpdateItem)"/>.</summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> _laneGates =
+        new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Test seam: runs between finding a row's stop source and cancelling it, the window in which
     /// the owner could otherwise have released it.</summary>
     internal Action<CancellationTokenSource>? BeforeItemCancelForTest { get; set; }
@@ -623,10 +628,21 @@ public sealed class InstallQueue
         });
 
         var started = System.Diagnostics.Stopwatch.StartNew();
-        _logging.Event(ActivityLog.Install, ActivityLog.InstallStarted(item, action, elevated: false));
+        var laneGate = _laneGates.GetOrAdd(LaneKey(item), _ => new SemaphoreSlim(1, 1));
+        var laneHeld = false;
 
         try
         {
+            // The lane is queue-wide, not per run: a side run (an uninstall started beside a batch) shares
+            // the package manager's global state with the batch, so it waits here for the batch's item on
+            // the same lane. Waited for inside this try, on the item's own stop token, so a row waiting for
+            // its lane still reads queued and Stop / its stop button end it like any other cancellation.
+            // (The elevated half needs no gate: the worker runs its jobs one at a time, an exclusive slot.)
+            await laneGate.WaitAsync(cancellationToken);
+            laneHeld = true;
+            started.Restart();
+            _logging.Event(ActivityLog.Install, ActivityLog.InstallStarted(item, action, elevated: false));
+
             if (action == InstallAction.Uninstall)
                 await source.UninstallAsync(item, progress, cancellationToken);
             else
@@ -707,6 +723,11 @@ public sealed class InstallQueue
             }
 
             RecordHistory(item, action, success: false, error: message, detail: ex.Message);
+        }
+        finally
+        {
+            if (laneHeld)
+                laneGate.Release();
         }
     }
 

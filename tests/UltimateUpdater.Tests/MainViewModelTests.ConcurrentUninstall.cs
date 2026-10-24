@@ -21,10 +21,20 @@ public partial class MainViewModelTests
     {
         public const string SourceId = "gated-test-source";
 
-        private readonly ConcurrentDictionary<string, TaskCompletionSource> _gates = new();
-        private readonly ConcurrentDictionary<string, int> _calls = new();
+        /// <summary>A second source, so a row on it sits in another lane than the first source's rows.</summary>
+        public const string OtherId = "gated-other-source";
 
-        public string Id => SourceId;
+        private readonly ConcurrentDictionary<string, TaskCompletionSource> _gates;
+        private readonly ConcurrentDictionary<string, int> _calls;
+
+        public HoldSource(string id = SourceId, HoldSource? shareWith = null)
+        {
+            Id = id;
+            _gates = shareWith?._gates ?? new();
+            _calls = shareWith?._calls ?? new();
+        }
+
+        public string Id { get; }
 
         public UpdateCategory Category => UpdateCategory.Software;
 
@@ -71,15 +81,17 @@ public partial class MainViewModelTests
 
     private static (MainViewModel ViewModel, HoldSource Source) CreateGated()
     {
+        // Both sources share their gates and call counts (row ids are unique), so a test drives either lane
+        // through the one returned source.
         var source = new HoldSource();
-        var viewModel = Create([source]);
+        var viewModel = Create([source, new HoldSource(HoldSource.OtherId, source)]);
         viewModel.UninstallConfirmOverride = () => true;
         return (viewModel, source);
     }
 
-    private static UpdateRowViewModel AddGatedRow(MainViewModel viewModel, string id)
+    private static UpdateRowViewModel AddGatedRow(MainViewModel viewModel, string id, string sourceId = HoldSource.SourceId)
     {
-        var row = new UpdateRowViewModel(Item(id, id, HoldSource.SourceId));
+        var row = new UpdateRowViewModel(Item(id, id, sourceId));
         viewModel.Updates.Add(row);
         return row;
     }
@@ -111,7 +123,7 @@ public partial class MainViewModelTests
         {
             var (viewModel, source) = CreateGated();
             var batchRow = AddGatedRow(viewModel, "batch.app");
-            var removeRow = AddGatedRow(viewModel, "remove.app");
+            var removeRow = AddGatedRow(viewModel, "remove.app", HoldSource.OtherId);
 
             StartGatedBatch(viewModel, source, batchRow);
             var uninstall = StartGatedUninstall(viewModel, source, removeRow);
@@ -145,7 +157,7 @@ public partial class MainViewModelTests
             {
                 var (viewModel, source) = CreateGated();
                 var batchRow = AddGatedRow(viewModel, "batch.app");
-                var removeRow = AddGatedRow(viewModel, "remove.app");
+                var removeRow = AddGatedRow(viewModel, "remove.app", HoldSource.OtherId);
                 var refusal = LocalizationService.Instance["UninstallBlockedByActivity"];
 
                 StartGatedBatch(viewModel, source, batchRow);
@@ -180,7 +192,7 @@ public partial class MainViewModelTests
         {
             var (viewModel, source) = CreateGated();
             var batchRow = AddGatedRow(viewModel, "batch.app");
-            var removeRow = AddGatedRow(viewModel, "remove.app");
+            var removeRow = AddGatedRow(viewModel, "remove.app", HoldSource.OtherId);
 
             StartGatedBatch(viewModel, source, batchRow);
             var uninstall = StartGatedUninstall(viewModel, source, removeRow);
@@ -206,7 +218,7 @@ public partial class MainViewModelTests
         {
             var (viewModel, source) = CreateGated();
             var batchRow = AddGatedRow(viewModel, "batch.app");
-            var removeRow = AddGatedRow(viewModel, "remove.app");
+            var removeRow = AddGatedRow(viewModel, "remove.app", HoldSource.OtherId);
 
             StartGatedBatch(viewModel, source, batchRow);
             var uninstall = StartGatedUninstall(viewModel, source, removeRow);
@@ -234,8 +246,8 @@ public partial class MainViewModelTests
         {
             var (viewModel, source) = CreateGated();
             var batchRow = AddGatedRow(viewModel, "batch.app");
-            var removeRow = AddGatedRow(viewModel, "remove.app");
-            var laterRow = AddGatedRow(viewModel, "later.app");
+            var removeRow = AddGatedRow(viewModel, "remove.app", HoldSource.OtherId);
+            var laterRow = AddGatedRow(viewModel, "later.app", HoldSource.OtherId);
 
             StartGatedBatch(viewModel, source, batchRow);
             var uninstall = StartGatedUninstall(viewModel, source, removeRow);
@@ -277,7 +289,7 @@ public partial class MainViewModelTests
         {
             var (viewModel, source) = CreateGated();
             var batchRow = AddGatedRow(viewModel, "batch.app");
-            var removeRow = AddGatedRow(viewModel, "remove.app");
+            var removeRow = AddGatedRow(viewModel, "remove.app", HoldSource.OtherId);
 
             StartGatedBatch(viewModel, source, batchRow);
             var uninstall = StartGatedUninstall(viewModel, source, removeRow);
@@ -290,6 +302,61 @@ public partial class MainViewModelTests
             source.Release("install", "batch.app");
             Pump(WaitUntilAsync(() => !viewModel.IsInstalling, ConcurrentWait));
             Assert.False(InstallActivityRunning(viewModel));
+        });
+    }
+
+    [Fact]
+    public void An_uninstall_on_the_lane_of_a_running_batch_install_waits_until_that_install_ends()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var (viewModel, source) = CreateGated();
+            var batchRow = AddGatedRow(viewModel, "batch.app");
+            var removeRow = AddGatedRow(viewModel, "remove.app");
+
+            StartGatedBatch(viewModel, source, batchRow);
+            var uninstall = viewModel.UninstallRowAsync(removeRow);
+            Pump(WaitUntilAsync(() => removeRow.InstallState == RowInstallState.Queued, ConcurrentWait));
+
+            // Give a wrongly parallel run every chance to start before asserting that it did not.
+            Pump(Task.Delay(400));
+            Assert.Equal(0, source.Calls("uninstall", "remove.app"));
+            Assert.Equal(RowInstallState.Queued, removeRow.InstallState);
+
+            source.Release("install", "batch.app");
+            Pump(WaitUntilAsync(() => source.Calls("uninstall", "remove.app") == 1, ConcurrentWait));
+            Assert.Equal(RowInstallState.Succeeded, batchRow.InstallState);
+
+            source.Release("uninstall", "remove.app");
+            RunPumped(uninstall);
+            Assert.Equal(RowInstallState.Succeeded, removeRow.InstallState);
+            Pump(WaitUntilAsync(() => !viewModel.IsInstalling, ConcurrentWait));
+        });
+    }
+
+    [Fact]
+    public void An_uninstall_waiting_for_its_lane_can_be_stopped_without_touching_the_batch()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var (viewModel, source) = CreateGated();
+            var batchRow = AddGatedRow(viewModel, "batch.app");
+            var removeRow = AddGatedRow(viewModel, "remove.app");
+
+            StartGatedBatch(viewModel, source, batchRow);
+            var uninstall = viewModel.UninstallRowAsync(removeRow);
+            Pump(WaitUntilAsync(() => removeRow.InstallState == RowInstallState.Queued, ConcurrentWait));
+
+            ((IRowActions)viewModel).CancelSingle(removeRow);
+            RunPumped(uninstall);
+
+            Assert.Equal(0, source.Calls("uninstall", "remove.app"));
+            Assert.NotEqual(RowInstallState.Running, removeRow.InstallState);
+            Assert.Equal(RowInstallState.Running, batchRow.InstallState);
+
+            source.Release("install", "batch.app");
+            Pump(WaitUntilAsync(() => !viewModel.IsInstalling, ConcurrentWait));
+            Assert.Equal(RowInstallState.Succeeded, batchRow.InstallState);
         });
     }
 }
