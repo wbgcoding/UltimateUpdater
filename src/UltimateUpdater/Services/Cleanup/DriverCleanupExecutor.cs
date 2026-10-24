@@ -173,6 +173,11 @@ public static class DriverCleanupExecutor
             failureMessage: $"Driver cleanup: could not back up '{packageName}'; it was not removed.");
     }
 
+    /// <summary>pnputil passes the setup API's two "done, restart pending" codes through (3010
+    /// ERROR_SUCCESS_REBOOT_REQUIRED, 1641 ERROR_SUCCESS_REBOOT_INITIATED); the change itself happened, so a
+    /// device removed that way must still get its now-unbound package deleted.</summary>
+    internal static bool IsPnputilSuccess(int exitCode) => exitCode is 0 or 3010 or 1641;
+
     private static async Task<bool> RunPnputilAsync(
         string pnputil, IReadOnlyList<string> arguments, LoggingService logging, CancellationToken cancellationToken,
         string? failureMessage = null)
@@ -180,8 +185,13 @@ public static class DriverCleanupExecutor
         try
         {
             var result = await ProcessRunner.RunAsync(pnputil, arguments, TimeSpan.FromMinutes(2), cancellationToken);
-            if (result.ExitCode == 0)
+            if (IsPnputilSuccess(result.ExitCode))
+            {
+                if (result.ExitCode != 0)
+                    logging.Info($"Driver cleanup: pnputil {string.Join(' ', arguments)} succeeded; a restart is needed to finish it (exit code {result.ExitCode}).");
+
                 return true;
+            }
 
             logging.Warn(failureMessage ?? $"Driver cleanup: pnputil {string.Join(' ', arguments)} failed with exit code {result.ExitCode}.");
             return false;
