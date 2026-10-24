@@ -2029,7 +2029,9 @@
                                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                                     <!-- The available version. Spans its own 62px column plus the old
                                          changelog column (the spinner's place) when there is an installed
-                                         version to arrow away from, otherwise the whole 158px lane, centred.
+                                         version to arrow away from, otherwise the three version columns
+                                         (138px), centred: their middle is the arrow's, so a lone version
+                                         sits right under the arrows of the rows around it.
                                          Column/alignment come from the Style, not a local value, since a
                                          local value always outranks a Style Setter/Trigger regardless of
                                          which one is written last. With a changelog the version is a link
@@ -2042,7 +2044,7 @@
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding HasInstalledVersion}" Value="False">
                                                         <Setter Property="Grid.Column" Value="0"/>
-                                                        <Setter Property="Grid.ColumnSpan" Value="4"/>
+                                                        <Setter Property="Grid.ColumnSpan" Value="3"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>

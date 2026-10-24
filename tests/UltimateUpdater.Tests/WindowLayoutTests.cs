@@ -3779,14 +3779,14 @@ public class WindowLayoutTests
             Assert.NotEqual(Visibility.Visible, hiddenArrow!.Visibility);
 
             // Row (c) has no installed version to point an arrow away from: the available-version text
-            // spans the whole lane and centres in it, instead of sitting left-aligned in its own 62px
-            // column the way it does whenever there IS an installed version to arrow away from.
-            var noVersionLane = FindByName<Grid>(noArrowRow, "VersionLane")!;
+            // centres exactly under the arrow of the rows around it, so a lone version lines up with the
+            // middle of every "old → new" pair instead of drifting right by the spinner column.
+            var referenceArrow = FindByName<TextBlock>(RowOf(installedOnly), "VersionArrow")!;
             var noVersionText = FindByName<TextBlock>(noArrowRow, "AvailableVersionText")!;
-            var laneMidX = noVersionLane.TransformToAncestor(content).Transform(new Point(noVersionLane.ActualWidth / 2, 0)).X;
+            var arrowMidX = referenceArrow.TransformToAncestor(content).Transform(new Point(referenceArrow.ActualWidth / 2, 0)).X;
             var textMidX = noVersionText.TransformToAncestor(content).Transform(new Point(noVersionText.ActualWidth / 2, 0)).X;
-            Assert.True(Math.Abs(laneMidX - textMidX) <= 1.0,
-                $"available-version centre {textMidX:0.0} vs lane centre {laneMidX:0.0} for a row with no installed version");
+            Assert.True(Math.Abs(arrowMidX - textMidX) <= 1.0,
+                $"available-version centre {textMidX:0.0} vs arrow centre {arrowMidX:0.0} for a row with no installed version");
 
             // Row (a): the arrow's vertical centre must land on the same line as the version text either
             // side of it, even though its own changelog button stretches the lane to 20px tall.
