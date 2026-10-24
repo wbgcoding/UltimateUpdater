@@ -1606,6 +1606,15 @@ Continuare con privilegi di amministratore?</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>Lo spazio viene liberato quando svuoti il cestino.</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>Prepara la pulizia in background all'avvio</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>Misura con priorità bassa ciò che si può pulire, così la finestra di pulizia si apre già con i risultati. Non a batteria.</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>Aggiornato alle {0}</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>Dump di arresto anomalo (sistema)</value>
   </data>

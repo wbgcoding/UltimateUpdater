@@ -1606,6 +1606,15 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>Miejsce zostanie zwolnione dopiero po opróżnieniu kosza.</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>Przygotuj czyszczenie w tle przy uruchomieniu</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>Z niskim priorytetem sprawdza, co można wyczyścić, dzięki czemu okno czyszczenia od razu pokazuje wyniki. Nie na baterii.</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>Stan na {0}</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>Zrzuty awaryjne (system)</value>
   </data>

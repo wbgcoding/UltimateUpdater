@@ -1606,6 +1606,15 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>ごみ箱を空にすると、その分の容量が解放されます。</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>起動時にバックグラウンドでクリーンアップを準備する</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>低い優先度でクリーンアップ可能な内容を測定し、クリーンアップ画面を開いたときにすぐ結果を表示します。バッテリー駆動中は実行しません。</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>{0} 時点</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>クラッシュダンプ（システム）</value>
   </data>

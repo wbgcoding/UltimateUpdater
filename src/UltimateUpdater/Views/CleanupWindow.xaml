@@ -1296,6 +1296,12 @@
                     <TextBlock Text="{Binding TotalText}" FontSize="13" HorizontalAlignment="Center"
                                Margin="0,2,0,0"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <!-- A window opened on the startup prescan's result says when that was measured. Quiet, and
+                         gone as soon as the user rescans. -->
+                    <TextBlock x:Name="MeasuredAtLabel" Text="{Binding MeasuredAtText}" FontSize="11"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"
+                               Visibility="{Binding HasMeasuredAt, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                     <TextBlock Text="{Binding Loc[CleanupScanning]}" FontSize="11" HorizontalAlignment="Center"
                                Margin="0,6,0,0"
                                Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}"

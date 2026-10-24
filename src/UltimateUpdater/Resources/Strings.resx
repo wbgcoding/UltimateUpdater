@@ -1606,6 +1606,15 @@ Continue with admin rights?</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>The space is freed once you empty the recycle bin.</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>Prepare the cleanup in the background at startup</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>Measures at low priority what can be cleaned, so the cleanup window opens with results. Not on battery.</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>As of {0}</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>Crash dumps (system)</value>
   </data>

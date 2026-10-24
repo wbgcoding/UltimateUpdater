@@ -1606,6 +1606,15 @@ Esto no se puede deshacer.</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>El espacio se libera cuando vacías la papelera de reciclaje.</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>Preparar la limpieza en segundo plano al iniciar</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>Mide con prioridad baja lo que se puede limpiar, para que la ventana de limpieza se abra ya con resultados. No con batería.</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>Actualizado a las {0}</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>Volcados de errores (sistema)</value>
   </data>

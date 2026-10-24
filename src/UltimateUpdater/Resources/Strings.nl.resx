@@ -1606,6 +1606,15 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>De ruimte komt pas vrij wanneer u de prullenbak leegt.</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>Opruimen bij het starten op de achtergrond voorbereiden</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>Meet met lage prioriteit wat kan worden opgeruimd, zodat het opruimvenster meteen met resultaten opent. Niet op batterij.</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>Stand van {0}</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>Crashdumps (systeem)</value>
   </data>

@@ -1606,6 +1606,15 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>清空回收站后才会释放这些空间。</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>启动时在后台准备清理</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>以低优先级测量可清理的内容，这样清理窗口打开时就已有结果。使用电池时不执行。</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>截至 {0}</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>崩溃转储（系统）</value>
   </data>

@@ -1606,6 +1606,15 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>Der Platz wird erst beim Leeren des Papierkorbs frei.</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>Bereinigen beim Start im Hintergrund vorbereiten</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>Misst mit niedriger Priorität, was sich bereinigen lässt, damit das Bereinigen-Fenster gleich Ergebnisse zeigt. Nicht im Akkubetrieb.</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>Stand: {0}</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>Absturzabbilder (System)</value>
   </data>

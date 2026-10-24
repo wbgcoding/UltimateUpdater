@@ -1606,6 +1606,15 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>Spațiul se eliberează abia când golești coșul de reciclare.</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>Pregătește curățarea în fundal la pornire</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>Măsoară cu prioritate scăzută ce se poate curăța, astfel încât fereastra de curățare să se deschidă direct cu rezultate. Nu pe baterie.</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>Situația la {0}</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>Dump-uri de eroare (sistem)</value>
   </data>

@@ -1606,6 +1606,15 @@ Continuar com direitos de administrador?</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>O espaço só é liberado quando você esvazia a Lixeira.</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>Preparar a limpeza em segundo plano ao iniciar</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>Mede com prioridade baixa o que pode ser limpo, para que a janela de limpeza abra já com resultados. Não com bateria.</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>Atualizado às {0}</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>Dumps de falha (sistema)</value>
   </data>

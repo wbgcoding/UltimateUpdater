@@ -1606,6 +1606,15 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>Alan, geri dönüşüm kutusunu boşalttığınızda boşalır.</value>
   </data>
+  <data name="CleanupPrescanAtStartup" xml:space="preserve">
+    <value>Başlangıçta temizliği arka planda hazırla</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHint" xml:space="preserve">
+    <value>Neyin temizlenebileceğini düşük öncelikle ölçer, böylece temizlik penceresi sonuçlarla birlikte açılır. Pil kullanılırken çalışmaz.</value>
+  </data>
+  <data name="CleanupMeasuredAt" xml:space="preserve">
+    <value>Ölçüm zamanı: {0}</value>
+  </data>
   <data name="CleanupMemoryDumps" xml:space="preserve">
     <value>Çökme dökümleri (sistem)</value>
   </data>
