@@ -1,4 +1,5 @@
 using System.IO;
+using System.IO.Enumeration;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
@@ -23,10 +24,11 @@ public class CleanupService(LoggingService logging)
         CleanupTarget target, CancellationToken cancellationToken, int recycleBinMinAgeDays = 0) =>
         Task.Run(() =>
         {
-            // Measuring is a long disk walk nobody is waiting on, so it runs in background thread mode to
-            // keep the rest of the machine responsive. The walks are fully synchronous, so the mode ends
-            // on the same pool thread before it is handed back.
-            using (BackgroundWork.Enter())
+            // A scan nobody is waiting on (the startup prescan, no window attached) runs in background
+            // thread mode to keep the rest of the machine responsive. A scan for an open window does not:
+            // somebody is looking at its spinner. The walks are fully synchronous, so the mode ends on the
+            // same pool thread before it is handed back.
+            using (BackgroundScan.Value ? BackgroundWork.Enter() : null)
             {
                 return target.Kind switch
                 {
@@ -42,6 +44,33 @@ public class CleanupService(LoggingService logging)
                 };
             }
         }, cancellationToken);
+
+    /// <summary>Carries the caller's priority choice into <see cref="ScanAsync(CleanupTarget, CancellationToken, int)"/>
+    /// without changing its signature (tests override it). <c>Task.Run</c> copies the value into the pool
+    /// thread's context.</summary>
+    private static readonly AsyncLocal<bool> BackgroundScan = new();
+
+    /// <summary>Test seam: what the caller asked for, readable from inside an overridden
+    /// <see cref="ScanAsync(CleanupTarget, CancellationToken, int)"/> that stands in for the real walk.</summary>
+    internal static bool BackgroundRequestedForTest => BackgroundScan.Value;
+
+    /// <summary>
+    /// Measures one target and says whether it may run in background thread mode: true only for a scan
+    /// nobody waits on (the startup prescan). The plain overload always runs at normal priority.
+    /// </summary>
+    public Task<CleanupScanResult> ScanAsync(
+        CleanupTarget target, CancellationToken cancellationToken, int recycleBinMinAgeDays, bool background)
+    {
+        BackgroundScan.Value = background;
+        try
+        {
+            return ScanAsync(target, cancellationToken, recycleBinMinAgeDays);
+        }
+        finally
+        {
+            BackgroundScan.Value = false;
+        }
+    }
 
     /// <summary>
     /// Frees one target. NEVER call this without the user having confirmed the warning first: that
@@ -233,29 +262,23 @@ public class CleanupService(LoggingService logging)
             if (CleanupSafety.TryReadDirectoryIdentity(directory, out var identity) && !identities.Add(identity))
                 continue;
 
-            foreach (var file in EnumerateFiles(directory, target.ExcludedDirectories, cancellationToken))
+            // Size and write time come out of the directory listing itself; asking each file again
+            // (a FileInfo per file) was one more disk round trip per file on a tree of hundreds of thousands.
+            foreach (var found in EnumerateFileDetails(directory, target.ExcludedDirectories, cancellationToken))
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
+                var file = found.Path;
                 if (!CleanupSafety.IsDeletableFile(directory, file))
                     continue;
 
-                try
-                {
-                    var info = new FileInfo(file);
-                    bytes += info.Length;
-                    files++;
+                bytes += found.Length;
+                files++;
 
-                    var bucket = BucketFor(directory, file, isAppCacheSweep);
-                    if (!buckets.TryGetValue(bucket, out var accumulator))
-                        accumulator = buckets[bucket] = new EntryAccumulator();
-                    accumulator.Add(info.Length, info.LastWriteTimeUtc, Path.GetExtension(file));
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
-                    // cannot even be measured: it certainly will not be deletable
-                    skipped++;
-                }
+                var bucket = BucketFor(directory, file, isAppCacheSweep);
+                if (!buckets.TryGetValue(bucket, out var accumulator))
+                    accumulator = buckets[bucket] = new EntryAccumulator();
+                accumulator.Add(found.Length, found.LastWriteUtc, Path.GetExtension(file));
             }
         }
 
@@ -629,6 +652,72 @@ public class CleanupService(LoggingService logging)
                 }
 
                 if (IsExcluded(current, excluded))
+                    continue;
+
+                yield return current;
+            }
+        }
+    }
+
+    /// <summary>One listed file with the facts the directory listing already carries.</summary>
+    private readonly record struct ListedFile(string Path, long Length, DateTime LastWriteUtc);
+
+    /// <summary>
+    /// The same walk as <see cref="EnumerateFiles"/> (same options, same exclusion, same tolerance for an
+    /// unreadable subtree), but each file arrives with its length and write time taken from the listing, so
+    /// measuring needs no second call per file.
+    /// </summary>
+    private IEnumerable<ListedFile> EnumerateFileDetails(
+        string directory, IReadOnlyList<string> excluded, CancellationToken cancellationToken)
+    {
+        EnumerateFilesHookForTest.Value?.Invoke(directory);
+
+        var options = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true,
+            AttributesToSkip = FileAttributes.ReparsePoint,
+        };
+
+        IEnumerator<ListedFile> enumerator;
+        try
+        {
+            enumerator = new FileSystemEnumerable<ListedFile>(
+                directory,
+                static (ref FileSystemEntry entry) =>
+                    new ListedFile(entry.ToFullPath(), entry.Length, entry.LastWriteTimeUtc.UtcDateTime),
+                options)
+            {
+                ShouldIncludePredicate = static (ref FileSystemEntry entry) => !entry.IsDirectory,
+            }.GetEnumerator();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logging.Warn($"Cleanup: cannot enumerate '{directory}': {ex.Message}");
+            yield break;
+        }
+
+        using (enumerator)
+        {
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                ListedFile current;
+                try
+                {
+                    if (!enumerator.MoveNext())
+                        break;
+
+                    current = enumerator.Current;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    logging.Warn($"Cleanup: the listing of '{directory}' stopped early: {ex.Message}");
+                    break;
+                }
+
+                if (excluded.Count > 0 && IsExcluded(current.Path, excluded))
                     continue;
 
                 yield return current;

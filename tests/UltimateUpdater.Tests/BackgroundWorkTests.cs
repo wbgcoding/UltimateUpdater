@@ -85,29 +85,69 @@ public class BackgroundWorkTests
         Assert.Equal(["begin", "end"], native.Calls.Select(c => c.Call));
     }
 
-    [Fact]
-    public async Task ScanAsync_runs_its_walk_inside_background_mode_and_leaves_it_before_the_thread_returns()
+    private static CleanupTarget MissingDirectoryTarget() =>
+        new("t", "x", "y", CleanupKind.Directories, DefaultEnabled: true,
+            RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "x")
+        {
+            Directories = [Path.Combine(Path.GetTempPath(), "wu-bg-missing-" + Guid.NewGuid())],
+        };
+
+    private static async Task<FakeNative> ScanWith(Func<CleanupService, CleanupTarget, Task> scan)
     {
         var native = new FakeNative();
         BackgroundWork.NativeForTest.Value = native;
         try
         {
-            var service = new CleanupService(new LoggingService());
-            var target = new CleanupTarget("t", "x", "y", CleanupKind.Directories, DefaultEnabled: true,
-                RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "x")
-            {
-                Directories = [Path.Combine(Path.GetTempPath(), "wu-bg-missing-" + Guid.NewGuid())],
-            };
-
-            await service.ScanAsync(target, CancellationToken.None);
+            await scan(new CleanupService(new LoggingService()), MissingDirectoryTarget());
         }
         finally
         {
             BackgroundWork.NativeForTest.Value = null;
         }
 
+        return native;
+    }
+
+    [Fact]
+    public async Task A_background_scan_runs_its_walk_inside_background_mode_and_leaves_it_before_the_thread_returns()
+    {
+        var native = await ScanWith((service, target) =>
+            service.ScanAsync(target, CancellationToken.None, 0, background: true));
+
         Assert.Equal(["begin", "end"], native.Calls.Select(c => c.Call));
         Assert.Equal(native.Calls[0].Thread, native.Calls[1].Thread);
+    }
+
+    [Fact]
+    public async Task A_scan_for_an_open_window_runs_at_normal_priority()
+    {
+        var explicitNormal = await ScanWith((service, target) =>
+            service.ScanAsync(target, CancellationToken.None, 0, background: false));
+        var plain = await ScanWith((service, target) =>
+            service.ScanAsync(target, CancellationToken.None));
+
+        Assert.Empty(explicitNormal.Calls);
+        Assert.Empty(plain.Calls);
+    }
+
+    [Fact]
+    public async Task A_background_request_does_not_leak_into_the_next_plain_scan()
+    {
+        var native = new FakeNative();
+        BackgroundWork.NativeForTest.Value = native;
+        try
+        {
+            var service = new CleanupService(new LoggingService());
+            await service.ScanAsync(MissingDirectoryTarget(), CancellationToken.None, 0, background: true);
+            native.Calls.Clear();
+            await service.ScanAsync(MissingDirectoryTarget(), CancellationToken.None);
+        }
+        finally
+        {
+            BackgroundWork.NativeForTest.Value = null;
+        }
+
+        Assert.Empty(native.Calls);
     }
 
     [Fact]

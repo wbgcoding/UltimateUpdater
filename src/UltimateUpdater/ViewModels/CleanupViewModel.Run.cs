@@ -1040,7 +1040,8 @@ public partial class CleanupViewModel
         CancellationToken cancellationToken,
         ElevatedJobHandle? handle = null,
         bool forceRestorePoint = false,
-        bool allowStart = true)
+        bool allowStart = true,
+        bool backgroundPriority = false)
     {
         if (_elevated is null)
             return false;
@@ -1051,6 +1052,7 @@ public partial class CleanupViewModel
             TargetIds = targets.Select(i => i.Target.Id).ToList(),
             Language = LocalizationService.Instance.CurrentLanguage,
             CreateRestorePoint = forceRestorePoint,
+            BackgroundPriority = command == "scan" && backgroundPriority,
             RegistryBackupFolder = _settings.Current.RegistryCleanup.BackupFolder,
             RegistryBackupRetentionCount = _settings.Current.RegistryCleanup.RetentionCount,
             // A "clean" command always targets one item at a time (see CleanElevatedAsync): a scan needs

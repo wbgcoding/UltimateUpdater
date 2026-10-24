@@ -293,7 +293,8 @@ public partial class CleanupViewModel
                             RefreshTotals();
                         },
                         cts.Token,
-                        allowStart: mode != ScanMode.Prescan);
+                        allowStart: mode != ScanMode.Prescan,
+                        backgroundPriority: mode == ScanMode.Prescan && !_windowAttached);
 
                     // A helper that died mid-scan must not leave rows spinning for ever.
                     if (IsCurrentScan())
@@ -344,7 +345,11 @@ public partial class CleanupViewModel
                     var measured = false;
                     try
                     {
-                        var result = await _service.ScanAsync(item.Target, cts.Token, item.RecycleBinMinAgeDays);
+                        // Background thread mode only while nobody has the window open: it is chosen as each target
+                        // starts, so a window that attaches mid-prescan gets normal priority for every target
+                        // not yet begun.
+                        var result = await _service.ScanAsync(
+                            item.Target, cts.Token, item.RecycleBinMinAgeDays, mode == ScanMode.Prescan && !_windowAttached);
                         measured = true;
                         if (!IsCurrentScan())
                             return;

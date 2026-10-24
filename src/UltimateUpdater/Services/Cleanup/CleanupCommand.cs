@@ -14,6 +14,10 @@ public sealed class CleanupCommand
 
     public List<string> TargetIds { get; set; } = new();
 
+    /// <summary>"scan" only: true when no window waits for the result (the startup prescan), so the worker
+    /// may measure in background thread mode. Absent or false from an older sender means normal priority.</summary>
+    public bool BackgroundPriority { get; set; }
+
     /// <summary>
     /// The app's own at-most-once-per-24-hours decision, mirroring the install-side rule via
     /// <see cref="RestorePointThrottle"/>, carried as a plain flag exactly like <see

@@ -365,6 +365,7 @@ public partial class CleanupViewModel : ObservableObject
         // A run carries on behind the closed dialog, and from here on it costs nothing at all: there is
         // nothing to mark up while nobody can see it.
         IsWindowVisible = false;
+        _windowAttached = false;
 
         // Deliberately NOT unsubscribed from the elevated helper here:
         // a still-busy instance is exactly the one MainViewModel.ShowCleanup() reuses for the next
@@ -397,12 +398,19 @@ public partial class CleanupViewModel : ObservableObject
     /// <summary>Ends a measuring pass for good; used when this view model is being replaced outright.</summary>
     public void CancelScan() => _scanCts?.Cancel();
 
+    /// <summary>True between <see cref="WindowAttached"/> and the window closing. Read by scans as each
+    /// target starts: with no window, a scan runs in background thread mode; with one, at normal priority.
+    /// Written on the UI thread, read from scan continuations.</summary>
+    private volatile bool _windowAttached;
+
     /// <summary>Re-subscribes to the elevated helper's state changes when a (re)opened window attaches to
     /// this view model; idempotent (unsubscribes first), so a window that reopens on a still-busy,
     /// reused instance (see <see cref="WindowClosed"/>) never ends up with two live handlers. Harmless to
     /// call again on a freshly constructed instance, whose constructor already subscribed once.</summary>
     internal void WindowAttached()
     {
+        _windowAttached = true;
+
         // A reused instance would otherwise time the reopened window from the FIRST open and log minutes.
         _openStopwatch.Restart();
 
@@ -419,6 +427,7 @@ public partial class CleanupViewModel : ObservableObject
     /// long as the helper itself lives.</summary>
     internal void Discard()
     {
+        _windowAttached = false;
         if (_elevated is not null)
             _elevated.StateChanged -= OnElevatedStateChanged;
     }

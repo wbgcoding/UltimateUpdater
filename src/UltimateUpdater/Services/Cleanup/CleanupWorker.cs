@@ -125,7 +125,7 @@ public static class CleanupWorker
             try
             {
                 if (command.Command == "scan")
-                    await ScanOneAsync(service, target, writer, jobId, cancellationToken);
+                    await ScanOneAsync(service, target, writer, jobId, command.BackgroundPriority, cancellationToken);
                 else
                     await CleanOneAsync(
                         service, target, writer, jobId, cancellationToken, pause, registrySettings,
@@ -169,10 +169,10 @@ public static class CleanupWorker
             .ToList();
 
     private static async Task ScanOneAsync(
-        CleanupService service, CleanupTarget target, StreamWriter writer, string jobId,
+        CleanupService service, CleanupTarget target, StreamWriter writer, string jobId, bool background,
         CancellationToken cancellationToken)
     {
-        var result = await service.ScanAsync(target, cancellationToken);
+        var result = await service.ScanAsync(target, cancellationToken, 0, background);
         Send(writer, jobId, ScanMessage(target.Id, result));
     }
 
