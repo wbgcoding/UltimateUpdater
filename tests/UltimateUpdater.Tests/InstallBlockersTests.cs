@@ -61,6 +61,18 @@ public class InstallBlockersTests
         Assert.Equal(["bash", "git"], blocked.ProcessNames.Order(StringComparer.OrdinalIgnoreCase));
     }
 
+    /// <summary>Seen live: Git's setup refused because an ssh.exe of a running git fetch used Git's files.</summary>
+    [Fact]
+    public void Git_is_blocked_by_its_own_ssh()
+    {
+        var blockers = new InstallBlockers(runningProcessNames: () => ["ssh", "sshd-session", "explorer"]);
+
+        var blocked = blockers.Detect(Item("Git.Git"));
+
+        Assert.NotNull(blocked);
+        Assert.Equal(["ssh"], blocked!.ProcessNames);
+    }
+
     [Fact]
     public void An_unrelated_package_with_the_known_processes_running_is_not_blocked()
     {

@@ -50,14 +50,16 @@ public sealed class InstallBlockers
 
     /// <summary>Git's silent setup finds its own shells still running, asks to close them and, with message
     /// boxes suppressed, asks again for ever at full CPU while every other winget install waits behind it.
-    /// Its names are short and common ("sh", "git"), so they match exactly, never as a prefix.</summary>
+    /// Its names are short and common ("sh", "git"), so they match exactly, never as a prefix. Git's own ssh,
+    /// scp and gpg stop the setup too (seen: an ssh.exe of a running git fetch); Windows' OpenSSH shares
+    /// those names, which costs at most one needless question.</summary>
     private static readonly IReadOnlyList<KnownBlocker> Table =
     [
         new("Microsoft.VisualStudio.", "Visual Studio", ["devenv", "VSIXInstaller", "ServiceHub"]),
         new("Corsair.", "Corsair iCUE", ["iCUE"]),
         new("Discord.", "Discord", ["Discord"]),
         new("Mozilla.Firefox", "Firefox", ["firefox"]),
-        new("Git.Git", "Git", ["bash", "sh", "mintty", "git", "git-bash", "ssh-agent", "gpg-agent"], ExactNames: true),
+        new("Git.Git", "Git", ["bash", "sh", "mintty", "git", "git-bash", "ssh", "scp", "sftp", "ssh-agent", "gpg", "gpg-agent"], ExactNames: true),
     ];
 
     private readonly Func<IReadOnlyList<string>> _runningProcessNames;
