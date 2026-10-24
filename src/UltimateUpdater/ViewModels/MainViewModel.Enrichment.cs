@@ -234,6 +234,15 @@ public partial class MainViewModel
         }
     }
 
+    /// <summary>Enrichment is part of the scan, just started from here instead of the orchestrator, so its
+    /// tool processes also yield to the user's own programs.</summary>
+    private static async Task<UpdateEnrichment?> EnrichAtScanPriorityAsync(
+        IUpdateSource source, UpdateItem item, CancellationToken cancellationToken)
+    {
+        using var scanScope = ScanScope.Enter();
+        return await source.EnrichAsync(item, cancellationToken);
+    }
+
     private async Task EnrichAllAsync(IReadOnlyList<UpdateRowViewModel> rows, CancellationToken cancellationToken)
     {
         // A handful at a time: enough to fill the table quickly without opening dozens of sockets to
@@ -270,7 +279,7 @@ public partial class MainViewModel
             await gate.WaitAsync(cancellationToken);
             try
             {
-                if (await source.EnrichAsync(row.Item, cancellationToken) is { } enrichment)
+                if (await EnrichAtScanPriorityAsync(source, row.Item, cancellationToken) is { } enrichment)
                 {
                     _enrichmentCache.Set(cacheKey, enrichment);
                     await _dispatcher.InvokeAsync(

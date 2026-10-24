@@ -172,19 +172,29 @@ internal sealed class SuspendedChildProcess : IChildProcess
     /// itself fails.
     /// </summary>
     internal static SuspendedChildProcess Start(
-        ProcessStartInfo info, string expectedImagePath, (string Family, string Aumid)? expectedPackage)
+        ProcessStartInfo info, string expectedImagePath, (string Family, string Aumid)? expectedPackage,
+        bool lowPriority = false)
     {
         // Held from the creation of the inheritable pipe ends until our copies of them are closed: a
         // launch through Process.Start in that span would inherit the write ends.
         lock (ProcessRunner.ChildStartLock)
-            return StartLocked(info, expectedImagePath, expectedPackage);
+            return StartLocked(info, expectedImagePath, expectedPackage, lowPriority);
     }
+
+    /// <summary>The process creation flags. The priority class is a creation flag here, so the child is
+    /// below normal from its first instruction and everything it starts inherits that.</summary>
+    internal static uint CreationFlags(bool lowPriority) =>
+        CreateSuspended | CreateUnicodeEnvironment | ExtendedStartupInfoPresent | CreateNoWindow
+        | (lowPriority ? BelowNormalPriorityClass : 0);
+
+    private const uint BelowNormalPriorityClass = 0x00004000;
 
     /// <summary>Test seam, invoked inside the start lock right after the pipes exist.</summary>
     internal static readonly AsyncLocal<Action?> AfterPipesCreatedForTest = new();
 
     private static SuspendedChildProcess StartLocked(
-        ProcessStartInfo info, string expectedImagePath, (string Family, string Aumid)? expectedPackage)
+        ProcessStartInfo info, string expectedImagePath, (string Family, string Aumid)? expectedPackage,
+        bool lowPriority)
     {
         var applicationPath = info.FileName;
         var commandLine = new StringBuilder();
@@ -257,7 +267,7 @@ internal sealed class SuspendedChildProcess : IChildProcess
 
             if (!CreateProcessW(
                     applicationPath, commandLine, IntPtr.Zero, IntPtr.Zero, true,
-                    CreateSuspended | CreateUnicodeEnvironment | ExtendedStartupInfoPresent | CreateNoWindow,
+                    CreationFlags(lowPriority),
                     environment, string.IsNullOrEmpty(info.WorkingDirectory) ? null : info.WorkingDirectory,
                     ref startup, out var created))
                 throw new Win32Exception(Marshal.GetLastWin32Error());

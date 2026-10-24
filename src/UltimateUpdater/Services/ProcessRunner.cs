@@ -167,7 +167,7 @@ public static class ProcessRunner
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(timeout);
 
-        using var process = ChildFactoryForTest.Value?.Invoke() ?? StartChild(executable, startInfo);
+        using var process = ChildFactoryForTest.Value?.Invoke() ?? StartChild(executable, startInfo, ScanScope.IsActive);
 
         // Ticks, not a DateTime: written from whichever pump last saw a byte and read from the idle
         // watchdog below, so it has to be a single value both sides can exchange/read atomically.
@@ -877,7 +877,7 @@ public static class ProcessRunner
     /// system mapped is compared with the pinned, verified target before it may run
     /// (<see cref="SuspendedChildProcess"/>).
     /// </summary>
-    private static IChildProcess StartChild(ResolvedExecutable executable, ProcessStartInfo startInfo)
+    private static IChildProcess StartChild(ResolvedExecutable executable, ProcessStartInfo startInfo, bool lowPriority)
     {
         if (executable.AliasPin is not null)
         {
@@ -893,7 +893,7 @@ public static class ProcessRunner
                 ? null
                 : (AppExecutionAlias.WingetPackageFamily, AppExecutionAlias.WingetAppUserModelId);
 
-            return SuspendedChildProcess.Start(startInfo, expected, expectedPackage);
+            return SuspendedChildProcess.Start(startInfo, expected, expectedPackage, lowPriority);
         }
 
         var process = new Process { StartInfo = startInfo };
@@ -908,6 +908,20 @@ public static class ProcessRunner
         {
             process.Dispose();
             throw;
+        }
+
+        if (lowPriority)
+        {
+            // Right after the start rather than at creation, which the managed route cannot express; what
+            // the tool starts afterwards inherits it. The process may already be gone or refuse the change,
+            // and neither is worth failing a scan for.
+            try
+            {
+                process.PriorityClass = ProcessPriorityClass.BelowNormal;
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+            {
+            }
         }
 
         return new ManagedChildProcess(process);

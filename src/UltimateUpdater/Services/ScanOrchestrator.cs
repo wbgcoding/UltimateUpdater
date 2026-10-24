@@ -399,6 +399,10 @@ public sealed class ScanOrchestrator
         _perSourceCts[source.Id] = sourceCts;
         var token = sourceCts.Token;
 
+        // Everything this source runs for the scan, its probe and its lookups included, starts its tool
+        // processes below normal priority so the scan never makes the user's own programs sluggish.
+        using var scanScope = ScanScope.Enter();
+
         try
         {
             // Never two runs of one source at once: the previous scan's run of it may still be going. Bounded,
