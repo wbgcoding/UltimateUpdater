@@ -469,11 +469,8 @@ public partial class MainViewModel
         }
         finally
         {
-            IsInstalling = false;
-            _installActivityRunning = false;
-            _installTimer?.Stop();
-            RefreshInstallProgress();
-            HandOffPendingInstalls();
+            if (EndInstallActivity())
+                HandOffPendingInstalls();
         }
     }
 
@@ -597,11 +594,8 @@ public partial class MainViewModel
         finally
         {
             row.IsRunningInteractively = false;
-            IsInstalling = false;
-            _installActivityRunning = false;
-            _installTimer?.Stop();
-            RefreshInstallProgress();
-            HandOffPendingInstalls();
+            if (EndInstallActivity())
+                HandOffPendingInstalls();
         }
     }
 
@@ -617,22 +611,31 @@ public partial class MainViewModel
     private Services.Sources.IUpdateSource? SourceFor(UpdateItem item) =>
         _sources.FirstOrDefault(s => s.Id == item.SourceId);
 
+    /// <summary>Test seam (null in production): answers the uninstall confirmation, which the headless
+    /// dialog layer would otherwise always decline.</summary>
+    internal Func<bool>? UninstallConfirmOverride { get; set; }
+
     /// <summary>
     /// Removing a package is destructive, so it is confirmed first and then run through the very same
     /// queue and progress window as an install: one item, action = Uninstall. Admin sources still take
     /// the elevated worker (one UAC prompt); user-scope ones run in-process.
+    /// With nothing else running it owns the shared install state like any solo activity. While a batch
+    /// (or another activity) runs it is a side run instead: its own concurrent queue run and token, the
+    /// row appended to the progress list, no flags of its own touched. An admin uninstall then waits for
+    /// the elevated worker's exclusive slot and shows as queued meanwhile. Only the very row that is
+    /// already queued or running is refused.
     /// </summary>
-    private async Task UninstallRowAsync(UpdateRowViewModel row)
+    internal async Task UninstallRowAsync(UpdateRowViewModel row)
     {
-        // A scan may be running; removing something is independent of looking for updates. A running
-        // install batch is not: both drive the same queue.
-        if (_installActivityRunning)
+        // A scan may be running; removing something is independent of looking for updates, and so is a
+        // running install batch: the queue takes concurrent runs. Only this row's own work blocks it.
+        if (UninstallBlockedForRow(row))
         {
             Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
             return;
         }
 
-        var confirmed = Dialogs.Confirm(
+        var confirmed = UninstallConfirmOverride?.Invoke() ?? Dialogs.Confirm(
             string.Format(Loc["UninstallConfirmHeadline"], row.Name),
             Loc["UninstallConfirmBody"],
             confirmText: Loc["UninstallButton"],
@@ -642,11 +645,9 @@ public partial class MainViewModel
 
         // Dialogs.Confirm pumps messages while it is up: an interactive retry's non-modal window
         // (ErrorDetailWindow, shown via ShowOwned) can finish and hand off to a fresh install loop in
-        // that window, claiming the very flag this method already checked before the dialog opened.
-        // Re-check now: proceeding regardless would cancel that loop's token and clear its batch out
-        // from under it, the same stomp the shared-activity flag above exists to prevent, just relocated
-        // behind this dialog.
-        if (_installActivityRunning)
+        // that window, or the same row can be queued meanwhile. Re-check now: proceeding regardless
+        // would run the row twice at once.
+        if (UninstallBlockedForRow(row))
         {
             Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
             return;
@@ -655,23 +656,43 @@ public partial class MainViewModel
         if (RefusedWhileSelfUpdateApplies("Uninstall"))
             return;
 
-        _installCts?.Cancel();
-        _installCts?.Dispose();
-        _installCts = new CancellationTokenSource();
-        _installActivityRunning = true;
-        IsInstalling = true;
+        var side = _installActivityRunning;
+        CancellationTokenSource? sideCts = null;
+        CancellationToken token;
+        if (side)
+        {
+            sideCts = new CancellationTokenSource();
+            _sideUninstallCts.Add(sideCts);
+            _sideUninstalls++;
+            token = sideCts.Token;
 
-        row.BeginInstall();
-        // so the finished row reads "Uninstalled" in red rather than a green "done"
-        row.WasUninstalled = true;
-        StartInstallProgress([row]);
+            if (!InstallBatch.Contains(row))
+                InstallBatch.Add(row);
+            row.BeginInstall();
+            // so the finished row reads "Uninstalled" in red rather than a green "done"
+            row.WasUninstalled = true;
+            RefreshInstallProgress();
+        }
+        else
+        {
+            _installCts?.Cancel();
+            _installCts?.Dispose();
+            _installCts = new CancellationTokenSource();
+            token = _installCts.Token;
+            _installActivityRunning = true;
+            IsInstalling = true;
+
+            row.BeginInstall();
+            row.WasUninstalled = true;
+            StartInstallProgress([row]);
+        }
 
         var key = PackageKey(row.Item);
         _uninstallingKeys.Add(key);
 
         try
         {
-            await _installQueue.RunAsync([row.Item], _installCts.Token, InstallAction.Uninstall);
+            await _installQueue.RunAsync([row.Item], token, InstallAction.Uninstall);
         }
         catch (OperationCanceledException)
         {
@@ -694,11 +715,18 @@ public partial class MainViewModel
         finally
         {
             _uninstallingKeys.Remove(key);
-            IsInstalling = false;
-            _installActivityRunning = false;
-            _installTimer?.Stop();
-            RefreshInstallProgress();
-            HandOffPendingInstalls();
+            if (sideCts is not null)
+                EndSideUninstall(sideCts);
+            else if (EndInstallActivity())
+                HandOffPendingInstalls();
         }
     }
+
+    /// <summary>The one case an uninstall is refused: this very row is already queued or running (a batch
+    /// install, another uninstall, an interactive retry).</summary>
+    private bool UninstallBlockedForRow(UpdateRowViewModel row) =>
+        row.InstallState is RowInstallState.Queued or RowInstallState.Running
+        || row.IsRunningInteractively
+        || _uninstallingKeys.Contains(PackageKey(row.Item))
+        || _installPending.Contains(row);
 }

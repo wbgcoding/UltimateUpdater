@@ -100,7 +100,7 @@ public sealed class InstallQueue
     /// <summary>
     /// Fires once, right before the batch's own automatic second attempt actually starts (there
     /// is something eligible to retry). Purely a UI cue, so the queue panel can show the retry round as
-    /// its own visibly separate section.
+    /// its own visibly separate section. Install runs only.
     /// </summary>
     public event Action? SecondAttemptStarted;
 
@@ -487,7 +487,10 @@ public sealed class InstallQueue
             return;
 
         _logging.Info($"Retrying {retryItems.Count} failed package(s) once, as the batch's own second attempt.");
-        SecondAttemptStarted?.Invoke();
+        // An uninstall has a retry round too, but it is nobody's "second attempt" of a batch: announcing it
+        // would put a running batch's queue panel into its retry section.
+        if (action == InstallAction.Install)
+            SecondAttemptStarted?.Invoke();
 
         var retryAdminScope = retryItems.Where(i => RequiresElevation(i.SourceId)).ToList();
 

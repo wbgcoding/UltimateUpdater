@@ -68,6 +68,64 @@ public partial class MainViewModel
     private bool _installActivityRunning;
 
     /// <summary>
+    /// Uninstalls started while another activity already owns the shared machinery. Each is its own
+    /// concurrent <see cref="InstallQueue.RunAsync"/> run (see <see cref="UninstallRowAsync"/>) and
+    /// takes no ownership: not the token, not the progress list, not the flags.
+    /// </summary>
+    private int _sideUninstalls;
+
+    /// <summary>The cancellation sources of the running <see cref="_sideUninstalls"/>, so Stop reaches them too.</summary>
+    private readonly List<CancellationTokenSource> _sideUninstallCts = [];
+
+    /// <summary>True once the activity that owns the shared state has finished while a side uninstall
+    /// still runs: the state stays up until the last of both ends.</summary>
+    private bool _ownerEnded;
+
+    /// <summary>
+    /// The owner activity's closing step. With no side uninstall running it releases the shared state
+    /// and returns true (the caller then hands the rows queued meanwhile to the next batch). Otherwise
+    /// the state stays up and the last side uninstall releases it, see <see cref="EndSideUninstall"/>.
+    /// </summary>
+    private bool EndInstallActivity()
+    {
+        if (_sideUninstalls > 0)
+        {
+            _ownerEnded = true;
+            RefreshInstallProgress();
+            return false;
+        }
+
+        ReleaseInstallActivity();
+        return true;
+    }
+
+    private void EndSideUninstall(CancellationTokenSource cts)
+    {
+        _sideUninstallCts.Remove(cts);
+        cts.Dispose();
+        _sideUninstalls--;
+
+        if (_sideUninstalls == 0 && _ownerEnded)
+        {
+            ReleaseInstallActivity();
+            HandOffPendingInstalls();
+        }
+        else
+        {
+            RefreshInstallProgress();
+        }
+    }
+
+    private void ReleaseInstallActivity()
+    {
+        _ownerEnded = false;
+        IsInstalling = false;
+        _installActivityRunning = false;
+        _installTimer?.Stop();
+        RefreshInstallProgress();
+    }
+
+    /// <summary>
     /// Turns the rows the user picked into the rows that actually have to be installed: a row the table
     /// folded several sources into stands for a REAL installation per source, so every one of them must be
     /// updated, best-ranked first; otherwise updating a folded row (e.g. graphify via both uv and pip)
@@ -754,10 +812,7 @@ public partial class MainViewModel
             _logging.Event(ActivityLog.Install, ActivityLog.BatchFinished(
                 InstallBatch.Count, DateTimeOffset.UtcNow - _installStartedAt));
 
-            IsInstalling = false;
-            _installActivityRunning = false;
-            _installTimer?.Stop();
-            RefreshInstallProgress();
+            var released = EndInstallActivity();
 
             // Surface any "installed, reboot pending" results once the batch is done.
             var rebootingRows = InstallBatch.Where(r => r.NeedsReboot).ToList();
@@ -768,7 +823,8 @@ public partial class MainViewModel
                 ShowRebootDialogIfNeeded(rebootingRows.Select(r => r.Name).ToList());
             }
 
-            if (stopped)
+            // Held open by a running uninstall: that one hands the pending rows on when it ends.
+            if (stopped && released)
                 HandOffPendingInstalls();
         }
     }
@@ -861,6 +917,8 @@ public partial class MainViewModel
     private void CancelInstall()
     {
         _installCts?.Cancel();
+        foreach (var sideCts in _sideUninstallCts.ToList())
+            sideCts.Cancel();
         foreach (var row in _installPending)
             row.MarkNotInstalled(Loc["InstallCancelled"]);
         _installPending.Clear();
