@@ -177,7 +177,6 @@ self-contained executables for x64 and ARM64, the installer and checksums. `dist
 | `UltimateUpdater.exe` | portable build (x64) |
 | `Setup-UltimateUpdater-<version>.exe` | installer with both architectures |
 | `SHA256SUMS.txt` | checksums for both |
-| `sbom.json` | bundled libraries and versions, for licence and vulnerability checks, not shipped |
 
 Without Inno Setup everything except the installer is still produced. To sign, set `WU_SIGN_THUMBPRINT`
 to a code-signing certificate's thumbprint in your certificate store (optionally `WU_SIGN_TIMESTAMP_URL`).

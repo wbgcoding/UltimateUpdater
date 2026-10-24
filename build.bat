@@ -231,24 +231,6 @@ if errorlevel 1 goto :error
 :nosignsetup
 
 echo.
-echo === dependency list ===
-rem NOTICE-dependencies.md is the human-written list of direct packages and their licences; this is
-rem the automated, transitive-inclusive one for anyone who wants the full tree. --format json needs a
-rem newer SDK than this project otherwise requires; without it this step writes dotnet's plain text
-rem listing to the same file name instead and says so, rather than failing the build over a report
-rem format nobody actually depends on.
-dotnet list "%ROOT%UltimateUpdater.slnx" package --include-transitive --format json > "%DIST%\sbom.json"
-if not errorlevel 1 goto :sbom_done
-echo --format json is not available on this SDK - writing the plain text dependency listing instead.
-dotnet list "%ROOT%UltimateUpdater.slnx" package --include-transitive > "%DIST%\sbom.json"
-if errorlevel 1 goto :error
-:sbom_done
-if not exist "%DIST%\sbom.json" (
-    echo ERROR: no dependency list was produced.
-    goto :error
-)
-
-echo.
 echo === checksums ===
 rem One SHA256SUMS.txt over every shipped artifact; the self-updater verifies against it.
 rem Get-FileHash is used rather than certutil, whose output is localized and would break parsing.

@@ -1,8 +1,7 @@
 # Third-party dependencies
 
 Every direct NuGet package this project references, its version at the time of writing and its
-licence. Transitive packages are not listed here by hand; `dist\sbom.json`, written by `build.bat`,
-carries the full transitive list for whoever wants it.
+licence. Transitive packages are not listed here; `dotnet list package --include-transitive` prints them.
 
 | Package | Version | Licence |
 | --- | --- | --- |
