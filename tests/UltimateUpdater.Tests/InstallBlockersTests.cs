@@ -47,6 +47,20 @@ public class InstallBlockersTests
         Assert.Equal("Corsair iCUE", blocked!.DisplayProgramName);
     }
 
+    /// <summary>Git's silent setup asks to close its own running shells and, with message boxes suppressed,
+    /// asks again for ever at full CPU; every other winget install then waits behind it.</summary>
+    [Fact]
+    public void Git_is_blocked_by_its_own_shells_matched_by_exact_name()
+    {
+        var blockers = new InstallBlockers(runningProcessNames: () => ["bash", "git", "GitHubDesktop", "ShareX", "explorer"]);
+
+        var blocked = blockers.Detect(Item("Git.Git"));
+
+        Assert.NotNull(blocked);
+        Assert.Equal("Git", blocked!.DisplayProgramName);
+        Assert.Equal(["bash", "git"], blocked.ProcessNames.Order(StringComparer.OrdinalIgnoreCase));
+    }
+
     [Fact]
     public void An_unrelated_package_with_the_known_processes_running_is_not_blocked()
     {

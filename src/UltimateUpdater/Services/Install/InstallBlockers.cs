@@ -45,14 +45,19 @@ public sealed class InstallBlockers
     /// exact one). Discord and Firefox are the two "1-2 more sensible ones" the same pattern implies: both
     /// are extremely common installs that refuse to update themselves while running.
     /// </summary>
-    private sealed record KnownBlocker(string PackageIdPrefix, string DisplayProgramName, IReadOnlyList<string> ProcessNamePrefixes);
+    private sealed record KnownBlocker(string PackageIdPrefix, string DisplayProgramName, IReadOnlyList<string> ProcessNamePrefixes,
+        bool ExactNames = false);
 
+    /// <summary>Git's silent setup finds its own shells still running, asks to close them and, with message
+    /// boxes suppressed, asks again for ever at full CPU while every other winget install waits behind it.
+    /// Its names are short and common ("sh", "git"), so they match exactly, never as a prefix.</summary>
     private static readonly IReadOnlyList<KnownBlocker> Table =
     [
         new("Microsoft.VisualStudio.", "Visual Studio", ["devenv", "VSIXInstaller", "ServiceHub"]),
         new("Corsair.", "Corsair iCUE", ["iCUE"]),
         new("Discord.", "Discord", ["Discord"]),
         new("Mozilla.Firefox", "Firefox", ["firefox"]),
+        new("Git.Git", "Git", ["bash", "sh", "mintty", "git", "git-bash", "ssh-agent", "gpg-agent"], ExactNames: true),
     ];
 
     private readonly Func<IReadOnlyList<string>> _runningProcessNames;
@@ -139,7 +144,9 @@ public sealed class InstallBlockers
             if (!item.Id.StartsWith(known.PackageIdPrefix, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var matches = MatchByPrefix(runningSet, known.ProcessNamePrefixes);
+            var matches = known.ExactNames
+                ? known.ProcessNamePrefixes.Where(name => runningSet.Contains(name) && !NeverClose.Contains(name)).ToList()
+                : MatchByPrefix(runningSet, known.ProcessNamePrefixes);
             if (matches.Count > 0)
                 return new BlockedInstall(item, known.DisplayProgramName, matches);
         }
