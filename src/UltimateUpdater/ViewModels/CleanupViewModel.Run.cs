@@ -732,9 +732,18 @@ public partial class CleanupViewModel
             // A helper that dropped out falls back to a local pass, which frees what it
             // can rather than skipping the target outright.
             var outcome = elevatedTargets.Contains(item)
-                ? await CleanElevatedAsync(item, progress, cancellationToken)
-                  ?? await CleanLocallyAsync()
+                ? await CleanElevatedAsync(item, progress, cancellationToken) ?? await FallBackLocallyAsync()
                 : await CleanLocallyAsync();
+
+            // What the helper confirmed gone before it dropped out stays counted: the local pass reports
+            // from zero again, so its live part restarts and the helper's part is added to its outcome.
+            async Task<CleanupOutcome> FallBackLocallyAsync()
+            {
+                var freedByHelper = liveFreed;
+                liveFreed = 0;
+                var local = await CleanLocallyAsync();
+                return local with { FreedBytes = local.FreedBytes + freedByHelper };
+            }
 
             // A per-user interpreter's own uninstaller must never run inside the elevated worker (HKCU is
             // user-writable, so a command read from it must never run with administrator rights; see
