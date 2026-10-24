@@ -521,6 +521,7 @@ public class SettingsServiceTests : IDisposable
         };
         service.Current.CleanupSelection["user-temp"] = false;
         service.Current.CleanupRecycleInsteadOfDelete = true;
+        service.Current.CleanupPrescanAtStartup = false;
         service.Current.HistoryRetentionDays = 365;
         service.Current.CleanupPermanentlyExcludedPaths.Add(@"C:\keep-me");
 
@@ -544,6 +545,7 @@ public class SettingsServiceTests : IDisposable
         Assert.Empty(service.Current.PersistentFailures);
         Assert.Empty(service.Current.CleanupSelection);
         Assert.Equal(defaults.CleanupRecycleInsteadOfDelete, service.Current.CleanupRecycleInsteadOfDelete);
+        Assert.True(service.Current.CleanupPrescanAtStartup);
         Assert.Equal(defaults.HistoryRetentionDays, service.Current.HistoryRetentionDays);
         Assert.Empty(service.Current.CleanupPermanentlyExcludedPaths);
     }

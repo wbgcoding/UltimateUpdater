@@ -107,6 +107,11 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool cleanupReminderEnabled;
 
+    /// <summary>Measure the cleanup areas in the background at startup (see
+    /// <c>AppSettings.CleanupPrescanAtStartup</c>).</summary>
+    [ObservableProperty]
+    private bool cleanupPrescanAtStartup;
+
     /// <summary>File targets go to the recycle bin instead of being deleted outright; the cleanup run reads
     /// the stored setting when it starts. A target that needs admin rights ignores it regardless.</summary>
     [ObservableProperty]
@@ -494,6 +499,7 @@ public partial class SettingsViewModel : ObservableObject
         closeToTray = current.Ui.CloseToTray;
         cleanupReminderEnabled = !current.CleanupReminderOff;
         cleanupRecycleInsteadOfDelete = current.CleanupRecycleInsteadOfDelete;
+        cleanupPrescanAtStartup = current.CleanupPrescanAtStartup;
         selectedTheme = current.Ui.Theme;
         selectedLanguage = current.Ui.Language;
 
@@ -637,6 +643,8 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnCleanupReminderEnabledChanged(bool value) => Apply(s => s.CleanupReminderOff = !value);
 
     partial void OnCleanupRecycleInsteadOfDeleteChanged(bool value) => Apply(s => s.CleanupRecycleInsteadOfDelete = value);
+
+    partial void OnCleanupPrescanAtStartupChanged(bool value) => Apply(s => s.CleanupPrescanAtStartup = value);
 
     partial void OnSelectedThemeChanged(string value)
     {
@@ -974,6 +982,7 @@ public partial class SettingsViewModel : ObservableObject
         CloseToTray = current.Ui.CloseToTray;
         CleanupReminderEnabled = !current.CleanupReminderOff;
         CleanupRecycleInsteadOfDelete = current.CleanupRecycleInsteadOfDelete;
+        CleanupPrescanAtStartup = current.CleanupPrescanAtStartup;
         SelectedTheme = current.Ui.Theme;
         SelectedLanguage = current.Ui.Language;
 

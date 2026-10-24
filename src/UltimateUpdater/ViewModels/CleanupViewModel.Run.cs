@@ -306,6 +306,9 @@ public partial class CleanupViewModel
 
         _runClaimed = true;
         OnRunClaimChanged();
+
+        // A run changes what the prescan measured; its result is no longer one to reuse or to stamp.
+        SetPrescanFinishedAt(null);
         try
         {
             await RunCleanupClaimedAsync();
@@ -1036,7 +1039,8 @@ public partial class CleanupViewModel
         Action<CleanupWorkerMessage> onMessage,
         CancellationToken cancellationToken,
         ElevatedJobHandle? handle = null,
-        bool forceRestorePoint = false)
+        bool forceRestorePoint = false,
+        bool allowStart = true)
     {
         if (_elevated is null)
             return false;
@@ -1142,7 +1146,8 @@ public partial class CleanupViewModel
         // like a hang. Cleaning changes the machine and takes the exclusive slot; emptying Temp while an
         // installer is using it would break both.
         exclusive: command is not ("scan" or "analyze"),
-        handle);
+        handle,
+        allowStart);
     }
 
     /// <summary>

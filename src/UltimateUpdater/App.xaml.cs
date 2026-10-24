@@ -393,6 +393,7 @@ public partial class App : Application
             settings, logging, themeService, scanOrchestrator, iconCache, installQueue, history, autostart,
             notifications, selfUpdate, sources, _elevated, wingetBootstrap: wingetBootstrap);
         _mainViewModel = mainViewModel;
+        mainViewModel.CleanupPrescanAllowed = !IsUnattended;
         var mainWindow = new MainWindow(mainViewModel, themeService, settings, logging);
 
         MainWindow = mainWindow;

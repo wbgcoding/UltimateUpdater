@@ -70,24 +70,93 @@ public partial class MainViewModel
         if (IsOpen<Views.CleanupWindow>())
             return;
 
-        // Busy, not merely cleaning: a dialog re-opened while still MEASURING must reuse that view model
-        // rather than get a fresh one, or its scan would race the old one over the same folders.
-        // Whatever is still going is picked back up; only a finished dialog (or none at all) starts fresh.
-        if (_cleanupViewModel is null || !_cleanupViewModel.IsBusy)
+        var cleanupViewModel = EnsureCleanupViewModel();
+
+        // Covers a fresh instance (already subscribed once by its own constructor) and a reused one whose
+        // earlier window close left it subscribed anyway; either way this is the one place a window
+        // actually attaches.
+        cleanupViewModel.WindowAttached();
+        ShowOwned(new Views.CleanupWindow(cleanupViewModel));
+    }
+
+    /// <summary>
+    /// The view model the dialog opens on. Busy, not merely cleaning: a dialog re-opened while still
+    /// MEASURING must reuse that view model rather than get a fresh one, or its scan would race the old one
+    /// over the same folders. Whatever is still going is picked back up; only a finished dialog (or none at
+    /// all) starts fresh. A prescanned one is kept too, while its result is fresh and nothing has touched it
+    /// since: opening it then costs no new measuring (the admin targets the prescan left out are measured
+    /// on open).
+    /// </summary>
+    internal CleanupViewModel EnsureCleanupViewModel()
+    {
+        if (_cleanupViewModel is null || (!_cleanupViewModel.IsBusy && !IsPrescanReusable(_cleanupViewModel)))
         {
             _cleanupViewModel?.CancelScan();
             _cleanupViewModel?.Discard();
             _cleanupViewModel = CreateCleanupViewModel();
         }
 
-        // Covers both branches above - a fresh instance (already
-        // subscribed once by its own constructor) and a reused, still-busy one whose earlier window close
-        // left it subscribed anyway; either way this is the one place a window actually attaches.
-        _cleanupViewModel.WindowAttached();
-        ShowOwned(new Views.CleanupWindow(_cleanupViewModel));
+        return _cleanupViewModel;
     }
 
     private CleanupViewModel? _cleanupViewModel;
+
+    /// <summary>How long a startup prescan's figures stay good for an opening dialog.</summary>
+    internal static readonly TimeSpan CleanupPrescanFreshness = TimeSpan.FromMinutes(30);
+
+    /// <summary>Set by the app once the session is a real, attended one. Off by default so a view model
+    /// built in a test never measures the machine it runs on.</summary>
+    internal bool CleanupPrescanAllowed { get; set; }
+
+    /// <summary>"Now" for the prescan's freshness and stamp; a test replaces it.</summary>
+    internal Func<DateTime> CleanupClock { get; set; } = () => DateTime.Now;
+
+    /// <summary>Test seam for the power check; null reads the real power status.</summary>
+    internal Func<bool>? OnAcPowerOverride { get; set; }
+
+    /// <summary>The running startup prescan, or null when none was started.</summary>
+    internal Task? CleanupPrescanTask { get; private set; }
+
+    /// <summary>Test seam: the measuring service a new cleanup view model gets; null is the real one.</summary>
+    internal Func<Services.Cleanup.CleanupService>? CleanupServiceOverride { get; set; }
+
+    private bool _cleanupPrescanStarted;
+
+    private bool IsPrescanReusable(CleanupViewModel viewModel)
+    {
+        if (viewModel.IsPrescanRunning)
+            return true;
+
+        return viewModel.Phase == CleanupPhase.Choosing
+            && viewModel.PrescanFinishedAt is { } at
+            && CleanupClock() - at < CleanupPrescanFreshness;
+    }
+
+    /// <summary>
+    /// After the first finished update scan, starts measuring what a cleanup could free, so the dialog opens
+    /// with figures instead of a spinner. Quiet by design: only on mains power, only when the setting is on,
+    /// user-scope targets (plus the admin ones if the elevated helper already runs), never an elevation or
+    /// UAC prompt, and never a cleanup. Once per session.
+    /// </summary>
+    private void StartCleanupPrescanIfWanted()
+    {
+        if (_cleanupPrescanStarted)
+            return;
+
+        _cleanupPrescanStarted = true;
+
+        if (!CleanupPrescanAllowed || !_settings.Current.CleanupPrescanAtStartup || _installQueue.IsMockSession)
+            return;
+
+        if (!(OnAcPowerOverride ?? Services.PowerStatus.IsOnAcPower)())
+            return;
+
+        if (_cleanupViewModel is not null)
+            return;
+
+        _cleanupViewModel = CreateCleanupViewModel();
+        CleanupPrescanTask = _cleanupViewModel.PrescanAsync();
+    }
 
     /// <summary>True while a cleanup is running, whether or not its dialog is open.</summary>
     [ObservableProperty]
@@ -101,7 +170,11 @@ public partial class MainViewModel
 
     private CleanupViewModel CreateCleanupViewModel()
     {
-        var viewModel = new CleanupViewModel(new Services.Cleanup.CleanupService(_logging), _logging, _settings, _elevated);
+        var viewModel = new CleanupViewModel(
+            CleanupServiceOverride?.Invoke() ?? new Services.Cleanup.CleanupService(_logging), _logging, _settings, _elevated)
+        {
+            Clock = () => CleanupClock(),
+        };
 
         viewModel.PropertyChanged += (_, args) =>
         {

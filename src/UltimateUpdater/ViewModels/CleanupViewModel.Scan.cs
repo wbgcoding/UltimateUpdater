@@ -100,22 +100,124 @@ public partial class CleanupViewModel
 
     private bool CanRescan() => Phase is CleanupPhase.Choosing or CleanupPhase.Finished && !IsScanning && !_runClaimed;
 
-    /// <summary>
-    /// Measures every target in the background as soon as the window opens, one row at a time so figures
-    /// appear progressively rather than all at the end.
-    /// </summary>
-    public Task StartScanAsync()
+    /// <summary>How far one measuring pass reaches. Full is the pass a window runs (and a rescan): every
+    /// target, asking for administrator rights first. Prescan is the quiet one at startup: user-scope
+    /// targets only, no question, no elevation. Remaining finishes a prescan on open: just the targets it
+    /// left out.</summary>
+    private enum ScanMode
     {
-        var task = StartScanCoreAsync();
+        Full,
+        Prescan,
+        Remaining,
+    }
+
+    /// <summary>Targets a prescan left out because they need rights the app does not have yet.</summary>
+    private List<CleanupItemViewModel> _prescanSkipped = [];
+
+    private Task? _prescanTask;
+
+    /// <summary>Where "now" comes from for the measurement stamp; a test replaces it.</summary>
+    internal Func<DateTime> Clock { get; set; } = () => DateTime.Now;
+
+    /// <summary>When the startup prescan finished measuring, or null when none did or the user has
+    /// rescanned since. Decides whether a reopened dialog may reuse this result.</summary>
+    public DateTime? PrescanFinishedAt { get; private set; }
+
+    /// <summary>True while the startup prescan is still measuring.</summary>
+    internal bool IsPrescanRunning => _prescanTask is { IsCompleted: false };
+
+    internal Task WaitForPrescanAsync() => _prescanTask ?? Task.CompletedTask;
+
+    /// <summary>The quiet "As of 14:05" line for a dialog opened on a prescanned result; empty after a rescan.</summary>
+    public string MeasuredAtText =>
+        PrescanFinishedAt is { } at
+            ? string.Format(Loc["CleanupMeasuredAt"], at.ToString("t", System.Globalization.CultureInfo.CurrentUICulture))
+            : string.Empty;
+
+    public bool HasMeasuredAt => PrescanFinishedAt is not null;
+
+    private void SetPrescanFinishedAt(DateTime? value)
+    {
+        PrescanFinishedAt = value;
+        OnPropertyChanged(nameof(PrescanFinishedAt));
+        OnPropertyChanged(nameof(MeasuredAtText));
+        OnPropertyChanged(nameof(HasMeasuredAt));
+    }
+
+    /// <summary>
+    /// Measures in the background at startup, before any window exists. Waits for the catalogue, then walks
+    /// the user-scope targets (plus the admin ones only when the elevated helper is already running) and
+    /// never asks for anything. Already measuring or busy: nothing to do.
+    /// </summary>
+    internal Task PrescanAsync()
+    {
+        if (IsBusy || _prescanTask is { IsCompleted: false })
+            return Task.CompletedTask;
+
+        var task = PrescanCoreAsync();
+        _prescanTask = task;
+        return task;
+    }
+
+    private async Task PrescanCoreAsync()
+    {
+        try
+        {
+            await CatalogReadyTask;
+            if (IsBusy)
+                return;
+
+            await StartScanTrackedAsync(ScanMode.Prescan);
+        }
+        catch (Exception ex)
+        {
+            _logging.Warn($"Cleanup prescan failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>What a freshly opened window starts: the rest of a prescan when one is fresh here, else
+    /// the full measuring pass. A prescan still going is waited for first, so the two never overlap.</summary>
+    public async Task StartOpenScanAsync()
+    {
+        if (_prescanTask is { IsCompleted: false } running)
+            await running;
+
+        if (IsScanning)
+            return;
+
+        await (PrescanFinishedAt is not null ? StartScanTrackedAsync(ScanMode.Remaining) : StartScanAsync());
+    }
+
+    private Task StartScanTrackedAsync(ScanMode mode)
+    {
+        var task = StartScanCoreAsync(mode);
         _scanTask = task;
         return task;
     }
 
+    /// <summary>
+    /// Measures every target in the background as soon as the window opens, one row at a time so figures
+    /// appear progressively rather than all at the end.
+    /// </summary>
+    public Task StartScanAsync() => StartScanTrackedAsync(ScanMode.Full);
+
     /// <summary>The scan's own body, pulled out so <see cref="StartScanAsync"/> can capture the running
     /// task into <see cref="_scanTask"/> before returning it, letting a later run wait for THIS scan to
     /// actually finish rather than only cancelling it (see <see cref="CleanupViewModel.AwaitScanUnwindAsync"/>).</summary>
-    private async Task StartScanCoreAsync()
+    private async Task StartScanCoreAsync(ScanMode mode)
     {
+        // A rescan the user asked for replaces the prescan's figures for good: the stamp goes with them.
+        if (mode == ScanMode.Full)
+        {
+            SetPrescanFinishedAt(null);
+            _prescanSkipped = [];
+        }
+
+        // What this pass measures: everything, or only what the prescan left out.
+        var scope = mode == ScanMode.Remaining ? _prescanSkipped.ToList() : Items.ToList();
+        if (mode == ScanMode.Remaining)
+            _prescanSkipped = [];
+
         // A fresh measurement after a finished run is a new choice: back to choosing, without the old
         // run's capsules and figures on the rows.
         if (Phase == CleanupPhase.Finished)
@@ -145,7 +247,7 @@ public partial class CleanupViewModel
 
         // Every row is being measured again: shown as such (not with the old figure as if it were current),
         // and its "nothing found" states are re-raised when its own result arrives.
-        foreach (var item in Items)
+        foreach (var item in scope)
             item.IsScanning = true;
 
         IsScanning = true;
@@ -161,9 +263,12 @@ public partial class CleanupViewModel
             {
                 // Asked before anything is measured: without admin the elevated targets report a floor
                 // rather than a total, and three of them do nothing whatsoever.
-                await EnsureElevationAsync(cts.Token);
+                // The prescan asks nothing: it takes what the app can read as it is. Finishing a prescan
+                // asks only when something it left out really needs the rights.
+                if (mode == ScanMode.Full || (mode == ScanMode.Remaining && scope.Any(i => i.Target.NeedsElevation)))
+                    await EnsureElevationAsync(cts.Token);
 
-                elevated = ElevatedItems(Items);
+                elevated = ElevatedItems(scope);
                 if (elevated.Count > 0)
                 {
                     await RunElevatedAsync(
@@ -187,7 +292,8 @@ public partial class CleanupViewModel
                             row.IsScanning = false;
                             RefreshTotals();
                         },
-                        cts.Token);
+                        cts.Token,
+                        allowStart: mode != ScanMode.Prescan);
 
                     // A helper that died mid-scan must not leave rows spinning for ever.
                     if (IsCurrentScan())
@@ -216,7 +322,14 @@ public partial class CleanupViewModel
             // independent directory/registry walks, each waiting on disk or the registry rather than the
             // CPU). Bounded to min(4, core count): unbounded would have every temp/cache folder and the
             // registry scan fight over the same disk and the same few registry hives at once.
-            var unelevated = Items.Where(item => !elevated.Contains(item)).ToList();
+            // A prescan leaves out the targets that need rights it does not have; they are measured on open.
+            var skipped = mode == ScanMode.Prescan && !ElevationService.IsElevated
+                ? scope.Where(item => item.Target.NeedsElevation && !elevated.Contains(item)).ToList()
+                : [];
+            if (mode == ScanMode.Prescan && IsCurrentScan())
+                _prescanSkipped = skipped;
+
+            var unelevated = scope.Where(item => !elevated.Contains(item) && !skipped.Contains(item)).ToList();
             using var throttle = new SemaphoreSlim(Math.Max(1, Math.Min(4, Environment.ProcessorCount)));
 
             async Task ScanOneAsync(CleanupItemViewModel item)
@@ -325,11 +438,15 @@ public partial class CleanupViewModel
 
                 RefreshTotals();
 
+                if (mode == ScanMode.Prescan && !cts.IsCancellationRequested)
+                    SetPrescanFinishedAt(Clock());
+
                 // Measures the component store on its own once administrator rights are already there, so
                 // the card needs no click. Never raises a prompt: the condition is exactly the one under
                 // which EnsureElevationForComponentStoreAsync asks nothing. A result already present is not
                 // measured again (the button still re-runs it).
-                if (!cts.IsCancellationRequested
+                if (mode != ScanMode.Prescan
+                    && !cts.IsCancellationRequested
                     && ComponentStoreResult is null
                     && !IsAnalyzingComponentStore
                     && (ElevationService.IsElevated || _elevated?.IsRunning == true))

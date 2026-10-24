@@ -457,7 +457,10 @@ public partial class MainViewModel
         // Only a finished scan restarts the interval: a scan the user stopped checked nothing, and postponed a
         // due scheduled scan by a whole interval.
         if (completedCleanly)
+        {
             ScanCompleted?.Invoke();
+            StartCleanupPrescanIfWanted();
+        }
 
         // Fire-and-forget, after the scan UI has settled: this may show a dialog and do network I/O, neither
         // of which the scan should wait on. A no-op once winget is present or once this session already

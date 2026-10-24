@@ -203,8 +203,23 @@ public partial class CleanupWindow
         // first one.
         if (_viewModel.IsCleaning)
             StartSweep();
+        else if (_viewModel.IsPrescanRunning)
+            _ = FinishAfterPrescanAsync();
         else if (!_viewModel.IsScanning)
-            _ = _viewModel.StartScanAsync();
+            _ = _viewModel.StartOpenScanAsync();
+    }
+
+    /// <summary>The window opened while the startup prescan was still measuring: the prescan is left to
+    /// finish (a second pass would fight it over the same folders), then the rest is measured as usual.</summary>
+    private async Task FinishAfterPrescanAsync()
+    {
+        await _viewModel.WaitForPrescanAsync();
+
+        // Closed meanwhile: nothing to measure for a window nobody can see (see OnCatalogReady).
+        if (_closed || _viewModel.IsBusy)
+            return;
+
+        await _viewModel.StartOpenScanAsync();
     }
 
     private void ReportVisibility()

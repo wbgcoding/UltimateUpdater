@@ -49,6 +49,11 @@ public sealed class AppSettings
     /// regardless of the value here (see CleanupService.CleanDirectories).</summary>
     public bool CleanupRecycleInsteadOfDelete { get; set; }
 
+    /// <summary>Measures the cleanup areas once at startup, in the background, after the first update scan
+    /// and never on battery, so the cleanup window opens with results. On by default; it only reads, it
+    /// never deletes and never asks for administrator rights.</summary>
+    public bool CleanupPrescanAtStartup { get; set; } = true;
+
     /// <summary>The recycle bin card only lists (and would delete) items whose own deletion timestamp is
     /// at least this many days old. 0 means every age, which is also the value a freshly unticked filter
     /// sets. Default 30, so a first look at the card does not immediately offer files someone may still

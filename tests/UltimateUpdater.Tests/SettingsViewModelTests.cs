@@ -41,6 +41,28 @@ public class SettingsViewModelTests
         Assert.True(viewModel.CleanupRecycleInsteadOfDelete);
     }
 
+    /// <summary>The startup prescan switch: on by default, flipping it writes the setting the main window
+    /// reads, it survives a reload from disk, and a reload of the window's own state shows it again.</summary>
+    [Fact]
+    public void The_cleanup_prescan_switch_toggles_and_persists_the_setting()
+    {
+        var logging = new LoggingService();
+        var path = Path.Combine(Directory.CreateTempSubdirectory("wu-settings-viewmodel-").FullName, "settings.json");
+        var settings = new SettingsService(logging, path);
+        var viewModel = new SettingsViewModel(settings, logging, new ThemeService(), new AutostartService(logging));
+        Assert.True(viewModel.CleanupPrescanAtStartup);
+
+        viewModel.CleanupPrescanAtStartup = false;
+
+        Assert.False(settings.Current.CleanupPrescanAtStartup);
+        settings.Flush();
+        Assert.False(new SettingsService(logging, path).Current.CleanupPrescanAtStartup);
+
+        settings.Current.CleanupPrescanAtStartup = true;
+        viewModel.ReloadFromSettings();
+        Assert.True(viewModel.CleanupPrescanAtStartup);
+    }
+
     /// <summary>
     /// The dropdown offers four values; a settings.json can hold any number. What is shown must never
     /// claim files are deleted sooner than they really are, so an in-between value rounds UP.

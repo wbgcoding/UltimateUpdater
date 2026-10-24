@@ -92,6 +92,7 @@ public sealed class SettingsService
             Current.RegistryCleanup = defaults.RegistryCleanup;
             Current.Logs = defaults.Logs;
             Current.CleanupRecycleInsteadOfDelete = defaults.CleanupRecycleInsteadOfDelete;
+            Current.CleanupPrescanAtStartup = defaults.CleanupPrescanAtStartup;
             Current.CleanupRecycleBinMinAgeDays = defaults.CleanupRecycleBinMinAgeDays;
             Current.CleanupReminderDays = defaults.CleanupReminderDays;
             Current.CleanupReminderOff = defaults.CleanupReminderOff;

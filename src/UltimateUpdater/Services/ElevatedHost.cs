@@ -390,10 +390,17 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
     /// False for read-only work (measuring), which then runs alongside whatever else is in flight. True for
     /// anything that changes the machine: the worker runs those strictly one at a time.
     /// </param>
+    /// <param name="allowStart">
+    /// False for a job that must never be the reason for an elevation prompt (the startup prescan): when
+    /// the helper is not running by now, the job is refused rather than the helper launched.
+    /// </param>
     public async Task<bool> RunAsync(
         string kind, object payload, Func<string, bool> onLine, CancellationToken cancellationToken,
-        bool exclusive = true, ElevatedJobHandle? handle = null)
+        bool exclusive = true, ElevatedJobHandle? handle = null, bool allowStart = true)
     {
+        if (!allowStart && !IsRunning)
+            return false;
+
         if (!await EnsureStartedAsync(cancellationToken))
             return false;
 
