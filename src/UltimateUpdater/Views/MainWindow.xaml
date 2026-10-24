@@ -1104,7 +1104,7 @@
                                      as every other row surface in this app (e.g. the Steam child rows),
                                      rather than a flat strip. -->
                                 <Border x:Name="QueueRowCard" CornerRadius="10" Margin="0,2" Padding="12,8"
-                                        BorderThickness="1" AllowDrop="True" Cursor="SizeAll"
+                                        BorderThickness="1" AllowDrop="True"
                                         Focusable="True"
                                         AutomationProperties.Name="{Binding Name}"
                                         Loaded="OnQueueRowCardLoaded"
@@ -1146,8 +1146,8 @@
                                         <!-- Grip dots, permanent: the row's only "you can reorder this" cue, so visible at rest, not
                                              just on hover/focus (a position number would say nothing a screen
                                              reader can't already read off the automation name below). Tertiary
-                                             at rest, secondary on hover or focus. The card's own SizeAll
-                                             cursor and Alt+Up/Down (OnQueueRowKeyDown) apply as well. -->
+                                             at rest, secondary on hover or focus. Alt+Up/Down
+                                             (OnQueueRowKeyDown) applies as well; the cursor stays the normal arrow. -->
                                         <ui:SymbolIcon x:Name="QueueGripIcon" Grid.Column="0" Symbol="ReOrderDotsVertical24" FontSize="12"
                                                        Margin="0,0,8,0" VerticalAlignment="Center"
                                                        ToolTip="{Binding DataContext.Loc[QueueReorderTooltip],
