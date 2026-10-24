@@ -777,84 +777,80 @@
 
                         <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
 
-                        <!-- The logs block: log folder, error reports folder and the log's own retention,
-                             grouped in a nested secondary surface so they read as one "logs" tier under
-                             the data folder row above. -->
-                        <Border Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
-                                CornerRadius="6" Padding="10">
-                            <StackPanel>
-                                <!-- The button sits in a third column, same shape as the retention row below: a path long
-                                     enough to need wrapping would push it off the card, so it stays fixed to the
-                                     right on text height and the path is ellipsised with a tooltip. -->
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <ui:SymbolIcon Grid.Column="0" Symbol="DocumentText24" Style="{StaticResource CardIcon}"/>
-                                    <StackPanel x:Name="LogFolderInfoPanel" Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsLogFolder]}"/>
-                                        <TextBlock x:Name="LogFolderPathText" Style="{StaticResource CardDesc}" Text="{Binding LogFolder}"
-                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
-                                                   ToolTip="{Binding LogFolder}"/>
-                                    </StackPanel>
-                                    <ui:Button x:Name="OpenLogFolderButton" Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0"
-                                               Icon="{ui:SymbolIcon FolderOpen24}"
-                                               Content="{Binding Loc[SettingsLogOpenFolder]}"
-                                               Command="{Binding OpenLogFolderCommand}"/>
-                                </Grid>
+                        <!-- The logs block: log folder, error reports folder and the log's own retention, plain
+                             rows on the same card surface as the data folder row above. -->
+                        <StackPanel>
+                            <!-- The button sits in a third column, same shape as the retention row below: a path long
+                                 enough to need wrapping would push it off the card, so it stays fixed to the
+                                 right on text height and the path is ellipsised with a tooltip. -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Grid.Column="0" Symbol="DocumentText24" Style="{StaticResource CardIcon}"/>
+                                <StackPanel x:Name="LogFolderInfoPanel" Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsLogFolder]}"/>
+                                    <TextBlock x:Name="LogFolderPathText" Style="{StaticResource CardDesc}" Text="{Binding LogFolder}"
+                                               TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                               ToolTip="{Binding LogFolder}"/>
+                                </StackPanel>
+                                <ui:Button x:Name="OpenLogFolderButton" Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0"
+                                           Icon="{ui:SymbolIcon FolderOpen24}"
+                                           Content="{Binding Loc[SettingsLogOpenFolder]}"
+                                           Command="{Binding OpenLogFolderCommand}"/>
+                            </Grid>
 
-                                <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                            <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
 
-                                <!-- The last ten one-click error reports, same row shape as the log
-                                     folder above it (a card's action button lives in its own third Auto column,
-                                     never below the title/description block). -->
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <ui:SymbolIcon Grid.Column="0" Symbol="ErrorCircle24" Style="{StaticResource CardIcon}"/>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsReportsFolder]}"/>
-                                        <TextBlock Style="{StaticResource CardDesc}" Text="{Binding ReportsFolder}"
-                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
-                                                   ToolTip="{Binding ReportsFolder}"/>
-                                    </StackPanel>
-                                    <ui:Button x:Name="OpenReportsButton" Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0"
-                                               Icon="{ui:SymbolIcon FolderOpen24}"
-                                               Content="{Binding Loc[SettingsOpenReports]}"
-                                               Command="{Binding OpenReportsCommand}"/>
-                                </Grid>
+                            <!-- The last ten one-click error reports, same row shape as the log
+                                 folder above it (a card's action button lives in its own third Auto column,
+                                 never below the title/description block). -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Grid.Column="0" Symbol="ErrorCircle24" Style="{StaticResource CardIcon}"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsReportsFolder]}"/>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding ReportsFolder}"
+                                               TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"
+                                               ToolTip="{Binding ReportsFolder}"/>
+                                </StackPanel>
+                                <ui:Button x:Name="OpenReportsButton" Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0"
+                                           Icon="{ui:SymbolIcon FolderOpen24}"
+                                           Content="{Binding Loc[SettingsOpenReports]}"
+                                           Command="{Binding OpenReportsCommand}"/>
+                            </Grid>
 
-                                <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                            <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
 
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsLogRetention]}"/>
-                                        <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsLogRetentionDesc]}"/>
-                                    </StackPanel>
-                                    <ComboBox x:Name="LogRetentionCombo" AutomationProperties.Name="{Binding Loc[SettingsLogRetention]}" Grid.Column="2" Style="{StaticResource CardCombo}" MinWidth="120" HorizontalAlignment="Right"
-                                              ItemsSource="{Binding LogRetentionOptions}"
-                                              SelectedValuePath="Days"
-                                              SelectedValue="{Binding LogRetentionDays}">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Display}"/>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsLogRetention]}"/>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsLogRetentionDesc]}"/>
+                                </StackPanel>
+                                <ComboBox x:Name="LogRetentionCombo" AutomationProperties.Name="{Binding Loc[SettingsLogRetention]}" Grid.Column="2" Style="{StaticResource CardCombo}" MinWidth="120" HorizontalAlignment="Right"
+                                          ItemsSource="{Binding LogRetentionOptions}"
+                                          SelectedValuePath="Days"
+                                          SelectedValue="{Binding LogRetentionDays}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Display}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </Grid>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
