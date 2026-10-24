@@ -646,6 +646,10 @@ public partial class App : Application
         // First thing here, before anything else that could fail: it belongs on disk either way.
         _settings?.Flush();
 
+        // After a data folder move this run still writes to the old folder until the restart; what it
+        // wrote since the copy has to follow, or the new folder would start without it.
+        AppPaths.SyncPendingDataFolder();
+
         _scheduler?.Dispose();
         _tray?.Dispose();
 

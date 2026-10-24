@@ -802,7 +802,15 @@ public partial class SettingsViewModel : ObservableObject
         }
 
         // The copy ran while the windows stayed usable: a setting changed meanwhile would otherwise be
-        // missing from the new folder after the restart.
+        // missing from the new folder after the restart. The same goes for the history and the reports
+        // written meanwhile.
+        if (!AppPaths.SyncLiveDataTo(effectiveTarget))
+        {
+            _logging.Warn("The current history and reports could not be written into the new data folder.");
+            Dialogs.Warn(Loc["SettingsDataFolderChange"], Loc["SettingsDataFolderCopyFailed"]);
+            return;
+        }
+
         try
         {
             _settings.WriteCopyTo(Path.Combine(effectiveTarget, "settings.json"));

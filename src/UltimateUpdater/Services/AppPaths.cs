@@ -287,7 +287,84 @@ public static class AppPaths
     /// <summary>Records the new location so the NEXT launch resolves <see cref="DataDirectory"/>
     /// there; this run keeps using the folder it already started with (moving a folder out from under a
     /// running process is what the restart is for).</summary>
-    public static bool WriteDataFolderPointer(string newPath) => WriteDataFolderPointer(newPath, PointerFilePath);
+    public static bool WriteDataFolderPointer(string newPath)
+    {
+        var written = WriteDataFolderPointer(newPath, PointerFilePath);
+        if (written)
+            _pendingDataFolder = newPath;
+
+        return written;
+    }
+
+    /// <summary>The folder the pointer now names while this run still writes to the old one; null when no move
+    /// happened in this run.</summary>
+    private static volatile string? _pendingDataFolder;
+
+    /// <summary>The files the running app keeps appending to or replacing after a data folder copy. The rest
+    /// of the folder (caches, logs, backups) is either rebuilt or tolerates a stale copy.</summary>
+    private static readonly string[] LiveWrittenEntries = ["history.jsonl", "history.jsonl.1", "cleanup-history.json", "reports"];
+
+    /// <summary>Brings the history, cleanup history and reports in the new data folder up to date with the
+    /// folder this run writes to. Called right before the pointer is written, so the copy made earlier does not
+    /// miss what happened meanwhile.</summary>
+    public static bool SyncLiveDataTo(string destination) => SyncLiveData(DataDirectory, destination, includeSettings: false);
+
+    /// <summary>At exit, once the delayed settings write has landed: everything written after the pointer was
+    /// set goes to the new folder too, so the restart finds nothing missing. Best effort, an exit never fails
+    /// on it.</summary>
+    public static void SyncPendingDataFolder()
+    {
+        if (_pendingDataFolder is { } pending)
+            SyncLiveData(DataDirectory, pending, includeSettings: true);
+    }
+
+    /// <summary>Makes each live-written entry in <paramref name="destination"/> a copy of the one in
+    /// <paramref name="source"/>, overwriting what is there and removing what the source no longer has (the
+    /// history pruning deletes its rotated file). Links are never followed. False when something could not be
+    /// written.</summary>
+    internal static bool SyncLiveData(string source, string destination, bool includeSettings)
+    {
+        var entries = includeSettings ? LiveWrittenEntries.Append("settings.json") : LiveWrittenEntries;
+        try
+        {
+            foreach (var entry in entries)
+            {
+                var from = Path.Combine(source, entry);
+                var to = Path.Combine(destination, entry);
+
+                if (Directory.Exists(from))
+                {
+                    if (IsReparsePoint(from))
+                        return false;
+
+                    // A report the user deleted meanwhile must not come back with the restart.
+                    TryDeleteBestEffort(to);
+                    if (!TryCopyDirectory(from, to, out var skipped) || skipped.Count > 0)
+                        return false;
+                }
+                else if (File.Exists(from))
+                {
+                    if (IsReparsePoint(from))
+                        return false;
+
+                    File.Copy(from, to, overwrite: true);
+                }
+                else
+                {
+                    if (Directory.Exists(to))
+                        Directory.Delete(to, recursive: true);
+                    else if (File.Exists(to))
+                        File.Delete(to);
+                }
+            }
+
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+        {
+            return false;
+        }
+    }
 
     internal static bool WriteDataFolderPointer(string newPath, string pointerFilePath)
     {
