@@ -1431,10 +1431,15 @@
                                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,80,0,0"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
 
+                    <!-- What is gone so far, climbing while the run works. -->
+                    <TextBlock x:Name="LiveFreedText" Text="{Binding LiveFreedText}" FontSize="11"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,118,0,0"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
                     <!-- Held: the motion stops and this says so, rather than a frozen scene looking stuck.
-                         Margin kept 24 below the percentage text's own, same gap as before the text moved. -->
+                         Sits below the live figure. -->
                     <TextBlock Text="{Binding Loc[CleanupPausedNote]}" FontSize="12"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,104,0,0"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,150,0,0"
                                Visibility="{Binding IsPaused, Converter={StaticResource BoolToVisibility}}"
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                 </Grid>

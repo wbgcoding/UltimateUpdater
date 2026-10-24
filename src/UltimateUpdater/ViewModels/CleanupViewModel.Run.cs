@@ -285,7 +285,19 @@ public partial class CleanupViewModel
         OnPropertyChanged(nameof(CleanPercentText));
     }
 
-    partial void OnFreedBytesChanged(long value) => OnPropertyChanged(nameof(FreedText));
+    partial void OnFreedBytesChanged(long value)
+    {
+        // Back to zero means a new run (or a reset): the live figure starts over with it.
+        _liveFreedShown = value == 0 ? 0 : Math.Max(_liveFreedShown, value);
+        OnPropertyChanged(nameof(FreedText));
+        OnPropertyChanged(nameof(LiveFreedText));
+    }
+
+    private long _liveFreedShown;
+
+    /// <summary>The small "~2.3 GB" under the percentage while a run works. Only ever climbs within a run: a
+    /// failed target takes its live part back out of the total, but the figure in the ring never steps back.</summary>
+    public string LiveFreedText => $"~{ByteSize.Format(_liveFreedShown)}";
 
     partial void OnSkippedFilesChanged(int value)
     {
