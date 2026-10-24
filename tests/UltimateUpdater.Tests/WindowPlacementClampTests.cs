@@ -137,3 +137,31 @@ public class WindowPlacementClampTests
         Assert.Equal(1040, bounds.Bottom);
     }
 }
+
+/// <summary>
+/// The computed bounds only count if WPF keeps them: CenterScreen re-centred the window on whichever monitor
+/// held the mouse, so a height fitted to a tall monitor pushed the title bar above a shorter one, and a
+/// MinHeight taller than the work area made WPF grow the window back past the clamp.
+/// </summary>
+[Collection("wpf")]
+public class MainWindowStartupPlacementTests
+{
+    [Fact]
+    public void The_main_window_opens_where_the_restore_put_it_and_no_larger()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var (viewModel, theme, settings) = WindowLayoutTests.CreateMainViewModel("en");
+            settings.Current.Ui.WindowPlacement = new UltimateUpdater.Models.Settings.WindowPlacement
+            {
+                Left = 0, Top = 0, Width = 4000, Height = 4000,
+            };
+
+            var window = new MainWindow(viewModel, theme, settings);
+
+            Assert.Equal(WindowStartupLocation.Manual, window.WindowStartupLocation);
+            Assert.True(window.MinHeight <= window.Height, $"MinHeight {window.MinHeight} > Height {window.Height}");
+            Assert.True(window.MinWidth <= window.Width, $"MinWidth {window.MinWidth} > Width {window.Width}");
+        });
+    }
+}

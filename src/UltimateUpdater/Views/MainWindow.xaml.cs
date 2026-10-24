@@ -697,6 +697,13 @@ public partial class MainWindow : FluentWindow
 
         var (bounds, onMonitor) = ResolveRestoreBounds(
             saved, saved is { } rect ? MonitorFor(rect) : null, PrimaryMonitorArea(), new System.Windows.Size(Width, Height));
+
+        // Any other startup location re-centres on the monitor under the mouse and throws these bounds away,
+        // and a minimum larger than the work area makes WPF grow the window past the clamp; either one put the
+        // title bar above the top edge of a smaller or more scaled monitor.
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        MinWidth = Math.Min(MinWidth, bounds.Width);
+        MinHeight = Math.Min(MinHeight, bounds.Height);
         ApplyBounds(bounds);
         if (onMonitor && placement is { Maximized: true })
         {
