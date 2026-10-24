@@ -405,12 +405,45 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
     /// A machine-wide Python keeps its site-packages under Program Files, so an unelevated upgrade
     /// there dies with a permission error. Pip's own advice in exactly that case is a per-user install,
     /// so the upgrade is retried with --user; no elevation, landing in the user's own site-packages.
-    /// Never applies to the self-upgrade case above, which already runs safely through the interpreter.
+    /// Never applies to the self-upgrade case above, which already runs safely through the interpreter,
+    /// nor to a virtual environment, where pip refuses --user outright and the retry would only bury the
+    /// real first error.
     /// </summary>
     protected override IReadOnlyList<string>? RetryInstallArguments(UpdateItem item, ProcessResult firstAttempt) =>
-        !IsSelfUpgrade(item) && NeedsUserScopeRetry(firstAttempt)
+        RetryArgumentsFor(item, firstAttempt);
+
+    internal static IReadOnlyList<string>? RetryArgumentsFor(UpdateItem item, ProcessResult firstAttempt) =>
+        !IsSelfUpgrade(item) && !IsVirtualEnv(InterpreterPath(item)) && NeedsUserScopeRetry(firstAttempt)
             ? ["-m", "pip", "install", "--upgrade", "--user", "--disable-pip-version-check", PackageName(item)]
             : null;
+
+    /// <summary>A venv marks itself with pyvenv.cfg beside its interpreter (Scripts) or one level above it.</summary>
+    internal static bool IsVirtualEnv(string pythonExe)
+    {
+        try
+        {
+            var dir = Path.GetDirectoryName(pythonExe);
+            if (string.IsNullOrEmpty(dir))
+                return false;
+
+            return File.Exists(Path.Combine(dir, "pyvenv.cfg"))
+                   || (Path.GetDirectoryName(dir) is { Length: > 0 } parent && File.Exists(Path.Combine(parent, "pyvenv.cfg")));
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>The message detail for a failed install. After a per-user retry that also failed, the first
+    /// attempt's output stays in it: that is where the actual reason usually is.</summary>
+    internal static string FailureDetail(ProcessResult firstAttempt, ProcessResult? retry)
+    {
+        var first = ToolOutput.Summarize(firstAttempt.StandardOutput, firstAttempt.StandardError, firstAttempt.ExitCode);
+        return retry is null
+            ? first
+            : $"{first} Retrying as a per-user install also failed: {ToolOutput.Summarize(retry.StandardOutput, retry.StandardError, retry.ExitCode)}";
+    }
 
     internal static bool IsSelfUpgrade(UpdateItem item) =>
         string.Equals(PackageName(item), "pip", StringComparison.OrdinalIgnoreCase);
@@ -439,9 +472,11 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
             executable, InstallArguments(item), InstallTimeout,
             segment => ReportSegment(progress, item.Name, segment), cancellationToken, Utf8Environment);
 
+        var firstAttempt = result;
+        ProcessResult? retried = null;
         if (!result.TimedOut && !IsInstallSuccess(result) && RetryInstallArguments(item, result) is { } retryArguments)
         {
-            result = await ProcessRunner.RunStreamingAsync(
+            result = retried = await ProcessRunner.RunStreamingAsync(
                 executable, retryArguments, InstallTimeout,
                 segment => ReportSegment(progress, item.Name, segment), cancellationToken, Utf8Environment);
         }
@@ -455,7 +490,7 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
             return;
         }
 
-        var detail = ToolOutput.Summarize(result.StandardOutput, result.StandardError, result.ExitCode);
+        var detail = FailureDetail(firstAttempt, retried);
 
         if (!IsSelfUpgrade(item) && LooksLikeBrokenPip(detail))
         {
