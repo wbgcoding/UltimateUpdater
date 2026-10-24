@@ -103,12 +103,15 @@ public partial class CleanupViewModel
     /// <summary>How far one measuring pass reaches. Full is the pass a window runs (and a rescan): every
     /// target, asking for administrator rights first. Prescan is the quiet one at startup: user-scope
     /// targets only, no question, no elevation. Remaining finishes a prescan on open: just the targets it
-    /// left out.</summary>
+    /// left out. Late is Remaining done quietly with nobody asking: the elevated helper started after the
+    /// prescan, so the targets it left out are measured now, at low priority while no window is open, with
+    /// no question and no elevation of its own.</summary>
     private enum ScanMode
     {
         Full,
         Prescan,
         Remaining,
+        Late,
     }
 
     /// <summary>Targets a prescan left out because they need rights the app does not have yet.</summary>
@@ -188,6 +191,22 @@ public partial class CleanupViewModel
         await (PrescanFinishedAt is not null ? StartScanTrackedAsync(ScanMode.Remaining) : StartScanAsync());
     }
 
+    /// <summary>
+    /// Measures, quietly, the admin targets a prescan left out, once the elevated helper runs. Only for a
+    /// prescanned view model that is idle and has no window open (an open window runs its own pass).
+    /// Never asks for anything.
+    /// </summary>
+    private void StartLateMeasuring()
+    {
+        if (_windowAttached || IsCleaning || _runClaimed || IsScanning || _prescanSkipped.Count == 0
+            || PrescanFinishedAt is null || Phase != CleanupPhase.Choosing || !HasElevationAvailable())
+        {
+            return;
+        }
+
+        _ = StartScanTrackedAsync(ScanMode.Late);
+    }
+
     private Task StartScanTrackedAsync(ScanMode mode)
     {
         var task = StartScanCoreAsync(mode);
@@ -214,9 +233,12 @@ public partial class CleanupViewModel
         }
 
         // What this pass measures: everything, or only what the prescan left out.
-        var scope = mode == ScanMode.Remaining ? _prescanSkipped.ToList() : Items.ToList();
-        if (mode == ScanMode.Remaining)
+        var scope = mode is ScanMode.Remaining or ScanMode.Late ? _prescanSkipped.ToList() : Items.ToList();
+        if (mode is ScanMode.Remaining or ScanMode.Late)
             _prescanSkipped = [];
+
+        // The two quiet passes (startup prescan, late catch-up) never ask and never start the helper.
+        var quietMode = mode is ScanMode.Prescan or ScanMode.Late;
 
         // A fresh measurement after a finished run is a new choice: back to choosing, without the old
         // run's capsules and figures on the rows.
@@ -269,6 +291,12 @@ public partial class CleanupViewModel
                     await EnsureElevationAsync(cts.Token);
 
                 elevated = ElevatedItems(scope);
+
+                // As soon as administrator rights exist, not after the whole walk: the analysis is the
+                // longest single measurement and needs nothing from the scan. Asks nothing itself.
+                if (!cts.IsCancellationRequested)
+                    StartQuietComponentStoreAnalysis();
+
                 if (elevated.Count > 0)
                 {
                     await RunElevatedAsync(
@@ -293,8 +321,8 @@ public partial class CleanupViewModel
                             RefreshTotals();
                         },
                         cts.Token,
-                        allowStart: mode != ScanMode.Prescan,
-                        backgroundPriority: mode == ScanMode.Prescan && !_windowAttached);
+                        allowStart: !quietMode,
+                        backgroundPriority: quietMode && !_windowAttached);
 
                     // A helper that died mid-scan must not leave rows spinning for ever.
                     if (IsCurrentScan())
@@ -324,10 +352,10 @@ public partial class CleanupViewModel
             // CPU). Bounded to min(4, core count): unbounded would have every temp/cache folder and the
             // registry scan fight over the same disk and the same few registry hives at once.
             // A prescan leaves out the targets that need rights it does not have; they are measured on open.
-            var skipped = mode == ScanMode.Prescan && !ElevationService.IsElevated
+            var skipped = quietMode && !ElevationService.IsElevated
                 ? scope.Where(item => item.Target.NeedsElevation && !elevated.Contains(item)).ToList()
                 : [];
-            if (mode == ScanMode.Prescan && IsCurrentScan())
+            if (quietMode && IsCurrentScan())
                 _prescanSkipped = skipped;
 
             var unelevated = scope.Where(item => !elevated.Contains(item) && !skipped.Contains(item)).ToList();
@@ -349,7 +377,7 @@ public partial class CleanupViewModel
                         // starts, so a window that attaches mid-prescan gets normal priority for every target
                         // not yet begun.
                         var result = await _service.ScanAsync(
-                            item.Target, cts.Token, item.RecycleBinMinAgeDays, mode == ScanMode.Prescan && !_windowAttached);
+                            item.Target, cts.Token, item.RecycleBinMinAgeDays, quietMode && !_windowAttached);
                         measured = true;
                         if (!IsCurrentScan())
                             return;
@@ -443,21 +471,13 @@ public partial class CleanupViewModel
 
                 RefreshTotals();
 
-                if (mode == ScanMode.Prescan && !cts.IsCancellationRequested)
+                if (quietMode && !cts.IsCancellationRequested)
                     SetPrescanFinishedAt(Clock());
 
-                // Measures the component store on its own once administrator rights are already there, so
-                // the card needs no click. Never raises a prompt: the condition is exactly the one under
-                // which EnsureElevationForComponentStoreAsync asks nothing. A result already present is not
-                // measured again (the button still re-runs it).
-                if (mode != ScanMode.Prescan
-                    && !cts.IsCancellationRequested
-                    && ComponentStoreResult is null
-                    && !IsAnalyzingComponentStore
-                    && (ElevationService.IsElevated || _elevated?.IsRunning == true))
-                {
-                    AnalyzeComponentStoreCommand.Execute(null);
-                }
+                // The helper may have started while the prescan was still walking: the admin targets it left
+                // out are measured now rather than waiting for the window.
+                if (mode == ScanMode.Prescan && !cts.IsCancellationRequested)
+                    StartLateMeasuring();
             }
         }
     }

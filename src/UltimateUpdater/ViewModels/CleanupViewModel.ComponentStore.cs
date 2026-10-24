@@ -96,13 +96,31 @@ public partial class CleanupViewModel
     /// exactly like a hang).
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanAnalyzeComponentStore))]
-    private async Task AnalyzeComponentStoreAsync()
+    private Task AnalyzeComponentStoreAsync() => AnalyzeComponentStoreCoreAsync(quiet: false);
+
+    /// <summary>
+    /// Starts the analysis on its own, without a click, but only where it costs nothing to ask: the process
+    /// is elevated or the app-wide helper already runs. Never raises a prompt and never starts the helper
+    /// (a helper that dropped out a moment ago just means no analysis now). A result already present is not
+    /// measured again (the button still re-runs it), and one in flight is not doubled.
+    /// </summary>
+    private void StartQuietComponentStoreAnalysis()
+    {
+        if (ComponentStoreResult is not null || IsAnalyzingComponentStore || !HasElevationAvailable())
+            return;
+
+        _ = AnalyzeComponentStoreCoreAsync(quiet: true);
+    }
+
+    /// <param name="quiet">True for the automatic start: no prompt, no helper launch, and a failure is only
+    /// logged, not shown on the card.</param>
+    private async Task AnalyzeComponentStoreCoreAsync(bool quiet)
     {
         IsAnalyzingComponentStore = true;
         SetComponentStoreStatus(null);
         try
         {
-            if (!await EnsureElevationForComponentStoreAsync(CancellationToken.None))
+            if (!await EnsureElevationForComponentStoreAsync(CancellationToken.None, quiet))
                 return;
 
             ComponentStoreAnalysis? result = null;
@@ -114,14 +132,18 @@ public partial class CleanupViewModel
                     if (message.Type == "componentStore")
                         result = ApplyComponentStoreMessage(message);
                 },
-                CancellationToken.None);
+                CancellationToken.None,
+                allowStart: !quiet);
 
             // The worker session itself could not be reached at all (never started, or died mid-call): a
             // silent fallback to Unknown here would show the same quiet dashes a genuinely empty DISM run
             // shows, with no way to tell the two apart.
             if (!completed)
             {
-                SetComponentStoreStatus("CleanupComponentStoreUnavailable");
+                if (!quiet)
+                    SetComponentStoreStatus("CleanupComponentStoreUnavailable");
+                else
+                    _logging.Info("Component store analysis skipped: the elevated helper was not reachable.");
                 return;
             }
 
@@ -132,7 +154,8 @@ public partial class CleanupViewModel
             // The command runs fire-and-forget from the button; an escaping exception (a worker launch that
             // failed for a reason other than the declined prompt, say) would reach the process-wide handler.
             _logging.Warn($"Component store analysis failed: {ex.Message}");
-            SetComponentStoreStatus("CleanupComponentStoreUnavailable");
+            if (!quiet)
+                SetComponentStoreStatus("CleanupComponentStoreUnavailable");
         }
         finally
         {
@@ -161,16 +184,21 @@ public partial class CleanupViewModel
     /// rights again, even if a previous press was declined - nothing here remembers a refusal - and only
     /// when this second attempt still fails does it leave a status line behind instead of returning quietly.
     /// </summary>
-    private async Task<bool> EnsureElevationForComponentStoreAsync(CancellationToken cancellationToken)
+    private async Task<bool> EnsureElevationForComponentStoreAsync(CancellationToken cancellationToken, bool quiet = false)
     {
         if (_elevated is null)
         {
-            SetComponentStoreStatus("CleanupComponentStoreUnavailable");
+            if (!quiet)
+                SetComponentStoreStatus("CleanupComponentStoreUnavailable");
             return false;
         }
 
         if (ElevationService.IsElevated)
             return true;
+
+        // The automatic start asks nothing: no helper running means no analysis now.
+        if (quiet)
+            return _elevated.IsRunning;
 
         var force = false;
         if (!_elevated.IsRunning)

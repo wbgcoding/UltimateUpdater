@@ -98,8 +98,9 @@ public class CleanupPrescanTests
 
         await rig.ViewModel.PrescanAsync();
 
-        // They went to the helper (the stand-in is reached once, for the whole admin batch), not in-process.
-        Assert.Equal(1, rig.StartRequests());
+        // They went to the helper (the stand-in is reached once for the whole admin batch, and once more by
+        // the quiet component store analysis), not in-process.
+        Assert.Equal(2, rig.StartRequests());
         Assert.Empty(rig.Service.Scanned.Intersect(admin));
         Assert.NotNull(rig.ViewModel.PrescanFinishedAt);
     }

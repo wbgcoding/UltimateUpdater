@@ -262,7 +262,18 @@ public partial class CleanupViewModel : ObservableObject
     /// waited on: the pipe thread raising this must not block against a UI thread that is itself waiting on
     /// that pipe, which is exactly where app exit stands while it shuts the helper down.</summary>
     private void OnElevatedStateChanged() =>
-        _dispatcher.BeginInvoke(() => SetElevationHints(show: !HasElevationAvailable()));
+        _dispatcher.BeginInvoke(() =>
+        {
+            SetElevationHints(show: !HasElevationAvailable());
+
+            // Rights that arrive mid-session (an admin install started the helper): measure what they unlock
+            // right now, quietly, instead of at the next click.
+            if (HasElevationAvailable())
+            {
+                StartQuietComponentStoreAnalysis();
+                StartLateMeasuring();
+            }
+        });
 
     /// <summary>
     /// The cleanup detail list's own column list for the shared chooser
