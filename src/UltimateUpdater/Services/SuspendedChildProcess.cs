@@ -112,6 +112,8 @@ internal sealed class SuspendedChildProcess : IChildProcess
 
     public bool HasExited => WaitForSingleObject(_process, 0) == WaitObject0;
 
+    internal int ProcessId => GetProcessId(_process);
+
     /// <summary>The limit flags the child's job carries, 0 when there is no job.</summary>
     internal uint JobLimitFlags =>
         _job is { IsInvalid: false, IsClosed: false }
@@ -141,6 +143,11 @@ internal sealed class SuspendedChildProcess : IChildProcess
 
     public void Kill()
     {
+        // The job misses whatever broke away from it, and winget starts its installers that way: a timed-out
+        // Git setup kept spinning at full CPU after its winget was gone. So the tree goes first, walked by
+        // parent while that parent is still alive; the handle held here keeps its id from being reused.
+        KillDescendants(GetProcessId(_process));
+
         // Failure means the process or job is already gone, which is the state wanted.
         if (_job is { IsInvalid: false, IsClosed: false })
             _ = TerminateJobObject(_job, 1);
@@ -603,6 +610,27 @@ internal sealed class SuspendedChildProcess : IChildProcess
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool TerminateProcess(SafeWaitHandle process, uint exitCode);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern int GetProcessId(SafeWaitHandle process);
+
+    /// <summary>The root and everything below it, by parent id; the framework's tree kill also checks start
+    /// times, so a process that only inherited a reused parent id is left alone. Never throws.</summary>
+    private static void KillDescendants(int rootId)
+    {
+        if (rootId == 0)
+            return;
+
+        try
+        {
+            using var root = Process.GetProcessById(rootId);
+            root.Kill(entireProcessTree: true);
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or Win32Exception or AggregateException)
+        {
+            // Already gone, or part of the tree could not be ended; the job terminate below still runs.
+        }
+    }
 
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern SafeFileHandle CreateJobObjectW(IntPtr attributes, string? name);
