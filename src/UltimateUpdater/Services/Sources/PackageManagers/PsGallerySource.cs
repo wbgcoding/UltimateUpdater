@@ -139,8 +139,13 @@ public sealed class PsGallerySource(LoggingService logging, HttpClient httpClien
             throw new InvalidOperationException($"{Id}: {action} timed out for '{item.Id}'.");
 
         if (result.ExitCode != 0)
-            throw new InvalidOperationException($"{Id}: {action} failed for '{item.Id}' (exit {result.ExitCode}).");
+            throw new InvalidOperationException(FailureMessage(action, item.Id, result));
 
         progress.Report(new Models.InstallProgress { PercentComplete = 100, StatusText = item.Name });
     }
+
+    /// <summary>The module cmdlets write their reason to the output, so it goes into the message like the
+    /// other command line sources do; a bare exit code left nothing to act on.</summary>
+    internal string FailureMessage(string action, string moduleName, ProcessResult result) =>
+        $"{Id}: {action} failed for '{moduleName}'. {ToolOutput.Summarize(result.StandardOutput, result.StandardError, result.ExitCode)}";
 }
