@@ -5,6 +5,38 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-25
+
+### Updates
+- Several installs run side by side more often: rows queued while a batch runs start at once, an
+  uninstall can run beside an install batch, and only installs through the same package manager wait
+  for each other. pip installs run in parallel per Python installation.
+- Rows that need manual work show a retry button right in the row.
+- Updating Git asks first while Git's shells, ssh or gpg are still running.
+- Stopping winget also ends installers that broke away from it.
+- Scan processes run at below-normal priority, so the PC stays responsive during a scan.
+- Exit codes are read more accurately: Chocolatey's own codes, and pending-restart codes from pnputil and
+  Python uninstalls count as success. A failed PowerShell module step names its reason.
+- pip no longer retries with `--user` inside a virtual environment.
+
+### Cleanup
+- Measuring is much faster and can run in the background after the first scan (setting, on by default,
+  skipped on battery); the window shows when the values were measured.
+- The component store is analysed on its own whenever admin rights are available, with the same
+  measuring dots as every other entry.
+- The freed amount climbs live during a run and shows under the ring percentage; the total below now
+  reads "x GB found".
+- Windows Disk Cleanup leaves no profile behind in the registry after a run.
+- Freed bytes stay correct when the elevated helper drops out, and a recycle bin call that timed out no
+  longer moves its file later.
+
+### Fixed
+- Moving the data folder keeps the current history and reports, skips files deleted during the copy
+  instead of failing, and removes the new folder again when a later step fails, so a retry works.
+- The main window opens where it was last placed.
+- A lone version is centred under the arrows above it.
+- Queue rows keep the normal mouse cursor; the log settings no longer sit on a tinted surface.
+
 ## [1.1.0] - 2026-10-23
 
 First public release.

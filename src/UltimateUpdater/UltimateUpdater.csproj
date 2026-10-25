@@ -17,7 +17,7 @@
     <ApplicationIcon>Assets/app.ico</ApplicationIcon>
     <AssemblyName>UltimateUpdater</AssemblyName>
     <RootNamespace>UltimateUpdater</RootNamespace>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Product>Ultimate Updater</Product>
     <Company>BGCoding</Company>
     <Copyright>© 2026 BGCoding</Copyright>
