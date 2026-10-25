@@ -486,6 +486,76 @@ public class DataFolderTests
         }
     }
 
+    /// <summary>A file the running app deletes between the listing and the copy is gone, not locked:
+    /// counting it as a skipped file would refuse the whole move over something that no longer exists.</summary>
+    [Fact]
+    public void A_file_deleted_after_it_was_listed_is_gone_not_locked()
+    {
+        var source = NewTempDir("move-source-vanished-file");
+        var logsDir = Path.Combine(source, "logs");
+        File.WriteAllText(Path.Combine(source, "kept.json"), "{}");
+        File.WriteAllText(Path.Combine(source, "gone.json"), "{}");
+
+        var destinationParent = NewTempDir("move-dest-parent-vanished-file");
+        var destination = Path.Combine(destinationParent, "UltimateUpdater");
+
+        try
+        {
+            var moved = AppPaths.TryMoveDataFolder(
+                source, logsDir, destination, out var blocking,
+                afterEnumerated: path =>
+                {
+                    if (Path.GetFileName(path) == "gone.json")
+                        File.Delete(path);
+                });
+
+            Assert.True(moved);
+            Assert.Empty(blocking);
+            Assert.True(File.Exists(Path.Combine(destination, "kept.json")));
+            Assert.False(File.Exists(Path.Combine(destination, "gone.json")));
+        }
+        finally
+        {
+            Directory.Delete(source, recursive: true);
+            Directory.Delete(destinationParent, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_subfolder_deleted_after_it_was_listed_neither_throws_nor_blocks_the_move()
+    {
+        var source = NewTempDir("move-source-vanished-dir");
+        var logsDir = Path.Combine(source, "logs");
+        File.WriteAllText(Path.Combine(source, "kept.json"), "{}");
+        var vanishing = Path.Combine(source, "reports");
+        Directory.CreateDirectory(vanishing);
+        File.WriteAllText(Path.Combine(vanishing, "r.txt"), "x");
+
+        var destinationParent = NewTempDir("move-dest-parent-vanished-dir");
+        var destination = Path.Combine(destinationParent, "UltimateUpdater");
+
+        try
+        {
+            var moved = AppPaths.TryMoveDataFolder(
+                source, logsDir, destination, out var blocking,
+                afterEnumerated: path =>
+                {
+                    if (Path.GetFileName(path) == "reports" && Directory.Exists(path))
+                        Directory.Delete(path, recursive: true);
+                });
+
+            Assert.True(moved);
+            Assert.Empty(blocking);
+            Assert.True(File.Exists(Path.Combine(destination, "kept.json")));
+            Assert.False(Directory.Exists(Path.Combine(destination, "reports")));
+        }
+        finally
+        {
+            Directory.Delete(source, recursive: true);
+            Directory.Delete(destinationParent, recursive: true);
+        }
+    }
+
     // ---- one-time %AppData% folder migration after the WindowsUpdater -> UltimateUpdater rename ----
 
     [Fact]

@@ -607,9 +607,10 @@ public static class AppPaths
         TryMoveDataFolder(DataDirectory, LogsDirectory, destination, out blockingSkippedFiles);
 
     internal static bool TryMoveDataFolder(
-        string source, string logsDirectory, string destination, out IReadOnlyList<string> blockingSkippedFiles)
+        string source, string logsDirectory, string destination, out IReadOnlyList<string> blockingSkippedFiles,
+        Action<string>? afterEnumerated = null)
     {
-        if (!TryCopyDirectory(source, destination, out var skipped))
+        if (!TryCopyDirectory(source, destination, out var skipped, afterEnumerated))
         {
             blockingSkippedFiles = [];
             TryDeleteBestEffort(destination);
@@ -642,13 +643,14 @@ public static class AppPaths
         }
     }
 
-    internal static bool TryCopyDirectory(string source, string destination, out IReadOnlyList<string> skippedFiles)
+    internal static bool TryCopyDirectory(
+        string source, string destination, out IReadOnlyList<string> skippedFiles, Action<string>? afterEnumerated = null)
     {
         var skipped = new List<string>();
         try
         {
             Directory.CreateDirectory(destination);
-            CopyRecursive(source, destination, skipped);
+            CopyRecursive(source, destination, skipped, afterEnumerated);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
         {
@@ -668,10 +670,13 @@ public static class AppPaths
     /// dropped here: <c>Path.GetFullPath</c> never resolves a link, and every folder entered is a child of the
     /// previous one by construction, so it was always true and could not catch a swapped folder.
     /// </summary>
-    private static void CopyRecursive(string source, string destination, List<string> skipped)
+    private static void CopyRecursive(
+        string source, string destination, List<string> skipped, Action<string>? afterEnumerated)
     {
         foreach (var file in Directory.EnumerateFiles(source))
         {
+            // Test seam for the window between listing an entry and using it, where the running app can delete it.
+            afterEnumerated?.Invoke(file);
             var name = Path.GetFileName(file);
             // Neither belongs in a copy of the data itself: the pointer names a location (copying it would
             // point the new folder at itself) and the write probe is transient housekeeping.
@@ -681,7 +686,11 @@ public static class AppPaths
                 continue;
             }
 
-            if (IsReparsePoint(file))
+            var kind = ClassifyEntry(file);
+            if (kind == EntryKind.Gone)
+                continue;
+
+            if (kind == EntryKind.Link)
             {
                 skipped.Add(file);
                 continue;
@@ -691,6 +700,10 @@ public static class AppPaths
             {
                 File.Copy(file, Path.Combine(destination, name), overwrite: true);
             }
+            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+            {
+                // Deleted by the running app after it was listed: nothing left to carry over, not a locked file.
+            }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 skipped.Add(file);
@@ -699,7 +712,13 @@ public static class AppPaths
 
         foreach (var directory in Directory.EnumerateDirectories(source))
         {
-            if (IsReparsePoint(directory))
+            afterEnumerated?.Invoke(directory);
+
+            var kind = ClassifyEntry(directory);
+            if (kind == EntryKind.Gone)
+                continue;
+
+            if (kind == EntryKind.Link)
             {
                 skipped.Add(directory);
                 continue;
@@ -707,22 +726,39 @@ public static class AppPaths
 
             var target = Path.Combine(destination, Path.GetFileName(directory));
             Directory.CreateDirectory(target);
-            CopyRecursive(directory, target, skipped);
+            try
+            {
+                CopyRecursive(directory, target, skipped, afterEnumerated);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // The folder was deleted while it was being copied: drop the half-made copy of it.
+                TryDeleteBestEffort(target);
+            }
         }
     }
 
-    /// <summary>An entry whose attributes cannot be read is treated as a link: fail closed, never copy it.</summary>
-    private static bool IsReparsePoint(string path)
+    private enum EntryKind { Plain, Link, Gone }
+
+    /// <summary>An entry whose attributes cannot be read is treated as a link: fail closed, never copy it.
+    /// One that no longer exists is told apart, since a deleted entry is nothing to carry over.</summary>
+    private static EntryKind ClassifyEntry(string path)
     {
         try
         {
-            return File.GetAttributes(path).HasFlag(FileAttributes.ReparsePoint);
+            return File.GetAttributes(path).HasFlag(FileAttributes.ReparsePoint) ? EntryKind.Link : EntryKind.Plain;
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return EntryKind.Gone;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
         {
-            return true;
+            return EntryKind.Link;
         }
     }
+
+    private static bool IsReparsePoint(string path) => ClassifyEntry(path) != EntryKind.Plain;
 
     /// <summary>Existing but read-only directories are common, so writability is proven, not assumed.</summary>
     private static bool TryPrepare(string directory)
