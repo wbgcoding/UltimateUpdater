@@ -1045,8 +1045,8 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   <data name="CleanupScanning" xml:space="preserve">
     <value>pomiar nadal trwa…</value>
   </data>
-  <data name="CleanupOfTotal" xml:space="preserve">
-    <value>z {0} znalezionych</value>
+  <data name="CleanupFoundTotal" xml:space="preserve">
+    <value>znaleziono {0}</value>
   </data>
   <data name="CleanupNeedsAdmin" xml:space="preserve">
     <value>wymaga uprawnień administratora</value>

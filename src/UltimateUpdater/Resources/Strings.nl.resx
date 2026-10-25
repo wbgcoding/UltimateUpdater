@@ -1045,8 +1045,8 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   <data name="CleanupScanning" xml:space="preserve">
     <value>nog aan het meten…</value>
   </data>
-  <data name="CleanupOfTotal" xml:space="preserve">
-    <value>van {0} gevonden</value>
+  <data name="CleanupFoundTotal" xml:space="preserve">
+    <value>{0} gevonden</value>
   </data>
   <data name="CleanupNeedsAdmin" xml:space="preserve">
     <value>beheerdersrechten nodig</value>

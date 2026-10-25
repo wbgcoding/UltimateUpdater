@@ -1045,8 +1045,8 @@ This cannot be undone by Ultimate Updater.</value>
   <data name="CleanupScanning" xml:space="preserve">
     <value>still measuring…</value>
   </data>
-  <data name="CleanupOfTotal" xml:space="preserve">
-    <value>of {0} found</value>
+  <data name="CleanupFoundTotal" xml:space="preserve">
+    <value>{0} found</value>
   </data>
   <data name="CleanupNeedsAdmin" xml:space="preserve">
     <value>needs admin</value>

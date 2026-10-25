@@ -1045,8 +1045,8 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupScanning" xml:space="preserve">
     <value>測定中…</value>
   </data>
-  <data name="CleanupOfTotal" xml:space="preserve">
-    <value>検出された {0} 中</value>
+  <data name="CleanupFoundTotal" xml:space="preserve">
+    <value>{0} を検出</value>
   </data>
   <data name="CleanupNeedsAdmin" xml:space="preserve">
     <value>管理者権限が必要</value>

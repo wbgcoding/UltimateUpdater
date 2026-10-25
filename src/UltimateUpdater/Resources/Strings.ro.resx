@@ -1045,8 +1045,8 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   <data name="CleanupScanning" xml:space="preserve">
     <value>încă se măsoară…</value>
   </data>
-  <data name="CleanupOfTotal" xml:space="preserve">
-    <value>din {0} găsiți</value>
+  <data name="CleanupFoundTotal" xml:space="preserve">
+    <value>{0} găsiți</value>
   </data>
   <data name="CleanupNeedsAdmin" xml:space="preserve">
     <value>necesită administrator</value>

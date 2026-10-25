@@ -223,7 +223,7 @@ public partial class CleanupViewModel
 
     public bool HasEmpty => Items.Any(i => i.IsSelected && i.ShowsNothingFound);
 
-    public string TotalText => string.Format(Loc["CleanupOfTotal"], ByteSize.Format(TotalBytes));
+    public string TotalText => string.Format(Loc["CleanupFoundTotal"], ByteSize.Format(TotalBytes));
 
     private long? _freeSpaceBefore;
     private long? _freeSpaceAfter;

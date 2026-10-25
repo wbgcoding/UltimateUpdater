@@ -1045,8 +1045,8 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="CleanupScanning" xml:space="preserve">
     <value>hâlâ ölçülüyor…</value>
   </data>
-  <data name="CleanupOfTotal" xml:space="preserve">
-    <value>bulunan {0} içinden</value>
+  <data name="CleanupFoundTotal" xml:space="preserve">
+    <value>{0} bulundu</value>
   </data>
   <data name="CleanupNeedsAdmin" xml:space="preserve">
     <value>yönetici gerekli</value>

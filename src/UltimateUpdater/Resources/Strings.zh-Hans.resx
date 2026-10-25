@@ -1045,8 +1045,8 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupScanning" xml:space="preserve">
     <value>仍在测量…</value>
   </data>
-  <data name="CleanupOfTotal" xml:space="preserve">
-    <value>共发现 {0}</value>
+  <data name="CleanupFoundTotal" xml:space="preserve">
+    <value>发现 {0}</value>
   </data>
   <data name="CleanupNeedsAdmin" xml:space="preserve">
     <value>需要管理员权限</value>

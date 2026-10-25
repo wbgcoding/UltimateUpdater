@@ -1045,8 +1045,8 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="CleanupScanning" xml:space="preserve">
     <value>wird noch berechnet…</value>
   </data>
-  <data name="CleanupOfTotal" xml:space="preserve">
-    <value>von {0} gefunden</value>
+  <data name="CleanupFoundTotal" xml:space="preserve">
+    <value>{0} gefunden</value>
   </data>
   <data name="CleanupNeedsAdmin" xml:space="preserve">
     <value>braucht Admin</value>

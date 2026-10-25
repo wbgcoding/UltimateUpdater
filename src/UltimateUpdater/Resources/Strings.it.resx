@@ -1045,8 +1045,8 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="CleanupScanning" xml:space="preserve">
     <value>misurazione in corso…</value>
   </data>
-  <data name="CleanupOfTotal" xml:space="preserve">
-    <value>su {0} trovati</value>
+  <data name="CleanupFoundTotal" xml:space="preserve">
+    <value>{0} trovati</value>
   </data>
   <data name="CleanupNeedsAdmin" xml:space="preserve">
     <value>richiede admin</value>
