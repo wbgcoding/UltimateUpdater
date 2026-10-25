@@ -792,6 +792,9 @@ public partial class SettingsViewModel : ObservableObject
         var effectiveTarget = AppPaths.EffectiveDataFolderTarget(picked);
         var oldFolder = AppPaths.DataDirectory;
 
+        // Only a subfolder this move creates may be removed again if a later step fails.
+        var createdTarget = !Directory.Exists(effectiveTarget);
+
         // The copy covers logs, caches, history and backups and can take a while on a slow drive or a
         // network share, so it runs off the UI thread; the command stays disabled until it is done.
         var (moved, blockingSkippedFiles) = await Task.Run(() =>
@@ -815,6 +818,7 @@ public partial class SettingsViewModel : ObservableObject
         if (!AppPaths.SyncLiveDataTo(effectiveTarget))
         {
             _logging.Warn("The current history and reports could not be written into the new data folder.");
+            AppPaths.DiscardCreatedDataFolder(effectiveTarget, createdTarget);
             Dialogs.Warn(Loc["SettingsDataFolderChange"], Loc["SettingsDataFolderCopyFailed"]);
             return;
         }
@@ -826,12 +830,14 @@ public partial class SettingsViewModel : ObservableObject
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _logging.Warn($"The current settings could not be written into the new data folder: {ex.Message}");
+            AppPaths.DiscardCreatedDataFolder(effectiveTarget, createdTarget);
             Dialogs.Warn(Loc["SettingsDataFolderChange"], Loc["SettingsDataFolderCopyFailed"]);
             return;
         }
 
         if (!AppPaths.WriteDataFolderPointer(effectiveTarget))
         {
+            AppPaths.DiscardCreatedDataFolder(effectiveTarget, createdTarget);
             Dialogs.Warn(Loc["SettingsDataFolderChange"], Loc["SettingsDataFolderCopyFailed"]);
             return;
         }

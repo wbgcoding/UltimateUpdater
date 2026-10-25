@@ -556,6 +556,87 @@ public class DataFolderTests
         }
     }
 
+    /// <summary>After the copy succeeded but a later step failed, the subfolder this move created is
+    /// removed again; left behind it would make every retry to the same target look non-empty.</summary>
+    [Fact]
+    public void A_subfolder_this_move_created_is_removed_when_a_later_step_fails()
+    {
+        var parent = NewTempDir("rollback-created");
+        var target = Path.Combine(parent, "UltimateUpdater");
+        Directory.CreateDirectory(Path.Combine(target, "reports"));
+        File.WriteAllText(Path.Combine(target, "settings.json"), "{}");
+        File.WriteAllText(Path.Combine(target, "reports", "r.txt"), "x");
+
+        try
+        {
+            AppPaths.DiscardCreatedDataFolder(target, createdByThisMove: true);
+
+            Assert.False(Directory.Exists(target));
+            Assert.True(Directory.Exists(parent));
+        }
+        finally
+        {
+            Directory.Delete(parent, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_subfolder_that_existed_before_the_move_is_never_removed()
+    {
+        var parent = NewTempDir("rollback-preexisting");
+        var target = Path.Combine(parent, "UltimateUpdater");
+        Directory.CreateDirectory(target);
+
+        try
+        {
+            AppPaths.DiscardCreatedDataFolder(target, createdByThisMove: false);
+
+            Assert.True(Directory.Exists(target));
+        }
+        finally
+        {
+            Directory.Delete(parent, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_link_in_place_of_the_created_subfolder_is_not_followed_or_emptied()
+    {
+        var parent = NewTempDir("rollback-link");
+        var elsewhere = NewTempDir("rollback-link-elsewhere");
+        File.WriteAllText(Path.Combine(elsewhere, "precious.txt"), "keep");
+        var target = Path.Combine(parent, "UltimateUpdater");
+        CreateJunction(target, elsewhere);
+
+        try
+        {
+            AppPaths.DiscardCreatedDataFolder(target, createdByThisMove: true);
+
+            Assert.True(File.Exists(Path.Combine(elsewhere, "precious.txt")));
+        }
+        finally
+        {
+            if (Directory.Exists(target))
+                Directory.Delete(target);
+            Directory.Delete(parent, recursive: true);
+            Directory.Delete(elsewhere, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Discarding_a_subfolder_that_is_already_gone_does_not_throw()
+    {
+        var parent = NewTempDir("rollback-missing");
+        try
+        {
+            AppPaths.DiscardCreatedDataFolder(Path.Combine(parent, "UltimateUpdater"), createdByThisMove: true);
+        }
+        finally
+        {
+            Directory.Delete(parent, recursive: true);
+        }
+    }
+
     // ---- one-time %AppData% folder migration after the WindowsUpdater -> UltimateUpdater rename ----
 
     [Fact]

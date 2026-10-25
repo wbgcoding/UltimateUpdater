@@ -629,6 +629,20 @@ public static class AppPaths
         return false;
     }
 
+    /// <summary>
+    /// Undoes a copy whose later step (final sync, settings copy, pointer write) failed: the dedicated
+    /// subfolder is removed so a retry to the same target is not refused as non-empty. Only a folder this
+    /// very move created is touched, never one that was already there, and a link in its place is left alone.
+    /// Never throws.
+    /// </summary>
+    public static void DiscardCreatedDataFolder(string destination, bool createdByThisMove)
+    {
+        if (!createdByThisMove || ClassifyEntry(destination) != EntryKind.Plain)
+            return;
+
+        TryDeleteBestEffort(destination);
+    }
+
     /// <summary>Cleanup after a failed copy/move; never throws, never blocks the caller from reporting or
     /// retrying its own failure.</summary>
     private static void TryDeleteBestEffort(string directory)
