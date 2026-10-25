@@ -557,9 +557,9 @@ public partial class MainViewModel
     {
         try
         {
-            return IsUnderWindowsFolder(process.MainModule?.FileName, Environment.GetFolderPath(Environment.SpecialFolder.Windows));
+            return IsUnderWindowsFolder(Services.ProcessImage.TryGetPath(process.Id), Environment.GetFolderPath(Environment.SpecialFolder.Windows));
         }
-        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or NotSupportedException)
+        catch (InvalidOperationException)
         {
             return false;
         }
