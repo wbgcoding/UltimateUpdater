@@ -30,7 +30,7 @@ public class LoggingReadBackTests : IDisposable
             "23:16:00 I inst too late");
 
         var lines = Logging().ReadAround(
-            new DateTimeOffset(day.AddHours(23).AddMinutes(15), DateTimeOffset.Now.Offset), TimeSpan.FromSeconds(30));
+            new DateTimeOffset(day.AddHours(23).AddMinutes(15)), TimeSpan.FromSeconds(30));
 
         Assert.Equal(
             ["23:14:45 I inst just inside", "23:15:00 I inst on the mark", "23:15:15 I inst just inside too"],
@@ -56,7 +56,7 @@ public class LoggingReadBackTests : IDisposable
         WriteLog(day, "23:15:02 I inst still in the plain file");
 
         var lines = Logging().ReadAround(
-            new DateTimeOffset(day.AddHours(23).AddMinutes(15), DateTimeOffset.Now.Offset), TimeSpan.FromSeconds(30));
+            new DateTimeOffset(day.AddHours(23).AddMinutes(15)), TimeSpan.FromSeconds(30));
 
         Assert.Equal(
             ["23:15:00 I inst first rollover", "23:15:01 I inst second rollover", "23:15:02 I inst still in the plain file"],
@@ -73,7 +73,7 @@ public class LoggingReadBackTests : IDisposable
             "23:15:02 W inst the failure line");
 
         var lines = Logging().ReadAround(
-            new DateTimeOffset(day.AddHours(23).AddMinutes(15), DateTimeOffset.Now.Offset), TimeSpan.FromSeconds(30), "inst");
+            new DateTimeOffset(day.AddHours(23).AddMinutes(15)), TimeSpan.FromSeconds(30), "inst");
 
         Assert.Equal(["23:15:00 I inst the install line", "23:15:02 W inst the failure line"], lines);
     }
@@ -86,7 +86,7 @@ public class LoggingReadBackTests : IDisposable
         WriteLog(day.AddDays(1), "00:00:10 I inst just after midnight");
 
         var lines = Logging().ReadAround(
-            new DateTimeOffset(day.AddDays(1), DateTimeOffset.Now.Offset), TimeSpan.FromSeconds(30));
+            new DateTimeOffset(day.AddDays(1)), TimeSpan.FromSeconds(30));
 
         Assert.Equal(["23:59:50 I inst just before midnight", "00:00:10 I inst just after midnight"], lines);
     }
