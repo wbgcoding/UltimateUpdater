@@ -112,7 +112,7 @@ public class RecycleBinDeleterSinkTests
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             var deleted = RecycleBinDeleter.DeleteToRecycleBin(
-                file, new LoggingService(), (_, _) => { release.Wait(); return (0, false); },
+                file, new LoggingService(), (_, _, _) => { release.Wait(); return (0, false); },
                 TimeSpan.FromMilliseconds(300), CancellationToken.None);
             watch.Stop();
 
@@ -139,7 +139,7 @@ public class RecycleBinDeleterSinkTests
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
             var deleted = RecycleBinDeleter.DeleteToRecycleBin(
-                file, new LoggingService(), (_, _) => { release.Wait(); return (0, false); },
+                file, new LoggingService(), (_, _, _) => { release.Wait(); return (0, false); },
                 TimeSpan.FromMinutes(5), cts.Token);
             watch.Stop();
 
@@ -151,5 +151,58 @@ public class RecycleBinDeleterSinkTests
             release.Set();
             File.Delete(file);
         }
+    }
+
+    /// <summary>An abandoned shell call that finally wakes up must not recycle the item after the caller
+    /// already counted it as not moved: the call is told to stand down, and a late finisher that honours it
+    /// leaves the file in place.</summary>
+    [Fact]
+    public void A_timed_out_shell_call_is_told_to_stand_down_and_leaves_the_item_alone()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"wu-recyclebin-late-{Guid.NewGuid():N}.txt");
+        File.WriteAllText(file, "late test");
+        using var release = new ManualResetEventSlim();
+        using var finished = new ManualResetEventSlim();
+        var movedAfterAbandon = false;
+
+        try
+        {
+            var deleted = RecycleBinDeleter.DeleteToRecycleBin(
+                file, new LoggingService(),
+                (path, _, abandoned) =>
+                {
+                    release.Wait();
+                    if (!abandoned.IsCancellationRequested)
+                    {
+                        movedAfterAbandon = true;
+                        File.Delete(path);
+                    }
+
+                    finished.Set();
+                    return (0, false);
+                },
+                TimeSpan.FromMilliseconds(300), CancellationToken.None);
+
+            Assert.False(deleted);
+
+            release.Set();
+            Assert.True(finished.Wait(TimeSpan.FromSeconds(10)));
+            Assert.False(movedAfterAbandon);
+            Assert.True(File.Exists(file));
+        }
+        finally
+        {
+            release.Set();
+            if (File.Exists(file))
+                File.Delete(file);
+        }
+    }
+
+    [Fact]
+    public void The_progress_sink_refuses_every_delete_once_the_call_is_abandoned()
+    {
+        Assert.True(RecycleBinDeleter.AllowDelete(0x80, abandoned: false));
+        Assert.False(RecycleBinDeleter.AllowDelete(0x80, abandoned: true));
+        Assert.False(RecycleBinDeleter.AllowDelete(0, abandoned: false));
     }
 }

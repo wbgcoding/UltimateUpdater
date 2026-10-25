@@ -132,7 +132,7 @@ public static class RecycleBinDeleter
     /// where it is. Everything else is a plain S_OK.
     /// </summary>
     [ComVisible(true)]
-    private sealed class RecycleOnlySink : IFileOperationProgressSink
+    private sealed class RecycleOnlySink(CancellationToken abandoned) : IFileOperationProgressSink
     {
         public int StartOperations() => 0;
 
@@ -153,7 +153,7 @@ public static class RecycleBinDeleter
         public int PreDeleteItem(uint dwFlags, IShellItem psiItem)
         {
             LastPreDeleteFlagsForTest = dwFlags;
-            return AllowDelete(dwFlags) ? 0 : EAbort;
+            return AllowDelete(dwFlags, abandoned.IsCancellationRequested) ? 0 : EAbort;
         }
 
         public int PostDeleteItem(uint dwFlags, IShellItem psiItem, int hrDelete, IShellItem psiNewlyCreated) => 0;
@@ -172,8 +172,10 @@ public static class RecycleBinDeleter
     }
 
     /// <summary>The decision of the progress sink: a delete may go ahead only when the shell has marked it as
-    /// one that recycles. Anything else would remove the item for good.</summary>
-    internal static bool AllowDelete(uint deleteFlags) => (deleteFlags & TsfDeleteRecycleIfPossible) != 0;
+    /// one that recycles. Anything else would remove the item for good. Once the caller has given up on the
+    /// call (timeout or cancel) and counted the item as not moved, no further delete may go ahead.</summary>
+    internal static bool AllowDelete(uint deleteFlags, bool abandoned = false) =>
+        !abandoned && (deleteFlags & TsfDeleteRecycleIfPossible) != 0;
 
     /// <summary>The flags the sink last saw on a delete; lets a live test prove the sink is really called.</summary>
     internal static uint? LastPreDeleteFlagsForTest { get; set; }
@@ -205,9 +207,11 @@ public static class RecycleBinDeleter
     internal static readonly TimeSpan OperationTimeout = TimeSpan.FromMinutes(5);
 
     /// <summary>The same move with the shell call and the time limit injectable, so the wait can be proven
-    /// without a shell that really hangs.</summary>
+    /// without a shell that really hangs. The operation gets a token that is cancelled when the caller gives
+    /// up on it, so a call that wakes up late stands down instead of moving an item already counted as kept.</summary>
     internal static bool DeleteToRecycleBin(
-        string path, LoggingService logging, Func<string, LoggingService, (int HResult, bool Aborted)> operation,
+        string path, LoggingService logging,
+        Func<string, LoggingService, CancellationToken, (int HResult, bool Aborted)> operation,
         TimeSpan timeout, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(path) || !(Directory.Exists(path) || File.Exists(path)))
@@ -216,13 +220,15 @@ public static class RecycleBinDeleter
         // IFileOperation wants a single-threaded apartment; a dedicated thread keeps that true whatever
         // thread the caller (a pool thread, the elevated worker) happens to be on.
         var result = (HResult: EFail, Aborted: true);
+        using var abandoned = new CancellationTokenSource();
+        var abandonedToken = abandoned.Token;
         var thread = new Thread(() =>
         {
             // A dedicated thread has no caller to hand an exception to: one escaping here would end the
             // process, so whatever RunOperation did not anticipate becomes a failed move instead.
             try
             {
-                result = operation(path, logging);
+                result = operation(path, logging, abandonedToken);
             }
             catch (Exception ex)
             {
@@ -242,17 +248,21 @@ public static class RecycleBinDeleter
         var deadline = DateTime.UtcNow + timeout;
         while (!thread.Join(TimeSpan.FromMilliseconds(100)))
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                logging.Warn($"Cleanup: recycle-bin delete of '{path}' was cancelled; the shell call is abandoned.");
-                return false;
-            }
+            var cancelled = cancellationToken.IsCancellationRequested;
+            if (!cancelled && DateTime.UtcNow < deadline)
+                continue;
 
-            if (DateTime.UtcNow >= deadline)
-            {
-                logging.Warn($"Cleanup: the shell did not answer for '{path}' within {timeout.TotalSeconds:0} s; giving up on it.");
-                return false;
-            }
+            // Tell the call to stand down first, so it cannot recycle the item after this returns false.
+            abandoned.Cancel();
+
+            // It may have finished in that very instant; its answer is then the truth.
+            if (thread.Join(TimeSpan.Zero))
+                break;
+
+            logging.Warn(cancelled
+                ? $"Cleanup: recycle-bin delete of '{path}' was cancelled; the shell call is abandoned."
+                : $"Cleanup: the shell did not answer for '{path}' within {timeout.TotalSeconds:0} s; giving up on it.");
+            return false;
         }
 
         var stillThere = Directory.Exists(path) || File.Exists(path);
@@ -265,7 +275,8 @@ public static class RecycleBinDeleter
         return true;
     }
 
-    private static (int HResult, bool Aborted) RunOperation(string path, LoggingService logging)
+    private static (int HResult, bool Aborted) RunOperation(
+        string path, LoggingService logging, CancellationToken abandoned)
     {
         object? operation = null;
         uint cookie = 0;
@@ -278,7 +289,7 @@ public static class RecycleBinDeleter
             operation = Activator.CreateInstance(type);
             var fileOperation = (IFileOperation)operation!;
             fileOperation.SetOperationFlags(FofNoConfirmation | FofSilent | FofNoErrorUi | FofxRecycleOnDelete);
-            fileOperation.Advise(new RecycleOnlySink(), out cookie);
+            fileOperation.Advise(new RecycleOnlySink(abandoned), out cookie);
 
             var iid = ShellItemIid;
             SHCreateItemFromParsingName(path, IntPtr.Zero, ref iid, out var item);
