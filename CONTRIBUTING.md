@@ -1,7 +1,5 @@
 # Contributing
 
-Thanks for helping to make Ultimate Updater better. Bug reports, ideas and pull requests are all welcome.
-
 ## Before you start
 
 - **Bugs and ideas:** open an issue with the matching template first, so we can agree on the
