@@ -1273,9 +1273,6 @@ This cannot be undone by Ultimate Updater.</value>
   <data name="ScanFailedNoJava" xml:space="preserve">
     <value>sdkmanager needs Java {0} or newer, and no Java installation was found (JAVA_HOME, PATH, or the one bundled with Android Studio).</value>
   </data>
-  <data name="CleanupFreeSpaceResult" xml:space="preserve">
-    <value>{0} now has {1} free (was {2})</value>
-  </data>
   <data name="SettingsLogFolder" xml:space="preserve">
     <value>Log files</value>
   </data>
@@ -1971,12 +1968,6 @@ Continue with admin rights?</value>
   </data>
   <data name="PipInterpreterTooltip" xml:space="preserve">
     <value>Python interpreter: {0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
-    <value>+~{0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
-    <value>Freed by Windows Disk Cleanup. Approximate, because it ran alongside the other tasks.</value>
   </data>
   <data name="CleanupDefaultSelection" xml:space="preserve">
     <value>Default selection</value>

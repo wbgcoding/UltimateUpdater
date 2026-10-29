@@ -1273,9 +1273,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="ScanFailedNoJava" xml:space="preserve">
     <value>sdkmanager には Java {0} 以降が必要ですが、Java のインストールが見つかりませんでした（JAVA_HOME、PATH、または Android Studio に同梱されたもの）。</value>
   </data>
-  <data name="CleanupFreeSpaceResult" xml:space="preserve">
-    <value>{0} は現在 {1} の空き容量があります（以前は {2}）</value>
-  </data>
   <data name="SettingsLogFolder" xml:space="preserve">
     <value>ログファイル</value>
   </data>
@@ -1971,12 +1968,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="PipInterpreterTooltip" xml:space="preserve">
     <value>Python インタープリター: {0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
-    <value>+~{0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
-    <value>Windows のディスククリーンアップによって解放されました。他のタスクと同時に実行されたため、概算値です。</value>
   </data>
   <data name="CleanupDefaultSelection" xml:space="preserve">
     <value>既定の選択</value>

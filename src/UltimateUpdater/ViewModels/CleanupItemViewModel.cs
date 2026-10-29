@@ -19,11 +19,28 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     [ObservableProperty]
     private bool isSelected;
 
+    /// <summary>What the scan found. Unticking a detail entry never lowers it: the found figures (row,
+    /// group header, dialog total) stay put, only <see cref="SelectedEntryBytes"/> follows the ticks.</summary>
     [ObservableProperty]
     private long bytes;
 
     [ObservableProperty]
     private int files;
+
+    private long _unselectedEntryBytes;
+    private int _unselectedEntryFiles;
+
+    /// <summary>What a run would actually clean from this target: <see cref="Bytes"/> without the detail
+    /// entries the user unticked.</summary>
+    public long SelectedEntryBytes => Math.Max(0, Bytes - _unselectedEntryBytes);
+
+    public int SelectedEntryFiles => Math.Max(0, Files - _unselectedEntryFiles);
+
+    private void RaiseSelectedEntryFigures()
+    {
+        OnPropertyChanged(nameof(SelectedEntryBytes));
+        OnPropertyChanged(nameof(SelectedEntryFiles));
+    }
 
     /// <summary>Still being measured: the row shows a quiet "scanning" hint rather than "0 B".</summary>
     [ObservableProperty]
@@ -122,7 +139,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
 
     /// <summary>"12,4 MB / 310 MB": what has gone of what was measured.</summary>
     public string ProgressText =>
-        Bytes > 0 ? $"{ByteSize.Format(FreedBytes)} / {ByteSize.Format(Bytes)}" : ByteSize.Format(FreedBytes);
+        SelectedEntryBytes > 0 ? $"{ByteSize.Format(FreedBytes)} / {ByteSize.Format(SelectedEntryBytes)}" : ByteSize.Format(FreedBytes);
 
     /// <summary>"3,2 MB in use, 1,1 MB protected": why this row freed less than it promised.</summary>
     public string SkippedText =>
@@ -467,8 +484,8 @@ public sealed partial class CleanupItemViewModel : ObservableObject
                 if (entry.IsSelected == turnOn)
                     continue;
 
-                deltaBytes += (turnOn ? 1 : -1) * entry.Model.Bytes;
-                deltaFiles += (turnOn ? 1 : -1) * entry.Model.Files;
+                deltaBytes += (turnOn ? -1 : 1) * entry.Model.Bytes;
+                deltaFiles += (turnOn ? -1 : 1) * entry.Model.Files;
                 entry.IsSelected = turnOn;
             }
         }
@@ -477,8 +494,9 @@ public sealed partial class CleanupItemViewModel : ObservableObject
             _suppressEntryToggle = false;
         }
 
-        Bytes += deltaBytes;
-        Files += deltaFiles;
+        _unselectedEntryBytes += deltaBytes;
+        _unselectedEntryFiles += deltaFiles;
+        RaiseSelectedEntryFigures();
         ApplyDriveNotes();
         OnPropertyChanged(nameof(AllEntriesSelected));
         _onSelectionChanged();
@@ -724,6 +742,9 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         IReadOnlyList<RecycleBinDriveSummary>? recycleBinDrives = null)
     {
         Entries.Clear();
+        _unselectedEntryBytes = 0;
+        _unselectedEntryFiles = 0;
+        RaiseSelectedEntryFigures();
         _omittedEntryCount = omittedCount;
         _omittedEntryBytes = omittedBytes;
         _recycleBinDrives = recycleBinDrives ?? [];
@@ -766,16 +787,16 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         return root;
     }
 
-    /// <summary>Reuses the row's own Bytes/Files exactly as the top-level checkbox already does for the
-    /// dialog above it: one toggle, one adjustment, no separate "effective size" to keep in sync by hand.</summary>
+    /// <summary>Keeps the selected figures in step with the entry ticks; the found figures are not touched.</summary>
     private void OnEntryToggled(CleanupEntryViewModel entry)
     {
         if (_suppressEntryToggle)
             return;
 
-        var sign = entry.IsSelected ? 1 : -1;
-        Bytes += sign * entry.Model.Bytes;
-        Files += sign * entry.Model.Files;
+        var sign = entry.IsSelected ? -1 : 1;
+        _unselectedEntryBytes += sign * entry.Model.Bytes;
+        _unselectedEntryFiles += sign * entry.Model.Files;
+        RaiseSelectedEntryFigures();
 
         // The drive's own note depends on whether anything on it is unticked, so it follows every toggle.
         ApplyDriveNotes();
@@ -912,6 +933,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
 
     partial void OnBytesChanged(long value)
     {
+        RaiseSelectedEntryFigures();
         OnPropertyChanged(nameof(SizeText));
         OnPropertyChanged(nameof(ShowsSize));
         OnPropertyChanged(nameof(ShowsNothingFound));
@@ -922,6 +944,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     /// to raise unconditionally rather than branch.</summary>
     partial void OnFilesChanged(int value)
     {
+        RaiseSelectedEntryFigures();
         OnPropertyChanged(nameof(SizeText));
         OnPropertyChanged(nameof(ShowsSize));
         OnPropertyChanged(nameof(ShowsNothingFound));

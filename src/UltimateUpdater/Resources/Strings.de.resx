@@ -1273,9 +1273,6 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="ScanFailedNoJava" xml:space="preserve">
     <value>sdkmanager benötigt Java {0} oder neuer, es wurde aber keine Java-Installation gefunden (JAVA_HOME, PATH oder die von Android Studio mitgelieferte).</value>
   </data>
-  <data name="CleanupFreeSpaceResult" xml:space="preserve">
-    <value>Auf {0} sind jetzt {1} frei (vorher {2})</value>
-  </data>
   <data name="SettingsLogFolder" xml:space="preserve">
     <value>Protokolldateien</value>
   </data>
@@ -1971,12 +1968,6 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="PipInterpreterTooltip" xml:space="preserve">
     <value>Python-Interpreter: {0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
-    <value>+~{0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
-    <value>Von der Windows-Datenträgerbereinigung freigegeben. Ungefähr, weil sie neben den anderen Aufgaben lief.</value>
   </data>
   <data name="CleanupDefaultSelection" xml:space="preserve">
     <value>Standardauswahl</value>

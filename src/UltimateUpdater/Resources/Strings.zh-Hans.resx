@@ -1273,9 +1273,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="ScanFailedNoJava" xml:space="preserve">
     <value>sdkmanager 需要 Java {0} 或更高版本，但未找到任何 Java 安装（JAVA_HOME、PATH，或 Android Studio 自带的版本）。</value>
   </data>
-  <data name="CleanupFreeSpaceResult" xml:space="preserve">
-    <value>{0} 当前剩余 {1}（此前为 {2}）</value>
-  </data>
   <data name="SettingsLogFolder" xml:space="preserve">
     <value>日志文件</value>
   </data>
@@ -1971,12 +1968,6 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="PipInterpreterTooltip" xml:space="preserve">
     <value>Python 解释器：{0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
-    <value>+~{0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
-    <value>由 Windows 磁盘清理释放。这是一个近似值，因为它与其他任务同时运行。</value>
   </data>
   <data name="CleanupDefaultSelection" xml:space="preserve">
     <value>默认选择</value>
