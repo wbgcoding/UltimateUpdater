@@ -5,6 +5,23 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Updates
+- Install progress is honest: a percentage shows only while a download reports one; the install phase
+  shows a moving bar with "Installing…" and the elapsed time instead of a bar that stopped at 90 %.
+  Download and install phases of winget, pip and Chocolatey are recognised in English and German.
+- pip installs the exact offered version. When that version cannot install (a dependency missing for
+  this Python version, or a conflict with other packages) the row says why and the version stays
+  hidden until a newer one comes out, instead of ending as "Version unchanged".
+- An uninstall through the same package manager waits while an interactive retry runs.
+
+### Cleanup
+- Unticking single files in an area's details no longer lowers the found total, only the selection.
+- A finished cleanup shows one figure: the space freed.
+- The freed total no longer counts bytes twice when the admin helper drops out, and the live figure no
+  longer drops back after a failed area.
+- Admin areas the background measurement could not reach are measured when the window opens instead of
+  showing 0 B.
+
 ## [1.1.1] - 2026-10-25
 
 ### Updates
