@@ -34,6 +34,27 @@ public static partial class ProgressParser
     [GeneratedRegex(@",(?=\d{3}(?!\d))")]
     private static partial Regex ThousandsCommaRegex();
 
+    // Lines the tools print once the download is over and the real install has begun. Matched in English
+    // and German because winget, pip and choco localise their output and the app runs on German Windows
+    // as often as English. Contains-matches for the long phrases; the generic "Installing"/"Installation"
+    // only at the start of a line (after a spinner glyph), so a path or a package name containing the word
+    // is not read as a phase change. "Installing build dependencies" is pip preparing a source build in the
+    // middle of its downloads, not the install step.
+    [GeneratedRegex(
+        @"Successfully\s+verified\s+installer\s+hash"
+        + @"|Starting\s+package\s+install"
+        + @"|Installer-?\s?Hash\b[^\r\n]{0,40}?(erfolgreich|überprüft|verifiziert)"
+        + @"|Paketinstallation\s+wird\s+gestartet"
+        + @"|Installing\s+collected\s+packages"
+        + @"|Installiere\s+gesammelte\s+Pakete"
+        + @"|^[\s\-\\|/]*(Installing(?!\s+build\s+dependencies)|Installation|Installiere|Extracting|Entpacke)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline)]
+    private static partial Regex InstallPhaseLineRegex();
+
+    /// <summary>True when the segment is a known "download finished, install starting" line.</summary>
+    public static bool IsInstallPhaseLine(string? segment) =>
+        !string.IsNullOrWhiteSpace(segment) && InstallPhaseLineRegex().IsMatch(segment);
+
     public static ProgressSample? Parse(string? segment)
     {
         if (string.IsNullOrWhiteSpace(segment))
@@ -65,15 +86,20 @@ public static partial class ProgressParser
     /// </summary>
     public static Models.InstallProgress? ToInstallProgress(string? segment, string statusText)
     {
-        if (Parse(segment) is not { } sample)
+        var sample = Parse(segment);
+        var installing = IsInstallPhaseLine(segment);
+        if (sample is null && !installing)
             return null;
 
+        // A bare install-phase line carries no figure: percent 0 and no bytes, which the row reads as a
+        // status line that moves nothing but the phase.
         return new Models.InstallProgress
         {
-            PercentComplete = sample.Percent ?? 0,
+            PercentComplete = sample?.Percent ?? 0,
             StatusText = statusText,
-            BytesReceived = sample.BytesReceived,
-            BytesTotal = sample.BytesTotal,
+            BytesReceived = sample?.BytesReceived,
+            BytesTotal = sample?.BytesTotal,
+            Phase = installing ? Models.InstallPhase.Installing : Models.InstallPhase.Downloading,
         };
     }
 

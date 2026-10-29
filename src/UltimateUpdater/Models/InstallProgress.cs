@@ -18,4 +18,10 @@ public sealed class InstallProgress
     public long? BytesReceived { get; init; }
 
     public long? BytesTotal { get; init; }
+
+    /// <summary>
+    /// Download or install stage, where the tool's output says so. Unknown for a source that reports
+    /// only a bare figure; the row then treats any measurable reading as a download.
+    /// </summary>
+    public InstallPhase Phase { get; init; }
 }

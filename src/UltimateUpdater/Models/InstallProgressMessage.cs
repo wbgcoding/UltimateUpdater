@@ -51,4 +51,10 @@ public sealed class InstallProgressMessage
     /// message from a copy that does not know it degrades to the plain success it already carries.
     /// </summary>
     public bool VersionUnchanged { get; set; }
+
+    /// <summary>
+    /// Download or install stage. Missing in a message from a copy that does not know it, which reads as
+    /// <see cref="InstallPhase.Unknown"/>.
+    /// </summary>
+    public InstallPhase Phase { get; set; }
 }

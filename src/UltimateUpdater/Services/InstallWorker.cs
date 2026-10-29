@@ -414,6 +414,7 @@ public static class InstallWorker
                 BytesReceived = p.BytesReceived,
                 BytesTotal = p.BytesTotal,
                 RebootRequired = p.RebootRequired,
+                Phase = p.Phase,
             }));
 
         bool delivered;
