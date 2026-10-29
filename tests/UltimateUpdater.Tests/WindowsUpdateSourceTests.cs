@@ -52,6 +52,14 @@ public class WindowsUpdateDownloadSizeTests
     [Fact]
     public void An_unknown_size_stays_unknown_either_way() =>
         Assert.Null(WindowsUpdateSource.DownloadSizeFor([DefinitionUpdatesCategoryId], null));
+
+    [Fact]
+    public void A_cumulative_update_reporting_every_payload_variant_shows_no_size() =>
+        Assert.Null(WindowsUpdateSource.DownloadSizeFor(["some-other-category"], 97_172_000_000));
+
+    [Fact]
+    public void A_large_but_plausible_update_keeps_its_size() =>
+        Assert.Equal(4_500_000_000, WindowsUpdateSource.DownloadSizeFor(["some-other-category"], 4_500_000_000));
 }
 
 /// <summary>

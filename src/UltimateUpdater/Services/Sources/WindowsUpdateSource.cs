@@ -489,9 +489,15 @@ public sealed class WindowsUpdateSource : IUpdateSource
     }
 
     /// <summary>Pure decision so it is testable without COM: a Definition Update's own reported size is
-    /// discarded, every other update keeps whatever <see cref="ReadDownloadSize"/> found.</summary>
+    /// discarded, and so is any size above <see cref="PlausibleDownloadSizeLimit"/>; every other update keeps
+    /// whatever <see cref="ReadDownloadSize"/> found.</summary>
     internal static long? DownloadSizeFor(HashSet<string> categoryIds, long? rawSize) =>
-        categoryIds.Contains(DefinitionUpdatesCategoryId) ? null : rawSize;
+        categoryIds.Contains(DefinitionUpdatesCategoryId) || rawSize > PlausibleDownloadSizeLimit ? null : rawSize;
+
+    /// <summary>A cumulative update's MaxDownloadSize adds up every payload variant it could ship (seen as
+    /// 90 GB for a monthly security update whose real transfer is a few GB). Feature upgrades never reach
+    /// this source, so anything above this is that sum, not a download.</summary>
+    private const long PlausibleDownloadSizeLimit = 8L * 1024 * 1024 * 1024;
 
     /// <summary>Whether WUA classifies this update as a driver (IWindowsDriverUpdate); an unreadable
     /// Type means "not a driver update" rather than aborting the whole row.</summary>
