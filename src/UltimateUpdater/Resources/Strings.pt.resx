@@ -531,6 +531,12 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
   <data name="ThemeDesc" xml:space="preserve">
     <value>Seguir o Windows ou forçar o modo claro ou escuro.</value>
   </data>
+  <data name="ThemeSystemAccent" xml:space="preserve">
+    <value>Usar a cor de destaque do Windows</value>
+  </data>
+  <data name="ThemeSystemAccentDesc" xml:space="preserve">
+    <value>Desligado: o azul próprio da aplicação. Ligado: a cor de destaque das definições do Windows.</value>
+  </data>
   <data name="SettingsAutostartDesc" xml:space="preserve">
     <value>Iniciar com o Windows, minimizado na bandeja.</value>
   </data>

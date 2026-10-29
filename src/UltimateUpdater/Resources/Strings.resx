@@ -531,6 +531,12 @@ This cannot be undone by Ultimate Updater.</value>
   <data name="ThemeDesc" xml:space="preserve">
     <value>Match Windows, or force light or dark.</value>
   </data>
+  <data name="ThemeSystemAccent" xml:space="preserve">
+    <value>Use Windows accent colour</value>
+  </data>
+  <data name="ThemeSystemAccentDesc" xml:space="preserve">
+    <value>Off: the app's own blue. On: the accent colour from Windows settings.</value>
+  </data>
   <data name="SettingsAutostartDesc" xml:space="preserve">
     <value>Start with Windows, minimised to the tray.</value>
   </data>

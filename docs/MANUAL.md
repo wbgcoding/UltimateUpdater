@@ -61,6 +61,14 @@ and nothing runs until you press the button and confirm.
 | Registry | Orphaned uninstall entries and other safe-to-remove registry leftovers, only ever after a registry backup is written | Yes |
 | Drivers | Devices that are no longer connected but still carry a third-party driver, and third-party driver packages no device uses; never inbox drivers, every package exported to the data folder first (a copy also stays in `%ProgramData%\UltimateUpdater\driver-backups`), all rows off by default; in the same section, older Python versions (off by default) | Yes |
 
+## Appearance
+
+Settings, Appearance sets the theme (follow Windows, light, dark, or one of two coloured dark themes) and
+the language. Buttons, switches and highlights use the Windows default blue on every PC. The switch "Use
+Windows accent colour" hands that choice to Windows instead, so the app follows the accent colour from the
+Windows settings, live. The two coloured dark themes keep their own colour, and Windows high contrast
+always uses the system colours.
+
 ## Where the data lives
 
 Installed: `%APPDATA%\UltimateUpdater`. Portable: a `data` folder next to the executable. If that

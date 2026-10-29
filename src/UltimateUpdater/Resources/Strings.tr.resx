@@ -531,6 +531,12 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="ThemeDesc" xml:space="preserve">
     <value>Windows ile eşleş veya açık ya da koyuyu zorla.</value>
   </data>
+  <data name="ThemeSystemAccent" xml:space="preserve">
+    <value>Windows vurgu rengini kullan</value>
+  </data>
+  <data name="ThemeSystemAccentDesc" xml:space="preserve">
+    <value>Kapalı: uygulamanın kendi mavisi. Açık: Windows ayarlarındaki vurgu rengi.</value>
+  </data>
   <data name="SettingsAutostartDesc" xml:space="preserve">
     <value>Windows ile başlat, bildirim alanına küçültülmüş olarak.</value>
   </data>

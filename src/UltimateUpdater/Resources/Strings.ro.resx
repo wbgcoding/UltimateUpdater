@@ -531,6 +531,12 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   <data name="ThemeDesc" xml:space="preserve">
     <value>Se potrivește cu Windows sau forțează modul deschis ori întunecat.</value>
   </data>
+  <data name="ThemeSystemAccent" xml:space="preserve">
+    <value>Folosește culoarea de accent din Windows</value>
+  </data>
+  <data name="ThemeSystemAccentDesc" xml:space="preserve">
+    <value>Oprit: albastrul propriu al aplicației. Pornit: culoarea de accent din setările Windows.</value>
+  </data>
   <data name="SettingsAutostartDesc" xml:space="preserve">
     <value>Pornește cu Windows, minimizat în zona de notificare.</value>
   </data>

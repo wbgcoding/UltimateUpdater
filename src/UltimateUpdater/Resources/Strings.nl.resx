@@ -531,6 +531,12 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   <data name="ThemeDesc" xml:space="preserve">
     <value>Windows volgen, of licht of donker forceren.</value>
   </data>
+  <data name="ThemeSystemAccent" xml:space="preserve">
+    <value>Windows-accentkleur gebruiken</value>
+  </data>
+  <data name="ThemeSystemAccentDesc" xml:space="preserve">
+    <value>Uit: het eigen blauw van de app. Aan: de accentkleur uit de Windows-instellingen.</value>
+  </data>
   <data name="SettingsAutostartDesc" xml:space="preserve">
     <value>Starten met Windows, geminimaliseerd naar het systeemvak.</value>
   </data>

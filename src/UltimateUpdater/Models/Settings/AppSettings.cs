@@ -141,6 +141,9 @@ public sealed class InstallSettings
 public sealed class UiSettings
 {
     public string Theme { get; set; } = "system";
+
+    /// <summary>Off: the app's own blue (#0078D4). On: the accent colour from the Windows settings.</summary>
+    public bool UseSystemAccent { get; set; }
     public string Language { get; set; } = "system";
     public WindowPlacement? WindowPlacement { get; set; }
     /// <summary>

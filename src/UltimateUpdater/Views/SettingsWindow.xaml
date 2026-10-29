@@ -972,6 +972,24 @@
 
                         <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
 
+                        <Grid x:Name="AccentRow">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="PaintBrush24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[ThemeSystemAccent]}"/>
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[ThemeSystemAccentDesc]}"/>
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="SystemAccentToggle" Grid.Column="2" VerticalAlignment="Center"
+                                             IsChecked="{Binding UseSystemAccent}" IsEnabled="{Binding CanChooseAccent}"
+                                             AutomationProperties.Name="{Binding Loc[ThemeSystemAccent]}"/>
+                        </Grid>
+
+                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>

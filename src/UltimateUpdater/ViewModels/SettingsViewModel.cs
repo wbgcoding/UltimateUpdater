@@ -120,6 +120,13 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string selectedTheme;
 
+    /// <summary>Off: the app's own blue. On: the accent colour from the Windows settings.</summary>
+    [ObservableProperty]
+    private bool useSystemAccent;
+
+    /// <summary>The two named themes carry their own colour, so the choice has no effect there.</summary>
+    public bool CanChooseAccent => SelectedTheme is not ("hacker" or "neon");
+
     [ObservableProperty]
     private string selectedLanguage;
 
@@ -501,6 +508,7 @@ public partial class SettingsViewModel : ObservableObject
         cleanupRecycleInsteadOfDelete = current.CleanupRecycleInsteadOfDelete;
         cleanupPrescanAtStartup = current.CleanupPrescanAtStartup;
         selectedTheme = current.Ui.Theme;
+        useSystemAccent = current.Ui.UseSystemAccent;
         selectedLanguage = current.Ui.Language;
 
         RebuildExcludedPaths();
@@ -650,6 +658,13 @@ public partial class SettingsViewModel : ObservableObject
     {
         Apply(s => s.Ui.Theme = value);
         _themeService.Apply(value);
+        OnPropertyChanged(nameof(CanChooseAccent));
+    }
+
+    partial void OnUseSystemAccentChanged(bool value)
+    {
+        Apply(s => s.Ui.UseSystemAccent = value);
+        _themeService.SetUseSystemAccent(value);
     }
 
     partial void OnSelectedLanguageChanged(string value)
@@ -990,6 +1005,7 @@ public partial class SettingsViewModel : ObservableObject
         CleanupRecycleInsteadOfDelete = current.CleanupRecycleInsteadOfDelete;
         CleanupPrescanAtStartup = current.CleanupPrescanAtStartup;
         SelectedTheme = current.Ui.Theme;
+        UseSystemAccent = current.Ui.UseSystemAccent;
         SelectedLanguage = current.Ui.Language;
 
         RebuildExcludedPaths();

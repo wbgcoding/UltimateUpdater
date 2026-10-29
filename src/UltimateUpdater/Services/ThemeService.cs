@@ -80,6 +80,40 @@ public sealed class ThemeService
     private static readonly Color HackerAccent = Color.FromRgb(0x19, 0xC0, 0x5C);
     private static readonly Color NeonAccent = Color.FromRgb(0x96, 0x5A, 0xFF);
 
+    /// <summary>The Windows default blue: the accent of the light, dark and system themes on every PC
+    /// unless the user opts into the Windows accent.</summary>
+    internal static readonly Color DefaultAccent = Color.FromRgb(0x00, 0x78, 0xD4);
+
+    private bool _useSystemAccent;
+
+    /// <summary>Which accent a theme paints with: the fixed colour, or null for "the one Windows supplies"
+    /// (high contrast, or the user's opt-in on the light, dark and system themes). The named themes keep
+    /// their own colour whatever the setting says.</summary>
+    internal static Color? ResolveAccent(string theme, bool useSystemAccent, bool highContrast)
+    {
+        if (highContrast)
+            return null;
+
+        return theme switch
+        {
+            "hacker" => HackerAccent,
+            "neon" => NeonAccent,
+            _ => useSystemAccent ? null : DefaultAccent,
+        };
+    }
+
+    /// <summary>Switches between the app's own blue and the Windows accent; repaints at once.</summary>
+    public void SetUseSystemAccent(bool value)
+    {
+        if (_useSystemAccent == value)
+            return;
+
+        _useSystemAccent = value;
+
+        if (_windows.Count > 0)
+            ApplyCore(_requestedTheme);
+    }
+
     /// <summary>
     /// The dark theme's own deep surfaces, OPAQUE by design: WPF-UI's stock dark theme paints
     /// <c>CardBackgroundFillColorDefaultBrush</c>, <c>ControlFillColorDefaultBrush</c> and
@@ -379,6 +413,10 @@ public sealed class ThemeService
 
     private static bool IsSystem(string theme) => theme is not ("light" or "dark" or "hacker" or "neon");
 
+    /// <summary>The OS settings broadcast matters for the "system" theme (light/dark) and for any
+    /// light/dark choice that follows the Windows accent.</summary>
+    private bool NeedsWatch(string theme) => IsSystem(theme) || (_useSystemAccent && theme is "light" or "dark");
+
     private void ApplyCore(string theme)
     {
         if (PrimaryWindow is not { } primary)
@@ -391,12 +429,7 @@ public sealed class ThemeService
             _ => ResolveSystemTheme(),
         };
 
-        Color? accent = theme switch
-        {
-            "hacker" => HackerAccent,
-            "neon" => NeonAccent,
-            _ => null,
-        };
+        var accent = ResolveAccent(theme, _useSystemAccent, SystemParameters.HighContrast);
 
         // Windows high contrast overrides theme AND accent alike: none of this app's own colour choices,
         // named or otherwise, may compete with a scheme the user turned on specifically because the
@@ -451,13 +484,17 @@ public sealed class ThemeService
 
         ThemeChanged?.Invoke();
 
-        if (IsSystem(theme) && !_isWatching)
+        var watch = NeedsWatch(theme);
+        if (watch)
+            _lastSystemAppearance = ReadSystemAppearance();
+
+        if (watch && !_isWatching)
         {
             _watchDispatcher = primary.Dispatcher;
             SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
             _isWatching = true;
         }
-        else if (!IsSystem(theme) && _isWatching)
+        else if (!watch && _isWatching)
         {
             SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
             _isWatching = false;
@@ -510,7 +547,7 @@ public sealed class ThemeService
 
     private void ReapplyIfSystemAppearanceChanged()
     {
-        if (!_isWatching || !IsSystem(_requestedTheme) || PrimaryWindow is null)
+        if (!_isWatching || !NeedsWatch(_requestedTheme) || PrimaryWindow is null)
             return;
 
         if (ReadSystemAppearance() != _lastSystemAppearance)

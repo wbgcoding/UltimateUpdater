@@ -531,6 +531,12 @@ Esto no se puede deshacer con Ultimate Updater.</value>
   <data name="ThemeDesc" xml:space="preserve">
     <value>Usa el tema de Windows o fuerza el claro u oscuro.</value>
   </data>
+  <data name="ThemeSystemAccent" xml:space="preserve">
+    <value>Usar el color de énfasis de Windows</value>
+  </data>
+  <data name="ThemeSystemAccentDesc" xml:space="preserve">
+    <value>Desactivado: el azul propio de la aplicación. Activado: el color de énfasis de la configuración de Windows.</value>
+  </data>
   <data name="SettingsAutostartDesc" xml:space="preserve">
     <value>Inicia con Windows, minimizado en la bandeja.</value>
   </data>

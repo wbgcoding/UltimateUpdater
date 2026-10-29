@@ -531,6 +531,12 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="ThemeDesc" xml:space="preserve">
     <value>Windows に合わせるか、ライトまたはダークを強制します。</value>
   </data>
+  <data name="ThemeSystemAccent" xml:space="preserve">
+    <value>Windows のアクセントカラーを使う</value>
+  </data>
+  <data name="ThemeSystemAccentDesc" xml:space="preserve">
+    <value>オフ: アプリ独自の青。オン: Windows の設定のアクセントカラー。</value>
+  </data>
   <data name="SettingsAutostartDesc" xml:space="preserve">
     <value>Windows 起動時にトレイに最小化した状態で開始します。</value>
   </data>

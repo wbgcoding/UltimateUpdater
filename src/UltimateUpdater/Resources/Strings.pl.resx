@@ -531,6 +531,12 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   <data name="ThemeDesc" xml:space="preserve">
     <value>Dopasuj do systemu Windows albo wymuś jasny lub ciemny motyw.</value>
   </data>
+  <data name="ThemeSystemAccent" xml:space="preserve">
+    <value>Użyj koloru akcentu systemu Windows</value>
+  </data>
+  <data name="ThemeSystemAccentDesc" xml:space="preserve">
+    <value>Wyłączone: własny niebieski aplikacji. Włączone: kolor akcentu z ustawień systemu Windows.</value>
+  </data>
   <data name="SettingsAutostartDesc" xml:space="preserve">
     <value>Uruchamiaj razem z systemem Windows, zminimalizowane do zasobnika.</value>
   </data>

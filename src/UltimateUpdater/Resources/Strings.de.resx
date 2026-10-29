@@ -531,6 +531,12 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="ThemeDesc" xml:space="preserve">
     <value>Windows folgen oder hell bzw. dunkel erzwingen.</value>
   </data>
+  <data name="ThemeSystemAccent" xml:space="preserve">
+    <value>Windows-Akzentfarbe verwenden</value>
+  </data>
+  <data name="ThemeSystemAccentDesc" xml:space="preserve">
+    <value>Aus: das Blau des Programms. An: die Akzentfarbe aus den Windows-Einstellungen.</value>
+  </data>
   <data name="SettingsAutostartDesc" xml:space="preserve">
     <value>Mit Windows starten, in den Infobereich minimiert.</value>
   </data>

@@ -337,6 +337,7 @@ public partial class App : Application
         Services.Security.MalwareScanner.ScanDownloads = settings.Current.Security.ScanDownloads;
 
         var themeService = new ThemeService();
+        themeService.SetUseSystemAccent(settings.Current.Ui.UseSystemAccent);
         var iconCache = new IconCacheService(logging);
         var history = new HistoryService(logging);
 

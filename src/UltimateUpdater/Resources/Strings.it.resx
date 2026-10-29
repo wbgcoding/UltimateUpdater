@@ -531,6 +531,12 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="ThemeDesc" xml:space="preserve">
     <value>Segui Windows oppure forza il tema chiaro o scuro.</value>
   </data>
+  <data name="ThemeSystemAccent" xml:space="preserve">
+    <value>Usa il colore di risalto di Windows</value>
+  </data>
+  <data name="ThemeSystemAccentDesc" xml:space="preserve">
+    <value>Disattivato: il blu dell'app. Attivato: il colore di risalto delle impostazioni di Windows.</value>
+  </data>
   <data name="SettingsAutostartDesc" xml:space="preserve">
     <value>Avvia con Windows, ridotto a icona nell'area di notifica.</value>
   </data>
