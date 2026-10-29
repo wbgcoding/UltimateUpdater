@@ -2179,4 +2179,7 @@ Esto no se puede deshacer.</value>
   <data name="InstallErrorPipBlockedNow" xml:space="preserve">
     <value>Nada que hacer. Esta actualización permanecerá oculta hasta que salga una versión más reciente.</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>Instalando… {0}</value>
+  </data>
 </root>

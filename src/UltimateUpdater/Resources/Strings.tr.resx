@@ -2179,4 +2179,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="InstallErrorPipBlockedNow" xml:space="preserve">
     <value>Yapılacak bir şey yok. Bu güncelleme, daha yeni bir sürüm çıkana kadar gizli kalır.</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>Yükleniyor… {0}</value>
+  </data>
 </root>

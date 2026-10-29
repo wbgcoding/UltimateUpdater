@@ -2179,4 +2179,7 @@ Continue with admin rights?</value>
   <data name="InstallErrorPipBlockedNow" xml:space="preserve">
     <value>Nothing to do. This update stays hidden until a newer version comes out.</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>Installing… {0}</value>
+  </data>
 </root>

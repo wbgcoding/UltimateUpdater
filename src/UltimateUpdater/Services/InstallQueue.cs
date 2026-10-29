@@ -18,6 +18,9 @@ public sealed record InstallItemStatus(string SourceId, string ItemId, double Pe
 
     public long? BytesTotal { get; init; }
 
+    /// <summary>Download or install stage as far as the tool's output shows it; Unknown when it does not.</summary>
+    public Models.InstallPhase Phase { get; init; }
+
     /// <summary>Raw, unlocalized diagnostic for a failure, shown only when the user asks for it (SECURITY.md).</summary>
     public string? Detail { get; init; }
 
@@ -671,6 +674,7 @@ public sealed class InstallQueue
                 BytesReceived = p.BytesReceived,
                 BytesTotal = p.BytesTotal,
                 RebootRequired = p.RebootRequired,
+                Phase = p.Phase,
             });
         });
 
@@ -1049,6 +1053,7 @@ public sealed class InstallQueue
             {
                 BytesReceived = message.BytesReceived,
                 BytesTotal = message.BytesTotal,
+                Phase = Enum.IsDefined(message.Phase) ? message.Phase : Models.InstallPhase.Unknown,
                 Detail = message.Detail,
                 RebootRequired = message.RebootRequired,
                 IsManualHandoff = message.IsManualHandoff,

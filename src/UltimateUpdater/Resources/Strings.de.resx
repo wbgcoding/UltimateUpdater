@@ -2179,4 +2179,7 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="InstallErrorPipBlockedNow" xml:space="preserve">
     <value>Nichts zu tun. Das Update bleibt ausgeblendet, bis eine neuere Version erscheint.</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>Wird installiert… {0}</value>
+  </data>
 </root>

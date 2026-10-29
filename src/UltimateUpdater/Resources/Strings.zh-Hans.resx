@@ -2179,4 +2179,7 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="InstallErrorPipBlockedNow" xml:space="preserve">
     <value>无需操作。在发布更新的版本之前，此更新将保持隐藏。</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>正在安装… {0}</value>
+  </data>
 </root>

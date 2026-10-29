@@ -654,25 +654,6 @@ public class EnrichmentAndDiagnosticsTests
         Assert.Equal(before, alreadyDated.PublishDateText);
     }
 
-    [Fact]
-    public void Indeterminate_progress_creeps_while_running_then_a_real_reading_takes_over()
-    {
-        var row = new UpdateRowViewModel(TestItem());
-        row.BeginInstall();
-        row.ApplyInstallStatus(new InstallItemStatus("winget", "x", 0, "working", null, null));
-        Assert.Equal(RowInstallState.Running, row.InstallState);
-
-        row.AdvanceIndeterminate();
-        row.AdvanceIndeterminate();
-        Assert.True(row.InstallPercent is > 0 and <= 90);
-
-        // a real percentage arrives and pins the bar; the creep stops honouring it
-        row.ApplyInstallStatus(new InstallItemStatus("winget", "x", 42, null, null, null));
-        Assert.Equal(42, row.InstallPercent);
-        row.AdvanceIndeterminate();
-        Assert.Equal(42, row.InstallPercent);
-    }
-
     /// <summary>
     /// a package the manager has no fitting version for ends on its own terminal state,
     /// the row shows the word in caution colour and NOT the red failure icon, which is reserved for an

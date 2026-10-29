@@ -842,7 +842,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{Binding CurrentInstallRow.SourceDisplay}" FontSize="11"
                                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding CurrentInstallRow.InstallPercentText}" FontSize="11"
+                                <TextBlock Grid.Column="1" Text="{Binding CurrentInstallRow.RunningProgressText}" FontSize="11"
                                            Margin="8,0,0,0" Style="{StaticResource TabularNumberText}"
                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                 <TextBlock Grid.Column="2" Text="{Binding CurrentInstallRow.TransferText}" FontSize="11" Margin="8,0,0,0"
@@ -1021,16 +1021,19 @@
                                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                                                     Margin="8,0,0,0">
-                                            <TextBlock Text="{Binding InstallPercentText}" FontSize="11" MinWidth="30"
+                                            <TextBlock Text="{Binding RunningProgressText}" FontSize="11" MinWidth="30"
                                                        TextAlignment="Right" Margin="0,0,6,0"
                                                        Style="{StaticResource TabularNumberText}"
                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                             <Border Width="80" Height="5" CornerRadius="2.5" VerticalAlignment="Center"
-                                                    Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                                                    Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                                    Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}">
                                                 <Border HorizontalAlignment="Left" CornerRadius="2.5"
                                                         Background="{DynamicResource AccentFillColorDefaultBrush}"
                                                         Width="{Binding InstallPercent, Converter={StaticResource PercentToWidth}, ConverterParameter=80}"/>
                                             </Border>
+                                            <views:IndeterminateBar Width="80" Height="5" VerticalAlignment="Center"
+                                                                    Visibility="{Binding ShowIndeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
                                         </StackPanel>
                                         <ui:Button Grid.Column="2" Margin="8,0,0,0" Padding="4,2" Appearance="Secondary"
                                                    Command="{Binding StopSingleCommand}"
@@ -1942,6 +1945,13 @@
                                                ToolTip="{Binding AllSourcesTooltip}"
                                                Visibility="{Binding ShowSourceText, Converter={StaticResource BoolToVisibility}}"
                                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                    <!-- While the row installs without a figure to show, the line says what it
+                                         is doing and for how long, in place of the source. -->
+                                    <TextBlock x:Name="InstallingPhaseText" Text="{Binding RunningStatusText}" FontSize="11" Margin="0,1,0,0"
+                                               TextTrimming="CharacterEllipsis"
+                                               Style="{StaticResource TabularNumberText}"
+                                               Visibility="{Binding ShowIndeterminateProgress, Converter={StaticResource BoolToVisibility}}"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                     <!-- A failed row says WHY here, in place of the source: the translated
                                          explainer only, never raw tool output (that stays behind Details). -->
                                     <TextBlock x:Name="FailureLineText" Text="{Binding FailureLine}" FontSize="11" Margin="0,1,0,0"
@@ -2134,13 +2144,21 @@
                                             <TextBlock x:Name="RunningPercentText" Text="{Binding InstallPercentText}" FontSize="12"
                                                        VerticalAlignment="Center" MinWidth="34" TextAlignment="Right"
                                                        Margin="0,0,8,0" Style="{StaticResource TabularNumberText}"
+                                                       Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}"
                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                             <Border Width="96" Height="6" CornerRadius="3" VerticalAlignment="Center"
-                                                    Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                                                    Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                                    Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}">
                                                 <Border HorizontalAlignment="Left" CornerRadius="3"
                                                         Background="{DynamicResource AccentFillColorDefaultBrush}"
                                                         Width="{Binding InstallPercent, Converter={StaticResource PercentToWidth}, ConverterParameter=96}"/>
                                             </Border>
+                                            <!-- No figure to show (installing, or nothing measurable reported):
+                                                 a moving bar and no number; the line under the name says what
+                                                 is going on and for how long. -->
+                                            <views:IndeterminateBar x:Name="RunningIndeterminateBar" Width="96" Height="6"
+                                                                    VerticalAlignment="Center"
+                                                                    Visibility="{Binding ShowIndeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
                                         </StackPanel>
 
                                         <!-- The vendor's own UI is driving, so a percentage would be
@@ -2372,7 +2390,7 @@
                                                     <StackPanel x:Name="ChildRunningLane" Orientation="Horizontal" VerticalAlignment="Center"
                                                                 Visibility="{Binding IsInstallRunning, Converter={StaticResource BoolToVisibility}}">
                                                         <views:WaitSpinner Margin="0,0,7,0" VerticalAlignment="Center"/>
-                                                        <TextBlock Text="{Binding InstallPercentText}" FontSize="12" VerticalAlignment="Center"
+                                                        <TextBlock Text="{Binding RunningProgressText}" FontSize="12" VerticalAlignment="Center"
                                                                    Style="{StaticResource TabularNumberText}"
                                                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                                    Visibility="{Binding ShowRunningProgress, Converter={StaticResource BoolToVisibility}}"/>

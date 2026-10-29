@@ -877,8 +877,9 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public bool ShowCancelledReason => CancelledReasonLine is not null;
 
-    /// <summary>The source line under the name; a failed row shows <see cref="FailureLine"/> in its place.</summary>
-    public bool ShowSourceText => ShowSourceLine && !IsInstallFailed && !ShowCancelledReason;
+    /// <summary>The source line under the name; a failed row shows <see cref="FailureLine"/> in its place and an
+    /// indeterminate run shows <see cref="RunningStatusText"/>.</summary>
+    public bool ShowSourceText => ShowSourceLine && !IsInstallFailed && !ShowCancelledReason && !ShowIndeterminateProgress;
 
     public Brush InstallStateBrush => InstallState switch
     {
@@ -1115,6 +1116,7 @@ public partial class UpdateRowViewModel : ObservableObject
         InstallStatusText = null;
         InstallErrorDetail = null;
         _hasRealProgress = false;
+        ResetPhase();
         // A retry starts from nothing: the last attempt's byte counts and throughput sample must neither
         // stay on the row nor feed the first speed reading of this attempt.
         BytesReceived = null;
@@ -1139,6 +1141,7 @@ public partial class UpdateRowViewModel : ObservableObject
         InstallPercent = 0;
         InstallStatusText = reason;
         _hasRealProgress = false;
+        ResetPhase();
     }
 
     /// <summary>Download size in bytes (source or enrichment), for the pre-install batch preview.</summary>
@@ -1267,13 +1270,12 @@ public partial class UpdateRowViewModel : ObservableObject
 
     /// <summary>
     /// True once the driving tool has reported a real figure, a non-zero percent or any byte count.
-    /// Until then the row shows a slowly advancing indeterminate percentage (AdvanceIndeterminate) so a
-    /// tool that prints no progress at all still looks alive instead of frozen at 0.
+    /// Until then the row shows an indeterminate bar, never an invented percentage.
     /// </summary>
     private bool _hasRealProgress;
 
     /// <summary>Public read of <see cref="_hasRealProgress"/>, the install band draws a wandering shine
-    /// instead of its normal fill while every running row is still on the indeterminate creep.</summary>
+    /// instead of its normal fill while no running row has a real figure.</summary>
     public bool HasRealProgress => _hasRealProgress;
 
     public void ApplyInstallStatus(InstallItemStatus status)
@@ -1290,7 +1292,11 @@ public partial class UpdateRowViewModel : ObservableObject
             BytesPerSecond = 0;
             _lastByteSampleAt = default;
             _lastByteSample = 0;
+            ResetPhase();
+            _runStartedAt = Clock();
         }
+
+        status = TrackPhase(status);
 
         InstallStatusText = status.Error ?? status.Status;
         if (status.Detail is not null)
@@ -1301,8 +1307,8 @@ public partial class UpdateRowViewModel : ObservableObject
             InstallErrorDetail = status.Error ?? status.Status;
         UpdateTransfer(status);
 
-        // A bare status line (percent 0, no bytes) must not stamp the row back to 0 and undo the
-        // indeterminate creep; only a real reading takes over the bar.
+        // A bare status line (percent 0, no bytes) must not stamp the row back to 0; only a real reading
+        // takes over the bar.
         if (status.Percent > 0 || status.BytesTotal is > 0 || status.BytesReceived is > 0)
         {
             _hasRealProgress = true;
@@ -1332,6 +1338,8 @@ public partial class UpdateRowViewModel : ObservableObject
         // sticky, same reason: the "result" message carries this, a later bare progress line must not clear it
         if (status.VersionUnchanged)
             VersionUnchanged = true;
+
+        NotifyPhaseChanged();
     }
 
     /// <summary>The item installed but a reboot is pending (winget 3010/1641). Not a failure, a note.</summary>
@@ -1348,21 +1356,6 @@ public partial class UpdateRowViewModel : ObservableObject
     private bool versionUnchanged;
 
     public string VersionUnchangedText => LocalizationService.Instance["InstallVersionUnchanged"];
-
-    /// <summary>
-    /// Fallback progress for a tool that reports nothing measurable: while the row is running and no
-    /// real reading has arrived, the percentage creeps toward, but never reaches, 90, slowing as it
-    /// climbs, so "download → install" reads as movement. A real reading (or completion) takes over
-    /// the moment it arrives. Driven by the install timer.
-    /// </summary>
-    public void AdvanceIndeterminate()
-    {
-        if (InstallState != RowInstallState.Running || _hasRealProgress)
-            return;
-
-        var step = InstallPercent < 55 ? 2.5 : InstallPercent < 80 ? 1.0 : 0.25;
-        InstallPercent = Math.Min(90, InstallPercent + step);
-    }
 
     private void UpdateTransfer(InstallItemStatus status)
     {
@@ -1452,10 +1445,16 @@ public partial class UpdateRowViewModel : ObservableObject
 
     partial void OnBytesPerSecondChanged(double value) => OnPropertyChanged(nameof(SpeedText));
 
-    partial void OnInstallPercentChanged(double value) => OnPropertyChanged(nameof(InstallPercentText));
+    partial void OnInstallPercentChanged(double value)
+    {
+        OnPropertyChanged(nameof(InstallPercentText));
+        OnPropertyChanged(nameof(RunningProgressText));
+    }
 
     partial void OnInstallStateChanged(RowInstallState value)
     {
+        OnRunningChanged(value == RowInstallState.Running);
+        NotifyPhaseChanged();
         OnPropertyChanged(nameof(InstallStateText));
         OnPropertyChanged(nameof(InstallStateTooltip));
         OnPropertyChanged(nameof(InstallStateBrush));

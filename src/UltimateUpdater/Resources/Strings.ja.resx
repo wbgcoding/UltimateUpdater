@@ -2179,4 +2179,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="InstallErrorPipBlockedNow" xml:space="preserve">
     <value>対処は不要です。より新しいバージョンが公開されるまで、この更新は非表示のままになります。</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>インストール中… {0}</value>
+  </data>
 </root>

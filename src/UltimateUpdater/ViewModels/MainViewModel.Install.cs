@@ -1037,17 +1037,24 @@ public partial class MainViewModel
     public int InstallTotalCount => InstallBatch.Count;
 
     // A finished row is a finished share of the work whatever its outcome: a failed or handed-off row left
-    // at its last reported percent kept the bar from ever reaching 100 % at the end of a batch.
+    // at its last reported percent kept the bar from ever reaching 100 % at the end of a batch. A row that
+    // is installing has its whole download behind it and counts as that, but never as finished: only a
+    // terminal state takes a share to 100, so the figure cannot read complete while a row still works.
     public double InstallOverallPercent =>
         InstallBatch.Count == 0
             ? 0
-            : InstallBatch.Average(r => IsTerminalInstallState(r.InstallState) ? 100 : r.InstallPercent);
+            : InstallBatch.Average(r => IsTerminalInstallState(r.InstallState)
+                ? 100
+                : r.Phase == InstallPhase.Installing ? 99 : Math.Min(99, r.InstallPercent));
 
-    public string InstallOverallPercentText => PercentFormat.Format(InstallOverallPercent);
+    // No figure while nothing in the batch has a real one: the strip shows the moving bar alone.
+    public string InstallOverallPercentText =>
+        IsInstalling && !InstallHasRealProgress ? string.Empty : PercentFormat.Format(InstallOverallPercent);
 
-    /// <summary>False while every row is still on the indeterminate creep (no tool has reported a real
-    /// figure yet); the install band shows a wandering shine instead of a bar stuck dead at 0.</summary>
-    public bool InstallHasRealProgress => InstallBatch.Any(r => r.HasRealProgress || r.InstallState == RowInstallState.Succeeded);
+    /// <summary>False while no running row has a real download figure (all installing, or nothing
+    /// measurable reported yet); the install band shows a wandering shine instead of a bar stuck at 0.</summary>
+    public bool InstallHasRealProgress => InstallBatch.Any(r =>
+        (r.HasRealProgress && r.Phase != InstallPhase.Installing) || r.InstallState == RowInstallState.Succeeded);
 
     public string InstallCountText =>
         string.Format(Loc["InstallProgressCount"], InstallDoneCount, InstallTotalCount);
@@ -1284,10 +1291,10 @@ public partial class MainViewModel
 
     private void OnInstallTimerTick(object? sender, EventArgs e)
     {
-        // A tool that reports no measurable progress still needs to look alive: nudge the running rows'
-        // indeterminate bar forward before the figures are recomputed.
+        // Ends a finished download's pause and moves each running row's elapsed time before the figures
+        // are recomputed.
         foreach (var row in InstallBatch)
-            row.AdvanceIndeterminate();
+            row.Tick();
 
         RefreshInstallProgress();
     }

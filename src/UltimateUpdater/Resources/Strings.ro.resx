@@ -2179,4 +2179,7 @@ Continuați cu drepturi de administrator?</value>
   <data name="InstallErrorPipBlockedNow" xml:space="preserve">
     <value>Nu e nimic de făcut. Această actualizare rămâne ascunsă până apare o versiune mai nouă.</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>Se instalează… {0}</value>
+  </data>
 </root>
