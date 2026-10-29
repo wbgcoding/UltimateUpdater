@@ -148,4 +148,94 @@ public partial class WindowLayoutTests
             Assert.True(bars[0].ActualWidth >= 200, $"the running bars are only {bars[0].ActualWidth:0} px wide at 1100 px");
         });
     }
+
+    /// <summary>The first <paramref name="queued"/> rows of the sample set installing: one running, the
+    /// rest waiting in the queue panel, which is opened.</summary>
+    private static (MainWindow Window, FrameworkElement Content, MainViewModel ViewModel) QueuePanelWindow(
+        string language, int queued = 3)
+    {
+        var (viewModel, theme, settings) = CreateMainViewModel(language);
+        Populate(viewModel);
+
+        var rows = viewModel.Updates.Where(r => r.Item.CanInstall).Take(queued + 1).ToList();
+        foreach (var row in rows)
+        {
+            row.BeginInstall();
+            viewModel.InstallBatch.Add(row);
+        }
+
+        rows[0].ApplyInstallStatus(new InstallItemStatus(
+            rows[0].Item.SourceId, rows[0].Item.Id, 40, "Installing", null, null));
+        foreach (var row in rows.Skip(1))
+            viewModel.QueueRows.Add(row);
+
+        viewModel.IsInstalling = true;
+        viewModel.IsQueuePanelExpanded = true;
+
+        var window = new MainWindow(viewModel, theme, settings);
+        return (window, (FrameworkElement)window.Content, viewModel);
+    }
+
+    /// <summary>
+    /// The queue panel lives on the strip's own surface: beside the header text, and in the gap between
+    /// two row cards, the pixels are the strip's background, with no second panel, band or border.
+    /// </summary>
+    [Theory]
+    [InlineData("dark")]
+    [InlineData("light")]
+    public void The_queue_panel_sits_on_the_strips_own_surface(string themeName)
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            ApplyTheme(themeName);
+            try
+            {
+                var (window, content, _) = QueuePanelWindow("en");
+                ApplyTheme(themeName);
+                AssertRendered(WpfHarness.RenderWindow(window, $"main-queue-surface-{themeName}", 1100, 700));
+
+                var host = (FrameworkElement)VisualTreeHelper.GetParent(content)!;
+                host.UpdateLayout();
+                var width = (int)host.ActualWidth;
+                var height = (int)host.ActualHeight;
+                var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+                bitmap.Render(host);
+
+                Color PixelAt(FrameworkElement element, double x, double y)
+                {
+                    var p = element.TransformToAncestor(host).Transform(new Point(x, y));
+                    var pixel = new byte[4];
+                    bitmap.CopyPixels(new Int32Rect((int)p.X, (int)p.Y, 1, 1), pixel, 4, 0);
+                    return Color.FromRgb(pixel[2], pixel[1], pixel[0]);
+                }
+
+                var header = FindByName<Border>(content, "QueueHeaderHover")!;
+                var cards = FindAllByName<Border>(content, "QueueRowCard");
+                Assert.True(cards.Count >= 2, "expected at least two queue rows");
+
+                // The strip's surface: just left of the header, inside the strip's own left padding.
+                var surface = PixelAt(header, -6, header.ActualHeight / 2);
+                var fill = PixelAt(cards[0], cards[0].ActualWidth - 6, cards[0].ActualHeight / 2);
+                Assert.True(ColourDistance(surface, fill) > 3, "the row cards show no fill of their own");
+
+                void AssertSurface(Color c, string what) =>
+                    Assert.True(ColourDistance(c, surface) <= 2,
+                        $"{themeName}: {what} is {c} but the strip's surface is {surface}.");
+
+                AssertSurface(PixelAt(header, header.ActualWidth * 0.55, header.ActualHeight / 2), "beside the header text");
+                AssertSurface(PixelAt(header, header.ActualWidth * 0.55, 1), "the top of the header row");
+                AssertSurface(PixelAt(header, header.ActualWidth * 0.55, header.ActualHeight - 1), "the bottom of the header row");
+
+                var gap = cards[1].TransformToAncestor(host).Transform(new Point(0, 0)).Y
+                    - cards[0].TransformToAncestor(host).Transform(new Point(0, 0)).Y - cards[0].ActualHeight;
+                Assert.InRange(gap, 2, 8);
+                AssertSurface(PixelAt(cards[0], cards[0].ActualWidth / 2, cards[0].ActualHeight + 1), "between two cards");
+                AssertSurface(PixelAt(cards[0], -6, cards[0].ActualHeight / 2), "left of a card");
+            }
+            finally
+            {
+                ApplyTheme("dark");
+            }
+        });
+    }
 }
