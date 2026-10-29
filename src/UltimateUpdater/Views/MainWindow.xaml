@@ -2289,7 +2289,7 @@
                                         <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12"
                                                    TextTrimming="CharacterEllipsis"
                                                    Text="{Binding VersionUnchangedText}"
-                                                   ToolTip="{Binding VersionUnchangedText}"
+                                                   ToolTip="{Binding VersionUnchangedTooltip}"
                                                    Visibility="{Binding VersionUnchanged, Converter={StaticResource BoolToVisibility}}"
                                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                         <!-- the details button carries the real tool output on demand -->
