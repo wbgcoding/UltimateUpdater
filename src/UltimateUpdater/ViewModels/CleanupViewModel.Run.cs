@@ -649,15 +649,21 @@ public partial class CleanupViewModel
         // plus this live part of every target still running, so it climbs while a target works and lands on
         // exactly the sum of the outcomes once they are all in.
         long liveFreed = 0;
+
+        // Added to every report: a local pass that takes over from a dropped helper reports from zero again,
+        // while what the helper already confirmed stays in liveFreed.
+        long reportBase = 0;
         var settled = false;
 
         var progress = new Progress<CleanupProgress>(report =>
         {
+            var reported = report.FreedBytes + reportBase;
+
             // A report is posted, so a last one can arrive after the target has settled its figure.
-            if (!settled && report.FreedBytes > liveFreed)
+            if (!settled && reported > liveFreed)
             {
-                FreedBytes += report.FreedBytes - liveFreed;
-                liveFreed = report.FreedBytes;
+                FreedBytes += reported - liveFreed;
+                liveFreed = reported;
             }
 
             // Never backwards, defense in depth: the elevated worker forwards its targets' own reports
@@ -666,7 +672,7 @@ public partial class CleanupViewModel
             // explicitly before this callback is wired for a fresh target, so the guard never sticks a NEW
             // target at its predecessor's percentage.
             item.Percent = Math.Max(item.Percent, report.Percent);
-            item.FreedBytes = report.FreedBytes;
+            item.FreedBytes = reported;
             if (!string.IsNullOrEmpty(report.CurrentItem))
                 item.DetailText = report.CurrentItem;
 
@@ -694,12 +700,12 @@ public partial class CleanupViewModel
                 ? await CleanElevatedAsync(item, progress, cancellationToken) ?? await FallBackLocallyAsync()
                 : await CleanLocallyAsync();
 
-            // What the helper confirmed gone before it dropped out stays counted: the local pass reports
-            // from zero again, so its live part restarts and the helper's part is added to its outcome.
+            // What the helper confirmed gone before it dropped out stays counted, once: the local pass
+            // reports from zero again on top of it, and the helper's part is added to its outcome.
             async Task<CleanupOutcome> FallBackLocallyAsync()
             {
                 var freedByHelper = liveFreed;
-                liveFreed = 0;
+                reportBase = freedByHelper;
                 var local = await CleanLocallyAsync();
                 return local with { FreedBytes = local.FreedBytes + freedByHelper };
             }
