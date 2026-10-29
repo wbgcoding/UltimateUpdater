@@ -15,6 +15,10 @@ versioning: [SemVer](https://semver.org).
 - An uninstall through the same package manager waits while an interactive retry runs.
 - Monthly Windows security updates no longer show an absurd size (such as 90 GB); an implausible size
   reported by Windows Update is left blank.
+- "Version unchanged" appears less often: the installed version is checked again for a short while,
+  since some installers finish in the background. When it stays unchanged, the row says why, and after
+  repeated identical results offers to ignore the package.
+- The install phase text ("Installing… 1:23") is no longer cut off in the list of running installs.
 
 ### Cleanup
 - Unticking single files in an area's details no longer lowers the found total, only the selection.
