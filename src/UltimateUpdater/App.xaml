@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:views="clr-namespace:UltimateUpdater.Views"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <ResourceDictionary>
@@ -130,16 +131,15 @@
                  buttons stay present but invisible; clicking the track still pages). Implicit by type so
                  every window's default ScrollViewer picks it up without repeating it per window
                  (previously table-only; the cleanup window used the plain default bar). -->
-            <!-- MinHeight/MinWidth both set: the same Thumb style serves the vertical AND horizontal
-                 ScrollBar below (one Track, orientation decides which dimension it enforces as the
-                 thumb's minimum length), so a list of several thousand rows still leaves a thumb of at
-                 least 32 points to grab instead of shrinking to a few. One step stronger than before
-                 (secondary text fill, not tertiary) for the same reason - a thumb this small needs the
-                 extra contrast to still read as grabbable. Track width (14pt) and corner radius (pill
-                 shape) are unchanged. -->
+            <!-- The thumb's minimum length is NOT a Thumb MinHeight/MinWidth: the Track sizes the thumb itself
+                 and ignores those. It takes half of SystemParameters.VerticalScrollBarButtonHeight (vertical)
+                 or HorizontalScrollBarButtonWidth (horizontal) as the floor, so the Track in the ScrollBar
+                 template below overrides those two keys with 96, giving a floor of 48 points: a list of
+                 thousands of rows still leaves a thumb to grab, and it reaches the end of the track. One step
+                 stronger than before (secondary text fill, not tertiary) for the same reason: a short thumb
+                 needs the extra contrast to still read as grabbable. Track width (14pt) and corner radius
+                 (pill shape) are unchanged. -->
             <Style x:Key="AppScrollThumb" TargetType="Thumb">
-                <Setter Property="MinHeight" Value="32"/>
-                <Setter Property="MinWidth" Value="32"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Thumb">
@@ -231,6 +231,10 @@
                                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                                     BorderThickness="1,0,0,0">
                                 <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                    <Track.Resources>
+                                        <sys:Double x:Key="{x:Static SystemParameters.VerticalScrollBarButtonHeightKey}">96</sys:Double>
+                                        <sys:Double x:Key="{x:Static SystemParameters.HorizontalScrollBarButtonWidthKey}">96</sys:Double>
+                                    </Track.Resources>
                                     <Track.DecreaseRepeatButton>
                                         <RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False"
                                                       Opacity="0" Background="Transparent" BorderThickness="0"/>

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using UltimateUpdater.Models;
@@ -308,6 +309,45 @@ public partial class WindowLayoutTests
             double MidY(FrameworkElement e) => e.TransformToAncestor(card).Transform(new Point(0, e.ActualHeight / 2)).Y;
             Assert.True(Math.Abs(MidY(icon) - card.ActualHeight / 2) <= 1.5, "the critical mark is not centred vertically");
             Assert.True(Math.Abs(MidY(lane) - card.ActualHeight / 2) <= 1.5, "the version lane is not centred vertically");
+        });
+    }
+
+    /// <summary>
+    /// A long list must still leave a thumb big enough to grab, and scrolled to the end the thumb must sit
+    /// at the very bottom of the track (a thumb forced bigger than the track's share would stop short).
+    /// </summary>
+    [Fact]
+    public void The_scrollbar_thumb_keeps_a_minimum_length_and_reaches_the_end_of_a_long_list()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            LocalizationService.Instance.Apply("en");
+            var entries = Enumerable.Range(0, 800).Select(i => new HistoryEntry
+            {
+                Timestamp = new DateTimeOffset(2026, 7, 19, 21, 0, 0, TimeSpan.Zero).AddMinutes(i),
+                SourceId = "winget", ItemId = $"Vendor.App{i}", Name = $"Application {i}",
+                FromVersion = "1.0.0", ToVersion = "1.0.1", Success = true,
+            }).ToList();
+            var viewModel = new HistoryViewModel(HistoryWith(entries));
+            var window = new HistoryWindow(viewModel, new LoggingService());
+            var content = (FrameworkElement)window.Content;
+            AssertRendered(WpfHarness.RenderWindow(window, "history-scrollbar-thumb-en", 820, 520));
+
+            var list = FindFirstDescendant<ListBox>(content)!;
+            var scroll = FindFirstDescendant<ScrollViewer>(list)!;
+            Assert.True(scroll.ScrollableHeight > 0, "expected a scrollable list");
+            var bar = FindAllByName<ScrollBar>(scroll, "PART_VerticalScrollBar").FirstOrDefault()
+                      ?? FindFirstDescendant<ScrollBar>(scroll)!;
+            var thumb = bar.Track!.Thumb!;
+
+            Assert.True(thumb.ActualHeight >= 47.5, $"the thumb is only {thumb.ActualHeight:0.0} points tall, expected at least 48");
+
+            scroll.ScrollToEnd();
+            window.UpdateLayout();
+            bar.UpdateLayout();
+            var bottom = thumb.TransformToAncestor(bar).Transform(new Point(0, thumb.ActualHeight)).Y;
+            Assert.True(bar.ActualHeight - bottom <= 1.5,
+                $"scrolled to the end, the thumb stops {bar.ActualHeight - bottom:0.0} points short of the track's end");
         });
     }
 }
