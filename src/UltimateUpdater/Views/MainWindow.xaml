@@ -1178,6 +1178,10 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
+                                            <!-- Critical mark: a fixed column of its own, so the version lane
+                                                 to its right starts at the same x whether or not a row has one. -->
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
 
@@ -1231,29 +1235,14 @@
                                         <!-- Two lines, name+source on top, everything else compact underneath,
                                              nothing here may wrap (fixed rule for every row surface). -->
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                            <!-- Grid, not a horizontal StackPanel: a StackPanel measures its children
-                                                 unbounded, so the name never trims and the critical icon is pushed out
-                                                 of view at the minimum width. -->
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock x:Name="QueueRowName" Grid.Column="0" Text="{Binding Name}" FontSize="12"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           ToolTip="{Binding Name}"
-                                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                                <ui:SymbolIcon x:Name="QueueRowCriticalIcon" Grid.Column="1" Symbol="ErrorCircle24" FontSize="11" Margin="5,0,0,0"
-                                                               VerticalAlignment="Center"
-                                                               ToolTip="{Binding CriticalLabel}"
-                                                               Foreground="{DynamicResource SystemFillColorCriticalBrush}"
-                                                               Visibility="{Binding IsCritical, Converter={StaticResource BoolToVisibility}}"/>
-                                            </Grid>
+                                            <TextBlock x:Name="QueueRowName" Text="{Binding Name}" FontSize="12"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding Name}"
+                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                                             <!-- Same reason: the trailing star column hands the size text a bounded
                                                  width to trim against. -->
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="Auto"/>
@@ -1267,32 +1256,11 @@
                                                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                                                Visibility="{Binding NeedsElevation, Converter={StaticResource BoolToVisibility}}"/>
-                                                <!-- One tooltip for the whole lane, instead of
-                                                     one per number, so the arrow and the gaps around it
-                                                     are hit-testable too. -->
-                                                <StackPanel x:Name="QueueVersionLane" Grid.Column="2" Orientation="Horizontal"
-                                                            Background="Transparent"
-                                                            ToolTip="{Binding VersionChangeTooltip}">
-                                                    <TextBlock Text="{Binding InstalledVersion}" FontSize="10" Margin="6,0,0,0"
-                                                               TextTrimming="CharacterEllipsis" MaxWidth="70"
-                                                               Style="{StaticResource TabularNumberText}"
-                                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                                               Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"/>
-                                                    <TextBlock Text="→" FontSize="10" Margin="3,0"
-                                                               VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                                               Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"/>
-                                                    <TextBlock Text="{Binding AvailableVersion}" FontSize="10"
-                                                               TextTrimming="CharacterEllipsis" MaxWidth="70"
-                                                               Style="{StaticResource TabularNumberText}"
-                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                                               Visibility="{Binding HasVersions, Converter={StaticResource BoolToVisibility}}"/>
-                                                </StackPanel>
-                                                <TextBlock Grid.Column="3" Text="{Binding PublishDateText}" FontSize="10" Margin="6,0,0,0"
+                                                <TextBlock Grid.Column="2" Text="{Binding PublishDateText}" FontSize="10" Margin="6,0,0,0"
                                                            Style="{StaticResource TabularNumberText}"
                                                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                                            Visibility="{Binding HasPublishDate, Converter={StaticResource BoolToVisibility}}"/>
-                                                <TextBlock Grid.Column="4" Text="{Binding DownloadSizeText}" FontSize="10" Margin="6,0,0,0"
+                                                <TextBlock Grid.Column="3" Text="{Binding DownloadSizeText}" FontSize="10" Margin="6,0,0,0"
                                                            TextTrimming="CharacterEllipsis"
                                                            Style="{StaticResource TabularNumberText}"
                                                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
@@ -1300,11 +1268,65 @@
                                             </Grid>
                                         </StackPanel>
 
+                                        <ui:SymbolIcon x:Name="QueueRowCriticalIcon" Grid.Column="3" Symbol="ErrorCircle24" FontSize="16"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       ToolTip="{Binding CriticalLabel}"
+                                                       AutomationProperties.Name="{Binding CriticalLabel}"
+                                                       Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                                       Visibility="{Binding IsCritical, Converter={StaticResource BoolToVisibility}}"/>
+
+                                        <!-- Version lane, built like the main table's: installed version
+                                             right-aligned in a fixed box, the arrow at a fixed x, the new version
+                                             left-aligned in a fixed box, so the arrows of all rows stand in one
+                                             vertical line. Without an installed version the new one is centred
+                                             over the whole lane. One tooltip for the whole lane (the transparent
+                                             background makes the arrow and the gaps hit-testable too). -->
+                                        <Grid x:Name="QueueVersionLane" Grid.Column="4" Width="152" Margin="8,0,0,0"
+                                              VerticalAlignment="Center" Background="Transparent"
+                                              ToolTip="{Binding VersionChangeTooltip}"
+                                              Visibility="{Binding HasVersions, Converter={StaticResource BoolToVisibility}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="68"/>
+                                                <ColumnDefinition Width="16"/>
+                                                <ColumnDefinition Width="68"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" x:Name="QueueInstalledVersionText" Text="{Binding InstalledVersion}" FontSize="11"
+                                                       VerticalAlignment="Center" TextAlignment="Right"
+                                                       TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                       Style="{StaticResource TabularNumberText}"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                       Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"/>
+                                            <TextBlock Grid.Column="1" x:Name="QueueVersionArrow" Text="→" FontSize="11"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                       Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"/>
+                                            <!-- Column and alignment come from the Style, not local values: a local
+                                                 value outranks a Style trigger. -->
+                                            <TextBlock x:Name="QueueAvailableVersionText" Text="{Binding AvailableVersion}" FontSize="11"
+                                                       VerticalAlignment="Center"
+                                                       TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource TabularNumberText}">
+                                                        <Setter Property="Grid.Column" Value="2"/>
+                                                        <Setter Property="TextAlignment" Value="Left"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasInstalledVersion}" Value="False">
+                                                                <Setter Property="Grid.Column" Value="0"/>
+                                                                <Setter Property="Grid.ColumnSpan" Value="3"/>
+                                                                <Setter Property="TextAlignment" Value="Center"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+
                                         <!-- Hidden (not just dimmed) until the card is hovered, so the row
                                              does not carry a permanent X. Hidden rather than
                                              Collapsed keeps the column's reserved width, so nothing else in
                                              the row shifts when it appears. -->
-                                        <ui:Button x:Name="RemoveQueueButton" Grid.Column="3" Appearance="Transparent" Padding="6" Margin="4,0,0,0"
+                                        <ui:Button x:Name="RemoveQueueButton" Grid.Column="5" Appearance="Transparent" Padding="6" Margin="4,0,0,0"
                                                    Command="{Binding DataContext.RemoveFromQueueCommand,
                                                              RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                    CommandParameter="{Binding}"

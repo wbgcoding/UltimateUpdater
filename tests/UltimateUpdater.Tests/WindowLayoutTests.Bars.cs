@@ -238,4 +238,76 @@ public partial class WindowLayoutTests
             }
         });
     }
+
+    /// <summary>
+    /// The queue rows carry their version lane in a column of its own, built like the main table's:
+    /// the arrow stands at the same x in every row, whatever the row shows (short or long versions, no
+    /// installed version, a critical mark), and the critical mark and the lane never overlap.
+    /// </summary>
+    [Fact]
+    public void Queue_version_lane_arrow_lines_up_across_rows_regardless_of_what_each_row_shows()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var (viewModel, theme, settings) = CreateMainViewModel("en");
+            Populate(viewModel);
+
+            var running = viewModel.Updates.First(r => r.Item.CanInstall);
+            running.BeginInstall();
+            viewModel.InstallBatch.Add(running);
+
+            var queued = new[]
+            {
+                new UpdateRowViewModel(Item("q.short", "Short versions", "winget", UpdateCategory.Software, "1.0.0", "1.1.0")),
+                new UpdateRowViewModel(Item("q.critical", "Critical row", "winget", UpdateCategory.Software, "10.2.3", "10.2.4", critical: true)),
+                new UpdateRowViewModel(Item("q.long", "Long version numbers", "winget", UpdateCategory.Software,
+                    "2024.11.30-preview.987654321", "2026.08.22-preview.123456789")),
+                new UpdateRowViewModel(Item("q.none", "No installed version", "winget", UpdateCategory.Software, null, "3.0.0")),
+            };
+            foreach (var row in queued)
+            {
+                viewModel.Updates.Add(row);
+                row.BeginInstall();
+                viewModel.InstallBatch.Add(row);
+                viewModel.QueueRows.Add(row);
+            }
+
+            viewModel.IsInstalling = true;
+            viewModel.IsQueuePanelExpanded = true;
+
+            var window = new MainWindow(viewModel, theme, settings);
+            var content = (FrameworkElement)window.Content;
+            AssertRendered(WpfHarness.RenderWindow(window, "main-queue-version-lane-en", 1100, 700));
+
+            var scroll = FindByName<ScrollViewer>(content, "QueueRowsScroll")!;
+            T In<T>(string name, UpdateRowViewModel vm) where T : FrameworkElement =>
+                FindAllByName<T>(scroll, name).First(e => ReferenceEquals(e.DataContext, vm));
+            double X(FrameworkElement e, double fraction) =>
+                e.TransformToAncestor(scroll).Transform(new Point(e.ActualWidth * fraction, 0)).X;
+
+            var withArrow = queued.Take(3).ToList();
+            var arrowXs = withArrow.Select(vm => Math.Round(X(In<TextBlock>("QueueVersionArrow", vm), 0.5), 1)).ToList();
+            Assert.True(arrowXs.Max() - arrowXs.Min() <= 0.5, $"the arrow moved between queue rows: {string.Join(", ", arrowXs)}");
+
+            var laneLefts = queued.Select(vm => Math.Round(X(In<Grid>("QueueVersionLane", vm), 0), 1)).ToList();
+            Assert.True(laneLefts.Max() - laneLefts.Min() <= 0.5, $"the lane moved between queue rows: {string.Join(", ", laneLefts)}");
+
+            var noInstalled = queued[3];
+            Assert.NotEqual(Visibility.Visible, In<TextBlock>("QueueVersionArrow", noInstalled).Visibility);
+            var lone = In<TextBlock>("QueueAvailableVersionText", noInstalled);
+            Assert.True(Math.Abs(X(lone, 0.5) - arrowXs[0]) <= 1.0,
+                $"a lone version is centred at {X(lone, 0.5):0.0}, the arrows stand at {arrowXs[0]:0.0}");
+
+            // The critical mark sits in its own column, left of the lane, vertically centred in the card.
+            var critical = queued[1];
+            var icon = In<Wpf.Ui.Controls.SymbolIcon>("QueueRowCriticalIcon", critical);
+            Assert.Equal(Visibility.Visible, icon.Visibility);
+            var lane = In<Grid>("QueueVersionLane", critical);
+            Assert.True(X(icon, 1) <= X(lane, 0) + 0.5, "the critical mark overlaps the version lane");
+            var card = FindAllByName<Border>(scroll, "QueueRowCard").First(c => ReferenceEquals(c.DataContext, critical));
+            double MidY(FrameworkElement e) => e.TransformToAncestor(card).Transform(new Point(0, e.ActualHeight / 2)).Y;
+            Assert.True(Math.Abs(MidY(icon) - card.ActualHeight / 2) <= 1.5, "the critical mark is not centred vertically");
+            Assert.True(Math.Abs(MidY(lane) - card.ActualHeight / 2) <= 1.5, "the version lane is not centred vertically");
+        });
+    }
 }

@@ -1383,7 +1383,7 @@ public partial class WindowLayoutTests
             var name = FindAllByName<TextBlock>(content, "QueueRowName").FirstOrDefault(t => t.Text == queued.Name);
             Assert.NotNull(scroll);
             Assert.NotNull(name);
-            var icon = FindAllByName<Wpf.Ui.Controls.SymbolIcon>(name!.Parent is Grid g ? g : content, "QueueRowCriticalIcon").FirstOrDefault();
+            var icon = FindAllByName<Wpf.Ui.Controls.SymbolIcon>(scroll!, "QueueRowCriticalIcon").FirstOrDefault(i => ReferenceEquals(i.DataContext, queued));
             Assert.NotNull(icon);
 
             var typeface = new Typeface(name!.FontFamily, name.FontStyle, name.FontWeight, name.FontStretch);
