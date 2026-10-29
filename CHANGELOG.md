@@ -13,6 +13,8 @@ versioning: [SemVer](https://semver.org).
   this Python version, or a conflict with other packages) the row says why and the version stays
   hidden until a newer one comes out, instead of ending as "Version unchanged".
 - An uninstall through the same package manager waits while an interactive retry runs.
+- Monthly Windows security updates no longer show an absurd size (such as 90 GB); an implausible size
+  reported by Windows Update is left blank.
 
 ### Cleanup
 - Unticking single files in an area's details no longer lowers the found total, only the selection.
