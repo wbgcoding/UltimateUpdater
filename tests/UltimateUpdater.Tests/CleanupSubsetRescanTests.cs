@@ -124,6 +124,29 @@ public class CleanupSubsetRescanTests
         Assert.Equal(outsideBytes, outside.Bytes);
     }
 
+    /// <summary>After a finished run every row goes back to choosing; measuring only one of them again left
+    /// the cleaned rows with their old figures, counting freed space as still to free.</summary>
+    [Fact]
+    public async Task A_subset_rescan_after_a_finished_run_measures_every_row()
+    {
+        var rig = CreateRig();
+        await rig.ViewModel.StartScanAsync();
+        var item = UserItem(rig.ViewModel);
+        var other = rig.ViewModel.Items.First(i => i != item && !i.Target.NeedsElevation && i.Entries.Count > 0);
+        rig.ViewModel.Phase = CleanupPhase.Finished;
+
+        rig.Service.NextRound();
+        while (rig.Service.Scanned.TryDequeue(out _))
+        {
+        }
+
+        await rig.ViewModel.RescanItemCommand.ExecuteAsync(item);
+
+        Assert.Contains(item.Target.Id, rig.Service.Scanned);
+        Assert.Contains(other.Target.Id, rig.Service.Scanned);
+        Assert.Equal(StepService.BytesFor(1), other.Bytes);
+    }
+
     [Fact]
     public async Task A_subset_rescan_recomputes_the_totals_and_leaves_ticks_alone()
     {

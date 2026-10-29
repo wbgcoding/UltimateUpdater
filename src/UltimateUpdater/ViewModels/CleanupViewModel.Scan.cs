@@ -116,8 +116,16 @@ public partial class CleanupViewModel
     private Task RescanGroupAsync(CleanupGroupViewModel? group) =>
         group is not null && Groups.Contains(group) ? StartSubsetScanAsync(group.Items) : Task.CompletedTask;
 
-    private Task StartSubsetScanAsync(IReadOnlyList<CleanupItemViewModel> subset) =>
-        subset.Count == 0 || !CanRescan() ? Task.CompletedTask : StartScanTrackedAsync(ScanMode.Subset, subset);
+    /// <summary>After a finished run every row goes back to choosing, so a partial pass would leave the
+    /// just-cleaned rows with their old sizes, entries and ticks, counting space that is already freed.
+    /// There the rescan covers every row.</summary>
+    private Task StartSubsetScanAsync(IReadOnlyList<CleanupItemViewModel> subset)
+    {
+        if (subset.Count == 0 || !CanRescan())
+            return Task.CompletedTask;
+
+        return Phase == CleanupPhase.Finished ? StartScanAsync() : StartScanTrackedAsync(ScanMode.Subset, subset);
+    }
 
     private void NotifyRescanCanExecuteChanged()
     {
