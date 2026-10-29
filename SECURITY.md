@@ -6,7 +6,8 @@ everything else.
 ## Reporting a vulnerability
 
 Please do not open a public issue. Use GitHub's private vulnerability reporting instead
-(the repository's **Security** tab, then **Report a vulnerability**) and include:
+(the repository's **Security** tab, then **Report a vulnerability**, or straight to
+https://github.com/wbgcoding/UltimateUpdater/security/advisories/new) and include:
 
 - the app version (Settings, About) and whether it is the portable build or the installer,
 - what an attacker needs (local user, another process, network position) and what they gain,
