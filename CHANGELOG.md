@@ -23,6 +23,17 @@ versioning: [SemVer](https://semver.org).
   longer drops back after a failed area.
 - Admin areas the background measurement could not reach are measured when the window opens instead of
   showing 0 B.
+- Right-click a category or an area to rescan just that part.
+- A category or an area's details show the amber or red dot when something ticked inside carries
+  that risk, so it is visible while collapsed.
+
+### Look
+- Every progress bar is a clean rounded pill, also while it starts filling and at its end.
+- Running installs line up their bars in one column and use the free width.
+- The queue sits on the install strip's own surface; its versions line up with the arrow in the
+  middle, like in the table, and the critical mark is larger.
+- Scrollbar handles stay at least 48 points long, however long the list.
+- The accent is the Windows default blue on every PC; Settings can switch to the Windows accent colour.
 
 ## [1.1.1] - 2026-10-25
 
