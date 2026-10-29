@@ -2179,4 +2179,13 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} erişim yok</value>
   </data>
+  <data name="InstallErrorPipMissingDependencyWhat" xml:space="preserve">
+    <value>{0} {1}, bu Python sürümü için henüz mevcut olmayan {2} paketini gerektiriyor.</value>
+  </data>
+  <data name="InstallErrorPipConflictWhat" xml:space="preserve">
+    <value>{0} {1}, yüklü diğer paketlerle uyumlu değil.</value>
+  </data>
+  <data name="InstallErrorPipBlockedNow" xml:space="preserve">
+    <value>Yapılacak bir şey yok. Bu güncelleme, daha yeni bir sürüm çıkana kadar gizli kalır.</value>
+  </data>
 </root>

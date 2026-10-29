@@ -23,7 +23,7 @@ public static class AppDataCleaner
     internal static readonly string[] OwnedFiles =
     [
         "history.jsonl", "history.jsonl.1", "enrichment-cache.json", "cleanup-history.json",
-        "last-scan.json", "last-scan.json.tmp", "restore-point.json",
+        "last-scan.json", "last-scan.json.tmp", "restore-point.json", "pip-blocked.json",
     ];
 
     /// <summary>The caches, the history and the logs. Returns true if anything could not be removed.</summary>

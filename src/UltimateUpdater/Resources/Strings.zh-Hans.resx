@@ -2179,4 +2179,13 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} 无法访问</value>
   </data>
+  <data name="InstallErrorPipMissingDependencyWhat" xml:space="preserve">
+    <value>{0} {1} 需要 {2}，但它目前还没有适用于此 Python 版本的构建。</value>
+  </data>
+  <data name="InstallErrorPipConflictWhat" xml:space="preserve">
+    <value>{0} {1} 与已安装的其他软件包不兼容。</value>
+  </data>
+  <data name="InstallErrorPipBlockedNow" xml:space="preserve">
+    <value>无需操作。在发布更新的版本之前，此更新将保持隐藏。</value>
+  </data>
 </root>
