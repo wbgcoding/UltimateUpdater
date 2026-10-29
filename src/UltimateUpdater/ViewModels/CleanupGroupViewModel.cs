@@ -33,6 +33,12 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
 
     public CleanupGroupKey Key { get; }
 
+    /// <summary>The window's "rescan just this category" command, handed in by the window's view model; the
+    /// header's right-click menu runs it with this group as the parameter.</summary>
+    public System.Windows.Input.ICommand? RescanCommand { get; internal set; }
+
+    public string RescanHeader => LocalizationService.Instance["CleanupRescanMenu"];
+
     public IReadOnlyList<CleanupItemViewModel> Items { get; }
 
     public string Title => LocalizationService.Instance[CleanupGroups.TitleKey(Key)];
@@ -172,6 +178,7 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
     public void RefreshLocalizedText()
     {
         OnPropertyChanged(nameof(Title));
+        OnPropertyChanged(nameof(RescanHeader));
         OnPropertyChanged(nameof(SelectedCountText));
         OnPropertyChanged(nameof(SizeText));
         OnPropertyChanged(nameof(FreedText));

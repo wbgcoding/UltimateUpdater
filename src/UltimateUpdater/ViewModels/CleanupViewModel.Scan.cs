@@ -19,7 +19,7 @@ public partial class CleanupViewModel
     partial void OnIsScanningChanged(bool value)
     {
         OnPropertyChanged(nameof(IsBusy));
-        RescanCommand.NotifyCanExecuteChanged();
+        NotifyRescanCanExecuteChanged();
     }
 
     /// <summary>
@@ -30,9 +30,10 @@ public partial class CleanupViewModel
     /// marked as skipped rather than the whole run failing. Returns true when the user said no (or the
     /// helper could not be started), so the caller asks for nothing else that needs those rights.
     /// </summary>
-    private async Task<bool> EnsureElevationAsync(CancellationToken cancellationToken)
+    private async Task<bool> EnsureElevationAsync(
+        CancellationToken cancellationToken, IReadOnlyCollection<CleanupItemViewModel>? scope = null)
     {
-        var needsAdmin = Items.Any(i => i.IsSelected && i.NeedsElevation);
+        var needsAdmin = (scope ?? Items).Any(i => i.IsSelected && i.NeedsElevation);
         if (!needsAdmin || ElevationService.IsElevated || _elevated is null)
         {
             // Already an administrator (or nothing needs one): every target runs in-process as before.
@@ -100,18 +101,45 @@ public partial class CleanupViewModel
 
     private bool CanRescan() => Phase is CleanupPhase.Choosing or CleanupPhase.Finished && !IsScanning && !_runClaimed;
 
+    /// <summary>
+    /// The right-click "Rescan" of one sub-category: measures just that row again, through the same pass
+    /// the full rescan runs (same gate, same elevation path, same per-row measuring state, same totals
+    /// afterwards), leaving every other row's figures, entries and ticks as they are.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanRescan))]
+    private Task RescanItemAsync(CleanupItemViewModel? item) =>
+        item is not null && Items.Contains(item) ? StartSubsetScanAsync([item]) : Task.CompletedTask;
+
+    /// <summary>The right-click "Rescan" of a whole category: its rows only, otherwise as
+    /// <see cref="RescanItemAsync"/>.</summary>
+    [RelayCommand(CanExecute = nameof(CanRescan))]
+    private Task RescanGroupAsync(CleanupGroupViewModel? group) =>
+        group is not null && Groups.Contains(group) ? StartSubsetScanAsync(group.Items) : Task.CompletedTask;
+
+    private Task StartSubsetScanAsync(IReadOnlyList<CleanupItemViewModel> subset) =>
+        subset.Count == 0 || !CanRescan() ? Task.CompletedTask : StartScanTrackedAsync(ScanMode.Subset, subset);
+
+    private void NotifyRescanCanExecuteChanged()
+    {
+        RescanCommand.NotifyCanExecuteChanged();
+        RescanItemCommand.NotifyCanExecuteChanged();
+        RescanGroupCommand.NotifyCanExecuteChanged();
+    }
+
     /// <summary>How far one measuring pass reaches. Full is the pass a window runs (and a rescan): every
     /// target, asking for administrator rights first. Prescan is the quiet one at startup: user-scope
     /// targets only, no question, no elevation. Remaining finishes a prescan on open: just the targets it
     /// left out. Late is Remaining done quietly with nobody asking: the elevated helper started after the
     /// prescan, so the targets it left out are measured now, at low priority while no window is open, with
-    /// no question and no elevation of its own.</summary>
+    /// no question and no elevation of its own. Subset is a rescan the user asked for on one category or
+    /// sub-category: the full pass, asking for rights first, but over the chosen rows only.</summary>
     private enum ScanMode
     {
         Full,
         Prescan,
         Remaining,
         Late,
+        Subset,
     }
 
     /// <summary>Targets a prescan left out because they need rights the app does not have yet.</summary>
@@ -207,9 +235,9 @@ public partial class CleanupViewModel
         _ = StartScanTrackedAsync(ScanMode.Late);
     }
 
-    private Task StartScanTrackedAsync(ScanMode mode)
+    private Task StartScanTrackedAsync(ScanMode mode, IReadOnlyList<CleanupItemViewModel>? subset = null)
     {
-        var task = StartScanCoreAsync(mode);
+        var task = StartScanCoreAsync(mode, subset);
         _scanTask = task;
         return task;
     }
@@ -223,7 +251,7 @@ public partial class CleanupViewModel
     /// <summary>The scan's own body, pulled out so <see cref="StartScanAsync"/> can capture the running
     /// task into <see cref="_scanTask"/> before returning it, letting a later run wait for THIS scan to
     /// actually finish rather than only cancelling it (see <see cref="CleanupViewModel.AwaitScanUnwindAsync"/>).</summary>
-    private async Task StartScanCoreAsync(ScanMode mode)
+    private async Task StartScanCoreAsync(ScanMode mode, IReadOnlyList<CleanupItemViewModel>? subset = null)
     {
         // A rescan the user asked for replaces the prescan's figures for good: the stamp goes with them.
         if (mode == ScanMode.Full)
@@ -232,10 +260,19 @@ public partial class CleanupViewModel
             _prescanSkipped = [];
         }
 
-        // What this pass measures: everything, or only what the prescan left out.
-        var scope = mode is ScanMode.Remaining or ScanMode.Late ? _prescanSkipped.ToList() : Items.ToList();
+        // What this pass measures: everything, only what the prescan left out, or only the chosen rows.
+        var scope = mode switch
+        {
+            ScanMode.Remaining or ScanMode.Late => _prescanSkipped.ToList(),
+            ScanMode.Subset => (subset ?? []).ToList(),
+            _ => Items.ToList(),
+        };
         if (mode is ScanMode.Remaining or ScanMode.Late)
             _prescanSkipped = [];
+
+        // A row measured now is no longer one the prescan left out.
+        if (mode == ScanMode.Subset)
+            _prescanSkipped = _prescanSkipped.Except(scope).ToList();
 
         // The two quiet passes (startup prescan, late catch-up) never ask and never start the helper.
         var quietMode = mode is ScanMode.Prescan or ScanMode.Late;
@@ -293,6 +330,8 @@ public partial class CleanupViewModel
                 // asks only when something it left out really needs the rights.
                 if (mode == ScanMode.Full || (mode == ScanMode.Remaining && scope.Any(i => i.Target.NeedsElevation)))
                     await EnsureElevationAsync(cts.Token);
+                else if (mode == ScanMode.Subset && scope.Any(i => i.IsSelected && i.NeedsElevation))
+                    await EnsureElevationAsync(cts.Token, scope);
 
                 elevated = ElevatedItems(scope);
 

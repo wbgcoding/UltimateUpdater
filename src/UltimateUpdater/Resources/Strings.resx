@@ -916,6 +916,9 @@ This cannot be undone by Ultimate Updater.</value>
   <data name="CleanupRescan" xml:space="preserve">
     <value>Rescan</value>
   </data>
+  <data name="CleanupRescanMenu" xml:space="preserve">
+    <value>Rescan</value>
+  </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>Stopped. The running system repair must finish; interrupting it could damage Windows' component store.</value>
   </data>

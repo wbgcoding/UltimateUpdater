@@ -916,6 +916,9 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="CleanupRescan" xml:space="preserve">
     <value>Neu prüfen</value>
   </data>
+  <data name="CleanupRescanMenu" xml:space="preserve">
+    <value>Neu scannen</value>
+  </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>Gestoppt. Die laufende Systemreparatur muss zu Ende laufen; ein Abbruch könnte den Windows-Komponentenspeicher beschädigen.</value>
   </data>

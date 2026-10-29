@@ -916,6 +916,9 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="CleanupRescan" xml:space="preserve">
     <value>Yeniden tara</value>
   </data>
+  <data name="CleanupRescanMenu" xml:space="preserve">
+    <value>Yeniden tara</value>
+  </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>Durduruldu. Çalışan sistem onarımının bitmesi gerekiyor; kesintiye uğratmak Windows'un bileşen deposuna zarar verebilir.</value>
   </data>

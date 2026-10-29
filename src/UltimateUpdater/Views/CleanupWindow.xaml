@@ -219,7 +219,17 @@
                                               Content="{TemplateBinding Header}"
                                               ContentTemplate="{TemplateBinding HeaderTemplate}"
                                               IsChecked="{Binding IsExpanded, Mode=TwoWay,
-                                                          RelativeSource={RelativeSource TemplatedParent}}"/>
+                                                          RelativeSource={RelativeSource TemplatedParent}}">
+                                    <!-- Right-click anywhere on the header row: measure just this category
+                                         again. A ContextMenu sits outside the visual tree, so it takes its
+                                         DataContext (the group) from the row it was opened on. -->
+                                    <ToggleButton.ContextMenu>
+                                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                            <MenuItem Header="{Binding RescanHeader}"
+                                                      Command="{Binding RescanCommand}" CommandParameter="{Binding}"/>
+                                        </ContextMenu>
+                                    </ToggleButton.ContextMenu>
+                                </ToggleButton>
                                 <Border x:Name="Body" Grid.Row="1" Visibility="Collapsed"
                                         BorderThickness="0,1,0,0" Padding="8,6,8,8"
                                         BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
@@ -339,6 +349,14 @@
                         <Binding Path="DataContext.ShowAllCategories" RelativeSource="{RelativeSource AncestorType=Window}"/>
                     </MultiBinding>
                 </Border.Visibility>
+                <!-- Right-click on the card (not on a detail row, which keeps its own menu): measure just
+                     this sub-category again. -->
+                <Border.ContextMenu>
+                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                        <MenuItem Header="{Binding RescanHeader}"
+                                  Command="{Binding RescanCommand}" CommandParameter="{Binding}"/>
+                    </ContextMenu>
+                </Border.ContextMenu>
                 <Border.Style>
                     <Style TargetType="Border">
                         <Setter Property="Background" Value="Transparent"/>

@@ -916,6 +916,9 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="CleanupRescan" xml:space="preserve">
     <value>Analizza di nuovo</value>
   </data>
+  <data name="CleanupRescanMenu" xml:space="preserve">
+    <value>Analizza di nuovo</value>
+  </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>Interrotto. La riparazione del sistema in esecuzione deve terminare; interromperla potrebbe danneggiare l'archivio dei componenti di Windows.</value>
   </data>

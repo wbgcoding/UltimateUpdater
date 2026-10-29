@@ -225,6 +225,9 @@ public partial class CleanupViewModel : ObservableObject
         foreach (var item in built.Where(i => i.IsComponentCleanup))
             item.ComponentStoreHost = this;
 
+        foreach (var item in built)
+            item.RescanCommand = RescanItemCommand;
+
         // Restore last session's checked state. Recycle bin and leftover-installs are
         // excluded on purpose; their "off" default is a safety decision, not a convenience, so they stay
         // out regardless of what was saved. An id with no saved entry (new catalogue target, or nothing
@@ -248,6 +251,9 @@ public partial class CleanupViewModel : ObservableObject
                 key == CleanupGroupKey.Registry ? _logging : null))
             .Where(group => group.Items.Count > 0)
             .ToList();
+
+        foreach (var group in builtGroups)
+            group.RescanCommand = RescanGroupCommand;
 
         return (built, builtGroups);
     }

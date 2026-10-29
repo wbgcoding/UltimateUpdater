@@ -916,6 +916,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupRescan" xml:space="preserve">
     <value>重新扫描</value>
   </data>
+  <data name="CleanupRescanMenu" xml:space="preserve">
+    <value>重新扫描</value>
+  </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>已停止。正在运行的系统修复必须先完成；中断它可能损坏 Windows 的组件存储。</value>
   </data>

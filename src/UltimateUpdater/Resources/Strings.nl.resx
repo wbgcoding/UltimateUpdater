@@ -916,6 +916,9 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   <data name="CleanupRescan" xml:space="preserve">
     <value>Opnieuw scannen</value>
   </data>
+  <data name="CleanupRescanMenu" xml:space="preserve">
+    <value>Opnieuw scannen</value>
+  </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>Gestopt. De lopende systeemreparatie moet eerst voltooid worden; onderbreken kan het onderdelenarchief van Windows beschadigen.</value>
   </data>

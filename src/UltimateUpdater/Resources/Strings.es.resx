@@ -916,6 +916,9 @@ Esto no se puede deshacer con Ultimate Updater.</value>
   <data name="CleanupRescan" xml:space="preserve">
     <value>Volver a analizar</value>
   </data>
+  <data name="CleanupRescanMenu" xml:space="preserve">
+    <value>Volver a analizar</value>
+  </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>Detenido. La reparación del sistema en ejecución debe terminar; interrumpirla podría dañar el almacén de componentes de Windows.</value>
   </data>

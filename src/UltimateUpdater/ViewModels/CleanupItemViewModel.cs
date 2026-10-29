@@ -182,6 +182,13 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     /// does not itself trigger a save and a rescan before the window has even opened.</summary>
     private readonly Action<int>? _onRecycleBinMinAgeDaysChanged;
 
+    /// <summary>The window's "rescan just this row" command, handed in by the window's view model (it owns
+    /// the scan); the card's right-click menu runs it with this row as the parameter. Null on a row built
+    /// without a window, whose menu entry then stays disabled.</summary>
+    public System.Windows.Input.ICommand? RescanCommand { get; internal set; }
+
+    public string RescanHeader => LocalizationService.Instance["CleanupRescanMenu"];
+
     public CleanupItemViewModel(
         CleanupTarget target, Action onSelectionChanged, Action<string>? onPermanentlyExcludePath = null,
         int initialRecycleBinMinAgeDays = 0, Action<int>? onRecycleBinMinAgeDaysChanged = null)
@@ -885,6 +892,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         OnPropertyChanged(nameof(ConsequenceText));
         OnPropertyChanged(nameof(RiskLevelText));
         OnPropertyChanged(nameof(RiskTooltip));
+        OnPropertyChanged(nameof(RescanHeader));
         OnPropertyChanged(nameof(NothingText));
         OnPropertyChanged(nameof(ElevationHint));
         OnPropertyChanged(nameof(ElevationTooltip));

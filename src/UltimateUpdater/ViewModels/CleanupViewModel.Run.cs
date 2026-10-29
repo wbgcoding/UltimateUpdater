@@ -243,7 +243,7 @@ public partial class CleanupViewModel
         foreach (var group in Groups)
             group.ShowsFreed = value == CleanupPhase.Finished;
 
-        RescanCommand.NotifyCanExecuteChanged();
+        NotifyRescanCanExecuteChanged();
     }
 
     partial void OnCleanPercentChanged(double value)
@@ -309,7 +309,7 @@ public partial class CleanupViewModel
     private void OnRunClaimChanged()
     {
         OnPropertyChanged(nameof(IsBusy));
-        RescanCommand.NotifyCanExecuteChanged();
+        NotifyRescanCanExecuteChanged();
     }
 
     /// <summary>File targets go to the recycle bin instead of being deleted outright: the Settings window's

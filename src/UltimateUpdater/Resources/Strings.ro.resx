@@ -916,6 +916,9 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   <data name="CleanupRescan" xml:space="preserve">
     <value>Rescanare</value>
   </data>
+  <data name="CleanupRescanMenu" xml:space="preserve">
+    <value>Rescanare</value>
+  </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>Oprit. Reparația de sistem în curs trebuie să se termine; întreruperea ei ar putea deteriora depozitul de componente al Windows.</value>
   </data>

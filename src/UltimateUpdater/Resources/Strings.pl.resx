@@ -916,6 +916,9 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   <data name="CleanupRescan" xml:space="preserve">
     <value>Skanuj ponownie</value>
   </data>
+  <data name="CleanupRescanMenu" xml:space="preserve">
+    <value>Skanuj ponownie</value>
+  </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>Zatrzymano. Trwająca naprawa systemu musi się zakończyć; jej przerwanie może uszkodzić magazyn składników systemu Windows.</value>
   </data>

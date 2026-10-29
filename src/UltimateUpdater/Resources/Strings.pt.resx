@@ -916,6 +916,9 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
   <data name="CleanupRescan" xml:space="preserve">
     <value>Verificar novamente</value>
   </data>
+  <data name="CleanupRescanMenu" xml:space="preserve">
+    <value>Verificar novamente</value>
+  </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>Interrompido. O reparo do sistema em execução precisa terminar; interrompê-lo pode danificar o repositório de componentes do Windows.</value>
   </data>
