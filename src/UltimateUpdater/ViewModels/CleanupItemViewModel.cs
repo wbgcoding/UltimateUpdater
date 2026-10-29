@@ -249,6 +249,57 @@ public sealed partial class CleanupItemViewModel : ObservableObject
 
     public string RiskTooltip => $"{RiskLevelText}: {ConsequenceText}";
 
+    /// <summary>The worst level among the detail rows the user has ticked, <see cref="CleanupRiskLevel.Safe"/>
+    /// when none is. Kept as a value (recomputed when a row is toggled or the list is replaced) rather than
+    /// walked on every read, because the dot bindings ask for it again on every selection change.</summary>
+    private CleanupRiskLevel _selectedEntryRisk = CleanupRiskLevel.Safe;
+
+    /// <summary>The worst level this row puts into a run right now: its own level plus its ticked detail
+    /// rows' levels, but only while the row itself is ticked. An unticked row runs nothing, so it warns of
+    /// nothing. Feeds the category header's dot.</summary>
+    public CleanupRiskLevel SelectedRiskLevel =>
+        IsSelected ? (CleanupRiskLevel)Math.Max((int)Target.RiskLevel, (int)_selectedEntryRisk) : CleanupRiskLevel.Safe;
+
+    /// <summary>The worst level among the ticked detail rows, shown on the details expander's header. Like
+    /// <see cref="SelectedRiskLevel"/> it is only live while the row itself is ticked.</summary>
+    public CleanupRiskLevel SelectedEntryRiskLevel => IsSelected ? _selectedEntryRisk : CleanupRiskLevel.Safe;
+
+    /// <summary>The header dot appears only for a level above Safe: a green dot would claim a safety the
+    /// ticks do not prove.</summary>
+    public bool ShowsSelectedEntryRisk => SelectedEntryRiskLevel > CleanupRiskLevel.Safe;
+
+    public string SelectedEntryRiskHint => SelectedRiskHint(SelectedEntryRiskLevel);
+
+    /// <summary>"At least one selected entry has level X", the dot's tooltip and automation name.</summary>
+    internal static string SelectedRiskHint(CleanupRiskLevel level) => string.Format(
+        LocalizationService.Instance["CleanupSelectedRiskHint"],
+        LocalizationService.Instance[RiskLevelKey(level)]);
+
+    private void RefreshSelectedEntryRisk()
+    {
+        var worst = CleanupRiskLevel.Safe;
+        foreach (var entry in Entries)
+        {
+            if (!entry.IsSelected || entry.RiskLevel <= worst)
+                continue;
+
+            worst = entry.RiskLevel;
+            if (worst == CleanupRiskLevel.Risky)
+                break;
+        }
+
+        _selectedEntryRisk = worst;
+        RaiseSelectedRisk();
+    }
+
+    private void RaiseSelectedRisk()
+    {
+        OnPropertyChanged(nameof(SelectedEntryRiskLevel));
+        OnPropertyChanged(nameof(ShowsSelectedEntryRisk));
+        OnPropertyChanged(nameof(SelectedEntryRiskHint));
+        OnPropertyChanged(nameof(SelectedRiskLevel));
+    }
+
     /// <summary>Shared with <see cref="CleanupEntryViewModel"/>'s own per-row risk dot so the
     /// same <see cref="CleanupRiskLevel"/> value always reads as the same word wherever it is shown.</summary>
     internal static string RiskLevelKey(CleanupRiskLevel level) => level switch
@@ -504,6 +555,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         _unselectedEntryBytes += deltaBytes;
         _unselectedEntryFiles += deltaFiles;
         RaiseSelectedEntryFigures();
+        RefreshSelectedEntryRisk();
         ApplyDriveNotes();
         OnPropertyChanged(nameof(AllEntriesSelected));
         _onSelectionChanged();
@@ -770,6 +822,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         }
 
         ApplyGrouping();
+        RefreshSelectedEntryRisk();
         OnPropertyChanged(nameof(HasEntries));
         OnPropertyChanged(nameof(DetailsHeaderText));
         OnPropertyChanged(nameof(HasOmittedEntries));
@@ -804,6 +857,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         _unselectedEntryBytes += sign * entry.Model.Bytes;
         _unselectedEntryFiles += sign * entry.Model.Files;
         RaiseSelectedEntryFigures();
+        RefreshSelectedEntryRisk();
 
         // The drive's own note depends on whether anything on it is unticked, so it follows every toggle.
         ApplyDriveNotes();
@@ -892,6 +946,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         OnPropertyChanged(nameof(ConsequenceText));
         OnPropertyChanged(nameof(RiskLevelText));
         OnPropertyChanged(nameof(RiskTooltip));
+        OnPropertyChanged(nameof(SelectedEntryRiskHint));
         OnPropertyChanged(nameof(RescanHeader));
         OnPropertyChanged(nameof(NothingText));
         OnPropertyChanged(nameof(ElevationHint));
@@ -936,6 +991,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
 
     partial void OnIsSelectedChanged(bool value)
     {
+        RaiseSelectedRisk();
         _onSelectionChanged();
     }
 

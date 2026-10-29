@@ -1591,6 +1591,9 @@ Continuare con privilegi di amministratore?</value>
   <data name="CleanupRiskRisky" xml:space="preserve">
     <value>Rischioso</value>
   </data>
+  <data name="CleanupSelectedRiskHint" xml:space="preserve">
+    <value>È selezionata almeno una voce con livello {0}.</value>
+  </data>
   <data name="CleanupShowAllCategories" xml:space="preserve">
     <value>Mostra tutte le aree ({0} nascoste)</value>
   </data>

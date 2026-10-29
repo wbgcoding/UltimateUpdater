@@ -1591,6 +1591,9 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupRiskRisky" xml:space="preserve">
     <value>Riskant</value>
   </data>
+  <data name="CleanupSelectedRiskHint" xml:space="preserve">
+    <value>Er is minstens één geselecteerd item met niveau {0}.</value>
+  </data>
   <data name="CleanupShowAllCategories" xml:space="preserve">
     <value>Alle gebieden tonen ({0} verborgen)</value>
   </data>

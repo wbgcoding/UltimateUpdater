@@ -1591,6 +1591,9 @@ Esto no se puede deshacer.</value>
   <data name="CleanupRiskRisky" xml:space="preserve">
     <value>Arriesgado</value>
   </data>
+  <data name="CleanupSelectedRiskHint" xml:space="preserve">
+    <value>Hay al menos una entrada seleccionada con nivel {0}.</value>
+  </data>
   <data name="CleanupShowAllCategories" xml:space="preserve">
     <value>Mostrar todas las áreas ({0} ocultas)</value>
   </data>

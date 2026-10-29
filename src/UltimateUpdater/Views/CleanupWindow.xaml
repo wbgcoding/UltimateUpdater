@@ -810,8 +810,28 @@
                               Style="{StaticResource CleanupDetailsExpander}"
                               Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
                         <Expander.Header>
-                            <TextBlock Text="{Binding DetailsHeaderText}" FontSize="11"
-                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            <!-- The same warning dot as the category header, from this list's ticked
+                                 rows only; hidden while they are all Safe. -->
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DetailsHeaderText}" FontSize="11"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                <Border x:Name="DetailsRiskDot" Width="8" Height="8" CornerRadius="4"
+                                        Margin="8,0,0,0" VerticalAlignment="Center"
+                                        Visibility="{Binding ShowsSelectedEntryRisk, Converter={StaticResource BoolToVisibility}}"
+                                        ToolTip="{Binding SelectedEntryRiskHint}"
+                                        AutomationProperties.Name="{Binding SelectedEntryRiskHint}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedEntryRiskLevel}" Value="Risky">
+                                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                </Border>
+                            </StackPanel>
                         </Expander.Header>
                         <StackPanel Margin="0,2,0,0">
                             <!-- Same tri-state pattern as the dialog's own group headers
@@ -1560,10 +1580,37 @@
                                                   Command="{Binding ToggleSelectionCommand}"
                                                   AutomationProperties.Name="{Binding Title}"/>
 
-                                        <TextBlock Grid.Column="1" Text="{Binding Title}"
-                                                   FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                        <!-- Title plus the warning dot right after it. The inner Grid keeps
+                                             the title's ellipsis (a StackPanel would not), and the dot only
+                                             exists while something ticked in the category is Moderate or
+                                             Risky: it bubbles the item dots up so a collapsed card still
+                                             warns, and it is never green. -->
+                                        <Grid Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                            <Border x:Name="GroupRiskDot" Grid.Column="1" Width="8" Height="8" CornerRadius="4"
+                                                    Margin="8,0,0,0" VerticalAlignment="Center"
+                                                    Visibility="{Binding ShowsSelectedRisk, Converter={StaticResource BoolToVisibility}}"
+                                                    ToolTip="{Binding SelectedRiskHint}"
+                                                    AutomationProperties.Name="{Binding SelectedRiskHint}">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SelectedRiskLevel}" Value="Risky">
+                                                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                            </Border>
+                                        </Grid>
 
                                         <!-- Size/count/freed on the same baseline as the title, flushed
                                              right against the chevron. -->

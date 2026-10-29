@@ -1591,6 +1591,9 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupRiskRisky" xml:space="preserve">
     <value>Riskli</value>
   </data>
+  <data name="CleanupSelectedRiskHint" xml:space="preserve">
+    <value>Seçili en az bir öğenin düzeyi: {0}.</value>
+  </data>
   <data name="CleanupShowAllCategories" xml:space="preserve">
     <value>Tüm alanları göster ({0} gizli)</value>
   </data>

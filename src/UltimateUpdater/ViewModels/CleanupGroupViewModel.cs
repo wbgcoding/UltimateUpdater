@@ -112,6 +112,17 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
     public string SelectedCountText =>
         string.Format(LocalizationService.Instance[VisibleCount == 1 ? "CleanupSelectedCountOne" : "CleanupSelectedCount"], SelectedCount, VisibleCount);
 
+    /// <summary>The worst level among the ticked rows and their ticked detail rows, Safe when nothing is
+    /// ticked. Drives the dot beside the title: it bubbles the warning up so a collapsed category still
+    /// says that something ticked inside it is not harmless.</summary>
+    public CleanupRiskLevel SelectedRiskLevel =>
+        Items.Aggregate(CleanupRiskLevel.Safe, (worst, item) => item.SelectedRiskLevel > worst ? item.SelectedRiskLevel : worst);
+
+    /// <summary>Never true for Safe: the dot only warns, it does not vouch.</summary>
+    public bool ShowsSelectedRisk => SelectedRiskLevel > CleanupRiskLevel.Safe;
+
+    public string SelectedRiskHint => CleanupItemViewModel.SelectedRiskHint(SelectedRiskLevel);
+
     private static bool IsEligibleForGroupToggle(CleanupItemViewModel item) =>
         item.Target.Kind != CleanupKind.Defragmentation;
 
@@ -157,6 +168,11 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
                 OnPropertyChanged(nameof(SelectedCount));
                 OnPropertyChanged(nameof(SelectedCountText));
                 break;
+            case nameof(CleanupItemViewModel.SelectedRiskLevel):
+                OnPropertyChanged(nameof(SelectedRiskLevel));
+                OnPropertyChanged(nameof(ShowsSelectedRisk));
+                OnPropertyChanged(nameof(SelectedRiskHint));
+                break;
             case nameof(CleanupItemViewModel.Bytes):
             case nameof(CleanupItemViewModel.Files):
                 OnPropertyChanged(nameof(TotalBytes));
@@ -179,6 +195,7 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(RescanHeader));
+        OnPropertyChanged(nameof(SelectedRiskHint));
         OnPropertyChanged(nameof(SelectedCountText));
         OnPropertyChanged(nameof(SizeText));
         OnPropertyChanged(nameof(FreedText));

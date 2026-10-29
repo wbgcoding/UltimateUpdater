@@ -1591,6 +1591,9 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupRiskRisky" xml:space="preserve">
     <value>Riscant</value>
   </data>
+  <data name="CleanupSelectedRiskHint" xml:space="preserve">
+    <value>Este selectată cel puțin o intrare cu nivelul {0}.</value>
+  </data>
   <data name="CleanupShowAllCategories" xml:space="preserve">
     <value>Arată toate zonele ({0} ascunse)</value>
   </data>

@@ -1591,6 +1591,9 @@ Continuar com direitos de administrador?</value>
   <data name="CleanupRiskRisky" xml:space="preserve">
     <value>Arriscado</value>
   </data>
+  <data name="CleanupSelectedRiskHint" xml:space="preserve">
+    <value>Há pelo menos uma entrada selecionada com nível {0}.</value>
+  </data>
   <data name="CleanupShowAllCategories" xml:space="preserve">
     <value>Mostrar todas as áreas ({0} ocultas)</value>
   </data>

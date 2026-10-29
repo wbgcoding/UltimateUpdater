@@ -1591,6 +1591,9 @@ Continue with admin rights?</value>
   <data name="CleanupRiskRisky" xml:space="preserve">
     <value>Risky</value>
   </data>
+  <data name="CleanupSelectedRiskHint" xml:space="preserve">
+    <value>At least one selected entry has level {0}.</value>
+  </data>
   <data name="CleanupShowAllCategories" xml:space="preserve">
     <value>Show all areas ({0} hidden)</value>
   </data>

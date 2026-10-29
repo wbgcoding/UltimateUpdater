@@ -1591,6 +1591,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupRiskRisky" xml:space="preserve">
     <value>有风险</value>
   </data>
+  <data name="CleanupSelectedRiskHint" xml:space="preserve">
+    <value>所选项中至少有一项的级别为“{0}”。</value>
+  </data>
   <data name="CleanupShowAllCategories" xml:space="preserve">
     <value>显示所有区域（已隐藏 {0} 个）</value>
   </data>

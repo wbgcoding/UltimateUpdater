@@ -1591,6 +1591,9 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="CleanupRiskRisky" xml:space="preserve">
     <value>Ryzykowne</value>
   </data>
+  <data name="CleanupSelectedRiskHint" xml:space="preserve">
+    <value>Zaznaczono co najmniej jeden wpis o poziomie: {0}.</value>
+  </data>
   <data name="CleanupShowAllCategories" xml:space="preserve">
     <value>Pokaż wszystkie obszary (ukryto {0})</value>
   </data>

@@ -1591,6 +1591,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupRiskRisky" xml:space="preserve">
     <value>リスクあり</value>
   </data>
+  <data name="CleanupSelectedRiskHint" xml:space="preserve">
+    <value>選択中の項目に、レベル「{0}」のものが少なくとも1つあります。</value>
+  </data>
   <data name="CleanupShowAllCategories" xml:space="preserve">
     <value>すべての領域を表示（{0} 件を非表示中）</value>
   </data>
