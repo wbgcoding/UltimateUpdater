@@ -2179,4 +2179,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} erişim yok</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>Yükleniyor… {0}</value>
+  </data>
 </root>

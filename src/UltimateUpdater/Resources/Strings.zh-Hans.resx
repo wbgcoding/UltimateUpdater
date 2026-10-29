@@ -2179,4 +2179,7 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} 无法访问</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>正在安装… {0}</value>
+  </data>
 </root>

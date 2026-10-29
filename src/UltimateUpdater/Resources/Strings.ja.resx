@@ -2179,4 +2179,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} はアクセス不可</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>インストール中… {0}</value>
+  </data>
 </root>

@@ -2179,4 +2179,7 @@ Esto no se puede deshacer.</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} sin acceso</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>Instalando… {0}</value>
+  </data>
 </root>

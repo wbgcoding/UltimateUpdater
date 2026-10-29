@@ -2179,4 +2179,7 @@ Continuar com direitos de administrador?</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} sem acesso</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>Instalando… {0}</value>
+  </data>
 </root>

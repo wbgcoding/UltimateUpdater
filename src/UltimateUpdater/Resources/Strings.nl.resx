@@ -2179,4 +2179,7 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} geen toegang</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>Installeren… {0}</value>
+  </data>
 </root>

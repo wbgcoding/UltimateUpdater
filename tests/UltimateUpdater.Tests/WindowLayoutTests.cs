@@ -1047,6 +1047,52 @@ public class WindowLayoutTests
     }
 
     /// <summary>
+    /// A row in its install phase shows the moving bar and the "Installing… m:ss" line, and neither the
+    /// percent text nor the filled bar: there is no figure to show.
+    /// </summary>
+    [Fact]
+    public void Main_table_installing_row_shows_the_moving_bar_and_no_percent()
+    {
+        RenderResult? result = null;
+        var percentShown = true;
+        var barShown = false;
+        var lineShown = false;
+        string lineText = string.Empty;
+
+        WpfHarness.OnUiThread(() =>
+        {
+            var (viewModel, theme, settings) = CreateMainViewModel("en");
+            Populate(viewModel);
+
+            var row = viewModel.Updates.First(r => r.Item.CanInstall);
+            row.BeginInstall();
+            viewModel.InstallBatch.Add(row);
+            row.ApplyInstallStatus(new InstallItemStatus(row.Item.SourceId, row.Item.Id, 0, null, null, null)
+            {
+                Phase = UltimateUpdater.Models.InstallPhase.Installing,
+            });
+            viewModel.IsInstalling = true;
+
+            var window = new MainWindow(viewModel, theme, settings);
+            var content = (FrameworkElement)window.Content;
+            result = WpfHarness.RenderWindow(window, "main-table-installing-row", (int)window.MinWidth, (int)window.MinHeight);
+
+            var tableRow = FindAllByName<Grid>(content, "TableRow").First(g => g.DataContext == row);
+            percentShown = FindByName<TextBlock>(tableRow, "RunningPercentText")!.Visibility == Visibility.Visible;
+            barShown = FindByName<UltimateUpdater.Views.IndeterminateBar>(tableRow, "RunningIndeterminateBar")!.Visibility == Visibility.Visible;
+            var line = FindByName<TextBlock>(tableRow, "InstallingPhaseText")!;
+            lineShown = line.Visibility == Visibility.Visible;
+            lineText = line.Text;
+        });
+
+        AssertRendered(result);
+        Assert.False(percentShown);
+        Assert.True(barShown);
+        Assert.True(lineShown);
+        Assert.StartsWith("Installing", lineText);
+    }
+
+    /// <summary>
     /// The state lane of a finished row (the state word plus the reboot marker, or plus the Retry button)
     /// must stay inside the 176 px action column in the languages with the longest words. Every visible child
     /// is measured against the column's real edges, and a text that does not fit must be trimmed, never cut.

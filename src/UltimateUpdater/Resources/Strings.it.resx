@@ -2179,4 +2179,7 @@ Continuare con privilegi di amministratore?</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} senza accesso</value>
   </data>
+  <data name="RowInstallingPhase" xml:space="preserve">
+    <value>Installazione in corso… {0}</value>
+  </data>
 </root>
