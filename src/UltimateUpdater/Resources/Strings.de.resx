@@ -2179,4 +2179,13 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} ohne Zugriff</value>
   </data>
+  <data name="InstallErrorPipMissingDependencyWhat" xml:space="preserve">
+    <value>{0} {1} braucht {2}, das es für diese Python-Version noch nicht gibt.</value>
+  </data>
+  <data name="InstallErrorPipConflictWhat" xml:space="preserve">
+    <value>{0} {1} passt nicht zu den anderen installierten Paketen.</value>
+  </data>
+  <data name="InstallErrorPipBlockedNow" xml:space="preserve">
+    <value>Nichts zu tun. Das Update bleibt ausgeblendet, bis eine neuere Version erscheint.</value>
+  </data>
 </root>

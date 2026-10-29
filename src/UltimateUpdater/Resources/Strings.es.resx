@@ -2179,4 +2179,13 @@ Esto no se puede deshacer.</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} sin acceso</value>
   </data>
+  <data name="InstallErrorPipMissingDependencyWhat" xml:space="preserve">
+    <value>{0} {1} necesita {2}, que aún no está disponible para esta versión de Python.</value>
+  </data>
+  <data name="InstallErrorPipConflictWhat" xml:space="preserve">
+    <value>{0} {1} no encaja con los demás paquetes instalados.</value>
+  </data>
+  <data name="InstallErrorPipBlockedNow" xml:space="preserve">
+    <value>Nada que hacer. Esta actualización permanecerá oculta hasta que salga una versión más reciente.</value>
+  </data>
 </root>

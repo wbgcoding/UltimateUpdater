@@ -2179,4 +2179,13 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} fără acces</value>
   </data>
+  <data name="InstallErrorPipMissingDependencyWhat" xml:space="preserve">
+    <value>{0} {1} are nevoie de {2}, care nu este încă disponibil pentru această versiune de Python.</value>
+  </data>
+  <data name="InstallErrorPipConflictWhat" xml:space="preserve">
+    <value>{0} {1} nu se potrivește cu celelalte pachete instalate.</value>
+  </data>
+  <data name="InstallErrorPipBlockedNow" xml:space="preserve">
+    <value>Nu e nimic de făcut. Această actualizare rămâne ascunsă până apare o versiune mai nouă.</value>
+  </data>
 </root>

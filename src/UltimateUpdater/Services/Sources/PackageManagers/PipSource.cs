@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using UltimateUpdater.Models;
 
 namespace UltimateUpdater.Services.Sources.PackageManagers;
@@ -53,6 +54,16 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
         var fetch = await RegistryEnrichment.FetchRawOutcomeAsync(httpClient, url, logging, sourceId, packageId, cancellationToken);
 
         return (fetch.Body is null ? null : PackageMetadataParsers.ParsePyPiLatest(fetch.Body).AvailableVersion, fetch);
+    }
+
+    private PipBlockedStore? _blockedStore;
+
+    /// <summary>One store per source, created on first use so the data folder is not touched before it is
+    /// needed; a test hands in a store on a temporary file instead.</summary>
+    internal PipBlockedStore BlockedStore
+    {
+        get => LazyInitializer.EnsureInitialized(ref _blockedStore, () => new PipBlockedStore(PipBlockedStore.DefaultPath, Logging))!;
+        init => _blockedStore = value;
     }
 
     private const string PackageMetaKey = "pipPackage";
@@ -166,7 +177,12 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
             return (null, ex);
         }
 
-        var outdated = PackageManagerParsers.ParsePipJson(result.StandardOutput).ToList();
+        var (listed, blocked) = BlockedStore.Apply(
+            interpreter.PythonExe, PackageManagerParsers.ParsePipJson(result.StandardOutput).ToList());
+        foreach (var package in blocked)
+            Logging.Info($"pip ({interpreter.DisplayLabel}): not offering {package.Id} {package.Available}; installing it failed here before and pip offers nothing newer.");
+
+        var outdated = listed.ToList();
         var heldBackIds = await FindHeldBackIdsAsync(interpreter, outdated, cancellationToken);
 
         return (outdated
@@ -402,8 +418,28 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
         }
     }
 
-    protected override IReadOnlyList<string> InstallArguments(UpdateItem item) =>
-        ["-m", "pip", "install", "--upgrade", "--disable-pip-version-check", PackageName(item)];
+    protected override IReadOnlyList<string> InstallArguments(UpdateItem item) => InstallArgumentsFor(item);
+
+    internal static IReadOnlyList<string> InstallArgumentsFor(UpdateItem item) =>
+        ["-m", "pip", "install", "--upgrade", "--disable-pip-version-check", Requirement(item)];
+
+    private static readonly Regex SafeVersion = new(
+        @"^[0-9A-Za-z][0-9A-Za-z.+_!-]{0,63}$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+    /// <summary>
+    /// The package pinned to the exact version the scan offered. A plain "--upgrade" makes pip quietly fall
+    /// back to the installed version when the newest one cannot be resolved (a dependency without a build
+    /// for this Python), and it exits 0 as if the upgrade had worked; the pin turns that into the real
+    /// error. A version that is missing or not a plain version string keeps the unpinned name.
+    /// </summary>
+    internal static string Requirement(UpdateItem item)
+    {
+        var name = PackageName(item);
+        var version = item.AvailableVersion;
+        return version is not null && SafeVersion.IsMatch(version) && ProcessRunner.IsSafePositionalArgument(version)
+            ? $"{name}=={version}"
+            : name;
+    }
 
     protected override IReadOnlyList<string>? UninstallArguments(UpdateItem item) =>
         ["-m", "pip", "uninstall", "-y", "--disable-pip-version-check", PackageName(item)];
@@ -421,7 +457,7 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
 
     internal static IReadOnlyList<string>? RetryArgumentsFor(UpdateItem item, ProcessResult firstAttempt) =>
         !IsSelfUpgrade(item) && !IsVirtualEnv(InterpreterPath(item)) && NeedsUserScopeRetry(firstAttempt)
-            ? ["-m", "pip", "install", "--upgrade", "--user", "--disable-pip-version-check", PackageName(item)]
+            ? ["-m", "pip", "install", "--upgrade", "--user", "--disable-pip-version-check", Requirement(item)]
             : null;
 
     /// <summary>A venv marks itself with pyvenv.cfg beside its interpreter (Scripts) or one level above it.</summary>
@@ -499,6 +535,18 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
 
         var detail = FailureDetail(firstAttempt, retried);
 
+        var blocked = PipInstallFailure.Classify(AllOutput(firstAttempt, retried), packageName);
+        if (blocked.Kind != PipFailureKind.None)
+        {
+            var version = item.AvailableVersion ?? string.Empty;
+            if (!string.IsNullOrEmpty(version))
+                BlockedStore.Add(InterpreterPath(item), packageName, version);
+
+            // Nothing was changed and nothing went wrong on the user's side: this version cannot be
+            // installed on this Python, so the row is "stuck", not failed.
+            throw new NotApplicableException($"{PipInstallFailure.BuildMessage(packageName, version, blocked)} {detail}");
+        }
+
         if (!IsSelfUpgrade(item) && LooksLikeBrokenPip(detail))
         {
             Logging.Warn($"pip: '{packageName}' failed because pip's own installation is broken; repairing with 'python -m ensurepip --upgrade'.");
@@ -527,6 +575,10 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
 
         throw new InvalidOperationException($"{Id}: install failed for '{packageName}'. {detail}");
     }
+
+    private static string AllOutput(ProcessResult firstAttempt, ProcessResult? retry) =>
+        firstAttempt.StandardError + "\n" + firstAttempt.StandardOutput
+        + (retry is null ? "" : "\n" + retry.StandardError + "\n" + retry.StandardOutput);
 
     internal static bool LooksLikeBrokenPip(string? text) =>
         text is not null && BrokenPipSignals.Any(signal => text.Contains(signal, StringComparison.OrdinalIgnoreCase));

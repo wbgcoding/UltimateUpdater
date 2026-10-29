@@ -127,6 +127,20 @@ public static class InstallErrorExplainer
             outputText = outputText[lastRung.Index..];
         }
 
+        // pip's own "cannot install" wording (PipSource.InstallAsync) leads the text and carries the package,
+        // version and dependency; it comes before any code lookup, which would read the trailing "(exit code 1)".
+        if (string.Equals(sourceId, "pip", StringComparison.OrdinalIgnoreCase)
+            && PackageManagers.PipInstallFailure.TryParseMessage(outputText, out var pipPackage, out var pipVersion, out var pipFailure))
+        {
+            return pipFailure.Kind == PackageManagers.PipFailureKind.MissingDependency
+                ? new InstallErrorExplanation(
+                    "InstallErrorPipMissingDependencyWhat", [pipPackage, pipVersion, pipFailure.Dependency ?? string.Empty],
+                    "InstallErrorPipBlockedNow", [], InstallErrorClassification.ManualWork)
+                : new InstallErrorExplanation(
+                    "InstallErrorPipConflictWhat", [pipPackage, pipVersion],
+                    "InstallErrorPipBlockedNow", [], InstallErrorClassification.ManualWork);
+        }
+
         var vendorCode = ExtractVendorDecimalCode(outputText);
         var hexCode = TryExtractHexCode(outputText);
 
