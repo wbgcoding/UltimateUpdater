@@ -215,7 +215,23 @@ public sealed class InstallQueue
         /// still showing Running) for their unelevated retry after the job ends. Guarded by the queue lock;
         /// here rather than only local so a stop click can take one out before that retry starts.</summary>
         public List<UpdateItem>? UserScopeRetries;
+
+        /// <summary>The delayed version re-checks of the current elevated batch (one task per result that read
+        /// "unchanged" right away). Guarded by the queue lock; awaited when the batch ends.</summary>
+        public readonly List<Task> Rechecks = [];
+
+        /// <summary>The run's stop token, for the delayed re-checks started from the pipe's reader thread.</summary>
+        public CancellationToken CancellationToken;
     }
+
+    /// <summary>
+    /// How often, and how many times, a version that still reads "unchanged" right after a successful install
+    /// is looked up again before the note is kept (some installers finish after they exit, or hand the work
+    /// to a background updater). Settable for tests only.
+    /// </summary>
+    internal TimeSpan VersionRecheckInterval { get; set; } = TimeSpan.FromSeconds(5);
+
+    internal int VersionRecheckAttempts { get; set; } = 6;
 
     /// <summary>
     /// Moves not-yet-started items into the given order, within whichever active run currently holds them.
@@ -707,8 +723,11 @@ public sealed class InstallQueue
             // Only meaningful for an install (there is no "installed version" to re-check after
             // a removal), and only a quiet note that never turns a real success into anything else.
             // A source that cannot answer (null) says nothing at all, exactly like the interface default.
+            // A value that still reads old right after the installer exits is looked up again for a while
+            // before the note stays; the row keeps showing the install (and its running time) meanwhile.
             var versionUnchanged = action == InstallAction.Install
-                && await IsVersionUnchangedAsync(source, item, item.InstalledVersion, _logging, cancellationToken);
+                && await IsVersionUnchangedAfterWaitAsync(
+                    source, item, item.InstalledVersion, _logging, VersionRecheckInterval, VersionRecheckAttempts, cancellationToken);
 
             // Report() below closes this item's own download line (if it had one) and writes
             // its "dl done" log line; it runs BEFORE the "ok" line so the log reads download-then-install
@@ -903,6 +922,7 @@ public sealed class InstallQueue
         // from a finished job is never mistaken for a live one.
         var jobHandle = new ElevatedJobHandle();
         run.ElevatedHandle = jobHandle;
+        run.CancellationToken = cancellationToken;
         try
         {
             await _elevated.RunAsync(
@@ -912,6 +932,24 @@ public sealed class InstallQueue
         finally
         {
             run.ElevatedHandle = null;
+
+            // Results waiting on their delayed version look-up are settled before this batch is over (a stop
+            // ends each wait at once), so the caller's "anything left unreported" pass never sees them open.
+            Task[] rechecks;
+            lock (_queueLock)
+            {
+                rechecks = [.. run.Rechecks];
+                run.Rechecks.Clear();
+            }
+
+            try
+            {
+                await Task.WhenAll(rechecks);
+            }
+            catch (Exception ex)
+            {
+                _logging.Warn($"Delayed version re-check ended with an error: {ex.Message}");
+            }
         }
 
         // Jobs the elevated helper had to refuse because the package belongs to this user rather than to
@@ -1037,6 +1075,46 @@ public sealed class InstallQueue
         var awaitsRetry = item is not null && message.Success == false && !terminalNonFailure && !isRetryRound
             && InstallErrorExplainer.Explain(item.SourceId, message.Detail)?.AllowsAutomaticRetry == true;
 
+        // Installed fine but the version still reads old right away: look again for a while before the note
+        // stays. Done here, in the app, never in the elevated worker, which holds its exclusive slot until the
+        // job ends. The result is reported once the lookups are over (RunElevatedBatchAsync awaits them).
+        if (item is not null && action == InstallAction.Install && message.Type == "result" && message.Success
+            && !terminalNonFailure && message.VersionUnchanged
+            && _sources.FirstOrDefault(s => s.Id == item.SourceId) is { } recheckSource)
+        {
+            var recheck = Task.Run(() => FinishAfterVersionRecheckAsync(recheckSource, message, item, action, reported, run));
+            lock (_queueLock)
+                run.Rechecks.Add(recheck);
+            return true;
+        }
+
+        ApplyWorkerResult(message, item, action, reported, run, awaitsRetry, terminalNonFailure);
+
+        return true;
+    }
+
+    private async Task FinishAfterVersionRecheckAsync(
+        IUpdateSource source, InstallProgressMessage message, UpdateItem item, InstallAction action,
+        ISet<string> reported, RunState run)
+    {
+        try
+        {
+            message.VersionUnchanged = await StillUnchangedAfterWaitAsync(
+                source, item, item.InstalledVersion, _logging, VersionRecheckInterval, VersionRecheckAttempts, run.CancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logging.Warn($"Delayed version re-check for '{item.Id}' failed: {ex.Message}");
+        }
+
+        ApplyWorkerResult(message, item, action, reported, run, awaitsRetry: false, terminalNonFailure: false);
+    }
+
+    /// <summary>Reports one worker message to the row and, for a result, records it (log, history, accounted-for set).</summary>
+    private void ApplyWorkerResult(
+        InstallProgressMessage message, UpdateItem? item, InstallAction action, ISet<string> reported, RunState run,
+        bool awaitsRetry, bool terminalNonFailure)
+    {
         if (awaitsRetry)
         {
             ReportAwaitingRetry(item!);
@@ -1095,8 +1173,6 @@ public sealed class InstallQueue
                     reported.Add(Key(item));
             }
         }
-
-        return true;
     }
 
     private void FailRemaining(
@@ -1150,6 +1226,51 @@ public sealed class InstallQueue
             logging.Warn($"Version re-check for '{item.Id}' failed: {ex.Message}");
             return false;
         }
+    }
+
+    /// <summary>
+    /// The immediate re-check, then (only when it reads "unchanged") a few more lookups spaced
+    /// <paramref name="interval"/> apart. A changed value at any lookup is a normal success.
+    /// </summary>
+    internal static async Task<bool> IsVersionUnchangedAfterWaitAsync(
+        IUpdateSource source, UpdateItem item, string? previousInstalledVersion, LoggingService logging,
+        TimeSpan interval, int attempts, CancellationToken cancellationToken)
+    {
+        if (!await IsVersionUnchangedAsync(source, item, previousInstalledVersion, logging, cancellationToken))
+            return false;
+
+        return await StillUnchangedAfterWaitAsync(source, item, previousInstalledVersion, logging, interval, attempts, cancellationToken);
+    }
+
+    /// <summary>
+    /// The delayed part alone: true only when no lookup within the window showed a different version.
+    /// A stop ends the wait quietly with false (the install itself succeeded, so no note is added); a lookup
+    /// that fails or has no answer simply counts as "no change seen yet".
+    /// </summary>
+    internal static async Task<bool> StillUnchangedAfterWaitAsync(
+        IUpdateSource source, UpdateItem item, string? previousInstalledVersion, LoggingService logging,
+        TimeSpan interval, int attempts, CancellationToken cancellationToken)
+    {
+        for (var i = 0; i < attempts; i++)
+        {
+            try
+            {
+                await Task.Delay(interval, cancellationToken);
+                var recheck = await source.GetInstalledVersionAsync(item, cancellationToken);
+                if (recheck is not null && !IsVersionUnchanged(previousInstalledVersion, recheck))
+                    return false;
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logging.Warn($"Delayed version re-check for '{item.Id}' failed: {ex.Message}");
+            }
+        }
+
+        return true;
     }
 
     /// <summary>

@@ -357,6 +357,105 @@ public class InstallQueueTests
     public void IsVersionUnchanged_reads_null_as_no_statement(string? recheck, string? previous, bool expected) =>
         Assert.Equal(expected, InstallQueue.IsVersionUnchanged(previous, recheck));
 
+    /// <summary>The installer finished after it exited: old, old, then the new version on the second poll.</summary>
+    [Fact]
+    public async Task Delayed_recheck_that_sees_the_new_version_is_a_plain_success()
+    {
+        var calls = 0;
+        var (queue, history, statuses) = Create(new StubSource("npm",
+            getInstalledVersion: _ => Interlocked.Increment(ref calls) <= 2 ? "1.0" : "2.0"));
+
+        await queue.RunAsync([Item("eslint", "npm")], CancellationToken.None);
+
+        var final = statuses.Last(s => s.ItemId == "eslint" && s.Success == true);
+        Assert.False(final.VersionUnchanged);
+        Assert.False(history.Read().Single(e => e.ItemId == "eslint").VersionUnchanged);
+        Assert.Equal(3, calls);
+    }
+
+    /// <summary>Old at every look-up: the note stays, after the immediate check plus every poll.</summary>
+    [Fact]
+    public async Task Delayed_recheck_that_stays_old_keeps_the_note()
+    {
+        var calls = 0;
+        var (queue, history, statuses) = Create(new StubSource("npm",
+            getInstalledVersion: _ => { Interlocked.Increment(ref calls); return "1.0"; }));
+        queue.VersionRecheckAttempts = 4;
+
+        await queue.RunAsync([Item("eslint", "npm")], CancellationToken.None);
+
+        var final = statuses.Last(s => s.ItemId == "eslint" && s.Success == true);
+        Assert.True(final.VersionUnchanged);
+        Assert.True(history.Read().Single(e => e.ItemId == "eslint").VersionUnchanged);
+        Assert.Equal(5, calls);
+    }
+
+    /// <summary>A stop during the wait ends it quietly: the install stays a success, without the note.</summary>
+    [Fact]
+    public async Task Stopping_during_the_delayed_recheck_keeps_the_success_without_a_note()
+    {
+        InstallQueue? queue = null;
+        var (created, history, statuses) = Create(new StubSource("npm",
+            getInstalledVersion: _ => { queue!.CancelItem("npm", "eslint"); return "1.0"; }));
+        queue = created;
+        queue.VersionRecheckInterval = TimeSpan.FromHours(1);
+
+        await queue.RunAsync([Item("eslint", "npm")], CancellationToken.None);
+
+        var final = statuses.Last(s => s.ItemId == "eslint" && s.Success == true);
+        Assert.False(final.VersionUnchanged);
+        Assert.DoesNotContain(statuses, s => s.ItemId == "eslint" && s.IsCancelled);
+        var entry = history.Read().Single(e => e.ItemId == "eslint");
+        Assert.True(entry.Success);
+        Assert.False(entry.VersionUnchanged);
+    }
+
+    /// <summary>A lookup without an answer or that throws only counts as "no change seen yet".</summary>
+    [Fact]
+    public async Task Delayed_recheck_ignores_a_failing_or_empty_lookup()
+    {
+        var calls = 0;
+        var source = new StubSource("npm", getInstalledVersion: _ =>
+        {
+            var n = Interlocked.Increment(ref calls);
+            return n == 1 ? "1.0" : n == 2 ? throw new InvalidOperationException("refused") : n == 3 ? null : "2.0";
+        });
+
+        var still = await InstallQueue.IsVersionUnchangedAfterWaitAsync(
+            source, Item("eslint", "npm"), "1.0", new LoggingService(), TimeSpan.Zero, 6, CancellationToken.None);
+
+        Assert.False(still);
+        Assert.Equal(4, calls);
+    }
+
+    /// <summary>The elevated path: the worker reports "unchanged" right away, the app polls afterwards.</summary>
+    [Fact]
+    public async Task Elevated_unchanged_result_is_settled_by_the_apps_delayed_recheck()
+    {
+        var calls = 0;
+        var (queue, history, statuses) = Create(new StubSource("npm",
+            getInstalledVersion: _ => Interlocked.Increment(ref calls) < 2 ? "1.0" : "2.0"));
+
+        var runStateType = typeof(InstallQueue).GetNestedType("RunState", BindingFlags.NonPublic)!;
+        var run = Activator.CreateInstance(runStateType, nonPublic: true)!;
+        var handleWorkerLine = typeof(InstallQueue)
+            .GetMethod("HandleWorkerLine", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var item = Item("eslint", "npm");
+        var reported = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var line = JsonSerializer.Serialize(
+            new { type = "result", sourceId = item.SourceId, itemId = item.Id, success = true, versionUnchanged = true }, Json);
+
+        handleWorkerLine.Invoke(queue, [line, new List<UpdateItem> { item }, InstallAction.Install, reported, new List<UpdateItem>(), run, false]);
+
+        var rechecks = (List<Task>)runStateType.GetField("Rechecks")!.GetValue(run)!;
+        await Task.WhenAll(rechecks.ToArray());
+
+        var final = statuses.Last(s => s.ItemId == "eslint" && s.Success == true);
+        Assert.False(final.VersionUnchanged);
+        Assert.Contains("npm:eslint", reported);
+        Assert.False(history.Read().Single(e => e.ItemId == "eslint").VersionUnchanged);
+    }
+
     // ---- this fix's own automatic retry round ----
 
     /// <summary>MSI 1618 ("another installation was already running") is one of the explainer table's
@@ -1351,7 +1450,11 @@ public class InstallQueueTests
         // and other non-UI test classes read the very same default when no UI test has redirected it yet.
         // A private file per Create() call removes that shared mutable state outright.
         var history = new HistoryService(logging, Path.Combine(temp, "history.jsonl"));
-        var queue = new InstallQueue(sources, settings, history, logging);
+        var queue = new InstallQueue(sources, settings, history, logging)
+        {
+            // The delayed version look-up waits seconds in production; tests poll back to back.
+            VersionRecheckInterval = TimeSpan.Zero,
+        };
 
         // Reproduced under load: InstallQueue.StatusChanged fires from whichever thread finishes an item,
         // and several can run at once by design (different source ids run concurrently, and a Progress<T>

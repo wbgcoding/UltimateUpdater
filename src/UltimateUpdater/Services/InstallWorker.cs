@@ -426,7 +426,9 @@ public static class InstallWorker
                 await source.InstallAsync(item, progress, cancellationToken);
 
             // Only meaningful for an install, and only a quiet note added to a real success,
-            // the same shared re-check the in-process path uses (InstallQueue.IsVersionUnchangedAsync).
+            // the same shared re-check the in-process path uses (InstallQueue.IsVersionUnchangedAsync). Only the
+            // immediate look-up happens here: the worker holds its exclusive slot until the job ends, so the
+            // delayed look-ups for a value that still reads old are done by the app after this result arrives.
             var versionUnchanged = job.Action == InstallAction.Install
                 && await InstallQueue.IsVersionUnchangedAsync(source, item, jobItem.InstalledVersion, logging, cancellationToken);
 
