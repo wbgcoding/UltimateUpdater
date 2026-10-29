@@ -37,6 +37,26 @@ public class ElevatedHostPumpTests
         Assert.False(host.IsRunning);
     }
 
+    /// <summary>A job that must never raise a prompt checks the helper is up and then goes straight on;
+    /// asking the start sequence in between would launch the helper if it ended in that instant.</summary>
+    [Fact]
+    public async Task A_job_that_may_not_start_the_helper_never_enters_the_start_sequence()
+    {
+        var host = new ElevatedHost(new LoggingService());
+        var starts = 0;
+        host.EnsureStartedOverrideForTest = _ =>
+        {
+            Interlocked.Increment(ref starts);
+            return Task.FromResult(true);
+        };
+        host.SetRunningForTest(true);
+
+        var reached = await host.RunAsync("scan", new { }, _ => true, CancellationToken.None, allowStart: false);
+
+        Assert.False(reached, "there is no session behind the flag");
+        Assert.Equal(0, starts);
+    }
+
     [Fact]
     public void A_throwing_state_listener_is_logged_and_never_escapes_the_state_change()
     {

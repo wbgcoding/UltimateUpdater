@@ -98,10 +98,9 @@ public class CleanupPrescanTests
 
         await rig.ViewModel.PrescanAsync();
 
-        // They went to the helper (the stand-in is reached once for the whole admin batch, and once more by
-        // the quiet component store analysis; a helper that cannot be reached is tried again by the late
-        // pass), not in-process.
-        Assert.True(rig.StartRequests() >= 2);
+        // They went to the helper, not in-process. A quiet job never enters the start sequence, so the
+        // stand-in is not asked at all.
+        Assert.Equal(0, rig.StartRequests());
         Assert.Empty(rig.Service.Scanned.Intersect(admin));
         Assert.NotNull(rig.ViewModel.PrescanFinishedAt);
     }

@@ -231,6 +231,8 @@ public class CleanupComponentStoreAutoTests
 
         var scan = OnUi(() => rig.ViewModel.StartOpenScanAsync());
         await WaitUntil(() => rig.ViewModel.ComponentStoreResult is not null, "the analysis finished");
+        // The analysis can be done before the scan job has reached the worker at all.
+        await WaitUntil(() => rig.Worker.Saw("scan"), "the scan reached the worker");
 
         // The admin scan is still being held at the door: the analysis did not wait for it.
         Assert.False(scan.IsCompleted);

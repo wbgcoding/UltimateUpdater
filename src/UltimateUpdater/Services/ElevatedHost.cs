@@ -398,11 +398,18 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
         string kind, object payload, Func<string, bool> onLine, CancellationToken cancellationToken,
         bool exclusive = true, ElevatedJobHandle? handle = null, bool allowStart = true)
     {
-        if (!allowStart && !IsRunning)
+        // A job that may not start the helper never enters the start sequence: if the helper ended right
+        // after the check, that sequence would launch it and raise the prompt this flag exists to prevent.
+        // A drop after the check is caught by the session capture below.
+        if (!allowStart)
+        {
+            if (!IsRunning)
+                return false;
+        }
+        else if (!await EnsureStartedAsync(cancellationToken))
+        {
             return false;
-
-        if (!await EnsureStartedAsync(cancellationToken))
-            return false;
+        }
 
         // Captured NOW, not read again later: a restart mid-wait replaces the field with a fresh instance
         // for the NEW session, and this conversation belongs to the one that was actually just ensured.
