@@ -14,7 +14,6 @@
             <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
             <views:BoolToHiddenVisibilityConverter x:Key="BoolToHiddenVisibility" />
             <views:InverseBooleanConverter x:Key="InverseBool" />
-            <views:PercentToWidthConverter x:Key="PercentToWidth" />
             <views:GroupInstallableToVisibilityConverter x:Key="GroupInstallable" />
             <views:CategoryIconConverter x:Key="CategoryIcon" />
             <views:PercentToArcConverter x:Key="PercentToArc" />

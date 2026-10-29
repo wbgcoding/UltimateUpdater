@@ -73,30 +73,28 @@ public partial class IndeterminateBar
         if (width <= 0 || height <= 0)
             return;
 
-        Track.CornerRadius = new CornerRadius(height / 2);
-        Segment.CornerRadius = new CornerRadius(height / 2);
         var segment = Math.Max(height, width * SegmentShare);
-        Segment.Width = segment;
+        Bar.SegmentLength = segment;
 
         if (!MotionPreference.AnimationsEnabled)
         {
-            SegmentTransform.X = (width - segment) / 2;
+            Bar.SegmentPhase = 0.5;
             return;
         }
 
-        SegmentTransform.X = -segment;
+        Bar.SegmentPhase = 0;
         if (!IsVisible || _window is { WindowState: WindowState.Minimized })
             return;
 
-        var slide = new DoubleAnimation(-segment, width, TimeSpan.FromSeconds(1.3))
+        var slide = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(1.3))
         {
             RepeatBehavior = RepeatBehavior.Forever,
             EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut },
         };
         var storyboard = new Storyboard();
         Timeline.SetDesiredFrameRate(storyboard, 60);
-        Storyboard.SetTarget(slide, Segment);
-        Storyboard.SetTargetProperty(slide, new PropertyPath("RenderTransform.X"));
+        Storyboard.SetTarget(slide, Bar);
+        Storyboard.SetTargetProperty(slide, new PropertyPath(PillProgressBar.SegmentPhaseProperty));
         storyboard.Children.Add(slide);
 
         _slide = storyboard;

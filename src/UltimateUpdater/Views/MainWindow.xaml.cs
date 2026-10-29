@@ -25,10 +25,6 @@ public partial class MainWindow : FluentWindow
     /// concern.</summary>
     private bool _hadFirstActivation;
 
-    /// <summary>Matches the fixed track Width on InstallBarFill's parent Border in XAML: the fill's own
-    /// Width has no Binding there (see the note beside it), so it never fights this animation.</summary>
-    private const double InstallBarTrackWidth = 160;
-
     public MainWindow(
         MainViewModel viewModel, ThemeService themeService, SettingsService settings, LoggingService? logging = null)
     {
@@ -283,8 +279,8 @@ public partial class MainWindow : FluentWindow
     }
 
     /// <summary>Keeps the install band's hand-drawn fill in step with the view model, gliding on a live
-    /// change instead of jumping: a plain XAML Binding on Width would fight this animation on every tick,
-    /// so the fill carries no Binding of its own.</summary>
+    /// change instead of jumping: a plain XAML Binding on Value would fight this animation on every tick,
+    /// so the bar carries no Binding of its own.</summary>
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainViewModel.InstallOverallPercent) or "")
@@ -368,12 +364,12 @@ public partial class MainWindow : FluentWindow
 
     private void UpdateInstallBarFill(bool animate)
     {
-        var target = _viewModel.InstallOverallPercent / 100d * InstallBarTrackWidth;
+        var target = _viewModel.InstallOverallPercent;
 
         if (!animate)
         {
-            InstallBarFill.BeginAnimation(WidthProperty, null);
-            InstallBarFill.Width = target;
+            InstallBar.BeginAnimation(PillProgressBar.ValueProperty, null);
+            InstallBar.Value = target;
             return;
         }
 
@@ -384,7 +380,7 @@ public partial class MainWindow : FluentWindow
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
         };
         Timeline.SetDesiredFrameRate(glide, 60);
-        InstallBarFill.BeginAnimation(WidthProperty, glide);
+        InstallBar.BeginAnimation(PillProgressBar.ValueProperty, glide);
     }
 
     /// <summary>

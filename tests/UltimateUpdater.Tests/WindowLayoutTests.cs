@@ -24,7 +24,7 @@ namespace UltimateUpdater.Tests;
 /// bin\...\ui-snapshots are there to be inspected by eye.
 /// </summary>
 [Collection("wpf")]
-public class WindowLayoutTests
+public partial class WindowLayoutTests
 {
     /// <summary>Anything below this is a flat rectangle, i.e. nothing rendered.</summary>
     private const int MinimumDistinctColours = 20;
@@ -362,7 +362,7 @@ public class WindowLayoutTests
             var content = (FrameworkElement)window.Content;
             result = WpfHarness.RenderWindow(window, "main-install-bar-shine-de", 1100, 700);
 
-            var shine = FindByName<Border>(content, "InstallBarShine");
+            var shine = FindByName<PillProgressBar>(content, "InstallBar");
             Assert.NotNull(shine);
 
             // Two triggers: one shows the strip, the other runs the sweep and also needs the window shown,
@@ -421,15 +421,15 @@ public class WindowLayoutTests
                 var result = WpfHarness.RenderWindow(window, "main-install-bar-shine-light-en", 1100, 700);
                 AssertRendered(result);
 
-                var shine = FindByName<Border>(content, "InstallBarShine");
-                Assert.NotNull(shine);
-                Assert.Equal(Visibility.Visible, shine!.Visibility);
-                var track = (FrameworkElement)VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(shine))!;
+                var bar = FindByName<PillProgressBar>(content, "InstallBar");
+                Assert.NotNull(bar);
+                Assert.Equal(Visibility.Visible, bar!.Visibility);
+                Assert.True(bar.SegmentLength > 0, "the bar shows no travelling segment while an install has no real progress");
+                var track = bar;
 
-                // Freeze the sweep: a fresh transform is not the one the storyboard drives, so the shine
-                // stays centred on the 160 px track.
-                var transform = new TranslateTransform((track.ActualWidth - shine.ActualWidth) / 2, 0);
-                shine.RenderTransform = transform;
+                // Freeze the sweep: drop the storyboard's animation and park the segment in the middle.
+                bar.BeginAnimation(PillProgressBar.SegmentPhaseProperty, null);
+                bar.SegmentPhase = 0.5;
 
                 var host = (FrameworkElement)VisualTreeHelper.GetParent(content)!;
                 host.UpdateLayout();
@@ -446,7 +446,7 @@ public class WindowLayoutTests
 
                 var middle = track.ActualHeight / 2;
                 contrast = AccentPalette.Contrast(PixelAt(track.ActualWidth / 2, middle), PixelAt(6, middle));
-                diag = $"track {track.ActualWidth}x{track.ActualHeight} at {track.TransformToAncestor(host).Transform(new Point(0, 0))} peak {PixelAt(track.ActualWidth / 2, middle)} edge {PixelAt(6, middle)} shineW {shine.ActualWidth} X {transform.X} vis {shine.Visibility}";
+                diag = $"track {track.ActualWidth}x{track.ActualHeight} at {track.TransformToAncestor(host).Transform(new Point(0, 0))} peak {PixelAt(track.ActualWidth / 2, middle)} edge {PixelAt(6, middle)} segment {bar.SegmentLength}";
             }
             finally
             {

@@ -1,19 +1,12 @@
 <UserControl x:Class="UltimateUpdater.Views.IndeterminateBar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:UltimateUpdater.Views"
              Focusable="False" IsHitTestVisible="False" SnapsToDevicePixels="True"
              AutomationProperties.AutomationId="IndeterminateBar">
-    <!-- A hand-drawn track with one accent segment sliding across it: "working, no figure to show".
+    <!-- A pill track with one accent segment sliding across it: "working, no figure to show".
          Hand-drawn for the same reason as the determinate bars (a WPF-UI ProgressBar recurses when
-         star-measured). The slide is started and stopped from the code-behind, only while the bar is on
-         screen and animations are allowed. -->
-    <Border x:Name="Track" ClipToBounds="True"
-            Background="{DynamicResource ControlFillColorSecondaryBrush}">
-        <Border x:Name="Segment" HorizontalAlignment="Left"
-                Background="{DynamicResource AccentFillColorDefaultBrush}">
-            <Border.RenderTransform>
-                <TranslateTransform x:Name="SegmentTransform"/>
-            </Border.RenderTransform>
-        </Border>
-    </Border>
+         star-measured). The slide (the bar's SegmentPhase) is started and stopped from the code-behind,
+         only while the bar is on screen and animations are allowed. -->
+    <local:PillProgressBar x:Name="Bar"/>
 </UserControl>

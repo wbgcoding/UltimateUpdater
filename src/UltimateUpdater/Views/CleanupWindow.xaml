@@ -748,15 +748,9 @@
                     <StackPanel Margin="0,6,12,0"
                                 Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal">
-                            <!-- The track carries its own fixed width because the fill is
-                                 sized from that same number by the converter; letting it
-                                 stretch with the window would leave the two disagreeing. -->
-                            <Border Width="240" Height="5" CornerRadius="3" VerticalAlignment="Center"
-                                    Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                                <Border HorizontalAlignment="Left" CornerRadius="3"
-                                        Background="{DynamicResource AccentFillColorDefaultBrush}"
-                                        Width="{Binding Percent, Converter={StaticResource PercentToWidth}, ConverterParameter=240}"/>
-                            </Border>
+                            <!-- A fixed width keeps the bar from stretching with the window. -->
+                            <views:PillProgressBar Width="240" Height="6" VerticalAlignment="Center"
+                                                   Value="{Binding Percent}"/>
                             <TextBlock Margin="10,0,0,0" FontSize="11"
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}">
@@ -1136,10 +1130,10 @@
                                            Margin="8,0,0,0" Style="{StaticResource TabularNumberText}"
                                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
 
-                                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Height="4"
-                                        Margin="0,3,0,0" CornerRadius="2" HorizontalAlignment="Left"
-                                        Width="{Binding BarWidth}"
-                                        Background="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                <views:PillProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Height="4"
+                                                       Margin="0,3,0,0" HorizontalAlignment="Left" Width="110"
+                                                       TrackBrush="Transparent" Maximum="110"
+                                                       Value="{Binding BarWidth}"/>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

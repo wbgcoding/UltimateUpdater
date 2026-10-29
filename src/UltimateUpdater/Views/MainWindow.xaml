@@ -708,7 +708,7 @@
                                                  render-harness regression traced back to (WindowLayoutTests
                                                  started failing on unrelated windows afterwards); a plain
                                                  BeginAnimation call straight on ToolbarLightSlide, the same
-                                                 technique InstallBarFill's own glide already uses, does not
+                                                 technique the install bar's own glide already uses, does not
                                                  have that problem. -->
                                             <Path Data="M18.25 11.2 A6.25,6.25 0 1 1 5.75 11.2 A6.25,6.25 0 1 1 18.25 11.2 Z"
                                                   Fill="{DynamicResource ControlFillColorSecondaryBrush}"/>
@@ -813,9 +813,13 @@
                             <!-- Star, not Auto: at the window's 860px minimum the item name is what gives way
                                  first (it trims to an ellipsis), instead of the whole strip clipping. -->
                             <ColumnDefinition Width="*" MinWidth="72" MaxWidth="300"/>
+                            <!-- The bar's column: 204 is what the old fixed bar plus its figure needed, so
+                                 the minimum width fits exactly as before; any room beyond that goes to the
+                                 bar, up to a length that still reads as one glance. The spacer column only
+                                 takes what both of these have turned down. -->
+                            <ColumnDefinition Width="1.5*" MinWidth="204" MaxWidth="400"/>
                             <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="0.001*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
@@ -854,96 +858,77 @@
 
                         <!-- Overall progress: a hand-drawn bar (track + fill), not a WPF-UI ProgressBar,
                              which recurses when star-measured (as it would be here). The exact overall %
-                             sits beside it so the number is never hidden inside the bar. The fill's Width is
+                             sits beside it so the number is never hidden inside the bar. The fill's Value is
                              driven entirely from code-behind (UpdateInstallBarFill) so it can glide instead
                              of jump, a plain Binding here would fight the animation on every tick. -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
-                            <!-- The track width is fixed and the fill is computed from it, so the two numbers
-                                 below MUST stay in step. 160 rather than 260: at 860px the strip has no room for
-                                 a wider bar next to the figures, and it clipped. ClipToBounds keeps the shine
-                                 sweep (below) from bleeding past the rounded ends while it travels. -->
-                            <Border Width="160" Height="6" CornerRadius="3" VerticalAlignment="Center" ClipToBounds="True"
-                                    Background="{DynamicResource ControlFillColorSecondaryBrush}">
-                                <Grid>
-                                    <Border x:Name="InstallBarFill" HorizontalAlignment="Left" CornerRadius="3"
-                                            Background="{DynamicResource AccentFillColorDefaultBrush}"
-                                            Visibility="{Binding InstallHasRealProgress, Converter={StaticResource BoolToVisibility}}"/>
-
-                                    <!-- No real reading has arrived yet: a wandering shine reads as "still
-                                         alive" where a bar stuck dead at 0 would not. -->
-                                    <!-- The accent colour faded in and out by an opacity mask: a white
-                                         gradient vanished on the light theme's near-white track, and a
-                                         GradientStop colour cannot take the theme brush as a resource key. -->
-                                    <Border x:Name="InstallBarShine" Width="56" Height="6" CornerRadius="3" HorizontalAlignment="Left"
-                                            Background="{DynamicResource AccentFillColorDefaultBrush}">
-                                        <Border.OpacityMask>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="#00000000" Offset="0"/>
-                                                <GradientStop Color="#99000000" Offset="0.5"/>
-                                                <GradientStop Color="#00000000" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.OpacityMask>
-                                        <Border.RenderTransform>
-                                            <TranslateTransform x:Name="InstallBarShineTransform"/>
-                                        </Border.RenderTransform>
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                <Style.Triggers>
-                                                    <!-- Both conditions, not just InstallHasRealProgress: that one alone
-                                                         is also False whenever the batch is empty, i.e. whenever nothing
-                                                         is installing at all, which used to leave this storyboard running
-                                                         forever in the background (a data trigger inside a Collapsed
-                                                         strip still fires; the sweep kept animating at 60fps with the
-                                                         window just sitting idle). -->
-                                                    <MultiDataTrigger>
-                                                        <MultiDataTrigger.Conditions>
-                                                            <Condition Binding="{Binding InstallHasRealProgress}" Value="False"/>
-                                                            <Condition Binding="{Binding IsInstalling}" Value="True"/>
-                                                        </MultiDataTrigger.Conditions>
-                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                    </MultiDataTrigger>
-                                                    <!-- The sweep itself also needs the window shown: an install that keeps
-                                                         running while the window is hidden to the tray would otherwise tick
-                                                         this storyboard at 60fps for nothing. A trigger of its own, so the
-                                                         strip's visibility above never depends on an ancestor window. -->
-                                                    <MultiDataTrigger>
-                                                        <MultiDataTrigger.Conditions>
-                                                            <Condition Binding="{Binding InstallHasRealProgress}" Value="False"/>
-                                                            <Condition Binding="{Binding IsInstalling}" Value="True"/>
-                                                            <Condition Binding="{Binding IsVisible, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
-                                                        </MultiDataTrigger.Conditions>
-                                                        <MultiDataTrigger.EnterActions>
-                                                            <BeginStoryboard Name="InstallBarShineStory">
-                                                                <Storyboard Timeline.DesiredFrameRate="60">
-                                                                    <DoubleAnimation
-                                                                        Storyboard.TargetProperty="RenderTransform.X"
-                                                                        From="-56" To="160" Duration="0:0:1.1"
-                                                                        RepeatBehavior="Forever">
-                                                                        <DoubleAnimation.EasingFunction>
-                                                                            <SineEase EasingMode="EaseInOut"/>
-                                                                        </DoubleAnimation.EasingFunction>
-                                                                    </DoubleAnimation>
-                                                                </Storyboard>
-                                                            </BeginStoryboard>
-                                                        </MultiDataTrigger.EnterActions>
-                                                        <MultiDataTrigger.ExitActions>
-                                                            <StopStoryboard BeginStoryboardName="InstallBarShineStory"/>
-                                                        </MultiDataTrigger.ExitActions>
-                                                    </MultiDataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                    </Border>
-                                </Grid>
-                            </Border>
-                            <TextBlock Text="{Binding InstallOverallPercentText}" FontSize="12" Margin="10,0,0,0"
+                        <Grid Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <!-- The bar takes the room its column has (the column grows with the strip, see
+                                 the column definitions above); its fill is driven from code-behind
+                                 (UpdateInstallBarFill) as a value glide. Until a real reading arrives a soft
+                                 shine travels the track instead, so a bar stuck dead at 0 never reads as
+                                 frozen. The shine is a segment of the bar itself, which keeps it inside the
+                                 track's round ends while it enters and leaves. -->
+                            <views:PillProgressBar x:Name="InstallBar" Height="6" VerticalAlignment="Center">
+                                <views:PillProgressBar.Style>
+                                    <Style TargetType="views:PillProgressBar">
+                                        <Style.Triggers>
+                                            <!-- Both conditions, not just InstallHasRealProgress: that one alone
+                                                 is also False whenever the batch is empty, i.e. whenever nothing
+                                                 is installing at all, which used to leave this storyboard running
+                                                 forever in the background (a data trigger inside a Collapsed
+                                                 strip still fires; the sweep kept animating at 60fps with the
+                                                 window just sitting idle). -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding InstallHasRealProgress}" Value="False"/>
+                                                    <Condition Binding="{Binding IsInstalling}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="SegmentLength" Value="56"/>
+                                                <Setter Property="SegmentFade" Value="True"/>
+                                            </MultiDataTrigger>
+                                            <!-- The sweep itself also needs the window shown: an install that keeps
+                                                 running while the window is hidden to the tray would otherwise tick
+                                                 this storyboard at 60fps for nothing. A trigger of its own, so the
+                                                 strip's visibility above never depends on an ancestor window. -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding InstallHasRealProgress}" Value="False"/>
+                                                    <Condition Binding="{Binding IsInstalling}" Value="True"/>
+                                                    <Condition Binding="{Binding IsVisible, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <MultiDataTrigger.EnterActions>
+                                                    <BeginStoryboard Name="InstallBarShineStory">
+                                                        <Storyboard Timeline.DesiredFrameRate="60">
+                                                            <DoubleAnimation
+                                                                Storyboard.TargetProperty="SegmentPhase"
+                                                                From="0" To="1" Duration="0:0:1.1"
+                                                                RepeatBehavior="Forever">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <SineEase EasingMode="EaseInOut"/>
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </MultiDataTrigger.EnterActions>
+                                                <MultiDataTrigger.ExitActions>
+                                                    <StopStoryboard BeginStoryboardName="InstallBarShineStory"/>
+                                                </MultiDataTrigger.ExitActions>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </views:PillProgressBar.Style>
+                            </views:PillProgressBar>
+                            <TextBlock Grid.Column="1" Text="{Binding InstallOverallPercentText}" FontSize="12" Margin="10,0,0,0"
                                        MinWidth="34" TextAlignment="Right" VerticalAlignment="Center"
                                        Style="{StaticResource TabularNumberText}"
                                        Visibility="{Binding ActualWidth, ElementName=InstallStrip,
                                                     Converter={StaticResource WideEnough}, ConverterParameter=400}"
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                        </StackPanel>
+                        </Grid>
 
                         <!-- The version being installed TO, and its release date where the source knows one
                             , shown even for a single queued item, never gated on batch size. -->
@@ -1025,14 +1010,10 @@
                                                        TextAlignment="Right" Margin="0,0,6,0"
                                                        Style="{StaticResource TabularNumberText}"
                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                                            <Border Width="80" Height="5" CornerRadius="2.5" VerticalAlignment="Center"
-                                                    Background="{DynamicResource ControlFillColorSecondaryBrush}"
-                                                    Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}">
-                                                <Border HorizontalAlignment="Left" CornerRadius="2.5"
-                                                        Background="{DynamicResource AccentFillColorDefaultBrush}"
-                                                        Width="{Binding InstallPercent, Converter={StaticResource PercentToWidth}, ConverterParameter=80}"/>
-                                            </Border>
-                                            <views:IndeterminateBar Width="80" Height="5" VerticalAlignment="Center"
+                                            <views:PillProgressBar Width="80" Height="6" VerticalAlignment="Center"
+                                                                   Value="{Binding InstallPercent}"
+                                                                   Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
+                                            <views:IndeterminateBar Width="80" Height="6" VerticalAlignment="Center"
                                                                     Visibility="{Binding ShowIndeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
                                         </StackPanel>
                                         <ui:Button Grid.Column="2" Margin="8,0,0,0" Padding="4,2" Appearance="Secondary"
@@ -2135,8 +2116,7 @@
                                                 VerticalAlignment="Center"
                                                 Visibility="{Binding IsInstallRunning, Converter={StaticResource BoolToVisibility}}">
                                         <!-- the percentage, then a hand-drawn bar. A hand-drawn bar
-                                             (a track Border with a fill Border sized by a percent→width
-                                             converter) is used rather than a ProgressBar on purpose: a
+                                             (a pill-shaped PillProgressBar) is used rather than a ProgressBar on purpose: a
                                              WPF-UI ProgressBar given a star-sized or infinite measure here
                                              sends the layout into an infinite measure recursion. -->
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
@@ -2146,13 +2126,9 @@
                                                        Margin="0,0,8,0" Style="{StaticResource TabularNumberText}"
                                                        Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}"
                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                                            <Border Width="96" Height="6" CornerRadius="3" VerticalAlignment="Center"
-                                                    Background="{DynamicResource ControlFillColorSecondaryBrush}"
-                                                    Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}">
-                                                <Border HorizontalAlignment="Left" CornerRadius="3"
-                                                        Background="{DynamicResource AccentFillColorDefaultBrush}"
-                                                        Width="{Binding InstallPercent, Converter={StaticResource PercentToWidth}, ConverterParameter=96}"/>
-                                            </Border>
+                                            <views:PillProgressBar x:Name="RunningProgressBar" Width="96" Height="6" VerticalAlignment="Center"
+                                                                   Value="{Binding InstallPercent}"
+                                                                   Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
                                             <!-- No figure to show (installing, or nothing measurable reported):
                                                  a moving bar and no number; the line under the name says what
                                                  is going on and for how long. -->
