@@ -1,0 +1,21 @@
+name: Feature request
+description: An idea for a new feature or a better workflow
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: Describe the situation and what is missing today.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How could Ultimate Updater help? Sketches and screenshots are welcome.
+  - type: textarea
+    id: source
+    attributes:
+      label: New update source?
+      description: If this is about another package manager, launcher or driver tool, how does it list and install updates today (command line, app, web page)?
