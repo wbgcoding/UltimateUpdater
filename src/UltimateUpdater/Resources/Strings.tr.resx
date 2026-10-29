@@ -1273,9 +1273,6 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="ScanFailedNoJava" xml:space="preserve">
     <value>sdkmanager, Java {0} veya daha yenisini gerektiriyor ve bir Java kurulumu bulunamadı (JAVA_HOME, PATH veya Android Studio ile birlikte gelen).</value>
   </data>
-  <data name="CleanupFreeSpaceResult" xml:space="preserve">
-    <value>{0} şimdi {1} boş alana sahip (öncesi {2})</value>
-  </data>
   <data name="SettingsLogFolder" xml:space="preserve">
     <value>Günlük dosyaları</value>
   </data>
@@ -1971,12 +1968,6 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="PipInterpreterTooltip" xml:space="preserve">
     <value>Python yorumlayıcısı: {0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
-    <value>+~{0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
-    <value>Windows Disk Temizleme tarafından boşaltıldı. Diğer görevlerle birlikte çalıştığı için yaklaşık bir değerdir.</value>
   </data>
   <data name="CleanupDefaultSelection" xml:space="preserve">
     <value>Varsayılan seçim</value>

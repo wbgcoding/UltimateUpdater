@@ -1273,9 +1273,6 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   <data name="ScanFailedNoJava" xml:space="preserve">
     <value>sdkmanager vereist Java {0} of nieuwer, en er is geen Java-installatie gevonden (JAVA_HOME, PATH, of de versie die met Android Studio wordt meegeleverd).</value>
   </data>
-  <data name="CleanupFreeSpaceResult" xml:space="preserve">
-    <value>{0} heeft nu {1} vrij (was {2})</value>
-  </data>
   <data name="SettingsLogFolder" xml:space="preserve">
     <value>Logbestanden</value>
   </data>
@@ -1971,12 +1968,6 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="PipInterpreterTooltip" xml:space="preserve">
     <value>Python-interpreter: {0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
-    <value>+~{0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
-    <value>Vrijgemaakt door Schijfopruiming van Windows. Bij benadering, omdat het gelijktijdig met de andere taken werd uitgevoerd.</value>
   </data>
   <data name="CleanupDefaultSelection" xml:space="preserve">
     <value>Standaardselectie</value>

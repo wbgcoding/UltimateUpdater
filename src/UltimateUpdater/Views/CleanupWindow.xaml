@@ -1427,7 +1427,7 @@
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                 </Grid>
 
-                <!-- centre when finished: what was freed, and what the drive has left because of it -->
+                <!-- centre when finished: the one figure, what was freed -->
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                             Visibility="{Binding IsFinished, Converter={StaticResource BoolToVisibility}}">
                     <!-- Written from the code-behind rather than bound: when the run ends the figure
@@ -1435,22 +1435,9 @@
                          animated window property (DisplayFreed). Same reason the arc's geometry is
                          assigned there, an ancestor binding does not resolve once the render harness has
                          detached this content from its window. -->
-                    <!-- Disk Cleanup never reports its own freed bytes, so its share is shown as this
-                         small approximate line above the sure total, only for a run that actually had
-                         both lanes; the total below never counts it twice, because it was never in it. -->
-                    <TextBlock Text="{Binding LaneOverlapExtraText}" FontSize="12" HorizontalAlignment="Center"
-                               Style="{StaticResource TabularNumberText}"
-                               Visibility="{Binding ShowsLaneOverlapExtra, Converter={StaticResource BoolToVisibility}}"
-                               ToolTip="{Binding LaneOverlapExtraTooltip}"
-                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                     <TextBlock x:Name="FreedNumber" FontSize="38" FontWeight="SemiBold"
                                HorizontalAlignment="Center" Style="{StaticResource TabularNumberText}"
                                Foreground="{DynamicResource SystemFillColorSuccessBrush}"/>
-                    <TextBlock Text="{Binding FreeSpaceText}" FontSize="12" HorizontalAlignment="Center"
-                               TextAlignment="Center" TextWrapping="Wrap" MaxWidth="170" Margin="0,2,0,0"
-                               Style="{StaticResource TabularNumberText}"
-                               Visibility="{Binding HasFreeSpaceResult, Converter={StaticResource BoolToVisibility}}"
-                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                 </StackPanel>
             </Grid>
         </Grid>

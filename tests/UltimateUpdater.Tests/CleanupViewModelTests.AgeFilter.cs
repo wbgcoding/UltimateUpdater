@@ -134,22 +134,6 @@ public partial class CleanupViewModelTests
         Assert.NotEmpty(viewModel.Groups);
     }
 
-    /// <summary>Disk Cleanup never reports its own freed bytes (cleanmgr says nothing), so its share is
-    /// read back as whatever the real drive gained beyond what the other lanes already counted for sure.</summary>
-    [Fact]
-    public void ComputeLaneOverlapExtraBytes_is_the_drive_delta_minus_the_counted_total()
-    {
-        Assert.Equal(300L, CleanupViewModel.ComputeLaneOverlapExtraBytes(1_000L, 1_500L, 200L));
-    }
-
-    /// <summary>Either reading missing means no real measurement exists at all, never a guess.</summary>
-    [Fact]
-    public void ComputeLaneOverlapExtraBytes_is_null_when_either_reading_is_missing()
-    {
-        Assert.Null(CleanupViewModel.ComputeLaneOverlapExtraBytes(null, 1_500L, 200L));
-        Assert.Null(CleanupViewModel.ComputeLaneOverlapExtraBytes(1_000L, null, 200L));
-    }
-
     /// <summary>A regular target's size column always has something to show once scanning/waiting are
     /// both done: a figure or "nothing found", never a reserved-but-blank cell.</summary>
     [Fact]
@@ -181,13 +165,20 @@ public partial class CleanupViewModelTests
         Assert.False(item.HasSizeCell);
     }
 
-    /// <summary>The counted total can already account for everything the drive gained (or more, if
-    /// something else grew the drive's usage in the meantime), a negative or zero result must never be
-    /// shown as a positive "Disk Cleanup freed this" figure.</summary>
+    /// <summary>The finished ring centre states exactly one figure: the freed total. No second line with
+    /// drive free space or an approximate extra share, and the text follows the freed bytes.</summary>
     [Fact]
-    public void ComputeLaneOverlapExtraBytes_can_be_zero_or_negative()
+    public void The_finished_ring_centre_shows_the_freed_total_as_its_only_figure()
     {
-        Assert.Equal(0L, CleanupViewModel.ComputeLaneOverlapExtraBytes(1_000L, 1_200L, 200L));
-        Assert.Equal(-100L, CleanupViewModel.ComputeLaneOverlapExtraBytes(1_000L, 1_100L, 200L));
+        var viewModel = Create(CreateSettings());
+
+        viewModel.FreedBytes = 3L * 1024 * 1024 * 1024;
+        viewModel.Phase = CleanupPhase.Finished;
+
+        Assert.Equal(CleanupViewModel.FormatFreed(viewModel.FreedBytes), viewModel.FreedText);
+        Assert.Contains(ByteSize.Format(viewModel.FreedBytes), viewModel.FreedText);
+        var extras = typeof(CleanupViewModel).GetProperties()
+            .Where(p => p.Name is "FreeSpaceText" or "HasFreeSpaceResult" or "LaneOverlapExtraText" or "ShowsLaneOverlapExtra");
+        Assert.Empty(extras);
     }
 }

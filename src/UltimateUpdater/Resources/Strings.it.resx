@@ -1273,9 +1273,6 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="ScanFailedNoJava" xml:space="preserve">
     <value>sdkmanager richiede Java {0} o una versione successiva e non è stata trovata alcuna installazione di Java (JAVA_HOME, PATH o quella inclusa con Android Studio).</value>
   </data>
-  <data name="CleanupFreeSpaceResult" xml:space="preserve">
-    <value>{0} ora ha {1} liberi (prima erano {2})</value>
-  </data>
   <data name="SettingsLogFolder" xml:space="preserve">
     <value>File di registro</value>
   </data>
@@ -1971,12 +1968,6 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="PipInterpreterTooltip" xml:space="preserve">
     <value>Interprete Python: {0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
-    <value>+~{0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
-    <value>Liberato dalla Pulizia disco di Windows. Approssimativo, perché è stata eseguita insieme alle altre attività.</value>
   </data>
   <data name="CleanupDefaultSelection" xml:space="preserve">
     <value>Selezione predefinita</value>

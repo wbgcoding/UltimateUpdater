@@ -1273,9 +1273,6 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   <data name="ScanFailedNoJava" xml:space="preserve">
     <value>sdkmanager necesită Java {0} sau mai nou, iar nicio instalare Java nu a fost găsită (JAVA_HOME, PATH, sau cea inclusă cu Android Studio).</value>
   </data>
-  <data name="CleanupFreeSpaceResult" xml:space="preserve">
-    <value>{0} are acum {1} liberi (era {2})</value>
-  </data>
   <data name="SettingsLogFolder" xml:space="preserve">
     <value>Fișiere de jurnal</value>
   </data>
@@ -1971,12 +1968,6 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="PipInterpreterTooltip" xml:space="preserve">
     <value>Interpretor Python: {0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
-    <value>+~{0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
-    <value>Eliberat de Curățare disc Windows. Aproximativ, deoarece a rulat alături de celelalte sarcini.</value>
   </data>
   <data name="CleanupDefaultSelection" xml:space="preserve">
     <value>Selecție implicită</value>

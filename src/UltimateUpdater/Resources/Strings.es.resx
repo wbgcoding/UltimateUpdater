@@ -1273,9 +1273,6 @@ Esto no se puede deshacer con Ultimate Updater.</value>
   <data name="ScanFailedNoJava" xml:space="preserve">
     <value>sdkmanager necesita Java {0} o posterior, y no se encontró ninguna instalación de Java (JAVA_HOME, PATH o la incluida con Android Studio).</value>
   </data>
-  <data name="CleanupFreeSpaceResult" xml:space="preserve">
-    <value>{0} ahora tiene {1} libres (antes {2})</value>
-  </data>
   <data name="SettingsLogFolder" xml:space="preserve">
     <value>Archivos de registro</value>
   </data>
@@ -1971,12 +1968,6 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="PipInterpreterTooltip" xml:space="preserve">
     <value>Intérprete de Python: {0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtra" xml:space="preserve">
-    <value>+~{0}</value>
-  </data>
-  <data name="CleanupLaneOverlapExtraTooltip" xml:space="preserve">
-    <value>Liberado por la Liberación de espacio en disco de Windows. Aproximado, porque se ejecutó junto con las demás tareas.</value>
   </data>
   <data name="CleanupDefaultSelection" xml:space="preserve">
     <value>Selección predeterminada</value>

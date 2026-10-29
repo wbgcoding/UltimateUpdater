@@ -155,9 +155,10 @@ public partial class CleanupViewModel
     }
 
     /// <summary>What the ticked targets would free.</summary>
-    public long SelectedBytes => Items.Where(i => i.IsSelected).Sum(i => i.Bytes);
+    public long SelectedBytes => Items.Where(i => i.IsSelected).Sum(i => i.SelectedEntryBytes);
 
-    /// <summary>What every target together would free: the ring's 100 %.</summary>
+    /// <summary>What the scan found in every target together: the ring's 100 %. Independent of the detail
+    /// ticks.</summary>
     public long TotalBytes => Items.Sum(i => i.Bytes);
 
     public string SelectedText => ByteSize.Format(SelectedBytes);
@@ -173,7 +174,7 @@ public partial class CleanupViewModel
     {
         get
         {
-            var files = Items.Where(i => i.IsSelected).Sum(i => i.Files);
+            var files = Items.Where(i => i.IsSelected).Sum(i => i.SelectedEntryFiles);
             return string.Format(Loc[files == 1 ? "CleanupFileCountOne" : "CleanupFileCount"], files);
         }
     }
@@ -225,25 +226,6 @@ public partial class CleanupViewModel
 
     public string TotalText => string.Format(Loc["CleanupFoundTotal"], ByteSize.Format(TotalBytes));
 
-    private long? _freeSpaceBefore;
-    private long? _freeSpaceAfter;
-
-    /// <summary>
-    /// What the drive itself has left, read once before the run and once after it. The freed figure counts
-    /// what this app deleted; this line answers the question the user actually has afterwards: how much
-    /// room is there now. Only shown when both readings succeeded, so a drive that cannot be queried simply
-    /// leaves the line out instead of showing a blank or a guess.
-    /// </summary>
-    public bool HasFreeSpaceResult => IsFinished && _freeSpaceBefore is not null && _freeSpaceAfter is not null;
-
-    public string FreeSpaceText => _freeSpaceBefore is null || _freeSpaceAfter is null
-        ? string.Empty
-        : string.Format(
-            Loc["CleanupFreeSpaceResult"],
-            SystemDriveName(),
-            ByteSize.Format(_freeSpaceAfter.Value),
-            ByteSize.Format(_freeSpaceBefore.Value));
-
     private static string SystemDriveName() =>
         Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) ?? "C:\\";
 
@@ -268,9 +250,7 @@ public partial class CleanupViewModel
 
     /// <summary>
     /// What the drive has free right now, read once at open: good enough for a figure that just
-    /// sits beside the ring while the user ticks boxes, and avoids a disk query on every click. Distinct
-    /// from <see cref="_freeSpaceBefore"/>/<see cref="_freeSpaceAfter"/>, which capture an actual run rather
-    /// than this arithmetic projection.
+    /// sits beside the ring while the user ticks boxes, and avoids a disk query on every click.
     /// </summary>
     private readonly long? _freeSpaceNow = FreeSpaceOnSystemDrive();
 
@@ -363,10 +343,10 @@ public partial class CleanupViewModel
                 continue;
 
             var groupTitle = Loc[CleanupGroups.TitleKey(key)];
-            var groupBytes = selected.Sum(i => i.Bytes);
+            var groupBytes = selected.Sum(i => i.SelectedEntryBytes);
             lines.Add(groupBytes > 0 ? $"{groupTitle}: {ByteSize.Format(groupBytes)}" : groupTitle);
-            lines.AddRange(selected.Select(i => i.Bytes > 0
-                ? $"  • {i.Title}: {ByteSize.Format(i.Bytes)}"
+            lines.AddRange(selected.Select(i => i.SelectedEntryBytes > 0
+                ? $"  • {i.Title}: {ByteSize.Format(i.SelectedEntryBytes)}"
                 : $"  • {i.Title}"));
             lines.Add(string.Empty);
         }

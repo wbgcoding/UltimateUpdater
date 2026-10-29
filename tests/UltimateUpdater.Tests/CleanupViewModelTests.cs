@@ -299,10 +299,10 @@ public partial class CleanupViewModelTests
 
     // ---- Detail-list entries drive the target's own size, and Clean respects them ----
 
-    /// <summary>The acceptance criterion, word for word: "kann einzelne abwählen, die Zielgröße ändert
-    /// sich mit", unchecking one detail-list row must move the target's own displayed total right away.</summary>
+    /// <summary>Unticking a detail entry lowers only what a run would clean: the found figures (row,
+    /// group header, dialog total) stay at the scanned value, the selected figures follow the ticks.</summary>
     [Fact]
-    public void Unchecking_a_detail_list_entry_reduces_the_targets_own_size_immediately()
+    public void Unchecking_a_detail_list_entry_lowers_the_selection_but_never_the_found_figures()
     {
         var settings = CreateSettings();
         var viewModel = Create(settings);
@@ -314,16 +314,27 @@ public partial class CleanupViewModelTests
             new CleanupEntry(@"C:\Temp\A", "A", 60, 6, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, CleanupEntryType.Cache),
             new CleanupEntry(@"C:\Temp\B", "B", 40, 4, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, CleanupEntryType.Cache),
         ]);
+        item.IsSelected = true;
+        var foundTotal = viewModel.TotalBytes;
+        var group = viewModel.Groups.First(g => g.Items.Contains(item));
+        var groupTotal = group.TotalBytes;
+        var selectedBefore = viewModel.SelectedBytes;
 
         item.Entries.First(e => e.DisplayName == "A").IsSelected = false;
 
-        Assert.Equal(40, item.Bytes);
-        Assert.Equal(4, item.Files);
+        Assert.Equal(100, item.Bytes);
+        Assert.Equal(10, item.Files);
+        Assert.Equal(foundTotal, viewModel.TotalBytes);
+        Assert.Equal(groupTotal, group.TotalBytes);
+        Assert.Equal(40, item.SelectedEntryBytes);
+        Assert.Equal(4, item.SelectedEntryFiles);
+        Assert.Equal(selectedBefore - 60, viewModel.SelectedBytes);
 
         // Re-checking must restore it exactly, no drift from the round trip.
         item.Entries.First(e => e.DisplayName == "A").IsSelected = true;
-        Assert.Equal(100, item.Bytes);
-        Assert.Equal(10, item.Files);
+        Assert.Equal(100, item.SelectedEntryBytes);
+        Assert.Equal(10, item.SelectedEntryFiles);
+        Assert.Equal(selectedBefore, viewModel.SelectedBytes);
     }
 
     /// <summary>The other half: a deselected entry's path must actually reach Clean, so the run frees
@@ -376,7 +387,7 @@ public partial class CleanupViewModelTests
     /// on, and the target's own Bytes/Files land on the sum of the whole list, not an accumulated drift
     /// from toggling row by row.</summary>
     [Fact]
-    public void ToggleAllEntries_selects_everything_and_sums_bytes_and_files_once()
+    public void ToggleAllEntries_restores_the_selected_figures_and_leaves_the_found_ones()
     {
         var settings = CreateSettings();
         var viewModel = Create(settings);
@@ -389,13 +400,15 @@ public partial class CleanupViewModelTests
             new CleanupEntry(@"C:\Temp\B", "B", 40, 4, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, CleanupEntryType.Cache),
         ]);
         item.Entries.First(e => e.DisplayName == "A").IsSelected = false;
-        Assert.Equal(40, item.Bytes);
+        Assert.Equal(40, item.SelectedEntryBytes);
+        Assert.Equal(100, item.Bytes);
 
         item.ToggleAllEntriesCommand.Execute(null);
 
         Assert.True(item.Entries.All(e => e.IsSelected));
+        Assert.Equal(100, item.SelectedEntryBytes);
+        Assert.Equal(10, item.SelectedEntryFiles);
         Assert.Equal(100, item.Bytes);
-        Assert.Equal(10, item.Files);
         Assert.True(item.AllEntriesSelected);
     }
 
@@ -418,8 +431,10 @@ public partial class CleanupViewModelTests
         item.ToggleAllEntriesCommand.Execute(null);
 
         Assert.True(item.Entries.All(e => !e.IsSelected));
-        Assert.Equal(0, item.Bytes);
-        Assert.Equal(0, item.Files);
+        Assert.Equal(0, item.SelectedEntryBytes);
+        Assert.Equal(0, item.SelectedEntryFiles);
+        Assert.Equal(100, item.Bytes);
+        Assert.Equal(10, item.Files);
         Assert.False(item.AllEntriesSelected);
     }
 

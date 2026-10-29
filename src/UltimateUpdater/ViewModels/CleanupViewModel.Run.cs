@@ -172,7 +172,7 @@ public partial class CleanupViewModel
     /// <summary>Something is ticked that actually has something to free (or is Disk Cleanup).</summary>
     public bool CanClean =>
         Phase == CleanupPhase.Choosing
-        && Items.Any(i => i.IsSelected && (i.Bytes > 0 || i.Target.Kind != CleanupKind.Directories))
+        && Items.Any(i => i.IsSelected && (i.SelectedEntryBytes > 0 || i.Target.Kind != CleanupKind.Directories))
         // While a ticked recycle bin is being re-measured for a new age filter, the figure a confirmation
         // would show is about to be replaced: Clean waits for the new one.
         && !(!IsScanning && Items.Any(i => i.IsSelected && i.IsRecycleBin && i.IsScanning));
@@ -191,36 +191,6 @@ public partial class CleanupViewModel
 
     [ObservableProperty]
     private long protectedBytes;
-
-    /// <summary>
-    /// True once a run selected BOTH the file lane and Disk Cleanup: the two run at the same
-    /// time, so the file lane's own counted bytes are not the whole story. Set once, before the
-    /// run starts, from that run's own lane split, never merely because Disk Cleanup ran alone. Consumed
-    /// only after the run ends, by <see cref="ShowsLaneOverlapExtra"/>.
-    /// </summary>
-    private bool _lanesOverlapped;
-
-    /// <summary>
-    /// Disk Cleanup never reports what it freed (cleanmgr says nothing, and guessing would be a lie), so
-    /// its share is read back from the system drive's own before/after free space instead: whatever that
-    /// delta holds beyond the file/registry lanes' own counted <see cref="FreedBytes"/> is what Disk
-    /// Cleanup must have accounted for. Only meaningful once both readings exist and only shown for a run
-    /// that actually had both lanes; a negative or zero result stays hidden rather than shown as a guess.
-    /// </summary>
-    private long? LaneOverlapExtraBytes => ComputeLaneOverlapExtraBytes(_freeSpaceBefore, _freeSpaceAfter, FreedBytes);
-
-    /// <summary>Pure arithmetic, split out so it is testable without a real drive or a real run.</summary>
-    internal static long? ComputeLaneOverlapExtraBytes(long? freeSpaceBefore, long? freeSpaceAfter, long freedBytes) =>
-        freeSpaceBefore is null || freeSpaceAfter is null
-            ? null
-            : freeSpaceAfter.Value - freeSpaceBefore.Value - freedBytes;
-
-    public bool ShowsLaneOverlapExtra => IsFinished && _lanesOverlapped && LaneOverlapExtraBytes is > 0;
-
-    public string LaneOverlapExtraText => string.Format(
-        Loc["CleanupLaneOverlapExtra"], ByteSize.Format(LaneOverlapExtraBytes ?? 0));
-
-    public string LaneOverlapExtraTooltip => Loc["CleanupLaneOverlapExtraTooltip"];
 
     public bool HasSkipped => SkippedFiles > 0;
 
@@ -266,11 +236,8 @@ public partial class CleanupViewModel
         OnPropertyChanged(nameof(CanClean));
         OnPropertyChanged(nameof(ShowPauseButton));
         OnPropertyChanged(nameof(ShowResumeButton));
-        OnPropertyChanged(nameof(HasFreeSpaceResult));
         OnPropertyChanged(nameof(HasFreeSpaceNow));
         OnPropertyChanged(nameof(HasLastCleanup));
-        OnPropertyChanged(nameof(ShowsLaneOverlapExtra));
-        OnPropertyChanged(nameof(LaneOverlapExtraText));
 
         // The result reads per section once the run is over, not only as one figure in the ring.
         foreach (var group in Groups)
@@ -390,7 +357,6 @@ public partial class CleanupViewModel
         _pause.Resume();
         IsPaused = false;
 
-        _freeSpaceBefore = FreeSpaceOnSystemDrive();
         var runTime = System.Diagnostics.Stopwatch.StartNew();
         _logging.Event(ActivityLog.Cleanup, $"start {selected.Count} targets");
 
@@ -458,11 +424,6 @@ public partial class CleanupViewModel
         var diskCleanupLane = selected.Where(i => LaneFor(i.Target.Kind) == CleanupLane.DiskCleanup).ToList();
         var defragLane = selected.Where(i => LaneFor(i.Target.Kind) == CleanupLane.Defrag).ToList();
 
-        // A file one lane removed is counted by the other as skipped once they can genuinely overlap in
-        // time; shown only when both lanes actually had something to run, never for Disk Cleanup (or the
-        // file lane) running alone.
-        _lanesOverlapped = fileLane.Count > 0 && diskCleanupLane.Count > 0;
-
         // ONE restore-point decision for the whole run (see CreateRestorePointAsync's own comment), made
         // and kicked off here, before any lane is dispatched, so it runs IN PARALLEL with the
         // repair/disk-cleanup/defrag lanes rather than ahead of them. Only the file lane removes anything,
@@ -523,8 +484,6 @@ public partial class CleanupViewModel
             // before it stopped, and claiming 100 % would be a different number's worth of confidence.
             if (!cancelled)
                 CleanPercent = 100;
-
-            _freeSpaceAfter = FreeSpaceOnSystemDrive();
 
             Phase = CleanupPhase.Finished;
             _logging.Event(
