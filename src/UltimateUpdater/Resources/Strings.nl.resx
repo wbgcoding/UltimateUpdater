@@ -194,6 +194,15 @@
   <data name="InstallVersionUnchanged" xml:space="preserve">
     <value>Versie ongewijzigd</value>
   </data>
+  <data name="InstallVersionUnchangedDetail" xml:space="preserve">
+    <value>Het installatieprogramma meldt succes, maar Windows toont nog de oude versie. Vaak is de update pas klaar als het programma is gesloten; sluit het en probeer opnieuw.</value>
+  </data>
+  <data name="InstallVersionUnchangedRepeat" xml:space="preserve">
+    <value>Dit gebeurde al {0} keer: de maker gebruikt waarschijnlijk een ander versienummer dan winget.</value>
+  </data>
+  <data name="PersistentUnchangedHint" xml:space="preserve">
+    <value>Na {0} installaties is de versie ongewijzigd. Dit pakket negeren?</value>
+  </data>
   <data name="RebootRequiredBadge" xml:space="preserve">
     <value>Herstart nodig</value>
   </data>

@@ -456,11 +456,13 @@ public partial class MainViewModel
 
     private void SyncPersistentFailureAttempts(UpdateRowViewModel row)
     {
-        row.PersistentFailureAttempts =
-            row.InstallState == RowInstallState.NeedsManualWork
-            && _settings.Current.PersistentFailures.TryGetValue(PackageKey(row.Item), out var record)
-                ? record.Count
-                : 0;
+        PersistentFailureRecord? record = null;
+        var flagged = row.InstallState == RowInstallState.NeedsManualWork
+            && _settings.Current.PersistentFailures.TryGetValue(PackageKey(row.Item), out record);
+
+        row.PersistentTallyIsUnchanged =
+            flagged && record!.Signature.StartsWith(UnchangedSignaturePrefix, StringComparison.Ordinal);
+        row.PersistentFailureAttempts = flagged ? record!.Count : 0;
     }
 
     /// <summary>The "keeps failing" filter chip's own count, over the live rows rather than the

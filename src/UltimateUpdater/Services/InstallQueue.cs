@@ -59,6 +59,11 @@ public sealed record InstallItemStatus(string SourceId, string ItemId, double Pe
     /// </summary>
     public bool VersionUnchanged { get; init; }
 
+    /// <summary>With <see cref="VersionUnchanged"/>: how many times this item has now ended unchanged for
+    /// the same versions, this one included (read from the history before this result is recorded). 0 when
+    /// not unchanged; 1 for a first time.</summary>
+    public int VersionUnchangedCount { get; init; }
+
     /// <summary>The item's outcome is decided: a result was reported, or it ended as a handoff, as not
     /// applicable or as stopped. A plain progress tick is not terminal. An <see cref="Error"/> text on its
     /// own does not make a status terminal here; a caller that treats it so adds that check itself.</summary>
@@ -733,7 +738,11 @@ public sealed class InstallQueue
             // its "dl done" log line; it runs BEFORE the "ok" line so the log reads download-then-install
             // rather than the other way round, which would leave a finished row with a
             // part-filled bar.
-            Report(new InstallItemStatus(item.SourceId, item.Id, 100, null, true, null) { VersionUnchanged = versionUnchanged });
+            Report(new InstallItemStatus(item.SourceId, item.Id, 100, null, true, null)
+            {
+                VersionUnchanged = versionUnchanged,
+                VersionUnchangedCount = versionUnchanged ? CountUnchanged(item) : 0,
+            });
             _logging.Event(ActivityLog.Install, ActivityLog.InstallSucceeded(item, action, started.Elapsed));
             RecordHistory(item, action, success: true, error: null, versionUnchanged: versionUnchanged);
         }
@@ -1138,6 +1147,7 @@ public sealed class InstallQueue
                 IsNotApplicable = message.IsNotApplicable,
                 IsCancelled = message.IsCancelled,
                 VersionUnchanged = message.VersionUnchanged,
+                VersionUnchangedCount = message.VersionUnchanged && item is not null ? CountUnchanged(item) : 0,
             });
         }
 
@@ -1280,6 +1290,21 @@ public sealed class InstallQueue
     /// </summary>
     internal static bool IsVersionUnchanged(string? previousInstalledVersion, string? recheckedVersion) =>
         recheckedVersion is not null && string.Equals(recheckedVersion, previousInstalledVersion, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>This result's place in the item's run of "installed, version unchanged" outcomes: the earlier
+    /// ones for the same versions already in the history, plus this one (not recorded yet).</summary>
+    private int CountUnchanged(UpdateItem item)
+    {
+        try
+        {
+            return _history.CountUnchangedInstalls(item.SourceId, item.Id, item.InstalledVersion, item.AvailableVersion) + 1;
+        }
+        catch (Exception ex)
+        {
+            _logging.Warn($"Could not count earlier unchanged installs of '{item.Id}': {ex.Message}");
+            return 1;
+        }
+    }
 
     private void RecordHistory(
         UpdateItem item, InstallAction action, bool success, string? error, bool isManualHandoff = false,

@@ -47,6 +47,17 @@ public partial class UpdateRowViewModel : ObservableObject
 
     partial void OnPersistentFailureAttemptsChanged(int value) => OnPropertyChanged(nameof(PersistentFailureHintText));
 
+    /// <summary>The tally behind <see cref="PersistentFailureAttempts"/> counts installs that finished with
+    /// the version unchanged, not failures: the hint and the state tooltip then say so.</summary>
+    [ObservableProperty]
+    private bool persistentTallyIsUnchanged;
+
+    partial void OnPersistentTallyIsUnchangedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(PersistentFailureHintText));
+        OnPropertyChanged(nameof(InstallStateTooltip));
+    }
+
     [ObservableProperty]
     private double installPercent;
 
@@ -806,6 +817,7 @@ public partial class UpdateRowViewModel : ObservableObject
     {
         RowInstallState.Stuck => WithRawStatus(LocalizationService.Instance["RowStuckDetail"]),
         RowInstallState.HandedOff => WithRawStatus(LocalizationService.Instance["RowHandedOffDetail"]),
+        RowInstallState.NeedsManualWork when PersistentTallyIsUnchanged => VersionUnchangedTooltip,
         RowInstallState.NeedsManualWork => WithRawStatus(LocalizationService.Instance["RowNeedsManualWorkDetail"]),
         RowInstallState.Cancelled => CancelledReasonLine ?? LocalizationService.Instance["RowCancelledTooltip"],
         _ => InstallStatusText,
@@ -821,7 +833,9 @@ public partial class UpdateRowViewModel : ObservableObject
     public bool ShowPersistentFailureHint => InstallState == RowInstallState.NeedsManualWork;
 
     public string PersistentFailureHintText =>
-        string.Format(LocalizationService.Instance["PersistentFailureHint"], PersistentFailureAttempts);
+        string.Format(
+            LocalizationService.Instance[PersistentTallyIsUnchanged ? "PersistentUnchangedHint" : "PersistentFailureHint"],
+            PersistentFailureAttempts);
 
     /// <summary>The percentage shown next to a running row's bar.</summary>
     public string InstallPercentText => PercentFormat.Format(InstallPercent);
@@ -1070,6 +1084,7 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(IgnoredBadgeLabel));
         OnPropertyChanged(nameof(RebootMarkerText));
         OnPropertyChanged(nameof(VersionUnchangedText));
+        OnPropertyChanged(nameof(VersionUnchangedTooltip));
         OnPropertyChanged(nameof(InstallHeader));
         OnPropertyChanged(nameof(RetryHeader));
         OnPropertyChanged(nameof(RetryInteractiveHeader));
@@ -1126,6 +1141,7 @@ public partial class UpdateRowViewModel : ObservableObject
         _lastByteSample = 0;
         NeedsReboot = false;
         VersionUnchanged = false;
+        VersionUnchangedCount = 0;
         // An install claims the row: a failed removal that is now being installed must not still report
         // itself as "Uninstalled" when it succeeds. The uninstall path sets the flag again right after.
         WasUninstalled = false;
@@ -1337,7 +1353,10 @@ public partial class UpdateRowViewModel : ObservableObject
 
         // sticky, same reason: the "result" message carries this, a later bare progress line must not clear it
         if (status.VersionUnchanged)
+        {
             VersionUnchanged = true;
+            VersionUnchangedCount = status.VersionUnchangedCount;
+        }
 
         NotifyPhaseChanged();
     }
@@ -1355,7 +1374,25 @@ public partial class UpdateRowViewModel : ObservableObject
     [ObservableProperty]
     private bool versionUnchanged;
 
+    /// <summary>How many times this item has ended unchanged for the same versions, this run included
+    /// (see <see cref="InstallItemStatus.VersionUnchangedCount"/>); 0 while not unchanged.</summary>
+    [ObservableProperty]
+    private int versionUnchangedCount;
+
+    partial void OnVersionUnchangedCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(VersionUnchangedTooltip));
+        OnPropertyChanged(nameof(InstallStateTooltip));
+    }
+
     public string VersionUnchangedText => LocalizationService.Instance["InstallVersionUnchanged"];
+
+    /// <summary>Why the version can stay the same and what to do; from the second identical result on, also
+    /// how often it already happened, which points at a vendor that numbers its versions differently.</summary>
+    public string VersionUnchangedTooltip => VersionUnchangedCount >= 2
+        ? LocalizationService.Instance["InstallVersionUnchangedDetail"] + "\n"
+            + string.Format(LocalizationService.Instance["InstallVersionUnchangedRepeat"], VersionUnchangedCount)
+        : LocalizationService.Instance["InstallVersionUnchangedDetail"];
 
     private void UpdateTransfer(InstallItemStatus status)
     {

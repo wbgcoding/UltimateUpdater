@@ -25,6 +25,33 @@ public class HistoryViewModelTests
             Error = error,
         });
 
+    private static HistoryRowViewModel Unchanged(int count) =>
+        new(new HistoryEntry
+        {
+            Timestamp = DateTimeOffset.Now, SourceId = "winget", ItemId = "Vendor.App", Name = "App",
+            FromVersion = "1.0", ToVersion = "2.0", Success = true, VersionUnchanged = true,
+        }, unchangedCount: count);
+
+    [Fact]
+    public void An_unchanged_install_explains_itself_and_names_the_repeat_count_from_the_second_time()
+    {
+        var first = Unchanged(1).ResultTooltip;
+        var third = Unchanged(3).ResultTooltip;
+
+        Assert.False(string.IsNullOrWhiteSpace(first));
+        Assert.DoesNotContain('\n', first!);
+        Assert.StartsWith(first!, third);
+        Assert.Contains("3", third!);
+        Assert.Contains('\n', third!);
+    }
+
+    [Fact]
+    public void A_failed_entry_keeps_its_error_as_the_result_tooltip()
+    {
+        Assert.Equal("boom", Row("App", "1.0", "2.0", "winget", success: false, error: "boom").ResultTooltip);
+        Assert.Null(Row("App", "1.0", "2.0", "winget").ResultTooltip);
+    }
+
     [Fact]
     public void The_header_line_names_every_column_in_order()
     {

@@ -194,6 +194,15 @@
   <data name="InstallVersionUnchanged" xml:space="preserve">
     <value>Sürüm değişmedi</value>
   </data>
+  <data name="InstallVersionUnchangedDetail" xml:space="preserve">
+    <value>Yükleyici başarılı olduğunu bildiriyor, ancak Windows hâlâ eski sürümü gösteriyor. Güncelleme çoğu zaman program kapatılınca tamamlanır; programı kapatıp yeniden deneyin.</value>
+  </data>
+  <data name="InstallVersionUnchangedRepeat" xml:space="preserve">
+    <value>Bu {0}. kez oldu: üretici büyük olasılıkla winget'ten farklı bir sürüm numarası kullanıyor.</value>
+  </data>
+  <data name="PersistentUnchangedHint" xml:space="preserve">
+    <value>{0} kurulumdan sonra sürüm değişmedi. Bu paket yoksayılsın mı?</value>
+  </data>
   <data name="RebootRequiredBadge" xml:space="preserve">
     <value>Yeniden başlatın</value>
   </data>

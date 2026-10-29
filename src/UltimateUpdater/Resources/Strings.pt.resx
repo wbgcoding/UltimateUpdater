@@ -194,6 +194,15 @@
   <data name="InstallVersionUnchanged" xml:space="preserve">
     <value>Versão inalterada</value>
   </data>
+  <data name="InstallVersionUnchangedDetail" xml:space="preserve">
+    <value>O instalador indica sucesso, mas o Windows ainda mostra a versão antiga. Muitas vezes a atualização só termina quando o programa é fechado; feche-o e tente de novo.</value>
+  </data>
+  <data name="InstallVersionUnchangedRepeat" xml:space="preserve">
+    <value>Já aconteceu {0} vezes: o fabricante provavelmente usa um número de versão diferente do winget.</value>
+  </data>
+  <data name="PersistentUnchangedHint" xml:space="preserve">
+    <value>Versão inalterada após {0} instalações. Ignorar este pacote?</value>
+  </data>
   <data name="RebootRequiredBadge" xml:space="preserve">
     <value>Requer reinício</value>
   </data>

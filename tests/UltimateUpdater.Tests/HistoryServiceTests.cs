@@ -25,6 +25,32 @@ public class HistoryServiceTests : IDisposable
         Assert.Equal(["first", null, "last"], lines);
     }
 
+    private static HistoryEntry Install(string from, string to, bool unchanged = true, bool success = true,
+        string source = "winget", string id = "Vendor.App") => new()
+    {
+        Timestamp = DateTimeOffset.Now, SourceId = source, ItemId = id, Name = id,
+        FromVersion = from, ToVersion = to, Success = success, VersionUnchanged = unchanged,
+    };
+
+    [Fact]
+    public void Unchanged_installs_are_counted_per_package_and_version_pair()
+    {
+        List<HistoryEntry> entries =
+        [
+            Install("1.0", "2.0"),
+            Install("1.0", "2.0"),
+            Install("1.0", "3.0"),                       // another target
+            Install("1.0", "2.0", unchanged: false),     // a normal success
+            Install("1.0", "2.0", success: false, unchanged: false),
+            Install("1.0", "2.0", id: "Other.App"),
+            Install("1.0", "2.0", source: "npm"),
+        ];
+
+        Assert.Equal(2, HistoryService.CountUnchangedInstalls(entries, "winget", "Vendor.App", "1.0", "2.0"));
+        Assert.Equal(1, HistoryService.CountUnchangedInstalls(entries, "WINGET", "vendor.app", "1.0", "3.0"));
+        Assert.Equal(0, HistoryService.CountUnchangedInstalls(entries, "winget", "Vendor.App", "0.9", "2.0"));
+    }
+
     [Fact]
     public void Ordinary_lines_read_normally()
     {

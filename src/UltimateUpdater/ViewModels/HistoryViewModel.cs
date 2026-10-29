@@ -11,7 +11,8 @@ using UltimateUpdater.Views;
 namespace UltimateUpdater.ViewModels;
 
 public sealed partial class HistoryRowViewModel(
-    HistoryEntry entry, bool canDowngrade = false, Action<HistoryEntry>? onDowngrade = null)
+    HistoryEntry entry, bool canDowngrade = false, Action<HistoryEntry>? onDowngrade = null,
+    int unchangedCount = 0)
     : ObservableObject
 {
     public string When => entry.Timestamp.LocalDateTime.ToString("g", CultureInfo.CurrentUICulture);
@@ -70,6 +71,15 @@ public sealed partial class HistoryRowViewModel(
 
     public string? Error => entry.Error;
 
+    /// <summary>The Result cell's hover text: the failure text, or for an install that left the version
+    /// unchanged why that happens (and how often this package already did the same).</summary>
+    public string? ResultTooltip => entry is { Action: "install", Success: true, VersionUnchanged: true }
+        ? unchangedCount >= 2
+            ? LocalizationService.Instance["InstallVersionUnchangedDetail"] + "\n"
+                + string.Format(LocalizationService.Instance["InstallVersionUnchangedRepeat"], unchangedCount)
+            : LocalizationService.Instance["InstallVersionUnchangedDetail"]
+        : entry.Error;
+
     /// <summary>The failing tool's own captured output, when this entry was written with one; null for
     /// every entry from before Detail existed, which falls back to a log excerpt (HistoryWindow.xaml.cs).</summary>
     public string? Detail => entry.Detail;
@@ -111,6 +121,7 @@ public sealed partial class HistoryRowViewModel(
     public void RefreshLocalizedText()
     {
         OnPropertyChanged(nameof(Result));
+        OnPropertyChanged(nameof(ResultTooltip));
         OnPropertyChanged(nameof(ShowDetailsTooltip));
         OnPropertyChanged(nameof(DowngradeHeader));
         OnPropertyChanged(nameof(SourceDisplay));
@@ -266,8 +277,22 @@ public partial class HistoryViewModel : ObservableObject
             canDowngradeFlags[i] = pinningCapableSourceIds?.Contains(entry.SourceId) == true;
         }
 
+        // Per "installed, version unchanged" entry: its place in the run of identical results for the
+        // same package and versions. Read() is newest first, so walk it from the oldest end.
+        var unchangedCounts = new int[read.Count];
+        var unchangedSeen = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (var i = read.Count - 1; i >= 0; i--)
+        {
+            var e = read[i];
+            if (e is not { Action: "install", Success: true, VersionUnchanged: true })
+                continue;
+
+            var key = $"{e.SourceId}:{e.ItemId}:{e.FromVersion}->{e.ToVersion}";
+            unchangedSeen[key] = unchangedCounts[i] = unchangedSeen.GetValueOrDefault(key) + 1;
+        }
+
         Entries = new ObservableCollection<HistoryRowViewModel>(
-            read.Select((e, i) => new HistoryRowViewModel(e, canDowngradeFlags[i], onDowngrade)));
+            read.Select((e, i) => new HistoryRowViewModel(e, canDowngradeFlags[i], onDowngrade, unchangedCounts[i])));
 
         SourceFilters = Entries
             .Select(row => row.SourceId)

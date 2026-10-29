@@ -422,6 +422,50 @@ public partial class MainViewModelTests
         });
     }
 
+    /// <summary>An install that keeps ending with the same version is tallied like a repeated failure:
+    /// the third identical result flags the row (never ignored on its own), the hint says so, and a plain
+    /// success clears the tally again.</summary>
+    [Fact]
+    public void Three_identical_unchanged_results_flag_the_row_and_a_normal_success_clears_it()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var source = new FailingSource();
+            var viewModel = CreateWithSettings([source], out var settings);
+            var row = new UpdateRowViewModel(Item("Persist.Tool", "Persistent Tool", source.Id));
+            viewModel.Updates.Add(row);
+            var key = $"{source.Id}:Persist.Tool";
+            var track = typeof(MainViewModel)
+                .GetMethod("TrackPersistentFailure", BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+            void Unchanged()
+            {
+                row.InstallState = RowInstallState.Succeeded;
+                row.VersionUnchanged = true;
+                track.Invoke(viewModel, [row]);
+            }
+
+            Unchanged();
+            Unchanged();
+            Assert.Equal(RowInstallState.Succeeded, row.InstallState);
+            Assert.Equal(2, settings.Current.PersistentFailures[key].Count);
+
+            Unchanged();
+            Assert.Equal(RowInstallState.NeedsManualWork, row.InstallState);
+            Assert.True(row.PersistentTallyIsUnchanged);
+            Assert.Equal(3, row.PersistentFailureAttempts);
+            Assert.True(row.ShowPersistentFailureHint);
+            Assert.Equal(
+                string.Format(LocalizationService.Instance["PersistentUnchangedHint"], 3), row.PersistentFailureHintText);
+            Assert.DoesNotContain(key, settings.Current.Excludes);
+
+            row.InstallState = RowInstallState.Succeeded;
+            row.VersionUnchanged = false;
+            track.Invoke(viewModel, [row]);
+            Assert.False(settings.Current.PersistentFailures.ContainsKey(key));
+        });
+    }
+
     /// <summary>The flag is not just an in-memory row property, it is derived from the settings
     /// record on load, so it survives a restart the same way Ignore and Snooze do.</summary>
     [Fact]

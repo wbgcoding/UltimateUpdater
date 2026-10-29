@@ -312,6 +312,20 @@ public sealed class HistoryService
         }
     }
 
+    /// <summary>How many earlier installs of this package ended "succeeded, version unchanged" for exactly
+    /// this from/to pair. Reads the whole history, so call it off the UI thread.</summary>
+    public int CountUnchangedInstalls(string sourceId, string itemId, string? fromVersion, string? toVersion) =>
+        CountUnchangedInstalls(Read(int.MaxValue), sourceId, itemId, fromVersion, toVersion);
+
+    internal static int CountUnchangedInstalls(
+        IEnumerable<HistoryEntry> entries, string sourceId, string itemId, string? fromVersion, string? toVersion) =>
+        entries.Count(e =>
+            e.Action == "install" && e.Success && e.VersionUnchanged
+            && string.Equals(e.SourceId, sourceId, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(e.ItemId, itemId, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(e.FromVersion, fromVersion, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(e.ToVersion, toVersion, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>A real history line is a small JSON object; generous headroom over anything legitimate,
     /// tight enough that a corrupt file with no newlines at all cannot buffer arbitrarily.</summary>
     private const int MaxLineChars = 64 * 1024;

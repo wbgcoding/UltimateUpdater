@@ -194,6 +194,15 @@
   <data name="InstallVersionUnchanged" xml:space="preserve">
     <value>バージョンは変更されていません</value>
   </data>
+  <data name="InstallVersionUnchangedDetail" xml:space="preserve">
+    <value>インストーラーは成功と報告していますが、Windows には古いバージョンが表示されたままです。プログラムを閉じるまで更新が完了しないことがよくあります。閉じてからもう一度試してください。</value>
+  </data>
+  <data name="InstallVersionUnchangedRepeat" xml:space="preserve">
+    <value>これで {0} 回目です。提供元が winget と異なるバージョン番号を使っている可能性があります。</value>
+  </data>
+  <data name="PersistentUnchangedHint" xml:space="preserve">
+    <value>{0} 回インストールしてもバージョンが変わりません。このパッケージを無視しますか？</value>
+  </data>
   <data name="RebootRequiredBadge" xml:space="preserve">
     <value>再起動が必要</value>
   </data>

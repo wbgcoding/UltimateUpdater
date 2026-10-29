@@ -428,6 +428,23 @@ public class InstallQueueTests
         Assert.Equal(4, calls);
     }
 
+    /// <summary>The count of identical unchanged results grows with every run, read from the history
+    /// before the new entry is written; a different target version starts again at 1.</summary>
+    [Fact]
+    public async Task Unchanged_result_counts_earlier_identical_results_from_the_history()
+    {
+        var (queue, history, statuses) = Create(new StubSource("npm", getInstalledVersion: _ => "1.0"));
+
+        await queue.RunAsync([Item("eslint", "npm")], CancellationToken.None);
+        await queue.RunAsync([Item("eslint", "npm")], CancellationToken.None);
+        await queue.RunAsync([Item("eslint", "npm")], CancellationToken.None);
+
+        var counts = statuses.Where(s => s.ItemId == "eslint" && s.Success == true && s.VersionUnchanged)
+            .Select(s => s.VersionUnchangedCount).ToList();
+        Assert.Equal([1, 2, 3], counts);
+        Assert.Equal(3, history.Read().Count(e => e.VersionUnchanged));
+    }
+
     /// <summary>The elevated path: the worker reports "unchanged" right away, the app polls afterwards.</summary>
     [Fact]
     public async Task Elevated_unchanged_result_is_settled_by_the_apps_delayed_recheck()

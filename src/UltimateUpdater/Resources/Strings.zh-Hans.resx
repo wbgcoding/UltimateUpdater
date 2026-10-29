@@ -194,6 +194,15 @@
   <data name="InstallVersionUnchanged" xml:space="preserve">
     <value>版本未变</value>
   </data>
+  <data name="InstallVersionUnchangedDetail" xml:space="preserve">
+    <value>安装程序报告成功，但 Windows 仍显示旧版本。更新通常要等程序关闭后才会完成；请关闭它后重试。</value>
+  </data>
+  <data name="InstallVersionUnchangedRepeat" xml:space="preserve">
+    <value>这已是第 {0} 次出现：开发者使用的版本号可能与 winget 不同。</value>
+  </data>
+  <data name="PersistentUnchangedHint" xml:space="preserve">
+    <value>已安装 {0} 次，版本仍未变化。要忽略此软件包吗？</value>
+  </data>
   <data name="RebootRequiredBadge" xml:space="preserve">
     <value>需要重启</value>
   </data>

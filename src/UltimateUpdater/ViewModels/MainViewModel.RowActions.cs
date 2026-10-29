@@ -250,6 +250,14 @@ public partial class MainViewModel
 
         if (row.InstallState == RowInstallState.Succeeded)
         {
+            // An install whose version stayed the same is tallied like a failure of one reason: the same
+            // from/to pair repeating means more retries will not change it. Never ignored on its own.
+            if (row.VersionUnchanged)
+            {
+                TrackRepeatedUnchanged(row, key);
+                return;
+            }
+
             if (_settings.Current.PersistentFailures.Remove(key))
                 Persist();
             return;
@@ -294,6 +302,35 @@ public partial class MainViewModel
         Persist();
     }
 
+    /// <summary>Signature prefix of a tally that counts "installed, version unchanged" results.</summary>
+    internal const string UnchangedSignaturePrefix = "unchanged:";
+
+    private void TrackRepeatedUnchanged(UpdateRowViewModel row, string key)
+    {
+        var signature = $"{UnchangedSignaturePrefix}{row.Item.InstalledVersion}->{row.Item.AvailableVersion}";
+
+        if (_settings.Current.PersistentFailures.TryGetValue(key, out var record) && record.Signature == signature)
+        {
+            record.Count++;
+            record.LastAt = DateTimeOffset.UtcNow;
+        }
+        else
+        {
+            record = new PersistentFailureRecord
+            {
+                Signature = signature,
+                Count = 1,
+                LastAt = DateTimeOffset.UtcNow,
+            };
+            _settings.Current.PersistentFailures[key] = record;
+        }
+
+        if (record.Count >= 3)
+            row.InstallState = RowInstallState.NeedsManualWork;
+
+        Persist();
+    }
+
     /// <summary>Applies a persisted 3-strike flag to a freshly scanned row: same level <see
     /// cref="ApplySnoozeState"/> already applies Snooze at, and for the same reason: the flag must survive
     /// a restart, not just the live session the 3rd failure happened in.</summary>
@@ -303,6 +340,7 @@ public partial class MainViewModel
         {
             row.InstallState = RowInstallState.NeedsManualWork;
             row.InstallErrorDetail = record.LastErrorText;
+            row.PersistentTallyIsUnchanged = record.Signature.StartsWith(UnchangedSignaturePrefix, StringComparison.Ordinal);
         }
 
         foreach (var child in row.Children)

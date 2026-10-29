@@ -194,6 +194,15 @@
   <data name="InstallVersionUnchanged" xml:space="preserve">
     <value>Versiune neschimbată</value>
   </data>
+  <data name="InstallVersionUnchangedDetail" xml:space="preserve">
+    <value>Programul de instalare raportează succes, dar Windows încă afișează versiunea veche. Adesea actualizarea se termină abia după ce programul este închis; închide-l și încearcă din nou.</value>
+  </data>
+  <data name="InstallVersionUnchangedRepeat" xml:space="preserve">
+    <value>S-a întâmplat deja de {0} ori: producătorul folosește probabil alt număr de versiune decât winget.</value>
+  </data>
+  <data name="PersistentUnchangedHint" xml:space="preserve">
+    <value>Versiune neschimbată după {0} instalări. Ignori acest pachet?</value>
+  </data>
   <data name="RebootRequiredBadge" xml:space="preserve">
     <value>Repornire necesară</value>
   </data>

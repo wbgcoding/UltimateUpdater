@@ -370,7 +370,7 @@
                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
 
                                     <TextBlock x:Name="HistoryResultText" Grid.Column="5"
-                                               Text="{Binding Result}" ToolTip="{Binding Error}">
+                                               Text="{Binding Result}" ToolTip="{Binding ResultTooltip}">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock" BasedOn="{StaticResource HistoryCellCentered}">
                                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>

@@ -194,6 +194,15 @@
   <data name="InstallVersionUnchanged" xml:space="preserve">
     <value>Version unverändert</value>
   </data>
+  <data name="InstallVersionUnchangedDetail" xml:space="preserve">
+    <value>Der Installer meldet Erfolg, aber Windows zeigt noch die alte Version. Oft wird das Update erst fertig, wenn das Programm geschlossen ist; schließ es und versuch es erneut.</value>
+  </data>
+  <data name="InstallVersionUnchangedRepeat" xml:space="preserve">
+    <value>Schon {0}-mal so: der Hersteller nutzt vermutlich eine andere Versionsnummer als winget.</value>
+  </data>
+  <data name="PersistentUnchangedHint" xml:space="preserve">
+    <value>{0}-mal installiert, Version unverändert. Dieses Paket ignorieren?</value>
+  </data>
   <data name="RebootRequiredBadge" xml:space="preserve">
     <value>Neustart nötig</value>
   </data>
