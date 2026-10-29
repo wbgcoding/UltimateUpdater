@@ -281,6 +281,10 @@ public partial class CleanupViewModel
             // the rescan button disabled. A failure here degrades to "scan the unelevated targets only",
             // the same fail-closed shape EnsureElevationAsync documents for a declined prompt.
             var elevated = new List<CleanupItemViewModel>();
+
+            // Admin rows a quiet pass handed to the helper but never got a figure for (it was gone by the
+            // time the job went out, or dropped mid-scan): they must not be stamped as measured.
+            var helperMissed = new List<CleanupItemViewModel>();
             try
             {
                 // Asked before anything is measured: without admin the elevated targets report a floor
@@ -299,7 +303,8 @@ public partial class CleanupViewModel
 
                 if (elevated.Count > 0)
                 {
-                    await RunElevatedAsync(
+                    var measuredByHelper = new HashSet<CleanupItemViewModel>();
+                    var reached = await RunElevatedAsync(
                         "scan",
                         elevated,
                         message =>
@@ -307,6 +312,7 @@ public partial class CleanupViewModel
                             if (message.Type != "scan" || !IsCurrentScan() || ItemFor(message.Id) is not { } row)
                                 return;
 
+                            measuredByHelper.Add(row);
                             row.Bytes = message.Bytes;
                             row.Files = message.Files;
                             row.SetLeftoverCandidates(message.LeftoverCandidates);
@@ -324,6 +330,9 @@ public partial class CleanupViewModel
                         allowStart: !quietMode,
                         backgroundPriority: quietMode && !_windowAttached);
 
+                    if (quietMode && !reached)
+                        helperMissed.AddRange(elevated.Where(item => !measuredByHelper.Contains(item)));
+
                     // A helper that died mid-scan must not leave rows spinning for ever.
                     if (IsCurrentScan())
                     {
@@ -339,6 +348,9 @@ public partial class CleanupViewModel
             catch (Exception ex)
             {
                 _logging.Warn($"Cleanup elevation scan failed: {ex.Message}");
+                if (quietMode)
+                    helperMissed.AddRange(elevated);
+
                 if (IsCurrentScan())
                 {
                     foreach (var item in elevated)
@@ -355,6 +367,7 @@ public partial class CleanupViewModel
             var skipped = quietMode && !ElevationService.IsElevated
                 ? scope.Where(item => item.Target.NeedsElevation && !elevated.Contains(item)).ToList()
                 : [];
+            skipped.AddRange(helperMissed.Except(skipped));
             if (quietMode && IsCurrentScan())
                 _prescanSkipped = skipped;
 

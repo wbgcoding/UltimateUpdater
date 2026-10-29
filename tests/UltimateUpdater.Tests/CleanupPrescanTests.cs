@@ -99,8 +99,9 @@ public class CleanupPrescanTests
         await rig.ViewModel.PrescanAsync();
 
         // They went to the helper (the stand-in is reached once for the whole admin batch, and once more by
-        // the quiet component store analysis), not in-process.
-        Assert.Equal(2, rig.StartRequests());
+        // the quiet component store analysis; a helper that cannot be reached is tried again by the late
+        // pass), not in-process.
+        Assert.True(rig.StartRequests() >= 2);
         Assert.Empty(rig.Service.Scanned.Intersect(admin));
         Assert.NotNull(rig.ViewModel.PrescanFinishedAt);
     }
@@ -118,6 +119,28 @@ public class CleanupPrescanTests
         var onOpen = rig.Service.Scanned.Skip(afterPrescan.Count).ToList();
         Assert.Equal(admin.OrderBy(x => x), onOpen.OrderBy(x => x));
         Assert.NotNull(rig.ViewModel.PrescanFinishedAt);
+    }
+
+    [Fact]
+    public async Task A_prescan_whose_helper_could_not_be_reached_leaves_the_admin_targets_for_the_open_pass()
+    {
+        // Reported as running, but the job never reaches it (the stand-in refuses every start).
+        var rig = CreateRig(helperRunning: true);
+        var admin = AdminIds(rig.ViewModel);
+        await rig.ViewModel.PrescanAsync();
+        Assert.Empty(rig.Service.Scanned.Intersect(admin));
+        var afterPrescan = rig.Service.Scanned.ToList();
+
+        // The late catch-up pass may still be trying the same helper; it settles before the window opens.
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        while (rig.ViewModel.IsScanning && DateTime.UtcNow < deadline)
+            await Task.Delay(10);
+
+        rig.Host.SetRunningForTest(false);
+        await rig.ViewModel.StartOpenScanAsync();
+
+        var onOpen = rig.Service.Scanned.Skip(afterPrescan.Count).ToList();
+        Assert.Equal(admin.OrderBy(x => x), onOpen.OrderBy(x => x));
     }
 
     [Fact]
