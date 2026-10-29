@@ -2,6 +2,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using UltimateUpdater.Models;
+using UltimateUpdater.Services;
+using UltimateUpdater.Services.Sources;
+using UltimateUpdater.ViewModels;
 using UltimateUpdater.Views;
 using Color = System.Windows.Media.Color;
 
@@ -100,6 +104,48 @@ public partial class WindowLayoutTests
             {
                 ApplyTheme("dark");
             }
+        });
+    }
+
+    /// <summary>
+    /// The compact running list is a strict table: every row's bar starts at the same x and has the same
+    /// width, whatever the row's name or percentage, and at a normal window width the bar is long enough
+    /// to read.
+    /// </summary>
+    [Fact]
+    public void Running_rows_share_one_bar_column_and_the_bar_is_wide()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var (viewModel, theme, settings) = CreateMainViewModel("en");
+            Populate(viewModel);
+
+            var rows = viewModel.Updates.Where(r => r.Item.CanInstall).Take(3).ToList();
+            var percentages = new double[] { 3, 48, 97 };
+            for (var i = 0; i < rows.Count; i++)
+            {
+                rows[i].BeginInstall();
+                viewModel.InstallBatch.Add(rows[i]);
+                rows[i].ApplyInstallStatus(new InstallItemStatus(
+                    rows[i].Item.SourceId, rows[i].Item.Id, percentages[i], "Installing", null, null));
+            }
+
+            viewModel.IsInstalling = true;
+
+            var window = new MainWindow(viewModel, theme, settings);
+            var content = (FrameworkElement)window.Content;
+            var result = WpfHarness.RenderWindow(window, "main-installing-running-bars-en", 1100, 700);
+            AssertRendered(result);
+
+            var list = FindByName<ItemsControl>(content, "RunningRowsList")!;
+            var bars = FindAllByName<PillProgressBar>(content, "RunningRowBar");
+            Assert.Equal(3, bars.Count);
+
+            var lefts = bars.Select(b => b.TransformToAncestor(list).Transform(new Point(0, 0)).X).ToList();
+            Assert.All(lefts, x => Assert.Equal(lefts[0], x, 0.5));
+            Assert.All(bars, b => Assert.Equal(bars[0].ActualWidth, b.ActualWidth, 0.5));
+            Assert.All(bars, b => Assert.Equal(6, b.ActualHeight, 0.5));
+            Assert.True(bars[0].ActualWidth >= 200, $"the running bars are only {bars[0].ActualWidth:0} px wide at 1100 px");
         });
     }
 }

@@ -992,31 +992,34 @@
                         <ItemsControl x:Name="RunningRowsList" ItemsSource="{Binding RunningRows}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
+                                    <!-- Strict columns, the same in every row: name, percent, bar, stop. Every
+                                         bar therefore starts and ends at the same x and the rows read as one
+                                         table. The name is a fixed box that trims to an ellipsis; the bar takes
+                                         whatever room is left, within a length that still reads as one glance. -->
                                     <Grid x:Name="RunningRowCard" Margin="0,0,0,6">
                                         <Grid.ColumnDefinitions>
-                                            <!-- Star, not Auto, same reason as the single-row name column:
-                                                 the name trims before anything else clips. -->
-                                            <ColumnDefinition Width="*" MinWidth="60" MaxWidth="220"/>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="240"/>
+                                            <ColumnDefinition Width="40"/>
+                                            <ColumnDefinition Width="*" MinWidth="120" MaxWidth="520"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock x:Name="RunningRowName" Grid.Column="0" Text="{Binding Name}" FontSize="12"
                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                   Margin="0,0,12,0"
                                                    ToolTip="{Binding Name}"
                                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
-                                                    Margin="8,0,0,0">
-                                            <TextBlock Text="{Binding RunningProgressText}" FontSize="11" MinWidth="30"
-                                                       TextAlignment="Right" Margin="0,0,6,0"
-                                                       Style="{StaticResource TabularNumberText}"
-                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                                            <views:PillProgressBar Width="80" Height="6" VerticalAlignment="Center"
+                                        <TextBlock Grid.Column="1" Text="{Binding RunningProgressText}" FontSize="11"
+                                                   VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,10,0"
+                                                   Style="{StaticResource TabularNumberText}"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                        <Grid Grid.Column="2" VerticalAlignment="Center">
+                                            <views:PillProgressBar x:Name="RunningRowBar" Height="6" VerticalAlignment="Center"
                                                                    Value="{Binding InstallPercent}"
                                                                    Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
-                                            <views:IndeterminateBar Width="80" Height="6" VerticalAlignment="Center"
+                                            <views:IndeterminateBar Height="6" VerticalAlignment="Center"
                                                                     Visibility="{Binding ShowIndeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
-                                        </StackPanel>
-                                        <ui:Button Grid.Column="2" Margin="8,0,0,0" Padding="4,2" Appearance="Secondary"
+                                        </Grid>
+                                        <ui:Button Grid.Column="3" Margin="12,0,0,0" Padding="4,2" Appearance="Secondary"
                                                    Command="{Binding StopSingleCommand}"
                                                    ToolTip="{Binding StopSingleTooltip}"
                                                    AutomationProperties.Name="{Binding StopSingleTooltip}">
