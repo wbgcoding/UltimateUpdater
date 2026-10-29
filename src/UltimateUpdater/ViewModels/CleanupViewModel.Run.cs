@@ -254,8 +254,9 @@ public partial class CleanupViewModel
 
     partial void OnFreedBytesChanged(long value)
     {
-        // Back to zero means a new run (or a reset): the live figure starts over with it.
-        _liveFreedShown = value == 0 ? 0 : Math.Max(_liveFreedShown, value);
+        // Never steps back inside a run, not even when a failed target takes its live part out and the
+        // total reaches zero; the run start resets it explicitly.
+        _liveFreedShown = Math.Max(_liveFreedShown, value);
         OnPropertyChanged(nameof(FreedText));
         OnPropertyChanged(nameof(LiveFreedText));
     }
@@ -362,6 +363,7 @@ public partial class CleanupViewModel
 
         Phase = CleanupPhase.Cleaning;
         CleanPercent = 0;
+        _liveFreedShown = 0;
         FreedBytes = 0;
 
         // A new run says nothing yet about its own pace; the first ticks decide.

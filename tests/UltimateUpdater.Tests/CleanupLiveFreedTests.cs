@@ -172,6 +172,25 @@ public class CleanupLiveFreedTests : IDisposable
     }
 
     [Fact]
+    public async Task The_live_figure_does_not_step_back_when_a_failed_target_takes_its_part_out()
+    {
+        var release = new TaskCompletionSource();
+        var service = new SlowCleanService(new LoggingService(), 1_000, 0, release.Task, fail: true);
+        var (viewModel, _) = CreateRun(service);
+        await viewModel.StartScanAsync().WaitAsync(TimeSpan.FromSeconds(30));
+
+        var run = viewModel.RunCleanupAsync();
+        await service.Reported.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        await WaitUntil(() => viewModel.FreedBytes == 1_000);
+        var shown = viewModel.LiveFreedText;
+        release.SetResult();
+        await run.WaitAsync(TimeSpan.FromSeconds(30));
+
+        Assert.Equal(0, viewModel.FreedBytes);
+        Assert.Equal(shown, viewModel.LiveFreedText);
+    }
+
+    [Fact]
     public async Task A_stopped_target_keeps_what_its_progress_confirmed()
     {
         var release = new TaskCompletionSource();
