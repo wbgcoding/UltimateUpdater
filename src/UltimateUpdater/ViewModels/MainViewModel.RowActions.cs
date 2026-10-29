@@ -546,6 +546,7 @@ public partial class MainViewModel
         var token = _installCts.Token;
         _installActivityRunning = true;
         IsInstalling = true;
+        _interactiveRetryLane = InstallQueue.LaneKey(row.Item);
 
         row.BeginInstall();
         row.IsRunningInteractively = true;
@@ -594,6 +595,7 @@ public partial class MainViewModel
         finally
         {
             row.IsRunningInteractively = false;
+            _interactiveRetryLane = null;
             if (EndInstallActivity())
                 HandOffPendingInstalls();
         }
@@ -722,11 +724,18 @@ public partial class MainViewModel
         }
     }
 
-    /// <summary>The one case an uninstall is refused: this very row is already queued or running (a batch
-    /// install, another uninstall, an interactive retry).</summary>
-    private bool UninstallBlockedForRow(UpdateRowViewModel row) =>
+    /// <summary>The lane (package manager) an interactive retry is using right now. The retry runs outside
+    /// the install queue, so a side uninstall in the same lane would run beside it and fail on the
+    /// manager's own single-operation lock.</summary>
+    private string? _interactiveRetryLane;
+
+    /// <summary>The cases an uninstall is refused: this very row is already queued or running (a batch
+    /// install, another uninstall, an interactive retry), or an interactive retry holds its manager.</summary>
+    internal bool UninstallBlockedForRow(UpdateRowViewModel row) =>
         row.InstallState is RowInstallState.Queued or RowInstallState.Running
         || row.IsRunningInteractively
+        || (_interactiveRetryLane is { } lane
+            && string.Equals(lane, InstallQueue.LaneKey(row.Item), StringComparison.OrdinalIgnoreCase))
         || _uninstallingKeys.Contains(PackageKey(row.Item))
         || _installPending.Contains(row);
 }
