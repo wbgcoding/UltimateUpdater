@@ -7,7 +7,7 @@
 ; written to this PC. Everything downstream reads IsPortableMode in [Code].
 
 #ifndef AppVersion
-  #define AppVersion "1.1.1"
+  #define AppVersion "1.1.2"
 #endif
 
 #define AppName "Ultimate Updater"

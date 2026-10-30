@@ -5,6 +5,8 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-10-30
+
 ### Updates
 - Install progress is honest: a percentage shows only while a download reports one; the install phase
   shows a moving bar with "Installing…" and the elapsed time instead of a bar that stopped at 90 %.
