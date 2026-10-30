@@ -155,6 +155,10 @@ internal sealed class PipBlockedStore(
             var entries = LoadLocked();
             entries.RemoveAll(e => Same(e, interpreter, package));
             entries.Add(new Entry(interpreter, package, version, _time.GetUtcNow()));
+
+            // Newest last, so a full list drops the oldest.
+            if (entries.Count > MaxEntries)
+                entries.RemoveRange(0, entries.Count - MaxEntries);
             SaveLocked(entries);
         }
     }
@@ -171,12 +175,20 @@ internal sealed class PipBlockedStore(
         lock (_gate)
         {
             var entries = LoadLocked();
+
+            // An interpreter that was uninstalled can never be offered again; its entries would only pile up.
+            var gone = entries.Select(e => e.Interpreter).Distinct(StringComparer.OrdinalIgnoreCase)
+                .Where(i => !_interpreterExists(i)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var changed = gone.Count > 0 && entries.RemoveAll(e => gone.Contains(e.Interpreter)) > 0;
             if (entries.Count == 0)
+            {
+                if (changed)
+                    SaveLocked(entries);
                 return (outdated, []);
+            }
 
             var visible = new List<OutdatedPackage>();
             var hidden = new List<OutdatedPackage>();
-            var changed = false;
             foreach (var package in outdated)
             {
                 var entry = entries.FirstOrDefault(e => Same(e, interpreter, package.Id));

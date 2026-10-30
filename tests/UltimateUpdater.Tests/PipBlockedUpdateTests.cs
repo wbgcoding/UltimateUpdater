@@ -355,6 +355,54 @@ public class PipBlockedUpdateTests : IDisposable
         Assert.Single(NewStore().Load());
     }
 
+    // ---- size ----
+
+    [Fact]
+    public void A_full_store_keeps_the_newest_entries_and_stays_readable()
+    {
+        var store = NewStore();
+        var python = @"C:\Users\someone\AppData\Local\Programs\Python\Python313\" + new string('x', 100) + @"\python.exe";
+        for (var i = 0; i < 600; i++)
+            store.Add(python, $"package-{i}", "1.0." + i);
+
+        var loaded = NewStore().Load();
+
+        Assert.Equal(500, loaded.Count);
+        Assert.Equal("package-100", loaded[0].Package);
+        Assert.Equal("package-599", loaded[^1].Package);
+        Assert.True(new FileInfo(StorePath).Length < 256 * 1024);
+    }
+
+    [Fact]
+    public void An_entry_for_a_missing_interpreter_is_pruned_by_apply()
+    {
+        const string gone = @"C:\Python311\python.exe";
+        var store = NewStore();
+        store.Add(gone, "pymupdf", "2.0");
+        store.Add(Python, "requests", "2.1");
+        _missing.Add(gone);
+
+        var (visible, hidden) = store.Apply(Python, [Outdated("requests", "2.0", "2.1")]);
+
+        Assert.Empty(visible);
+        Assert.Single(hidden);
+        Assert.Equal(new[] { "requests" }, NewStore().Load().Select(e => e.Package));
+    }
+
+    [Fact]
+    public void Pruning_the_last_entry_still_saves_the_empty_file()
+    {
+        const string gone = @"C:\Python311\python.exe";
+        var store = NewStore();
+        store.Add(gone, "pymupdf", "2.0");
+        _missing.Add(gone);
+
+        var (visible, _) = store.Apply(gone, [Outdated("pymupdf", "1.0", "2.0")]);
+
+        Assert.Single(visible);
+        Assert.Empty(NewStore().Load());
+    }
+
     // ---- expiry ----
 
     [Fact]
