@@ -293,6 +293,18 @@ public partial class WindowLayoutTests
             var laneLefts = queued.Select(vm => Math.Round(X(In<Grid>("QueueVersionLane", vm), 0), 1)).ToList();
             Assert.True(laneLefts.Max() - laneLefts.Min() <= 0.5, $"the lane moved between queue rows: {string.Join(", ", laneLefts)}");
 
+            // A long version takes the room it needs to the left (the name column gives way) instead of
+            // being cut with an ellipsis inside a fixed box.
+            var longRow = queued[2];
+            foreach (var name in new[] { "QueueInstalledVersionText", "QueueAvailableVersionText" })
+            {
+                var text = In<TextBlock>(name, longRow);
+                var shown = text.ActualWidth;
+                text.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                Assert.True(shown + 0.5 >= text.DesiredSize.Width,
+                    $"{name} is cut: {shown:0.0} shown of {text.DesiredSize.Width:0.0} needed");
+            }
+
             var noInstalled = queued[3];
             Assert.NotEqual(Visibility.Visible, In<TextBlock>("QueueVersionArrow", noInstalled).Visibility);
             var lone = In<TextBlock>("QueueAvailableVersionText", noInstalled);

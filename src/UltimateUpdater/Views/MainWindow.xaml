@@ -1136,7 +1136,8 @@
                     <ScrollViewer x:Name="QueueRowsScroll" VerticalScrollBarVisibility="Auto" MaxHeight="240" Margin="0,6,0,0">
                         <!-- 18px right margin (14px track + 4px air) keeps the auto scrollbar from overlaying
                              the row content, same defect and same fix as EntriesScroll in CleanupWindow.xaml. -->
-                        <ItemsControl x:Name="QueueItemsControl" ItemsSource="{Binding QueueRows}" AlternationCount="999" Margin="0,0,18,0">
+                        <ItemsControl x:Name="QueueItemsControl" ItemsSource="{Binding QueueRows}" AlternationCount="999" Margin="0,0,18,0"
+                                      Grid.IsSharedSizeScope="True">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <!-- The whole card is the drag source/drop target, reordering and removing
@@ -1279,21 +1280,24 @@
                                                        Visibility="{Binding IsCritical, Converter={StaticResource BoolToVisibility}}"/>
 
                                         <!-- Version lane, built like the main table's: installed version
-                                             right-aligned in a fixed box, the arrow at a fixed x, the new version
-                                             left-aligned in a fixed box, so the arrows of all rows stand in one
-                                             vertical line. Without an installed version the new one is centred
-                                             over the whole lane. One tooltip for the whole lane (the transparent
-                                             background makes the arrow and the gaps hit-testable too). -->
-                                        <Grid x:Name="QueueVersionLane" Grid.Column="4" Width="152" Margin="8,0,0,0"
+                                             right-aligned, the arrow, the new version left-aligned. Both version
+                                             boxes share one width across all rows (shared size group on the
+                                             ItemsControl), so the arrows stand in one vertical line, and they
+                                             grow with the longest version, taking the room from the name column
+                                             instead of cutting the version. Without an installed version the new
+                                             one is centred over the whole lane. One tooltip for the whole lane
+                                             (the transparent background makes the arrow and the gaps
+                                             hit-testable too). -->
+                                        <Grid x:Name="QueueVersionLane" Grid.Column="4" Margin="8,0,0,0"
                                               VerticalAlignment="Center" Background="Transparent"
                                               ToolTip="{Binding VersionChangeTooltip}"
                                               Visibility="{Binding HasVersions, Converter={StaticResource BoolToVisibility}}">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="68"/>
+                                                <ColumnDefinition Width="Auto" MinWidth="68" SharedSizeGroup="QueueVersion"/>
                                                 <ColumnDefinition Width="16"/>
-                                                <ColumnDefinition Width="68"/>
+                                                <ColumnDefinition Width="Auto" MinWidth="68" SharedSizeGroup="QueueVersion"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" x:Name="QueueInstalledVersionText" Text="{Binding InstalledVersion}" FontSize="11"
+                                            <TextBlock Grid.Column="0" x:Name="QueueInstalledVersionText" Text="{Binding InstalledVersion}" FontSize="11" MaxWidth="180"
                                                        VerticalAlignment="Center" TextAlignment="Right"
                                                        TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
                                                        Style="{StaticResource TabularNumberText}"
@@ -1305,7 +1309,7 @@
                                                        Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"/>
                                             <!-- Column and alignment come from the Style, not local values: a local
                                                  value outranks a Style trigger. -->
-                                            <TextBlock x:Name="QueueAvailableVersionText" Text="{Binding AvailableVersion}" FontSize="11"
+                                            <TextBlock x:Name="QueueAvailableVersionText" Text="{Binding AvailableVersion}" FontSize="11" MaxWidth="180"
                                                        VerticalAlignment="Center"
                                                        TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}">
