@@ -5,6 +5,12 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Updates
+- Stopping a row now also ends the short wait while its version is checked again after an install.
+- That wait no longer holds back other queued installs.
+- A pip version hidden after a failed install shows again after seven days, so a misread error cannot
+  hide an update for good.
+
 ## [1.1.2] - 2026-10-30
 
 ### Updates
