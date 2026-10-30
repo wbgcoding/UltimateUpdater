@@ -10,15 +10,25 @@ namespace UltimateUpdater.Services.Sources.PackageManagers;
 /// pip offers a different one for that package, the entry is dropped and the row shows again.
 /// Written by the unelevated app only; the elevated worker writes no files, so there <see cref="Add"/>
 /// does nothing. A damaged or newer-format file reads as empty and never throws.
+/// An entry expires after <see cref="Lifetime"/>, so a misread failure cannot hide a version for good.
 /// </summary>
-internal sealed class PipBlockedStore(string path, LoggingService logging, bool? writable = null)
+internal sealed class PipBlockedStore(
+    string path, LoggingService logging, bool? writable = null,
+    TimeProvider? time = null, Func<string, bool>? interpreterExists = null)
 {
-    internal const int CurrentVersion = 1;
+    /// <summary>2 added the per-entry timestamp; version 1 files are read, their entries count as expired.</summary>
+    internal const int CurrentVersion = 2;
+
+    internal static readonly TimeSpan Lifetime = TimeSpan.FromDays(7);
 
     /// <summary>A few hundred short entries at most; anything larger is not this file.</summary>
     private const long MaxFileBytes = 256 * 1024;
 
-    private const int MaxEntries = 2000;
+    /// <summary>Small enough that a full file with long interpreter paths stays under <see cref="MaxFileBytes"/>.</summary>
+    internal const int MaxEntries = 500;
+
+    private readonly TimeProvider _time = time ?? TimeProvider.System;
+    private readonly Func<string, bool> _interpreterExists = interpreterExists ?? File.Exists;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -31,7 +41,7 @@ internal sealed class PipBlockedStore(string path, LoggingService logging, bool?
 
     internal static string DefaultPath => Path.Combine(AppPaths.DataDirectory, "pip-blocked.json");
 
-    internal sealed record Entry(string Interpreter, string Package, string Version);
+    internal sealed record Entry(string Interpreter, string Package, string Version, DateTimeOffset? BlockedAt = null);
 
     private sealed class FileModel
     {
@@ -47,6 +57,8 @@ internal sealed class PipBlockedStore(string path, LoggingService logging, bool?
         public string? Package { get; set; }
 
         public string? Version { get; set; }
+
+        public DateTimeOffset? BlockedAt { get; set; }
     }
 
     /// <summary>PEP 503 normalisation, so "PyMuPDF", "pymupdf" and "py_mu.pdf" are one package.</summary>
@@ -85,12 +97,16 @@ internal sealed class PipBlockedStore(string path, LoggingService logging, bool?
                 return [];
             }
 
+            // Version 1 had no timestamp: its entries are expired, like any entry without one.
+            var now = _time.GetUtcNow();
             return (model.Blocked ?? [])
                 .Where(e => !string.IsNullOrWhiteSpace(e.Interpreter)
                             && !string.IsNullOrWhiteSpace(e.Package)
-                            && !string.IsNullOrWhiteSpace(e.Version))
-                .Take(MaxEntries)
-                .Select(e => new Entry(e.Interpreter!, e.Package!, e.Version!))
+                            && !string.IsNullOrWhiteSpace(e.Version)
+                            && model.Version >= 2
+                            && e.BlockedAt is { } at && now - at < Lifetime)
+                .TakeLast(MaxEntries)
+                .Select(e => new Entry(e.Interpreter!, e.Package!, e.Version!, e.BlockedAt))
                 .ToList();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
@@ -110,8 +126,11 @@ internal sealed class PipBlockedStore(string path, LoggingService logging, bool?
             var model = new FileModel
             {
                 Version = CurrentVersion,
-                Blocked = entries.Take(MaxEntries)
-                    .Select(e => new EntryModel { Interpreter = e.Interpreter, Package = e.Package, Version = e.Version })
+                Blocked = entries.TakeLast(MaxEntries)
+                    .Select(e => new EntryModel
+                    {
+                        Interpreter = e.Interpreter, Package = e.Package, Version = e.Version, BlockedAt = e.BlockedAt,
+                    })
                     .ToList(),
             };
 
@@ -135,7 +154,7 @@ internal sealed class PipBlockedStore(string path, LoggingService logging, bool?
         {
             var entries = LoadLocked();
             entries.RemoveAll(e => Same(e, interpreter, package));
-            entries.Add(new Entry(interpreter, package, version));
+            entries.Add(new Entry(interpreter, package, version, _time.GetUtcNow()));
             SaveLocked(entries);
         }
     }

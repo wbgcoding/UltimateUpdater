@@ -27,7 +27,19 @@ public class PipBlockedUpdateTests : IDisposable
 
     private string StorePath => Path.Combine(_directory, "pip-blocked.json");
 
-    private PipBlockedStore NewStore(bool? writable = null) => new(StorePath, new LoggingService(), writable);
+    private readonly Clock _clock = new();
+
+    private sealed class Clock : TimeProvider
+    {
+        public DateTimeOffset Now { get; set; } = new(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+
+        public override DateTimeOffset GetUtcNow() => Now;
+    }
+
+    private readonly HashSet<string> _missing = new(StringComparer.OrdinalIgnoreCase);
+
+    private PipBlockedStore NewStore(bool? writable = null) =>
+        new(StorePath, new LoggingService(), writable, _clock, path => !_missing.Contains(path));
 
     private static UpdateItem Item(string package, string? available, string python = Python) => new()
     {
@@ -222,7 +234,7 @@ public class PipBlockedUpdateTests : IDisposable
 
         var entry = Assert.Single(loaded);
         Assert.Equal((Python, "pymupdf", "2.0"), (entry.Interpreter, entry.Package, entry.Version));
-        Assert.Contains("\"version\": 1", File.ReadAllText(StorePath).Replace("\r", ""));
+        Assert.Contains("\"version\": 2", File.ReadAllText(StorePath).Replace("\r", ""));
     }
 
     [Fact]
@@ -275,7 +287,8 @@ public class PipBlockedUpdateTests : IDisposable
     public void An_entry_with_a_missing_field_is_dropped_and_the_rest_kept()
     {
         File.WriteAllText(StorePath,
-            "{\"version\": 1, \"blocked\": [{\"interpreter\":\"p\",\"package\":\"a\"}, {\"interpreter\":\"p\",\"package\":\"b\",\"version\":\"2\"}]}");
+            "{\"version\": 2, \"blocked\": [{\"interpreter\":\"p\",\"package\":\"a\",\"blockedAt\":\"2026-06-01T11:00:00Z\"}, " +
+            "{\"interpreter\":\"p\",\"package\":\"b\",\"version\":\"2\",\"blockedAt\":\"2026-06-01T11:00:00Z\"}]}");
 
         var entry = Assert.Single(NewStore().Load());
         Assert.Equal("b", entry.Package);
@@ -340,5 +353,65 @@ public class PipBlockedUpdateTests : IDisposable
         store.Apply(Python, [Outdated("requests", "2.0", "2.1")]);
 
         Assert.Single(NewStore().Load());
+    }
+
+    // ---- expiry ----
+
+    [Fact]
+    public void An_entry_older_than_seven_days_no_longer_hides_its_version()
+    {
+        var store = NewStore();
+        store.Add(Python, "pymupdf", "2.0");
+
+        _clock.Now += TimeSpan.FromDays(7) + TimeSpan.FromMinutes(1);
+        var (visible, hidden) = store.Apply(Python, [Outdated("pymupdf", "1.28.2", "2.0")]);
+
+        Assert.Single(visible);
+        Assert.Empty(hidden);
+    }
+
+    [Fact]
+    public void A_fresh_entry_still_hides_its_version()
+    {
+        var store = NewStore();
+        store.Add(Python, "pymupdf", "2.0");
+
+        _clock.Now += TimeSpan.FromDays(6);
+        var (visible, hidden) = store.Apply(Python, [Outdated("pymupdf", "1.28.2", "2.0")]);
+
+        Assert.Empty(visible);
+        Assert.Single(hidden);
+    }
+
+    [Fact]
+    public void An_expired_entry_is_dropped_on_the_next_write()
+    {
+        var store = NewStore();
+        store.Add(Python, "old", "1.0");
+        _clock.Now += TimeSpan.FromDays(8);
+
+        store.Add(Python, "new", "2.0");
+
+        Assert.Equal(new[] { "new" }, NewStore().Load().Select(e => e.Package));
+        Assert.DoesNotContain("\"old\"", File.ReadAllText(StorePath));
+    }
+
+    [Fact]
+    public void An_entry_without_a_timestamp_counts_as_expired()
+    {
+        File.WriteAllText(StorePath, "{\"version\": 2, \"blocked\": [{\"interpreter\":\"p\",\"package\":\"a\",\"version\":\"1\"}]}");
+
+        Assert.Empty(NewStore().Load());
+    }
+
+    [Fact]
+    public void A_version_1_file_is_read_and_its_entries_count_as_expired()
+    {
+        File.WriteAllText(StorePath, "{\"version\": 1, \"blocked\": [{\"interpreter\":\"p\",\"package\":\"a\",\"version\":\"1\"}]}");
+
+        var (visible, hidden) = NewStore().Apply("p", [Outdated("a", "0.9", "1")]);
+
+        Assert.Single(visible);
+        Assert.Empty(hidden);
     }
 }
