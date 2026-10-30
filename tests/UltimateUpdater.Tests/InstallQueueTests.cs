@@ -508,6 +508,40 @@ public class InstallQueueTests
         Assert.True(history.Read().Single(e => e.ItemId == "eslint").Success);
     }
 
+    /// <summary>An unchanged in-process result is settled after its delayed look-up, but that wait holds
+    /// neither the parallel slot nor the lane: the next queued item starts at once.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Delayed_recheck_does_not_hold_back_the_next_queued_item(bool sameSource)
+    {
+        var secondStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        void OnInstall(UpdateItem i)
+        {
+            if (i.Id == "second")
+                secondStarted.TrySetResult();
+        }
+
+        var first = new StubSource("npm", onInstall: OnInstall, getInstalledVersion: id => id == "eslint" ? "1.0" : "2.0");
+        var other = sameSource ? first : new StubSource("scoop", onInstall: OnInstall, getInstalledVersion: _ => "2.0");
+        var (queue, history, statuses) = CreateWith(
+            s => s.Install.MaxParallelInstalls = sameSource ? 3 : 1, sameSource ? [first] : [first, other]);
+        queue.VersionRecheckInterval = TimeSpan.FromHours(1);
+
+        var runTask = queue.RunAsync([Item("eslint", "npm"), Item("second", sameSource ? "npm" : "scoop")], CancellationToken.None);
+
+        await secondStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.False(runTask.IsCompleted);
+        Assert.DoesNotContain(statuses, s => s.ItemId == "eslint" && s.Success == true);
+
+        queue.CancelItem("npm", "eslint");
+        await runTask.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.False(statuses.Last(s => s.ItemId == "eslint" && s.Success == true).VersionUnchanged);
+        Assert.Contains(statuses, s => s.ItemId == "second" && s.Success == true);
+        Assert.Equal(2, history.Read().Count(e => e.Success));
+    }
+
     // ---- this fix's own automatic retry round ----
 
     /// <summary>MSI 1618 ("another installation was already running") is one of the explainer table's

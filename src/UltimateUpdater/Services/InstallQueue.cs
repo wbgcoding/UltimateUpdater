@@ -225,6 +225,10 @@ public sealed class InstallQueue
         /// "unchanged" right away). Guarded by the queue lock; awaited when the batch ends.</summary>
         public readonly List<Task> Rechecks = [];
 
+        /// <summary>The delayed version re-checks of in-process installs, run after the item let go of its slot
+        /// and lane. Guarded by the queue lock; awaited when the run ends.</summary>
+        public readonly List<Task> InProcessRechecks = [];
+
         /// <summary>The run's stop token, for the delayed re-checks started from the pipe's reader thread.</summary>
         public CancellationToken CancellationToken;
     }
@@ -489,6 +493,24 @@ public sealed class InstallQueue
         }
         finally
         {
+            // Results still waiting on their delayed look-up are settled first (a stop ends each wait at once),
+            // so the unreported-rows pass below never closes a row whose install actually succeeded.
+            Task[] rechecks;
+            lock (_queueLock)
+            {
+                rechecks = [.. run.InProcessRechecks];
+                run.InProcessRechecks.Clear();
+            }
+
+            try
+            {
+                await Task.WhenAll(rechecks);
+            }
+            catch (Exception ex)
+            {
+                _logging.Warn($"Delayed version re-check ended with an error: {ex.Message}");
+            }
+
             lock (_queueLock)
                 _activeRuns.Remove(run);
 
@@ -646,11 +668,64 @@ public sealed class InstallQueue
         {
             // Removed and disposed under the lock CancelItem cancels under, so a stop click can never reach
             // a source that was disposed a moment earlier.
-            lock (_queueLock)
+            ReleaseItemCancellation(run, key, itemCts);
+        }
+    }
+
+    /// <summary>The success outcome of an in-process install: reported first, so the log reads
+    /// download-then-install and a closed download line never trails the "ok".</summary>
+    private void CompleteInProcessSuccess(UpdateItem item, InstallAction action, TimeSpan installTime, bool versionUnchanged)
+    {
+        Report(new InstallItemStatus(item.SourceId, item.Id, 100, null, true, null)
+        {
+            VersionUnchanged = versionUnchanged,
+            VersionUnchangedCount = versionUnchanged ? CountUnchanged(item) : 0,
+        });
+        _logging.Event(ActivityLog.Install, ActivityLog.InstallSucceeded(item, action, installTime));
+        RecordHistory(item, action, success: true, error: null, versionUnchanged: versionUnchanged);
+    }
+
+    /// <summary>
+    /// Runs the delayed part of the version re-check after the caller released its throttle slot and lane, so
+    /// an unrelated queued install is not held back for the whole window. The result is reported once the
+    /// look-ups are over; the item stays stoppable meanwhile through a token registered under its key, which
+    /// replaces the one <see cref="InstallInProcessAsync"/> deregisters only while it is still its own.
+    /// </summary>
+    private void DeferInProcessRecheck(
+        IUpdateSource source, UpdateItem item, InstallAction action, TimeSpan installTime,
+        CancellationToken batchToken, CancellationToken itemToken, RunState run)
+    {
+        var key = Key(item);
+
+        // Linked to the batch token, not the item's: the item's own source is disposed as soon as the caller
+        // returns, which would cut the link to the batch. A stop that already landed carries over by hand.
+        var recheckCts = CancellationTokenSource.CreateLinkedTokenSource(batchToken);
+        if (itemToken.IsCancellationRequested)
+            recheckCts.Cancel();
+        Task task;
+        lock (_queueLock)
+        {
+            run.ItemCancellations[key] = recheckCts;
+            task = Task.Run(async () =>
             {
-                run.ItemCancellations.TryRemove(key, out _);
-                itemCts.Dispose();
-            }
+                var unchanged = false;
+                try
+                {
+                    unchanged = await StillUnchangedAfterWaitAsync(
+                        source, item, item.InstalledVersion, _logging, VersionRecheckInterval, VersionRecheckAttempts, recheckCts.Token);
+                }
+                catch (Exception ex)
+                {
+                    _logging.Warn($"Delayed version re-check for '{item.Id}' failed: {ex.Message}");
+                }
+                finally
+                {
+                    ReleaseItemCancellation(run, key, recheckCts);
+                }
+
+                CompleteInProcessSuccess(item, action, installTime, unchanged);
+            });
+            run.InProcessRechecks.Add(task);
         }
     }
 
@@ -729,22 +804,19 @@ public sealed class InstallQueue
             // a removal), and only a quiet note that never turns a real success into anything else.
             // A source that cannot answer (null) says nothing at all, exactly like the interface default.
             // A value that still reads old right after the installer exits is looked up again for a while
-            // before the note stays; the row keeps showing the install (and its running time) meanwhile.
-            var versionUnchanged = action == InstallAction.Install
-                && await IsVersionUnchangedAfterWaitAsync(
-                    source, item, item.InstalledVersion, _logging, VersionRecheckInterval, VersionRecheckAttempts, cancellationToken);
+            // before the note stays; that wait runs after this item let go of its slot and lane, and the
+            // row keeps showing the install (and its running time) until it is over.
+            var unchangedNow = action == InstallAction.Install
+                && await IsVersionUnchangedAsync(source, item, item.InstalledVersion, _logging, cancellationToken);
+            var installTime = started.Elapsed;
 
-            // Report() below closes this item's own download line (if it had one) and writes
-            // its "dl done" log line; it runs BEFORE the "ok" line so the log reads download-then-install
-            // rather than the other way round, which would leave a finished row with a
-            // part-filled bar.
-            Report(new InstallItemStatus(item.SourceId, item.Id, 100, null, true, null)
+            if (unchangedNow)
             {
-                VersionUnchanged = versionUnchanged,
-                VersionUnchangedCount = versionUnchanged ? CountUnchanged(item) : 0,
-            });
-            _logging.Event(ActivityLog.Install, ActivityLog.InstallSucceeded(item, action, started.Elapsed));
-            RecordHistory(item, action, success: true, error: null, versionUnchanged: versionUnchanged);
+                DeferInProcessRecheck(source, item, action, installTime, batchToken, cancellationToken, run);
+                return;
+            }
+
+            CompleteInProcessSuccess(item, action, installTime, versionUnchanged: false);
         }
         catch (OperationCanceledException) when (batchToken.IsCancellationRequested)
         {
