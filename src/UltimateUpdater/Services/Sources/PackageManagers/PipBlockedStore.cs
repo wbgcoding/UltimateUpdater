@@ -65,6 +65,9 @@ internal sealed class PipBlockedStore(string path, LoggingService logging, bool?
 
     private List<Entry> LoadLocked()
     {
+        if (path.Length == 0)
+            return [];
+
         try
         {
             var text = AtomicFile.TryReadAllText(path, MaxFileBytes);

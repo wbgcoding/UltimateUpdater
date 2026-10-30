@@ -6,6 +6,7 @@ using UltimateUpdater.Models;
 using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
 using UltimateUpdater.Services.Sources;
+using UltimateUpdater.Services.Sources.PackageManagers;
 
 namespace UltimateUpdater.Tests;
 
@@ -371,5 +372,23 @@ public class SecurityFixTests
 
         Assert.Equal(before, AppPaths.AccessCount);
         Assert.Equal(2, lines.Count);
+    }
+
+    /// <summary>The pip blocked-version store used to resolve its default path (AppPaths) before its own
+    /// worker check; in a worker-mode source that must stay untouched, and nothing is written.</summary>
+    [Fact]
+    public void A_worker_mode_pip_install_failure_never_touches_AppPaths()
+    {
+        // The worker's logger takes a sink and never reads AppPaths; the default one does.
+        var source = new PipSource(new LoggingService(_ => { }), new HttpClient()) { RunsInElevatedWorker = true };
+        var before = AppPaths.AccessCount;
+        const string python = @"C:\Python315\python.exe";
+
+        source.BlockedStore.Add(python, "pymupdf", "2.0");
+        var (visible, hidden) = source.BlockedStore.Apply(python, [new OutdatedPackage("pymupdf", "pymupdf", "1.0", "2.0")]);
+
+        Assert.Equal(before, AppPaths.AccessCount);
+        Assert.Single(visible);
+        Assert.Empty(hidden);
     }
 }

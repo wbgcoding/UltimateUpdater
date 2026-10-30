@@ -59,12 +59,18 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
     private PipBlockedStore? _blockedStore;
 
     /// <summary>One store per source, created on first use so the data folder is not touched before it is
-    /// needed; a test hands in a store on a temporary file instead.</summary>
+    /// needed; a test hands in a store on a temporary file instead. The elevated worker gets a store without
+    /// a path: resolving <see cref="PipBlockedStore.DefaultPath"/> would run AppPaths as admin.</summary>
     internal PipBlockedStore BlockedStore
     {
-        get => LazyInitializer.EnsureInitialized(ref _blockedStore, () => new PipBlockedStore(PipBlockedStore.DefaultPath, Logging))!;
+        get => LazyInitializer.EnsureInitialized(ref _blockedStore, () => RunsInElevatedWorker
+            ? new PipBlockedStore(string.Empty, Logging, writable: false)
+            : new PipBlockedStore(PipBlockedStore.DefaultPath, Logging))!;
         init => _blockedStore = value;
     }
+
+    /// <summary>Test seam for <see cref="ElevationService.IsElevatedWorkerProcess"/>, which is fixed per process.</summary>
+    internal bool RunsInElevatedWorker { get; init; } = ElevationService.IsElevatedWorkerProcess;
 
     private const string PackageMetaKey = "pipPackage";
     private const string InterpreterMetaKey = "pythonPath";
