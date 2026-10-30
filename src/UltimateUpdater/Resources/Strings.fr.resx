@@ -348,7 +348,7 @@
     <value>Ouvrir dans un lanceur</value>
   </data>
   <data name="InstallProgressCount" xml:space="preserve">
-    <value>Terminé : {0} sur {1}</value>
+    <value>Terminées : {0} sur {1}</value>
   </data>
   <data name="InstallRunningCount" xml:space="preserve">
     <value>Installations en cours : {0}</value>
@@ -481,7 +481,7 @@ Ultimate Updater ne peut pas annuler cette action.</value>
     <value>Sécurité Windows vérifie les fichiers que cette application télécharge elle-même avant leur exécution.</value>
   </data>
   <data name="ScanningDownload" xml:space="preserve">
-    <value>recherche de virus</value>
+    <value>recherche de virus en cours</value>
   </data>
   <data name="SettingsRegistryBackupGroup" xml:space="preserve">
     <value>Nettoyage</value>
@@ -724,7 +724,7 @@ Ultimate Updater ne peut pas annuler cette action.</value>
     <value>Gestionnaire de paquets communautaire pour Windows (choco.exe). Met à jour les paquets maintenus par la communauté ; nécessite des droits administrateur.</value>
   </data>
   <data name="SourceDescScoop" xml:space="preserve">
-    <value>Gestionnaire de paquets en ligne de commande, installe dans le dossier utilisateur sans droits administrateur.</value>
+    <value>Gestionnaire de paquets en ligne de commande qui s'installe dans le dossier utilisateur sans droits administrateur.</value>
   </data>
   <data name="SourceDescPip" xml:space="preserve">
     <value>Programme d'installation de paquets de Python. Liste et met à jour les paquets Python obsolètes.</value>
@@ -1046,10 +1046,10 @@ Ultimate Updater ne peut pas annuler cette action.</value>
     <value>{0} libérés au total</value>
   </data>
   <data name="CleanupHistoryRunCount" xml:space="preserve">
-    <value>{0} exécutions · dernière le {1}</value>
+    <value>{0} exécutions · dernière : {1}</value>
   </data>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
-    <value>{0} exécution · dernière le {1}</value>
+    <value>{0} exécution · le {1}</value>
   </data>
   <data name="CleanupHistoryTopCategories" xml:space="preserve">
     <value>Zones les plus volumineuses</value>
@@ -1073,7 +1073,7 @@ Ultimate Updater ne peut pas annuler cette action.</value>
     <value>en attente</value>
   </data>
   <data name="CleanupStateCleaning" xml:space="preserve">
-    <value>nettoyage</value>
+    <value>nettoyage en cours</value>
   </data>
   <data name="CleanupStateStopped" xml:space="preserve">
     <value>arrêté</value>
@@ -1202,7 +1202,7 @@ Ultimate Updater ne peut pas annuler cette action.</value>
     <value>Outils en ligne de commande Python installés avec pipx. Chaque outil est un candidat ; pipx upgrade s'exécute à la demande.</value>
   </data>
   <data name="SourceDescVsCodeExtension" xml:space="preserve">
-    <value>Extensions de Visual Studio Code. Chaque extension installée est un candidat ; à la demande, elle est réinstallée dans la dernière version de la place de marché.</value>
+    <value>Extensions de Visual Studio Code. Chaque extension installée est un candidat ; à la demande, elle est réinstallée dans la dernière version disponible sur le Marketplace.</value>
   </data>
   <data name="SourceNameVsCodeExtension" xml:space="preserve">
     <value>Extensions VS Code</value>
@@ -1214,7 +1214,7 @@ Ultimate Updater ne peut pas annuler cette action.</value>
     <value>Le runtime Bun. Recherche la dernière version sur GitHub et met à jour avec “bun upgrade”. Masqué lorsqu'un gestionnaire de paquets a installé Bun.</value>
   </data>
   <data name="SourceDescUv" xml:space="preserve">
-    <value>uv, le gestionnaire de paquets Python qui se met à jour lui-même. Masqué lorsqu'un gestionnaire de paquets a installé uv, car "uv self update" refuse dans ce cas.</value>
+    <value>uv, le gestionnaire de paquets Python qui se met à jour lui-même. Masqué lorsqu'un gestionnaire de paquets a installé uv, car "uv self update" refuse alors de s'exécuter.</value>
   </data>
   <data name="SourceDescUvTool" xml:space="preserve">
     <value>Outils Python installés avec “uv tool”. Compare chaque outil à PyPI et n'affiche que les versions obsolètes.</value>
@@ -1226,7 +1226,7 @@ Ultimate Updater ne peut pas annuler cette action.</value>
     <value>Composants de Google Cloud CLI avec version installée et version la plus récente, ainsi que taille de téléchargement. “gcloud components update” les met tous à jour ensemble.</value>
   </data>
   <data name="SourceDescOllama" xml:space="preserve">
-    <value>Modèles Ollama récupérés localement. Compare le condensé du manifeste de chacun à celui du registre, de sorte que seule une balise réellement déplacée devient une ligne. Nécessite un serveur Ollama en cours d'exécution ; cette application ne le démarre jamais.</value>
+    <value>Modèles Ollama récupérés localement. Compare le condensé du manifeste de chacun à celui du registre, de sorte que seule une balise ayant réellement changé devient une ligne. Nécessite un serveur Ollama en cours d'exécution ; cette application ne le démarre jamais.</value>
   </data>
   <data name="SourceNameOllama" xml:space="preserve">
     <value>Modèles Ollama</value>
@@ -1673,7 +1673,7 @@ Continuer avec les droits administrateur ?</value>
     <value>Une autre installation était en cours en même temps, Windows a donc refusé celle-ci.</value>
   </data>
   <data name="InstallErrorMsi1618Now" xml:space="preserve">
-    <value>Elle a été retentée automatiquement une fois les autres terminées.</value>
+    <value>Une nouvelle tentative a été effectuée automatiquement une fois les autres terminées.</value>
   </data>
   <data name="InstallErrorMsi1619What" xml:space="preserve">
     <value>Le package d'installation n'a pas pu être lu (erreur de l'installeur 1619/1620).</value>
@@ -1865,7 +1865,7 @@ Continuer avec les droits administrateur ?</value>
     <value>Réessayer en mode interactif</value>
   </data>
   <data name="RowRunningInteractive" xml:space="preserve">
-    <value>exécution interactive…</value>
+    <value>en cours (interactif)…</value>
   </data>
   <data name="InstallBlockersLine" xml:space="preserve">
     <value>{0} est bloqué par : {1}</value>
@@ -1874,7 +1874,7 @@ Continuer avec les droits administrateur ?</value>
     <value>Fermer le programme et continuer</value>
   </data>
   <data name="InstallBlockerSkip" xml:space="preserve">
-    <value>Ignorer les bloqués</value>
+    <value>Ignorer les éléments bloqués</value>
   </data>
   <data name="InstallBlockerTryAnyway" xml:space="preserve">
     <value>Réessayer quand même</value>
@@ -1949,7 +1949,7 @@ Continuer avec les droits administrateur ?</value>
     <value>Marques de Simple Icons (CC0). Toutes les marques appartiennent à leurs propriétaires.</value>
   </data>
   <data name="AboutTrademarks" xml:space="preserve">
-    <value>Non affilié à Microsoft, NVIDIA, AMD, Intel, Dell, Lenovo, HP, Valve, Epic Games ni à aucun autre éditeur affiché par cette application, et ni approuvé ni sponsorisé par eux.</value>
+    <value>Cette application n'est affiliée à aucun des éditeurs affichés, notamment Microsoft, NVIDIA, AMD, Intel, Dell, Lenovo, HP, Valve et Epic Games, et n'est ni approuvée ni sponsorisée par eux.</value>
   </data>
   <data name="WingetBootstrapConfirmHeadline" xml:space="preserve">
     <value>winget est introuvable</value>
@@ -2069,7 +2069,7 @@ Continuer avec les droits administrateur ?</value>
     <value>Condensé distant d'un modèle (modèles de la bibliothèque uniquement)</value>
   </data>
   <data name="NetPurposeOllamaLocal" xml:space="preserve">
-    <value>Liste locale des modèles Ollama, la seule adresse http:// simple utilisée, boucle locale uniquement</value>
+    <value>Liste locale des modèles Ollama, la seule adresse HTTP non chiffrée utilisée, boucle locale uniquement</value>
   </data>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Afficher les ignorés</value>
@@ -2177,16 +2177,16 @@ Continuer avec les droits administrateur ?</value>
     <value>La mise à jour sera installée une fois le travail en cours terminé.</value>
   </data>
   <data name="CleanupProtectedFiles" xml:space="preserve">
-    <value>{0} fichiers n'ont pas pu être consultés et ont été ignorés.</value>
+    <value>{0} fichiers inaccessibles ont été ignorés.</value>
   </data>
   <data name="CleanupProtectedFilesOne" xml:space="preserve">
-    <value>{0} fichier n'a pas pu être consulté et a été ignoré.</value>
+    <value>{0} fichier inaccessible a été ignoré.</value>
   </data>
   <data name="CleanupProtectedFilesSize" xml:space="preserve">
-    <value>{0} fichiers ({1}) n'ont pas pu être consultés et ont été ignorés.</value>
+    <value>{0} fichiers inaccessibles ({1}) ont été ignorés.</value>
   </data>
   <data name="CleanupProtectedFilesSizeOne" xml:space="preserve">
-    <value>{0} fichier ({1}) n'a pas pu être consulté et a été ignoré.</value>
+    <value>{0} fichier inaccessible ({1}) a été ignoré.</value>
   </data>
   <data name="CleanupProtected" xml:space="preserve">
     <value>{0} sans accès</value>
