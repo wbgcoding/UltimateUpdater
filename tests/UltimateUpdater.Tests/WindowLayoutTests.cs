@@ -58,6 +58,7 @@ public partial class WindowLayoutTests
     [InlineData("ro")]
     [InlineData("tr")]
     [InlineData("ja")]
+    [InlineData("fr")]
     public void Main_window_not_checked_state_shows_the_prompt_and_a_scan_button(string language)
     {
         RenderResult? result = null;
@@ -2586,7 +2587,7 @@ public partial class WindowLayoutTests
             {
                 ("system", viewModel.Loc["LanguageOptionSystem"]), ("en", "English"), ("de", "Deutsch"),
                 ("es", "Español"), ("it", "Italiano"), ("pt", "Português"), ("pl", "Polski"),
-                ("zh-Hans", "中文（简体）"), ("ja", "日本語"), ("nl", "Nederlands"), ("tr", "Türkçe"), ("ro", "Română"),
+                ("zh-Hans", "中文（简体）"), ("ja", "日本語"), ("nl", "Nederlands"), ("tr", "Türkçe"), ("ro", "Română"), ("fr", "Français"),
             };
             viewModel.SelectedLanguage = languageTags.OrderByDescending(t => MeasureTextWidth(t.Text)).First().Tag;
 
@@ -4800,6 +4801,7 @@ public partial class WindowLayoutTests
     [InlineData("it")]
     [InlineData("ro")]
     [InlineData("de")]
+    [InlineData("fr")]
     public void Main_table_size_header_with_the_sort_arrow_leaves_room_in_its_column(string language)
     {
         RenderResult? result = null;
@@ -6810,6 +6812,7 @@ public partial class WindowLayoutTests
     [InlineData("ro")]
     [InlineData("tr")]
     [InlineData("zh-Hans")]
+    [InlineData("fr")]
     public void Main_window_row_state_words_fit_the_state_column_untrimmed(string language)
     {
         RenderResult? result = null;

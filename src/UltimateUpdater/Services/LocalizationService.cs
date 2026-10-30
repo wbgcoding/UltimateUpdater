@@ -20,7 +20,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
     /// <summary>The language codes the app ships resources for.</summary>
     public static IReadOnlyList<string> SupportedLanguages { get; } =
-        ["en", "de", "es", "it", "pt", "pl", "zh-Hans", "ja", "nl", "tr", "ro"];
+        ["en", "de", "es", "it", "pt", "pl", "zh-Hans", "ja", "nl", "tr", "ro", "fr"];
 
     /// <summary>
     /// The setting last applied ("system" or one of <see cref="SupportedLanguages"/>). A worker process starts

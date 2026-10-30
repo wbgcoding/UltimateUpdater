@@ -30,7 +30,7 @@ public class HardwiredTextTests
         // English UI showing "Deutsch" translated to "German" would defeat the point of the control.
         "SettingsWindow.xaml: Content=\"English\"",
         "SettingsWindow.xaml: Content=\"Deutsch\"",
-        // The nine additional languages, same reason as the two entries above.
+        // The additional languages, same reason as the two entries above.
         "SettingsWindow.xaml: Content=\"Español\"",
         "SettingsWindow.xaml: Content=\"Italiano\"",
         "SettingsWindow.xaml: Content=\"Português\"",
@@ -40,6 +40,7 @@ public class HardwiredTextTests
         "SettingsWindow.xaml: Content=\"Nederlands\"",
         "SettingsWindow.xaml: Content=\"Türkçe\"",
         "SettingsWindow.xaml: Content=\"Română\"",
+        "SettingsWindow.xaml: Content=\"Français\"",
         // Punctuation and symbols, not language-dependent words, a version-arrow glyph and
         // a breadcrumb separator read identically in every locale. Only visible now that the scan's
         // starting-character restriction (a letter) was lifted; these were always here.
@@ -111,6 +112,7 @@ public class HardwiredTextTests
     [InlineData("Nederlands")]
     [InlineData("Türkçe")]
     [InlineData("Română")]
+    [InlineData("Français")]
     public void Every_approved_exception_still_matches_something_real(string expectedWord)
     {
         // Guards the exception list itself from going stale: if SettingsWindow.xaml ever stops

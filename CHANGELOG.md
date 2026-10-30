@@ -35,9 +35,13 @@ versioning: [SemVer](https://semver.org).
 - Every progress bar is a clean rounded pill, also while it starts filling and at its end.
 - Running installs line up their bars in one column and use the free width.
 - The queue sits on the install strip's own surface; its versions line up with the arrow in the
-  middle, like in the table, and the critical mark is larger.
+  middle, like in the table, and the critical mark is larger. Long version numbers take the room they
+  need instead of being cut off.
 - Scrollbar handles stay at least 48 points long, however long the list.
 - The accent is the Windows default blue on every PC; Settings can switch to the Windows accent colour.
+
+### Languages
+- French. The language list in Settings is sorted by name, after System and English.
 
 ## [1.1.1] - 2026-10-25
 

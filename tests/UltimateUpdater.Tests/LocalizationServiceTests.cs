@@ -36,6 +36,8 @@ public class LocalizationServiceTests
     [InlineData("zh-CN", "zh-Hans")]
     [InlineData("de-AT", "de")]
     [InlineData("ro-RO", "ro")]
+    [InlineData("fr-FR", "fr")]
+    [InlineData("fr-CA", "fr")]
     public void System_language_follows_every_shipped_windows_language(string windowsCulture, string expectedLanguage)
     {
         var resolved = LocalizationService.ResolveSystemCulture(new CultureInfo(windowsCulture));
@@ -46,7 +48,7 @@ public class LocalizationServiceTests
     }
 
     [Theory]
-    [InlineData("fr-FR")]
+    [InlineData("sv-SE")]
     [InlineData("zh-TW")]
     [InlineData("ko-KR")]
     public void System_language_falls_back_to_english_when_it_is_not_shipped(string windowsCulture) =>

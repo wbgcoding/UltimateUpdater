@@ -1007,14 +1007,15 @@
                                 <ComboBoxItem Tag="en" Content="English"/>
                                 <ComboBoxItem Tag="de" Content="Deutsch"/>
                                 <ComboBoxItem Tag="es" Content="Español"/>
+                                <ComboBoxItem Tag="fr" Content="Français"/>
                                 <ComboBoxItem Tag="it" Content="Italiano"/>
-                                <ComboBoxItem Tag="pt" Content="Português"/>
-                                <ComboBoxItem Tag="pl" Content="Polski"/>
-                                <ComboBoxItem Tag="zh-Hans" Content="中文（简体）"/>
-                                <ComboBoxItem Tag="ja" Content="日本語"/>
                                 <ComboBoxItem Tag="nl" Content="Nederlands"/>
-                                <ComboBoxItem Tag="tr" Content="Türkçe"/>
+                                <ComboBoxItem Tag="pl" Content="Polski"/>
+                                <ComboBoxItem Tag="pt" Content="Português"/>
                                 <ComboBoxItem Tag="ro" Content="Română"/>
+                                <ComboBoxItem Tag="tr" Content="Türkçe"/>
+                                <ComboBoxItem Tag="ja" Content="日本語"/>
+                                <ComboBoxItem Tag="zh-Hans" Content="中文（简体）"/>
                             </ComboBox>
                         </Grid>
                     </StackPanel>

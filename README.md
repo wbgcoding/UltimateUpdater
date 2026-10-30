@@ -46,8 +46,8 @@ it in one go. A separate cleanup window frees disk space and runs Windows' own m
 - Lets you undo: an optional restore point before the first admin batch, a registry backup before
   registry cleanup, a driver export before a driver package is removed, and a rollback to the previous
   version for winget packages.
-- Follows the Windows light or dark theme, sits in the tray and speaks eleven languages (English, German,
-  Spanish, Italian, Portuguese, Polish, Simplified Chinese, Japanese, Dutch, Turkish, Romanian).
+- Follows the Windows light or dark theme, sits in the tray and speaks twelve languages (English, German,
+  French, Spanish, Italian, Portuguese, Polish, Dutch, Romanian, Turkish, Japanese, Simplified Chinese).
 
 ## Cleanup
 
@@ -234,3 +234,5 @@ under CC0 (see [`NOTICE-brand-icons.md`](NOTICE-brand-icons.md)); bundled librar
 ## Licence
 
 [MIT](LICENSE) © 2026 BGCoding
+
+Made with Claude.

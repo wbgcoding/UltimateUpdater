@@ -17,7 +17,7 @@ public sealed record DriverInfVersionInfo(string Provider, string ClassName, str
 /// </summary>
 public static class DriverPackageInfReader
 {
-    /// <summary>The app's own 11 supported UI cultures (see <see cref="LocalizationService.Apply"/>), mapped
+    /// <summary>The app's own supported UI cultures (see <see cref="LocalizationService.Apply"/>), mapped
     /// to the hex LANGID a driver INF's own <c>[Strings.xxxx]</c> section uses for that same language. Used
     /// only as the SECOND priority behind the neutral <c>[Strings]</c> section, and only for the app's own
     /// current language - never any other locale's section, so a %token% never surfaces text in a language
@@ -36,6 +36,7 @@ public static class DriverPackageInfReader
             ["nl"] = "0413",
             ["tr"] = "041f",
             ["ro"] = "0418",
+            ["fr"] = "040c",
         };
 
     [DllImport("kernel32.dll")]
