@@ -14,7 +14,13 @@ Inno Setup 6.
 
 ```bat
 dotnet build UltimateUpdater.slnx -c Release
-dotnet test tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj -c Release
+dotnet test tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj -c Release --filter "FullyQualifiedName!~WindowLayoutTests&FullyQualifiedName!~LiveButtonContrastTests&FullyQualifiedName!~PressedPixelTests"
+```
+
+That filter matches CI. The render tests need a desktop session and run on their own:
+
+```bat
+dotnet test tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj -c Release --filter "FullyQualifiedName~WindowLayoutTests"
 ```
 
 `build.bat` runs the full pipeline into `dist\`.
