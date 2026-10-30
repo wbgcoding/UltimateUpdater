@@ -1091,7 +1091,14 @@ public sealed class InstallQueue
             && !terminalNonFailure && message.VersionUnchanged
             && _sources.FirstOrDefault(s => s.Id == item.SourceId) is { } recheckSource)
         {
-            var recheck = Task.Run(() => FinishAfterVersionRecheckAsync(recheckSource, message, item, action, reported, run));
+            // Registered here, before the task starts, so a row stop that lands at any moment of the wait reaches
+            // it through CancelItem's per-row lookup.
+            var recheckKey = Key(item);
+            var recheckCts = CancellationTokenSource.CreateLinkedTokenSource(run.CancellationToken);
+            lock (_queueLock)
+                run.ItemCancellations[recheckKey] = recheckCts;
+
+            var recheck = Task.Run(() => FinishAfterVersionRecheckAsync(recheckSource, message, item, action, reported, run, recheckKey, recheckCts));
             lock (_queueLock)
                 run.Rechecks.Add(recheck);
             return true;
@@ -1102,18 +1109,35 @@ public sealed class InstallQueue
         return true;
     }
 
+    /// <summary>Drops <paramref name="cts"/> from the run's stop map (only while it is still the registered
+    /// one) and disposes it, both under the lock <see cref="CancelItem"/> cancels under.</summary>
+    private void ReleaseItemCancellation(RunState run, string key, CancellationTokenSource cts)
+    {
+        lock (_queueLock)
+        {
+            if (run.ItemCancellations.TryGetValue(key, out var current) && ReferenceEquals(current, cts))
+                run.ItemCancellations.TryRemove(key, out _);
+            cts.Dispose();
+        }
+    }
+
     private async Task FinishAfterVersionRecheckAsync(
         IUpdateSource source, InstallProgressMessage message, UpdateItem item, InstallAction action,
-        ISet<string> reported, RunState run)
+        ISet<string> reported, RunState run, string key, CancellationTokenSource recheckCts)
     {
         try
         {
             message.VersionUnchanged = await StillUnchangedAfterWaitAsync(
-                source, item, item.InstalledVersion, _logging, VersionRecheckInterval, VersionRecheckAttempts, run.CancellationToken);
+                source, item, item.InstalledVersion, _logging, VersionRecheckInterval, VersionRecheckAttempts, recheckCts.Token);
         }
         catch (Exception ex)
         {
             _logging.Warn($"Delayed version re-check for '{item.Id}' failed: {ex.Message}");
+        }
+        finally
+        {
+            // Under the lock CancelItem cancels under, so a stop click never reaches a disposed source.
+            ReleaseItemCancellation(run, key, recheckCts);
         }
 
         ApplyWorkerResult(message, item, action, reported, run, awaitsRetry: false, terminalNonFailure: false);

@@ -473,6 +473,41 @@ public class InstallQueueTests
         Assert.False(history.Read().Single(e => e.ItemId == "eslint").VersionUnchanged);
     }
 
+    /// <summary>A row stop during the app's delayed look-up of an elevated result ends it at once: the row
+    /// leaves "installing" as a plain success, it does not sit through the whole window.</summary>
+    [Fact]
+    public async Task Row_stop_ends_the_delayed_recheck_of_an_elevated_result()
+    {
+        var (queue, history, statuses) = Create(new StubSource("npm", getInstalledVersion: _ => "1.0"));
+        queue.VersionRecheckInterval = TimeSpan.FromHours(1);
+
+        var runStateType = typeof(InstallQueue).GetNestedType("RunState", BindingFlags.NonPublic)!;
+        var run = Activator.CreateInstance(runStateType, nonPublic: true)!;
+        var activeRuns = (System.Collections.IList)typeof(InstallQueue)
+            .GetField("_activeRuns", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(queue)!;
+        activeRuns.Add(run);
+        var handleWorkerLine = typeof(InstallQueue)
+            .GetMethod("HandleWorkerLine", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var item = Item("eslint", "npm");
+        var reported = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var line = JsonSerializer.Serialize(
+            new { type = "result", sourceId = item.SourceId, itemId = item.Id, success = true, versionUnchanged = true }, Json);
+
+        handleWorkerLine.Invoke(queue, [line, new List<UpdateItem> { item }, InstallAction.Install, reported, new List<UpdateItem>(), run, false]);
+        Assert.DoesNotContain(statuses, s => s.ItemId == "eslint" && s.Success == true);
+
+        queue.CancelItem("npm", "eslint");
+
+        var rechecks = (List<Task>)runStateType.GetField("Rechecks")!.GetValue(run)!;
+        await Task.WhenAll(rechecks.ToArray()).WaitAsync(TimeSpan.FromSeconds(1));
+
+        var final = statuses.Last(s => s.ItemId == "eslint" && s.Success == true);
+        Assert.False(final.VersionUnchanged);
+        Assert.DoesNotContain(statuses, s => s.ItemId == "eslint" && s.IsCancelled);
+        Assert.Contains("npm:eslint", reported);
+        Assert.True(history.Read().Single(e => e.ItemId == "eslint").Success);
+    }
+
     // ---- this fix's own automatic retry round ----
 
     /// <summary>MSI 1618 ("another installation was already running") is one of the explainer table's
@@ -1456,11 +1491,15 @@ public class InstallQueueTests
     }
 
     private static (InstallQueue Queue, HistoryService History, List<InstallItemStatus> Statuses) Create(
-        params IUpdateSource[] sources)
+        params IUpdateSource[] sources) => CreateWith(null, sources);
+
+    private static (InstallQueue Queue, HistoryService History, List<InstallItemStatus> Statuses) CreateWith(
+        Action<UltimateUpdater.Models.Settings.AppSettings>? configure, IUpdateSource[] sources)
     {
         var logging = new LoggingService();
         var temp = Directory.CreateTempSubdirectory("wu-install-test-").FullName;
         var settings = new SettingsService(logging, Path.Combine(temp, "settings.json"));
+        configure?.Invoke(settings.Current);
 
         // An explicit path of its own, never the shared HistoryService.EffectivePath: that static fallback
         // is also what WpfHarness.RedirectUserDataForTest reassigns for every UI test on its own thread,
