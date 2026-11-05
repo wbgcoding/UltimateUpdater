@@ -1,5 +1,17 @@
 @echo off
+title Ultimate Updater build
 setlocal enabledelayedexpansion
+
+rem A double-click run (Explorer starts it as cmd /c) gets a small window that closes itself after a
+rem successful build. Automated runs (WU_NOPAUSE=1: CI and the autobuild hook) are never resized or held.
+set INTERACTIVE=
+if not "%WU_NOPAUSE%"=="1" (
+    echo %CMDCMDLINE% | findstr /i /c:"/c" >nul && set INTERACTIVE=1
+)
+if defined INTERACTIVE mode con cols=100 lines=25
+
+rem A test host left over from an earlier run keeps the test assembly locked and fails the next build.
+taskkill /f /im testhost.exe >nul 2>nul
 
 rem Single authoritative build. ALWAYS builds, tests, publishes both architectures, builds
 rem the installer and refreshes dist\, so every run leaves its artifacts in dist\. A "release" argument
@@ -254,19 +266,15 @@ type "%DIST%\SHA256SUMS.txt"
 
 echo.
 echo BUILD OK - artifacts are in dist\.
+if defined INTERACTIVE timeout /t 10
 endlocal
 exit /b 0
 
 :error
 echo.
 echo BUILD FAILED
-rem Keep the window open on failure so the error stays readable, but ONLY when build.bat was launched
-rem by a double-click in Explorer (which runs it as cmd /c "..."), never in an automated run: the
-rem autobuild Stop hook and CI set WU_NOPAUSE=1, and a run started from an existing console keeps its
-rem own window open anyway. CMDCMDLINE carries the /c switch only in the double-click case, and findstr
-rem looks for that literal switch.
-if not "%WU_NOPAUSE%"=="1" (
-    echo %CMDCMDLINE% | findstr /i /c:"/c" >nul && pause
-)
+rem Keep a double-clicked window open on failure so the error stays readable (INTERACTIVE, set at the
+rem top); an automated run or one started from an existing console never waits here.
+if defined INTERACTIVE pause
 endlocal
 exit /b 1
