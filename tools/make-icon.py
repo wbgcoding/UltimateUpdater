@@ -5,13 +5,15 @@ downsamples, which gives clean antialiasing without pulling in an SVG rasterizer
 is not worth the dependency). Assets/icon.svg holds the same design in editable form for humans;
 if you change one, change the other.
 
-Design intent: a dark glass disc with a thin blue ring and a download arrow over a base bar.
+Design intent: a dark glass disc carrying a progress ring (a dark track with a blue arc over two
+thirds of it, ending in a round dot) and a download arrow over a base bar.
 The ring keeps the existing blue as the product colour (the family of the accent the UI itself
 uses); the UI itself still follows the Windows system accent rather than a fixed brand hue.
 
 Run:  python tools/make-icon.py
 """
 
+import math
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -30,6 +32,14 @@ RING_DEEP = (0x0A, 0x54, 0xAD)   # #0A54AD, bottom-left
 RING_MID = (0x3D, 0x9E, 0xF0)    # #3D9EF0, middle
 RING_BRIGHT = (0x6F, 0xD3, 0xFF)  # #6FD3FF, top-right
 RING_FLAT = (0x3D, 0x9E, 0xF0)   # flat colour used at 16/20px, where the gradient turns to mud
+TRACK = (0x2A, 0x2F, 0x37, 255)  # #2A2F37, the unfilled part of the progress ring
+
+# Progress ring geometry on the 256 grid: centre line radius, width, and the arc from 12 o'clock
+# clockwise to the end dot (Pillow angles: degrees clockwise from 3 o'clock).
+RING_RADIUS = 112
+RING_WIDTH = 16
+ARC_START = -90
+ARC_END = 150
 
 WHITE = (255, 255, 255, 255)
 
@@ -106,6 +116,22 @@ def ring_mask(outer_radius: float, inner_radius: float) -> Image.Image:
     return mask
 
 
+def arc_mask() -> Image.Image:
+    """The filled part of the progress ring, with round caps at both ends."""
+    mask = Image.new("L", (CANVAS, CANVAS), 0)
+    draw = ImageDraw.Draw(mask)
+    cx = cy = CANVAS / 2
+    outer = scaled(RING_RADIUS + RING_WIDTH / 2)
+    width = scaled(RING_WIDTH)
+    draw.arc([cx - outer, cy - outer, cx + outer, cy + outer], ARC_START, ARC_END, fill=255, width=width)
+    r_line = scaled(RING_RADIUS)
+    for angle in (ARC_START, ARC_END):
+        x = cx + r_line * math.cos(math.radians(angle))
+        y = cy + r_line * math.sin(math.radians(angle))
+        draw.ellipse([x - width / 2, y - width / 2, x + width / 2, y + width / 2], fill=255)
+    return mask
+
+
 def disc_mask(radius: float) -> Image.Image:
     mask = Image.new("L", (CANVAS, CANVAS), 0)
     cx = cy = CANVAS / 2
@@ -130,7 +156,7 @@ def draw_download_glyph(image: Image.Image, small: bool) -> None:
             r = w / 2
             draw.ellipse([scaled(x) - r, scaled(y) - r, scaled(x) + r, scaled(y) + r], fill=colour)
 
-    capped_line(128, 56, 128, 132, 28 * grow, WHITE)
+    capped_line(128, 62, 128, 132, 28 * grow, WHITE)
     half = 52 * (1.08 if small else 1.0)
     draw.polygon([(scaled(128 - half), scaled(122)), (scaled(128), scaled(180)), (scaled(128 + half), scaled(122))],
                  fill=WHITE)
@@ -147,15 +173,25 @@ def draw_icon(small: bool = False) -> Image.Image:
     glass.putalpha(disc_mask(disc_radius))
     image.alpha_composite(glass)
 
-    # 2. Ring: a thin band at the very edge, about 6% of the width.
-    ring_width = scaled(15)
-    mask = ring_mask(disc_radius, disc_radius - ring_width)
-    if small:
-        ring = Image.new("RGBA", (CANVAS, CANVAS), RING_FLAT + (255,))
-    else:
-        ring = ring_gradient()
-    ring.putalpha(mask)
+    # 2. Progress ring: dark track all round, blue arc from 12 o'clock clockwise with round ends.
+    outer = scaled(RING_RADIUS + RING_WIDTH / 2)
+    inner = scaled(RING_RADIUS - RING_WIDTH / 2)
+    track = Image.new("RGBA", (CANVAS, CANVAS), TRACK)
+    track.putalpha(ring_mask(outer, inner))
+    image.alpha_composite(track)
+
+    ring = Image.new("RGBA", (CANVAS, CANVAS), RING_FLAT + (255,)) if small else ring_gradient()
+    ring.putalpha(arc_mask())
     image.alpha_composite(ring)
+
+    # The end dot sits on the arc's end in the bright colour, like a progress marker.
+    dot = ImageDraw.Draw(image)
+    cx = cy = CANVAS / 2
+    r_line = scaled(RING_RADIUS)
+    ex = cx + r_line * math.cos(math.radians(ARC_END))
+    ey = cy + r_line * math.sin(math.radians(ARC_END))
+    dr = scaled(RING_WIDTH * 0.8)
+    dot.ellipse([ex - dr, ey - dr, ex + dr, ey + dr], fill=RING_BRIGHT + (255,))
 
     # 3. Symbol: download arrow over a base bar.
     draw_download_glyph(image, small)
