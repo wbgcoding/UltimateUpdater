@@ -10,6 +10,29 @@ versioning: [SemVer](https://semver.org).
 - That wait no longer holds back other queued installs.
 - A pip version hidden after a failed install shows again after seven days, so a misread error cannot
   hide an update for good.
+- Updating the app itself shows the download with percent, size and speed, then "Verifying" and
+  "Installing", and Setup shows its own progress window instead of nothing.
+- Releases carry a signature made with the publisher's key; the app installs an update only when the
+  signature and the signed version and file name match, otherwise it offers the release page.
+- Setup closes a running copy reliably, also one sitting in the notification area, and asks first when
+  that copy is installing updates.
+- Git is skipped while its own shells are open, instead of an endless install attempt; it is tried again
+  on the next run.
+- An installer that stops responding is stopped after five minutes without activity, and the row says so.
+- A package source that is not up to date yet, and a rustup self update that cannot find its own setup
+  file, show a plain message instead of raw tool output.
+- Settings and other windows stay smooth while updates install.
+- Programs restored from the last scan show their icons again; icons are also found through Start menu
+  shortcuts, uv and rustup show their brand mark, and driver rows show the icon of the installed vendor
+  tool (NVIDIA App, AMD Software, Intel assistant).
+- New app icon.
+
+### Cleanup
+- The status card beside the ring is new: current area, a step bar of all areas, freed space, elapsed
+  time and details on demand, plus a summary at the end.
+- The selection shows the selected and found size ("276 MB / 326 MB selected").
+- The list card has clean rounded corners.
+- The main window's Clean up button shows the percentage while a cleanup runs.
 
 ## [1.1.2] - 2026-10-30
 
