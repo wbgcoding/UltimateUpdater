@@ -132,7 +132,7 @@ Found a security problem? Please report it privately, see [`SECURITY.md`](SECURI
 
 ## Privacy
 
-No telemetry, no account, no ads. Nothing about you or your PC is sent to the author. The app talks to:
+No account, no ads. Nothing about you or your PC is sent to the author. The app talks to:
 
 - the update sources installed on your PC, through their own registries and feeds (for example winget,
   PyPI, npm, Windows Update),

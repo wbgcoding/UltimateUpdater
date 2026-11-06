@@ -5,8 +5,8 @@ downsamples, which gives clean antialiasing without pulling in an SVG rasterizer
 is not worth the dependency). Assets/icon.svg holds the same design in editable form for humans;
 if you change one, change the other.
 
-Design intent: a dark glass disc carrying a progress ring (a dark track with a blue arc over two
-thirds of it, ending in a round dot) and a download arrow over a base bar.
+Design intent: a dark glass disc carrying a progress ring (a dark track with a blue arc over four
+fifths of it, ending in a round dot) and a download arrow over a base bar.
 The ring keeps the existing blue as the product colour (the family of the accent the UI itself
 uses); the UI itself still follows the Windows system accent rather than a fixed brand hue.
 
@@ -39,7 +39,7 @@ TRACK = (0x2A, 0x2F, 0x37, 255)  # #2A2F37, the unfilled part of the progress ri
 RING_RADIUS = 112
 RING_WIDTH = 16
 ARC_START = -90
-ARC_END = 150
+ARC_END = 198
 
 WHITE = (255, 255, 255, 255)
 
