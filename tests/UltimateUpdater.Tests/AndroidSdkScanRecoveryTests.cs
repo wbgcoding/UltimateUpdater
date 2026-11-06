@@ -60,4 +60,18 @@ public class AndroidSdkScanRecoveryTests
 
         Assert.Equal(2, items.Count);
     }
+
+    [Fact]
+    public void The_crash_exit_note_is_written_once_per_session_at_info()
+    {
+        var lines = new List<string>();
+        var source = new AndroidSdkSource(new LoggingService(lines.Add), new HttpClient());
+
+        source.BuildScanResult(Result(RealListing, -1073740791));
+        source.BuildScanResult(Result(RealListing, -1073740791));
+        source.BuildScanResult(Result(RealListing, -1073740791));
+
+        var notes = lines.Where(line => line.Contains("exited with code -1073740791")).ToList();
+        Assert.Single(notes);
+    }
 }

@@ -2257,4 +2257,7 @@ Continuați cu drepturi de administrator?</value>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>Deschide pagina versiunii</value>
   </data>
+  <data name="ScanRateLimited" xml:space="preserve">
+    <value>Limita GitHub a fost atinsă, disponibil din nou la {0}</value>
+  </data>
 </root>
