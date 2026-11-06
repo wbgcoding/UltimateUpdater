@@ -39,6 +39,66 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <!-- WPF-UI's Expander only slides its body with a render transform and drops the layout height in
+             one frame afterwards, which is the hitch when a card closes. This copy of its template keeps
+             the look (header, chevron, hover) and puts the body in a RevealDecorator, which animates the
+             real height the same way in both directions. All four cards of this page use it. -->
+        <Style x:Key="SmoothExpander" TargetType="Expander" BasedOn="{StaticResource {x:Type Expander}}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Border x:Name="ToggleButtonBorder" Grid.Row="0"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="{TemplateBinding Border.CornerRadius}">
+                                <ToggleButton x:Name="ExpanderToggleButton" Margin="0"
+                                              Padding="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center"
+                                              Content="{TemplateBinding Header}"
+                                              FontSize="{TemplateBinding FontSize}"
+                                              Foreground="{TemplateBinding Foreground}"
+                                              IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                              IsEnabled="{TemplateBinding IsEnabled}"
+                                              OverridesDefaultStyle="True"
+                                              Template="{StaticResource DefaultExpanderToggleButtonStyle}"/>
+                            </Border>
+                            <views:RevealDecorator Grid.Row="1" IsOpen="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Border Background="{DynamicResource ExpanderContentBackground}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="1,0,1,1" CornerRadius="0,0,4,4">
+                                    <ContentPresenter x:Name="ContentPresenter" Margin="{TemplateBinding Padding}"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      Content="{TemplateBinding Content}"/>
+                                </Border>
+                            </views:RevealDecorator>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ToggleButtonBorder" Property="CornerRadius" Value="4,4,0,0"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource ExpanderHeaderDisabledForeground}"/>
+                                <Setter TargetName="ExpanderToggleButton" Property="Foreground" Value="{DynamicResource ExpanderHeaderDisabledForeground}"/>
+                                <Setter TargetName="ExpanderToggleButton" Property="BorderBrush" Value="{DynamicResource ExpanderHeaderDisabledBorderBrush}"/>
+                            </Trigger>
+                            <Trigger SourceName="ExpanderToggleButton" Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ExpanderToggleButton" Property="BorderBrush" Value="{DynamicResource ExpanderHeaderBorderPointerOverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="SectionHeader" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -393,7 +453,7 @@
                 <Border Style="{StaticResource Card}" Margin="0,6,0,6">
                     <!-- Right margin keeps the collapse chevron off the card edge, in line with the
                          controls on the other cards. -->
-                    <Expander x:Name="SourcesExpander" Background="Transparent" BorderThickness="0" Padding="0"
+                    <Expander x:Name="SourcesExpander" Style="{StaticResource SmoothExpander}" Background="Transparent" BorderThickness="0" Padding="0"
                               Margin="0,0,16,0" HorizontalContentAlignment="Stretch">
                         <Expander.Header>
                             <Grid>
@@ -668,7 +728,7 @@
                         <!-- Permanently-excluded cleanup paths: a right-click in the cleanup dialog adds to
                              this list, and this is where an entry is released again. Same
                              collapsed-by-default Expander shape as the Sources card above. -->
-                        <Expander x:Name="ExcludedPathsExpander" Background="Transparent" BorderThickness="0" Padding="0"
+                        <Expander x:Name="ExcludedPathsExpander" Style="{StaticResource SmoothExpander}" Background="Transparent" BorderThickness="0" Padding="0"
                                   Margin="0,0,16,0" HorizontalContentAlignment="Stretch"
                                   Visibility="{Binding HasExcludedPaths, Converter={StaticResource BoolToVisibility}}">
                             <Expander.Header>
@@ -1157,7 +1217,7 @@
                 <!-- About: identity, version, licence, project link, and the third-party disclaimer.
                      Collapsed by default, same Expander shape as SourcesExpander above. -->
                 <Border Style="{StaticResource Card}" Margin="0,6,0,6">
-                    <Expander x:Name="AboutExpander" Background="Transparent" BorderThickness="0" Padding="0"
+                    <Expander x:Name="AboutExpander" Style="{StaticResource SmoothExpander}" Background="Transparent" BorderThickness="0" Padding="0"
                               Margin="0,0,16,0" HorizontalContentAlignment="Stretch">
                         <Expander.Header>
                             <Grid>
@@ -1177,7 +1237,10 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <ui:SymbolIcon Grid.Column="0" Symbol="Info24" Style="{StaticResource CardIcon}"/>
+                                <!-- The app icon beside its name and version. -->
+                                <Image Grid.Column="0" Width="64" Height="64" Margin="0,0,16,0" VerticalAlignment="Center"
+                                       Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"
+                                       RenderOptions.BitmapScalingMode="HighQuality"/>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[AppTitle]}"/>
                                     <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[AboutTagline]}"/>
@@ -1209,7 +1272,7 @@
                      Collapsed by default, same Expander shape as SourcesExpander above. -->
                 <Border Style="{StaticResource Card}" Margin="0,0,0,6"
                         Visibility="{Binding HasNetworkTargets, Converter={StaticResource BoolToVisibility}}">
-                    <Expander x:Name="NetworkTargetsExpander" Background="Transparent" BorderThickness="0" Padding="0"
+                    <Expander x:Name="NetworkTargetsExpander" Style="{StaticResource SmoothExpander}" Background="Transparent" BorderThickness="0" Padding="0"
                               Margin="0,0,16,0" HorizontalContentAlignment="Stretch">
                         <Expander.Header>
                             <Grid>

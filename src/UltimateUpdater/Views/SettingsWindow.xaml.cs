@@ -21,6 +21,10 @@ public partial class SettingsWindow : FluentWindow
     // sections cannot reach the top of the page).
     private FrameworkElement? _navigationTarget;
 
+    // Set while the card a click opened is still growing: the page gets taller frame by frame, so the
+    // target keeps moving and the scroll follows it instead of stopping at the height it had on the click.
+    private bool _revealPending;
+
     public SettingsWindow(SettingsViewModel viewModel)
     {
         InitializeComponent();
@@ -33,6 +37,7 @@ public partial class SettingsWindow : FluentWindow
         DismissOnDeactivate.Attach(this);
 
         SettingsScroll.ScrollChanged += OnScrollChanged;
+        AddHandler(RevealDecorator.SettledEvent, new RoutedEventHandler(OnRevealSettled));
         // the user takes over the scrolling (wheel, scrollbar drag, keys): the position drives the highlight again
         SettingsScroll.PreviewMouseWheel += (_, _) => _navigationTarget = null;
         SettingsScroll.PreviewMouseDown += (_, _) => _navigationTarget = null;
@@ -87,11 +92,42 @@ public partial class SettingsWindow : FluentWindow
             expander.IsExpanded = true;
 
         SettingsScroll.UpdateLayout();
+        _revealPending = target is System.Windows.Controls.Expander opened && RevealOf(opened) is { IsSettling: true };
         var offset = Math.Min(SectionTop(target), SettingsScroll.ScrollableHeight);
 
         // Already there: no scroll event will follow, so nothing may wait for an arrival.
-        _navigationTarget = Math.Abs(offset - SettingsScroll.VerticalOffset) < 1 ? null : target;
+        _navigationTarget = !_revealPending && Math.Abs(offset - SettingsScroll.VerticalOffset) < 1 ? null : target;
         SettingsScroll.ScrollToVerticalOffset(SectionTop(target));
+    }
+
+    private static RevealDecorator? RevealOf(DependencyObject parent)
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is RevealDecorator reveal)
+                return reveal;
+            if (RevealOf(child) is { } nested)
+                return nested;
+        }
+
+        return null;
+    }
+
+    // The card has reached its full height: land exactly on the section, now that it can be reached.
+    private void OnRevealSettled(object sender, RoutedEventArgs e)
+    {
+        var wasPending = _revealPending;
+        _revealPending = false;
+        if (!wasPending || _navigationTarget is not { } target)
+            return;
+
+        SettingsScroll.UpdateLayout();
+        var top = SectionTop(target);
+        if (Math.Abs(Math.Min(top, SettingsScroll.ScrollableHeight) - SettingsScroll.VerticalOffset) < 1)
+            _navigationTarget = null;
+        else
+            SettingsScroll.ScrollToVerticalOffset(top);
     }
 
     private double SectionTop(FrameworkElement element)
@@ -109,6 +145,12 @@ public partial class SettingsWindow : FluentWindow
 
         if (_navigationTarget is { } target)
         {
+            if (_revealPending)
+            {
+                SettingsScroll.ScrollToVerticalOffset(SectionTop(target));
+                return;
+            }
+
             var arrived = Math.Abs(SettingsScroll.VerticalOffset - SectionTop(target)) < 1
                 || SettingsScroll.VerticalOffset >= SettingsScroll.ScrollableHeight - 1;
             if (arrived)
