@@ -669,36 +669,6 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public bool UsesGlyphTile => !UsesBrandTile && !UsesLetterTile;
 
-    /// <summary>
-    /// Muted, deliberately unbranded tile colours. A stable colour per name makes rows without a real
-    /// icon tellable apart at a glance without pretending to be anyone's logo.
-    /// </summary>
-    private static readonly Brush[] FallbackTiles =
-    [
-        Frozen(0x3A, 0x5A, 0x7A), Frozen(0x5A, 0x3A, 0x5F), Frozen(0x3F, 0x5F, 0x4A),
-        Frozen(0x6B, 0x4A, 0x33), Frozen(0x44, 0x4A, 0x6B), Frozen(0x6B, 0x3A, 0x44),
-        Frozen(0x35, 0x5C, 0x5C), Frozen(0x5C, 0x55, 0x33),
-    ];
-
-    /// <summary>Stable across runs: derived from the name, never from a hash that varies per process.</summary>
-    public Brush InitialBrush
-    {
-        get
-        {
-            var seed = Name.Where(char.IsLetterOrDigit)
-                .Aggregate(17, (current, c) => (current * 31 + char.ToLowerInvariant(c)) & 0x7FFFFFF);
-
-            return FallbackTiles[seed % FallbackTiles.Length];
-        }
-    }
-
-    private static Brush Frozen(byte r, byte g, byte b)
-    {
-        var brush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
-        brush.Freeze();
-        return brush;
-    }
-
     public string CategoryDisplay
     {
         get

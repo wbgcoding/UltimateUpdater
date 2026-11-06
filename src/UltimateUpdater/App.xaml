@@ -160,12 +160,6 @@
                 <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
             </Style>
 
-            <!-- What sits on a name tile: the letter, the category glyph or the brand mark. Fixed rather
-                 than semantic on purpose - the tile behind it is a generated, saturated colour per row and
-                 looks the same in both themes, so a brush that follows the theme would turn dark on it and
-                 disappear in light mode. Named once here because six places draw on that tile. -->
-            <SolidColorBrush x:Key="TileGlyphBrush" Color="#F2F2F2"/>
-
             <!-- Fallback only: ThemeService.ApplyCore always writes the real value (white at 6 percent in
                  the dark theme, transparent otherwise) before any window shows, see
                  ThemeService.ApplyDarkPaletteOverrides. Declared here too so a card's DynamicResource
