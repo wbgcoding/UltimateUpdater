@@ -10,9 +10,13 @@ namespace UltimateUpdater.Services.SelfUpdate;
 /// </summary>
 internal static class ReleaseSignature
 {
-    /// <summary>The public half of the release key, SubjectPublicKeyInfo PEM. Empty until the real key is
-    /// pasted in; with no usable key every update is refused (fail closed).</summary>
-    internal const string ReleasePublicKeyPem = "";
+    /// <summary>The public half of the release key, SubjectPublicKeyInfo PEM. The private half never leaves
+    /// the release machine; with no usable key every update is refused (fail closed).</summary>
+    internal const string ReleasePublicKeyPem =
+        "-----BEGIN PUBLIC KEY-----\n" +
+        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEFSBPLo9ErPUjI53wBqjpc2ANmpnY\n" +
+        "b98sJVo6nA5WjBCR0BrIHAfZ02623gbvFHFn5sr9dAXu9HrD8v2SGpKxAA==\n" +
+        "-----END PUBLIC KEY-----";
 
     private const int SignatureBytes = 64;
 

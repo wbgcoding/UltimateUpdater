@@ -72,14 +72,17 @@ public class ReleaseSignatureTests
     }
 
     [Fact]
-    public void Without_a_usable_public_key_nothing_verifies()
+    public void Only_the_shipped_release_key_verifies_release_signatures()
     {
         var (_, key) = NewKey();
         using (key)
         {
             var signature = Sign(key, Content);
 
-            Assert.False(ReleaseSignature.IsUsableKey(ReleaseSignature.ReleasePublicKeyPem));
+            Assert.False(ReleaseSignature.IsUsableKey(""));
+            Assert.False(Verify(Content, signature, ""));
+            Assert.True(ReleaseSignature.IsUsableKey(ReleaseSignature.ReleasePublicKeyPem));
+            // a test key's signature never passes the shipped release key
             Assert.False(Verify(Content, signature, ReleaseSignature.ReleasePublicKeyPem));
             Assert.False(Verify(Content, signature, "-----BEGIN PUBLIC KEY-----\nnonsense\n-----END PUBLIC KEY-----"));
         }
