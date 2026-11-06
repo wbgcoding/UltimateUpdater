@@ -1102,9 +1102,6 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   <data name="CleanupFreeSpaceNow" xml:space="preserve">
     <value>{0} wolne, +{1} po czyszczeniu</value>
   </data>
-  <data name="CleanupCurrentLabel" xml:space="preserve">
-    <value>Bieżące</value>
-  </data>
   <data name="CleanupFailedHeadline" xml:space="preserve">
     <value>Nie można było ukończyć czyszczenia</value>
   </data>
@@ -2209,20 +2206,11 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>{0} / {1} zaznaczono</value>
   </data>
-  <data name="CleanupStepDone" xml:space="preserve">
-    <value>gotowe</value>
-  </data>
-  <data name="CleanupStepTooltip" xml:space="preserve">
-    <value>{0}: {1}</value>
-  </data>
   <data name="CleanupStatFreed" xml:space="preserve">
     <value>Zwolniono</value>
   </data>
   <data name="CleanupStatElapsed" xml:space="preserve">
     <value>Czas</value>
-  </data>
-  <data name="CleanupDetailsExpander" xml:space="preserve">
-    <value>Szczegóły</value>
   </data>
   <data name="CleanupSummaryDone" xml:space="preserve">
     <value>Czyszczenie zakończone</value>
@@ -2256,5 +2244,11 @@ Kontynuować z uprawnieniami administratora?</value>
   </data>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>Otwórz stronę wydania</value>
+  </data>
+  <data name="CleanupAreaOfTotal" xml:space="preserve">
+    <value>Obszar {0} z {1}</value>
+  </data>
+  <data name="CleanupLastDone" xml:space="preserve">
+    <value>Ostatnio ukończono: {0} · {1}</value>
   </data>
 </root>

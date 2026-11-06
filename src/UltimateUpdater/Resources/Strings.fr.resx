@@ -1102,9 +1102,6 @@ Ultimate Updater ne peut pas annuler cette action.</value>
   <data name="CleanupFreeSpaceNow" xml:space="preserve">
     <value>{0} libres, +{1} après le nettoyage</value>
   </data>
-  <data name="CleanupCurrentLabel" xml:space="preserve">
-    <value>Actuel</value>
-  </data>
   <data name="CleanupFailedHeadline" xml:space="preserve">
     <value>Le nettoyage n'a pas pu être terminé</value>
   </data>
@@ -2209,20 +2206,11 @@ Continuer avec les droits administrateur ?</value>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>{0} / {1} sélectionnés</value>
   </data>
-  <data name="CleanupStepDone" xml:space="preserve">
-    <value>terminé</value>
-  </data>
-  <data name="CleanupStepTooltip" xml:space="preserve">
-    <value>{0} : {1}</value>
-  </data>
   <data name="CleanupStatFreed" xml:space="preserve">
     <value>Libéré</value>
   </data>
   <data name="CleanupStatElapsed" xml:space="preserve">
     <value>Durée</value>
-  </data>
-  <data name="CleanupDetailsExpander" xml:space="preserve">
-    <value>Détails</value>
   </data>
   <data name="CleanupSummaryDone" xml:space="preserve">
     <value>Nettoyage terminé</value>
@@ -2256,5 +2244,11 @@ Continuer avec les droits administrateur ?</value>
   </data>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>Ouvrir la page de la version</value>
+  </data>
+  <data name="CleanupAreaOfTotal" xml:space="preserve">
+    <value>Zone {0} sur {1}</value>
+  </data>
+  <data name="CleanupLastDone" xml:space="preserve">
+    <value>Dernière terminée : {0} · {1}</value>
   </data>
 </root>

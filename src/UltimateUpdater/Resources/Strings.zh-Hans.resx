@@ -1102,9 +1102,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupFreeSpaceNow" xml:space="preserve">
     <value>可用 {0}，清理后 +{1}</value>
   </data>
-  <data name="CleanupCurrentLabel" xml:space="preserve">
-    <value>当前</value>
-  </data>
   <data name="CleanupFailedHeadline" xml:space="preserve">
     <value>清理无法完成</value>
   </data>
@@ -2209,20 +2206,11 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>已选 {0} / {1}</value>
   </data>
-  <data name="CleanupStepDone" xml:space="preserve">
-    <value>已完成</value>
-  </data>
-  <data name="CleanupStepTooltip" xml:space="preserve">
-    <value>{0}：{1}</value>
-  </data>
   <data name="CleanupStatFreed" xml:space="preserve">
     <value>已释放</value>
   </data>
   <data name="CleanupStatElapsed" xml:space="preserve">
     <value>用时</value>
-  </data>
-  <data name="CleanupDetailsExpander" xml:space="preserve">
-    <value>详细信息</value>
   </data>
   <data name="CleanupSummaryDone" xml:space="preserve">
     <value>清理已完成</value>
@@ -2256,5 +2244,11 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>打开发布页面</value>
+  </data>
+  <data name="CleanupAreaOfTotal" xml:space="preserve">
+    <value>第 {0}/{1} 个区域</value>
+  </data>
+  <data name="CleanupLastDone" xml:space="preserve">
+    <value>上次完成：{0} · {1}</value>
   </data>
 </root>

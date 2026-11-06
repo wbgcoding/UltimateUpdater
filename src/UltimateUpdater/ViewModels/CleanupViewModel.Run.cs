@@ -900,8 +900,7 @@ public partial class CleanupViewModel
         CurrentAreaPercentText = primary is null ? string.Empty : PercentFormat.Format(primary.Percent);
         CurrentDetailText = primary?.DetailText ?? string.Empty;
 
-        OnPropertyChanged(nameof(DoneCountText));
-        OnPropertyChanged(nameof(StatusHeadlineText));
+        RefreshAreaProgress();
     }
 
     /// <summary>
@@ -964,7 +963,11 @@ public partial class CleanupViewModel
 
     public bool HasCurrentDetail => CurrentDetailText.Length > 0;
 
-    partial void OnCurrentDetailTextChanged(string value) => OnPropertyChanged(nameof(HasCurrentDetail));
+    partial void OnCurrentDetailTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasCurrentDetail));
+        OnPropertyChanged(nameof(CurrentPathText));
+    }
 
     /// <summary>"4 von 10 erledigt": the run's own count, beside the ring while it works.</summary>
     public string DoneCountText => StepItems is { Count: > 0 } items

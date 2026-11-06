@@ -4,15 +4,18 @@ using UltimateUpdater.Services.Cleanup;
 
 namespace UltimateUpdater.ViewModels;
 
-// The status block beside the ring: which area is being cleaned, a step bar of every area in the run,
-// what has been freed and for how long, and (once it is over) the summary.
+// The status block beside the ring: which area of how many is being cleaned, the file or command at work,
+// the area that finished last, what has been freed and for how long, and (once it is over) the summary.
 public partial class CleanupViewModel
 {
     private IReadOnlyList<CleanupItemViewModel> _stepItems = [];
 
+    /// <summary>The areas finished so far in this run, oldest first; the last one feeds the "last done" line.</summary>
+    private readonly List<CleanupItemViewModel> _doneOrder = [];
+
     /// <summary>
-    /// The areas of the current or last run, in list order, for the step bar. Unlike the run's own working
-    /// list it survives the end of the run, so the finished picture still shows what became of each area.
+    /// The areas of the current or last run, in list order. Unlike the run's own working list it survives
+    /// the end of the run, so the finished summary still counts what the run got through.
     /// </summary>
     public IReadOnlyList<CleanupItemViewModel> StepItems
     {
@@ -20,10 +23,65 @@ public partial class CleanupViewModel
         internal set
         {
             _stepItems = value;
+            _doneOrder.Clear();
             OnPropertyChanged();
-            OnPropertyChanged(nameof(DoneCountText));
-            OnPropertyChanged(nameof(StatusHeadlineText));
+            RaiseAreaProgress();
         }
+    }
+
+    public double AreaTotalCount => Math.Max(1, StepItems.Count);
+
+    public double AreaDoneCount => StepItems.Count(i => i.IsDone);
+
+    /// <summary>"Area 3 of 10": the area being worked on is the one after those already done, never past the last.</summary>
+    public string AreaOfTotalText => StepItems is { Count: > 0 } items
+        ? string.Format(Loc["CleanupAreaOfTotal"], Math.Min(items.Count(i => i.IsDone) + 1, items.Count), items.Count)
+        : string.Empty;
+
+    /// <summary>"Last done: Caches · 1,2 GB"; empty until the first area of the run is through.</summary>
+    public string LastDoneText => _doneOrder.Count > 0
+        ? string.Format(Loc["CleanupLastDone"], _doneOrder[^1].Title, ByteSize.Format(_doneOrder[^1].FreedBytes))
+        : string.Empty;
+
+    /// <summary>The path or command at work, cut in the middle to fit one line of the card: the start (drive,
+    /// program) and the end (file name) are the parts that tell it apart. The full text is the tooltip.</summary>
+    public string CurrentPathText => TrimMiddle(CurrentDetailText, PathLineChars);
+
+    // The card is 236 px wide and the line is monospace 11 px, about 6 px a character.
+    private const int PathLineChars = 34;
+
+    internal static string TrimMiddle(string text, int maxChars)
+    {
+        text = text.ReplaceLineEndings(" ");
+        if (text.Length <= maxChars || maxChars < 5)
+            return text;
+
+        var keep = maxChars - 1;
+        var head = keep / 3;
+        return string.Concat(text.AsSpan(0, head), "…", text.AsSpan(text.Length - (keep - head)));
+    }
+
+    /// <summary>Records which areas have newly finished, in the order they did, and tells the card.</summary>
+    internal void RefreshAreaProgress()
+    {
+        foreach (var item in StepItems)
+        {
+            if (item.IsDone && !_doneOrder.Contains(item))
+                _doneOrder.Add(item);
+        }
+
+        RaiseAreaProgress();
+    }
+
+    private void RaiseAreaProgress()
+    {
+        OnPropertyChanged(nameof(AreaTotalCount));
+        OnPropertyChanged(nameof(AreaDoneCount));
+        OnPropertyChanged(nameof(AreaOfTotalText));
+        OnPropertyChanged(nameof(LastDoneText));
+        OnPropertyChanged(nameof(StatusCaptionText));
+        OnPropertyChanged(nameof(DoneCountText));
+        OnPropertyChanged(nameof(StatusHeadlineText));
     }
 
     /// <summary>The status block takes the place of the drive facts as soon as a run exists.</summary>
@@ -51,10 +109,10 @@ public partial class CleanupViewModel
         _ => CleanupStatusKind.Cleaning,
     };
 
-    /// <summary>The small caption over the headline: "Aktuell" while it works, the result afterwards.</summary>
+    /// <summary>The small caption over the headline: "Bereich 3 von 10" while it works, the result afterwards.</summary>
     public string StatusCaptionText => Phase switch
     {
-        CleanupPhase.Cleaning => Loc["CleanupCurrentLabel"],
+        CleanupPhase.Cleaning => AreaOfTotalText,
         CleanupPhase.Finished => Loc[WasStopped ? "CleanupSummaryStopped" : "CleanupSummaryDone"],
         _ => string.Empty,
     };

@@ -1102,9 +1102,6 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   <data name="CleanupFreeSpaceNow" xml:space="preserve">
     <value>{0} liberi, +{1} după curățare</value>
   </data>
-  <data name="CleanupCurrentLabel" xml:space="preserve">
-    <value>Curent</value>
-  </data>
   <data name="CleanupFailedHeadline" xml:space="preserve">
     <value>Curățarea nu a putut fi finalizată</value>
   </data>
@@ -2209,20 +2206,11 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>{0} / {1} selectat</value>
   </data>
-  <data name="CleanupStepDone" xml:space="preserve">
-    <value>terminat</value>
-  </data>
-  <data name="CleanupStepTooltip" xml:space="preserve">
-    <value>{0}: {1}</value>
-  </data>
   <data name="CleanupStatFreed" xml:space="preserve">
     <value>Eliberat</value>
   </data>
   <data name="CleanupStatElapsed" xml:space="preserve">
     <value>Durată</value>
-  </data>
-  <data name="CleanupDetailsExpander" xml:space="preserve">
-    <value>Detalii</value>
   </data>
   <data name="CleanupSummaryDone" xml:space="preserve">
     <value>Curățare terminată</value>
@@ -2256,5 +2244,11 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>Deschide pagina versiunii</value>
+  </data>
+  <data name="CleanupAreaOfTotal" xml:space="preserve">
+    <value>Zona {0} din {1}</value>
+  </data>
+  <data name="CleanupLastDone" xml:space="preserve">
+    <value>Ultima finalizată: {0} · {1}</value>
   </data>
 </root>

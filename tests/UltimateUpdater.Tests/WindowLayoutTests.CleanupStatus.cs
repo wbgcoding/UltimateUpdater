@@ -15,7 +15,7 @@ public partial class WindowLayoutTests
 
     /// <summary>
     /// The status block beside the ring in its four faces (nothing run yet, cleaning with a long path
-    /// behind a closed expander, done, stopped), in both languages. The block has a fixed height, so the
+    /// on one trimmed line, done, stopped), in both languages. The block has a fixed height, so the
     /// header band must be exactly as tall in every face: nothing may push the list below.
     /// </summary>
     [Theory]
@@ -32,7 +32,8 @@ public partial class WindowLayoutTests
         RenderResult? result = null;
         double bandHeight = 0;
         double panelHeight = 0;
-        var stepCount = 0;
+        string caption = string.Empty;
+        string lastDone = string.Empty;
         string headline = string.Empty;
 
         WpfHarness.OnUiThread(() =>
@@ -95,6 +96,7 @@ public partial class WindowLayoutTests
                     viewModel.CurrentDetailText = LongCleanupPath;
                     viewModel.CleanPercent = 47;
                     window.DisplayPercent = 47;
+                    viewModel.RefreshAreaProgress();
                     viewModel.Phase = CleanupPhase.Cleaning;
                 }
                 else
@@ -116,8 +118,8 @@ public partial class WindowLayoutTests
             {
                 var panel = FindByName<Grid>(content, "CleanupRunPanel")!;
                 panelHeight = panel.ActualHeight;
-                var bar = FindByName<ItemsControl>(content, "CleanupStepBar")!;
-                stepCount = bar.Items.Count;
+                caption = FindByName<TextBlock>(content, "CleanupStatusCaption")!.Text;
+                lastDone = FindByName<TextBlock>(content, "CleanupStatusLastDone")!.Text;
                 headline = FindByName<TextBlock>(content, "CleanupStatusHeadline")!.Text;
             }
         });
@@ -127,7 +129,9 @@ public partial class WindowLayoutTests
         if (face == "idle")
             return;
 
-        Assert.Equal(14, stepCount);
+        Assert.False(string.IsNullOrWhiteSpace(caption));
+        if (face == "running")
+            Assert.False(string.IsNullOrWhiteSpace(lastDone));
         Assert.False(string.IsNullOrWhiteSpace(headline));
         Assert.Equal(206, panelHeight, 1);
         Assert.True(bandHeight >= 228 - 0.5, $"the header band is {bandHeight:F0}px high");

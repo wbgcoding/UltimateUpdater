@@ -1102,9 +1102,6 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="CleanupFreeSpaceNow" xml:space="preserve">
     <value>{0} frei, +{1} nach Bereinigung</value>
   </data>
-  <data name="CleanupCurrentLabel" xml:space="preserve">
-    <value>Aktuell</value>
-  </data>
   <data name="CleanupFailedHeadline" xml:space="preserve">
     <value>Die Bereinigung konnte nicht abgeschlossen werden</value>
   </data>
@@ -2209,20 +2206,11 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>{0} / {1} ausgewählt</value>
   </data>
-  <data name="CleanupStepDone" xml:space="preserve">
-    <value>Erledigt</value>
-  </data>
-  <data name="CleanupStepTooltip" xml:space="preserve">
-    <value>{0}: {1}</value>
-  </data>
   <data name="CleanupStatFreed" xml:space="preserve">
     <value>Freigegeben</value>
   </data>
   <data name="CleanupStatElapsed" xml:space="preserve">
     <value>Dauer</value>
-  </data>
-  <data name="CleanupDetailsExpander" xml:space="preserve">
-    <value>Details</value>
   </data>
   <data name="CleanupSummaryDone" xml:space="preserve">
     <value>Bereinigung abgeschlossen</value>
@@ -2256,5 +2244,11 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>Release-Seite öffnen</value>
+  </data>
+  <data name="CleanupAreaOfTotal" xml:space="preserve">
+    <value>Bereich {0} von {1}</value>
+  </data>
+  <data name="CleanupLastDone" xml:space="preserve">
+    <value>Zuletzt fertig: {0} · {1}</value>
   </data>
 </root>

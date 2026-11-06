@@ -1221,25 +1221,43 @@
                 </Grid>
 
                 <!-- The run: one fixed-height card, so the ring, the list below and the window never move while
-                     text inside it changes. Shape tells the states apart as well as colour. -->
+                     text inside it changes. Shape tells the states apart as well as colour. While it works:
+                     "area X of Y" over a thin bar, the area at work (bold, with its icon), the exact file or
+                     command on one line, and the area that finished last. The rows that carry text keep their
+                     line height when empty, so nothing below them shifts. -->
                 <Grid x:Name="CleanupRunPanel" Width="236" Height="206" HorizontalAlignment="Left"
                       Visibility="{Binding ShowsRunStatus, Converter={StaticResource BoolToVisibility}}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Which area, or how the run ended. -->
-                    <Grid Grid.Row="0">
+                    <!-- "Area 3 of 10" while it works, how the run ended afterwards. -->
+                    <TextBlock x:Name="CleanupStatusCaption" Grid.Row="0" Text="{Binding StatusCaptionText}"
+                               FontSize="11" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                    <!-- Progress over the areas of the run, not over bytes: the ring already carries those. -->
+                    <views:PillProgressBar x:Name="CleanupAreaBar" Grid.Row="1" Height="4" Margin="0,5,0,0"
+                                           HorizontalAlignment="Stretch"
+                                           Maximum="{Binding AreaTotalCount}" Value="{Binding AreaDoneCount}"
+                                           AutomationProperties.Name="{Binding StatusCaptionText}"
+                                           Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}"/>
+
+                    <!-- The area at work, or the count of what the run got through. -->
+                    <Grid Grid.Row="2" Margin="0,8,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon x:Name="CleanupStatusIcon" Grid.Column="0" FontSize="22" Margin="0,2,10,0"
-                                       VerticalAlignment="Top">
+                        <ui:SymbolIcon x:Name="CleanupStatusIcon" Grid.Column="0" FontSize="20" Margin="0,0,8,0"
+                                       VerticalAlignment="Center">
                             <ui:SymbolIcon.Style>
                                 <Style TargetType="ui:SymbolIcon">
                                     <Setter Property="Symbol" Value="{Binding CurrentGroupKey, Converter={StaticResource GroupIcon}}"/>
@@ -1257,64 +1275,37 @@
                                 </Style>
                             </ui:SymbolIcon.Style>
                         </ui:SymbolIcon>
-                        <StackPanel Grid.Column="1">
-                            <TextBlock Text="{Binding StatusCaptionText}" FontSize="11" TextTrimming="CharacterEllipsis"
-                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-                            <TextBlock x:Name="CleanupStatusHeadline" Text="{Binding StatusHeadlineText}" FontSize="13"
-                                       FontWeight="SemiBold" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
-                                       ToolTip="{Binding StatusHeadlineText}"
-                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                        </StackPanel>
-                        <TextBlock Grid.Column="2" Text="{Binding CurrentAreaPercentText}" FontSize="12" Margin="8,17,0,0"
-                                   VerticalAlignment="Top" Style="{StaticResource TabularNumberText}"
+                        <TextBlock x:Name="CleanupStatusHeadline" Grid.Column="1" Text="{Binding StatusHeadlineText}"
+                                   FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding StatusHeadlineText}"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding CurrentAreaPercentText}" FontSize="12" Margin="8,0,0,0"
+                                   VerticalAlignment="Center" Style="{StaticResource TabularNumberText}"
                                    Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                     </Grid>
 
-                    <!-- One glyph per area of the run. -->
-                    <ItemsControl x:Name="CleanupStepBar" Grid.Row="1" ItemsSource="{Binding StepItems}"
-                                  Margin="0,10,0,0" MaxHeight="57" ClipToBounds="True" Focusable="False">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Width="16" Height="16" Margin="0,0,3,3" Background="Transparent"
-                                        ToolTip="{Binding StepTooltip}"
-                                        AutomationProperties.Name="{Binding StepTooltip}">
-                                    <ui:SymbolIcon FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <ui:SymbolIcon.Style>
-                                            <Style TargetType="ui:SymbolIcon">
-                                                <Setter Property="Symbol" Value="Circle12"/>
-                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding StepKind}" Value="Done">
-                                                        <Setter Property="Symbol" Value="Checkmark12"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding StepKind}" Value="Running">
-                                                        <Setter Property="Filled" Value="True"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding StepKind}" Value="NothingFound">
-                                                        <Setter Property="Symbol" Value="Subtract12"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding StepKind}" Value="Stopped">
-                                                        <Setter Property="Symbol" Value="Dismiss12"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ui:SymbolIcon.Style>
-                                    </ui:SymbolIcon>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <!-- The file or command, one line, shortened in the middle so both its start and its end
+                         stay readable; the tooltip carries the whole text. -->
+                    <TextBlock x:Name="CleanupStatusPath" Grid.Row="3" Margin="0,5,0,0"
+                               Text="{Binding CurrentPathText}" FontSize="11"
+                               FontFamily="Consolas, Cascadia Mono, Courier New"
+                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding CurrentDetailText}"
+                               AutomationProperties.Name="{Binding CurrentDetailText}"
+                               Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                    <TextBlock x:Name="CleanupStatusLastDone" Grid.Row="4" Margin="0,3,0,0"
+                               Text="{Binding LastDoneText}" FontSize="11" TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding LastDoneText}"
+                               AutomationProperties.Name="{Binding LastDoneText}"
+                               Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
 
                     <!-- Freed so far and the time it took. -->
-                    <Grid Grid.Row="2" Margin="0,8,0,0">
+                    <Grid Grid.Row="5" Margin="0,10,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
@@ -1335,23 +1326,12 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- While it works: the exact file or command behind a closed expander, so its length never
-                         moves anything. After it: what stayed behind. -->
-                    <Grid Grid.Row="3" Margin="0,6,0,0" ClipToBounds="True">
-                        <Expander x:Name="CleanupDetailExpander" Header="{Binding Loc[CleanupDetailsExpander]}"
-                                  Padding="0,4,0,0" VerticalAlignment="Top" FontSize="11"
-                                  Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock Text="{Binding CurrentDetailText}" FontSize="11"
-                                       FontFamily="Consolas, Cascadia Mono, Courier New"
-                                       TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="30"
-                                       ToolTip="{Binding CurrentDetailText}"
-                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-                        </Expander>
-                        <TextBlock Text="{Binding SkippedText}" FontSize="12" TextWrapping="Wrap"
-                                   TextTrimming="CharacterEllipsis" MaxHeight="48" VerticalAlignment="Top"
-                                   Visibility="{Binding IsFinished, Converter={StaticResource BoolToVisibility}}"
-                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-                    </Grid>
+                    <!-- After the run: what stayed behind. -->
+                    <TextBlock Grid.Row="6" Margin="0,8,0,0" Text="{Binding SkippedText}" FontSize="12"
+                               TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="48"
+                               VerticalAlignment="Top"
+                               Visibility="{Binding IsFinished, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                 </Grid>
             </StackPanel>
 
