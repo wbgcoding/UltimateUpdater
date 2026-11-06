@@ -2254,4 +2254,10 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupLastDone" xml:space="preserve">
     <value>Ultima finalizată: {0} · {1}</value>
   </data>
+  <data name="TextMenuCopy" xml:space="preserve">
+    <value>Copiază</value>
+  </data>
+  <data name="TextMenuSelectAll" xml:space="preserve">
+    <value>Selectează tot</value>
+  </data>
 </root>

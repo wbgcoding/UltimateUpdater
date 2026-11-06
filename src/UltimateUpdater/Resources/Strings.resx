@@ -2254,4 +2254,10 @@ Continue with admin rights?</value>
   <data name="CleanupLastDone" xml:space="preserve">
     <value>Last done: {0} · {1}</value>
   </data>
+  <data name="TextMenuCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="TextMenuSelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
 </root>

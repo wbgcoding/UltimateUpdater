@@ -2254,4 +2254,10 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupLastDone" xml:space="preserve">
     <value>直前に完了: {0} · {1}</value>
   </data>
+  <data name="TextMenuCopy" xml:space="preserve">
+    <value>コピー</value>
+  </data>
+  <data name="TextMenuSelectAll" xml:space="preserve">
+    <value>すべて選択</value>
+  </data>
 </root>

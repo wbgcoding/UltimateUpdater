@@ -2254,4 +2254,10 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="CleanupLastDone" xml:space="preserve">
     <value>Ostatnio ukończono: {0} · {1}</value>
   </data>
+  <data name="TextMenuCopy" xml:space="preserve">
+    <value>Kopiuj</value>
+  </data>
+  <data name="TextMenuSelectAll" xml:space="preserve">
+    <value>Zaznacz wszystko</value>
+  </data>
 </root>

@@ -78,7 +78,18 @@
                      VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled"
                      Background="Transparent" BorderThickness="0" Padding="20,12"
                      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-                     AutomationProperties.Name="{Binding WindowTitle}"/>
+                     AutomationProperties.Name="{Binding WindowTitle}">
+                <!-- The text box's built-in menu is an internal subclass of ContextMenu, which an implicit
+                     style never reaches, so it would stay grey. A read-only text needs only these two. -->
+                <TextBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="{Binding Loc[TextMenuCopy]}" Command="ApplicationCommands.Copy"
+                                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                        <MenuItem Header="{Binding Loc[TextMenuSelectAll]}" Command="ApplicationCommands.SelectAll"
+                                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                    </ContextMenu>
+                </TextBox.ContextMenu>
+            </TextBox>
         </Border>
 
         <Grid x:Name="ChangelogActionRow" Grid.Row="3" Margin="20,12,20,20">

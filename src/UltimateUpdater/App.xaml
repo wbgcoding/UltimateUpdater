@@ -21,6 +21,182 @@
             <views:GroupSelectionConverter x:Key="GroupSelection" />
             <views:WideEnoughToVisibilityConverter x:Key="WideEnough" />
 
+            <!-- Themed row context menu (updates only): rounded card surface, flat items with a rounded
+                 hover highlight, matching the rest of the app rather than the classic Win32 menu. -->
+            <Style x:Key="RowMenuItem" TargetType="MenuItem">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                <Setter Property="Padding" Value="11,7"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Border x:Name="Bd" Background="Transparent" CornerRadius="5" Margin="3,1"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- RowMenuItem's own template has no Popup at all (it only ever drew a plain header before now),
+                 so it cannot host a submenu, reusing it for "Remind me later" would render the header but
+                 never open the three durations under it. Same themed surface, plus the Popup a submenu needs. -->
+            <Style x:Key="RowSubmenuItem" TargetType="MenuItem" BasedOn="{StaticResource RowMenuItem}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Grid>
+                                <Border x:Name="Bd" Background="Transparent" CornerRadius="5" Margin="3,1"
+                                        Padding="{TemplateBinding Padding}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <ContentPresenter Grid.Column="0" ContentSource="Header" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="›" Margin="12,0,0,0" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                    </Grid>
+                                </Border>
+                                <Popup x:Name="PART_Popup" Placement="Right" AllowsTransparency="True"
+                                       Focusable="False" PopupAnimation="Fade"
+                                       IsOpen="{TemplateBinding IsSubmenuOpen}">
+                                    <Border Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
+                                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1" CornerRadius="7" Padding="3" MinWidth="150">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.35" Direction="270"/>
+                                        </Border.Effect>
+                                        <StackPanel IsItemsHost="True"/>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="RowContextMenu" TargetType="ContextMenu">
+                <!-- An OPAQUE solid fill, not the semi-transparent card brush, so the menu never shows the
+                     rows through it. -->
+                <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContextMenu">
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" CornerRadius="7" Padding="3" MinWidth="180">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.35" Direction="270"/>
+                                </Border.Effect>
+                                <StackPanel IsItemsHost="True"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Every other menu in the app (the cleanup window's menus, the column chooser, the filter menu,
+                 the changelog text box) takes the row menu's look through these implicit styles, instead of the
+                 grey system menu. Unlike RowMenuItem this template carries everything a general menu item can
+                 need: a check mark for checkable items, the shortcut text, and the arrow and popup of a submenu. -->
+            <Style TargetType="ContextMenu" BasedOn="{StaticResource RowContextMenu}"/>
+            <Style TargetType="MenuItem">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                <Setter Property="Padding" Value="11,7"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Grid>
+                                <Border x:Name="Bd" Background="Transparent" CornerRadius="5" Margin="3,1"
+                                        Padding="{TemplateBinding Padding}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Hidden, not collapsed, on an unchecked checkable item, so the labels
+                                             of a checkbox menu stay in one line whatever is ticked. -->
+                                        <ui:SymbolIcon x:Name="Check" Grid.Column="0" Symbol="Checkmark16" FontSize="14"
+                                                       Width="16" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                                       Visibility="Collapsed"/>
+                                        <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center"
+                                                          RecognizesAccessKey="True"/>
+                                        <TextBlock x:Name="Gesture" Grid.Column="2" Text="{TemplateBinding InputGestureText}"
+                                                   Margin="24,0,0,0" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                        <TextBlock x:Name="Arrow" Grid.Column="3" Text="›" Margin="12,0,0,0"
+                                                   VerticalAlignment="Center" Visibility="Collapsed"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                    </Grid>
+                                </Border>
+                                <Popup x:Name="PART_Popup" Placement="Right" AllowsTransparency="True"
+                                       Focusable="False" PopupAnimation="Fade"
+                                       IsOpen="{TemplateBinding IsSubmenuOpen}">
+                                    <Border Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
+                                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1" CornerRadius="7" Padding="3" MinWidth="150">
+                                        <Border.Effect>
+                                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.35" Direction="270"/>
+                                        </Border.Effect>
+                                        <StackPanel IsItemsHost="True"/>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsCheckable" Value="True">
+                                    <Setter TargetName="Check" Property="Visibility" Value="Hidden"/>
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                                <Trigger Property="InputGestureText" Value="">
+                                    <Setter TargetName="Gesture" Property="Visibility" Value="Collapsed"/>
+                                </Trigger>
+                                <Trigger Property="HasItems" Value="True">
+                                    <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="Gesture" Property="Visibility" Value="Collapsed"/>
+                                </Trigger>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Separator">
+                            <Border Height="1" Margin="8,4" Background="{DynamicResource CardStrokeColorDefaultBrush}"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <!-- The one shared tone for a standalone panel surface (a hint banner, the main table, the
                  cleanup targets card, a settings card, a history list): defined ONCE here so every one of
                  them stays in step, rather than each window copying the same four properties locally and

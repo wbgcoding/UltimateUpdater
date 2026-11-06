@@ -2254,4 +2254,10 @@ Continuar com direitos de administrador?</value>
   <data name="CleanupLastDone" xml:space="preserve">
     <value>Última concluída: {0} · {1}</value>
   </data>
+  <data name="TextMenuCopy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="TextMenuSelectAll" xml:space="preserve">
+    <value>Selecionar tudo</value>
+  </data>
 </root>
