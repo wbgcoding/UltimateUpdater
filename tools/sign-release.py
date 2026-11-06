@@ -1,6 +1,7 @@
 """Signs release artifacts with the release key (ECDSA P-256 over SHA-256).
 
   sign-release.py --generate [--key PATH]    create the key pair once, print ONLY the public key (PEM)
+  sign-release.py --lock [--key PATH]        restrict an existing key file to the current user, prints nothing
   sign-release.py DIST_DIR [--key PATH]      write <asset>.sig for every *.exe and SHA256SUMS.txt in DIST_DIR
 
 The private key lives in the gitignored .signing/release-key.pem next to the repo root and is never
@@ -10,6 +11,7 @@ signature (r then s, 32 bytes each), the format the app's verifier reads.
 import argparse
 import base64
 import os
+import subprocess
 import sys
 
 from cryptography.hazmat.primitives import hashes, serialization
@@ -18,6 +20,28 @@ from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_KEY = os.path.join(ROOT, ".signing", "release-key.pem")
+
+
+def lock(key_path):
+    """Drops inherited permissions on the key file and leaves full access to the current user alone."""
+    user = os.environ.get("USERNAME")
+    if not user:
+        print("Cannot tell the current user; the key file was not locked.", file=sys.stderr)
+        return 1
+    if not os.path.isfile(key_path):
+        print("No key file at the given path.", file=sys.stderr)
+        return 1
+
+    result = subprocess.run(
+        ["icacls", key_path, "/inheritance:r", "/grant:r", user + ":F"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if result.returncode != 0:
+        print("icacls failed; the key file is not locked. Run this tool with --lock to retry.", file=sys.stderr)
+        return 1
+    return 0
 
 
 def generate(key_path):
@@ -35,6 +59,8 @@ def generate(key_path):
     # exclusive create: never replaces a key that appeared meanwhile
     with open(key_path, "xb") as handle:
         handle.write(pem)
+    if lock(key_path) != 0:
+        return 1
 
     public = key.public_key().public_bytes(
         serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
@@ -82,11 +108,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("dist", nargs="?")
     parser.add_argument("--generate", action="store_true")
+    parser.add_argument("--lock", action="store_true")
     parser.add_argument("--key", default=DEFAULT_KEY)
     args = parser.parse_args()
 
     if args.generate:
         return generate(args.key)
+    if args.lock:
+        return lock(args.key)
     if not args.dist:
         parser.error("a dist folder is needed")
     return sign_directory(args.dist, args.key)

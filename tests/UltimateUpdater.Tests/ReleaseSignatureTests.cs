@@ -386,6 +386,7 @@ public class ReleaseSignatureTests
             var publicPem = RunPython(script, "--generate", "--key", keyPath).Trim();
             Assert.StartsWith("-----BEGIN PUBLIC KEY-----", publicPem);
             Assert.DoesNotContain("PRIVATE", publicPem);
+            AssertOnlyTheCurrentUserHasAccess(keyPath);
 
             File.WriteAllBytes(Path.Combine(dist, ExeName), Content);
             File.WriteAllText(Path.Combine(dist, "SHA256SUMS.txt"), "sums");
@@ -407,6 +408,63 @@ public class ReleaseSignatureTests
         {
             Directory.Delete(work, recursive: true);
         }
+    }
+
+    [Fact]
+    public void The_lock_mode_restricts_an_existing_key_file_to_the_current_user_and_prints_nothing()
+    {
+        if (!PythonWithCryptography())
+            return;
+
+        var script = Path.Combine(RepoRoot(), "tools", "sign-release.py");
+        var work = Path.Combine(Path.GetTempPath(), "uu-lock-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(work);
+        try
+        {
+            // not a key: the lock mode must work on the file's permissions alone, never on its contents
+            var keyPath = Path.Combine(work, "release-key.pem");
+            File.WriteAllText(keyPath, "placeholder");
+            var info = new FileInfo(keyPath);
+            var security = info.GetAccessControl();
+            security.SetAccessRuleProtection(isProtected: false, preserveInheritance: true);
+            info.SetAccessControl(security);
+            Assert.False(info.GetAccessControl().AreAccessRulesProtected);
+
+            var output = RunPython(script, "--lock", "--key", keyPath);
+
+            Assert.Equal(string.Empty, output.Trim());
+            AssertOnlyTheCurrentUserHasAccess(keyPath);
+            Assert.Equal("placeholder", File.ReadAllText(keyPath));
+        }
+        finally
+        {
+            Directory.Delete(work, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void The_lock_mode_refuses_a_missing_key_file()
+    {
+        if (!PythonWithCryptography())
+            return;
+
+        var script = Path.Combine(RepoRoot(), "tools", "sign-release.py");
+        var missing = Path.Combine(Path.GetTempPath(), "uu-nokey-" + Guid.NewGuid().ToString("N"), "release-key.pem");
+
+        Assert.ThrowsAny<Exception>(() => RunPython(script, "--lock", "--key", missing));
+    }
+
+    private static void AssertOnlyTheCurrentUserHasAccess(string path)
+    {
+        var security = new FileInfo(path).GetAccessControl();
+        Assert.True(security.AreAccessRulesProtected, "the key still inherits permissions from its folder");
+
+        var self = System.Security.Principal.WindowsIdentity.GetCurrent().User;
+        var rules = security.GetAccessRules(true, true, typeof(System.Security.Principal.SecurityIdentifier))
+            .Cast<System.Security.AccessControl.FileSystemAccessRule>()
+            .ToList();
+        Assert.NotEmpty(rules);
+        Assert.All(rules, rule => Assert.Equal(self, rule.IdentityReference));
     }
 
     private static bool PythonWithCryptography()
