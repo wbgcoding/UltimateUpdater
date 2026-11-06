@@ -26,11 +26,19 @@ versioning: [SemVer](https://semver.org).
   shortcuts, uv and rustup show their brand mark, and driver rows show the icon of the installed vendor
   tool (NVIDIA App, AMD Software, Intel assistant).
 - New app icon.
+- The update list has a calmer look: thin lines between rows, small group headings, a light tint on
+  ticked rows, and neutral tiles for programs without an icon.
+- Packages from pip, npm, pnpm, gem, Composer and other package managers show the mark of their package
+  manager instead of a random program icon.
+- When every GitHub lookup fails, the source names the reason; a reached GitHub limit says when lookups
+  work again.
+- Settings sections open and close smoothly, and the About section shows the app icon.
 
 ### Cleanup
-- The status card beside the ring is new: current area, a step bar of all areas, freed space, elapsed
-  time and details on demand, plus a summary at the end.
-- The selection shows the selected and found size ("276 MB / 326 MB selected").
+- The status card beside the ring is new: "Area 7 of 14" with a bar, the current area and file, the
+  last finished area, freed space and elapsed time, plus a summary at the end.
+- The selection shows the selected and found size ("276 MB / 326 MB selected"), and so does every row
+  of the list, already before cleaning.
 - The list card has clean rounded corners.
 - The main window's Clean up button shows the percentage while a cleanup runs.
 
