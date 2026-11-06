@@ -117,6 +117,29 @@ public static class UpdateManifest
         return new ReleaseInfo(NormalizeVersion(tag), assets, GetString(element, "body"));
     }
 
+    private const string VersionLinePrefix = "# version ";
+
+    /// <summary>The version the signed checksum file names on its first line (<c># version 1.2.3</c>), or
+    /// null when that line is missing or malformed. It binds the digests to one release, so a genuine file of an
+    /// older release cannot be passed off as the newer one.</summary>
+    public static string? ReadSignedVersion(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+            return null;
+
+        var end = content.IndexOfAny(['\r', '\n']);
+        var first = (end < 0 ? content : content[..end]).Trim();
+        if (!first.StartsWith(VersionLinePrefix, StringComparison.Ordinal))
+            return null;
+
+        var version = first[VersionLinePrefix.Length..].Trim();
+        return ParseSemver(version) is null ? null : version;
+    }
+
+    /// <summary>True when both texts are the same valid version (a leading "v" and build metadata are ignored).</summary>
+    public static bool IsSameVersion(string left, string right) =>
+        ParseSemver(left) is { } a && ParseSemver(right) is { } b && Compare(a, b) == 0;
+
     /// <summary>Parses a SHA256SUMS.txt body into filename → lowercase hex digest.</summary>
     public static IReadOnlyDictionary<string, string> ParseChecksums(string content)
     {
@@ -127,7 +150,7 @@ public static class UpdateManifest
         foreach (var rawLine in content.Replace("\r\n", "\n").Split('\n'))
         {
             var line = rawLine.Trim();
-            if (line.Length == 0)
+            if (line.Length == 0 || line[0] == '#')
                 continue;
 
             // "<64 hex> <filename>", with the leading "*" binary marker allowed

@@ -10,8 +10,11 @@ namespace UltimateUpdater.Services.SelfUpdate;
 
 /// <param name="SignatureAsset">The release's <c>&lt;asset&gt;.sig</c>; null when the release carries none,
 /// which the download then refuses.</param>
+/// <param name="ChecksumSignatureAsset">The signature of the checksum file itself; null when the release has
+/// none, which the download refuses the same way.</param>
 public sealed record AvailableUpdate(
-    string Version, ReleaseAsset Asset, ReleaseAsset ChecksumAsset, string ReleaseNotes, ReleaseAsset? SignatureAsset = null);
+    string Version, ReleaseAsset Asset, ReleaseAsset ChecksumAsset, string ReleaseNotes, ReleaseAsset? SignatureAsset = null,
+    ReleaseAsset? ChecksumSignatureAsset = null);
 
 /// <summary>What a check concluded. <see cref="Failed"/> is "could not tell" (network, timeout, unreadable
 /// feed), never to be shown as "up to date".</summary>
@@ -92,10 +95,14 @@ public sealed partial class SelfUpdateService
     /// <summary>The key releases must be signed with; a test passes its own so no real key is ever needed.</summary>
     private readonly string _publicKeyPem;
 
+    /// <summary>Whether this copy was set up by the installer; decides which asset it may take. A test passes its own.</summary>
+    private readonly Func<bool> _isInstalled;
+
     public SelfUpdateService(
         HttpClient httpClient, LoggingService logging, IUpdateChannel channel, Func<string?>? currentImagePath = null,
-        string? publicKeyPem = null)
+        string? publicKeyPem = null, Func<bool>? isInstalled = null)
     {
+        _isInstalled = isInstalled ?? (() => AppPaths.IsInstalled);
         _httpClient = httpClient;
         _logging = logging;
         _channel = channel;
@@ -166,10 +173,12 @@ public sealed partial class SelfUpdateService
             // message, so the user learns why instead of the update silently never appearing.
             var signature = release.Assets.FirstOrDefault(a =>
                 string.Equals(a.Name, asset.Name + SignatureSuffix, StringComparison.OrdinalIgnoreCase));
+            var checksumSignature = release.Assets.FirstOrDefault(a =>
+                string.Equals(a.Name, ChecksumFileName + SignatureSuffix, StringComparison.OrdinalIgnoreCase));
 
             return new SelfUpdateCheckResult(
                 SelfUpdateCheckOutcome.Found,
-                new AvailableUpdate(release.Version, asset, checksums, release.ReleaseNotes, signature));
+                new AvailableUpdate(release.Version, asset, checksums, release.ReleaseNotes, signature, checksumSignature));
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -227,9 +236,19 @@ public sealed partial class SelfUpdateService
                 return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.SignatureInvalid);
             }
 
-            if (update.SignatureAsset is null)
+            // The artifact signature covers bytes only, so the name decides what Apply does with them: a signed
+            // portable exe renamed to a Setup name would otherwise be started elevated as an installer. Only the
+            // exact name for this install kind is taken.
+            var expectedName = ExpectedAssetName(_isInstalled(), update.Version);
+            if (!string.Equals(update.Asset.Name, expectedName, StringComparison.Ordinal))
             {
-                _logging.EventFailed(ActivityLog.SelfUpdate, $"release has no signature for '{update.Asset.Name}'");
+                _logging.EventFailed(ActivityLog.SelfUpdate, $"'{update.Asset.Name}' is not the artifact this install takes; refusing the update");
+                return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.SignatureInvalid);
+            }
+
+            if (update.SignatureAsset is null || update.ChecksumSignatureAsset is null)
+            {
+                _logging.EventFailed(ActivityLog.SelfUpdate, "release is missing a signature file");
                 return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.SignatureInvalid);
             }
 
@@ -240,6 +259,30 @@ public sealed partial class SelfUpdateService
             var checksumBody = await _channel.GetStringAsync(_httpClient, ChooseUrl(update.ChecksumAsset), cancellationToken);
             if (checksumBody is null)
                 return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.NetworkFailed);
+
+            var checksumSignatureText = await _channel.GetStringAsync(_httpClient, ChooseUrl(update.ChecksumSignatureAsset), cancellationToken);
+            if (checksumSignatureText is null)
+                return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.NetworkFailed);
+
+            // No digest from the checksum file is trusted before the release key has signed that file: the
+            // artifact signature alone would let someone with write access to the release swap in an older
+            // signed artifact under a newer tag.
+            using (var checksumBytes = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(checksumBody)))
+            {
+                if (!ReleaseSignature.Verify(checksumBytes, checksumSignatureText, _publicKeyPem))
+                {
+                    _logging.EventFailed(ActivityLog.SelfUpdate, "signature check failed for the checksum file; refusing the update");
+                    return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.SignatureInvalid);
+                }
+            }
+
+            var signedVersion = UpdateManifest.ReadSignedVersion(checksumBody);
+            if (signedVersion is null || !UpdateManifest.IsSameVersion(signedVersion, update.Version)
+                || !UpdateManifest.IsNewer(CurrentVersion, signedVersion))
+            {
+                _logging.EventFailed(ActivityLog.SelfUpdate, "the signed version does not match the offered one or is not newer; refusing the update");
+                return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.SignatureInvalid);
+            }
 
             var checksums = UpdateManifest.ParseChecksums(checksumBody);
             if (!checksums.TryGetValue(update.Asset.Name, out var expectedDigest))
@@ -746,22 +789,17 @@ public sealed partial class SelfUpdateService
 
     private ReleaseAsset? SelectAssetForThisMachine(ReleaseInfo release)
     {
-        // installed builds take the installer, portable builds take the fixed-name portable exe
-        if (AppPaths.IsInstalled)
-        {
-            // ONE installer carries both architectures and picks at install time, so its name has no
-            // architecture in it. Requiring one here meant an installed copy never found an update.
-            return release.Assets.FirstOrDefault(a =>
-                a.Name.StartsWith("Setup-", StringComparison.OrdinalIgnoreCase) &&
-                a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
-        }
-
-        // The portable download is x64-only, so there is nothing to disambiguate by
-        // architecture any more. An ARM64 machine running a portable copy is not a supported shape:
-        // ARM64 users take the installer, which is the only place that architecture is offered.
-        return release.Assets.FirstOrDefault(a =>
-            string.Equals(a.Name, PortableAssetName, StringComparison.OrdinalIgnoreCase));
+        // Installed builds take the installer, portable builds the fixed-name portable exe. ONE installer
+        // carries both architectures and picks at install time, so its name has no architecture in it. The
+        // portable download is x64-only; an ARM64 machine running a portable copy is not a supported shape,
+        // ARM64 users take the installer.
+        var expected = ExpectedAssetName(_isInstalled(), release.Version);
+        return release.Assets.FirstOrDefault(a => string.Equals(a.Name, expected, StringComparison.Ordinal));
     }
+
+    /// <summary>The one asset name this install kind may take for <paramref name="version"/>.</summary>
+    internal static string ExpectedAssetName(bool installed, string version) =>
+        installed ? $"Setup-UltimateUpdater-{version}.exe" : PortableAssetName;
 
     private static string ChooseUrl(ReleaseAsset asset) =>
         string.IsNullOrEmpty(asset.DownloadUrl) ? asset.ApiUrl : asset.DownloadUrl;

@@ -24,10 +24,14 @@ public class SelfUpdateOutcomeTests
         """;
 
     private static SelfUpdateService Service(ScriptedChannel channel) =>
-        new(new HttpClient(), new LoggingService(), channel, publicKeyPem: TestKeyPem);
+        new(new HttpClient(), new LoggingService(), channel, publicKeyPem: TestKey.ExportSubjectPublicKeyInfoPem());
 
-    private static readonly string TestKeyPem =
-        System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256).ExportSubjectPublicKeyInfoPem();
+    private static readonly ECDsa TestKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+    /// <summary>Every answer a release serves, signed with <see cref="TestKey"/>: the checksum file (with its
+    /// version line), the signature of that file and the signature of the artifact.</summary>
+    private static Func<string, CancellationToken, Task<string?>> Feed(byte[] listed, string name = "UltimateUpdater.exe") =>
+        (url, _) => SignedFeed(TestKey, url, listed, listed, "999.0.0", name);
 
     [Fact]
     public async Task A_check_that_gets_no_answer_is_failed_not_up_to_date()
@@ -82,7 +86,8 @@ public class SelfUpdateOutcomeTests
         new ReleaseAsset("UltimateUpdater.exe", "https://github.com/x/y/a.exe", "", size),
         new ReleaseAsset("SHA256SUMS.txt", "https://github.com/x/y/SHA256SUMS.txt", "", 10),
         string.Empty,
-        new ReleaseAsset("UltimateUpdater.exe.sig", "https://github.com/x/y/a.exe.sig", "", 90));
+        new ReleaseAsset("UltimateUpdater.exe.sig", "https://github.com/x/y/a.exe.sig", "", 90),
+        new ReleaseAsset("SHA256SUMS.txt.sig", "https://github.com/x/y/SHA256SUMS.txt.sig", "", 90));
 
     [Fact]
     public async Task A_missing_checksum_file_is_a_network_failure()
@@ -99,7 +104,7 @@ public class SelfUpdateOutcomeTests
     {
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  UltimateUpdater.exe"),
+            Get = Feed([1, 2, 3]),
             Download = (_, _) => Task.FromResult(false),
         };
 
@@ -114,7 +119,7 @@ public class SelfUpdateOutcomeTests
         string? staged = null;
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  UltimateUpdater.exe"),
+            Get = Feed([1, 2, 3]),
             Download = (target, _) =>
             {
                 staged = target;
@@ -139,7 +144,7 @@ public class SelfUpdateOutcomeTests
     {
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  UltimateUpdater.exe"),
+            Get = Feed([1, 2, 3]),
             Download = (_, _) => throw new HttpRequestException("reset"),
         };
 
@@ -171,7 +176,7 @@ public class SelfUpdateOutcomeTests
     {
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  some other file.exe"),
+            Get = Feed([1, 2, 3], "some other file.exe"),
         };
 
         var result = await Service(channel).DownloadVerifiedAsync(Update(), CancellationToken.None);
@@ -184,7 +189,7 @@ public class SelfUpdateOutcomeTests
     {
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  UltimateUpdater.exe"),
+            Get = Feed([1, 2, 3]),
         };
 
         var result = await Service(channel)
@@ -199,7 +204,7 @@ public class SelfUpdateOutcomeTests
         string? written = null;
         var channel = new ScriptedChannel
         {
-            Get = (_, _) => Task.FromResult<string?>($"{new string('a', 64)}  UltimateUpdater.exe"),
+            Get = Feed([9, 9, 9]),
             Download = (path, _) =>
             {
                 written = path;
@@ -219,14 +224,10 @@ public class SelfUpdateOutcomeTests
     public async Task Progress_runs_from_download_to_verification_and_never_steps_back()
     {
         var content = new byte[] { 1, 2, 3, 4 };
-        using var key = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
-        var signature = Convert.ToBase64String(key.SignData(
-            content,
-            System.Security.Cryptography.HashAlgorithmName.SHA256,
-            System.Security.Cryptography.DSASignatureFormat.IeeeP1363FixedFieldConcatenation));
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var channel = new ScriptedChannel
         {
-            Get = (url, _) => Task.FromResult<string?>(url.EndsWith(".sig", StringComparison.Ordinal) ? signature : ChecksumLine(content)),
+            Get = (url, _) => SignedFeed(key, url, content, content, "999.0.0", "UltimateUpdater.exe"),
             Readings = [(1, 4), (2, 4), (4, 4)],
             Download = (path, _) =>
             {
@@ -237,8 +238,7 @@ public class SelfUpdateOutcomeTests
         var seen = new List<SelfUpdateProgress>();
 
         var service = new SelfUpdateService(new HttpClient(), new LoggingService(), channel, publicKeyPem: key.ExportSubjectPublicKeyInfoPem());
-        var update = Update() with { SignatureAsset = new ReleaseAsset("UltimateUpdater.exe.sig", "https://github.com/x/y/a.exe.sig", "", 90) };
-        var result = await service.DownloadVerifiedAsync(update, CancellationToken.None, new Collector(seen));
+        var result = await service.DownloadVerifiedAsync(Update(), CancellationToken.None, new Collector(seen));
         if (result.Path is not null)
             service.DiscardVerified(result.Path);
 
@@ -255,9 +255,26 @@ public class SelfUpdateOutcomeTests
         public void Report(SelfUpdateProgress value) => target.Add(value);
     }
 
-    /// <summary>The checksum line for <paramref name="content"/> under the portable asset name.</summary>
-    internal static string ChecksumLine(byte[] content) =>
-        $"{Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant()}  UltimateUpdater.exe";
+    /// <summary>The checksum file as the build writes it: a version line, then one digest line.</summary>
+    internal static string ChecksumLine(byte[] content, string version = "999.0.0", string name = "UltimateUpdater.exe") =>
+        $"# version {version}\r\n{Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant()}  {name}\r\n";
+
+    internal static string SignText(ECDsa key, string text) => SignBytes(key, System.Text.Encoding.UTF8.GetBytes(text));
+
+    internal static string SignBytes(ECDsa key, byte[] data) =>
+        Convert.ToBase64String(key.SignData(data, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation));
+
+    /// <summary>What a fully signed release answers for <paramref name="url"/>: the checksum file lists
+    /// <paramref name="listed"/>, the artifact signature covers <paramref name="signedContent"/>.</summary>
+    internal static Task<string?> SignedFeed(
+        ECDsa key, string url, byte[] listed, byte[] signedContent, string version, string name)
+    {
+        var sums = ChecksumLine(listed, version, name);
+        if (url.EndsWith("SHA256SUMS.txt.sig", StringComparison.Ordinal))
+            return Task.FromResult<string?>(SignText(key, sums));
+
+        return Task.FromResult<string?>(url.EndsWith(".sig", StringComparison.Ordinal) ? SignBytes(key, signedContent) : sums);
+    }
 
     internal sealed class ScriptedChannel : IUpdateChannel
     {

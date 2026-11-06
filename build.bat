@@ -252,8 +252,10 @@ echo.
 echo === checksums ===
 rem One SHA256SUMS.txt over every shipped artifact; the self-updater verifies against it.
 rem Get-FileHash is used rather than certutil, whose output is localized and would break parsing.
+rem The first line names the version. The file is signed, so the app can tell this release's digests from an
+rem older signed release re-published under a newer tag.
 powershell -NoProfile -Command ^
-    "Get-ChildItem -Path '%DIST%\*.exe' | ForEach-Object { '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name } | Set-Content -Path '%DIST%\SHA256SUMS.txt' -Encoding ascii"
+    "$l = @('# version %VERSION%'); $l += Get-ChildItem -Path '%DIST%\*.exe' | ForEach-Object { '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name }; $l | Set-Content -Path '%DIST%\SHA256SUMS.txt' -Encoding ascii"
 if errorlevel 1 goto :error
 if not exist "%DIST%\SHA256SUMS.txt" (
     echo ERROR: no checksum file was produced.

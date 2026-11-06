@@ -226,6 +226,24 @@ public class SelfUpdateTests
         Assert.True(checksums.ContainsKey("Setup-UltimateUpdater-0.2.0.exe"));
     }
 
+    [Fact]
+    public void A_version_line_is_skipped_by_the_checksum_parser_and_read_as_the_signed_version()
+    {
+        const string body = "# version 1.2.3\r\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  UltimateUpdater.exe\r\n";
+
+        Assert.Equal("1.2.3", UpdateManifest.ReadSignedVersion(body));
+        Assert.Equal("UltimateUpdater.exe", Assert.Single(UpdateManifest.ParseChecksums(body)).Key);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  a.exe\n# version 1.2.3\n")]
+    [InlineData("# version\n")]
+    [InlineData("# version not-a-version\n")]
+    [InlineData("#version 1.2.3\n")]
+    public void Only_a_well_formed_first_line_counts_as_the_signed_version(string body) =>
+        Assert.Null(UpdateManifest.ReadSignedVersion(body));
+
     [Theory]
     [InlineData("")]
     [InlineData("garbage")]
