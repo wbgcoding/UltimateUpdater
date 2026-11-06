@@ -134,6 +134,35 @@ public class SettingsExpanderTests : IDisposable
     }
 
     [Fact]
+    public void A_move_counts_as_settling_until_it_has_arrived()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            // The eased value comes within a hair of its target before the animation completes; in
+            // that last stretch the card must still count as moving, or a caller that waits for the
+            // move to end sees a closed card that is still visible.
+            var reveal = new RevealDecorator { Child = new Border { Height = 100 } };
+            var settled = 0;
+            reveal.Settled += (_, _) => settled++;
+
+            foreach (var open in new[] { true, false })
+            {
+                settled = 0;
+                reveal.IsOpen = open;
+                for (var attempt = 0; attempt < 2000 && reveal.IsSettling; attempt++)
+                {
+                    Tick();
+                    Thread.Sleep(1);
+                }
+
+                Assert.False(reveal.IsSettling, "the move never arrived");
+                Assert.Equal(1, settled);
+                Assert.Equal(open ? Visibility.Visible : Visibility.Collapsed, reveal.Visibility);
+            }
+        });
+    }
+
+    [Fact]
     public void Without_window_animations_a_card_closes_at_once()
     {
         MotionPreference.AnimationsEnabledForTest = false;

@@ -64,8 +64,10 @@ internal sealed class RevealDecorator : Decorator
         remove => RemoveHandler(SettledEvent, value);
     }
 
-    /// <summary>True while a move is under way (the layout height is still changing).</summary>
-    internal bool IsSettling => Math.Abs(Progress - (IsOpen ? 1.0 : 0.0)) > 0.0001;
+    /// <summary>True from the start of a move until it has arrived and Settled was raised. The eased value
+    /// sits within a hair of its target for the last frames before the animation completes, so the value
+    /// alone cannot tell.</summary>
+    internal bool IsSettling { get; private set; }
 
     private static void OnIsOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((RevealDecorator)d).MoveTo((bool)e.NewValue);
@@ -90,6 +92,7 @@ internal sealed class RevealDecorator : Decorator
 
         // Visible from the first frame of opening; Collapsed only once closing has arrived.
         Visibility = Visibility.Visible;
+        IsSettling = true;
 
         var animation = new DoubleAnimation(from, target, FullDuration * Math.Abs(target - from))
         {
@@ -108,6 +111,7 @@ internal sealed class RevealDecorator : Decorator
 
     private void Arrive(bool open)
     {
+        IsSettling = false;
         BeginAnimation(ProgressProperty, null);
         Progress = open ? 1.0 : 0.0;
         Visibility = open ? Visibility.Visible : Visibility.Collapsed;
