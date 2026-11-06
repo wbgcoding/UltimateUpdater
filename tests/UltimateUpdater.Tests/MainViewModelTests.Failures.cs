@@ -173,18 +173,36 @@ public partial class MainViewModelTests
         // its PRE-call state for a while before BeginInstall actually runs; the wait covers that gap too,
         // not just Queued/Running, or it could bail out before the row ever left Idle. A real timed wait,
         // not a tight spin, since that snapshot is a genuine thread pool hop a busy loop can outrun.
+        // A row that fails the same way twice ends where it started (Failed -> Failed), so the wait keys on
+        // a state CHANGE having happened at all, not on the final value differing from the start.
         var stateBeforeCall = row.InstallState;
-        ((IRowActions)viewModel).InstallSingle(row);
-        Pump(WaitForRowToSettleAsync(row, stateBeforeCall));
+        var transitions = 0;
+        void OnChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(UpdateRowViewModel.InstallState))
+                Interlocked.Increment(ref transitions);
+        }
+
+        row.PropertyChanged += OnChanged;
+        try
+        {
+            ((IRowActions)viewModel).InstallSingle(row);
+            Pump(WaitForRowToSettleAsync(row, stateBeforeCall, () => Volatile.Read(ref transitions) > 0));
+        }
+        finally
+        {
+            row.PropertyChanged -= OnChanged;
+        }
     }
 
     /// <summary>Best effort, same as the bounded loop it replaces: gives up quietly after the timeout
     /// rather than failing the test, since some scenarios here legitimately end back at their own starting
     /// state (a row failing the same classified way twice).</summary>
-    private static async Task WaitForRowToSettleAsync(UpdateRowViewModel row, RowInstallState stateBeforeCall)
+    private static async Task WaitForRowToSettleAsync(UpdateRowViewModel row, RowInstallState stateBeforeCall, Func<bool>? hasMoved = null)
     {
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
-        while (row.InstallState == stateBeforeCall || row.InstallState is RowInstallState.Queued or RowInstallState.Running)
+        while ((row.InstallState == stateBeforeCall && hasMoved?.Invoke() != true)
+            || row.InstallState is RowInstallState.Queued or RowInstallState.Running)
         {
             if (DateTime.UtcNow > deadline)
                 return;
