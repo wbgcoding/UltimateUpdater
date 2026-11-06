@@ -56,6 +56,9 @@ public sealed class IconCacheService
     private readonly Lazy<IReadOnlyList<InstalledApp>> _installedApps;
 
     private readonly LoggingService _logging;
+    private readonly StartMenuShortcuts _startMenu;
+    private readonly DriverVendorTools _driverTools;
+    private readonly Lazy<IReadOnlyList<string>> _pathFolders;
 
     private sealed record InstalledApp(string Name, string? IconValue, string? InstallLocation);
 
@@ -63,8 +66,21 @@ public sealed class IconCacheService
     private sealed record IconSource(string Path, int Index, bool IsImageFile);
 
     public IconCacheService(LoggingService logging)
+        : this(logging, null, null, null)
+    {
+    }
+
+    /// <summary>The places an icon can come from beyond the registry are injectable so tests never depend on this PC's Start menu, PATH or driver tools.</summary>
+    internal IconCacheService(
+        LoggingService logging,
+        StartMenuShortcuts? startMenu,
+        DriverVendorTools? driverTools,
+        IReadOnlyList<string>? pathFolders)
     {
         _logging = logging;
+        _startMenu = startMenu ?? new StartMenuShortcuts(StartMenuShortcuts.DefaultFolders());
+        _driverTools = driverTools ?? new DriverVendorTools();
+        _pathFolders = new Lazy<IReadOnlyList<string>>(() => pathFolders ?? ReadPathFolders());
         _installedApps = new Lazy<IReadOnlyList<InstalledApp>>(ReadInstalledApps);
         CleanupCache();
     }
@@ -125,27 +141,158 @@ public sealed class IconCacheService
         return bitmap;
     }
 
-    /// <summary>The app's own icon first, its own executable second, the source's own store last.</summary>
+    /// <summary>
+    /// The app's own icon first: its Uninstall entry, then its Start-menu shortcut, then its main
+    /// executable, then (for command-line tools) the executable on PATH, and the source's own store last.
+    /// A file only counts when it really carries an icon: an executable without one would show Windows'
+    /// generic program icon and hide the brand mark the row would otherwise get.
+    /// </summary>
     private IconSource? FindIconSource(string sourceId, string itemId, string displayName, string? executableHint)
     {
+        // A driver has no application of its own; the vendor's control program is what the user knows it by.
+        if (DriverVendorTools.IsDriverSource(sourceId) && FindDriverToolIcon(sourceId, displayName) is { } driverIcon)
+            return driverIcon;
+
         var app = MatchInstalledApp(displayName);
 
-        if (app is not null)
-        {
-            if (ParseIconValue(app.IconValue) is { } declared)
-                return declared;
+        if (app is not null && ParseIconValue(app.IconValue) is { } declared)
+            return declared;
 
-            if (MainExecutableIn(app.InstallLocation, displayName) is { } executable)
-                return new IconSource(executable, 0, IsImageFile: false);
+        if (FromStartMenu(displayName) is { } shortcutIcon)
+            return shortcutIcon;
+
+        if (app is not null && MainExecutableIn(app.InstallLocation, displayName) is { } executable
+            && HasIconResource(executable, 0))
+        {
+            return new IconSource(executable, 0, IsImageFile: false);
         }
 
         // Games are not in the Uninstall registry under their own name. Steam keeps their icons.
         if (sourceId == "steam" && SteamGameIcon(itemId) is { } steamIcon)
             return steamIcon;
 
+        if (CommandLineSources.Contains(sourceId) && FromPath(itemId, displayName) is { } toolIcon)
+            return toolIcon;
+
         // A launcher row's open target is the client executable itself; its icon is exactly the row's
         // and beats the flat brand-mark tile the row would otherwise fall back to.
         return IconSourceFromExecutable(executableHint);
+    }
+
+    /// <summary>Package managers and runtimes whose rows are command-line tools that may sit on PATH.</summary>
+    private static readonly HashSet<string> CommandLineSources = new(StringComparer.Ordinal)
+    {
+        "uv", "uv-tool", "rustup", "pipx", "pip", "npm", "pnpm", "dotnet-tool", "gem", "composer",
+        "bun", "deno", "volta", "mise", "gcloud", "ollama", "flutter", "vcpkg", "pyenv-win",
+        "chocolatey", "scoop", "github-release", "gh-extension", "psgallery",
+    };
+
+    private IconSource? FindDriverToolIcon(string sourceId, string displayName)
+    {
+        var vendor = _driverTools.VendorFor(sourceId, displayName);
+        if (vendor is null)
+            return null;
+
+        var executable = _driverTools.FindExecutable(vendor);
+        if (executable is null && vendor.UninstallName is { } uninstallName)
+        {
+            // The Intel tool has no fixed install folder; its Uninstall entry is the only place it is named.
+            var wanted = TextNormalization.AlphanumericLower(uninstallName);
+            var app = _installedApps.Value.FirstOrDefault(a =>
+                TextNormalization.AlphanumericLower(a.Name).Contains(wanted, StringComparison.Ordinal));
+
+            if (app is not null && ParseIconValue(app.IconValue) is { } declared)
+                return declared;
+
+            executable = app is null ? null : MainExecutableIn(app.InstallLocation, app.Name);
+        }
+
+        return executable is not null && HasIconResource(executable, 0)
+            ? new IconSource(executable, 0, IsImageFile: false)
+            : null;
+    }
+
+    /// <summary>The shortcut's own icon location first, its target program second.</summary>
+    private IconSource? FromStartMenu(string displayName)
+    {
+        if (_startMenu.Find(displayName) is not { } shortcut)
+            return null;
+
+        if (shortcut.IconPath is { } iconPath && File.Exists(iconPath) && HasIconResource(iconPath, shortcut.IconIndex))
+        {
+            var isImage = Path.GetExtension(iconPath) is ".png" or ".jpg" or ".jpeg" or ".bmp";
+            return new IconSource(iconPath, shortcut.IconIndex, isImage);
+        }
+
+        if (shortcut.TargetPath is { } target && Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase)
+            && File.Exists(target) && HasIconResource(target, 0))
+        {
+            return new IconSource(target, 0, IsImageFile: false);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// A command-line tool's executable is named like the tool: the last part of its id ("astral-sh.uv" is
+    /// uv) or the first word of its name. Only an executable that really carries an icon counts.
+    /// </summary>
+    private IconSource? FromPath(string itemId, string displayName)
+    {
+        foreach (var name in ExecutableNameCandidates(itemId, displayName))
+        {
+            foreach (var folder in _pathFolders.Value)
+            {
+                var candidate = Path.Combine(folder, name + ".exe");
+                if (File.Exists(candidate) && HasIconResource(candidate, 0))
+                    return new IconSource(candidate, 0, IsImageFile: false);
+            }
+        }
+
+        return null;
+    }
+
+    private static IEnumerable<string> ExecutableNameCandidates(string itemId, string displayName)
+    {
+        var fromId = itemId[(itemId.LastIndexOfAny(['.', '/', '\\']) + 1)..].Trim();
+        if (IsFileNameWord(fromId))
+            yield return fromId;
+
+        var first = displayName.Split([' ', ':'], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+        if (IsFileNameWord(first) && !string.Equals(first, fromId, StringComparison.OrdinalIgnoreCase))
+            yield return first;
+    }
+
+    private static bool IsFileNameWord(string value) =>
+        value.Length > 0 && value.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
+
+    private static IReadOnlyList<string> ReadPathFolders() =>
+        (Environment.GetEnvironmentVariable("PATH") ?? "")
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(f => f.Trim('"'))
+            .Where(f => f.Length > 0 && f.IndexOfAny(Path.GetInvalidPathChars()) < 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    /// <summary>
+    /// False for an executable with no icon resource (Windows would draw its generic program icon) and
+    /// for a file that is not there. Plain image files always count.
+    /// </summary>
+    private static bool HasIconResource(string path, int index)
+    {
+        if (Path.GetExtension(path) is ".png" or ".jpg" or ".jpeg" or ".bmp")
+            return File.Exists(path);
+
+        try
+        {
+            // An index below zero is a resource id, which only exists when there is at least one icon.
+            var count = ExtractIconEx(path, -1, null, null, 0);
+            return index < 0 ? count > 0 : count > index;
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException or ExternalException)
+        {
+            return false;
+        }
     }
 
     /// <summary>An icon straight from an executable (or image) path, when the path is real and rooted.</summary>
@@ -255,7 +402,8 @@ public sealed class IconCacheService
     /// </summary>
     private InstalledApp? MatchInstalledApp(string displayName)
     {
-        if (string.IsNullOrWhiteSpace(displayName))
+        displayName = CleanName(displayName);
+        if (displayName.Length == 0)
             return null;
 
         var apps = _installedApps.Value;
@@ -267,12 +415,31 @@ public sealed class IconCacheService
         return Best(apps, displayName, prefixOnly: true) ?? Best(apps, displayName, prefixOnly: false);
     }
 
+    /// <summary>
+    /// The name without trailing bracketed notes such as "(remove only)" or "(x64 de)": an uninstaller entry
+    /// and the row for the same product rarely agree on them. Kept as is when nothing else would be left.
+    /// </summary>
+    internal static string CleanName(string name)
+    {
+        var text = name.Trim();
+        while (text.EndsWith(')'))
+        {
+            var open = text.LastIndexOf('(');
+            if (open <= 0)
+                break;
+
+            text = text[..open].TrimEnd();
+        }
+
+        return text.Length == 0 ? name.Trim() : text;
+    }
+
     private static InstalledApp? Best(IReadOnlyList<InstalledApp> apps, string displayName, bool prefixOnly) =>
         apps.Where(a => IsPartialMatch(a.Name, displayName, prefixOnly))
             .OrderByDescending(a => a.Name.Length)
             .FirstOrDefault();
 
-    private static bool IsPartialMatch(string candidate, string displayName, bool prefixOnly)
+    internal static bool IsPartialMatch(string candidate, string displayName, bool prefixOnly)
     {
         if (Math.Min(candidate.Length, displayName.Length) < MinimumPartialMatchLength)
             return false;
@@ -306,7 +473,7 @@ public sealed class IconCacheService
                     continue;
 
                 apps.Add(new InstalledApp(
-                    name,
+                    CleanName(name),
                     registry.Value(entry, "DisplayIcon"),
                     registry.Value(entry, "InstallLocation")));
             }

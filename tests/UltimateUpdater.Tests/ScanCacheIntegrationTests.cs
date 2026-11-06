@@ -441,4 +441,83 @@ public class ScanCacheIntegrationTests
             File.Delete(CachePath);
         }
     }
+
+    private static string WriteCachedIcon(string sourceId, string itemId)
+    {
+        var path = Path.Combine(AppPaths.IconCacheDirectory, $"{sourceId}_{itemId}.png");
+        var pixels = new byte[16 * 16 * 4];
+        Array.Fill(pixels, (byte)200);
+        var bitmap = System.Windows.Media.Imaging.BitmapSource.Create(
+            16, 16, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, pixels, 16 * 4);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+        using var stream = File.Create(path);
+        encoder.Save(stream);
+        return path;
+    }
+
+    /// <summary>
+    /// Rows restored from the last session's scan never went through icon resolution, and the live scan
+    /// then kept them on its unchanged fast path, so an app whose icon was already on disk stayed a
+    /// lettered tile until its version changed.
+    /// </summary>
+    [Fact]
+    public void A_cached_row_gets_its_icon_from_the_icon_cache()
+    {
+        File.Delete(CachePath);
+        var iconPath = "";
+        try
+        {
+            WpfHarness.OnUiThread(() =>
+            {
+                var firstViewModel = Create([new FlakySource("flaky", [MakeItem("icon-pkg", "flaky")], fails: false)]);
+                Pump(firstViewModel.ScanCommand.ExecuteAsync(null));
+                Assert.True(File.Exists(CachePath));
+
+                iconPath = WriteCachedIcon("flaky", "icon-pkg");
+
+                var gatedSource = new GatedSource("flaky");
+                var secondViewModel = Create([gatedSource]);
+                var scan = secondViewModel.ScanCommand.ExecuteAsync(null);
+                Pump(WaitUntilAsync(() => secondViewModel.Updates.Any(r => r.Item.Id == "icon-pkg"), TimeSpan.FromSeconds(5)));
+                var row = Assert.Single(secondViewModel.Updates, r => r.Item.Id == "icon-pkg");
+
+                Pump(WaitUntilAsync(() => row.Icon is not null, TimeSpan.FromSeconds(5)));
+                Assert.NotNull(row.Icon);
+
+                gatedSource.Release();
+                Pump(scan);
+            });
+        }
+        finally
+        {
+            File.Delete(CachePath);
+            if (iconPath.Length > 0)
+                File.Delete(iconPath);
+        }
+    }
+
+    [Fact]
+    public void A_row_built_for_a_downgrade_gets_its_icon_from_the_icon_cache()
+    {
+        var iconPath = "";
+        try
+        {
+            WpfHarness.OnUiThread(() =>
+            {
+                iconPath = WriteCachedIcon("flaky", "transient-pkg");
+                var viewModel = Create([new FlakySource("flaky", [], fails: false)]);
+
+                var row = viewModel.CreateTransientRow("flaky", "transient-pkg", "Transient Package", "1.0.0");
+
+                Pump(WaitUntilAsync(() => row.Icon is not null, TimeSpan.FromSeconds(5)));
+                Assert.NotNull(row.Icon);
+            });
+        }
+        finally
+        {
+            if (iconPath.Length > 0)
+                File.Delete(iconPath);
+        }
+    }
 }

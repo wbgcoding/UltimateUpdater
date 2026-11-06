@@ -24,5 +24,7 @@ Some well-known marks are deliberately missing (Microsoft's among them). Their o
 removal from the upstream set, so they are not bundled here either; those rows fall back to a
 category symbol.
 
+The rustup row shows the Rust mark, since rustup has none of its own; the uv mark is Astral's.
+
 If you are the owner of a mark used here and would rather it were not, remove its slug from the list
 in `tools/make-brand-icons.py` and regenerate; the application works unchanged without it.

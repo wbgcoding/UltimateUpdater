@@ -134,6 +134,10 @@ public partial class MainViewModel
         // full ApplyFilter every time it fires.
         Updates.AddRange(newRows);
 
+        // The live scan keeps an unchanged cached row on its fast path and never resolves its icon, so this
+        // is the only place a restored row gets one.
+        ResolveIconsAsync(newRows);
+
         RefreshHeader(resortManualOnly: false);
 
         // The first row from last session's cache actually reaching the screen, not just the
