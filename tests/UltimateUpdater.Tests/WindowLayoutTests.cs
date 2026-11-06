@@ -698,15 +698,13 @@ public partial class WindowLayoutTests
         }
     }
 
-    /// <summary>The table's resting rows separate by alternating background rather than a grid
-    /// of lines. "Software" is always the first group Populate builds (Firefox then VS Code), so its first
-    /// two rows land at ItemsControl.AlternationIndex 0 and 1 inside the SAME group, alternation restarts
-    /// per group, so this is the one pair guaranteed to differ only by alternation, not by group. Reads
-    /// each row's own "Root" Border (its ControlTemplate's TemplatedParent is the ListBoxItem the
-    /// alternation index lives on) scoped to the main table's own ListBox, never the separate manual-open
-    /// ListBox that names its own row Border "Root" too.</summary>
+    /// <summary>The table is one surface: rows are told apart by a hairline above each, never by a zebra
+    /// background, and only a ticked row carries the faint accent tint. Reads each row's own "Root" Border
+    /// (its ControlTemplate's TemplatedParent is the ListBoxItem) scoped to the main table's own ListBox,
+    /// never the separate manual-open ListBox that names its own row Border "Root" too. Populate ticks
+    /// exactly one row (the critical Windows update).</summary>
     [Fact]
-    public void The_two_alternation_indices_resolve_to_different_row_brushes()
+    public void Table_rows_are_separated_by_hairlines_and_only_a_ticked_row_is_tinted()
     {
         RenderResult? result = null;
 
@@ -716,29 +714,27 @@ public partial class WindowLayoutTests
             Populate(viewModel);
             var window = new MainWindow(viewModel, theme, settings);
             var content = (FrameworkElement)window.Content;
-            result = WpfHarness.RenderWindow(window, "main-row-alternation-de", 1100, 700);
+            result = WpfHarness.RenderWindow(window, "main-row-lines-de", 1100, 700);
 
             var updatesListBox = FindByName<ListBox>(content, "UpdatesListBox");
             Assert.NotNull(updatesListBox);
 
-            var rootBordersByIndex = new Dictionary<int, Border>();
-            foreach (var border in FindAllByName<Border>(updatesListBox!, "Root"))
-            {
-                if (border.TemplatedParent is not ListBoxItem item)
-                    continue;
+            var rows = FindAllByName<Border>(updatesListBox!, "Root")
+                .Where(border => border.TemplatedParent is ListBoxItem)
+                .ToList();
+            Assert.True(rows.Count >= 4, $"expected the populated rows, found {rows.Count}");
 
-                var index = ItemsControl.GetAlternationIndex(item);
-                rootBordersByIndex.TryAdd(index, border);
+            foreach (var row in rows)
+            {
+                Assert.Equal(1.0, row.BorderThickness.Top);
+                Assert.Equal(0.0, row.BorderThickness.Bottom);
+                // a resting row has no fill of its own: no zebra
+                Assert.True(row.Background is null || (row.Background is System.Windows.Media.SolidColorBrush { Color.A: 0 }),
+                    "a resting row must not carry a background fill");
             }
 
-            Assert.True(rootBordersByIndex.ContainsKey(0) && rootBordersByIndex.ContainsKey(1),
-                $"expected rows at both alternation index 0 and 1, found indices: {string.Join(",", rootBordersByIndex.Keys)}");
-
-            var evenBrush = rootBordersByIndex[0].Background as System.Windows.Media.SolidColorBrush;
-            var oddBrush = rootBordersByIndex[1].Background as System.Windows.Media.SolidColorBrush;
-            Assert.NotNull(evenBrush);
-            Assert.NotNull(oddBrush);
-            Assert.NotEqual(evenBrush!.Color, oddBrush!.Color);
+            var tinted = rows.Count(row => FindByName<Border>(row, "SelectedTint")?.Visibility == Visibility.Visible);
+            Assert.Equal(1, tinted);
         });
 
         AssertRendered(result);
@@ -2147,6 +2143,31 @@ public partial class WindowLayoutTests
             Populate(viewModel);
             var window = new MainWindow(viewModel, theme, settings);
             result = WpfHarness.RenderWindow(window, "main-1366x768-light-de", 860, 640);
+        });
+
+        AssertRendered(result);
+
+        // put the harness back so the remaining snapshots are not rendered half-light
+        WpfHarness.OnUiThread(() => ApplyTheme("dark"));
+    }
+
+    /// <summary>A wide window gives the extra width to the name column, so the table still reads as one
+    /// aligned grid with the same columns in both themes and languages. Snapshot only: the review is by eye.</summary>
+    [Theory]
+    [InlineData("en", "dark")]
+    [InlineData("en", "light")]
+    [InlineData("de", "light")]
+    public void Main_window_wide_renders(string language, string themeName)
+    {
+        RenderResult? result = null;
+
+        WpfHarness.OnUiThread(() =>
+        {
+            var (viewModel, theme, settings) = CreateMainViewModel(language);
+            theme.Apply(themeName);
+            Populate(viewModel);
+            var window = new MainWindow(viewModel, theme, settings);
+            result = WpfHarness.RenderWindow(window, $"main-wide-{themeName}-{language}", 1600, 800);
         });
 
         AssertRendered(result);

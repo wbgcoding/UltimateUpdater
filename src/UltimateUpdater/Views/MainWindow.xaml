@@ -43,6 +43,16 @@
         <!-- The "hide sources without a tool" toggle above the pill strip. -->
         <views:CountToVisibilityConverter x:Key="CountToVisibility"/>
         <views:ShortcutTooltipConverter x:Key="ShortcutTooltip"/>
+        <views:UpperCaseConverter x:Key="UpperCase"/>
+
+        <!-- The table's row buttons: outline only, no grey fill, so a column of them reads as quiet
+             controls on the table surface instead of a stack of filled chips. Hover and pressed fills
+             still come from the stock template. -->
+        <Style x:Key="RowOutlineButton" TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
 
         <!-- The sort mark beside a sortable column title: only the active direction, in the accent. Fixed width so the mark appearing or
              changing never nudges the label. -->
@@ -1248,17 +1258,17 @@
                                              glyph), just smaller, a name alone was hard to place at a glance
                                              in a fast-moving queue. -->
                                         <Grid Grid.Column="1" Width="22" Height="22" Margin="0,0,10,0" VerticalAlignment="Center">
-                                            <Border CornerRadius="4" Background="{Binding InitialBrush}"
+                                            <Border CornerRadius="4" Background="{DynamicResource ControlFillColorSecondaryBrush}"
                                                     Visibility="{Binding UsesTile, Converter={StaticResource BoolToVisibility}}">
                                                 <Grid>
                                                     <TextBlock Text="{Binding InitialLetter}" FontSize="11" FontWeight="SemiBold"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                               Foreground="{StaticResource TileGlyphBrush}"
+                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                                Visibility="{Binding UsesLetterTile, Converter={StaticResource BoolToVisibility}}"/>
-                                                    <ui:SymbolIcon Symbol="Box24" FontSize="12" Foreground="{StaticResource TileGlyphBrush}"
+                                                    <ui:SymbolIcon Symbol="Box24" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                    Visibility="{Binding UsesGlyphTile, Converter={StaticResource BoolToVisibility}}"/>
-                                                    <Path Data="{Binding BrandGeometry}" Fill="{StaticResource TileGlyphBrush}" Stretch="Uniform"
+                                                    <Path Data="{Binding BrandGeometry}" Fill="{DynamicResource TextFillColorSecondaryBrush}" Stretch="Uniform"
                                                           Width="12" Height="12"
                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
                                                           Visibility="{Binding UsesBrandTile, Converter={StaticResource BoolToVisibility}}"/>
@@ -1540,7 +1550,7 @@
                          the card's usual 12px left margin - the negative margin cancels exactly that, so
                          this box lines up with them instead of sitting 12px right of them. MinHeight
                          matches the category header's own StackPanel MinHeight (30) for the same reason. -->
-                    <CheckBox x:Name="SelectAllCheckBox" Grid.Column="0" Margin="-12,0,0,0"
+                    <CheckBox x:Name="SelectAllCheckBox" Grid.Column="0" Margin="0"
                               VerticalAlignment="Center" HorizontalAlignment="Left"
                               IsThreeState="True"
                               IsChecked="{Binding AllVisibleSelected, Mode=OneWay}"
@@ -1557,7 +1567,7 @@
                         <StackPanel.InputBindings>
                             <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="name"/>
                         </StackPanel.InputBindings>
-                        <TextBlock Text="{Binding Loc[ColumnName]}" FontSize="14" FontWeight="SemiBold"
+                        <TextBlock Text="{Binding Loc[ColumnName]}" FontSize="12" FontWeight="SemiBold"
                                    VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                         <!-- Fixed width so the arrow appearing/disappearing never nudges the label. -->
@@ -1566,7 +1576,7 @@
 
                     <!-- Publisher, hidden by default; a plain label, not clickable, there is
                          no per-row sort key for it. -->
-                    <TextBlock Grid.Column="3" Text="{Binding Loc[ColumnPublisher]}" FontSize="14" FontWeight="SemiBold"
+                    <TextBlock Grid.Column="3" Text="{Binding Loc[ColumnPublisher]}" FontSize="12" FontWeight="SemiBold"
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
 
@@ -1577,7 +1587,7 @@
                         <StackPanel.InputBindings>
                             <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="date"/>
                         </StackPanel.InputBindings>
-                        <TextBlock Text="{Binding Loc[ColumnDate]}" FontSize="14" FontWeight="SemiBold"
+                        <TextBlock Text="{Binding Loc[ColumnDate]}" FontSize="12" FontWeight="SemiBold"
                                    VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                         <TextBlock Text="{Binding DateSortGlyph}" Style="{StaticResource SortGlyphText}"/>
@@ -1590,7 +1600,7 @@
                         <StackPanel.InputBindings>
                             <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="version"/>
                         </StackPanel.InputBindings>
-                        <TextBlock Text="{Binding Loc[ColumnVersion]}" FontSize="14" FontWeight="SemiBold"
+                        <TextBlock Text="{Binding Loc[ColumnVersion]}" FontSize="12" FontWeight="SemiBold"
                                    VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                         <TextBlock Text="{Binding VersionSortGlyph}" Style="{StaticResource SortGlyphText}"/>
@@ -1603,7 +1613,7 @@
                         <StackPanel.InputBindings>
                             <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="size"/>
                         </StackPanel.InputBindings>
-                        <TextBlock Text="{Binding Loc[ColumnSize]}" FontSize="14" FontWeight="SemiBold"
+                        <TextBlock Text="{Binding Loc[ColumnSize]}" FontSize="12" FontWeight="SemiBold"
                                    VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                         <TextBlock Text="{Binding SizeSortGlyph}" Style="{StaticResource SortGlyphText}"/>
@@ -1645,10 +1655,9 @@
                      at 300 rows. -->
                 <ListBox x:Name="UpdatesListBox" ItemsSource="{Binding UpdatesView}"
                          Background="Transparent" BorderThickness="0"
-                         Padding="0,4,8,10"
+                         Padding="0,0,0,8"
                          HorizontalContentAlignment="Stretch"
                          VirtualizingPanel.IsVirtualizingWhenGrouping="False"
-                         AlternationCount="2"
                          PreviewKeyDown="OnUpdatesListPreviewKeyDown">
 
                     <!-- The ListBox's own class command binding answers Ctrl+A itself (selecting list
@@ -1680,7 +1689,7 @@
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
                             <Setter Property="Padding" Value="0"/>
-                            <Setter Property="Margin" Value="4,1"/>
+                            <Setter Property="Margin" Value="0"/>
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                             <Setter Property="Focusable" Value="True"/>
                             <!-- Continue lets Tab walk into the row's CheckBox/Open button (WPF's default
@@ -1694,19 +1703,22 @@
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="ListBoxItem">
-                                        <Border x:Name="Root" CornerRadius="6" Background="Transparent" Padding="8,3">
-                                            <ContentPresenter/>
+                                        <!-- One hairline above every row (no zebra, no card): the table is one
+                                             surface and the rows are told apart by thin lines. The tint layer
+                                             sits behind the content and spans the full width, so a ticked row
+                                             reads as a faint accent wash that follows the accent setting. -->
+                                        <Border x:Name="Root" BorderThickness="0,1,0,0" Background="Transparent"
+                                                BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+                                            <Grid>
+                                                <Border x:Name="SelectedTint" Visibility="Collapsed" Opacity="0.12"
+                                                        Background="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                                <ContentPresenter Margin="12,3"/>
+                                            </Grid>
                                         </Border>
                                         <ControlTemplate.Triggers>
-                                            <!-- Alternating resting background only, so the table separates
-                                                 without a grid of lines; grouped display restarts alternation
-                                                 inside each category (accepted). Listed before the
-                                                 hover/focus triggers below so those still win when the
-                                                 pointer is actually over an odd row. -->
-                                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                                <Setter TargetName="Root" Property="Background"
-                                                        Value="{DynamicResource ControlFillColorDefaultBrush}"/>
-                                            </Trigger>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <Setter TargetName="SelectedTint" Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter TargetName="Root" Property="Background"
                                                         Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
@@ -1753,7 +1765,7 @@
                                                      code-behind (Loaded) rather than hardcoded: WPF regenerates
                                                      these groups as the table refreshes, and a hardcoded default
                                                      would silently reopen whatever the user had collapsed. -->
-                                                <Expander Margin="0,1,0,2" Padding="0" BorderThickness="0"
+                                                <Expander Margin="0,8,0,0" Padding="0" BorderThickness="0"
                                                           Background="Transparent" HorizontalContentAlignment="Stretch"
                                                           Loaded="OnGroupExpanderLoaded"
                                                           Expanded="OnGroupExpanderToggled"
@@ -1797,7 +1809,7 @@
                                                     </Expander.Template>
                                                     <Expander.Header>
                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                                                                    MinHeight="30">
+                                                                    MinHeight="28" Margin="12,0,0,0">
                                                             <!-- Ticks or clears every installable row in this
                                                                  category at once. The command decides which of
                                                                  the two by what is already selected. -->
@@ -1861,17 +1873,19 @@
                                                             </Path>
                                                             <!-- A modern Fluent glyph per category, left of its name. -->
                                                             <ui:SymbolIcon Symbol="{Binding Items[0].CategoryKey, Converter={StaticResource CategoryIcon}}"
-                                                                           FontSize="18" Margin="0,0,9,0" VerticalAlignment="Center"
-                                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
-                                                                       FontSize="14" VerticalAlignment="Center"
-                                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                                                           FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                                            <!-- A small muted capitals label with its count, not a heading: the
+                                                                 rows under it are the content. -->
+                                                            <TextBlock Text="{Binding Name, Converter={StaticResource UpperCase}}" FontWeight="SemiBold"
+                                                                       FontSize="11.5" VerticalAlignment="Center"
+                                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                                             <TextBlock Text="{Binding ItemCount, StringFormat=' ({0})'}"
-                                                                       FontSize="14" VerticalAlignment="Center"
+                                                                       FontSize="11.5" VerticalAlignment="Center"
                                                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                                                         </StackPanel>
                                                     </Expander.Header>
-                                                    <ItemsPresenter Margin="0,1,0,0"/>
+                                                    <ItemsPresenter Margin="0,2,0,0"/>
                                                 </Expander>
                                             </ControlTemplate>
                                         </Setter.Value>
@@ -1927,15 +1941,15 @@
                                     <!-- Fallback only: it keeps the gutter from looking ragged when no icon
                                          resolves, and it disappears the moment a real one does, a round
                                          app icon otherwise showed the square tile through its corners. -->
-                                    <Border CornerRadius="4" Background="{Binding InitialBrush}"
+                                    <Border CornerRadius="4" Background="{DynamicResource ControlFillColorSecondaryBrush}"
                                             Visibility="{Binding UsesTile, Converter={StaticResource BoolToVisibility}}">
                                         <Grid>
                                             <TextBlock Text="{Binding InitialLetter}" FontSize="12" FontWeight="SemiBold"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                       Foreground="{StaticResource TileGlyphBrush}"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                        Visibility="{Binding UsesLetterTile, Converter={StaticResource BoolToVisibility}}"/>
 
-                                            <ui:SymbolIcon FontSize="13" Foreground="{StaticResource TileGlyphBrush}"
+                                            <ui:SymbolIcon FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                                            Visibility="{Binding UsesGlyphTile, Converter={StaticResource BoolToVisibility}}">
                                                 <ui:SymbolIcon.Style>
@@ -1965,7 +1979,7 @@
 
                                             <!-- bundled brand mark: monochrome on the tile colour, so
                                                  no row invents a brand colour of its own -->
-                                            <Path Data="{Binding BrandGeometry}" Fill="{StaticResource TileGlyphBrush}" Stretch="Uniform"
+                                            <Path Data="{Binding BrandGeometry}" Fill="{DynamicResource TextFillColorSecondaryBrush}" Stretch="Uniform"
                                                   Width="14" Height="14"
                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
                                                   Visibility="{Binding UsesBrandTile, Converter={StaticResource BoolToVisibility}}"/>
@@ -2212,12 +2226,12 @@
                                 <Grid Grid.Column="7" VerticalAlignment="Center">
                                     <!-- Idle installable row: a per-row Install button that queues just
                                          this update (it joins any batch already running). -->
-                                    <ui:Button Content="{Binding InstallHeader}" Command="{Binding InstallCommand}"
+                                    <ui:Button Style="{StaticResource RowOutlineButton}" Content="{Binding InstallHeader}" Command="{Binding InstallCommand}"
                                                Appearance="Secondary" Padding="12,3" FontSize="12"
                                                HorizontalAlignment="Right"
                                                Visibility="{Binding ShowInstallButton, Converter={StaticResource BoolToVisibility}}"/>
 
-                                    <ui:Button Content="{Binding OpenHeader}" Command="{Binding OpenCommand}"
+                                    <ui:Button Style="{StaticResource RowOutlineButton}" Content="{Binding OpenHeader}" Command="{Binding OpenCommand}"
                                                Appearance="Secondary" Padding="10,3" FontSize="12"
                                                HorizontalAlignment="Right"
                                                Visibility="{Binding ShowOpenButton, Converter={StaticResource BoolToVisibility}}"/>
@@ -2260,7 +2274,7 @@
 
                                         <!-- this row's own stop button: stops just this one,
                                              the rest of the queue keeps running. -->
-                                        <ui:Button Margin="8,0,0,0" Padding="5,2" Appearance="Secondary"
+                                        <ui:Button Style="{StaticResource RowOutlineButton}" Margin="8,0,0,0" Padding="5,2" Appearance="Secondary"
                                                    Command="{Binding StopSingleCommand}"
                                                    ToolTip="{Binding StopSingleTooltip}"
                                                    AutomationProperties.Name="{Binding StopSingleTooltip}"
@@ -2328,7 +2342,7 @@
                                                    Visibility="{Binding VersionUnchanged, Converter={StaticResource BoolToVisibility}}"
                                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                         <!-- the details button carries the real tool output on demand -->
-                                        <ui:Button Margin="8,0,0,0" Padding="5,2" Appearance="Secondary"
+                                        <ui:Button Style="{StaticResource RowOutlineButton}" Margin="8,0,0,0" Padding="5,2" Appearance="Secondary"
                                                    Command="{Binding ShowErrorDetailCommand}"
                                                    ToolTip="{Binding DetailsHeader}"
                                                    AutomationProperties.Name="{Binding DetailsHeader}"
@@ -2336,11 +2350,11 @@
                                             <ui:SymbolIcon Symbol="Info24" FontSize="13"/>
                                         </ui:Button>
                                         <!-- a failed row can be retried -->
-                                        <ui:Button Margin="6,0,0,0" Padding="10,3" FontSize="12" Appearance="Secondary"
+                                        <ui:Button Style="{StaticResource RowOutlineButton}" Margin="6,0,0,0" Padding="10,3" FontSize="12" Appearance="Secondary"
                                                    Content="{Binding RetryHeader}" Command="{Binding RetryCommand}"
                                                    Visibility="{Binding ShowRetryButton, Converter={StaticResource BoolToVisibility}}"/>
                                         <!-- a row that needs manual work gets the same retry, clearing the flag first -->
-                                        <ui:Button Margin="6,0,0,0" Padding="10,3" FontSize="12" Appearance="Secondary"
+                                        <ui:Button Style="{StaticResource RowOutlineButton}" Margin="6,0,0,0" Padding="10,3" FontSize="12" Appearance="Secondary"
                                                    AutomationProperties.AutomationId="RowResetAndRetry"
                                                    Content="{Binding RetryHeader}" Command="{Binding ResetAndRetryCommand}"
                                                    Visibility="{Binding ShowResetAndRetryButton, Converter={StaticResource BoolToVisibility}}"/>
@@ -2665,17 +2679,17 @@
                                 <StackPanel Orientation="Horizontal" ToolTip="{Binding Name}"
                                             AutomationProperties.Name="{Binding Name}">
                                     <Grid Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,7,0">
-                                        <Border CornerRadius="4" Background="{Binding InitialBrush}"
+                                        <Border CornerRadius="4" Background="{DynamicResource ControlFillColorSecondaryBrush}"
                                                 Visibility="{Binding UsesTile, Converter={StaticResource BoolToVisibility}}">
                                             <Grid>
                                                 <TextBlock Text="{Binding InitialLetter}" FontSize="10" FontWeight="SemiBold"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                           Foreground="{StaticResource TileGlyphBrush}"
+                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                            Visibility="{Binding UsesLetterTile, Converter={StaticResource BoolToVisibility}}"/>
-                                                <ui:SymbolIcon FontSize="11" Symbol="Box24" Foreground="{StaticResource TileGlyphBrush}"
+                                                <ui:SymbolIcon FontSize="11" Symbol="Box24" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                Visibility="{Binding UsesGlyphTile, Converter={StaticResource BoolToVisibility}}"/>
-                                                <Path Data="{Binding BrandGeometry}" Fill="{StaticResource TileGlyphBrush}" Stretch="Uniform"
+                                                <Path Data="{Binding BrandGeometry}" Fill="{DynamicResource TextFillColorSecondaryBrush}" Stretch="Uniform"
                                                       Width="12" Height="12"
                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
                                                       Visibility="{Binding UsesBrandTile, Converter={StaticResource BoolToVisibility}}"/>
