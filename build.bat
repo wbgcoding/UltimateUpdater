@@ -28,6 +28,25 @@ set CONFIG=Release
 rem Nobody is watching a build: the app must never open a dialog that waits for a click here (one
 rem would stop the test step until someone dismissed it).
 set WU_UNATTENDED=1
+rem === build freshness: check ===
+set "BS=%~dp0tools\build-stamp.ps1"
+set "BSKEY=exe"
+rem The signing setup changes what ends up in dist, so it is part of the freshness key.
+set "BSEXTRA=plain"
+if defined WU_SIGN_THUMBPRINT set "BSEXTRA=!BSEXTRA!-codesign"
+set "BSRELKEY=%UU_SIGNING_KEY%"
+if not defined BSRELKEY set "BSRELKEY=%ROOT%.signing\release-key.pem"
+if exist "!BSRELKEY!" set "BSEXTRA=!BSEXTRA!-sigkey"
+set "BSFRESH="
+set "BSFORCE="
+if "%FORCE%"=="1" set "BSFORCE=1"
+for %%A in (%*) do if /i "%%~A"=="--force" set "BSFORCE=1"
+if defined BSFORCE goto :bs_start
+if not exist "%BS%" goto :bs_start
+for /f "usebackq delims=" %%A in (`powershell -NoProfile -ExecutionPolicy RemoteSigned -File "%BS%" -Check -Project "%~dp0." -Key "%BSKEY%" -Extra "%BSEXTRA%"`) do set "BSFRESH=%%A"
+if defined BSFRESH goto :bs_uptodate
+:bs_start
+
 
 echo === build ===
 dotnet build "%ROOT%UltimateUpdater.slnx" -c %CONFIG%
@@ -300,6 +319,10 @@ echo Artifacts in %DIST%
 type "%DIST%\SHA256SUMS.txt"
 
 echo.
+rem === build freshness: save (every final file in dist: exes, signatures, checksums) ===
+set "BSART=dist\UltimateUpdater.exe"
+for %%f in ("%DIST%\*.exe" "%DIST%\*.sig" "%DIST%\SHA256SUMS.txt") do if /i not "%%~nxf"=="UltimateUpdater.exe" set "BSART=!BSART!,dist\%%~nxf"
+if exist "%BS%" powershell -NoProfile -ExecutionPolicy RemoteSigned -File "%BS%" -Save -Project "%~dp0." -Key "%BSKEY%" -Extra "%BSEXTRA%" -Artifact "!BSART!" >nul 2>&1
 echo BUILD OK - artifacts are in dist\.
 if defined INTERACTIVE timeout /t 10
 endlocal
@@ -313,3 +336,9 @@ rem top); an automated run or one started from an existing console never waits h
 if defined INTERACTIVE pause
 endlocal
 exit /b 1
+
+:bs_uptodate
+for %%F in ("%BSFRESH%") do echo Build is up to date ^(last build %%~tF^), nothing to do: %%~fF
+if defined INTERACTIVE "%SystemRoot%\System32\timeout.exe" /t 10
+endlocal
+exit /b 0

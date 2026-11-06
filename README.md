@@ -181,6 +181,8 @@ self-contained executables for x64 and ARM64, the installer and checksums. `dist
 | `Setup-UltimateUpdater-<version>.exe` | installer with both architectures |
 | `SHA256SUMS.txt` | checksums for both |
 
+A second run with nothing changed reports "Build is up to date" and exits; `build.bat --force` (or `FORCE=1`) rebuilds anyway.
+
 Without Inno Setup everything except the installer is still produced. To sign, set `WU_SIGN_THUMBPRINT`
 to a code-signing certificate's thumbprint in your certificate store (optionally `WU_SIGN_TIMESTAMP_URL`).
 For a build that is going to be published, set `WU_RELEASE=1`: a missing release signing key then fails the
