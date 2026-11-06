@@ -666,17 +666,11 @@ This cannot be undone by Ultimate Updater.</value>
   <data name="RowQueued" xml:space="preserve">
     <value>Queued</value>
   </data>
-  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
-    <value>{0} · {1:0} %</value>
-  </data>
   <data name="CleanupDoneCount" xml:space="preserve">
     <value>{0} of {1} areas done</value>
   </data>
   <data name="CleanupDoneCountOne" xml:space="preserve">
     <value>{0} of {1} area done</value>
-  </data>
-  <data name="CleanupRemainingCount" xml:space="preserve">
-    <value>{0} still to go</value>
   </data>
   <data name="CleanupEmptyCount" xml:space="preserve">
     <value>{0} areas with nothing found</value>
@@ -2205,5 +2199,29 @@ Continue with admin rights?</value>
   </data>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>{0} / {1} selected</value>
+  </data>
+  <data name="CleanupStepDone" xml:space="preserve">
+    <value>done</value>
+  </data>
+  <data name="CleanupStepTooltip" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="CleanupStatFreed" xml:space="preserve">
+    <value>Freed</value>
+  </data>
+  <data name="CleanupStatElapsed" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="CleanupDetailsExpander" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="CleanupSummaryDone" xml:space="preserve">
+    <value>Cleanup finished</value>
+  </data>
+  <data name="CleanupSummaryStopped" xml:space="preserve">
+    <value>Cleanup stopped</value>
+  </data>
+  <data name="ToolbarCleanupRunning" xml:space="preserve">
+    <value>Clean up {0} %</value>
   </data>
 </root>

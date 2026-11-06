@@ -666,17 +666,11 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="RowQueued" xml:space="preserve">
     <value>In coda</value>
   </data>
-  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
-    <value>{0} · {1:0} %</value>
-  </data>
   <data name="CleanupDoneCount" xml:space="preserve">
     <value>{0} di {1} aree completate</value>
   </data>
   <data name="CleanupDoneCountOne" xml:space="preserve">
     <value>{0} di {1} area completata</value>
-  </data>
-  <data name="CleanupRemainingCount" xml:space="preserve">
-    <value>ne restano {0}</value>
   </data>
   <data name="CleanupEmptyCount" xml:space="preserve">
     <value>{0} aree senza elementi trovati</value>
@@ -2205,5 +2199,29 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>{0} / {1} selezionati</value>
+  </data>
+  <data name="CleanupStepDone" xml:space="preserve">
+    <value>fatto</value>
+  </data>
+  <data name="CleanupStepTooltip" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="CleanupStatFreed" xml:space="preserve">
+    <value>Liberato</value>
+  </data>
+  <data name="CleanupStatElapsed" xml:space="preserve">
+    <value>Durata</value>
+  </data>
+  <data name="CleanupDetailsExpander" xml:space="preserve">
+    <value>Dettagli</value>
+  </data>
+  <data name="CleanupSummaryDone" xml:space="preserve">
+    <value>Pulizia completata</value>
+  </data>
+  <data name="CleanupSummaryStopped" xml:space="preserve">
+    <value>Pulizia interrotta</value>
+  </data>
+  <data name="ToolbarCleanupRunning" xml:space="preserve">
+    <value>Pulisci {0} %</value>
   </data>
 </root>

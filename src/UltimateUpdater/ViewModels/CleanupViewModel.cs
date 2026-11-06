@@ -149,7 +149,11 @@ public partial class CleanupViewModel : ObservableObject
         {
             Interval = TimeSpan.FromMilliseconds(200),
         };
-        _entryProgressTimer.Tick += (_, _) => FlushEntryProgress();
+        _entryProgressTimer.Tick += (_, _) =>
+        {
+            FlushEntryProgress();
+            RefreshElapsed();
+        };
 
         // The remembered column chooser state for the cleanup detail list.
         if (_settings.Current.Ui.Tables.TryGetValue("cleanup", out var tableState))
@@ -356,7 +360,9 @@ public partial class CleanupViewModel : ObservableObject
         OnPropertyChanged(nameof(StoppingRepairText));
         OnPropertyChanged(nameof(HistoryEmptyText));
         OnPropertyChanged(nameof(DoneCountText));
-        OnPropertyChanged(nameof(RemainingCountText));
+        RefreshStatusText();
+        OnPropertyChanged(nameof(ElapsedText));
+        OnPropertyChanged(nameof(StatusFreedText));
         OnPropertyChanged(nameof(HistoryEmptyOverviewText));
         OnPropertyChanged(nameof(RestorePointText));
         OnPropertyChanged(nameof(MeasuredAtText));

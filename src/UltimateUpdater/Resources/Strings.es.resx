@@ -666,17 +666,11 @@ Esto no se puede deshacer con Ultimate Updater.</value>
   <data name="RowQueued" xml:space="preserve">
     <value>En cola</value>
   </data>
-  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
-    <value>{0} · {1:0} %</value>
-  </data>
   <data name="CleanupDoneCount" xml:space="preserve">
     <value>{0} de {1} áreas completadas</value>
   </data>
   <data name="CleanupDoneCountOne" xml:space="preserve">
     <value>{0} de {1} área completada</value>
-  </data>
-  <data name="CleanupRemainingCount" xml:space="preserve">
-    <value>Quedan {0}</value>
   </data>
   <data name="CleanupEmptyCount" xml:space="preserve">
     <value>{0} áreas sin nada encontrado</value>
@@ -2205,5 +2199,29 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>{0} / {1} seleccionados</value>
+  </data>
+  <data name="CleanupStepDone" xml:space="preserve">
+    <value>listo</value>
+  </data>
+  <data name="CleanupStepTooltip" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="CleanupStatFreed" xml:space="preserve">
+    <value>Liberado</value>
+  </data>
+  <data name="CleanupStatElapsed" xml:space="preserve">
+    <value>Duración</value>
+  </data>
+  <data name="CleanupDetailsExpander" xml:space="preserve">
+    <value>Detalles</value>
+  </data>
+  <data name="CleanupSummaryDone" xml:space="preserve">
+    <value>Limpieza terminada</value>
+  </data>
+  <data name="CleanupSummaryStopped" xml:space="preserve">
+    <value>Limpieza detenida</value>
+  </data>
+  <data name="ToolbarCleanupRunning" xml:space="preserve">
+    <value>Limpiar {0} %</value>
   </data>
 </root>
