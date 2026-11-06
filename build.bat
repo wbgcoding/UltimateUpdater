@@ -11,7 +11,7 @@ if not "%WU_NOPAUSE%"=="1" (
 if defined INTERACTIVE mode con cols=100 lines=25
 
 rem A test host left over from an earlier run keeps the test assembly locked and fails the next build.
-taskkill /f /im testhost.exe >nul 2>nul
+powershell -NoProfile -Command "Get-Process testhost -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path.StartsWith('%~dp0', [StringComparison]::OrdinalIgnoreCase) } | Stop-Process -Force" >nul 2>nul
 
 rem Single authoritative build. ALWAYS builds, tests, publishes both architectures, builds
 rem the installer and refreshes dist\, so every run leaves its artifacts in dist\. A "release" argument
