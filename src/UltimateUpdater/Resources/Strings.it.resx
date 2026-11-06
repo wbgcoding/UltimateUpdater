@@ -2203,4 +2203,28 @@ Continuare con privilegi di amministratore?</value>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Installazione in corso… {0}</value>
   </data>
+  <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
+    <value>Download in corso… {0} %</value>
+  </data>
+  <data name="SelfUpdatePhaseDownloadingUnknown" xml:space="preserve">
+    <value>Download in corso…</value>
+  </data>
+  <data name="SelfUpdatePhaseVerifying" xml:space="preserve">
+    <value>Verifica in corso…</value>
+  </data>
+  <data name="SelfUpdatePhaseInstalling" xml:space="preserve">
+    <value>Installazione in corso…</value>
+  </data>
+  <data name="SelfUpdateDetail" xml:space="preserve">
+    <value>{0} di {1} · {2}/s</value>
+  </data>
+  <data name="SelfUpdateDetailUnknownTotal" xml:space="preserve">
+    <value>{0} · {1}/s</value>
+  </data>
+  <data name="SelfUpdateSignatureInvalid" xml:space="preserve">
+    <value>L'aggiornamento non ha una firma valida e non è stato installato. Puoi scaricarlo tu stesso dalla pagina della release.</value>
+  </data>
+  <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
+    <value>Apri la pagina della release</value>
+  </data>
 </root>

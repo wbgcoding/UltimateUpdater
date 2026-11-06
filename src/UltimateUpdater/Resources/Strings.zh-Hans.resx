@@ -2203,4 +2203,28 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>正在安装… {0}</value>
   </data>
+  <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
+    <value>正在下载… {0} %</value>
+  </data>
+  <data name="SelfUpdatePhaseDownloadingUnknown" xml:space="preserve">
+    <value>正在下载…</value>
+  </data>
+  <data name="SelfUpdatePhaseVerifying" xml:space="preserve">
+    <value>正在验证…</value>
+  </data>
+  <data name="SelfUpdatePhaseInstalling" xml:space="preserve">
+    <value>正在安装…</value>
+  </data>
+  <data name="SelfUpdateDetail" xml:space="preserve">
+    <value>{0} / {1} · {2}/秒</value>
+  </data>
+  <data name="SelfUpdateDetailUnknownTotal" xml:space="preserve">
+    <value>{0} · {1}/秒</value>
+  </data>
+  <data name="SelfUpdateSignatureInvalid" xml:space="preserve">
+    <value>此更新没有有效签名，未被安装。你可以自行从发布页面下载。</value>
+  </data>
+  <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
+    <value>打开发布页面</value>
+  </data>
 </root>

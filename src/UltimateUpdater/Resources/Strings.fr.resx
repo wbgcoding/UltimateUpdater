@@ -2203,4 +2203,28 @@ Continuer avec les droits administrateur ?</value>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Installation… {0}</value>
   </data>
+  <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
+    <value>Téléchargement… {0} %</value>
+  </data>
+  <data name="SelfUpdatePhaseDownloadingUnknown" xml:space="preserve">
+    <value>Téléchargement…</value>
+  </data>
+  <data name="SelfUpdatePhaseVerifying" xml:space="preserve">
+    <value>Vérification…</value>
+  </data>
+  <data name="SelfUpdatePhaseInstalling" xml:space="preserve">
+    <value>Installation…</value>
+  </data>
+  <data name="SelfUpdateDetail" xml:space="preserve">
+    <value>{0} sur {1} · {2}/s</value>
+  </data>
+  <data name="SelfUpdateDetailUnknownTotal" xml:space="preserve">
+    <value>{0} · {1}/s</value>
+  </data>
+  <data name="SelfUpdateSignatureInvalid" xml:space="preserve">
+    <value>La mise à jour n'a pas de signature valide et n'a pas été installée. Tu peux la télécharger toi-même depuis la page de la version.</value>
+  </data>
+  <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
+    <value>Ouvrir la page de la version</value>
+  </data>
 </root>

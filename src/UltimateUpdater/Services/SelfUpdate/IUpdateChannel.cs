@@ -18,5 +18,8 @@ public interface IUpdateChannel
 
     Task<string?> GetStringAsync(HttpClient client, string url, CancellationToken cancellationToken);
 
-    Task<bool> DownloadAsync(HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken);
+    /// <summary>Reports bytes read so far and the advertised total, at most a few times a second and once more at the end.</summary>
+    Task<bool> DownloadAsync(
+        HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken,
+        IProgress<(long Read, long? Total)>? progress = null);
 }

@@ -24,7 +24,10 @@ public class SelfUpdateOutcomeTests
         """;
 
     private static SelfUpdateService Service(ScriptedChannel channel) =>
-        new(new HttpClient(), new LoggingService(), channel);
+        new(new HttpClient(), new LoggingService(), channel, publicKeyPem: TestKeyPem);
+
+    private static readonly string TestKeyPem =
+        System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256).ExportSubjectPublicKeyInfoPem();
 
     [Fact]
     public async Task A_check_that_gets_no_answer_is_failed_not_up_to_date()
@@ -78,7 +81,8 @@ public class SelfUpdateOutcomeTests
         "999.0.0",
         new ReleaseAsset("UltimateUpdater.exe", "https://github.com/x/y/a.exe", "", size),
         new ReleaseAsset("SHA256SUMS.txt", "https://github.com/x/y/SHA256SUMS.txt", "", 10),
-        string.Empty);
+        string.Empty,
+        new ReleaseAsset("UltimateUpdater.exe.sig", "https://github.com/x/y/a.exe.sig", "", 90));
 
     [Fact]
     public async Task A_missing_checksum_file_is_a_network_failure()
@@ -211,6 +215,46 @@ public class SelfUpdateOutcomeTests
         Assert.False(File.Exists(written));
     }
 
+    [Fact]
+    public async Task Progress_runs_from_download_to_verification_and_never_steps_back()
+    {
+        var content = new byte[] { 1, 2, 3, 4 };
+        using var key = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+        var signature = Convert.ToBase64String(key.SignData(
+            content,
+            System.Security.Cryptography.HashAlgorithmName.SHA256,
+            System.Security.Cryptography.DSASignatureFormat.IeeeP1363FixedFieldConcatenation));
+        var channel = new ScriptedChannel
+        {
+            Get = (url, _) => Task.FromResult<string?>(url.EndsWith(".sig", StringComparison.Ordinal) ? signature : ChecksumLine(content)),
+            Readings = [(1, 4), (2, 4), (4, 4)],
+            Download = (path, _) =>
+            {
+                File.WriteAllBytes(path, content);
+                return Task.FromResult(true);
+            },
+        };
+        var seen = new List<SelfUpdateProgress>();
+
+        var service = new SelfUpdateService(new HttpClient(), new LoggingService(), channel, publicKeyPem: key.ExportSubjectPublicKeyInfoPem());
+        var update = Update() with { SignatureAsset = new ReleaseAsset("UltimateUpdater.exe.sig", "https://github.com/x/y/a.exe.sig", "", 90) };
+        var result = await service.DownloadVerifiedAsync(update, CancellationToken.None, new Collector(seen));
+        if (result.Path is not null)
+            service.DiscardVerified(result.Path);
+
+        Assert.Equal(SelfUpdateDownloadOutcome.Downloaded, result.Outcome);
+        var downloading = seen.Where(p => p.Phase == SelfUpdatePhase.Downloading && p.Read > 0).ToList();
+        Assert.Equal([1L, 2L, 4L], downloading.Select(p => p.Read).ToArray());
+        Assert.Equal(downloading.Select(p => p.Read).Order().ToArray(), downloading.Select(p => p.Read).ToArray());
+        Assert.Equal(downloading[^1].Total, downloading[^1].Read);
+        Assert.Equal(SelfUpdatePhase.Verifying, seen[^1].Phase);
+    }
+
+    private sealed class Collector(List<SelfUpdateProgress> target) : IProgress<SelfUpdateProgress>
+    {
+        public void Report(SelfUpdateProgress value) => target.Add(value);
+    }
+
     /// <summary>The checksum line for <paramref name="content"/> under the portable asset name.</summary>
     internal static string ChecksumLine(byte[] content) =>
         $"{Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant()}  UltimateUpdater.exe";
@@ -222,13 +266,22 @@ public class SelfUpdateOutcomeTests
 
         public Func<string, CancellationToken, Task<bool>> Download { get; init; } = (_, _) => Task.FromResult(false);
 
+        /// <summary>Byte readings the fake download reports before it answers.</summary>
+        public (long Read, long? Total)[] Readings { get; init; } = [];
+
         public bool IsAvailable => true;
 
         public Task<string?> GetStringAsync(HttpClient client, string url, CancellationToken cancellationToken) =>
             Get(url, cancellationToken);
 
         public Task<bool> DownloadAsync(
-            HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken) =>
-            Download(targetPath, cancellationToken);
+            HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken,
+            IProgress<(long Read, long? Total)>? progress = null)
+        {
+            foreach (var reading in Readings)
+                progress?.Report(reading);
+
+            return Download(targetPath, cancellationToken);
+        }
     }
 }

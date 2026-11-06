@@ -32,6 +32,94 @@ public partial class MainViewModel
 
     partial void OnSelfUpdateInProgressChanged(bool value) => InstallSelfUpdateCommand.NotifyCanExecuteChanged();
 
+    /// <summary>What the banner says while the update runs: downloading with a percentage, verifying or
+    /// installing. Empty when nothing is running.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelfUpdateShowsProgress))]
+    private string selfUpdatePhaseText = string.Empty;
+
+    /// <summary>0 to 100; only meaningful while <see cref="SelfUpdateProgressIndeterminate"/> is false.</summary>
+    [ObservableProperty]
+    private double selfUpdatePercent;
+
+    /// <summary>True while the size is unknown or the phase has no measurable length (verifying, installing).</summary>
+    [ObservableProperty]
+    private bool selfUpdateProgressIndeterminate;
+
+    /// <summary>"84.0 MB of 199.4 MB · 12.4 MB/s" during the download, empty otherwise.</summary>
+    [ObservableProperty]
+    private string selfUpdateDetail = string.Empty;
+
+    /// <summary>Cancelling is possible while bytes are still arriving; once the file is being checked or
+    /// started it is too late to take back.</summary>
+    [ObservableProperty]
+    private bool selfUpdateCanCancel;
+
+    public bool SelfUpdateShowsProgress => SelfUpdatePhaseText.Length > 0;
+
+    private readonly Services.SelfUpdate.DownloadRateMeter _selfUpdateRate = new();
+    private System.Diagnostics.Stopwatch _selfUpdateClock = System.Diagnostics.Stopwatch.StartNew();
+
+    [RelayCommand]
+    private void CancelSelfUpdate()
+    {
+        if (SelfUpdateCanCancel)
+            _selfUpdateCts?.Cancel();
+    }
+
+    private void ClearSelfUpdateProgress()
+    {
+        SelfUpdatePhaseText = string.Empty;
+        SelfUpdateDetail = string.Empty;
+        SelfUpdatePercent = 0;
+        SelfUpdateProgressIndeterminate = false;
+        SelfUpdateCanCancel = false;
+    }
+
+    /// <summary>Shows one reading in the banner. The percentage only ever rises within a run, so a late or
+    /// repeated reading never makes the bar step back.</summary>
+    internal void ShowSelfUpdateProgress(Services.SelfUpdate.SelfUpdateProgress reading)
+    {
+        switch (reading.Phase)
+        {
+            case Services.SelfUpdate.SelfUpdatePhase.Downloading:
+                var known = reading.Total is > 0;
+                var percent = known ? Math.Min(100, (int)(reading.Read * 100 / reading.Total!.Value)) : 0;
+                if (known && percent < SelfUpdatePercent)
+                    percent = (int)SelfUpdatePercent;
+
+                SelfUpdateCanCancel = true;
+                SelfUpdateProgressIndeterminate = !known;
+                SelfUpdatePercent = percent;
+                SelfUpdatePhaseText = known
+                    ? string.Format(Loc["SelfUpdatePhaseDownloading"], percent)
+                    : Loc["SelfUpdatePhaseDownloadingUnknown"];
+
+                var rate = _selfUpdateRate.Add(reading.Read, _selfUpdateClock.Elapsed);
+                SelfUpdateDetail = reading.Read <= 0 || rate <= 0
+                    ? string.Empty
+                    : known
+                        ? string.Format(Loc["SelfUpdateDetail"], ByteSize.Format(reading.Read), ByteSize.Format(reading.Total!.Value), ByteSize.Format((long)rate))
+                        : string.Format(Loc["SelfUpdateDetailUnknownTotal"], ByteSize.Format(reading.Read), ByteSize.Format((long)rate));
+                break;
+
+            case Services.SelfUpdate.SelfUpdatePhase.Verifying:
+                SelfUpdateCanCancel = false;
+                SelfUpdateProgressIndeterminate = true;
+                SelfUpdateDetail = string.Empty;
+                SelfUpdatePhaseText = Loc["SelfUpdatePhaseVerifying"];
+                break;
+        }
+    }
+
+    private void ShowSelfUpdateInstalling()
+    {
+        SelfUpdateCanCancel = false;
+        SelfUpdateProgressIndeterminate = true;
+        SelfUpdateDetail = string.Empty;
+        SelfUpdatePhaseText = Loc["SelfUpdatePhaseInstalling"];
+    }
+
     /// <summary>Applying the update ends the process; an install batch or a cleanup run still in flight would
     /// be killed half way, so the command waits until neither is running.</summary>
     private bool CanInstallSelfUpdate => !IsInstalling && !IsCleanupRunning && !SelfUpdateInProgress;
@@ -124,10 +212,22 @@ public partial class MainViewModel
             _selfUpdateCts?.Dispose();
             _selfUpdateCts = new CancellationTokenSource();
 
+            // Created here on the dispatcher, so readings from the download thread are posted back to it
+            // and the window never waits on the network.
+            _selfUpdateClock = System.Diagnostics.Stopwatch.StartNew();
+            ShowSelfUpdateProgress(new Services.SelfUpdate.SelfUpdateProgress(Services.SelfUpdate.SelfUpdatePhase.Downloading));
+            var progress = new Progress<Services.SelfUpdate.SelfUpdateProgress>(ShowSelfUpdateProgress);
+
             var download = await (SelfUpdateDownloadForTest?.Invoke(_pendingSelfUpdate, _selfUpdateCts.Token)
-                ?? _selfUpdate.DownloadVerifiedAsync(_pendingSelfUpdate, _selfUpdateCts.Token));
+                ?? _selfUpdate.DownloadVerifiedAsync(_pendingSelfUpdate, _selfUpdateCts.Token, progress));
             if (download.Path is not { } verifiedPath)
             {
+                if (download.Outcome == Services.SelfUpdate.SelfUpdateDownloadOutcome.SignatureInvalid)
+                {
+                    OfferReleasePageAfterBadSignature();
+                    return;
+                }
+
                 // Network and verification failures read differently: one is worth a retry, the other says
                 // the file was refused.
                 var message = download.Outcome == Services.SelfUpdate.SelfUpdateDownloadOutcome.NetworkFailed
@@ -167,9 +267,25 @@ public partial class MainViewModel
         }
         finally
         {
+            ClearSelfUpdateProgress();
             if (!keepInProgress)
                 SelfUpdateInProgress = false;
         }
+    }
+
+    internal const string ReleasePageUrl = SettingsViewModel.RepositoryUrl + "/releases/latest";
+
+    /// <summary>Test-only: replaces the dialog that tells the user the update was not validly signed.</summary>
+    internal Func<bool>? SignatureRefusedPromptForTest { get; set; }
+
+    /// <summary>Nothing was installed. The user can still fetch the release by hand, so the notice offers
+    /// the release page next to its plain close button.</summary>
+    private void OfferReleasePageAfterBadSignature()
+    {
+        var open = SignatureRefusedPromptForTest?.Invoke()
+            ?? Dialogs.Confirm(Loc["SelfUpdateSignatureInvalid"], string.Empty, Loc["SelfUpdateOpenReleasePage"], Loc["DialogOk"]);
+        if (open)
+            UriLauncher.LaunchDetached(ReleasePageUrl, _logging);
     }
 
     /// <summary>Install work counts from the moment it owns the install machinery or has rows waiting for
@@ -198,6 +314,7 @@ public partial class MainViewModel
         // can start between that check and the process ending.
         _selfUpdateApplying = true;
         var applied = false;
+        ShowSelfUpdateInstalling();
         try
         {
             var apply = SelfUpdateApplyForTest ?? _selfUpdate.Apply;
@@ -206,7 +323,10 @@ public partial class MainViewModel
         finally
         {
             if (!applied)
+            {
                 _selfUpdateApplying = false;
+                ClearSelfUpdateProgress();
+            }
         }
 
         if (applied)

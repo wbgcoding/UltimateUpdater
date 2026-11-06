@@ -2203,4 +2203,28 @@ Continuați cu drepturi de administrator?</value>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Se instalează… {0}</value>
   </data>
+  <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
+    <value>Se descarcă… {0} %</value>
+  </data>
+  <data name="SelfUpdatePhaseDownloadingUnknown" xml:space="preserve">
+    <value>Se descarcă…</value>
+  </data>
+  <data name="SelfUpdatePhaseVerifying" xml:space="preserve">
+    <value>Se verifică…</value>
+  </data>
+  <data name="SelfUpdatePhaseInstalling" xml:space="preserve">
+    <value>Se instalează…</value>
+  </data>
+  <data name="SelfUpdateDetail" xml:space="preserve">
+    <value>{0} din {1} · {2}/s</value>
+  </data>
+  <data name="SelfUpdateDetailUnknownTotal" xml:space="preserve">
+    <value>{0} · {1}/s</value>
+  </data>
+  <data name="SelfUpdateSignatureInvalid" xml:space="preserve">
+    <value>Actualizarea nu este semnată valid și nu a fost instalată. O poți descărca singur de pe pagina versiunii.</value>
+  </data>
+  <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
+    <value>Deschide pagina versiunii</value>
+  </data>
 </root>

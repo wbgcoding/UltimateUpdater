@@ -12,7 +12,8 @@ public class SelfUpdateSetupLaunchTests
         Assert.Equal("runas", info.Verb);
         Assert.True(info.UseShellExecute);
         Assert.Equal(@"C:\Temp\setup.exe", info.FileName);
-        Assert.Contains("/VERYSILENT", info.Arguments);
+        Assert.Contains("/SILENT", info.Arguments);
+        Assert.DoesNotContain("VERYSILENT", info.Arguments);
     }
 
     [Fact]

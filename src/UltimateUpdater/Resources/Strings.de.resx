@@ -2203,4 +2203,28 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Wird installiert… {0}</value>
   </data>
+  <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
+    <value>Wird heruntergeladen… {0} %</value>
+  </data>
+  <data name="SelfUpdatePhaseDownloadingUnknown" xml:space="preserve">
+    <value>Wird heruntergeladen…</value>
+  </data>
+  <data name="SelfUpdatePhaseVerifying" xml:space="preserve">
+    <value>Wird geprüft…</value>
+  </data>
+  <data name="SelfUpdatePhaseInstalling" xml:space="preserve">
+    <value>Wird installiert…</value>
+  </data>
+  <data name="SelfUpdateDetail" xml:space="preserve">
+    <value>{0} von {1} · {2}/s</value>
+  </data>
+  <data name="SelfUpdateDetailUnknownTotal" xml:space="preserve">
+    <value>{0} · {1}/s</value>
+  </data>
+  <data name="SelfUpdateSignatureInvalid" xml:space="preserve">
+    <value>Das Update ist nicht gültig signiert und wurde nicht installiert. Du kannst es auf der Release-Seite selbst laden.</value>
+  </data>
+  <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
+    <value>Release-Seite öffnen</value>
+  </data>
 </root>

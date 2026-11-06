@@ -2203,4 +2203,28 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>インストール中… {0}</value>
   </data>
+  <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
+    <value>ダウンロード中… {0} %</value>
+  </data>
+  <data name="SelfUpdatePhaseDownloadingUnknown" xml:space="preserve">
+    <value>ダウンロード中…</value>
+  </data>
+  <data name="SelfUpdatePhaseVerifying" xml:space="preserve">
+    <value>確認中…</value>
+  </data>
+  <data name="SelfUpdatePhaseInstalling" xml:space="preserve">
+    <value>インストール中…</value>
+  </data>
+  <data name="SelfUpdateDetail" xml:space="preserve">
+    <value>{0} / {1} · {2}/秒</value>
+  </data>
+  <data name="SelfUpdateDetailUnknownTotal" xml:space="preserve">
+    <value>{0} · {1}/秒</value>
+  </data>
+  <data name="SelfUpdateSignatureInvalid" xml:space="preserve">
+    <value>このアップデートは有効な署名がないためインストールされませんでした。リリースページから自分でダウンロードできます。</value>
+  </data>
+  <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
+    <value>リリースページを開く</value>
+  </data>
 </root>

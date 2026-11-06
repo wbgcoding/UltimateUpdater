@@ -8,7 +8,10 @@ using UltimateUpdater.Services.Sources;
 
 namespace UltimateUpdater.Services.SelfUpdate;
 
-public sealed record AvailableUpdate(string Version, ReleaseAsset Asset, ReleaseAsset ChecksumAsset, string ReleaseNotes);
+/// <param name="SignatureAsset">The release's <c>&lt;asset&gt;.sig</c>; null when the release carries none,
+/// which the download then refuses.</param>
+public sealed record AvailableUpdate(
+    string Version, ReleaseAsset Asset, ReleaseAsset ChecksumAsset, string ReleaseNotes, ReleaseAsset? SignatureAsset = null);
 
 /// <summary>What a check concluded. <see cref="Failed"/> is "could not tell" (network, timeout, unreadable
 /// feed), never to be shown as "up to date".</summary>
@@ -17,8 +20,15 @@ public enum SelfUpdateCheckOutcome { None, Found, Failed }
 public sealed record SelfUpdateCheckResult(SelfUpdateCheckOutcome Outcome, AvailableUpdate? Update = null);
 
 /// <summary>Why a download did not produce a verified file: the network never delivered it, or what arrived
-/// was refused by a verification step.</summary>
-public enum SelfUpdateDownloadOutcome { Downloaded, NetworkFailed, VerificationFailed }
+/// was refused by a verification step. <see cref="SignatureInvalid"/> is the signature check in particular:
+/// missing, malformed or not matching the release key, which the user is told differently.</summary>
+public enum SelfUpdateDownloadOutcome { Downloaded, NetworkFailed, VerificationFailed, SignatureInvalid }
+
+/// <summary>Where a self-update is: bytes arriving, or the finished file being checked.</summary>
+public enum SelfUpdatePhase { Downloading, Verifying }
+
+/// <summary>One progress reading; <see cref="Total"/> is null when the server did not say how big the file is.</summary>
+public readonly record struct SelfUpdateProgress(SelfUpdatePhase Phase, long Read = 0, long? Total = null);
 
 public sealed record SelfUpdateDownloadResult(SelfUpdateDownloadOutcome Outcome, string? Path = null);
 
@@ -31,6 +41,9 @@ public sealed partial class SelfUpdateService
 {
     private const string ReleasesApi = "https://api.github.com/repos/wbgcoding/UltimateUpdater/releases";
     private const string ChecksumFileName = "SHA256SUMS.txt";
+
+    /// <summary>Appended to an asset's name to get the file holding its signature.</summary>
+    private const string SignatureSuffix = ".sig";
 
     /// <summary>Refuse anything implausibly large before writing it to disk.</summary>
     private const long MaxAssetBytes = 300L * 1024 * 1024;
@@ -76,13 +89,18 @@ public sealed partial class SelfUpdateService
     /// touches the test host's own executable.</summary>
     private readonly Func<string?>? _currentImagePath;
 
+    /// <summary>The key releases must be signed with; a test passes its own so no real key is ever needed.</summary>
+    private readonly string _publicKeyPem;
+
     public SelfUpdateService(
-        HttpClient httpClient, LoggingService logging, IUpdateChannel channel, Func<string?>? currentImagePath = null)
+        HttpClient httpClient, LoggingService logging, IUpdateChannel channel, Func<string?>? currentImagePath = null,
+        string? publicKeyPem = null)
     {
         _httpClient = httpClient;
         _logging = logging;
         _channel = channel;
         _currentImagePath = currentImagePath;
+        _publicKeyPem = publicKeyPem ?? ReleaseSignature.ReleasePublicKeyPem;
     }
 
     /// <summary>
@@ -144,9 +162,14 @@ public sealed partial class SelfUpdateService
             }
 
             _logging.Event(ActivityLog.SelfUpdate, ActivityLog.SelfUpdateFound(release.Version));
+            // A release without a signature file is still offered: the download refuses it with the signature
+            // message, so the user learns why instead of the update silently never appearing.
+            var signature = release.Assets.FirstOrDefault(a =>
+                string.Equals(a.Name, asset.Name + SignatureSuffix, StringComparison.OrdinalIgnoreCase));
+
             return new SelfUpdateCheckResult(
                 SelfUpdateCheckOutcome.Found,
-                new AvailableUpdate(release.Version, asset, checksums, release.ReleaseNotes));
+                new AvailableUpdate(release.Version, asset, checksums, release.ReleaseNotes, signature));
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -171,7 +194,7 @@ public sealed partial class SelfUpdateService
     /// verification step refused the file (not).
     /// </summary>
     public async Task<SelfUpdateDownloadResult> DownloadVerifiedAsync(
-        AvailableUpdate update, CancellationToken cancellationToken)
+        AvailableUpdate update, CancellationToken cancellationToken, IProgress<SelfUpdateProgress>? progress = null)
     {
         var callerToken = cancellationToken;
 
@@ -196,6 +219,24 @@ public sealed partial class SelfUpdateService
 
         try
         {
+            // Refused before a single byte of the installer is fetched: with no usable key or no signature
+            // file the download could only end in a refusal.
+            if (!ReleaseSignature.IsUsableKey(_publicKeyPem))
+            {
+                _logging.EventFailed(ActivityLog.SelfUpdate, "no usable release key is built in; refusing the update");
+                return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.SignatureInvalid);
+            }
+
+            if (update.SignatureAsset is null)
+            {
+                _logging.EventFailed(ActivityLog.SelfUpdate, $"release has no signature for '{update.Asset.Name}'");
+                return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.SignatureInvalid);
+            }
+
+            var signatureText = await _channel.GetStringAsync(_httpClient, ChooseUrl(update.SignatureAsset), cancellationToken);
+            if (signatureText is null)
+                return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.NetworkFailed);
+
             var checksumBody = await _channel.GetStringAsync(_httpClient, ChooseUrl(update.ChecksumAsset), cancellationToken);
             if (checksumBody is null)
                 return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.NetworkFailed);
@@ -214,7 +255,10 @@ public sealed partial class SelfUpdateService
             }
 
             Directory.CreateDirectory(stagingFolder);
-            if (!await _channel.DownloadAsync(_httpClient, ChooseUrl(update.Asset), targetPath, MaxAssetBytes, cancellationToken))
+            progress?.Report(new SelfUpdateProgress(SelfUpdatePhase.Downloading));
+            var downloadProgress = progress is null ? null : new DownloadProgressAdapter(progress);
+            if (!await _channel.DownloadAsync(
+                    _httpClient, ChooseUrl(update.Asset), targetPath, MaxAssetBytes, cancellationToken, downloadProgress))
             {
                 // a refused or truncated download still created the file; nothing unverified stays behind
                 _logging.EventFailed(ActivityLog.SelfUpdate, $"download of '{update.Asset.Name}' failed or was refused");
@@ -223,6 +267,7 @@ public sealed partial class SelfUpdateService
             }
 
             _logging.Event(ActivityLog.SelfUpdate, ActivityLog.SelfUpdateDownloaded(update.Asset.Name, update.Asset.Size));
+            progress?.Report(new SelfUpdateProgress(SelfUpdatePhase.Verifying));
 
             // Opened before hashing and held until the file has been started. Without a handle any
             // process running as this user can rewrite the file in %TEMP% between the hash and the
@@ -241,6 +286,17 @@ public sealed partial class SelfUpdateService
                 ReleaseVerified();
                 TryDeleteStaged(targetPath);
                 return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.VerificationFailed);
+            }
+
+            // The checksum only proves the file matches the checksum file, and both come from the same
+            // release. The signature proves the release owner's key made this exact file; it is checked
+            // through the same handle, so the bytes verified are the bytes that run.
+            if (!ReleaseSignature.Verify(_verified, signatureText, _publicKeyPem))
+            {
+                _logging.EventFailed(ActivityLog.SelfUpdate, $"signature check failed for '{update.Asset.Name}', discarded");
+                ReleaseVerified();
+                TryDeleteStaged(targetPath);
+                return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.SignatureInvalid);
             }
 
             // Second opinion from the installed antivirus, on the file the checksum just proved is the one
@@ -282,6 +338,20 @@ public sealed partial class SelfUpdateService
             TryDeleteStaged(targetPath);
             return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.NetworkFailed);
         }
+    }
+
+    /// <summary>Hands the channel's byte counts on as download-phase readings.</summary>
+    private sealed class DownloadProgressAdapter(IProgress<SelfUpdateProgress> target) : IProgress<(long Read, long? Total)>
+    {
+        public void Report((long Read, long? Total) value) =>
+            target.Report(new SelfUpdateProgress(SelfUpdatePhase.Downloading, value.Read, value.Total));
+    }
+
+    /// <summary>Gives up a verified download that will not be started: drops the pin and removes the staged file.</summary>
+    internal void DiscardVerified(string path)
+    {
+        ReleaseVerified();
+        TryDeleteStaged(path);
     }
 
     /// <summary>Drops the handle that pins the verified artifact (see DownloadVerifiedAsync).</summary>
@@ -341,11 +411,12 @@ public sealed partial class SelfUpdateService
     private static void ConfigureSetupStartInfo(ProcessStartInfo info, string verifiedPath, bool machineScope)
     {
         info.FileName = verifiedPath;
-        // FORCECLOSEAPPLICATIONS: without it Setup refuses to replace a running copy and
-        // exits with code 5, having done nothing. RELAUNCH=1 starts this app again once
+        // SILENT, not VERYSILENT: Setup shows its own progress window, so the seconds after this app has
+        // gone are not a blank screen. FORCECLOSEAPPLICATIONS: without it Setup refuses to replace a
+        // running copy and exits with code 5, having done nothing. RELAUNCH=1 starts this app again once
         // Setup is finished: the Restart Manager offers to do that and does not do it
         // reliably, so it is asked for explicitly.
-        info.Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS /RELAUNCH=1";
+        info.Arguments = "/SILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS /RELAUNCH=1";
         if (machineScope)
             info.Verb = "runas";
     }
