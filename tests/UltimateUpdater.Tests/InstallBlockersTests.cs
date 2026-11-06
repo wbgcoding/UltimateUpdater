@@ -47,30 +47,81 @@ public class InstallBlockersTests
         Assert.Equal("Corsair iCUE", blocked!.DisplayProgramName);
     }
 
+    private const string GitFolder = @"C:\Program Files\Git";
+
+    private static InstallBlockers GitBlockers(
+        IReadOnlyList<string> names, Func<string, IReadOnlyList<string>> imagePathsOf, string? gitFolder = GitFolder) =>
+        new(runningProcessNames: () => names, imagePathsOf: imagePathsOf, gitInstallFolder: () => gitFolder);
+
     /// <summary>Git's silent setup asks to close its own running shells and, with message boxes suppressed,
-    /// asks again for ever at full CPU; every other winget install then waits behind it.</summary>
+    /// asks again for ever at full CPU. A terminal on Git Bash keeps bash running all day, so the row is
+    /// skipped for the run instead of asking the user to close anything.</summary>
     [Fact]
-    public void Git_is_blocked_by_its_own_shells_matched_by_exact_name()
+    public void Git_is_skipped_while_its_own_shells_run_and_never_offered_for_closing()
     {
-        var blockers = new InstallBlockers(runningProcessNames: () => ["bash", "git", "GitHubDesktop", "ShareX", "explorer"]);
+        var blockers = GitBlockers(
+            ["bash", "git", "GitHubDesktop", "ShareX", "explorer"],
+            name => name switch
+            {
+                "bash" => [$@"{GitFolder}\usr\bin\bash.exe", $@"{GitFolder}\bin\bash.exe", $@"{GitFolder}\usr\bin\bash.exe"],
+                "git" => [$@"{GitFolder}\cmd\git.exe"],
+                _ => [],
+            });
 
         var blocked = blockers.Detect(Item("Git.Git"));
 
         Assert.NotNull(blocked);
-        Assert.Equal("Git", blocked!.DisplayProgramName);
-        Assert.Equal(["bash", "git"], blocked.ProcessNames.Order(StringComparer.OrdinalIgnoreCase));
+        Assert.True(blocked!.SkipOnly);
+        Assert.Equal("Git", blocked.DisplayProgramName);
+        Assert.Equal("bash ×3, git", blocked.DescribeProcesses());
     }
 
-    /// <summary>Seen live: Git's setup refused because an ssh.exe of a running git fetch used Git's files.</summary>
+    /// <summary>Windows' own OpenSSH shares the ssh name but lives in the Windows folder; it must never count.</summary>
     [Fact]
-    public void Git_is_blocked_by_its_own_ssh()
+    public void Git_ignores_an_ssh_that_runs_from_the_windows_folder()
     {
-        var blockers = new InstallBlockers(runningProcessNames: () => ["ssh", "sshd-session", "explorer"]);
+        var blockers = GitBlockers(
+            ["ssh", "sshd-session", "explorer"],
+            name => name == "ssh" ? [@"C:\Windows\System32\OpenSSH\ssh.exe"] : []);
+
+        Assert.Null(blockers.Detect(Item("Git.Git")));
+    }
+
+    [Fact]
+    public void Git_counts_its_own_ssh_even_when_a_windows_ssh_runs_too()
+    {
+        var blockers = GitBlockers(
+            ["ssh"],
+            _ => [@"C:\Windows\System32\OpenSSH\ssh.exe", $@"{GitFolder}\usr\bin\ssh.exe"]);
 
         var blocked = blockers.Detect(Item("Git.Git"));
 
         Assert.NotNull(blocked);
         Assert.Equal(["ssh"], blocked!.ProcessNames);
+    }
+
+    [Fact]
+    public void A_folder_next_to_gits_with_the_same_start_does_not_count()
+    {
+        var blockers = GitBlockers(["bash"], _ => [@"C:\Program Files\Git2\bin\bash.exe"]);
+
+        Assert.Null(blockers.Detect(Item("Git.Git")));
+    }
+
+    [Fact]
+    public void Git_without_a_findable_install_folder_is_not_skipped()
+    {
+        var blockers = GitBlockers(["bash"], _ => [$@"{GitFolder}\bin\bash.exe"], gitFolder: null);
+
+        Assert.Null(blockers.Detect(Item("Git.Git")));
+    }
+
+    [Fact]
+    public void A_process_whose_image_cannot_be_read_does_not_hold_git_back()
+    {
+        var blockers = GitBlockers(["bash"], _ => []);
+
+        Assert.Null(blockers.Detect(Item("Git.Git")));
     }
 
     [Fact]

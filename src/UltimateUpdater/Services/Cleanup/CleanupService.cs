@@ -130,6 +130,10 @@ public class CleanupService(LoggingService logging)
     internal static readonly IReadOnlyList<string> AnalyzeComponentStoreArguments =
         ["/Online", "/Cleanup-Image", "/AnalyzeComponentStore", "/English"];
 
+    /// <summary>How long DISM may take to analyze the store before it is stopped. On a PC with a large or
+    /// busy store the read-only analysis runs well past five minutes, which only produced a timeout.</summary>
+    internal static readonly TimeSpan ComponentStoreAnalysisTimeout = TimeSpan.FromMinutes(15);
+
     /// <summary>
     /// Read-only measurement of the WinSxS component store via DISM's own AnalyzeComponentStore switch.
     /// Needs administrator rights like every other DISM call in this file; the caller is
@@ -155,14 +159,14 @@ public class CleanupService(LoggingService logging)
             // OemTextRecovery's own doc comment for the full story.
             var result = await ProcessRunner.RunAsync(
                 dism, AnalyzeComponentStoreArguments,
-                TimeSpan.FromMinutes(5), cancellationToken, outputEncoding: Encoding.Latin1);
+                ComponentStoreAnalysisTimeout, cancellationToken, outputEncoding: Encoding.Latin1);
 
-            // A killed-after-5-minutes DISM must read as "this timed out", never as a run that "finished"
+            // A killed-after-the-deadline DISM must read as "this timed out", never as a run that "finished"
             // with a stray -1 exit code (result.ExitCode is meaningless once TimedOut is set, the process
             // was killed rather than exiting) or as one that quietly reported nothing at all.
             if (result.TimedOut)
             {
-                logging.Warn("Cleanup: component store analysis timed out after 5 minutes and was stopped.");
+                logging.Warn("Cleanup: component store analysis timed out after 15 minutes and was stopped.");
                 return ComponentStoreAnalysis.TimedOutResult;
             }
 

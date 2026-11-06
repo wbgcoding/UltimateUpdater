@@ -348,6 +348,14 @@ public partial class MainViewModel
                 continue;
             }
 
+            // Never asked about and never closed, attended or not: it is the next run's job, not a failure.
+            if (blocker.SkipOnly)
+            {
+                SkipRowInUse(row, blocker);
+                skipped.Add(row);
+                continue;
+            }
+
             if (App.IsUnattended)
             {
                 SkipBlockedRowUnattended(row, blocker.DisplayProgramName);
@@ -739,6 +747,24 @@ public partial class MainViewModel
         row.ApplyInstallStatus(new InstallItemStatus(row.SourceId, row.Item.Id, 0, message, false, message));
 
         _history.Append(HistoryEntry.ForItem(row.Item, InstallAction.Install, success: false, error: message));
+    }
+
+    /// <summary>
+    /// A program that must not be closed is using the files the update would replace (Git's own shells).
+    /// The row ends as Cancelled with the reason, not as a failure, so it is never counted towards the
+    /// repeated-failure flag and simply comes back on the next scan.
+    /// </summary>
+    private void SkipRowInUse(UpdateRowViewModel row, Services.Install.BlockedInstall blocker)
+    {
+        var message = string.Format(Loc["InstallBlockerInUse"], blocker.DescribeProcesses());
+
+        row.BeginInstall();
+        row.ApplyInstallStatus(new InstallItemStatus(row.SourceId, row.Item.Id, 0, message, null, null)
+        {
+            IsCancelled = true,
+        });
+
+        _history.Append(HistoryEntry.ForItem(row.Item, InstallAction.Install, success: false, error: message, isCancelled: true));
     }
 
     /// <summary>

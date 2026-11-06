@@ -130,7 +130,7 @@ public abstract class CliUpdateSource : IUpdateSource
         string executable, IReadOnlyList<string> arguments, IProgress<Models.InstallProgress> progress, string name, CancellationToken cancellationToken) =>
         ProcessRunner.RunStreamingAsync(
             executable, arguments, InstallTimeout, segment => ReportSegment(progress, name, segment), cancellationToken,
-            ProcessEnvironment);
+            ProcessEnvironment, stallWatch: StallWatchOptions.ForInstall);
 
     /// <summary>Hands one streamed output segment to the progress parser, reporting only real readings.</summary>
     private protected static void ReportSegment(IProgress<Models.InstallProgress> progress, string name, string segment)

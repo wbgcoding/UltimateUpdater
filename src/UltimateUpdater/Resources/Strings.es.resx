@@ -1996,9 +1996,6 @@ Esto no se puede deshacer.</value>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Seleccionar solo los elementos seguros, los mismos que están marcados de forma predeterminada.</value>
   </data>
-  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
-    <value>Windows no respondió a tiempo. Se detuvo el análisis.</value>
-  </data>
   <data name="CleanupPipLeftovers" xml:space="preserve">
     <value>Restos de instalaciones de pip interrumpidas</value>
   </data>
@@ -2202,5 +2199,17 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Instalando… {0}</value>
+  </data>
+  <data name="InstallBlockerInUse" xml:space="preserve">
+    <value>Git se está usando ahora mismo ({0}), se volverá a intentar en la próxima ejecución.</value>
+  </data>
+  <data name="InstallStalled" xml:space="preserve">
+    <value>El instalador dejó de responder y se detuvo.</value>
+  </data>
+  <data name="InstallPackageSourceStale" xml:space="preserve">
+    <value>El origen de paquetes aún no está actualizado, inténtalo de nuevo más tarde.</value>
+  </data>
+  <data name="InstallRustupMetadata" xml:space="preserve">
+    <value>rustup no pudo leer su propio archivo de instalación. Ejecuta "rustup update" en un terminal cuando nada más lo esté usando.</value>
   </data>
 </root>

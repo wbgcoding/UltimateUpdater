@@ -485,7 +485,8 @@ public static class InstallWorker
             // the user's own paths, goes to the log and travels back as Detail for the row's
             // "Details" affordance, which the user opens on purpose (SECURITY.md).
             logging.Error($"Worker {job.Action} failed for '{item.Id}'", ex);
-            var summary = LocalizationService.Instance[job.Action == InstallAction.Uninstall ? "UninstallFailed" : "InstallFailed"];
+            var summary = InstallErrorExplainer.RowText(item.SourceId, ex.Message, key => LocalizationService.Instance[key])
+                ?? LocalizationService.Instance[job.Action == InstallAction.Uninstall ? "UninstallFailed" : "InstallFailed"];
             delivered = Send(writer, jobId, Result(item.SourceId, item.Id, false, summary, ex.Message));
         }
 

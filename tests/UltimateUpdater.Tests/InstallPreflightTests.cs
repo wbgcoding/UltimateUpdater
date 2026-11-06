@@ -396,6 +396,42 @@ public class InstallPreflightTests
         }
     }
 
+    /// <summary>Git in use is skipped for the run even when someone is watching: no question, nothing closed,
+    /// and the row ends as Cancelled with the reason, so it never counts as a failure.</summary>
+    [Fact]
+    public void Git_in_use_is_skipped_without_a_question_and_without_a_failure()
+    {
+        App.ForceAttendedForTest = true;
+        try
+        {
+            WpfHarness.OnUiThread(() =>
+            {
+                var blockers = new Services.Install.InstallBlockers(
+                    runningProcessNames: () => ["bash"],
+                    imagePathsOf: _ => [@"C:\Program Files\Git\usr\bin\bash.exe"],
+                    gitInstallFolder: () => @"C:\Program Files\Git");
+                var viewModel = Create(installBlockers: blockers);
+
+                var row = new UpdateRowViewModel(Item("Git.Git", "Git", "winget"));
+                viewModel.Updates.Add(row);
+                row.IsSelected = true;
+
+                var opened = false;
+                viewModel.InstallPreflightOverride = _ => { opened = true; return true; };
+
+                ExecuteInstallAndWait(viewModel);
+
+                Assert.False(opened);
+                Assert.Equal(RowInstallState.Cancelled, row.InstallState);
+                Assert.Equal(string.Format(LocalizationService.Instance["InstallBlockerInUse"], "bash"), row.InstallStatusText);
+            });
+        }
+        finally
+        {
+            App.ForceAttendedForTest = false;
+        }
+    }
+
     /// <summary>Unattended (the suite's default, see WpfHarness): never opens the window, keeps skipping
     /// a blocked row automatically with its reason recorded, exactly as before this fix.</summary>
     [Fact]

@@ -22,7 +22,6 @@ public partial class CleanupViewModel
         OnPropertyChanged(nameof(HasComponentStoreResult));
         OnPropertyChanged(nameof(ComponentStoreSizeText));
         OnPropertyChanged(nameof(ShowComponentStoreRecommended));
-        OnPropertyChanged(nameof(ShowComponentStoreTimedOut));
     }
 
     partial void OnIsAnalyzingComponentStoreChanged(bool value)
@@ -33,8 +32,9 @@ public partial class CleanupViewModel
     public string ComponentStoreRecommendedText => Loc["CleanupComponentStoreRecommended"];
 
     /// <summary>Whether a result (however incomplete) has come back at least once; the lines below the
-    /// description depend on this.</summary>
-    public bool HasComponentStoreResult => ComponentStoreResult is not null;
+    /// description depend on this. An analysis DISM never finished in time counts as no result yet: a
+    /// slow Windows is no failure of this app, so the card stays as if nothing had been measured.</summary>
+    public bool HasComponentStoreResult => ComponentStoreResult is { TimedOut: false };
 
     /// <summary>"{0} on disk, {1} shared with Windows"; either half falls back to a dash when DISM's own
     /// output did not carry that one field, never a guess. When NEITHER carried, a run that
@@ -49,13 +49,6 @@ public partial class CleanupViewModel
                 ComponentStoreResult?.SharedWithWindowsBytes is { } shared ? ByteSize.Format(shared) : "-");
 
     public bool ShowComponentStoreRecommended => ComponentStoreResult?.CleanupRecommended == true;
-
-    /// <summary>DISM was killed after its own 5-minute deadline rather than answering; distinct from a
-    /// completed run that simply had nothing to report (<see cref="ComponentStoreSizeText"/>'s
-    /// "CleanupComponentStoreNoNumbers" case), which is not an error at all.</summary>
-    public bool ShowComponentStoreTimedOut => ComponentStoreResult?.TimedOut == true;
-
-    public string ComponentStoreTimedOutText => Loc["CleanupComponentStoreTimedOut"];
 
     /// <summary>
     /// Starts the analysis on its own, but only where it costs nothing to ask: the process is elevated or

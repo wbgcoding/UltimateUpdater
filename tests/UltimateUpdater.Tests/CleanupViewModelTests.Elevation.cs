@@ -216,18 +216,18 @@ public partial class CleanupViewModelTests
         Assert.Contains("-", text);
     }
 
-    /// <summary>DISM being killed after its own deadline must show as a distinguishable error, not as
-    /// the same silent "no numbers" wording a genuinely empty run produces.</summary>
+    /// <summary>DISM being stopped after its own deadline is no failure line and not the "no numbers"
+    /// sentence of a finished empty run either: the card stays as if nothing had been measured yet.</summary>
     [Fact]
-    public void ShowComponentStoreTimedOut_is_true_only_for_a_timed_out_result()
+    public void A_timed_out_analysis_leaves_the_card_in_its_not_measured_state()
     {
         var viewModel = Create(CreateSettings());
 
         viewModel.ComponentStoreResult = ComponentStoreAnalysis.TimedOutResult;
-        Assert.True(viewModel.ShowComponentStoreTimedOut);
+        Assert.False(viewModel.HasComponentStoreResult);
 
         viewModel.ComponentStoreResult = new ComponentStoreAnalysis(null, null, null, null);
-        Assert.False(viewModel.ShowComponentStoreTimedOut);
+        Assert.True(viewModel.HasComponentStoreResult);
     }
 
     /// <summary>The tick already says "done"; the state text next to it must not repeat the same

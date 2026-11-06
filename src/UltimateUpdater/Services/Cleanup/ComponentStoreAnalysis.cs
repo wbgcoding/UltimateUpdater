@@ -18,10 +18,9 @@ public sealed record ComponentStoreAnalysis(
     /// understood.</summary>
     public static readonly ComponentStoreAnalysis Unknown = new(null, null, null, null);
 
-    /// <summary>DISM itself was killed after running past its own hard deadline (<see
-    /// cref="CleanupService.AnalyzeComponentStoreAsync"/>'s 5-minute <see cref="ProcessRunner.RunAsync"/>
-    /// timeout) rather than crashing or returning early on its own. Distinct from <see cref="Unknown"/>: the
-    /// dialog must say THIS happened rather than silently showing dashes as if DISM had simply printed
-    /// nothing.</summary>
+    /// <summary>DISM itself was killed after running past its hard deadline (<see
+    /// cref="CleanupService.ComponentStoreAnalysisTimeout"/>) rather than crashing or returning early on its
+    /// own. Distinct from <see cref="Unknown"/> so the log can say so; the dialog shows it as "not measured
+    /// yet", not as a failure.</summary>
     public static readonly ComponentStoreAnalysis TimedOutResult = new(null, null, null, null, TimedOut: true);
 }

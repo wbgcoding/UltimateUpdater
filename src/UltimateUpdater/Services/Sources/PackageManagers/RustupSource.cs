@@ -55,4 +55,15 @@ public sealed class RustupSource(LoggingService logging, HttpClient httpClient) 
     }
 
     protected override IReadOnlyList<string> InstallArguments(UpdateItem item) => ["update"];
+
+    /// <summary>rustup replaces its own executable while it runs; when that file is read at the wrong moment
+    /// (a virus scanner holding it, a half finished swap) the update stops with a metadata error. The same
+    /// command a moment later normally goes through, so the failure is retried once before it is reported.</summary>
+    protected override IReadOnlyList<string>? RetryInstallArguments(UpdateItem item, ProcessResult firstAttempt) =>
+        IsInitMetadataFailure($"{firstAttempt.StandardOutput}\n{firstAttempt.StandardError}") ? InstallArguments(item) : null;
+
+    /// <summary>True when the text is rustup's "could not read metadata" failure on its own setup file.</summary>
+    internal static bool IsInitMetadataFailure(string text) =>
+        text.Contains("could not read metadata for file", StringComparison.OrdinalIgnoreCase)
+        && text.Contains("rustup-init.exe", StringComparison.OrdinalIgnoreCase);
 }

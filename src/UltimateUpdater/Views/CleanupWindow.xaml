@@ -322,14 +322,6 @@
                            FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" FontWeight="SemiBold"
                            Visibility="{Binding ShowComponentStoreRecommended, Converter={StaticResource BoolToVisibility}}"
                            Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
-
-                <!-- Distinct from a completed run that legitimately had nothing to report
-                     (CleanupComponentStoreNoNumbers): DISM itself was killed after its own deadline, which
-                     used to look identical to an empty, successful result. -->
-                <TextBlock x:Name="ComponentStoreTimedOutText" Text="{Binding ComponentStoreTimedOutText}"
-                           FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
-                           Visibility="{Binding ShowComponentStoreTimedOut, Converter={StaticResource BoolToVisibility}}"
-                           Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
             </StackPanel>
         </DataTemplate>
 

@@ -122,4 +122,10 @@ public class ApplyComponentStoreMessageTests
         Assert.True(result.TimedOut);
         Assert.Null(result.ActualSizeBytes);
     }
+
+    [Fact]
+    public void The_analysis_gets_fifteen_minutes_before_it_is_stopped()
+    {
+        Assert.Equal(TimeSpan.FromMinutes(15), UltimateUpdater.Services.Cleanup.CleanupService.ComponentStoreAnalysisTimeout);
+    }
 }

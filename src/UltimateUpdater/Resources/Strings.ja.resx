@@ -1996,9 +1996,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>安全な項目だけを選択します。既定でオンになっている項目と同じです。</value>
   </data>
-  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
-    <value>Windows が時間内に応答しませんでした。解析は中止されました。</value>
-  </data>
   <data name="CleanupPipLeftovers" xml:space="preserve">
     <value>中断された pip インストールの残骸</value>
   </data>
@@ -2202,5 +2199,17 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>インストール中… {0}</value>
+  </data>
+  <data name="InstallBlockerInUse" xml:space="preserve">
+    <value>Git は現在使用中です ({0})。次回の実行時に再試行します。</value>
+  </data>
+  <data name="InstallStalled" xml:space="preserve">
+    <value>インストーラーが応答しなくなったため、中止しました。</value>
+  </data>
+  <data name="InstallPackageSourceStale" xml:space="preserve">
+    <value>パッケージソースがまだ最新ではありません。後でもう一度お試しください。</value>
+  </data>
+  <data name="InstallRustupMetadata" xml:space="preserve">
+    <value>rustup は自身のセットアップファイルを読み取れませんでした。他に使用しているものがなくなってから、ターミナルで "rustup update" を実行してください。</value>
   </data>
 </root>

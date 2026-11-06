@@ -863,7 +863,8 @@ public sealed class InstallQueue
             // "Details" affordance, which the user opens deliberately (SECURITY.md).
             _logging.EventFailed(ActivityLog.Install, ActivityLog.InstallFailed(item, action, started.Elapsed, ex.Message));
             _logging.Error($"{action} failed for '{item.Id}'", ex);
-            var message = LocalizationService.Instance[action == InstallAction.Uninstall ? "UninstallFailed" : "InstallFailed"];
+            var message = InstallErrorExplainer.RowText(item.SourceId, ex.Message, key => LocalizationService.Instance[key])
+                ?? LocalizationService.Instance[action == InstallAction.Uninstall ? "UninstallFailed" : "InstallFailed"];
 
             // Only from the FIRST round (a second failure is final, no third pass), and only for
             // a cause the explainer table itself marks safe to retry blindly. Such a failure is not the

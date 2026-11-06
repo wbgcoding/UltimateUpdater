@@ -79,7 +79,7 @@ public sealed class CleanupWorkerMessage
     public bool? ComponentStoreCleanupRecommended { get; set; }
 
     /// <summary>Set only on a message with <c>Type == "componentStore"</c>: DISM was killed after running
-    /// past its own 5-minute deadline rather than answering. Distinct from every field above being null,
+    /// past its own deadline rather than answering. Distinct from every field above being null,
     /// which can also mean a completed run that simply had nothing to report.</summary>
     public bool ComponentStoreTimedOut { get; set; }
 

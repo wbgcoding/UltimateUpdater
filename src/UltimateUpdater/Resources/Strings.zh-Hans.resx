@@ -1996,9 +1996,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>仅选择安全项，也就是默认勾选的那些项。</value>
   </data>
-  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
-    <value>Windows 未及时响应，分析已停止。</value>
-  </data>
   <data name="CleanupPipLeftovers" xml:space="preserve">
     <value>中断的 pip 安装残留</value>
   </data>
@@ -2202,5 +2199,17 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>正在安装… {0}</value>
+  </data>
+  <data name="InstallBlockerInUse" xml:space="preserve">
+    <value>Git 当前正在使用 ({0})，将在下次运行时重试。</value>
+  </data>
+  <data name="InstallStalled" xml:space="preserve">
+    <value>安装程序已停止响应，已将其终止。</value>
+  </data>
+  <data name="InstallPackageSourceStale" xml:space="preserve">
+    <value>软件包源尚未更新，请稍后再试。</value>
+  </data>
+  <data name="InstallRustupMetadata" xml:space="preserve">
+    <value>rustup 无法读取其自身的安装文件。待没有其他程序占用时，在终端中运行 "rustup update"。</value>
   </data>
 </root>

@@ -30,8 +30,20 @@ public sealed record InstallErrorExplanation(
     string WhatNowKey,
     object[] WhatNowArgs,
     InstallErrorClassification Classification,
-    bool AllowsAutomaticRetry = false)
+    bool AllowsAutomaticRetry = false,
+    bool UseAsRowText = false,
+    bool CountsAsFailure = true)
 {
+    /// <summary>
+    /// The cause is plain enough to be the row's own line instead of the generic "install failed": the single
+    /// sentence of <see cref="WhatHappenedKey"/> then stands on the row, the raw text stays in the details.
+    /// </summary>
+
+    /// <summary>
+    /// False for a failure that says nothing about this package or this PC (the package source being behind):
+    /// it never counts toward the repeated-failure flag, however often it comes back.
+    /// </summary>
+
     /// <summary>The interactive-retry eligibility test, deliberately narrow, see InstallErrorExplainer's own table.</summary>
     public bool AllowsInteractiveRetry => Classification == InstallErrorClassification.Recoverable;
 
@@ -45,7 +57,9 @@ public sealed record InstallErrorExplanation(
 
     /// <summary>Both sentences, localized and joined: what the row's tooltip and the error window show.</summary>
     public string Format(Func<string, string> lookup) =>
-        $"{string.Format(lookup(WhatHappenedKey), WhatHappenedArgs)} {string.Format(lookup(WhatNowKey), WhatNowArgs)}";
+        WhatNowKey.Length == 0
+            ? string.Format(lookup(WhatHappenedKey), WhatHappenedArgs)
+            : $"{string.Format(lookup(WhatHappenedKey), WhatHappenedArgs)} {string.Format(lookup(WhatNowKey), WhatNowArgs)}";
 }
 
 /// <summary>
@@ -141,6 +155,13 @@ public static class InstallErrorExplainer
                     "InstallErrorPipBlockedNow", [], InstallErrorClassification.ManualWork);
         }
 
+        // Our own stall watch (ProcessRunner) and rustup's own-file failure are matched by their wording:
+        // neither carries a code of its own.
+        if (outputText.Contains(StalledMarker, StringComparison.Ordinal))
+            return StalledExplanation;
+        if (PackageManagers.RustupSource.IsInitMetadataFailure(outputText))
+            return RustupMetadataExplanation;
+
         var vendorCode = ExtractVendorDecimalCode(outputText);
         var hexCode = TryExtractHexCode(outputText);
 
@@ -165,6 +186,8 @@ public static class InstallErrorExplainer
         // APPINSTALLER_CLI_ERROR_* is winget's own error namespace; scoped to it so an unrelated tool's
         // text can never accidentally match one of these hex codes or wordings.
         var isWinget = string.Equals(sourceId, "winget", StringComparison.OrdinalIgnoreCase);
+        if (isWinget && hexCode is { } hashHex && WingetSource.IsInstallerHashMismatch(hashHex))
+            return PackageSourceStaleExplanation;
         if (isWinget && hexCode is { } wingetHex && WingetSource.IsInapplicableOutcome(wingetHex))
             return NoApplicableExplanation;
         if (isWinget && hexCode is { } techHex && WingetSource.IsDifferentInstallTechnology(techHex))
@@ -470,6 +493,19 @@ public static class InstallErrorExplainer
 
     // ---- The broadest, last-resort bucket: see Explain's own "timed out" check. ----
 
+    /// <summary>The wording <see cref="InstallerStalledException"/> carries.</summary>
+    private const string StalledMarker = "the installer stopped responding and was stopped";
+
+    private static readonly InstallErrorExplanation StalledExplanation = new(
+        "InstallStalled", [], "", [], InstallErrorClassification.Recoverable, UseAsRowText: true);
+
+    private static readonly InstallErrorExplanation PackageSourceStaleExplanation = new(
+        "InstallPackageSourceStale", [], "", [], InstallErrorClassification.Recoverable,
+        UseAsRowText: true, CountsAsFailure: false);
+
+    private static readonly InstallErrorExplanation RustupMetadataExplanation = new(
+        "InstallRustupMetadata", [], "", [], InstallErrorClassification.ManualWork, UseAsRowText: true);
+
     private static readonly InstallErrorExplanation TimeoutExplanation = new(
         "InstallErrorTimeoutWhat", [], "InstallErrorTimeoutNow", [], InstallErrorClassification.Recoverable,
         AllowsAutomaticRetry: true);
@@ -481,6 +517,16 @@ public static class InstallErrorExplainer
     /// </summary>
     public static string? Describe(string sourceId, string? outputText, Func<string, string> lookup) =>
         Explain(sourceId, outputText)?.Format(lookup);
+
+    /// <summary>
+    /// The row's own line for a failure whose cause is plain enough to name there, or null to keep the generic
+    /// "install failed" line. Both install paths (in-process and the elevated worker) call this, so the row
+    /// reads the same whichever side ran the install.
+    /// </summary>
+    public static string? RowText(string sourceId, string? outputText, Func<string, string> lookup) =>
+        Explain(sourceId, outputText) is { UseAsRowText: true } explanation
+            ? string.Format(lookup(explanation.WhatHappenedKey), explanation.WhatHappenedArgs)
+            : null;
 
     /// <summary>
     /// The raw numeric code <see cref="Explain"/> itself would extract from this text (vendor decimal
