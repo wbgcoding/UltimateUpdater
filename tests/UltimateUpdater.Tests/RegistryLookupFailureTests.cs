@@ -327,4 +327,66 @@ public class RegistryLookupFailureTests
         Assert.Null(await RegistryEnrichment.FetchRawAsync(
             client, "https://example.invalid/x", Log(), "test", "item", CancellationToken.None));
     }
+
+    private static async Task<RegistryFetch> FetchWith(Func<HttpResponseMessage> respond)
+    {
+        using var client = Client(_ => respond());
+        return await RegistryEnrichment.FetchRawOutcomeAsync(
+            client, "https://api.github.com/repos/o/r/releases/latest", Log(), "github-release", "o/r", CancellationToken.None);
+    }
+
+    private static HttpResponseMessage Limited(DateTimeOffset reset)
+    {
+        var response = new HttpResponseMessage(HttpStatusCode.Forbidden);
+        response.Headers.TryAddWithoutValidation("X-RateLimit-Remaining", "0");
+        response.Headers.TryAddWithoutValidation("X-RateLimit-Reset", reset.ToUnixTimeSeconds().ToString());
+        return response;
+    }
+
+    [Fact]
+    public async Task A_used_up_rate_limit_throws_with_the_reset_time()
+    {
+        var reset = DateTimeOffset.FromUnixTimeSeconds(DateTimeOffset.UtcNow.AddMinutes(30).ToUnixTimeSeconds());
+        var fetch = await FetchWith(() => Limited(reset));
+
+        var ex = Assert.Throws<RegistryRateLimitedException>(() => RegistryFetch.ThrowIfAllFailed("github-release", [fetch, fetch]));
+
+        Assert.Equal(reset, ex.ResetAt);
+    }
+
+    [Fact]
+    public async Task A_403_without_the_limit_headers_is_a_plain_failure_naming_the_status()
+    {
+        var fetch = await FetchWith(() => new HttpResponseMessage(HttpStatusCode.Forbidden));
+
+        var ex = Assert.Throws<InvalidOperationException>(() => RegistryFetch.ThrowIfAllFailed("github-release", [fetch]));
+
+        Assert.IsNotType<RegistryRateLimitedException>(ex);
+        Assert.Contains("HTTP 403", ex.Message);
+        Assert.Contains("1 of 1", ex.Message);
+    }
+
+    [Fact]
+    public async Task The_most_common_failure_is_named()
+    {
+        var bad = await FetchWith(() => new HttpResponseMessage(HttpStatusCode.InternalServerError));
+        var other = await FetchWith(() => new HttpResponseMessage(HttpStatusCode.BadGateway));
+
+        var ex = Assert.Throws<InvalidOperationException>(() => RegistryFetch.ThrowIfAllFailed("x", [bad, other, bad]));
+
+        Assert.Contains("HTTP 500 (2 of 3 lookups)", ex.Message);
+    }
+
+    [Fact]
+    public async Task A_failed_lookup_logs_its_status_without_headers()
+    {
+        var lines = new List<string>();
+        using var client = Client(_ => Limited(DateTimeOffset.UtcNow.AddHours(1)));
+
+        await RegistryEnrichment.FetchRawOutcomeAsync(
+            client, "https://api.github.com/x", new LoggingService(lines.Add), "github-release", "o/r", CancellationToken.None);
+
+        var line = Assert.Single(lines, l => l.Contains("answered 403"));
+        Assert.Contains("rate limit", line);
+    }
 }

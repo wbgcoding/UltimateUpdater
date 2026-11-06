@@ -2257,4 +2257,7 @@ Continuar com direitos de administrador?</value>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>Abrir a página da versão</value>
   </data>
+  <data name="ScanRateLimited" xml:space="preserve">
+    <value>Limite do GitHub atingido, disponível novamente às {0}</value>
+  </data>
 </root>

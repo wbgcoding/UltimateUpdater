@@ -20,6 +20,24 @@ internal enum RegistryFetchStatus
     Failed,
 }
 
+/// <summary>A lookup the registry answered with a failing status. <see cref="RateLimitReset"/> is set only
+/// for GitHub's "limit used up" answer (403 or 429 with no requests remaining), so a scan can tell the
+/// user when to try again instead of a bare status.</summary>
+internal sealed class RegistryHttpException(string message, int statusCode, DateTimeOffset? rateLimitReset = null)
+    : InvalidOperationException(message)
+{
+    public int StatusCode { get; } = statusCode;
+
+    public DateTimeOffset? RateLimitReset { get; } = rateLimitReset;
+}
+
+/// <summary>Every lookup of a source ended on a rate limit that lifts at <see cref="ResetAt"/>. The scan
+/// shows the reset time on the source's pill; rows already in the table stay (the source counts as failed).</summary>
+internal sealed class RegistryRateLimitedException(string message, DateTimeOffset resetAt) : InvalidOperationException(message)
+{
+    public DateTimeOffset ResetAt { get; } = resetAt;
+}
+
 /// <summary>
 /// The outcome of one registry lookup. <see cref="Error"/> is set for <see cref="RegistryFetchStatus.Failed"/>
 /// only; an internal timeout is recorded as a <see cref="TimeoutException"/>, never as an
@@ -47,11 +65,36 @@ internal readonly record struct RegistryFetch(string? Body, RegistryFetchStatus 
         if (connection is not null)
             System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(connection).Throw();
 
-        if (errors.Any(error => error is TimeoutException))
-            throw new TimeoutException($"{sourceId}: every registry lookup timed out.");
+        // A rate limit is the one reason the user can act on (wait until the reset), so it outranks the
+        // count: a few 403s among other failures still mean "stop asking until then".
+        var limited = errors.OfType<RegistryHttpException>().Where(error => error.RateLimitReset is not null).ToList();
+        if (limited.Count > 0)
+        {
+            var reset = limited.Max(error => error.RateLimitReset!.Value);
+            throw new RegistryRateLimitedException(
+                $"{sourceId}: every registry lookup failed; the rate limit is reached until {reset:u}.", reset);
+        }
 
-        throw new InvalidOperationException($"{sourceId}: every registry lookup failed.");
+        // Name the most common reason so the log says why, not only that it failed.
+        var dominant = errors
+            .GroupBy(DescribeFailure)
+            .OrderByDescending(group => group.Count())
+            .FirstOrDefault();
+        var reason = dominant is null ? "no reason recorded" : $"{dominant.Key} ({dominant.Count()} of {made.Count} lookups)";
+
+        if (dominant?.Key == "timeout")
+            throw new TimeoutException($"{sourceId}: every registry lookup failed: {reason}.");
+
+        throw new InvalidOperationException($"{sourceId}: every registry lookup failed: {reason}.");
     }
+
+    /// <summary>A short, token-free label for one lookup failure, used to find the dominant reason.</summary>
+    private static string DescribeFailure(Exception error) => error switch
+    {
+        RegistryHttpException http => $"HTTP {http.StatusCode}",
+        TimeoutException => "timeout",
+        _ => error.GetType().Name,
+    };
 }
 
 /// <summary>
@@ -107,6 +150,22 @@ internal static class RegistryEnrichment
             socket.Dispose();
             throw;
         }
+    }
+
+    /// <summary>GitHub's used-up limit: 403 or 429 with X-RateLimit-Remaining 0 and a reset time (epoch
+    /// seconds). Null for every other answer, and for any host that sends no such headers.</summary>
+    internal static DateTimeOffset? RateLimitReset(HttpResponseMessage response)
+    {
+        if (response.StatusCode is not (HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests))
+            return null;
+
+        if (!response.Headers.TryGetValues("X-RateLimit-Remaining", out var remaining) || remaining.FirstOrDefault()?.Trim() != "0")
+            return null;
+
+        return response.Headers.TryGetValues("X-RateLimit-Reset", out var reset)
+               && long.TryParse(reset.FirstOrDefault(), out var epoch) && epoch > 0 && epoch < 253402300799L
+            ? DateTimeOffset.FromUnixTimeSeconds(epoch)
+            : null;
     }
 
     private static bool IsRedirect(HttpStatusCode status) =>
@@ -263,8 +322,13 @@ internal static class RegistryEnrichment
 
             if (!response.IsSuccessStatusCode)
             {
+                var reset = RateLimitReset(response);
+                // Only the status and the rate-limit reset are logged, never other headers or tokens.
+                logging.Info($"{sourceId}: registry lookup for '{itemId}' answered {(int)response.StatusCode}" +
+                             (reset is { } at ? $" (rate limit, resets {at:u})" : string.Empty) + ".");
                 return (null, RegistryFetchStatus.Failed,
-                    new InvalidOperationException($"{sourceId}: the registry answered {(int)response.StatusCode} for '{itemId}'."));
+                    new RegistryHttpException(
+                        $"{sourceId}: the registry answered {(int)response.StatusCode} for '{itemId}'.", (int)response.StatusCode, reset));
             }
 
             if (response.Content.Headers.ContentLength > cap)

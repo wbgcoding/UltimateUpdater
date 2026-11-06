@@ -2257,4 +2257,7 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>打开发布页面</value>
   </data>
+  <data name="ScanRateLimited" xml:space="preserve">
+    <value>已达到 GitHub 限制，{0} 后可再次使用</value>
+  </data>
 </root>

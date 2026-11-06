@@ -135,16 +135,27 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
             if (!recognized)
                 EnsureScanCompleted(result);
             else if (!IsAcceptedScanExitCode(result.ExitCode))
-                Logging.Warn($"{Id}: list recognised with zero updates but '{Executable}' exited with code {result.ExitCode}; treating as a clean scan.");
+                LogCrashExitOnce($"{Id}: list recognised with zero updates but '{Executable}' exited with code {result.ExitCode}; treating as a clean scan.");
         }
         else if (!IsAcceptedScanExitCode(result.ExitCode))
         {
-            Logging.Warn($"{Id}: scan produced {packages.Count} package row(s) but '{Executable}' exited with code {result.ExitCode}; keeping the parsed result.");
+            LogCrashExitOnce($"{Id}: scan produced {packages.Count} package row(s) but '{Executable}' exited with code {result.ExitCode}; keeping the parsed result.");
         }
 
         return packages
             .Select(p => CreateItem(p.Id, p.Name, p.Installed, p.Available))
             .ToList();
+    }
+
+    private int _crashExitLogged;
+
+    /// <summary>The tool's crash exit after a complete listing is a known quirk that repeats on every scan, so
+    /// it is noted once per app session (this source lives for the whole session) and at Info: it is handled,
+    /// not a warning.</summary>
+    private void LogCrashExitOnce(string message)
+    {
+        if (Interlocked.Exchange(ref _crashExitLogged, 1) == 0)
+            Logging.Info(message);
     }
 
     /// <summary>

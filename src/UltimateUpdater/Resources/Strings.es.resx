@@ -2257,4 +2257,7 @@ Esto no se puede deshacer.</value>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>Abrir la página de la versión</value>
   </data>
+  <data name="ScanRateLimited" xml:space="preserve">
+    <value>Límite de GitHub alcanzado, disponible de nuevo a las {0}</value>
+  </data>
 </root>

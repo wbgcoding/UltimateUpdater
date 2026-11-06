@@ -573,6 +573,19 @@ public sealed class ScanOrchestrator
                 status.Detail = ex.Message;
                 Report(status, generation);
             }
+            catch (RegistryRateLimitedException ex)
+            {
+                // Still the ordinary error state (rows already shown stay, as for any failed source), but the
+                // pill says when the limit lifts instead of the generic text.
+                if (IsCurrent(generation))
+                    Interlocked.Increment(ref _failedThisRun);
+                _logging.Info($"Scan of '{source.Id}' hit the rate limit until {ex.ResetAt:u}.");
+                status.State = ProviderScanState.Error;
+                status.ErrorMessage = string.Format(
+                    LocalizationService.Instance["ScanRateLimited"], ex.ResetAt.ToLocalTime().ToString("HH:mm"));
+                status.Detail = ex.Message;
+                Report(status, generation);
+            }
             catch (ProcessIdleTimeoutException ex)
             {
                 // Judged by silence, not total runtime: this is still the ordinary error state, just with

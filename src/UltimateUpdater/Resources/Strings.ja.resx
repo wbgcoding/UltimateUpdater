@@ -2257,4 +2257,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>リリースページを開く</value>
   </data>
+  <data name="ScanRateLimited" xml:space="preserve">
+    <value>GitHub の上限に達しました。{0} 以降に再び利用できます</value>
+  </data>
 </root>

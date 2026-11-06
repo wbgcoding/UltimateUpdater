@@ -2257,4 +2257,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
     <value>Sürüm sayfasını aç</value>
   </data>
+  <data name="ScanRateLimited" xml:space="preserve">
+    <value>GitHub sınırına ulaşıldı, {0} saatinde yeniden kullanılabilir</value>
+  </data>
 </root>
