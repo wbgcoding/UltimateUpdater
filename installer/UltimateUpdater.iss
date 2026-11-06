@@ -668,8 +668,10 @@ end;
 { The app holds a named mutex exactly while it installs updates or cleans up (BusySignal in the app). The
   name carries the SID of the user who runs the app, which is not necessarily the account Setup runs
   under (a separate administrator approves the prompt), so the SID is taken from the owner of the running
-  process instead of from Setup. Exit code 10 means: a copy in this folder is busy. A mutex that exists
-  but cannot be opened still counts as busy. }
+  process instead of from Setup. Exit code 10 means: a copy in this folder is busy. Only a clean exit 0
+  means idle: a mutex that exists but cannot be opened, an owner that cannot be looked up, a PowerShell
+  that does not start or any other exit code all count as busy, because the probe is what stands between
+  a silent Setup and an install that is cut off. }
 const
   BusyExitCode = 10;
 
@@ -691,6 +693,7 @@ end;
 
 function InstallingCopyRuns: Boolean;
 var
+  Started: Boolean;
   ResultCode: Integer;
   Script: String;
 begin
@@ -700,14 +703,30 @@ begin
     'foreach ($c in $copies) { ' +
     '$o = Get-CimInstance Win32_Process -Filter (''ProcessId='' + $c.Id) -ErrorAction SilentlyContinue | ' +
     'Invoke-CimMethod -MethodName GetOwnerSid -ErrorAction SilentlyContinue; ' +
-    'if (-not $o -or -not $o.Sid) { continue }; ' +
+    'if (-not $o -or -not $o.Sid) { $busy = $true; continue }; ' +
     '$m = $null; ' +
     'try { if ([System.Threading.Mutex]::TryOpenExisting(''Local\UltimateUpdater-Busy-'' + $o.Sid, [ref]$m)) ' +
     '{ $m.Dispose(); $busy = $true } } catch { $busy = $true } }; ' +
     'if ($busy) { exit ' + IntToStr(BusyExitCode) + ' } else { exit 0 }';
-  Result := Exec(PowerShellPath,
+  Started := Exec(PowerShellPath,
        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
-       SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = BusyExitCode);
+       SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Result := (not Started) or (ResultCode <> 0);
+end;
+
+{ True when Setup was started with the given bare switch. The param constant only reads /Name=value, and the
+  self-updater's switch carries no value. }
+function HasSwitch(const Name: String): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+    if CompareText(ParamStr(I), Name) = 0 then
+    begin
+      Result := True;
+      Exit;
+    end;
 end;
 
 { Ends the copies in the install folder and waits for them to be gone. A tray-resident copy used to answer
@@ -727,18 +746,27 @@ begin
        SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
-{ Runs before the Restart Manager looks for running applications. An interactive Setup asks before it cuts
-  off an install or a cleanup in progress; a silent one (the self-updater only starts Setup when no work
-  is running) goes ahead. }
+{ Runs before the Restart Manager looks for running applications. Only the app's own self-update, which
+  passes /FROMAPP after it has made sure no work is running, skips the busy check. Any other Setup asks
+  before it cuts off an install or a cleanup in progress; a silent one cannot ask, so it stops with a
+  non-zero exit code and leaves the running app alone. }
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   Result := '';
-  if (not WizardSilent) and InstallingCopyRuns then
+  if (not HasSwitch('/FROMAPP')) and InstallingCopyRuns then
+  begin
+    if WizardSilent then
+    begin
+      Log('Silent Setup stopped: the app is busy (or could not be checked) and Setup was not started by the app.');
+      Result := CustomMessage('BusyDeclined');
+      Exit;
+    end;
     if MsgBox(CustomMessage('BusyPrompt'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) <> IDYES then
     begin
       Result := CustomMessage('BusyDeclined');
       Exit;
     end;
+  end;
   StopRunningCopies;
 end;
 

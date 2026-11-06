@@ -16,6 +16,16 @@ public class SelfUpdateSetupLaunchTests
         Assert.DoesNotContain("VERYSILENT", info.Arguments);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void The_setup_the_app_starts_says_so_to_skip_the_busy_check(bool machineScope)
+    {
+        var info = SelfUpdateService.BuildSetupStartInfo(@"C:\Temp\setup.exe", machineScope);
+
+        Assert.Contains(" /FROMAPP", info.Arguments);
+    }
+
     [Fact]
     public void A_per_user_install_starts_the_verified_setup_without_elevation()
     {

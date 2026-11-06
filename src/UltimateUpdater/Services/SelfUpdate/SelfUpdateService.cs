@@ -458,8 +458,9 @@ public sealed partial class SelfUpdateService
         // gone are not a blank screen. FORCECLOSEAPPLICATIONS: without it Setup refuses to replace a
         // running copy and exits with code 5, having done nothing. RELAUNCH=1 starts this app again once
         // Setup is finished: the Restart Manager offers to do that and does not do it
-        // reliably, so it is asked for explicitly.
-        info.Arguments = "/SILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS /RELAUNCH=1";
+        // reliably, so it is asked for explicitly. FROMAPP tells Setup the app itself started it, which is the
+        // only run that may close a busy app without asking.
+        info.Arguments = "/SILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS /RELAUNCH=1 /FROMAPP";
         if (machineScope)
             info.Verb = "runas";
     }

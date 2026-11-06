@@ -135,8 +135,8 @@ public class InstallerScriptTests
 
         Assert.True(prepare.Success, "PrepareToInstall is gone");
         Assert.Contains("StopRunningCopies", prepare.Value);
-        // a silent Setup (the self-updater's) never asks; an interactive one asks only when the app is busy
-        Assert.Contains("(not WizardSilent) and InstallingCopyRuns", prepare.Value);
+        // only the app's own /FROMAPP run skips the busy check; every other run checks it
+        Assert.Contains("(not HasSwitch('/FROMAPP')) and InstallingCopyRuns", prepare.Value);
 
         var stop = Regex.Match(script, @"procedure StopRunningCopies.*?\r?\nend;", RegexOptions.Singleline);
         Assert.Contains("Stop-Process", stop.Value);
@@ -144,6 +144,34 @@ public class InstallerScriptTests
         // by path, never by image name: a portable copy elsewhere must survive
         Assert.DoesNotContain("taskkill", stop.Value, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("$_.Path", script);
+    }
+
+    [Fact]
+    public void A_silent_run_that_did_not_come_from_the_app_stops_on_a_busy_app_without_killing()
+    {
+        var prepare = Regex.Match(Script(), @"function PrepareToInstall.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(prepare.Success, "PrepareToInstall is gone");
+
+        // the busy branch of a silent run returns a message (Setup aborts with a non-zero code) before any stop
+        var busyBranch = prepare.Value.IndexOf("if WizardSilent then", StringComparison.Ordinal);
+        var stop = prepare.Value.IndexOf("StopRunningCopies", StringComparison.Ordinal);
+        Assert.True(busyBranch >= 0 && busyBranch < stop, "the silent busy branch must come before StopRunningCopies");
+        var silent = prepare.Value[busyBranch..stop];
+        Assert.Contains("Log(", silent);
+        Assert.Contains("Result := CustomMessage('BusyDeclined')", silent);
+        Assert.Contains("Exit;", silent);
+    }
+
+    [Fact]
+    public void The_busy_probe_counts_every_failure_as_busy()
+    {
+        var probe = Regex.Match(Script(), @"function InstallingCopyRuns.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(probe.Success, "InstallingCopyRuns is gone");
+
+        // no owner SID, mutex open error, PowerShell not started, any exit code but 0: all busy
+        Assert.Contains("if (-not $o -or -not $o.Sid) { $busy = $true; continue }", probe.Value);
+        Assert.Contains("catch { $busy = $true }", probe.Value);
+        Assert.Contains("Result := (not Started) or (ResultCode <> 0);", probe.Value);
     }
 
     [Fact]
