@@ -30,6 +30,9 @@ public partial class App : Application
     private TrayIconService? _tray;
     private ScanScheduler? _scheduler;
     private ElevatedHost? _elevated;
+    private BusySignal? _busySignal;
+    private DispatcherTimer? _busyTimer;
+    private System.Windows.Interop.HwndSource? _installerListener;
     private bool _isExiting;
     private bool _isWorker;
 
@@ -417,6 +420,8 @@ public partial class App : Application
         _scheduler.Start();
         mainViewModel.ScanCompleted += () => _scheduler.NotifyScanCompleted();
 
+        StartInstallerSignals(mainWindow, mainViewModel);
+
         // --tray: started by autostart, so come up in the background without stealing focus
         StartedInTray = e.Args.Contains(TrayArgument);
 
@@ -599,6 +604,35 @@ public partial class App : Application
         base.OnSessionEnding(e);
     }
 
+    /// <summary>Two things the installer relies on: it can see whether work is running (a mutex that exists
+    /// exactly then), and it can ask the app to close even when the app only hides on "close". The close
+    /// request is listened for on the main window and on a hidden window of its own, because an autostart
+    /// into the tray never gives the main window a handle.</summary>
+    private void StartInstallerSignals(MainWindow mainWindow, MainViewModel mainViewModel)
+    {
+        _busySignal = new BusySignal();
+        _busyTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(500) };
+        _busyTimer.Tick += (_, _) => _busySignal.Set(mainViewModel.WorkIsRunning);
+        _busyTimer.Start();
+
+        _installerListener = InstallerCloseRequest.CreateListener(Dispatcher, ExitWithoutPrompt);
+        mainWindow.SourceInitialized += (_, _) =>
+        {
+            if (System.Windows.Interop.HwndSource.FromHwnd(new System.Windows.Interop.WindowInteropHelper(mainWindow).Handle) is { } source)
+                InstallerCloseRequest.Attach(source, Dispatcher, ExitWithoutPrompt);
+        };
+    }
+
+    /// <summary>The installer asked the app to close because it needs the files: whatever is running is cut
+    /// off (Setup asked the user first when it could), and no question is put to a person who may not be
+    /// there at all.</summary>
+    private void ExitWithoutPrompt()
+    {
+        _logging?.Info("The installer asked the app to close: exiting");
+        _isExiting = true;
+        Shutdown();
+    }
+
     /// <summary>Real exit, as opposed to close-to-tray.</summary>
     internal void ExitApplication()
     {
@@ -654,6 +688,9 @@ public partial class App : Application
 
         _scheduler?.Dispose();
         _tray?.Dispose();
+        _busyTimer?.Stop();
+        _busySignal?.Dispose();
+        _installerListener?.Dispose();
 
         // Closing the pipe is the shutdown protocol for the elevated helper; bounded wait since this
         // runs on the UI thread with the window gone.

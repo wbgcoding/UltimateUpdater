@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 
@@ -124,6 +125,34 @@ public class InstallerScriptTests
         Assert.Contains("RestartApplications=no", script);
         Assert.DoesNotContain("RestartApplications=yes", script);
         Assert.Contains("CloseApplications=yes", script);
+    }
+
+    [Fact]
+    public void Setup_ends_a_running_copy_by_path_before_the_restart_manager_looks()
+    {
+        var script = Script();
+        var prepare = Regex.Match(script, @"function PrepareToInstall.*?\r?\nend;", RegexOptions.Singleline);
+
+        Assert.True(prepare.Success, "PrepareToInstall is gone");
+        Assert.Contains("StopRunningCopies", prepare.Value);
+        // a silent Setup (the self-updater's) never asks; an interactive one asks only when the app is busy
+        Assert.Contains("(not WizardSilent) and InstallingCopyRuns", prepare.Value);
+
+        var stop = Regex.Match(script, @"procedure StopRunningCopies.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.Contains("Stop-Process", stop.Value);
+        Assert.Contains("Wait-Process -Timeout 5", stop.Value);
+        // by path, never by image name: a portable copy elsewhere must survive
+        Assert.DoesNotContain("taskkill", stop.Value, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("$_.Path", script);
+    }
+
+    [Fact]
+    public void Setup_looks_for_the_same_busy_mutex_the_app_raises()
+    {
+        var script = Script();
+
+        Assert.Contains(BusySignal.NamePrefix, script);
+        Assert.Contains("TryOpenExisting", script);
     }
 
     /// <summary>
