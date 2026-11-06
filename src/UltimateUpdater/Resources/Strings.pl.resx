@@ -666,17 +666,11 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   <data name="RowQueued" xml:space="preserve">
     <value>W kolejce</value>
   </data>
-  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
-    <value>{0} · {1:0} %</value>
-  </data>
   <data name="CleanupDoneCount" xml:space="preserve">
     <value>Ukończono {0} z {1} obszarów</value>
   </data>
   <data name="CleanupDoneCountOne" xml:space="preserve">
     <value>Ukończono {0} z {1} obszaru</value>
-  </data>
-  <data name="CleanupRemainingCount" xml:space="preserve">
-    <value>Do wykonania pozostało {0}</value>
   </data>
   <data name="CleanupEmptyCount" xml:space="preserve">
     <value>Obszary bez wyników: {0}</value>
@@ -2211,5 +2205,32 @@ Kontynuować z uprawnieniami administratora?</value>
   </data>
   <data name="InstallRustupMetadata" xml:space="preserve">
     <value>rustup nie mógł odczytać własnego pliku instalacyjnego. Uruchom "rustup update" w terminalu, gdy nic innego go nie używa.</value>
+  </data>
+  <data name="CleanupSelectedOfFound" xml:space="preserve">
+    <value>{0} / {1} zaznaczono</value>
+  </data>
+  <data name="CleanupStepDone" xml:space="preserve">
+    <value>gotowe</value>
+  </data>
+  <data name="CleanupStepTooltip" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="CleanupStatFreed" xml:space="preserve">
+    <value>Zwolniono</value>
+  </data>
+  <data name="CleanupStatElapsed" xml:space="preserve">
+    <value>Czas</value>
+  </data>
+  <data name="CleanupDetailsExpander" xml:space="preserve">
+    <value>Szczegóły</value>
+  </data>
+  <data name="CleanupSummaryDone" xml:space="preserve">
+    <value>Czyszczenie zakończone</value>
+  </data>
+  <data name="CleanupSummaryStopped" xml:space="preserve">
+    <value>Czyszczenie zatrzymane</value>
+  </data>
+  <data name="ToolbarCleanupRunning" xml:space="preserve">
+    <value>Wyczyść {0} %</value>
   </data>
 </root>

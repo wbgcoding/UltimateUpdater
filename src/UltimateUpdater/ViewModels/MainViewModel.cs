@@ -288,6 +288,7 @@ public partial class MainViewModel : ObservableObject, IRowActions
     /// </summary>
     public void RefreshLocalizedText()
     {
+        OnPropertyChanged(nameof(ToolbarCleanupText));
         OnPropertyChanged(nameof(HeadlineText));
         OnPropertyChanged(nameof(SubheadlineText));
         OnPropertyChanged(nameof(EmptyStateText));

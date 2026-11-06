@@ -108,6 +108,35 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         OnPropertyChanged(nameof(RunStateIsSuccess));
         OnPropertyChanged(nameof(RunStateIsCaution));
         OnPropertyChanged(nameof(RunStateText));
+        RaiseStepChanged();
+    }
+
+    /// <summary>Which glyph the status block's step bar draws for this area.</summary>
+    public CleanupStepKind StepKind => RunState switch
+    {
+        CleanupTargetState.Running => CleanupStepKind.Running,
+        CleanupTargetState.Done => ShowsNothingFound ? CleanupStepKind.NothingFound : CleanupStepKind.Done,
+        CleanupTargetState.Stopped or CleanupTargetState.Skipped => CleanupStepKind.Stopped,
+        _ => CleanupStepKind.Waiting,
+    };
+
+    /// <summary>"Temporary files: done", for the hover on a step glyph and for screen readers.</summary>
+    public string StepTooltip => string.Format(
+        LocalizationService.Instance["CleanupStepTooltip"],
+        Title,
+        LocalizationService.Instance[StepKind switch
+        {
+            CleanupStepKind.Running => "CleanupStateCleaning",
+            CleanupStepKind.Done => "CleanupStepDone",
+            CleanupStepKind.NothingFound => "CleanupNothingToClean",
+            CleanupStepKind.Stopped => RunState == CleanupTargetState.Skipped ? "CleanupStateSkipped" : "CleanupStateStopped",
+            _ => "CleanupStateWaiting",
+        }]);
+
+    private void RaiseStepChanged()
+    {
+        OnPropertyChanged(nameof(StepKind));
+        OnPropertyChanged(nameof(StepTooltip));
     }
 
     /// <summary>
@@ -1002,6 +1031,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowsSize));
         OnPropertyChanged(nameof(ShowsNothingFound));
         OnPropertyChanged(nameof(HasSizeCell));
+        RaiseStepChanged();
     }
 
     /// <summary>Only matters for a registry row (see <see cref="IsRegistryCleanup"/>) but cheap enough
@@ -1013,6 +1043,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowsSize));
         OnPropertyChanged(nameof(ShowsNothingFound));
         OnPropertyChanged(nameof(HasSizeCell));
+        RaiseStepChanged();
     }
 
     partial void OnIsScanningChanged(bool value)

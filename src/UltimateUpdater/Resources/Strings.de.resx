@@ -666,17 +666,11 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="RowQueued" xml:space="preserve">
     <value>Wartet</value>
   </data>
-  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
-    <value>{0} · {1:0} %</value>
-  </data>
   <data name="CleanupDoneCount" xml:space="preserve">
     <value>{0} von {1} Bereichen erledigt</value>
   </data>
   <data name="CleanupDoneCountOne" xml:space="preserve">
     <value>{0} von {1} Bereich erledigt</value>
-  </data>
-  <data name="CleanupRemainingCount" xml:space="preserve">
-    <value>{0} noch offen</value>
   </data>
   <data name="CleanupEmptyCount" xml:space="preserve">
     <value>{0} Bereiche ohne Fund</value>
@@ -2211,5 +2205,32 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="InstallRustupMetadata" xml:space="preserve">
     <value>rustup konnte seine eigene Setup-Datei nicht lesen. Führe "rustup update" in einem Terminal aus, sobald nichts anderes sie benutzt.</value>
+  </data>
+  <data name="CleanupSelectedOfFound" xml:space="preserve">
+    <value>{0} / {1} ausgewählt</value>
+  </data>
+  <data name="CleanupStepDone" xml:space="preserve">
+    <value>Erledigt</value>
+  </data>
+  <data name="CleanupStepTooltip" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="CleanupStatFreed" xml:space="preserve">
+    <value>Freigegeben</value>
+  </data>
+  <data name="CleanupStatElapsed" xml:space="preserve">
+    <value>Dauer</value>
+  </data>
+  <data name="CleanupDetailsExpander" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="CleanupSummaryDone" xml:space="preserve">
+    <value>Bereinigung abgeschlossen</value>
+  </data>
+  <data name="CleanupSummaryStopped" xml:space="preserve">
+    <value>Bereinigung gestoppt</value>
+  </data>
+  <data name="ToolbarCleanupRunning" xml:space="preserve">
+    <value>Bereinigen {0} %</value>
   </data>
 </root>

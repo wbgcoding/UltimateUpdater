@@ -666,17 +666,11 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="RowQueued" xml:space="preserve">
     <value>Sırada</value>
   </data>
-  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
-    <value>{0} · %{1:0}</value>
-  </data>
   <data name="CleanupDoneCount" xml:space="preserve">
     <value>{0}/{1} alan tamamlandı</value>
   </data>
   <data name="CleanupDoneCountOne" xml:space="preserve">
     <value>{0}/{1} alan tamamlandı</value>
-  </data>
-  <data name="CleanupRemainingCount" xml:space="preserve">
-    <value>{0} tane kaldı</value>
   </data>
   <data name="CleanupEmptyCount" xml:space="preserve">
     <value>{0} alanda hiçbir şey bulunamadı</value>
@@ -2211,5 +2205,32 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="InstallRustupMetadata" xml:space="preserve">
     <value>rustup kendi kurulum dosyasını okuyamadı. Başka hiçbir şey kullanmadığında bir terminalde "rustup update" çalıştır.</value>
+  </data>
+  <data name="CleanupSelectedOfFound" xml:space="preserve">
+    <value>{0} / {1} seçili</value>
+  </data>
+  <data name="CleanupStepDone" xml:space="preserve">
+    <value>bitti</value>
+  </data>
+  <data name="CleanupStepTooltip" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="CleanupStatFreed" xml:space="preserve">
+    <value>Boşaltılan</value>
+  </data>
+  <data name="CleanupStatElapsed" xml:space="preserve">
+    <value>Süre</value>
+  </data>
+  <data name="CleanupDetailsExpander" xml:space="preserve">
+    <value>Ayrıntılar</value>
+  </data>
+  <data name="CleanupSummaryDone" xml:space="preserve">
+    <value>Temizlik tamamlandı</value>
+  </data>
+  <data name="CleanupSummaryStopped" xml:space="preserve">
+    <value>Temizlik durduruldu</value>
+  </data>
+  <data name="ToolbarCleanupRunning" xml:space="preserve">
+    <value>Temizle %{0}</value>
   </data>
 </root>

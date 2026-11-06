@@ -80,6 +80,15 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
         ? string.Format(LocalizationService.Instance[TotalFiles == 1 ? "CleanupRegistryEntryCountOne" : "CleanupRegistryEntryCount"], TotalFiles)
         : ByteSize.Format(TotalBytes);
 
+    /// <summary>What the ticked members would free: the first half of <see cref="ChosenSizeText"/>.</summary>
+    public long SelectedBytes => Items.Where(i => i.IsSelected).Sum(i => i.SelectedEntryBytes);
+
+    /// <summary>The header's size cell: "ticked / found" while only part of what was found is ticked, else
+    /// just what was found. Registry entries are counted, not measured, so they keep the plain text.</summary>
+    public string ChosenSizeText => IsRegistryGroup || SelectedBytes >= TotalBytes
+        ? SizeText
+        : $"{ByteSize.Format(SelectedBytes)} / {ByteSize.Format(TotalBytes)}";
+
     /// <summary>False only when EVERY member has nothing to report (Systemreparatur: DISM+sfc are both
     /// <see cref="CleanupItemViewModel.HasUnknownSize"/>); summing unknown-size rows always lands on
     /// exactly zero, and printing "0,0 B" reads as a measurement rather than as "not measurable". A mixed
@@ -167,6 +176,11 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
                 OnPropertyChanged(nameof(IsSelected));
                 OnPropertyChanged(nameof(SelectedCount));
                 OnPropertyChanged(nameof(SelectedCountText));
+                OnPropertyChanged(nameof(ChosenSizeText));
+                break;
+            case nameof(CleanupItemViewModel.SelectedEntryBytes):
+                OnPropertyChanged(nameof(SelectedBytes));
+                OnPropertyChanged(nameof(ChosenSizeText));
                 break;
             case nameof(CleanupItemViewModel.SelectedRiskLevel):
                 OnPropertyChanged(nameof(SelectedRiskLevel));
@@ -178,6 +192,7 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
                 OnPropertyChanged(nameof(TotalBytes));
                 OnPropertyChanged(nameof(TotalFiles));
                 OnPropertyChanged(nameof(SizeText));
+                OnPropertyChanged(nameof(ChosenSizeText));
                 OnPropertyChanged(nameof(IsEmpty));
                 break;
             case nameof(CleanupItemViewModel.IsScanning):
@@ -198,6 +213,7 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedRiskHint));
         OnPropertyChanged(nameof(SelectedCountText));
         OnPropertyChanged(nameof(SizeText));
+        OnPropertyChanged(nameof(ChosenSizeText));
         OnPropertyChanged(nameof(FreedText));
         OnPropertyChanged(nameof(RegistryBackupNoteText));
     }

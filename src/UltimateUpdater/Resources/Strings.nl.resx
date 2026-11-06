@@ -666,17 +666,11 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   <data name="RowQueued" xml:space="preserve">
     <value>In wachtrij</value>
   </data>
-  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
-    <value>{0} · {1:0} %</value>
-  </data>
   <data name="CleanupDoneCount" xml:space="preserve">
     <value>{0} van {1} gebieden voltooid</value>
   </data>
   <data name="CleanupDoneCountOne" xml:space="preserve">
     <value>{0} van {1} gebied voltooid</value>
-  </data>
-  <data name="CleanupRemainingCount" xml:space="preserve">
-    <value>{0} nog te gaan</value>
   </data>
   <data name="CleanupEmptyCount" xml:space="preserve">
     <value>{0} gebieden zonder resultaat</value>
@@ -2211,5 +2205,32 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="InstallRustupMetadata" xml:space="preserve">
     <value>rustup kon zijn eigen installatiebestand niet lezen. Voer "rustup update" uit in een terminal zodra niets anders het gebruikt.</value>
+  </data>
+  <data name="CleanupSelectedOfFound" xml:space="preserve">
+    <value>{0} / {1} geselecteerd</value>
+  </data>
+  <data name="CleanupStepDone" xml:space="preserve">
+    <value>klaar</value>
+  </data>
+  <data name="CleanupStepTooltip" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="CleanupStatFreed" xml:space="preserve">
+    <value>Vrijgemaakt</value>
+  </data>
+  <data name="CleanupStatElapsed" xml:space="preserve">
+    <value>Duur</value>
+  </data>
+  <data name="CleanupDetailsExpander" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="CleanupSummaryDone" xml:space="preserve">
+    <value>Opschoning voltooid</value>
+  </data>
+  <data name="CleanupSummaryStopped" xml:space="preserve">
+    <value>Opschoning gestopt</value>
+  </data>
+  <data name="ToolbarCleanupRunning" xml:space="preserve">
+    <value>Opruimen {0} %</value>
   </data>
 </root>

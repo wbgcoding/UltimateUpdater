@@ -238,6 +238,19 @@ public partial class CleanupViewModel
         OnPropertyChanged(nameof(ShowResumeButton));
         OnPropertyChanged(nameof(HasFreeSpaceNow));
         OnPropertyChanged(nameof(HasLastCleanup));
+        OnPropertyChanged(nameof(ShowsRunStatus));
+        OnPropertyChanged(nameof(StatusKind));
+        OnPropertyChanged(nameof(StatusCaptionText));
+        OnPropertyChanged(nameof(StatusHeadlineText));
+        OnPropertyChanged(nameof(StatusFreedText));
+
+        // Back to choosing: the previous run's picture makes way for the idle facts.
+        if (value == CleanupPhase.Choosing)
+        {
+            StepItems = [];
+            CurrentGroupKey = null;
+            CurrentAreaPercentText = string.Empty;
+        }
 
         // The result reads per section once the run is over, not only as one figure in the ring.
         foreach (var group in Groups)
@@ -259,6 +272,7 @@ public partial class CleanupViewModel
         _liveFreedShown = Math.Max(_liveFreedShown, value);
         OnPropertyChanged(nameof(FreedText));
         OnPropertyChanged(nameof(LiveFreedText));
+        OnPropertyChanged(nameof(StatusFreedText));
     }
 
     private long _liveFreedShown;
@@ -390,6 +404,9 @@ public partial class CleanupViewModel
             .ToList();
 
         _runItems = selected.Except(superseded).ToList();
+        StepItems = _runItems;
+        WasStopped = false;
+        StartRunClock();
         foreach (var item in _runItems)
         {
             item.IsWaiting = true;
@@ -458,6 +475,8 @@ public partial class CleanupViewModel
         finally
         {
             CurrentItemText = string.Empty;
+            CurrentGroupKey = null;
+            CurrentAreaPercentText = string.Empty;
             _cleanJobs.Clear();
             _runItems = null;
             _pause.Resume();
@@ -487,6 +506,8 @@ public partial class CleanupViewModel
             if (!cancelled)
                 CleanPercent = 100;
 
+            StopRunClock();
+            WasStopped = cancelled;
             Phase = CleanupPhase.Finished;
             _logging.Event(
                 ActivityLog.Cleanup,
@@ -868,20 +889,19 @@ public partial class CleanupViewModel
         CleanPercent = Math.Min(100, items.Sum(i => i.IsDone ? 100 : i.Percent) / items.Count);
 
         var running = items.Where(i => i.IsCleaning).ToList();
-        CurrentItemText = running.Count > 0
-            ? string.Join(" · ", running.Select(i => i.Title))
-            : string.Empty;
 
-        // Under the name: what that target is actually doing, and how far it has got. With several targets running the one that has said something
-        // most recently is the interesting one; a repair step always reports, a file pass reports its path.
-        var detailed = running.FirstOrDefault(i => i.HasDetail);
-        CurrentDetailText = detailed?.DetailText ?? string.Empty;
-        CurrentTargetPercentText = detailed is null
+        // With several targets running at once the one that has said something is the interesting one; a
+        // repair step always reports, a file pass reports its path. The others fold into a "+n".
+        var primary = running.FirstOrDefault(i => i.HasDetail) ?? running.FirstOrDefault();
+        CurrentItemText = primary is null
             ? string.Empty
-            : string.Format(System.Globalization.CultureInfo.CurrentUICulture, Loc["CleanupCurrentTargetPercent"], detailed.Title, detailed.Percent);
+            : running.Count > 1 ? $"{primary.Title} +{running.Count - 1}" : primary.Title;
+        CurrentGroupKey = primary is null ? null : CleanupGroups.For(primary.Target);
+        CurrentAreaPercentText = primary is null ? string.Empty : PercentFormat.Format(primary.Percent);
+        CurrentDetailText = primary?.DetailText ?? string.Empty;
 
         OnPropertyChanged(nameof(DoneCountText));
-        OnPropertyChanged(nameof(RemainingCountText));
+        OnPropertyChanged(nameof(StatusHeadlineText));
     }
 
     /// <summary>
@@ -942,22 +962,13 @@ public partial class CleanupViewModel
     [ObservableProperty]
     private string currentDetailText = string.Empty;
 
-    /// <summary>"Temporäre Windows-Dateien · 62 %"; how far the target itself has got.</summary>
-    [ObservableProperty]
-    private string currentTargetPercentText = string.Empty;
-
     public bool HasCurrentDetail => CurrentDetailText.Length > 0;
 
     partial void OnCurrentDetailTextChanged(string value) => OnPropertyChanged(nameof(HasCurrentDetail));
 
     /// <summary>"4 von 10 erledigt": the run's own count, beside the ring while it works.</summary>
-    public string DoneCountText => _runItems is { Count: > 0 } items
+    public string DoneCountText => StepItems is { Count: > 0 } items
         ? string.Format(Loc[items.Count == 1 ? "CleanupDoneCountOne" : "CleanupDoneCount"], items.Count(i => i.IsDone), items.Count)
-        : string.Empty;
-
-    /// <summary>What is still ahead, so the figure beside the ring is not only about the past.</summary>
-    public string RemainingCountText => _runItems is { Count: > 0 } items
-        ? string.Format(Loc["CleanupRemainingCount"], items.Count(i => !i.IsDone))
         : string.Empty;
 
     /// <summary>

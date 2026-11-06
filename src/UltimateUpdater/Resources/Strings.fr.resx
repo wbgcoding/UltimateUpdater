@@ -666,17 +666,11 @@ Ultimate Updater ne peut pas annuler cette action.</value>
   <data name="RowQueued" xml:space="preserve">
     <value>En attente</value>
   </data>
-  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
-    <value>{0} · {1:0} %</value>
-  </data>
   <data name="CleanupDoneCount" xml:space="preserve">
     <value>Zones terminées : {0} sur {1}</value>
   </data>
   <data name="CleanupDoneCountOne" xml:space="preserve">
     <value>{0} zone sur {1} terminée</value>
-  </data>
-  <data name="CleanupRemainingCount" xml:space="preserve">
-    <value>Restant : {0}</value>
   </data>
   <data name="CleanupEmptyCount" xml:space="preserve">
     <value>Zones sans résultat : {0}</value>
@@ -2211,5 +2205,32 @@ Continuer avec les droits administrateur ?</value>
   </data>
   <data name="InstallRustupMetadata" xml:space="preserve">
     <value>rustup n'a pas pu lire son propre fichier d'installation. Lance "rustup update" dans un terminal quand rien d'autre ne l'utilise.</value>
+  </data>
+  <data name="CleanupSelectedOfFound" xml:space="preserve">
+    <value>{0} / {1} sélectionnés</value>
+  </data>
+  <data name="CleanupStepDone" xml:space="preserve">
+    <value>terminé</value>
+  </data>
+  <data name="CleanupStepTooltip" xml:space="preserve">
+    <value>{0} : {1}</value>
+  </data>
+  <data name="CleanupStatFreed" xml:space="preserve">
+    <value>Libéré</value>
+  </data>
+  <data name="CleanupStatElapsed" xml:space="preserve">
+    <value>Durée</value>
+  </data>
+  <data name="CleanupDetailsExpander" xml:space="preserve">
+    <value>Détails</value>
+  </data>
+  <data name="CleanupSummaryDone" xml:space="preserve">
+    <value>Nettoyage terminé</value>
+  </data>
+  <data name="CleanupSummaryStopped" xml:space="preserve">
+    <value>Nettoyage arrêté</value>
+  </data>
+  <data name="ToolbarCleanupRunning" xml:space="preserve">
+    <value>Nettoyer {0} %</value>
   </data>
 </root>

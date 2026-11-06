@@ -724,7 +724,8 @@
                                     </Viewbox>
                                 </Grid>
                             </Grid>
-                            <TextBlock Text="{Binding Loc[ToolbarCleanupLabel]}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding ToolbarCleanupText}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                       Style="{StaticResource TabularNumberText}"/>
                           </StackPanel>
                         </ui:Button.Content>
                     </ui:Button>

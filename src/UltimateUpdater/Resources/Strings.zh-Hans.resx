@@ -666,17 +666,11 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="RowQueued" xml:space="preserve">
     <value>已排队</value>
   </data>
-  <data name="CleanupCurrentTargetPercent" xml:space="preserve">
-    <value>{0} · {1:0} %</value>
-  </data>
   <data name="CleanupDoneCount" xml:space="preserve">
     <value>已完成 {0}/{1} 个区域</value>
   </data>
   <data name="CleanupDoneCountOne" xml:space="preserve">
     <value>已完成 {0}/{1} 个区域</value>
-  </data>
-  <data name="CleanupRemainingCount" xml:space="preserve">
-    <value>还剩 {0} 个</value>
   </data>
   <data name="CleanupEmptyCount" xml:space="preserve">
     <value>{0} 个区域未发现内容</value>
@@ -2211,5 +2205,32 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="InstallRustupMetadata" xml:space="preserve">
     <value>rustup 无法读取其自身的安装文件。待没有其他程序占用时，在终端中运行 "rustup update"。</value>
+  </data>
+  <data name="CleanupSelectedOfFound" xml:space="preserve">
+    <value>已选 {0} / {1}</value>
+  </data>
+  <data name="CleanupStepDone" xml:space="preserve">
+    <value>已完成</value>
+  </data>
+  <data name="CleanupStepTooltip" xml:space="preserve">
+    <value>{0}：{1}</value>
+  </data>
+  <data name="CleanupStatFreed" xml:space="preserve">
+    <value>已释放</value>
+  </data>
+  <data name="CleanupStatElapsed" xml:space="preserve">
+    <value>用时</value>
+  </data>
+  <data name="CleanupDetailsExpander" xml:space="preserve">
+    <value>详细信息</value>
+  </data>
+  <data name="CleanupSummaryDone" xml:space="preserve">
+    <value>清理已完成</value>
+  </data>
+  <data name="CleanupSummaryStopped" xml:space="preserve">
+    <value>清理已停止</value>
+  </data>
+  <data name="ToolbarCleanupRunning" xml:space="preserve">
+    <value>清理 {0}%</value>
   </data>
 </root>

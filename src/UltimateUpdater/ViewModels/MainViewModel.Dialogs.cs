@@ -166,7 +166,32 @@ public partial class MainViewModel
     {
         InstallSelfUpdateCommand.NotifyCanExecuteChanged();
         ApplyWaitingSelfUpdateWhenIdle();
+        OnPropertyChanged(nameof(ToolbarCleanupText));
     }
+
+    private int _cleanupRunPercent;
+
+    /// <summary>The cleanup run's progress in whole percent, the same figure the ring in its window carries.</summary>
+    internal int CleanupRunPercent
+    {
+        get => _cleanupRunPercent;
+        private set
+        {
+            if (!SetProperty(ref _cleanupRunPercent, value))
+                return;
+
+            if (IsCleanupRunning)
+                OnPropertyChanged(nameof(ToolbarCleanupText));
+        }
+    }
+
+    /// <summary>
+    /// The toolbar button's word: "Bereinigen" at rest, "Bereinigen 47 %" while a cleanup runs, also with
+    /// its window closed, so the run is never out of sight.
+    /// </summary>
+    public string ToolbarCleanupText => IsCleanupRunning
+        ? string.Format(Loc["ToolbarCleanupRunning"], CleanupRunPercent)
+        : Loc["ToolbarCleanupLabel"];
 
     private CleanupViewModel CreateCleanupViewModel()
     {
@@ -179,7 +204,12 @@ public partial class MainViewModel
         viewModel.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(CleanupViewModel.IsCleaning))
+            {
+                CleanupRunPercent = (int)Math.Round(viewModel.CleanPercent);
                 IsCleanupRunning = viewModel.IsCleaning;
+            }
+            else if (args.PropertyName == nameof(CleanupViewModel.CleanPercent))
+                CleanupRunPercent = (int)Math.Round(viewModel.CleanPercent);
         };
 
         return viewModel;
