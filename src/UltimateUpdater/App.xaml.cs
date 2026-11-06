@@ -246,7 +246,10 @@ public partial class App : Application
                     }
 
                     logging.Info("Starting elevated worker.");
-                    Shutdown(await ElevatedWorker.RunAsync(e.Args[1], serverProcessId, logging));
+                    // The touch report is a test probe that never has a server to reach: a short connect
+                    // timeout keeps that test from waiting out the full production timeout.
+                    var connectTimeoutMs = e.Args.Contains(ReportAppPathsTouchArgument) ? 1_000 : 30_000;
+                    Shutdown(await ElevatedWorker.RunAsync(e.Args[1], serverProcessId, logging, connectTimeoutMs));
                 }
                 finally
                 {

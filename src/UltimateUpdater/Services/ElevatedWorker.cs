@@ -406,7 +406,7 @@ public static class ElevatedWorker
         }
     }
 
-    public static async Task<int> RunAsync(string pipeName, int expectedServerProcessId, LoggingService logging)
+    public static async Task<int> RunAsync(string pipeName, int expectedServerProcessId, LoggingService logging, int connectTimeoutMs = 30_000)
     {
         // Anonymous impersonation: with the default the pipe SERVER may impersonate its client, and this
         // client holds an administrator token.
@@ -419,7 +419,7 @@ public static class ElevatedWorker
 
         try
         {
-            await pipe.ConnectAsync(30_000);
+            await pipe.ConnectAsync(connectTimeoutMs);
         }
         catch (TimeoutException)
         {
