@@ -1486,7 +1486,10 @@
                  of floating over it, themed by the app-wide ScrollBar style in App.xaml. A group card's own
                  right-hand size text used to sit right under that overlay thumb whenever the list actually
                  needed to scroll. -->
-            <ScrollViewer Style="{x:Null}" VerticalScrollBarVisibility="Auto" Padding="8,6">
+            <!-- RoundedClip: the scrollbar's square surface would otherwise paint over the card's rounded
+                 right-hand corners (7 = the card's radius 8 minus its 1px stroke). -->
+            <ScrollViewer Style="{x:Null}" VerticalScrollBarVisibility="Auto" Padding="8,6"
+                          views:RoundedClip.Radius="7">
               <StackPanel>
                 <DockPanel Margin="4,0,4,6" LastChildFill="False"
                            Visibility="{Binding IsChoosing, Converter={StaticResource BoolToVisibility}}">
