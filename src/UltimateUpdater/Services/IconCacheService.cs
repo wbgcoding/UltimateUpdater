@@ -34,6 +34,13 @@ public sealed class IconCacheService
     /// </summary>
     private const int CleanupEveryNWrites = 100;
 
+    /// <summary>
+    /// Part of every cache file name. Raise it whenever the lookup rules change so files written by an
+    /// older rule (a Python script launcher cached for a pip package) are never read again; they age
+    /// out through <see cref="CleanupCache"/> like any other unused file.
+    /// </summary>
+    internal const string CacheKeyVersion = "v2";
+
     private int _writesSinceCleanup;
 
     /// <summary>Executables that live beside an app but are never the app itself.</summary>
@@ -92,7 +99,11 @@ public sealed class IconCacheService
     /// </summary>
     public BitmapSource? GetIcon(string sourceId, string itemId, string displayName, string? executableHint = null)
     {
-        var cacheKey = SanitizeKey($"{sourceId}_{itemId}");
+        // A library from a package manager has no icon of its own: the row shows the ecosystem's mark.
+        if (BrandIcons.IsLibrarySource(sourceId))
+            return null;
+
+        var cacheKey = CacheKey(sourceId, itemId);
         if (_memoryCache.TryGetValue(cacheKey, out var cached))
             return cached;
 
@@ -179,13 +190,28 @@ public sealed class IconCacheService
         return IconSourceFromExecutable(executableHint);
     }
 
-    /// <summary>Package managers and runtimes whose rows are command-line tools that may sit on PATH.</summary>
+    /// <summary>
+    /// Runtimes and tool managers whose own executable is the product, so it may sit on PATH. Library
+    /// sources (pip, npm, gem, ...) are not here: see <see cref="BrandIcons.IsLibrarySource"/>.
+    /// </summary>
     private static readonly HashSet<string> CommandLineSources = new(StringComparer.Ordinal)
     {
-        "uv", "uv-tool", "rustup", "pipx", "pip", "npm", "pnpm", "dotnet-tool", "gem", "composer",
-        "bun", "deno", "volta", "mise", "gcloud", "ollama", "flutter", "vcpkg", "pyenv-win",
-        "chocolatey", "scoop", "github-release", "gh-extension", "psgallery",
+        "uv", "rustup", "bun", "deno", "volta", "mise", "gcloud", "ollama", "flutter", "pyenv-win",
+        "chocolatey", "scoop", "github-release",
     };
+
+    /// <summary>
+    /// An executable directly inside a folder named Scripts is a generated launcher stub (pip and
+    /// setuptools write one per console script, all carrying the same Python icon), never the program.
+    /// </summary>
+    internal static bool IsScriptsLauncher(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        var folder = Path.GetFileName(Path.GetDirectoryName(path.Trim().Trim('"')));
+        return string.Equals(folder, "Scripts", StringComparison.OrdinalIgnoreCase);
+    }
 
     private IconSource? FindDriverToolIcon(string sourceId, string displayName)
     {
@@ -218,13 +244,13 @@ public sealed class IconCacheService
         if (_startMenu.Find(displayName) is not { } shortcut)
             return null;
 
-        if (shortcut.IconPath is { } iconPath && File.Exists(iconPath) && HasIconResource(iconPath, shortcut.IconIndex))
+        if (shortcut.IconPath is { } iconPath && !IsScriptsLauncher(iconPath) && File.Exists(iconPath) && HasIconResource(iconPath, shortcut.IconIndex))
         {
             var isImage = Path.GetExtension(iconPath) is ".png" or ".jpg" or ".jpeg" or ".bmp";
             return new IconSource(iconPath, shortcut.IconIndex, isImage);
         }
 
-        if (shortcut.TargetPath is { } target && Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase)
+        if (shortcut.TargetPath is { } target && !IsScriptsLauncher(target) && Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase)
             && File.Exists(target) && HasIconResource(target, 0))
         {
             return new IconSource(target, 0, IsImageFile: false);
@@ -244,7 +270,7 @@ public sealed class IconCacheService
             foreach (var folder in _pathFolders.Value)
             {
                 var candidate = Path.Combine(folder, name + ".exe");
-                if (File.Exists(candidate) && HasIconResource(candidate, 0))
+                if (!IsScriptsLauncher(candidate) && File.Exists(candidate) && HasIconResource(candidate, 0))
                     return new IconSource(candidate, 0, IsImageFile: false);
             }
         }
@@ -298,7 +324,7 @@ public sealed class IconCacheService
     /// <summary>An icon straight from an executable (or image) path, when the path is real and rooted.</summary>
     private static IconSource? IconSourceFromExecutable(string? path)
     {
-        if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path) || !File.Exists(path))
+        if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path) || IsScriptsLauncher(path) || !File.Exists(path))
             return null;
 
         var isImage = Path.GetExtension(path) is ".png" or ".jpg" or ".jpeg" or ".bmp";
@@ -321,7 +347,7 @@ public sealed class IconCacheService
             text = text[..comma].Trim().Trim('"');
         }
 
-        if (!File.Exists(text))
+        if (IsScriptsLauncher(text) || !File.Exists(text))
             return null;
 
         var isImage = Path.GetExtension(text) is ".png" or ".jpg" or ".jpeg" or ".bmp";
@@ -342,7 +368,7 @@ public sealed class IconCacheService
             var executables = new DirectoryInfo(installLocation)
                 .EnumerateFiles("*.exe", SearchOption.TopDirectoryOnly)
                 .Where(f => !NotTheApplication.Any(n =>
-                    f.Name.StartsWith(n, StringComparison.OrdinalIgnoreCase)))
+                    f.Name.StartsWith(n, StringComparison.OrdinalIgnoreCase)) && !IsScriptsLauncher(f.FullName))
                 .ToList();
 
             if (executables.Count == 0)
@@ -673,6 +699,10 @@ public sealed class IconCacheService
 
     /// <summary>One file we may not delete must not abort the whole sweep.</summary>
     private static void TryDelete(FileInfo file) => FileDeletion.TryDelete(file.FullName);
+
+    /// <summary>The file name (without extension) the icon for one row is cached under.</summary>
+    internal static string CacheKey(string sourceId, string itemId) =>
+        SanitizeKey($"{CacheKeyVersion}_{sourceId}_{itemId}");
 
     private static string SanitizeKey(string key)
     {

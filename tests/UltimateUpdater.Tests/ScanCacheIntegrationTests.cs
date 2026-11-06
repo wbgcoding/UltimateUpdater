@@ -444,7 +444,7 @@ public class ScanCacheIntegrationTests
 
     private static string WriteCachedIcon(string sourceId, string itemId)
     {
-        var path = Path.Combine(AppPaths.IconCacheDirectory, $"{sourceId}_{itemId}.png");
+        var path = Path.Combine(AppPaths.IconCacheDirectory, IconCacheService.CacheKey(sourceId, itemId) + ".png");
         var pixels = new byte[16 * 16 * 4];
         Array.Fill(pixels, (byte)200);
         var bitmap = System.Windows.Media.Imaging.BitmapSource.Create(

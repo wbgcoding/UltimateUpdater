@@ -17,7 +17,7 @@ from pathlib import Path
 # Curated: things a Windows user plausibly has installed, plus the update sources themselves.
 SLUGS = [
     "7zip", "adobephotoshop", "amd", "audacity", "autodesk", "battledotnet", "blender", "brave",
-    "ccleaner", "chocolatey", "davinciresolve", "discord", "docker", "dotnet", "ea", "epicgames",
+    "ccleaner", "chocolatey", "composer", "davinciresolve", "discord", "docker", "dotnet", "ea", "epicgames",
     "figma", "filezilla", "firefox", "gimp", "git", "github", "gnubash", "go", "godotengine",
     "gogdotcom", "googlechrome", "homebrew", "inkscape", "intellijidea", "intel", "itchdotio",
     "krita", "kubernetes", "libreoffice", "malwarebytes", "mysql", "neovim", "nginx", "nodedotjs",
