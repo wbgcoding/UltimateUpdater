@@ -615,17 +615,22 @@ public partial class App : Application
         _busyTimer.Tick += (_, _) => _busySignal.Set(mainViewModel.WorkIsRunning);
         _busyTimer.Start();
 
-        _installerListener = InstallerCloseRequest.CreateListener(Dispatcher, ExitWithoutPrompt);
+        Func<bool> isBusy = () => mainViewModel.WorkIsRunning;
+        _installerListener = InstallerCloseRequest.CreateListener(Dispatcher, ExitWithoutPrompt, isBusy, LogRefusedCloseRequest);
         mainWindow.SourceInitialized += (_, _) =>
         {
             if (System.Windows.Interop.HwndSource.FromHwnd(new System.Windows.Interop.WindowInteropHelper(mainWindow).Handle) is { } source)
-                InstallerCloseRequest.Attach(source, Dispatcher, ExitWithoutPrompt);
+                InstallerCloseRequest.Attach(source, Dispatcher, ExitWithoutPrompt, isBusy, LogRefusedCloseRequest);
         };
     }
 
-    /// <summary>The installer asked the app to close because it needs the files: whatever is running is cut
-    /// off (Setup asked the user first when it could), and no question is put to a person who may not be
-    /// there at all.</summary>
+    /// <summary>The installer asked while a scan, install or cleanup is running: the app stays up and the
+    /// installer (or the person behind it) decides what to do next.</summary>
+    private void LogRefusedCloseRequest() =>
+        _logging?.Info("The installer asked the app to close, but work is running: refusing");
+
+    /// <summary>The installer asked an idle app to close because it needs the files: no question is put to a
+    /// person who may not be there at all. A busy app never gets here, it refuses the request.</summary>
     private void ExitWithoutPrompt()
     {
         _logging?.Info("The installer asked the app to close: exiting");

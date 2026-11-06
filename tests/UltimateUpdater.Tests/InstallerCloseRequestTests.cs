@@ -1,5 +1,6 @@
 using System.Threading;
 using UltimateUpdater.Services;
+using static UltimateUpdater.Services.InstallerCloseRequest;
 
 namespace UltimateUpdater.Tests;
 
@@ -37,6 +38,70 @@ public class InstallerCloseRequestTests
     public void Other_messages_are_ignored_even_with_the_flag_set(int message)
     {
         Assert.False(InstallerCloseRequest.IsCloseRequest(message, new IntPtr(0x1)));
+    }
+
+    [Fact]
+    public void An_idle_app_agrees_to_the_installers_close_request()
+    {
+        Assert.Equal(CloseAnswer.Exit, InstallerCloseRequest.Decide(WmQueryEndSession, new IntPtr(0x1), busy: false));
+    }
+
+    [Fact]
+    public void A_busy_app_refuses_the_installers_close_request()
+    {
+        Assert.Equal(CloseAnswer.Refuse, InstallerCloseRequest.Decide(WmQueryEndSession, new IntPtr(0x1), busy: true));
+    }
+
+    [Theory]
+    [InlineData(WmQueryEndSession, 0x0L, true)]
+    [InlineData(WmQueryEndSession, 0x80000000L, true)]
+    [InlineData(WmEndSession, 0x1L, true)]
+    [InlineData(WmClose, 0x1L, false)]
+    public void Everything_else_is_left_to_the_normal_handling(int message, long flags, bool busy)
+    {
+        Assert.Equal(CloseAnswer.Ignore, InstallerCloseRequest.Decide(message, new IntPtr(flags), busy));
+    }
+
+    [Fact]
+    public void A_busy_app_answers_the_request_with_zero_and_stays_up()
+    {
+        var exits = 0;
+        var refusals = 0;
+        var handled = false;
+
+        var result = InstallerCloseRequest.Respond(
+            WmQueryEndSession, new IntPtr(0x1), busy: true, exit: () => exits++, refused: () => refusals++, ref handled);
+
+        Assert.True(handled);
+        Assert.Equal(IntPtr.Zero, result);
+        Assert.Equal(0, exits);
+        Assert.Equal(1, refusals);
+    }
+
+    [Fact]
+    public void An_idle_app_answers_the_request_with_one_and_exits()
+    {
+        var exits = 0;
+        var handled = false;
+
+        var result = InstallerCloseRequest.Respond(
+            WmQueryEndSession, new IntPtr(0x1), busy: false, exit: () => exits++, refused: () => { }, ref handled);
+
+        Assert.True(handled);
+        Assert.Equal(new IntPtr(1), result);
+        Assert.Equal(1, exits);
+    }
+
+    [Fact]
+    public void An_unrelated_message_is_not_handled()
+    {
+        var handled = false;
+
+        var result = InstallerCloseRequest.Respond(
+            WmClose, new IntPtr(0x1), busy: true, exit: () => { }, refused: () => { }, ref handled);
+
+        Assert.False(handled);
+        Assert.Equal(IntPtr.Zero, result);
     }
 
     [Fact]
