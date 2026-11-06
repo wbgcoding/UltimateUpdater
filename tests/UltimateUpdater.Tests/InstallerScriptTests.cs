@@ -235,6 +235,6 @@ public class InstallerScriptTests
         var warning = branch.IndexOf("WARNING: Unsigned build", StringComparison.Ordinal);
         Assert.True(release >= 0 && release < warning, "WU_RELEASE=1 must be checked before the warning path");
         Assert.Contains("goto :error", branch[release..warning]);
-        Assert.Contains("goto :signdone", branch[warning..]);
+        Assert.Contains("goto :releasesigndone", branch[warning..]);
     }
 }
