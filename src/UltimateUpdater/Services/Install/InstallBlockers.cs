@@ -4,8 +4,18 @@ using UltimateUpdater.Services.Sources;
 
 namespace UltimateUpdater.Services.Install;
 
-/// <summary>What blocked one update from installing cleanly, and what to do about it.</summary>
-public sealed record BlockedInstall(UpdateItem Item, string DisplayProgramName, IReadOnlyList<string> ProcessNames);
+/// <summary>What blocked one update from installing cleanly, and what to do about it. <paramref name="SkipOnly"/>:
+/// the program is never offered for closing; the row is skipped for this run and tried again on the next one.
+/// <paramref name="ProcessNames"/> then holds one entry per running process, so the count can be shown.</summary>
+public sealed record BlockedInstall(
+    UpdateItem Item, string DisplayProgramName, IReadOnlyList<string> ProcessNames, bool SkipOnly = false)
+{
+    /// <summary>The running processes as short text, e.g. "bash ×3, ssh".</summary>
+    public string DescribeProcesses() =>
+        string.Join(", ", ProcessNames
+            .GroupBy(name => name, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.Count() > 1 ? $"{group.Key} ×{group.Count()}" : group.Key));
+}
 
 /// <summary>
 /// Pre-install check: the program an update would overwrite may still be running, exactly what
@@ -46,35 +56,139 @@ public sealed class InstallBlockers
     /// are extremely common installs that refuse to update themselves while running.
     /// </summary>
     private sealed record KnownBlocker(string PackageIdPrefix, string DisplayProgramName, IReadOnlyList<string> ProcessNamePrefixes,
-        bool ExactNames = false);
+        bool ExactNames = false, bool OwnFolderOnly = false);
 
     /// <summary>Git's silent setup finds its own shells still running, asks to close them and, with message
     /// boxes suppressed, asks again for ever at full CPU while every other winget install waits behind it.
     /// Its names are short and common ("sh", "git"), so they match exactly, never as a prefix. Git's own ssh,
     /// scp and gpg stop the setup too (seen: an ssh.exe of a running git fetch); Windows' OpenSSH shares
-    /// those names, which costs at most one needless question: the close step never touches a process that runs
-    /// from the Windows folder.</summary>
+    /// those names, so only a process whose image lives in Git's own install folder counts. Nothing is closed,
+    /// since a terminal on Git Bash is open all day: the row is skipped until the next run.</summary>
     private static readonly IReadOnlyList<KnownBlocker> Table =
     [
         new("Microsoft.VisualStudio.", "Visual Studio", ["devenv", "VSIXInstaller", "ServiceHub"]),
         new("Corsair.", "Corsair iCUE", ["iCUE"]),
         new("Discord.", "Discord", ["Discord"]),
         new("Mozilla.Firefox", "Firefox", ["firefox"]),
-        new("Git.Git", "Git", ["bash", "sh", "mintty", "git", "git-bash", "ssh", "scp", "sftp", "ssh-agent", "gpg", "gpg-agent"], ExactNames: true),
+        new("Git.Git", "Git", ["bash", "sh", "mintty", "git", "git-bash", "ssh", "scp", "sftp", "ssh-agent", "gpg", "gpg-agent"],
+            ExactNames: true, OwnFolderOnly: true),
     ];
 
     private readonly Func<IReadOnlyList<string>> _runningProcessNames;
     private readonly InstallLocationResolver? _locationResolver;
     private readonly Func<string, IReadOnlyList<string>> _topLevelExecutableNames;
+    private readonly Func<string, IReadOnlyList<string>> _imagePathsOf;
+    private readonly Func<string?> _gitInstallFolder;
 
+    /// <param name="imagePathsOf">Process name (no ".exe") to the full image path of every running instance.</param>
+    /// <param name="gitInstallFolder">Git's install folder, or null when it cannot be found.</param>
     public InstallBlockers(
         InstallLocationResolver? locationResolver = null,
         Func<IReadOnlyList<string>>? runningProcessNames = null,
-        Func<string, IReadOnlyList<string>>? topLevelExecutableNames = null)
+        Func<string, IReadOnlyList<string>>? topLevelExecutableNames = null,
+        Func<string, IReadOnlyList<string>>? imagePathsOf = null,
+        Func<string?>? gitInstallFolder = null)
     {
         _locationResolver = locationResolver;
         _runningProcessNames = runningProcessNames ?? DefaultRunningProcessNames;
         _topLevelExecutableNames = topLevelExecutableNames ?? TopLevelExecutableNames;
+        _imagePathsOf = imagePathsOf ?? DefaultImagePathsOf;
+        _gitInstallFolder = gitInstallFolder ?? FindGitInstallFolder;
+    }
+
+    private static IReadOnlyList<string> DefaultImagePathsOf(string processName)
+    {
+        var processes = Array.Empty<System.Diagnostics.Process>();
+        try
+        {
+            processes = System.Diagnostics.Process.GetProcessesByName(processName);
+            var paths = new List<string>(processes.Length);
+            foreach (var process in processes)
+            {
+                try
+                {
+                    if (process.MainModule?.FileName is { Length: > 0 } path)
+                        paths.Add(path);
+                }
+                catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception
+                                               or NotSupportedException)
+                {
+                    // An elevated or protected process cannot be read; it cannot be a shell of this user either.
+                }
+            }
+
+            return paths;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            return [];
+        }
+        finally
+        {
+            foreach (var process in processes)
+                process.Dispose();
+        }
+    }
+
+    /// <summary>Git for Windows' install folder: its own registry key first, then the two default places.</summary>
+    internal static string? FindGitInstallFolder()
+    {
+        try
+        {
+            foreach (var hive in new[] { Microsoft.Win32.Registry.LocalMachine, Microsoft.Win32.Registry.CurrentUser })
+            {
+                using var key = hive.OpenSubKey(@"SOFTWARE\GitForWindows");
+                if (key?.GetValue("InstallPath") is string { Length: > 0 } path && Directory.Exists(path))
+                    return path;
+            }
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            // fall through to the default places
+        }
+
+        string[] candidates =
+        [
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Git"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Git"),
+        ];
+        return candidates.FirstOrDefault(Directory.Exists);
+    }
+
+    /// <summary>True when <paramref name="path"/> lies inside <paramref name="folder"/>. The folder is matched
+    /// with a trailing separator so a sibling like "Git2" is not inside "Git".</summary>
+    internal static bool IsInside(string path, string folder)
+    {
+        var root = Path.GetFullPath(folder).TrimEnd('\\', '/') + Path.DirectorySeparatorChar;
+        return Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>One entry per running instance of these names whose image lies in Git's install folder. A
+    /// shell from anywhere else (Windows' own OpenSSH, another Git copy) does not hold Git's files. With no
+    /// known install folder nothing counts, so an unfindable Git is installed rather than skipped for ever.</summary>
+    private List<string> InOwnFolder(IReadOnlyList<string> names)
+    {
+        if (names.Count == 0 || _gitInstallFolder() is not { Length: > 0 } folder)
+            return [];
+
+        var inside = new List<string>();
+        foreach (var name in names)
+        {
+            foreach (var path in _imagePathsOf(name))
+            {
+                try
+                {
+                    if (IsInside(path, folder))
+                        inside.Add(name);
+                }
+                catch (ArgumentException)
+                {
+                    // a malformed path cannot be inside anything
+                }
+            }
+        }
+
+        return inside;
     }
 
     /// <summary>
@@ -147,9 +261,17 @@ public sealed class InstallBlockers
             if (!item.Id.StartsWith(known.PackageIdPrefix, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var matches = known.ExactNames
+            IReadOnlyList<string> matches = known.ExactNames
                 ? known.ProcessNamePrefixes.Where(name => runningSet.Contains(name) && !NeverClose.Contains(name)).ToList()
                 : MatchByPrefix(runningSet, known.ProcessNamePrefixes);
+            if (known.OwnFolderOnly)
+            {
+                matches = InOwnFolder(matches);
+                if (matches.Count > 0)
+                    return new BlockedInstall(item, known.DisplayProgramName, matches, SkipOnly: true);
+                continue;
+            }
+
             if (matches.Count > 0)
                 return new BlockedInstall(item, known.DisplayProgramName, matches);
         }

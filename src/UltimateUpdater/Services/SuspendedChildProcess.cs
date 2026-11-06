@@ -20,6 +20,9 @@ internal interface IChildProcess : IDisposable
 
     bool HasExited { get; }
 
+    /// <summary>The system id of the child, the root of the tree the stall watch looks at.</summary>
+    int ProcessId { get; }
+
     Task WaitForExitAsync(CancellationToken cancellationToken);
 
     /// <summary>Ends the child and everything it started. Never throws: it may already be gone.</summary>
@@ -36,6 +39,8 @@ internal sealed class ManagedChildProcess(Process process) : IChildProcess
     public int ExitCode => process.ExitCode;
 
     public bool HasExited => process.HasExited;
+
+    public int ProcessId => process.Id;
 
     public Task WaitForExitAsync(CancellationToken cancellationToken) => process.WaitForExitAsync(cancellationToken);
 
@@ -112,7 +117,7 @@ internal sealed class SuspendedChildProcess : IChildProcess
 
     public bool HasExited => WaitForSingleObject(_process, 0) == WaitObject0;
 
-    internal int ProcessId => GetProcessId(_process);
+    public int ProcessId => GetProcessId(_process);
 
     /// <summary>The limit flags the child's job carries, 0 when there is no job.</summary>
     internal uint JobLimitFlags =>

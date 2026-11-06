@@ -107,8 +107,9 @@ public static class ProcessRunner
         Action<string> onOutput,
         CancellationToken cancellationToken,
         IReadOnlyDictionary<string, string>? environment = null,
-        TimeSpan? idleTimeout = null) =>
-        ExecuteAsync(fileName, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding: null);
+        TimeSpan? idleTimeout = null,
+        StallWatchOptions? stallWatch = null) =>
+        ExecuteAsync(fileName, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding: null, stallWatch);
 
     private static async Task<ProcessResult> ExecuteAsync(
         string fileName,
@@ -118,7 +119,8 @@ public static class ProcessRunner
         IReadOnlyDictionary<string, string>? environment,
         Action<string>? onOutput,
         TimeSpan? idleTimeout = null,
-        Encoding? outputEncoding = null)
+        Encoding? outputEncoding = null,
+        StallWatchOptions? stallWatch = null)
     {
         // Defense in depth, checked before anything else and regardless of elevation or caller
         // (Security.CommandDenyList): every current caller only ever issues package-manager-
@@ -141,7 +143,7 @@ public static class ProcessRunner
 
         return await RunResolvedAsync(
             executable, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding, elevated,
-            scrubEnvironment);
+            scrubEnvironment, stallWatch);
     }
 
     /// <summary>The launch and the wait for an already resolved executable. Separate from
@@ -157,7 +159,8 @@ public static class ProcessRunner
         TimeSpan? idleTimeout,
         Encoding? outputEncoding,
         bool elevated,
-        bool? scrubEnvironment = null)
+        bool? scrubEnvironment = null,
+        StallWatchOptions? stallWatch = null)
     {
         var startInfo = BuildStartInfo(executable, arguments, environment, outputEncoding, elevated, scrubEnvironment: scrubEnvironment);
 
@@ -192,6 +195,13 @@ public static class ProcessRunner
             ? WatchForIdleAsync(idle, () => Interlocked.Read(ref lastActivityTicks), () => idleTriggered = true, timeoutCts, idleWatchStopCts.Token)
             : Task.CompletedTask;
 
+        // Same lifetime as the idle watchdog. Judges the whole tree below the tool, not its output: an
+        // installer that prints nothing for minutes but works is alive, one that does nothing at all is not.
+        var stallTriggered = false;
+        var stallWatchTask = stallWatch is { } stall
+            ? WatchForStallAsync(stall, process.ProcessId, () => stallTriggered = true, timeoutCts, idleWatchStopCts.Token)
+            : Task.CompletedTask;
+
         try
         {
             try
@@ -220,6 +230,9 @@ public static class ProcessRunner
                 if (idleTriggered)
                     throw new ProcessIdleTimeoutException(idleTimeout!.Value);
 
+                if (stallTriggered)
+                    throw new InstallerStalledException(Path.GetFileNameWithoutExtension(executable.Path));
+
                 return new ProcessResult(-1, ReadSink(stdout), ReadSink(stderr)) { TimedOut = true };
             }
 
@@ -229,6 +242,7 @@ public static class ProcessRunner
         {
             await idleWatchStopCts.CancelAsync();
             await SwallowAsync(idleWatchdog);
+            await SwallowAsync(stallWatchTask);
         }
     }
 
@@ -440,6 +454,45 @@ public static class ProcessRunner
         catch (ObjectDisposedException)
         {
             // timeoutCts was already disposed by the caller returning before this loop's next tick
+        }
+    }
+
+    /// <summary>Test seam: stands in for the system look at the process tree.</summary>
+    internal static readonly AsyncLocal<Func<int, TreeActivity>?> TreeSamplerForTest = new();
+
+    /// <summary>
+    /// Looks at the tool's whole process tree every sample interval; once <see cref="StallDetector"/> says
+    /// it has shown no life for the whole window, marks it and cancels <paramref name="timeoutCts"/> so the
+    /// caller's wait ends and the tree is stopped, instead of running to the full install deadline.
+    /// </summary>
+    private static async Task WatchForStallAsync(
+        StallWatchOptions options, int rootId, Action markStalled, CancellationTokenSource timeoutCts,
+        CancellationToken stopToken)
+    {
+        var detector = new StallDetector(options);
+        var sampler = TreeSamplerForTest.Value ?? ProcessTreeSampler.Sample;
+        try
+        {
+            using var ticker = new PeriodicTimer(options.SampleInterval);
+            do
+            {
+                var activity = await Task.Run(() => sampler(rootId), CancellationToken.None);
+                if (!detector.Observe(Environment.TickCount64, activity))
+                    continue;
+
+                markStalled();
+                await timeoutCts.CancelAsync();
+                return;
+            }
+            while (await ticker.WaitForNextTickAsync(stopToken));
+        }
+        catch (OperationCanceledException)
+        {
+            // the call ended before the window ran out
+        }
+        catch (ObjectDisposedException)
+        {
+            // timeoutCts was already disposed by the caller returning
         }
     }
 

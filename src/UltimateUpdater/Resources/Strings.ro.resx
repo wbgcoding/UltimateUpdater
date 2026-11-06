@@ -1996,9 +1996,6 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Selectează doar elementele sigure, aceleași care sunt bifate implicit.</value>
   </data>
-  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
-    <value>Windows nu a răspuns la timp. Analiza a fost întreruptă.</value>
-  </data>
   <data name="CleanupPipLeftovers" xml:space="preserve">
     <value>Resturi ale instalărilor pip întrerupte</value>
   </data>
@@ -2202,5 +2199,17 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Se instalează… {0}</value>
+  </data>
+  <data name="InstallBlockerInUse" xml:space="preserve">
+    <value>Git este în uz chiar acum ({0}), se va reîncerca la următoarea rulare.</value>
+  </data>
+  <data name="InstallStalled" xml:space="preserve">
+    <value>Programul de instalare nu mai răspundea și a fost oprit.</value>
+  </data>
+  <data name="InstallPackageSourceStale" xml:space="preserve">
+    <value>Sursa de pachete nu este încă actualizată, încearcă din nou mai târziu.</value>
+  </data>
+  <data name="InstallRustupMetadata" xml:space="preserve">
+    <value>rustup nu a putut citi propriul fișier de instalare. Rulează "rustup update" într-un terminal când nimic altceva nu îl folosește.</value>
   </data>
 </root>

@@ -203,6 +203,9 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(IsFilterHidingEverything));
     }
 
+    /// <summary>Test-only counter, incremented once per <see cref="RefreshHeader"/> run.</summary>
+    internal int RefreshHeaderRunCountForTest;
+
     /// <param name="resortManualOnly">
     /// False on the scan drain's own tick, which runs five times a second for the whole scan. A Refresh
     /// raises a Reset, and a Reset makes the compact block regenerate its containers; closing an open row
@@ -212,6 +215,7 @@ public partial class MainViewModel
     /// </param>
     private void RefreshHeader(bool resortManualOnly = true)
     {
+        RefreshHeaderRunCountForTest++;
         OnPropertyChanged(nameof(HeadlineText));
         OnPropertyChanged(nameof(SubheadlineText));
         RefreshFilteredState();

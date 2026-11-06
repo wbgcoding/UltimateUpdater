@@ -477,4 +477,75 @@ public class InstallErrorExplainerTests
         Assert.Null(InstallErrorExplainer.TryFindUnknownCode(null));
         Assert.Null(InstallErrorExplainer.TryFindUnknownCode("   "));
     }
+
+    [Theory]
+    [InlineData("winget install failed for 'Foo.Bar' (exit 0x8A150011). Der Installerhash stimmt nicht.")]
+    [InlineData("winget install failed for 'Foo.Bar' (exit 0x8A150011). Installer hash does not match.")]
+    public void A_winget_hash_mismatch_says_the_package_source_is_behind_and_never_counts_as_a_failure(string text)
+    {
+        var explanation = InstallErrorExplainer.Explain("winget", text);
+
+        Assert.NotNull(explanation);
+        Assert.Equal("InstallPackageSourceStale", explanation!.WhatHappenedKey);
+        Assert.True(explanation.UseAsRowText);
+        Assert.False(explanation.CountsAsFailure);
+        Assert.True(explanation.AllowsAutomaticRetry == false);
+        Assert.Equal("InstallPackageSourceStale", InstallErrorExplainer.RowText("winget", text, key => key));
+    }
+
+    [Fact]
+    public void The_hash_mismatch_code_from_another_tool_is_not_taken_for_winget_s()
+    {
+        var explanation = InstallErrorExplainer.Explain("chocolatey", "choco: install failed (exit 0x8A150011).");
+
+        Assert.NotEqual("InstallPackageSourceStale", explanation?.WhatHappenedKey);
+    }
+
+    [Fact]
+    public void A_repeated_hash_mismatch_is_not_counted_toward_the_manual_work_flag()
+    {
+        var mismatch = InstallErrorExplainer.Explain("winget", "winget install failed for 'X' (exit 0x8A150011).");
+        var other = InstallErrorExplainer.Explain("winget", "winget install failed for 'X' (exit 0x8A150109).");
+
+        Assert.False(mismatch!.CountsAsFailure);
+        Assert.True(other!.CountsAsFailure);
+    }
+
+    [Theory]
+    [InlineData("error: could not read metadata for file 'D:\\work\\rustup-init.exe': Access is denied")]
+    [InlineData("rustup: Could Not Read Metadata For File `rustup-init.exe`")]
+    public void Rustup_failing_on_its_own_setup_file_gets_a_short_manual_hint(string text)
+    {
+        var explanation = InstallErrorExplainer.Explain("rustup", text);
+
+        Assert.NotNull(explanation);
+        Assert.Equal("InstallRustupMetadata", explanation!.WhatHappenedKey);
+        Assert.Equal(InstallErrorClassification.ManualWork, explanation.Classification);
+        Assert.Equal("InstallRustupMetadata", InstallErrorExplainer.RowText("rustup", text, key => key));
+    }
+
+    [Fact]
+    public void Another_metadata_error_is_not_taken_for_the_rustup_one()
+    {
+        Assert.NotEqual("InstallRustupMetadata",
+            InstallErrorExplainer.Explain("rustup", "error: could not read metadata for file 'x.toml'")?.WhatHappenedKey);
+    }
+
+    [Fact]
+    public void A_stalled_installer_is_a_recoverable_failure_with_its_own_row_line()
+    {
+        var explanation = InstallErrorExplainer.Explain(
+            "winget", "winget: the installer stopped responding and was stopped.");
+
+        Assert.NotNull(explanation);
+        Assert.Equal("InstallStalled", explanation!.WhatHappenedKey);
+        Assert.Equal(InstallErrorClassification.Recoverable, explanation.Classification);
+        Assert.Equal("InstallStalled", explanation.Format(key => key));
+    }
+
+    [Fact]
+    public void An_ordinary_failure_keeps_the_generic_row_line()
+    {
+        Assert.Null(InstallErrorExplainer.RowText("winget", "winget install failed for 'X' (exit 0x8A150109).", key => key));
+    }
 }

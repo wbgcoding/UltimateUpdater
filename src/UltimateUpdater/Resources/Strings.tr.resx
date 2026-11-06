@@ -1996,9 +1996,6 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Yalnızca güvenli öğeleri, yani varsayılan olarak işaretli olanları seçer.</value>
   </data>
-  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
-    <value>Windows zamanında yanıt vermedi. Analiz durduruldu.</value>
-  </data>
   <data name="CleanupPipLeftovers" xml:space="preserve">
     <value>Kesintiye uğramış pip kurulumlarının kalıntıları</value>
   </data>
@@ -2202,5 +2199,17 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Yükleniyor… {0}</value>
+  </data>
+  <data name="InstallBlockerInUse" xml:space="preserve">
+    <value>Git şu anda kullanılıyor ({0}), bir sonraki çalıştırmada yeniden denenecek.</value>
+  </data>
+  <data name="InstallStalled" xml:space="preserve">
+    <value>Yükleyici yanıt vermeyi bıraktı ve durduruldu.</value>
+  </data>
+  <data name="InstallPackageSourceStale" xml:space="preserve">
+    <value>Paket kaynağı henüz güncel değil, daha sonra tekrar dene.</value>
+  </data>
+  <data name="InstallRustupMetadata" xml:space="preserve">
+    <value>rustup kendi kurulum dosyasını okuyamadı. Başka hiçbir şey kullanmadığında bir terminalde "rustup update" çalıştır.</value>
   </data>
 </root>

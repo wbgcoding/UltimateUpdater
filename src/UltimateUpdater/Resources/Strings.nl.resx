@@ -1996,9 +1996,6 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Alleen de veilige items selecteren, dezelfde die standaard zijn aangevinkt.</value>
   </data>
-  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
-    <value>Windows heeft niet tijdig gereageerd. De analyse is gestopt.</value>
-  </data>
   <data name="CleanupPipLeftovers" xml:space="preserve">
     <value>Restanten van onderbroken pip-installaties</value>
   </data>
@@ -2202,5 +2199,17 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Installeren… {0}</value>
+  </data>
+  <data name="InstallBlockerInUse" xml:space="preserve">
+    <value>Git is op dit moment in gebruik ({0}), het wordt bij de volgende run opnieuw geprobeerd.</value>
+  </data>
+  <data name="InstallStalled" xml:space="preserve">
+    <value>Het installatieprogramma reageerde niet meer en is gestopt.</value>
+  </data>
+  <data name="InstallPackageSourceStale" xml:space="preserve">
+    <value>De pakketbron is nog niet bijgewerkt, probeer het later opnieuw.</value>
+  </data>
+  <data name="InstallRustupMetadata" xml:space="preserve">
+    <value>rustup kon zijn eigen installatiebestand niet lezen. Voer "rustup update" uit in een terminal zodra niets anders het gebruikt.</value>
   </data>
 </root>

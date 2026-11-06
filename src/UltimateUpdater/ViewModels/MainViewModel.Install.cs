@@ -348,6 +348,14 @@ public partial class MainViewModel
                 continue;
             }
 
+            // Never asked about and never closed, attended or not: it is the next run's job, not a failure.
+            if (blocker.SkipOnly)
+            {
+                SkipRowInUse(row, blocker);
+                skipped.Add(row);
+                continue;
+            }
+
             if (App.IsUnattended)
             {
                 SkipBlockedRowUnattended(row, blocker.DisplayProgramName);
@@ -739,6 +747,24 @@ public partial class MainViewModel
         row.ApplyInstallStatus(new InstallItemStatus(row.SourceId, row.Item.Id, 0, message, false, message));
 
         _history.Append(HistoryEntry.ForItem(row.Item, InstallAction.Install, success: false, error: message));
+    }
+
+    /// <summary>
+    /// A program that must not be closed is using the files the update would replace (Git's own shells).
+    /// The row ends as Cancelled with the reason, not as a failure, so it is never counted towards the
+    /// repeated-failure flag and simply comes back on the next scan.
+    /// </summary>
+    private void SkipRowInUse(UpdateRowViewModel row, Services.Install.BlockedInstall blocker)
+    {
+        var message = string.Format(Loc["InstallBlockerInUse"], blocker.DescribeProcesses());
+
+        row.BeginInstall();
+        row.ApplyInstallStatus(new InstallItemStatus(row.SourceId, row.Item.Id, 0, message, null, null)
+        {
+            IsCancelled = true,
+        });
+
+        _history.Append(HistoryEntry.ForItem(row.Item, InstallAction.Install, success: false, error: message, isCancelled: true));
     }
 
     /// <summary>
@@ -1328,19 +1354,32 @@ public partial class MainViewModel
     /// <summary>UI cue: fires once the batch's own retry round actually starts.</summary>
     private void OnSecondAttemptStarted() => _dispatcher.Invoke(() => IsSecondAttemptActive = true);
 
-    private void OnInstallStatusChanged(InstallItemStatus status)
+    /// <summary>How often a row's plain progress reaches the window: at most four times a second, however
+    /// often the tool prints. A synchronous hop per report ran at a priority above input, so the app's other
+    /// windows could not be opened or scrolled while several installs were chatting.</summary>
+    internal static readonly TimeSpan InstallProgressFlushInterval = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>Newest not yet applied plain progress per row; guarded by <see cref="_lastDispatchedInstallStatus"/>.</summary>
+    private readonly Dictionary<string, InstallItemStatus> _pendingInstallProgress = new(StringComparer.OrdinalIgnoreCase);
+
+    private bool _installProgressFlushScheduled;
+
+    internal void OnInstallStatusChanged(InstallItemStatus status)
     {
         var key = $"{status.SourceId}:{status.ItemId}";
         var rounded = Math.Floor(status.Percent);
 
-        // Only a plain, mid-install progress tick may be dropped; a terminal result (Success/Error set,
-        // or a manual handoff) always crosses immediately, so a chatty tool's redraw storm can never
-        // delay the one report the user is actually waiting for.
+        // Only a plain, mid-install progress tick may be dropped or delayed; a terminal result (Success/Error
+        // set, or a manual handoff) and the flags a later tick must not overwrite always cross immediately,
+        // so a chatty tool's redraw storm can never delay the one report the user is actually waiting for.
+        var isImmediate = status.IsTerminal || status.Error is not null || status.IsAwaitingRetry
+            || status.RebootRequired || status.VersionUnchanged;
         var isTerminal = status.IsTerminal || status.Error is not null;
 
+        var scheduleFlush = false;
         lock (_lastDispatchedInstallStatus)
         {
-            if (!isTerminal
+            if (!isImmediate
                 && _lastDispatchedInstallStatus.TryGetValue(key, out var last)
                 && last.Percent == rounded && last.Status == status.Status)
             {
@@ -1351,34 +1390,75 @@ public partial class MainViewModel
                 _lastDispatchedInstallStatus.Remove(key);
             else
                 _lastDispatchedInstallStatus[key] = (rounded, status.Status);
+
+            if (isImmediate)
+            {
+                // Whatever was waiting for this row is older than this report.
+                _pendingInstallProgress.Remove(key);
+            }
+            else
+            {
+                _pendingInstallProgress[key] = status;
+                scheduleFlush = !_installProgressFlushScheduled;
+                _installProgressFlushScheduled = true;
+            }
         }
 
-        _dispatcher.Invoke(() =>
+        if (!isImmediate)
         {
-            // Source included: ids are unique per source only, and chocolatey/scoop/pip/npm share
-            // package names, so matching on the id alone would report two installs onto one row.
-            // Children too: Steam's parent row carries id "steam", and every actual game
-            // update rides as a CHILD with its own id; searching only the top level would leave a
-            // Steam child's install/uninstall progress or manual-handoff result never reaching its row.
-            var row = FindRow(status.SourceId, status.ItemId);
-            if (row is null)
-                return;
-
-            row.ApplyInstallStatus(status);
-            if (isTerminal)
-                TrackPersistentFailure(row);
-
-            // WindowsUpdateSource.Install throws this exact text only once the update's own GUID is
-            // genuinely gone from a fresh search, never for a mere revision bump (WindowsUpdateMatching
-            // already handles that case without failing). The row is stale either way it arrived here (an
-            // in-process install or the elevated worker's own "result" message both funnel through this
-            // same status), so the source is rescanned on its own rather than making the user do it by hand.
-            if (status.Success == false
-                && string.Equals(status.SourceId, "windowsupdate", StringComparison.Ordinal)
-                && status.Detail?.Contains("is no longer offered", StringComparison.Ordinal) == true)
+            if (scheduleFlush)
             {
-                _ = Background.Run(RescanSingleSourceAsync(status.SourceId), _logging, "rescan single source");
+                _ = Task.Delay(InstallProgressFlushInterval).ContinueWith(
+                    _ => _dispatcher.BeginInvoke(FlushPendingInstallProgress, DispatcherPriority.Background),
+                    CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
             }
-        });
+
+            return;
+        }
+
+        _dispatcher.Invoke(() => ApplyInstallStatus(status, isTerminal));
+    }
+
+    /// <summary>Applies the newest plain progress of every row that reported since the last flush.</summary>
+    private void FlushPendingInstallProgress()
+    {
+        InstallItemStatus[] batch;
+        lock (_lastDispatchedInstallStatus)
+        {
+            batch = [.. _pendingInstallProgress.Values];
+            _pendingInstallProgress.Clear();
+            _installProgressFlushScheduled = false;
+        }
+
+        foreach (var status in batch)
+            ApplyInstallStatus(status, isTerminal: false);
+    }
+
+    private void ApplyInstallStatus(InstallItemStatus status, bool isTerminal)
+    {
+        // Source included: ids are unique per source only, and chocolatey/scoop/pip/npm share
+        // package names, so matching on the id alone would report two installs onto one row.
+        // Children too: Steam's parent row carries id "steam", and every actual game
+        // update rides as a CHILD with its own id; searching only the top level would leave a
+        // Steam child's install/uninstall progress or manual-handoff result never reaching its row.
+        var row = FindRow(status.SourceId, status.ItemId);
+        if (row is null)
+            return;
+
+        row.ApplyInstallStatus(status);
+        if (isTerminal)
+            TrackPersistentFailure(row);
+
+        // WindowsUpdateSource.Install throws this exact text only once the update's own GUID is
+        // genuinely gone from a fresh search, never for a mere revision bump (WindowsUpdateMatching
+        // already handles that case without failing). The row is stale either way it arrived here (an
+        // in-process install or the elevated worker's own "result" message both funnel through this
+        // same status), so the source is rescanned on its own rather than making the user do it by hand.
+        if (status.Success == false
+            && string.Equals(status.SourceId, "windowsupdate", StringComparison.Ordinal)
+            && status.Detail?.Contains("is no longer offered", StringComparison.Ordinal) == true)
+        {
+            _ = Background.Run(RescanSingleSourceAsync(status.SourceId), _logging, "rescan single source");
+        }
     }
 }

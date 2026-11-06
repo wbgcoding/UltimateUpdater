@@ -104,7 +104,8 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
                 VersionPinnedInstallArguments(item.Id, pinnedVersion),
                 InstallTimeout,
                 segment => Report(progress, item.Name, segment),
-                cancellationToken);
+                cancellationToken,
+                stallWatch: StallWatchOptions.ForInstall);
 
             if (pinnedResult.TimedOut)
                 throw new InvalidOperationException($"winget install timed out for '{item.Id}'.");
@@ -143,7 +144,8 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
                 attempt.Arguments,
                 InstallTimeout,
                 segment => Report(progress, item.Name, segment),
-                cancellationToken);
+                cancellationToken,
+                stallWatch: StallWatchOptions.ForInstall);
 
             if (result.TimedOut)
                 throw new InvalidOperationException($"winget install timed out for '{item.Id}'.");
@@ -193,7 +195,8 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
                     VersionPinnedInstallArguments(item.Id, offeredVersion),
                     InstallTimeout,
                     segment => Report(progress, item.Name, segment),
-                    cancellationToken);
+                    cancellationToken,
+                    stallWatch: StallWatchOptions.ForInstall);
 
                 if (pinned.TimedOut)
                     throw new InvalidOperationException($"winget install timed out for '{item.Id}'.");
@@ -543,6 +546,14 @@ throw new InvalidOperationException($"winget: refusing to uninstall '{item.Id}';
     /// </summary>
     internal static bool IsNoUninstallInfo(int exitCode) =>
         unchecked((uint)exitCode) == 0x8A15002Fu;
+
+    /// <summary>
+    /// winget's own APPINSTALLER_CLI_ERROR_INSTALLER_HASH_MISMATCH (0x8A150011): the downloaded installer does
+    /// not match the hash in the package source. That happens while the source still lists the old hash of a
+    /// file the vendor has since replaced, and clears once the source catches up; nothing on this PC is wrong.
+    /// </summary>
+    internal static bool IsInstallerHashMismatch(int exitCode) =>
+        unchecked((uint)exitCode) == 0x8A150011u;
 
     /// <summary>
     /// winget passes an installer's own exit code straight through. A genuine OS-killed-the-process NTSTATUS

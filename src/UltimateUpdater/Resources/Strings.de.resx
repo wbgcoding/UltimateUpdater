@@ -1996,9 +1996,6 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Nur die unkritischen Einträge auswählen, also genau die, die standardmäßig angehakt sind.</value>
   </data>
-  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
-    <value>Windows hat nicht rechtzeitig geantwortet. Die Analyse wurde abgebrochen.</value>
-  </data>
   <data name="CleanupPipLeftovers" xml:space="preserve">
     <value>Reste abgebrochener pip-Installationen</value>
   </data>
@@ -2202,5 +2199,17 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Wird installiert… {0}</value>
+  </data>
+  <data name="InstallBlockerInUse" xml:space="preserve">
+    <value>Git wird gerade benutzt ({0}), nächster Versuch beim nächsten Lauf.</value>
+  </data>
+  <data name="InstallStalled" xml:space="preserve">
+    <value>Der Installer reagiert nicht mehr und wurde abgebrochen.</value>
+  </data>
+  <data name="InstallPackageSourceStale" xml:space="preserve">
+    <value>Die Paketquelle ist noch nicht aktuell, versuch es später erneut.</value>
+  </data>
+  <data name="InstallRustupMetadata" xml:space="preserve">
+    <value>rustup konnte seine eigene Setup-Datei nicht lesen. Führe "rustup update" in einem Terminal aus, sobald nichts anderes sie benutzt.</value>
   </data>
 </root>

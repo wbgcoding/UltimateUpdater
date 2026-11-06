@@ -54,6 +54,7 @@ public class ProcessRunnerStopTests
         public StreamReader StandardError { get; } = new(new StuckStream([]));
         public int ExitCode => -1;
         public bool HasExited => false;
+        public int ProcessId => 0;
         public int KillCalls { get; private set; }
 
         public Task WaitForExitAsync(CancellationToken cancellationToken) =>

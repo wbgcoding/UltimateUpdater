@@ -267,7 +267,7 @@ public partial class MainViewModel
             return;
 
         var explanation = InstallErrorExplainer.Explain(row.SourceId, row.InstallErrorDetail);
-        if (explanation is null)
+        if (explanation is not { CountsAsFailure: true })
             return;
 
         var signature = $"{explanation.WhatHappenedKey}:{string.Join(",", explanation.WhatHappenedArgs)}";

@@ -1996,9 +1996,6 @@ Continuare con privilegi di amministratore?</value>
   <data name="CleanupDefaultSelectionTooltip" xml:space="preserve">
     <value>Seleziona solo gli elementi sicuri, gli stessi selezionati per impostazione predefinita.</value>
   </data>
-  <data name="CleanupComponentStoreTimedOut" xml:space="preserve">
-    <value>Windows non ha risposto in tempo. L'analisi è stata interrotta.</value>
-  </data>
   <data name="CleanupPipLeftovers" xml:space="preserve">
     <value>Residui di installazioni pip interrotte</value>
   </data>
@@ -2202,5 +2199,17 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Installazione in corso… {0}</value>
+  </data>
+  <data name="InstallBlockerInUse" xml:space="preserve">
+    <value>Git è in uso in questo momento ({0}), verrà ritentato alla prossima esecuzione.</value>
+  </data>
+  <data name="InstallStalled" xml:space="preserve">
+    <value>Il programma di installazione ha smesso di rispondere ed è stato interrotto.</value>
+  </data>
+  <data name="InstallPackageSourceStale" xml:space="preserve">
+    <value>L'origine dei pacchetti non è ancora aggiornata, riprova più tardi.</value>
+  </data>
+  <data name="InstallRustupMetadata" xml:space="preserve">
+    <value>rustup non è riuscito a leggere il proprio file di installazione. Esegui "rustup update" in un terminale quando nient'altro lo usa.</value>
   </data>
 </root>
