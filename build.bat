@@ -299,7 +299,7 @@ if not exist "%DIST%\SHA256SUMS.txt" (
 )
 
 echo.
-echo === signing ===
+echo === release signatures ===
 rem Every exe and SHA256SUMS.txt gets a <name>.sig made with the release key (ECDSA P-256), which the app
 rem checks before it installs an update. The private key sits in the gitignored .signing folder; UU_SIGNING_KEY
 rem points at another key file (used to try this step with a throwaway key). No key: the build goes on, unsigned,
@@ -312,7 +312,7 @@ if not exist "%SIGNKEY%" (
         goto :error
     )
     echo WARNING: Unsigned build - no release key found, so the app will refuse this build as an update.
-    goto :signdone
+    goto :releasesigndone
 )
 where py >nul 2>nul
 if errorlevel 1 (
@@ -329,7 +329,7 @@ if errorlevel 1 (
     echo ERROR: signing the release files failed.
     goto :error
 )
-:signdone
+:releasesigndone
 
 echo.
 echo Artifacts in %DIST%
