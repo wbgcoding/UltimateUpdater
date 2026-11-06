@@ -1102,9 +1102,6 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="CleanupFreeSpaceNow" xml:space="preserve">
     <value>{0} boş, temizlikten sonra +{1}</value>
   </data>
-  <data name="CleanupCurrentLabel" xml:space="preserve">
-    <value>Geçerli</value>
-  </data>
   <data name="CleanupFailedHeadline" xml:space="preserve">
     <value>Temizlik tamamlanamadı</value>
   </data>
@@ -2209,20 +2206,11 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>{0} / {1} seçili</value>
   </data>
-  <data name="CleanupStepDone" xml:space="preserve">
-    <value>bitti</value>
-  </data>
-  <data name="CleanupStepTooltip" xml:space="preserve">
-    <value>{0}: {1}</value>
-  </data>
   <data name="CleanupStatFreed" xml:space="preserve">
     <value>Boşaltılan</value>
   </data>
   <data name="CleanupStatElapsed" xml:space="preserve">
     <value>Süre</value>
-  </data>
-  <data name="CleanupDetailsExpander" xml:space="preserve">
-    <value>Ayrıntılar</value>
   </data>
   <data name="CleanupSummaryDone" xml:space="preserve">
     <value>Temizlik tamamlandı</value>
@@ -2259,5 +2247,11 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="ScanRateLimited" xml:space="preserve">
     <value>GitHub sınırına ulaşıldı, {0} saatinde yeniden kullanılabilir</value>
+  </data>
+  <data name="CleanupAreaOfTotal" xml:space="preserve">
+    <value>Alan {0}/{1}</value>
+  </data>
+  <data name="CleanupLastDone" xml:space="preserve">
+    <value>Son tamamlanan: {0} · {1}</value>
   </data>
 </root>

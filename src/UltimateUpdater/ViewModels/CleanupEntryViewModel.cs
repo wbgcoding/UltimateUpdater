@@ -116,6 +116,10 @@ public sealed partial class CleanupEntryViewModel : ObservableObject
 
     public string SizeText => ByteSize.Format(Model.Bytes);
 
+    /// <summary>"ticked / found" for the size cell while choosing: the row's own size when ticked, "0 B /
+    /// size" when not, so the effect of a tick is visible on the row itself.</summary>
+    public string ChosenSizeText => $"{ByteSize.Format(IsSelected ? Model.Bytes : 0)} / {ByteSize.Format(Model.Bytes)}";
+
     /// <summary>A single deleted file in the recycle bin rather than a grouped folder row: it knows where
     /// it came from, and its own <see cref="CleanupEntry.Path"/> (the bin's <c>$R</c> file) is of no use to
     /// the user at all.</summary>
@@ -221,6 +225,7 @@ public sealed partial class CleanupEntryViewModel : ObservableObject
     public void RefreshLocalizedText()
     {
         OnPropertyChanged(nameof(SizeText));
+        OnPropertyChanged(nameof(ChosenSizeText));
         OnPropertyChanged(nameof(DateText));
         OnPropertyChanged(nameof(OpenFolderHeader));
         OnPropertyChanged(nameof(CopyPathHeader));
@@ -229,5 +234,9 @@ public sealed partial class CleanupEntryViewModel : ObservableObject
         OnPropertyChanged(nameof(RiskTooltip));
     }
 
-    partial void OnIsSelectedChanged(bool value) => _onToggled(this);
+    partial void OnIsSelectedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ChosenSizeText));
+        _onToggled(this);
+    }
 }

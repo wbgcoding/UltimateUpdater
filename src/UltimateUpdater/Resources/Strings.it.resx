@@ -1102,9 +1102,6 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="CleanupFreeSpaceNow" xml:space="preserve">
     <value>{0} liberi, +{1} dopo la pulizia</value>
   </data>
-  <data name="CleanupCurrentLabel" xml:space="preserve">
-    <value>Corrente</value>
-  </data>
   <data name="CleanupFailedHeadline" xml:space="preserve">
     <value>Impossibile completare la pulizia</value>
   </data>
@@ -2209,20 +2206,11 @@ Continuare con privilegi di amministratore?</value>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>{0} / {1} selezionati</value>
   </data>
-  <data name="CleanupStepDone" xml:space="preserve">
-    <value>fatto</value>
-  </data>
-  <data name="CleanupStepTooltip" xml:space="preserve">
-    <value>{0}: {1}</value>
-  </data>
   <data name="CleanupStatFreed" xml:space="preserve">
     <value>Liberato</value>
   </data>
   <data name="CleanupStatElapsed" xml:space="preserve">
     <value>Durata</value>
-  </data>
-  <data name="CleanupDetailsExpander" xml:space="preserve">
-    <value>Dettagli</value>
   </data>
   <data name="CleanupSummaryDone" xml:space="preserve">
     <value>Pulizia completata</value>
@@ -2259,5 +2247,11 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="ScanRateLimited" xml:space="preserve">
     <value>Limite di GitHub raggiunto, di nuovo disponibile alle {0}</value>
+  </data>
+  <data name="CleanupAreaOfTotal" xml:space="preserve">
+    <value>Area {0} di {1}</value>
+  </data>
+  <data name="CleanupLastDone" xml:space="preserve">
+    <value>Ultima completata: {0} · {1}</value>
   </data>
 </root>

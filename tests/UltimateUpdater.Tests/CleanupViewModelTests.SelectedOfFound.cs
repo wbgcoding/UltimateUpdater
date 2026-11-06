@@ -50,20 +50,63 @@ public partial class CleanupViewModelTests
     }
 
     [Fact]
-    public void A_group_header_shows_ticked_against_found_only_while_part_of_it_is_ticked()
+    public void A_group_header_always_shows_ticked_against_found()
     {
         var viewModel = Create(CreateSettings());
         var group = viewModel.Groups.First(g => g.Items.Count > 1 && !g.IsRegistryGroup);
         SetFoundSizes(viewModel, 2 * 1024 * 1024);
+        var found = ByteSize.Format(group.TotalBytes);
+
         foreach (var item in group.Items)
             item.IsSelected = true;
-
-        Assert.Equal(group.SizeText, group.ChosenSizeText);
+        Assert.Equal($"{ByteSize.Format(group.TotalBytes)} / {found}", group.ChosenSizeText);
 
         group.Items[0].IsSelected = false;
-
-        Assert.Equal(
-            $"{ByteSize.Format(group.SelectedBytes)} / {ByteSize.Format(group.TotalBytes)}", group.ChosenSizeText);
+        Assert.Equal($"{ByteSize.Format(group.SelectedBytes)} / {found}", group.ChosenSizeText);
         Assert.True(group.SelectedBytes < group.TotalBytes);
+
+        foreach (var item in group.Items)
+            item.IsSelected = false;
+        Assert.Equal($"{ByteSize.Format(0)} / {found}", group.ChosenSizeText);
+    }
+
+    [Fact]
+    public void A_row_shows_its_own_size_when_ticked_and_nothing_against_found_when_not()
+    {
+        var viewModel = Create(CreateSettings());
+        SetFoundSizes(viewModel, 3 * 1024 * 1024);
+        var item = viewModel.Items.First(i => i.Target.Kind == CleanupKind.Directories);
+        var changed = new List<string?>();
+        item.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        item.IsSelected = true;
+        Assert.Equal($"{ByteSize.Format(item.Bytes)} / {ByteSize.Format(item.Bytes)}", item.ChosenSizeText);
+
+        item.IsSelected = false;
+        Assert.Equal($"{ByteSize.Format(0)} / {ByteSize.Format(item.Bytes)}", item.ChosenSizeText);
+        Assert.Contains(nameof(CleanupItemViewModel.ChosenSizeText), changed);
+    }
+
+    [Fact]
+    public void A_row_with_an_unticked_detail_entry_shows_the_remaining_size_against_found()
+    {
+        var viewModel = Create(CreateSettings());
+        var item = viewModel.Items.First(i => i.Target.Kind == CleanupKind.Directories);
+        item.Bytes = 100;
+        item.Files = 10;
+        item.SetEntries(
+        [
+            new CleanupEntry(@"C:\Temp\A", "A", 60, 6, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, CleanupEntryType.Cache),
+            new CleanupEntry(@"C:\Temp\B", "B", 40, 4, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow, CleanupEntryType.Cache),
+        ]);
+        item.IsSelected = true;
+        var entry = item.Entries.First(e => e.DisplayName == "A");
+
+        Assert.Equal($"{ByteSize.Format(60)} / {ByteSize.Format(60)}", entry.ChosenSizeText);
+
+        entry.IsSelected = false;
+
+        Assert.Equal($"{ByteSize.Format(0)} / {ByteSize.Format(60)}", entry.ChosenSizeText);
+        Assert.Equal($"{ByteSize.Format(40)} / {ByteSize.Format(100)}", item.ChosenSizeText);
     }
 }

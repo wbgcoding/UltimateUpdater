@@ -15,10 +15,74 @@ public partial class CleanupViewModelTests
         Assert.Equal(string.Empty, viewModel.StatusCaptionText);
         Assert.Equal("0:00", viewModel.ElapsedText);
 
+        viewModel.StepItems = viewModel.Items.Take(4).ToList();
         viewModel.Phase = CleanupPhase.Cleaning;
         Assert.True(viewModel.ShowsRunStatus);
         Assert.Equal(CleanupStatusKind.Cleaning, viewModel.StatusKind);
-        Assert.Equal(LocalizationService.Instance["CleanupCurrentLabel"], viewModel.StatusCaptionText);
+        Assert.Equal(string.Format(LocalizationService.Instance["CleanupAreaOfTotal"], 1, 4), viewModel.StatusCaptionText);
+    }
+
+    [Fact]
+    public void The_caption_counts_the_area_at_work_and_never_runs_past_the_last_one()
+    {
+        var viewModel = Create(CreateSettings());
+        var areas = viewModel.Items.Take(3).ToList();
+        viewModel.StepItems = areas;
+        viewModel.Phase = CleanupPhase.Cleaning;
+
+        areas[0].IsDone = true;
+        viewModel.RefreshAreaProgress();
+        Assert.Equal(string.Format(LocalizationService.Instance["CleanupAreaOfTotal"], 2, 3), viewModel.AreaOfTotalText);
+        Assert.Equal(1, viewModel.AreaDoneCount);
+        Assert.Equal(3, viewModel.AreaTotalCount);
+
+        areas[1].IsDone = true;
+        areas[2].IsDone = true;
+        viewModel.RefreshAreaProgress();
+        Assert.Equal(string.Format(LocalizationService.Instance["CleanupAreaOfTotal"], 3, 3), viewModel.AreaOfTotalText);
+    }
+
+    [Fact]
+    public void The_last_done_line_names_the_area_that_finished_most_recently_with_what_it_freed()
+    {
+        var viewModel = Create(CreateSettings());
+        var areas = viewModel.Items.Take(3).ToList();
+        viewModel.StepItems = areas;
+        Assert.Equal(string.Empty, viewModel.LastDoneText);
+
+        areas[1].FreedBytes = 5 * 1024 * 1024;
+        areas[1].IsDone = true;
+        viewModel.RefreshAreaProgress();
+        areas[0].FreedBytes = 2 * 1024 * 1024;
+        areas[0].IsDone = true;
+        viewModel.RefreshAreaProgress();
+
+        Assert.Equal(
+            string.Format(LocalizationService.Instance["CleanupLastDone"], areas[0].Title, ByteSize.Format(2 * 1024 * 1024)),
+            viewModel.LastDoneText);
+
+        viewModel.Phase = CleanupPhase.Finished;
+        Assert.NotEqual(string.Empty, viewModel.LastDoneText);
+        viewModel.Phase = CleanupPhase.Choosing;
+        Assert.Equal(string.Empty, viewModel.LastDoneText);
+    }
+
+    [Fact]
+    public void A_long_path_is_cut_in_the_middle_keeping_its_start_and_its_file_name()
+    {
+        const string path = @"C:\Users\Someone\AppData\Local\Packages\Store\LocalCache\very-long-file-name-1234567890.tmp";
+
+        var shortened = CleanupViewModel.TrimMiddle(path, 34);
+
+        Assert.Equal(34, shortened.Length);
+        Assert.StartsWith(@"C:\Users\", shortened);
+        Assert.EndsWith("1234567890.tmp", shortened);
+        Assert.Contains("…", shortened);
+        Assert.Equal(@"C:\Temp\a.tmp", CleanupViewModel.TrimMiddle(@"C:\Temp\a.tmp", 34));
+
+        var viewModel = Create(CreateSettings());
+        viewModel.CurrentDetailText = path;
+        Assert.Equal(shortened, viewModel.CurrentPathText);
     }
 
     [Theory]
@@ -77,51 +141,7 @@ public partial class CleanupViewModelTests
     }
 
     [Fact]
-    public void Every_run_state_of_an_area_has_its_own_step_glyph_kind()
-    {
-        var viewModel = Create(CreateSettings());
-        var item = viewModel.Items[0];
-        item.IsScanning = false;
-        item.Bytes = 4096;
-        item.Files = 3;
-
-        item.RunState = CleanupTargetState.Waiting;
-        Assert.Equal(CleanupStepKind.Waiting, item.StepKind);
-
-        item.RunState = CleanupTargetState.Running;
-        Assert.Equal(CleanupStepKind.Running, item.StepKind);
-
-        item.RunState = CleanupTargetState.Done;
-        Assert.Equal(CleanupStepKind.Done, item.StepKind);
-
-        item.Bytes = 0;
-        item.Files = 0;
-        Assert.Equal(CleanupStepKind.NothingFound, item.StepKind);
-
-        item.RunState = CleanupTargetState.Stopped;
-        Assert.Equal(CleanupStepKind.Stopped, item.StepKind);
-
-        item.RunState = CleanupTargetState.Skipped;
-        Assert.Equal(CleanupStepKind.Stopped, item.StepKind);
-    }
-
-    [Fact]
-    public void A_step_names_its_area_and_its_state_for_the_hover_and_screen_readers()
-    {
-        var viewModel = Create(CreateSettings());
-        var item = viewModel.Items[0];
-        item.RunState = CleanupTargetState.Running;
-
-        Assert.Equal(
-            string.Format(
-                LocalizationService.Instance["CleanupStepTooltip"],
-                item.Title,
-                LocalizationService.Instance["CleanupStateCleaning"]),
-            item.StepTooltip);
-    }
-
-    [Fact]
-    public void The_step_bar_keeps_the_areas_of_the_run_after_it_ends_and_clears_on_a_new_choice()
+    public void The_run_keeps_its_areas_of_the_run_after_it_ends_and_clears_on_a_new_choice()
     {
         var viewModel = Create(CreateSettings());
         var areas = viewModel.Items.Take(3).ToList();
@@ -136,7 +156,7 @@ public partial class CleanupViewModelTests
     }
 
     [Fact]
-    public void The_done_count_follows_the_areas_of_the_step_bar()
+    public void The_done_count_follows_the_areas_of_the_run()
     {
         var viewModel = Create(CreateSettings());
         var areas = viewModel.Items.Take(4).ToList();

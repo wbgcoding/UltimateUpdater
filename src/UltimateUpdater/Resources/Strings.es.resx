@@ -1102,9 +1102,6 @@ Esto no se puede deshacer con Ultimate Updater.</value>
   <data name="CleanupFreeSpaceNow" xml:space="preserve">
     <value>{0} libres, +{1} tras la limpieza</value>
   </data>
-  <data name="CleanupCurrentLabel" xml:space="preserve">
-    <value>Actual</value>
-  </data>
   <data name="CleanupFailedHeadline" xml:space="preserve">
     <value>No se pudo completar la limpieza</value>
   </data>
@@ -2209,20 +2206,11 @@ Esto no se puede deshacer.</value>
   <data name="CleanupSelectedOfFound" xml:space="preserve">
     <value>{0} / {1} seleccionados</value>
   </data>
-  <data name="CleanupStepDone" xml:space="preserve">
-    <value>listo</value>
-  </data>
-  <data name="CleanupStepTooltip" xml:space="preserve">
-    <value>{0}: {1}</value>
-  </data>
   <data name="CleanupStatFreed" xml:space="preserve">
     <value>Liberado</value>
   </data>
   <data name="CleanupStatElapsed" xml:space="preserve">
     <value>Duración</value>
-  </data>
-  <data name="CleanupDetailsExpander" xml:space="preserve">
-    <value>Detalles</value>
   </data>
   <data name="CleanupSummaryDone" xml:space="preserve">
     <value>Limpieza terminada</value>
@@ -2259,5 +2247,11 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="ScanRateLimited" xml:space="preserve">
     <value>Límite de GitHub alcanzado, disponible de nuevo a las {0}</value>
+  </data>
+  <data name="CleanupAreaOfTotal" xml:space="preserve">
+    <value>Área {0} de {1}</value>
+  </data>
+  <data name="CleanupLastDone" xml:space="preserve">
+    <value>Último completado: {0} · {1}</value>
   </data>
 </root>
