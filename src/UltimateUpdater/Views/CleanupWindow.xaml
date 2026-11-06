@@ -1138,6 +1138,9 @@
                 <TextBlock Text="{Binding SelectedCountText}" FontSize="13" FontWeight="SemiBold"
                            TextWrapping="Wrap"
                            Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                <TextBlock Text="{Binding SelectedOfFoundText}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
+                           Style="{StaticResource TabularNumberText}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 <TextBlock Text="{Binding FileCountText}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
 
@@ -1619,7 +1622,7 @@
                                              right against the chevron. -->
                                         <StackPanel x:Name="CleanupGroupMetaPanel" Grid.Column="2" Orientation="Horizontal"
                                                     VerticalAlignment="Center" Margin="16,0,0,0">
-                                            <TextBlock Text="{Binding SizeText}" FontSize="11"
+                                            <TextBlock Text="{Binding ChosenSizeText}" FontSize="11"
                                                        FontWeight="SemiBold"
                                                        Style="{StaticResource TabularNumberText}"
                                                        Visibility="{Binding ShowsSize, Converter={StaticResource BoolToVisibility}}"

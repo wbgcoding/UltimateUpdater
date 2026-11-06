@@ -169,6 +169,10 @@ public partial class CleanupViewModel
     public string SelectedCountText =>
         string.Format(Loc[Items.Count == 1 ? "CleanupSelectedCountOne" : "CleanupSelectedCount"], Items.Count(i => i.IsSelected), Items.Count);
 
+    /// <summary>"1,2 GB / 3,4 GB selected": what the ticks would free against everything the scan found.</summary>
+    public string SelectedOfFoundText =>
+        string.Format(Loc["CleanupSelectedOfFound"], ByteSize.Format(SelectedBytes), ByteSize.Format(TotalBytes));
+
     /// <summary>How many files the measured targets add up to; the figure behind the size.</summary>
     public string FileCountText
     {
@@ -274,6 +278,7 @@ public partial class CleanupViewModel
         OnPropertyChanged(nameof(RingPercent));
         OnPropertyChanged(nameof(CanClean));
         OnPropertyChanged(nameof(SelectedCountText));
+        OnPropertyChanged(nameof(SelectedOfFoundText));
         OnPropertyChanged(nameof(FileCountText));
         OnPropertyChanged(nameof(TopAreas));
         OnPropertyChanged(nameof(HasTopAreas));

@@ -2203,4 +2203,7 @@ Continuare con privilegi di amministratore?</value>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Installazione in corso… {0}</value>
   </data>
+  <data name="CleanupSelectedOfFound" xml:space="preserve">
+    <value>{0} / {1} selezionati</value>
+  </data>
 </root>

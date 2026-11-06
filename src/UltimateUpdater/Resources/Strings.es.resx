@@ -2203,4 +2203,7 @@ Esto no se puede deshacer.</value>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Instalando… {0}</value>
   </data>
+  <data name="CleanupSelectedOfFound" xml:space="preserve">
+    <value>{0} / {1} seleccionados</value>
+  </data>
 </root>

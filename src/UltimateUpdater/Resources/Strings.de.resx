@@ -2203,4 +2203,7 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Wird installiert… {0}</value>
   </data>
+  <data name="CleanupSelectedOfFound" xml:space="preserve">
+    <value>{0} / {1} ausgewählt</value>
+  </data>
 </root>

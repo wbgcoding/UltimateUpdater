@@ -345,6 +345,7 @@ public partial class CleanupViewModel : ObservableObject
     public void RefreshLocalizedText()
     {
         OnPropertyChanged(nameof(SelectedCountText));
+        OnPropertyChanged(nameof(SelectedOfFoundText));
         OnPropertyChanged(nameof(FileCountText));
         OnPropertyChanged(nameof(TopAreas));
         OnPropertyChanged(nameof(FreeSpaceNowText));

@@ -2203,4 +2203,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="RowInstallingPhase" xml:space="preserve">
     <value>Yükleniyor… {0}</value>
   </data>
+  <data name="CleanupSelectedOfFound" xml:space="preserve">
+    <value>{0} / {1} seçili</value>
+  </data>
 </root>
