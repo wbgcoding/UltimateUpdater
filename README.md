@@ -183,7 +183,8 @@ self-contained executables for x64 and ARM64, the installer and checksums. `dist
 
 Without Inno Setup everything except the installer is still produced. To sign, set `WU_SIGN_THUMBPRINT`
 to a code-signing certificate's thumbprint in your certificate store (optionally `WU_SIGN_TIMESTAMP_URL`).
-In automated runs set `WU_NOPAUSE=1`. A GitHub Actions workflow (`.github/workflows/release-build.yml`)
+For a build that is going to be published, set `WU_RELEASE=1`: a missing release signing key then fails the
+build instead of only printing a warning. In automated runs set `WU_NOPAUSE=1`. A GitHub Actions workflow (`.github/workflows/release-build.yml`)
 builds and tests on a clean runner, by hand or on a version tag only.
 
 Portable executable only, without tests, icon or installer:

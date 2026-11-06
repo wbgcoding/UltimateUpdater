@@ -266,10 +266,15 @@ echo.
 echo === signing ===
 rem Every exe and SHA256SUMS.txt gets a <name>.sig made with the release key (ECDSA P-256), which the app
 rem checks before it installs an update. The private key sits in the gitignored .signing folder; UU_SIGNING_KEY
-rem points at another key file (used to try this step with a throwaway key). No key: the build goes on, unsigned.
+rem points at another key file (used to try this step with a throwaway key). No key: the build goes on, unsigned,
+rem unless WU_RELEASE=1 marks it as a release build, where a missing key is an error.
 set "SIGNKEY=%UU_SIGNING_KEY%"
 if not defined SIGNKEY set "SIGNKEY=%ROOT%.signing\release-key.pem"
 if not exist "%SIGNKEY%" (
+    if "%WU_RELEASE%"=="1" (
+        echo ERROR: WU_RELEASE=1 but no release key was found at %SIGNKEY%, so this build could not be shipped.
+        goto :error
+    )
     echo WARNING: Unsigned build - no release key found, so the app will refuse this build as an update.
     goto :signdone
 )

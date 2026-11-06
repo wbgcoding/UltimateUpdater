@@ -218,4 +218,23 @@ public class InstallerScriptTests
         Assert.Contains("installer-win-%%a", build);
         Assert.Contains("installer-win-x64\\UltimateUpdater.exe\" \"%STAGE%\\installer-win-arm64\\UltimateUpdater.exe", build);
     }
+
+    [Fact]
+    public void A_release_build_without_a_signing_key_fails_while_a_plain_build_only_warns()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "UltimateUpdater.slnx")))
+            directory = directory.Parent;
+        var build = File.ReadAllText(Path.Combine(directory!.FullName, "build.bat")).Replace("\r\n", "\n");
+
+        var missing = build.IndexOf("if not exist \"%SIGNKEY%\" (", StringComparison.Ordinal);
+        Assert.True(missing >= 0, "the missing-key branch is gone");
+        var branch = build[missing..build.IndexOf("where py", missing, StringComparison.Ordinal)];
+
+        var release = branch.IndexOf("if \"%WU_RELEASE%\"==\"1\" (", StringComparison.Ordinal);
+        var warning = branch.IndexOf("WARNING: Unsigned build", StringComparison.Ordinal);
+        Assert.True(release >= 0 && release < warning, "WU_RELEASE=1 must be checked before the warning path");
+        Assert.Contains("goto :error", branch[release..warning]);
+        Assert.Contains("goto :signdone", branch[warning..]);
+    }
 }
