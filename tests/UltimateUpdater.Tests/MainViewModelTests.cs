@@ -1218,7 +1218,8 @@ public partial class MainViewModelTests
             Task.FromResult<string?>(releasesJson);
 
         public Task<bool> DownloadAsync(
-            HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken) =>
+            HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken,
+            IProgress<(long Read, long? Total)>? progress = null) =>
             Task.FromResult(false);
     }
 

@@ -20,6 +20,14 @@ unless you prefer otherwise.
 
 Only the latest release gets security fixes. The app's own update check offers it.
 
+## How updates are verified
+
+Each release ships a `.sig` file next to every `.exe` and next to `SHA256SUMS.txt`: an ECDSA P-256
+signature over SHA-256 made with the maintainer's release key. The app installs an update only when the
+file matches `SHA256SUMS.txt` and the signature verifies against the public key built into the app. A
+missing or invalid signature stops the update, and the app points to the release page instead. The
+private key is never part of the repository.
+
 ## Scope
 
 In scope: the app, its elevated helper, the installer and the self-update. Out of scope: the

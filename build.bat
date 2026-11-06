@@ -261,6 +261,34 @@ if not exist "%DIST%\SHA256SUMS.txt" (
 )
 
 echo.
+echo === signing ===
+rem Every exe and SHA256SUMS.txt gets a <name>.sig made with the release key (ECDSA P-256), which the app
+rem checks before it installs an update. The private key sits in the gitignored .signing folder; UU_SIGNING_KEY
+rem points at another key file (used to try this step with a throwaway key). No key: the build goes on, unsigned.
+set "SIGNKEY=%UU_SIGNING_KEY%"
+if not defined SIGNKEY set "SIGNKEY=%ROOT%.signing\release-key.pem"
+if not exist "%SIGNKEY%" (
+    echo WARNING: Unsigned build - no release key found, so the app will refuse this build as an update.
+    goto :signdone
+)
+where py >nul 2>nul
+if errorlevel 1 (
+    echo ERROR: signing needs Python with the cryptography package, but py was not found.
+    goto :error
+)
+py -3 -c "import cryptography" >nul 2>nul
+if errorlevel 1 (
+    echo ERROR: signing needs the Python cryptography package ^(py -3 -m pip install cryptography^).
+    goto :error
+)
+py -3 "%ROOT%tools\sign-release.py" "%DIST%" --key "%SIGNKEY%"
+if errorlevel 1 (
+    echo ERROR: signing the release files failed.
+    goto :error
+)
+:signdone
+
+echo.
 echo Artifacts in %DIST%
 type "%DIST%\SHA256SUMS.txt"
 

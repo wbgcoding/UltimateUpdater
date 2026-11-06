@@ -155,7 +155,8 @@ public partial class MainViewModelTests
             Task.FromResult(_index < responses.Length ? responses[_index++] : responses[^1]);
 
         public Task<bool> DownloadAsync(
-            HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken) =>
+            HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken,
+            IProgress<(long Read, long? Total)>? progress = null) =>
             Task.FromResult(false);
     }
 

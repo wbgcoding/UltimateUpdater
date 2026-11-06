@@ -113,7 +113,9 @@ Until the app is code-signed, SmartScreen warns on first start: *More info*, the
 hash matches.
 
 The app updates itself from this repository's releases; a download is only applied when it matches
-`SHA256SUMS.txt`.
+`SHA256SUMS.txt` and carries a valid signature. Every `.exe` and `SHA256SUMS.txt` in a release comes with a
+`.sig` file: an ECDSA P-256 signature over SHA-256 made with the maintainer's release key, which the app
+checks against the public key built into it.
 
 ## Security model
 
@@ -123,7 +125,8 @@ An updater starts other people's installers with administrator rights. How the a
   authenticates both ends; no job file is written to disk that could be swapped in between.
 - An elevated launch never resolves a tool through `PATH`, only through fixed, verified locations.
 - The helper never runs uninstall commands taken from the user's own registry hive.
-- Self-updates fail closed: a missing or mismatching checksum stops the update.
+- Self-updates fail closed: a missing or mismatching checksum, or a missing or invalid release signature,
+  stops the update.
 
 Found a security problem? Please report it privately, see [`SECURITY.md`](SECURITY.md).
 

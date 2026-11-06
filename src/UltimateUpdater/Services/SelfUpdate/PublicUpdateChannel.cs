@@ -34,7 +34,9 @@ public sealed class PublicUpdateChannel : IUpdateChannel
             : null;
     }
 
-    public async Task<bool> DownloadAsync(HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken)
+    public async Task<bool> DownloadAsync(
+        HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken,
+        IProgress<(long Read, long? Total)>? progress = null)
     {
         // The artifact URL comes out of the release JSON and can point anywhere. Checking it only on
         // the metadata call left the download itself free to go to any host, over plain HTTP.
@@ -44,7 +46,7 @@ public sealed class PublicUpdateChannel : IUpdateChannel
             return false;
         }
 
-        return await UpdateDownload.ExecuteAsync(client, CreateRequest(HttpMethod.Get, url, "application/octet-stream"), targetPath, maxBytes, _logging, cancellationToken);
+        return await UpdateDownload.ExecuteAsync(client, CreateRequest(HttpMethod.Get, url, "application/octet-stream"), targetPath, maxBytes, _logging, cancellationToken, progress);
     }
 
     /// <summary>An asset fetched through the API URL answers with its JSON metadata unless the binary is

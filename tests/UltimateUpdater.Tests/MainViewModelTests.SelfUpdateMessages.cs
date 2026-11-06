@@ -11,7 +11,8 @@ public partial class MainViewModelTests
         {"tag_name":"v999.0.0","draft":false,"body":"","assets":[
           {"name":"UltimateUpdater.exe","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/a.exe","url":"https://api.github.com/repos/x/y/releases/assets/1","size":10},
           {"name":"Setup-UltimateUpdater-999.0.0.exe","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/b.exe","url":"https://api.github.com/repos/x/y/releases/assets/2","size":10},
-          {"name":"SHA256SUMS.txt","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/SHA256SUMS.txt","url":"https://api.github.com/repos/x/y/releases/assets/3","size":10}
+          {"name":"SHA256SUMS.txt","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/SHA256SUMS.txt","url":"https://api.github.com/repos/x/y/releases/assets/3","size":10},
+          {"name":"UltimateUpdater.exe.sig","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/a.exe.sig","url":"https://api.github.com/repos/x/y/releases/assets/4","size":90}
         ]}
         """;
 
@@ -36,7 +37,8 @@ public partial class MainViewModelTests
         {
             var channel = new SelfUpdateOutcomeTests.ScriptedChannel { Get = get, Download = download };
             var logging = new LoggingService();
-            var selfUpdate = new SelfUpdateService(new HttpClient(), logging, channel, () => imagePath);
+            var selfUpdate = new SelfUpdateService(
+                new HttpClient(), logging, channel, () => imagePath, ReleaseKey.ExportSubjectPublicKeyInfoPem());
             var viewModel = Create(selfUpdate: selfUpdate);
 
             Assert.Equal(
@@ -52,10 +54,18 @@ public partial class MainViewModelTests
         }
     }
 
+    private static readonly System.Security.Cryptography.ECDsa ReleaseKey =
+        System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+
     private static Task<string?> ReleaseFeed(string url) =>
         Task.FromResult<string?>(url.EndsWith("SHA256SUMS.txt", StringComparison.Ordinal)
             ? SelfUpdateOutcomeTests.ChecksumLine([7, 7, 7])
-            : NewerReleaseJson);
+            : url.EndsWith(".sig", StringComparison.Ordinal)
+                ? Convert.ToBase64String(ReleaseKey.SignData(
+                    [7, 7, 7],
+                    System.Security.Cryptography.HashAlgorithmName.SHA256,
+                    System.Security.Cryptography.DSASignatureFormat.IeeeP1363FixedFieldConcatenation))
+                : NewerReleaseJson);
 
     [Fact]
     public void A_download_that_never_arrives_says_the_download_failed()

@@ -2233,4 +2233,28 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
     <value>Wyczyść {0} %</value>
   </data>
+  <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
+    <value>Pobieranie… {0} %</value>
+  </data>
+  <data name="SelfUpdatePhaseDownloadingUnknown" xml:space="preserve">
+    <value>Pobieranie…</value>
+  </data>
+  <data name="SelfUpdatePhaseVerifying" xml:space="preserve">
+    <value>Sprawdzanie…</value>
+  </data>
+  <data name="SelfUpdatePhaseInstalling" xml:space="preserve">
+    <value>Instalowanie…</value>
+  </data>
+  <data name="SelfUpdateDetail" xml:space="preserve">
+    <value>{0} z {1} · {2}/s</value>
+  </data>
+  <data name="SelfUpdateDetailUnknownTotal" xml:space="preserve">
+    <value>{0} · {1}/s</value>
+  </data>
+  <data name="SelfUpdateSignatureInvalid" xml:space="preserve">
+    <value>Aktualizacja nie ma prawidłowego podpisu i nie została zainstalowana. Możesz pobrać ją samodzielnie ze strony wydania.</value>
+  </data>
+  <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
+    <value>Otwórz stronę wydania</value>
+  </data>
 </root>

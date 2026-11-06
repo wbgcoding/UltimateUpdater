@@ -2233,4 +2233,28 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
     <value>Temizle %{0}</value>
   </data>
+  <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
+    <value>İndiriliyor… {0} %</value>
+  </data>
+  <data name="SelfUpdatePhaseDownloadingUnknown" xml:space="preserve">
+    <value>İndiriliyor…</value>
+  </data>
+  <data name="SelfUpdatePhaseVerifying" xml:space="preserve">
+    <value>Doğrulanıyor…</value>
+  </data>
+  <data name="SelfUpdatePhaseInstalling" xml:space="preserve">
+    <value>Yükleniyor…</value>
+  </data>
+  <data name="SelfUpdateDetail" xml:space="preserve">
+    <value>{0} / {1} · {2}/sn</value>
+  </data>
+  <data name="SelfUpdateDetailUnknownTotal" xml:space="preserve">
+    <value>{0} · {1}/sn</value>
+  </data>
+  <data name="SelfUpdateSignatureInvalid" xml:space="preserve">
+    <value>Güncelleme geçerli şekilde imzalanmamış ve yüklenmedi. Sürüm sayfasından kendin indirebilirsin.</value>
+  </data>
+  <data name="SelfUpdateOpenReleasePage" xml:space="preserve">
+    <value>Sürüm sayfasını aç</value>
+  </data>
 </root>

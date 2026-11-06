@@ -380,6 +380,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <ui:SymbolIcon Grid.Column="0" Symbol="ArrowDownload24" FontSize="18" VerticalAlignment="Center"
@@ -388,7 +389,8 @@
                 <!-- A Grid, not a horizontal StackPanel: that panel hands its children unlimited width, so
                      the ellipsis below could never appear and a long title simply pushed the version out of
                      view. Here the title takes what is left over and trims; the version always fits. -->
-                <Grid Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
+                <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -414,6 +416,30 @@
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                 </Grid>
 
+                <!-- Progress of the running update: phase with percentage, a bar, and bytes with speed. -->
+                <StackPanel Margin="0,6,0,0"
+                            Visibility="{Binding SelfUpdateShowsProgress, Converter={StaticResource BoolToVisibility}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding SelfUpdatePhaseText}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   AutomationProperties.AutomationId="SelfUpdatePhaseText"/>
+                        <TextBlock Grid.Column="1" Text="{Binding SelfUpdateDetail}" Margin="12,0,0,0"
+                                   TextTrimming="CharacterEllipsis" HorizontalAlignment="Right"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   AutomationProperties.AutomationId="SelfUpdateDetail"/>
+                    </Grid>
+                    <ProgressBar Margin="0,4,0,0" Height="4" Minimum="0" Maximum="100"
+                                 Value="{Binding SelfUpdatePercent, Mode=OneWay}"
+                                 IsIndeterminate="{Binding SelfUpdateProgressIndeterminate}"
+                                 AutomationProperties.AutomationId="SelfUpdateProgressBar"
+                                 AutomationProperties.Name="{Binding SelfUpdatePhaseText}"/>
+                </StackPanel>
+                </StackPanel>
+
                 <ui:Button Grid.Column="2" Content="{Binding Loc[SelfUpdateWhatsNew]}" Appearance="Secondary"
                            Margin="0,0,8,0" Command="{Binding ShowSelfUpdateChangelogCommand}"/>
 
@@ -435,7 +461,11 @@
                     </ui:Button.Style>
                 </ui:Button>
 
-                <ui:Button Grid.Column="4" Appearance="Secondary" Margin="8,0,0,0" Padding="9,6"
+                <ui:Button Grid.Column="4" Content="{Binding Loc[CancelButton]}" Appearance="Secondary" Margin="8,0,0,0"
+                           Command="{Binding CancelSelfUpdateCommand}"
+                           Visibility="{Binding SelfUpdateCanCancel, Converter={StaticResource BoolToVisibility}}"/>
+
+                <ui:Button Grid.Column="5" Appearance="Secondary" Margin="8,0,0,0" Padding="9,6"
                            Command="{Binding DismissSelfUpdateCommand}"
                            ToolTip="{Binding Loc[SelfUpdateDismiss]}"
                            AutomationProperties.Name="{Binding Loc[SelfUpdateDismiss]}">

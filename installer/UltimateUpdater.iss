@@ -159,6 +159,8 @@ en.ModePortableTitle=Portable
 en.ModePortableInfo=Places a single, self-contained program file in a folder of your choice. Nothing else is added to this PC.
 en.PortableDirDescription=Choose a folder for the portable copy of {#AppName}. Setup suggests a folder of its own next to this installer and places {#PortableExeName} into it. Nothing else is written to this PC.
 en.UpdateDirDescription={#AppName} is already installed on this PC and will be updated in the folder shown below. Click Next to continue, or Browse to choose a different folder.
+en.BusyPrompt={#AppName} is installing updates right now. Close it anyway and continue?
+en.BusyDeclined=Setup stopped because {#AppName} is installing updates right now.
 de.AutostartTask={#AppName} automatisch bei der Windows-Anmeldung starten
 de.LaunchAfter={#AppName} jetzt starten
 de.ModeCaption=Art der Installation
@@ -169,6 +171,8 @@ de.ModePortableTitle=Portabel
 de.ModePortableInfo=Legt eine einzelne, eigenständige Programmdatei in einem Ordner Ihrer Wahl ab. Sonst wird nichts auf diesem PC hinzugefügt.
 de.PortableDirDescription=Wählen Sie einen Ordner für die portable Version von {#AppName}. Setup schlägt einen eigenen Ordner neben diesem Installationsprogramm vor und legt {#PortableExeName} darin ab. Sonst wird nichts auf diesem PC gespeichert.
 de.UpdateDirDescription={#AppName} ist auf diesem PC bereits installiert und wird im unten angezeigten Ordner aktualisiert. Klicken Sie auf Weiter, oder auf Durchsuchen, um einen anderen Ordner zu wählen.
+de.BusyPrompt={#AppName} installiert gerade Updates. Trotzdem beenden und fortfahren?
+de.BusyDeclined=Die Installation wurde angehalten, weil {#AppName} gerade Updates installiert.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -659,6 +663,83 @@ begin
   Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
        SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+{ The app holds a named mutex exactly while it installs updates or cleans up (BusySignal in the app). The
+  name carries the SID of the user who runs the app, which is not necessarily the account Setup runs
+  under (a separate administrator approves the prompt), so the SID is taken from the owner of the running
+  process instead of from Setup. Exit code 10 means: a copy in this folder is busy. A mutex that exists
+  but cannot be opened still counts as busy. }
+const
+  BusyExitCode = 10;
+
+function PowerShellPath: String;
+begin
+  Result := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
+end;
+
+{ The copies that would hold Setup's files: by PATH, so a portable copy running from somewhere else
+  is never touched (same reasoning as InitializeUninstall). }
+function RunningCopiesScript: String;
+begin
+  Result :=
+    '$p = @(''' + PsQuote(ExpandConstant('{app}\{#AppExeName}')) + ''', ''' +
+    PsQuote(ExpandConstant('{app}\{#PortableExeName}')) + '''); ' +
+    '$copies = @(Get-Process -ErrorAction SilentlyContinue | ' +
+    'Where-Object { $_.Path -and ($p -contains $_.Path) }); ';
+end;
+
+function InstallingCopyRuns: Boolean;
+var
+  ResultCode: Integer;
+  Script: String;
+begin
+  Script :=
+    RunningCopiesScript +
+    '$busy = $false; ' +
+    'foreach ($c in $copies) { ' +
+    '$o = Get-CimInstance Win32_Process -Filter (''ProcessId='' + $c.Id) -ErrorAction SilentlyContinue | ' +
+    'Invoke-CimMethod -MethodName GetOwnerSid -ErrorAction SilentlyContinue; ' +
+    'if (-not $o -or -not $o.Sid) { continue }; ' +
+    '$m = $null; ' +
+    'try { if ([System.Threading.Mutex]::TryOpenExisting(''Local\UltimateUpdater-Busy-'' + $o.Sid, [ref]$m)) ' +
+    '{ $m.Dispose(); $busy = $true } } catch { $busy = $true } }; ' +
+    'if ($busy) { exit ' + IntToStr(BusyExitCode) + ' } else { exit 0 }';
+  Result := Exec(PowerShellPath,
+       '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
+       SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = BusyExitCode);
+end;
+
+{ Ends the copies in the install folder and waits for them to be gone. A tray-resident copy used to answer
+  the Restart Manager's close request with "ok" and stay alive, which left Setup on the "applications in
+  use" page; doing it here, before the Restart Manager looks, keeps that page from appearing at all. }
+procedure StopRunningCopies;
+var
+  ResultCode: Integer;
+  Script: String;
+begin
+  Script :=
+    RunningCopiesScript +
+    '$copies | Stop-Process -Force -ErrorAction SilentlyContinue; ' +
+    '$copies | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue';
+  Exec(PowerShellPath,
+       '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
+       SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+{ Runs before the Restart Manager looks for running applications. An interactive Setup asks before it cuts
+  off an install or a cleanup in progress; a silent one (the self-updater only starts Setup when no work
+  is running) goes ahead. }
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  Result := '';
+  if (not WizardSilent) and InstallingCopyRuns then
+    if MsgBox(CustomMessage('BusyPrompt'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) <> IDYES then
+    begin
+      Result := CustomMessage('BusyDeclined');
+      Exit;
+    end;
+  StopRunningCopies;
 end;
 
 { Set by the self-updater so the app it just closed is started again. }
