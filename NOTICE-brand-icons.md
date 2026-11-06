@@ -25,6 +25,8 @@ removal from the upstream set, so they are not bundled here either; those rows f
 category symbol.
 
 The rustup row shows the Rust mark, since rustup has none of its own; the uv mark is Astral's.
+Rows from library sources (pip, npm, pnpm, gem, composer, dotnet-tool and similar) show the mark of their
+ecosystem (Python, npm, pnpm, Ruby, Composer, .NET), never an icon taken from an installed program.
 
 If you are the owner of a mark used here and would rather it were not, remove its slug from the list
 in `tools/make-brand-icons.py` and regenerate; the application works unchanged without it.

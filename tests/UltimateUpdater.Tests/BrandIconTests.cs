@@ -60,6 +60,28 @@ public class BrandIconTests
         Assert.True(plain.UsesLetterTile);
     }
 
+    /// <summary>A pip library must not wear the letter tile either, and no installed program's icon is looked for.</summary>
+    [Theory]
+    [InlineData("typer", "pip")]
+    [InlineData("google-auth", "pip")]
+    [InlineData("left-pad", "npm")]
+    public void A_library_row_gets_its_ecosystem_mark_not_a_letter(string name, string sourceId)
+    {
+        var row = new UpdateRowViewModel(Item(name, sourceId, name));
+
+        Assert.True(row.UsesBrandTile);
+        Assert.False(row.UsesLetterTile);
+        Assert.True(BrandIcons.IsLibrarySource(sourceId));
+    }
+
+    [Theory]
+    [InlineData("chocolatey")]
+    [InlineData("winget")]
+    [InlineData("uv")]
+    [InlineData("rustup")]
+    public void Application_sources_are_not_library_sources(string sourceId) =>
+        Assert.False(BrandIcons.IsLibrarySource(sourceId));
+
     private static UpdateItem Item(string name, string sourceId, string id) => new()
     {
         Id = id,

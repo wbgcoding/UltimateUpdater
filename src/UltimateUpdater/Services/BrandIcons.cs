@@ -49,10 +49,41 @@ internal static class BrandIcons
     };
 
     /// <summary>
-    /// Only for sources where the row IS the client: a launcher row is the launcher. Package managers
-    /// are deliberately absent: every Chocolatey package would otherwise wear Chocolatey's logo,
-    /// which says nothing the source pill on the row does not already say, and looks like a claim
-    /// about the package itself.
+    /// Sources whose rows are libraries or tools a package manager installs, not applications. They have
+    /// no program of their own on the machine, so an icon found by name (Uninstall entry, Start menu,
+    /// PATH) can only belong to something unrelated: pip's "google-auth" is not the Google app, and
+    /// the script launcher beside a Python tool is not the tool's icon. These rows never look for an
+    /// icon on disk and wear the language or ecosystem mark instead. Chocolatey, Scoop and mise are
+    /// absent on purpose: their packages are mostly applications with an icon of their own.
+    /// </summary>
+    private static readonly Dictionary<string, string> LibrarySources = new(StringComparer.Ordinal)
+    {
+        ["composer"] = "composer",
+        ["dotnet-tool"] = "dotnet",
+        ["gem"] = "ruby",
+        ["gh-extension"] = "github",
+        ["npm"] = "npm",
+        ["pip"] = "python",
+        ["pipx"] = "python",
+        ["pnpm"] = "pnpm",
+        ["uv-tool"] = "uv",
+        // vcpkg and psgallery have no mark upstream; they still never borrow an application's icon.
+        ["psgallery"] = "",
+        ["vcpkg"] = "",
+    };
+
+    /// <summary>
+    /// True when the source's rows are libraries or package-manager tools that must never be matched
+    /// against installed applications.
+    /// </summary>
+    public static bool IsLibrarySource(string? sourceId) =>
+        !string.IsNullOrEmpty(sourceId) && LibrarySources.ContainsKey(sourceId);
+
+    /// <summary>
+    /// Sources where the whole source gives the row its mark: a launcher row IS the launcher, and a
+    /// library row is a package of its ecosystem. Application package managers are deliberately absent:
+    /// every Chocolatey package would otherwise wear Chocolatey's logo, which says nothing the source
+    /// pill on the row does not already say, and looks like a claim about the package itself.
     /// </summary>
     private static readonly Dictionary<string, string> BySource = new(StringComparer.Ordinal)
     {
@@ -99,8 +130,13 @@ internal static class BrandIcons
             yield return TextNormalization.AlphanumericLower(string.Concat(WithoutVersion(WithoutVendor(words))));
         }
 
-        if (!string.IsNullOrWhiteSpace(sourceId) && BySource.TryGetValue(sourceId, out var bySource))
-            yield return bySource;
+        if (!string.IsNullOrWhiteSpace(sourceId))
+        {
+            if (BySource.TryGetValue(sourceId, out var bySource))
+                yield return bySource;
+            else if (LibrarySources.TryGetValue(sourceId, out var byLibrary) && byLibrary.Length > 0)
+                yield return byLibrary;
+        }
     }
 
     private static Geometry? Lookup(string key)

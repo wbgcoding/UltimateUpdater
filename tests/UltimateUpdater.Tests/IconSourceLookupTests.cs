@@ -90,7 +90,7 @@ public class IconSourceLookupTests : IDisposable
 
     private object? Icon(IconCacheService cache, string sourceId, string itemId, string name)
     {
-        _cachedIcons.Add(Path.Combine(AppPaths.IconCacheDirectory, $"{sourceId}_{itemId}.png"));
+        _cachedIcons.Add(Path.Combine(AppPaths.IconCacheDirectory, IconCacheService.CacheKey(sourceId, itemId) + ".png"));
         return cache.GetIcon(sourceId, itemId, name);
     }
 
@@ -165,7 +165,7 @@ public class IconSourceLookupTests : IDisposable
         var bin = Folder("bin");
         CopyOfExeWithIcon(bin, "zqtool.exe");
 
-        Assert.NotNull(Icon(Cache(path: [bin]), "uv-tool", "zqtool", "zqtool"));
+        Assert.NotNull(Icon(Cache(path: [bin]), "uv", "zqtool", "zqtool"));
     }
 
     [Fact]
@@ -184,6 +184,65 @@ public class IconSourceLookupTests : IDisposable
         ExeWithoutIcon(bin, "zqnoicon.exe");
 
         Assert.Null(Icon(Cache(path: [bin]), "uv", "zqnoicon", "zqnoicon"));
+    }
+
+    [Theory]
+    [InlineData("pip", "typer")]
+    [InlineData("pip", "google-auth")]
+    [InlineData("pipx", "zqlib")]
+    [InlineData("npm", "zqlib")]
+    [InlineData("pnpm", "zqlib")]
+    [InlineData("gem", "zqlib")]
+    [InlineData("composer", "zqlib")]
+    [InlineData("dotnet-tool", "zqlib")]
+    [InlineData("uv-tool", "zqlib")]
+    [InlineData("psgallery", "zqlib")]
+    public void A_library_row_never_borrows_an_icon_from_PATH_the_Start_menu_or_the_registry_apps(string sourceId, string itemId)
+    {
+        var bin = Folder("bin");
+        CopyOfExeWithIcon(bin, itemId + ".exe");
+        var menu = Folder("menu");
+        WriteShortcut(Path.Combine(menu, itemId + ".lnk"), ExeWithIcon);
+
+        Assert.Null(Icon(Cache(startMenu: [menu], path: [bin]), sourceId, itemId, itemId));
+    }
+
+    [Theory]
+    [InlineData("pip", "typer", "python")]
+    [InlineData("pip", "google-auth", "python")]
+    [InlineData("pipx", "zqlib", "python")]
+    [InlineData("npm", "zqlib", "npm")]
+    [InlineData("pnpm", "zqlib", "pnpm")]
+    [InlineData("gem", "zqlib", "ruby")]
+    [InlineData("composer", "zqlib", "composer")]
+    [InlineData("dotnet-tool", "zqlib", "dotnet")]
+    [InlineData("uv-tool", "zqlib", "uv")]
+    public void A_library_row_shows_its_ecosystem_mark(string sourceId, string itemId, string slug)
+    {
+        var expected = BrandIcons.Resolve(slug, null, null);
+
+        Assert.NotNull(expected);
+        Assert.Equal(expected!.ToString(), BrandIcons.Resolve(itemId, sourceId, itemId)!.ToString());
+    }
+
+    [Fact]
+    public void The_uv_row_still_takes_its_own_executable_from_PATH()
+    {
+        var bin = Folder("bin");
+        CopyOfExeWithIcon(bin, "uv.exe");
+
+        Assert.NotNull(Icon(Cache(path: [bin]), "uv", "astral-sh.uv", "uv"));
+    }
+
+    [Fact]
+    public void An_executable_in_a_Scripts_folder_is_never_chosen()
+    {
+        var scripts = Folder(Path.Combine("py", "Scripts"));
+        CopyOfExeWithIcon(scripts, "zqscripted.exe");
+
+        Assert.Null(Icon(Cache(path: [scripts]), "uv", "zqscripted", "zqscripted"));
+        Assert.True(IconCacheService.IsScriptsLauncher(Path.Combine(scripts, "zqscripted.exe")));
+        Assert.False(IconCacheService.IsScriptsLauncher(Path.Combine(Folder("bin"), "zqscripted.exe")));
     }
 
     [Fact]
