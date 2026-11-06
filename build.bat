@@ -52,40 +52,57 @@ echo === build ===
 dotnet build "%ROOT%UltimateUpdater.slnx" -c %CONFIG%
 if errorlevel 1 goto :error
 
+rem The UI snapshots are a LOOKING tool, not a correctness gate: WindowLayoutTests renders the real windows
+rem to PNGs so a person can see the layout, LiveButtonContrastTests reads real resolved colours through
+rem the same renderer, and PressedPixelTests renders every control pressed and counts near-black pixels.
+rem All three depend on the machine's state and have been observed to fail for a whole session and then
+rem work again on the very same code, so they only WARN. They are almost half the test time, so they run
+rem as two halves in separate test hosts in the background while the gate runs; a separate process shares
+rem none of the singletons that keep the suite serial inside one host.
+set "SNAP=%ROOT%build\snapshots"
+if not exist "%ROOT%build" mkdir "%ROOT%build"
+del /q "%SNAP%-1.rc" "%SNAP%-2.rc" >nul 2>nul
+echo.
+echo === ui snapshots + live style checks (not a gate, in the background) ===
+start "" /b cmd /c ""%ROOT%tools\run-snapshots.cmd" "%ROOT%tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj" %CONFIG% "%SNAP%-1.log" "%SNAP%-1.rc" 1"
+start "" /b cmd /c ""%ROOT%tools\run-snapshots.cmd" "%ROOT%tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj" %CONFIG% "%SNAP%-2.log" "%SNAP%-2.rc" 2"
+
 echo.
 echo === test ===
 rem Delayed expansion eats the "!" in the filter, and the whole suite ran instead of the gate - so this
 rem one command runs with it switched off. endlocal keeps the errorlevel, which is all that is needed here.
 rem LiveButtonContrastTests is excluded alongside WindowLayoutTests: it renders through the SAME WpfHarness
 rem (ApplicationThemeManager.Apply loads a WPF-UI theme dictionary via a "pack:" URI), so it is exposed to
-rem the identical environmentally-flaky registration this project already treats as non-gating - it failed
-rem outright in a scripted build.bat run while `dotnet test` alone passed clean (observed 2026-07-30).
-rem The blame-hang flags are the upper bound this step had none of: a test that stops making progress
-rem (a WPF harness dispatcher that stopped pumping did exactly this and held a testhost.exe for 38
-rem minutes) is killed after two minutes and the run names the test it was in. Dump collection is off -
-rem the name is the whole point here, and a full dump of a WPF test host is hundreds of megabytes.
+rem the identical environmentally-flaky registration this project already treats as non-gating.
+rem The blame-hang flags kill a test that stops making progress after two minutes and name it. Dump
+rem collection is off: the name is the whole point, and a WPF test host dump is hundreds of megabytes.
+rem --no-build: the solution build above already built the test project.
 setlocal disabledelayedexpansion
-dotnet test "%ROOT%tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj" -c %CONFIG% --blame-hang --blame-hang-timeout 2min --blame-hang-dump-type none --filter "FullyQualifiedName!~WindowLayoutTests&FullyQualifiedName!~LiveButtonContrastTests&FullyQualifiedName!~PressedPixelTests"
+dotnet test "%ROOT%tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj" -c %CONFIG% --no-build --blame-hang --blame-hang-timeout 2min --blame-hang-dump-type none --filter "FullyQualifiedName!~WindowLayoutTests&FullyQualifiedName!~LiveButtonContrastTests&FullyQualifiedName!~PressedPixelTests"
 endlocal
 if errorlevel 1 goto :error
 
-rem The UI snapshots are a LOOKING tool, not a correctness gate: WindowLayoutTests renders the real windows
-rem to PNGs so a person can see the layout, and LiveButtonContrastTests reads real resolved colours through
-rem the same renderer, and PressedPixelTests renders every control pressed and counts near-black pixels.
-rem All three depend on the machine's state and have been observed to fail for a whole session
-rem and then work again, on the very same code - verified by running against an untouched checkout. Blocking
-rem a release on either would mean a build that cannot be trusted to mean anything, so they run separately
-rem and only WARN. Read the warning: when they fail, that part was NOT checked this run.
 rem No parenthesised if-block here: one of those swallowed the whole icon/version/dist-reset section that
-rem follows and the build silently produced a Setup with an empty version in its name. GOTO past the
-rem warning instead - the same reason this file avoids CALL throughout: a called label runs in its
-rem own scope, and an errorlevel set inside it does not reliably reach the caller.
+rem follows and the build silently produced a Setup with an empty version in its name. GOTO instead - the
+rem same reason this file avoids CALL throughout: a called label runs in its own scope, and an errorlevel
+rem set inside it does not reliably reach the caller. ping is the wait because timeout.exe refuses to run
+rem with redirected input, which every automated run has.
 echo.
-echo === ui snapshots + live style checks (not a gate) ===
-rem Same hang guard as the gate above, and it matters more here: these three renders are the ones that
-rem have actually hung, and a warning-only step must never be able to stop the build for ever.
-dotnet test "%ROOT%tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj" -c %CONFIG% --blame-hang --blame-hang-timeout 2min --blame-hang-dump-type none --filter "FullyQualifiedName~WindowLayoutTests|FullyQualifiedName~LiveButtonContrastTests|FullyQualifiedName~PressedPixelTests"
+echo === waiting for the ui snapshots ===
+:snapshots_wait
+if not exist "%SNAP%-1.rc" goto :snapshots_sleep
+if exist "%SNAP%-2.rc" goto :snapshots_read
+:snapshots_sleep
+ping -n 3 127.0.0.1 >nul
+goto :snapshots_wait
+:snapshots_read
+type "%SNAP%-1.log"
+type "%SNAP%-2.log"
+findstr /x /c:"ok" "%SNAP%-1.rc" >nul
+if errorlevel 1 goto :snapshots_warn
+findstr /x /c:"ok" "%SNAP%-2.rc" >nul
 if not errorlevel 1 goto :snapshots_done
+:snapshots_warn
 echo.
 echo WARNING: the UI snapshot/live-style renders did not pass - that part was NOT verified this run.
 echo          The build continues; look at tests\...\ui-snapshots\ or re-run to check the UI.
