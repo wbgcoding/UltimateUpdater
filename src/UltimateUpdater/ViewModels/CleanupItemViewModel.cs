@@ -40,6 +40,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(SelectedEntryBytes));
         OnPropertyChanged(nameof(SelectedEntryFiles));
+        OnPropertyChanged(nameof(ChosenSizeText));
     }
 
     /// <summary>Still being measured: the row shows a quiet "scanning" hint rather than "0 B".</summary>
@@ -915,6 +916,12 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         ? string.Format(LocalizationService.Instance[Files == 1 ? "CleanupRegistryEntryCountOne" : "CleanupRegistryEntryCount"], Files)
         : ByteSize.Format(Bytes);
 
+    /// <summary>The row's size cell while choosing: "ticked / found", where an unticked row reads "0 B /
+    /// found". A registry row is counted, not measured, and keeps its plain count.</summary>
+    public string ChosenSizeText => IsRegistryCleanup
+        ? SizeText
+        : $"{ByteSize.Format(IsSelected ? SelectedEntryBytes : 0)} / {ByteSize.Format(Bytes)}";
+
     /// <summary>
     /// "Nothing found", said quietly. It
     /// still has to be said at all, because a blank cell reads as "not measured" when the honest answer is
@@ -985,6 +992,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowsRunState));
         OnPropertyChanged(nameof(SkippedText));
         OnPropertyChanged(nameof(SizeText));
+        OnPropertyChanged(nameof(ChosenSizeText));
         OnPropertyChanged(nameof(LeftoverWarningText));
         OnPropertyChanged(nameof(DriverGroupDisconnectedText));
         OnPropertyChanged(nameof(DriverGroupOldPackagesText));
@@ -1020,6 +1028,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
 
     partial void OnIsSelectedChanged(bool value)
     {
+        OnPropertyChanged(nameof(ChosenSizeText));
         RaiseSelectedRisk();
         _onSelectionChanged();
     }

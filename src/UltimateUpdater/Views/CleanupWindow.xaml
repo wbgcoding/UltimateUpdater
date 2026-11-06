@@ -476,7 +476,7 @@
                      anyway, a small empty box sitting beside the row's own risk dot for no reason. -->
                 <Grid Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" MinWidth="96"
                       Visibility="{Binding HasSizeCell, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="{Binding SizeText}" FontSize="13" FontWeight="SemiBold"
+                    <TextBlock Text="{Binding ChosenSizeText}" FontSize="13" FontWeight="SemiBold"
                                HorizontalAlignment="Right"
                                Visibility="{Binding ShowsSize, Converter={StaticResource BoolToVisibility}}"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
@@ -1029,7 +1029,7 @@
                                                  column is hidden from the chooser; two independent
                                                  DataTriggers rather than one combined condition, since both
                                                  collapse to the exact same Visibility value. -->
-                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SizeText}"
+                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding ChosenSizeText}"
                                                        FontSize="12" VerticalAlignment="Center"
                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}">
                                                 <TextBlock.Style>

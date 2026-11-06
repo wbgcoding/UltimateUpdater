@@ -83,9 +83,10 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
     /// <summary>What the ticked members would free: the first half of <see cref="ChosenSizeText"/>.</summary>
     public long SelectedBytes => Items.Where(i => i.IsSelected).Sum(i => i.SelectedEntryBytes);
 
-    /// <summary>The header's size cell: "ticked / found" while only part of what was found is ticked, else
-    /// just what was found. Registry entries are counted, not measured, so they keep the plain text.</summary>
-    public string ChosenSizeText => IsRegistryGroup || SelectedBytes >= TotalBytes
+    /// <summary>The header's size cell: always "ticked / found" so the user sees what a run would free while
+    /// still choosing, fully ticked and unticked included. Registry entries are counted, not measured, so
+    /// they keep the plain text.</summary>
+    public string ChosenSizeText => IsRegistryGroup
         ? SizeText
         : $"{ByteSize.Format(SelectedBytes)} / {ByteSize.Format(TotalBytes)}";
 
