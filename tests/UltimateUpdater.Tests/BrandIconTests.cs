@@ -19,6 +19,8 @@ public class BrandIconTests
     [InlineData("7-Zip", "winget", "7zip.7zip")]
     [InlineData("VLC media player", "winget", "VideoLAN.VLC")]
     [InlineData("Steam", "steam", "steam")]
+    [InlineData("Rustup: the Rust toolchain installer", "winget", "Rustlang.Rustup")]   // the tool shows the language mark
+    [InlineData("uv", "winget", "astral-sh.uv")]
     public void A_known_product_gets_its_mark(string name, string sourceId, string itemId) =>
         Assert.NotNull(BrandIcons.Resolve(name, sourceId, itemId));
 

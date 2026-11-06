@@ -40,6 +40,7 @@ internal static class BrandIcons
         ["python3"] = "python",
         ["riot"] = "riotgames",
         ["riotclient"] = "riotgames",
+        ["rustup"] = "rust",
         ["rockstar"] = "rockstargames",
         ["torbrowserbundle"] = "torbrowser",
         ["ubisoftconnect"] = "ubisoft",

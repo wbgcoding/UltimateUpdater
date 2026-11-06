@@ -24,7 +24,7 @@ SLUGS = [
     "notepadplusplus", "npm", "nvidia", "obsstudio", "openjdk", "opera", "php", "postgresql",
     "postman", "pycharm", "python", "qbittorrent", "redis", "riotgames", "rockstargames", "ruby",
     "rust", "signal", "spotify", "steam", "sublimetext", "telegram", "terraform", "thunderbird",
-    "torbrowser", "ubisoft", "unity", "virtualbox", "vivaldi", "vlcmediaplayer", "whatsapp",
+    "torbrowser", "ubisoft", "unity", "uv", "virtualbox", "vivaldi", "vlcmediaplayer", "whatsapp",
     "wireshark", "zoom",
     # Packages, not applications: npm/pip/PSGallery rows have no icon on disk to find, so these are
     # the only ones those rows can ever get.

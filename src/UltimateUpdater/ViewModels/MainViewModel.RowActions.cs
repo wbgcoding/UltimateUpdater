@@ -422,6 +422,7 @@ public partial class MainViewModel
         TrackSelection(row);
         _rowsByKey[PackageKey(item)] = row;
         Updates.Add(row);
+        ResolveIconsAsync([row]);
         return row;
     }
 
