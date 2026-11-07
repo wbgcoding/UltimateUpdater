@@ -51,6 +51,9 @@ public static class CleanupWorker
         if (command.Command == "analyze")
         {
             var analysis = await new CleanupService(logging).AnalyzeComponentStoreAsync(cancellationToken);
+
+            // This branch returns before the log timer below exists, so the lines the analysis logged go out here.
+            DrainLog(writer, jobId);
             Send(writer, jobId, new CleanupWorkerMessage
             {
                 Type = "componentStore",

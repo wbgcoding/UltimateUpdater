@@ -421,10 +421,45 @@ public class InstallWorkerTests
         await runTask;
     }
 
+    /// <summary>
+    /// Two jobs run at the same time in one worker: each job's log lines must go back under its own job id,
+    /// not be drained by whichever job's flush happens to run first.
+    /// </summary>
+    [Fact]
+    public async Task Concurrent_jobs_each_send_only_their_own_log_lines()
+    {
+        var (writer, buffer) = NewWriter();
+        // Two sources, so the items really overlap (one source runs its items one after the other).
+        var bothLogged = new CountdownEvent(2);
+        var sources = new IUpdateSource[]
+        {
+            new SlowLoggingSource("winget", TimeSpan.FromSeconds(1.5), bothLogged),
+            new SlowLoggingSource("chocolatey", TimeSpan.FromSeconds(1.5), bothLogged),
+        };
+
+        Task Run(string jobId, string sourceId, string itemId) => ElevatedWorker.RunWithJobLogAsync(() => InstallWorker.RunJobAsync(
+            new InstallJobFile { Items = [new InstallJobItem { SourceId = sourceId, ItemId = itemId, Name = itemId }] },
+            writer, jobId, new LoggingService(), CancellationToken.None, sources));
+
+        await Task.WhenAll(Run("jobA", "winget", "a"), Run("jobB", "chocolatey", "b"));
+
+        var logs = ReadAll(buffer)
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => System.Text.Json.JsonDocument.Parse(line).RootElement)
+            .Where(e => e.GetProperty("payload").GetProperty("type").GetString() == "log")
+            .Select(e => (Id: e.GetProperty("id").GetString(), Text: e.GetProperty("payload").GetProperty("status").GetString()))
+            .ToList();
+
+        Assert.Contains(logs, l => l.Id == "jobA" && l.Text == "a line logged by a");
+        Assert.Contains(logs, l => l.Id == "jobB" && l.Text == "a line logged by b");
+        Assert.DoesNotContain(logs, l => l.Id == "jobA" && l.Text == "a line logged by b");
+        Assert.DoesNotContain(logs, l => l.Id == "jobB" && l.Text == "a line logged by a");
+    }
+
     /// <summary>Installs nothing real; only enqueues one log line as soon as its own install starts, then
     /// blocks for <paramref name="delay"/> so a test can observe whether that line was flushed WHILE the
     /// install was still running.</summary>
-    private sealed class SlowLoggingSource(string id, TimeSpan delay) : IUpdateSource
+    private sealed class SlowLoggingSource(string id, TimeSpan delay, CountdownEvent? bothLogged = null) : IUpdateSource
     {
         public string Id => id;
 
@@ -440,6 +475,15 @@ public class InstallWorkerTests
         public async Task InstallAsync(UpdateItem item, IProgress<Models.InstallProgress> progress, CancellationToken cancellationToken)
         {
             ElevatedWorker.CollectLog("a line logged during the slow install");
+            ElevatedWorker.CollectLog($"a line logged by {item.Id}");
+
+            // Both jobs have a line waiting before either one's flush can run.
+            if (bothLogged is not null)
+            {
+                bothLogged.Signal();
+                bothLogged.Wait(TimeSpan.FromSeconds(10), cancellationToken);
+            }
+
             await Task.Delay(delay, cancellationToken);
             progress.Report(new Models.InstallProgress { PercentComplete = 100, StatusText = item.Name });
         }
