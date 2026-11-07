@@ -2263,4 +2263,7 @@ Continuare con privilegi di amministratore?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Seleziona tutto</value>
   </data>
+  <data name="CleanupOpenReport" xml:space="preserve">
+    <value>Apri rapporto</value>
+  </data>
 </root>

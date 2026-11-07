@@ -76,6 +76,11 @@ public sealed partial class CleanupHistoryRowViewModel : ObservableObject
 
     public IReadOnlyList<CleanupHistoryAreaViewModel> Areas { get; }
 
+    /// <summary>Whether the row shows its areas. Bound two-way to the history window's expander; the view
+    /// model owns it so the window that opens from the cleanup report can start with the newest run open.</summary>
+    [ObservableProperty]
+    private bool isExpanded;
+
     public override string ToString() => $"{WhenText}, {FreedText}";
 
     /// <summary>The identity <see cref="CleanupHistoryService.Remove"/> matches on.</summary>

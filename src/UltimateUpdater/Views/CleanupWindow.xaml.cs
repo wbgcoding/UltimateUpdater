@@ -698,4 +698,8 @@ public partial class CleanupWindow
     /// </summary>
     private void OnShowHistory(object sender, RoutedEventArgs e) =>
         new CleanupHistoryWindow(_viewModel) { Owner = this }.Show();
+
+    /// <summary>The report of the run that just ended: the same window, with the newest entry unfolded.</summary>
+    private void OnShowReport(object sender, RoutedEventArgs e) =>
+        new CleanupHistoryWindow(_viewModel, expandNewest: true) { Owner = this }.Show();
 }

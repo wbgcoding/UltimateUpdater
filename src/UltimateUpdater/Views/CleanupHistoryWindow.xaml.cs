@@ -12,12 +12,21 @@ public partial class CleanupHistoryWindow : FluentWindow
 {
     private readonly CleanupViewModel _viewModel;
 
-    public CleanupHistoryWindow(CleanupViewModel viewModel)
+    /// <param name="expandNewest">Opens with the newest run unfolded and every other one folded, scrolled to
+    /// the top where the newest sits: what the report button of a finished cleanup asks for.</param>
+    public CleanupHistoryWindow(CleanupViewModel viewModel, bool expandNewest = false)
     {
         InitializeComponent();
         WindowBackdropType = ThemeService.ActiveBackdrop;
         DataContext = viewModel;
         _viewModel = viewModel;
+
+        if (expandNewest)
+        {
+            viewModel.ExpandNewestHistoryRow();
+            Loaded += (_, _) => CleanupHistoryList.ScrollToTop();
+        }
+
         DialogKeyboard.CloseOnEscape(this);
         DialogSizing.FitHeightToContent(this);
 

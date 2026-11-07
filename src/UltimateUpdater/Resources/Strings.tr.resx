@@ -2263,4 +2263,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Tümünü seç</value>
   </data>
+  <data name="CleanupOpenReport" xml:space="preserve">
+    <value>Raporu aç</value>
+  </data>
 </root>

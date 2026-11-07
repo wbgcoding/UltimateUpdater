@@ -2263,4 +2263,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>すべて選択</value>
   </data>
+  <data name="CleanupOpenReport" xml:space="preserve">
+    <value>レポートを開く</value>
+  </data>
 </root>

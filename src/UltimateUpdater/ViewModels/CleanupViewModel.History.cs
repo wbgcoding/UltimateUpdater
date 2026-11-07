@@ -68,6 +68,14 @@ public partial class CleanupViewModel
 
     public bool HasHistory => History.Count > 0;
 
+    /// <summary>Unfolds the newest run and folds every other one. The rows are shared with the cleanup
+    /// window's own history window, so a row the user unfolded earlier would otherwise stay open.</summary>
+    public void ExpandNewestHistoryRow()
+    {
+        for (var i = 0; i < History.Count; i++)
+            History[i].IsExpanded = i == 0;
+    }
+
     /// <summary>The inverse, for <see cref="UltimateUpdater.Views.CleanupHistoryWindow"/>'s empty state; a plain bool
     /// property rather than an inverting converter, the same shape HistoryViewModel.IsEmpty already
     /// uses for the same purpose.</summary>
