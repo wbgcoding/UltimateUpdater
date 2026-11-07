@@ -184,4 +184,18 @@ public class InstallStallWatchTests
 
         Assert.Equal("InstallStalled", text);
     }
+
+    /// <summary>The sampler asks for the limited query right (0x1000), the one right Windows also grants on
+    /// processes the full query right is refused for, and still reads the whole tree with it.</summary>
+    [Fact]
+    public void The_sampler_opens_processes_with_the_limited_query_right_and_still_reads_them()
+    {
+        Assert.Equal(0x1000u, ProcessTreeSampler.ProcessQueryLimitedInformation);
+
+        var own = ProcessTreeSampler.Sample(Environment.ProcessId);
+
+        Assert.True(own.Complete);
+        Assert.True(own.ProcessCount >= 1);
+        Assert.True(own.Cpu > TimeSpan.Zero);
+    }
 }
