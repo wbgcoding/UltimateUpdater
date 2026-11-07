@@ -56,6 +56,17 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
     protected override string Executable => Resolved.Value.Executable ?? "sdkmanager";
 
     /// <summary>
+    /// The listing first downloads and parses every repository manifest and prints nothing meanwhile;
+    /// during a full scan, with the JVM starting next to every other source, that stayed silent past
+    /// the default minute on a real developer PC and the source was reported as failed.
+    /// </summary>
+    internal static readonly TimeSpan ListingSilenceLimit = TimeSpan.FromMinutes(4);
+
+    protected override TimeSpan ScanTimeout => TimeSpan.FromMinutes(6);
+
+    protected override TimeSpan ScanIdleTimeout => ListingSilenceLimit;
+
+    /// <summary>
     /// sdkmanager reads its SDK location from ANDROID_HOME and refuses to run without one. When we found the
     /// tool ourselves we know the root it belongs to, so it is passed explicitly rather than relying on the
     /// user's environment being set, a developer with the command-line tools in place but no ANDROID_HOME

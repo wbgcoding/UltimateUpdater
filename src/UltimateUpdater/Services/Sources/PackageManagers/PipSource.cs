@@ -24,6 +24,18 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
     protected override string Executable => "pip";
 
     /// <summary>
+    /// `pip list --outdated` asks the index about every installed package and prints its JSON only at
+    /// the very end: measured 107 s of complete silence for 274 packages on one interpreter, alone and
+    /// on a fast line. Silence is therefore no sign of a hang here, so it gets the same generous limit
+    /// as the whole call.
+    /// </summary>
+    internal static readonly TimeSpan OutdatedListLimit = TimeSpan.FromMinutes(6);
+
+    protected override TimeSpan ScanTimeout => OutdatedListLimit;
+
+    protected override TimeSpan ScanIdleTimeout => OutdatedListLimit;
+
+    /// <summary>
     /// Python writes to a redirected stdout in the ANSI code page (cp1252 here), so the first package
     /// description with an emoji makes pip die with UnicodeEncodeError (exit 2). Measured with
     /// 'pip inspect', which prints every installed package's metadata; any pip output can carry such text.
