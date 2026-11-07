@@ -90,6 +90,11 @@
                                         Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
+                                <!-- Open, the header and the body below it are one card: only the top corners
+                                     follow the card's curve (its inner radius, 8 minus the 1px stroke), the
+                                     bottom edge meets the body's hairline square. Collapsed, the header IS the
+                                     card and stays fully rounded. -->
+                                <Setter TargetName="Hit" Property="CornerRadius" Value="7,7,0,0"/>
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
@@ -211,7 +216,10 @@
                                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                                 views:GlassCardHighlight.Show="True">
-                            <Grid>
+                            <!-- RoundedClip: a Border rounds only its own fill and stroke, never its child, so
+                                 without it the header's hover surface and the body would paint square over the
+                                 card's curve (7 = the card's radius 8 minus its 1px stroke). -->
+                            <Grid views:RoundedClip.Radius="7">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
@@ -232,8 +240,8 @@
                                     </ToggleButton.ContextMenu>
                                 </ToggleButton>
                                 <Border x:Name="Body" Grid.Row="1" Visibility="Collapsed"
-                                        BorderThickness="0,1,0,0" Padding="8,6,8,8"
-                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                        BorderThickness="0,1,0,0" Padding="4,4,4,6"
+                                        BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
                                     <ContentPresenter/>
                                 </Border>
                             </Grid>
@@ -333,15 +341,37 @@
                  them the list read as one wall of text. The card only
                  shows up on hover and while the target is working, so a resting list stays
                  calm. -->
-            <Border CornerRadius="6" Padding="8,7" Margin="2,1">
-                <Border.Visibility>
+            <!-- The shell carries the visibility and the hairline between targets; the rounded card inside it
+                 is only the hover surface, so a hidden target takes its hairline with it. The hairline is
+                 drawn above every target but the first of its group (alternation index 0). The padding puts
+                 the checkbox on the same line as the group header's checkbox above it. -->
+            <Grid x:Name="ItemShell">
+                <Grid.Visibility>
                     <!-- Visible when it is default-visible OR "show all categories" is open. See
                          CleanupCardVisibilityConverter's own doc comment. -->
                     <MultiBinding Converter="{StaticResource CleanupCardVisibility}">
                         <Binding Path="Target.DefaultVisible"/>
                         <Binding Path="DataContext.ShowAllCategories" RelativeSource="{RelativeSource AncestorType=Window}"/>
                     </MultiBinding>
-                </Border.Visibility>
+                </Grid.Visibility>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Border x:Name="ItemDivider" Grid.Row="0" Height="1"
+                        BorderThickness="0,1,0,0" SnapsToDevicePixels="True"
+                        BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Path=(ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+            <Border Grid.Row="1" CornerRadius="6" Padding="11,9">
                 <!-- Right-click on the card (not on a detail row, which keeps its own menu): measure just
                      this sub-category again. -->
                 <Border.ContextMenu>
@@ -474,7 +504,10 @@
                      repair, defrag) once scanning/waiting are both done: none of its four children ever
                      show for that kind, and the MinWidth below used to keep the column's width reserved
                      anyway, a small empty box sitting beside the row's own risk dot for no reason. -->
-                <Grid Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" MinWidth="96"
+                <!-- Right margin 26: the size figures of a group header, its targets and their detail rows
+                     all end on one vertical line (the group header's meta text ends 42px inside the card,
+                     before its chevron), so the sizes read as one column down the whole table. -->
+                <Grid Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" MinWidth="96" Margin="0,0,26,0"
                       Visibility="{Binding HasSizeCell, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock Text="{Binding ChosenSizeText}" FontSize="13" FontWeight="SemiBold"
                                HorizontalAlignment="Right"
@@ -799,7 +832,7 @@
                     <!-- Two-way, not a hardcoded False: whether this list is open is the first gate on the
                          per-row marking during a run (CleanupItemViewModel.ApplyEntryProgress), closed
                          means the run never even looks for the row a report belongs to. -->
-                    <Expander Margin="0,6,12,0" IsExpanded="{Binding IsDetailsExpanded, Mode=TwoWay}"
+                    <Expander Margin="0,6,0,0" IsExpanded="{Binding IsDetailsExpanded, Mode=TwoWay}"
                               Style="{StaticResource CleanupDetailsExpander}"
                               Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
                         <Expander.Header>
@@ -866,7 +899,7 @@
                                         <!-- No margin on the ItemsControl itself any more: its own scrollbar
                                              now lives on THIS ScrollViewer, so a right margin here would
                                              shift the scrollbar left along with the rows instead of only the
-                                             rows, putting both back flush against each other. The 18px
+                                             rows, putting both back flush against each other. The 26px
                                              clearance moved onto the VirtualizingStackPanel below, which
                                              insets the ROWS but leaves this ScrollViewer (and its overlay
                                              scrollbar) spanning the full width, exactly where the old outer
@@ -881,7 +914,7 @@
                                 </ItemsControl.Template>
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel Margin="0,0,18,0"/>
+                                        <VirtualizingStackPanel Margin="0,0,26,0"/>
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <!-- Only rendered when GroupDescriptions are set on EntriesView (the recycle
@@ -1074,6 +1107,7 @@
                 </StackPanel>
             </Grid>
             </Border>
+            </Grid>
         </DataTemplate>
         </ResourceDictionary>
     </ui:FluentWindow.Resources>
@@ -1651,7 +1685,7 @@
                                              repeated clicks, including indeterminate, which a click must
                                              never be able to land on by itself. -->
                                         <CheckBox x:Name="GroupCheckBox" Grid.Column="0" VerticalAlignment="Center"
-                                                  Margin="0,0,12,0" IsThreeState="True"
+                                                  Margin="0,0,8,0" IsThreeState="True"
                                                   IsChecked="{Binding IsSelected, Mode=OneWay}"
                                                   Command="{Binding ToggleSelectionCommand}"
                                                   AutomationProperties.Name="{Binding Title}"/>
@@ -1736,7 +1770,7 @@
                                     </StackPanel>
                                 </Expander.Header>
 
-                                <ItemsControl ItemsSource="{Binding Items}"
+                                <ItemsControl ItemsSource="{Binding Items}" AlternationCount="100"
                                               ItemTemplate="{StaticResource CleanupItemTemplate}"/>
                             </Expander>
                         </DataTemplate>

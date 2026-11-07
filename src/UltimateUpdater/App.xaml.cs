@@ -414,9 +414,6 @@ public partial class App : Application
         notifications.NotificationRequested += (title, message) => _tray.ShowBalloon(title, message);
         mainViewModel.LanguageChanged += () => _tray.RefreshLocalization();
 
-        // The tray menu is WinForms and paints from colours captured when it was built, so it is rebuilt
-        // on a theme change too, otherwise it stayed in the previous theme until the next restart.
-        themeService.ThemeChanged += () => Dispatcher.BeginInvoke(() => _tray?.RefreshLocalization());
 
         _scheduler = new ScanScheduler(
             settings, logging, () => mainViewModel.RunScheduledScanAsync(), isOnline: NetworkAvailability.IsOnline);

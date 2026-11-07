@@ -1,7 +1,13 @@
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
+using System.Windows.Interop;
+using WpfContextMenu = System.Windows.Controls.ContextMenu;
+using WpfMenuItem = System.Windows.Controls.MenuItem;
+using WpfSeparator = System.Windows.Controls.Separator;
 
 namespace UltimateUpdater.Services;
 
@@ -20,10 +26,7 @@ public sealed class TrayIconService : IDisposable
     /// disposed since other code may still hold the same shared instance.</summary>
     private readonly Icon? _ownIcon;
 
-    /// <summary>Built once and reused across every <see cref="BuildMenu"/> call (language/theme
-    /// changes rebuild the menu itself but never need a different font) instead of leaking one GDI
-    /// font handle per rebuild.</summary>
-    private readonly Font _menuFont = new("Segoe UI", 9.75f);
+    private WpfContextMenu? _menu;
 
     public event Action? OpenRequested;
 
@@ -46,7 +49,7 @@ public sealed class TrayIconService : IDisposable
 
         _notifyIcon.DoubleClick += (_, _) => OpenRequested?.Invoke();
         _notifyIcon.BalloonTipClicked += (_, _) => OpenRequested?.Invoke();
-        _notifyIcon.ContextMenuStrip = BuildMenu();
+        _notifyIcon.MouseUp += OnNotifyIconMouseUp;
     }
 
     public void Show() => _notifyIcon.Visible = true;
@@ -65,62 +68,65 @@ public sealed class TrayIconService : IDisposable
     }
 
     /// <summary>
-    /// Rebuilt on language change so the menu is never left in the previous language, and on theme
-    /// change, because a WinForms menu paints from colours read when it was built and would otherwise keep
-    /// the previous theme until the next language switch.
+    /// Only the tooltip is kept here: the menu is built fresh on every right-click, so it is always in
+    /// the current language, and its WPF surfaces follow the theme through the app's dynamic brushes.
     /// </summary>
     public void RefreshLocalization()
     {
         _notifyIcon.Text = LocalizationService.Instance["AppTitle"];
-        _notifyIcon.ContextMenuStrip?.Dispose();
-        _notifyIcon.ContextMenuStrip = BuildMenu();
     }
 
-    private ContextMenuStrip BuildMenu()
+    /// <summary>
+    /// The menu is a WPF context menu, not a WinForms strip, so it takes the app's own menu style
+    /// (rounded card, soft shadow, hover and press surfaces) and looks like the row menu in both
+    /// themes. A WinForms strip could only be rounded with a hard-edged window region laid over its own
+    /// square border and the system's corner rounding, which showed as ragged double corners.
+    /// </summary>
+    private void OnNotifyIconMouseUp(object? sender, MouseEventArgs e)
     {
-        var menu = new ContextMenuStrip
-        {
-            // Themed to match the app's Fluent surfaces rather than the classic grey.
-            Renderer = new TrayMenuRenderer(IsDarkTheme()),
-            Font = _menuFont,
-            ShowImageMargin = false,
-            Padding = new Padding(2, 4, 2, 4),
-        };
+        if (e.Button != MouseButtons.Right)
+            return;
 
-        // Rounded corners, to match the app's own menus. Applied every time the drop-down opens (it is
-        // laid out fresh each time and its client size is only known then); the renderer draws a
-        // rounded hover to match. The previous Region is disposed before replacing it, otherwise every
-        // single open of this SAME menu (there can be many, across a long tray session) leaked one GDI
-        // region handle.
+        var menu = BuildMenu();
+
+        // A popup only closes on a click elsewhere while its window is the foreground one, and the tray
+        // icon's owner is not, so the menu is brought to the front once it is on screen.
         menu.Opened += (_, _) =>
         {
-            if (menu.ClientSize.Width <= 0 || menu.ClientSize.Height <= 0)
-                return;
-
-            using var path = TrayMenuRenderer.RoundedRect(
-                new Rectangle(0, 0, menu.ClientSize.Width, menu.ClientSize.Height), 8);
-            var oldRegion = menu.Region;
-            menu.Region = new Region(path);
-            oldRegion?.Dispose();
+            if (System.Windows.PresentationSource.FromVisual(menu) is HwndSource source)
+                SetForegroundWindow(source.Handle);
         };
 
-        AddItem(menu, LocalizationService.Instance["TrayOpen"], () => OpenRequested?.Invoke());
-        AddItem(menu, LocalizationService.Instance["TrayScan"], () => ScanRequested?.Invoke());
-        menu.Items.Add(new ToolStripSeparator());
-        AddItem(menu, LocalizationService.Instance["TrayExit"], () => ExitRequested?.Invoke());
+        _menu = menu;
+        menu.IsOpen = true;
+    }
+
+    /// <summary>The menu as it opens on a right-click; public to the tests so a render can check its look.</summary>
+    internal WpfContextMenu BuildMenu()
+    {
+        var menu = new WpfContextMenu
+        {
+            Placement = PlacementMode.MousePoint,
+            StaysOpen = false,
+        };
+
+        menu.Items.Add(CreateItem(LocalizationService.Instance["TrayOpen"], () => OpenRequested?.Invoke()));
+        menu.Items.Add(CreateItem(LocalizationService.Instance["TrayScan"], () => ScanRequested?.Invoke()));
+        menu.Items.Add(new WpfSeparator());
+        menu.Items.Add(CreateItem(LocalizationService.Instance["TrayExit"], () => ExitRequested?.Invoke()));
         return menu;
     }
 
-    private static void AddItem(ContextMenuStrip menu, string text, Action onClick)
+    private static WpfMenuItem CreateItem(string text, Action onClick)
     {
-        var item = new ToolStripMenuItem(text) { Padding = new Padding(6, 3, 6, 3) };
+        var item = new WpfMenuItem { Header = text };
         item.Click += (_, _) => onClick();
-        menu.Items.Add(item);
+        return item;
     }
 
-    /// <summary>The theme WPF-UI currently has applied, so the tray menu matches the windows.</summary>
-    private static bool IsDarkTheme() =>
-        Wpf.Ui.Appearance.ApplicationThemeManager.GetAppTheme() == Wpf.Ui.Appearance.ApplicationTheme.Dark;
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     /// <summary>Null means "use the shared <see cref="SystemIcons.Application"/> fallback": the
     /// caller must not dispose that shared instance, only whatever this method itself extracted.</summary>
@@ -144,9 +150,9 @@ public sealed class TrayIconService : IDisposable
     public void Dispose()
     {
         _notifyIcon.Visible = false;
-        _notifyIcon.ContextMenuStrip?.Dispose();
+        if (_menu is { IsOpen: true })
+            _menu.IsOpen = false;
         _notifyIcon.Dispose();
         _ownIcon?.Dispose();
-        _menuFont.Dispose();
     }
 }
