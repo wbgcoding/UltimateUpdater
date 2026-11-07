@@ -85,7 +85,7 @@ public class PackagedAppLogoTests : IDisposable
 
     private IconCacheService Cache(string packageRoot, string registeredName = PackageName) =>
         new(new LoggingService(), new StartMenuShortcuts([]), null, [],
-            new PackagedAppLogos(new PackageTable(new() { ["Zq.Chat_1.0_x64__abc"] = (registeredName, packageRoot) })));
+            new PackagedAppLogos(new PackageTable(new() { ["Zq.Chat_1.0.0.0_x64__0123456789abc"] = (registeredName, packageRoot) })));
 
     private static (byte B, byte G, byte R, byte A) PixelAt(BitmapSource bitmap, int x, int y)
     {
@@ -173,4 +173,79 @@ public class PackagedAppLogoTests : IDisposable
     [InlineData(null)]
     public void Any_other_plate_value_means_no_plate(string? value) =>
         Assert.Null(PackagedAppLogos.ParsePlate(value));
+
+    /// <summary>The white-mark package of above, with the first Application running an executable.</summary>
+    private string PackageWithExecutable(string executable, string? fileContent)
+    {
+        var package = WhiteMarkPackage();
+        var manifest = Path.Combine(package, "AppxManifest.xml");
+        File.WriteAllText(manifest, File.ReadAllText(manifest).Replace(
+            "<Application Id=\"App\">", $"<Application Id=\"App\" Executable=\"{executable}\">"));
+        if (fileContent is not null)
+        {
+            Directory.CreateDirectory(Path.Combine(package, "app"));
+            File.WriteAllText(Path.Combine(package, "app", "Chat.exe"), fileContent);
+        }
+
+        return package;
+    }
+
+    private static PackagedAppLogos Logos(string packageRoot, Func<string, bool>? hasIcon = null) =>
+        new(new PackageTable(new() { ["Zq.Chat_1.0.0.0_x64__0123456789abc"] = (PackageName, packageRoot) }), hasIcon);
+
+    [Fact]
+    public void An_application_executable_with_an_icon_wins_over_the_logo_and_gets_no_plate()
+    {
+        var logo = Logos(PackageWithExecutable("app/Chat.exe", "x"), hasIcon: _ => true).Find(PackageName);
+
+        Assert.True(logo?.IsExecutable);
+        Assert.EndsWith(Path.Combine("app", "Chat.exe"), logo?.Path);
+        Assert.Null(logo?.Plate);
+    }
+
+    [Fact]
+    public void An_application_executable_without_an_icon_falls_back_to_the_logo_on_its_plate()
+    {
+        // Not an executable at all, so the real icon probe finds no icon resource in it.
+        var logo = Logos(PackageWithExecutable("app/Chat.exe", "not an executable")).Find(PackageName);
+
+        Assert.False(logo?.IsExecutable);
+        Assert.EndsWith("Square44x44Logo.scale-200.png", logo?.Path);
+        Assert.Equal(Color.FromRgb(0x31, 0x43, 0xFF), logo?.Plate);
+    }
+
+    [Fact]
+    public void A_real_executable_inside_the_package_is_taken_for_its_icon()
+    {
+        var package = PackageWithExecutable("app/Chat.exe", null);
+        File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"),
+            Path.Combine(Directory.CreateDirectory(Path.Combine(package, "app")).FullName, "Chat.exe"));
+
+        var icon = Icon(new IconCacheService(new LoggingService(), new StartMenuShortcuts([]), null, [], Logos(package)), PackageName);
+
+        Assert.NotNull(icon);
+        var corner = PixelAt(icon, 1, 1);
+        Assert.NotEqual((0xFF, 0x43, 0x31, 0xFF), (corner.B, corner.G, corner.R, corner.A));
+    }
+
+    [Theory]
+    [InlineData("../outside/Chat.exe")]
+    [InlineData("..\\outside\\Chat.exe")]
+    public void An_executable_that_escapes_the_package_is_ignored_and_the_logo_is_used(string executable)
+    {
+        var package = PackageWithExecutable(executable, null);
+        Directory.CreateDirectory(Path.Combine(_root, "outside"));
+        File.WriteAllText(Path.Combine(_root, "outside", "Chat.exe"), "x");
+
+        var logo = Logos(package, hasIcon: _ => true).Find(PackageName);
+
+        Assert.False(logo?.IsExecutable);
+        Assert.NotNull(logo?.Plate);
+    }
+
+    [Fact]
+    public void The_cache_key_changes_so_icons_cached_with_a_plate_are_never_read_again()
+    {
+        Assert.NotEqual("v3", IconCacheService.CacheKeyVersion);
+    }
 }

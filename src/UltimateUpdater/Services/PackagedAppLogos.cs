@@ -13,61 +13,51 @@ namespace UltimateUpdater.Services;
 /// shortcut file, so nothing else on the machine names its icon; its package does: the manifest's
 /// <c>Square44x44Logo</c>. Many packages ship that logo as a white mark on a transparent background and
 /// leave the colour to the manifest's <c>BackgroundColor</c>, which Windows draws as a plate behind it.
-/// A package is matched by its display name, exactly, never by similarity.
+/// An application executable inside the package that carries an icon is preferred to that logo.
 /// </summary>
 internal sealed class PackagedAppLogos
 {
-    internal const string PackagesKey =
-        @"HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages";
+    internal const string PackagesKey = PackagedApps.PackagesKey;
 
     /// <summary>The icon is drawn about this big; the nearest variant at or above it keeps the mark sharp.</summary>
     private const int WantedSize = 64;
 
     private const int BaseLogoSize = 44;
 
-    private readonly IRegistryView _registry;
-    private readonly Lazy<IReadOnlyList<(string Name, string Root)>> _packages;
+    private readonly PackagedApps _apps;
+    private readonly Func<string, bool> _hasIcon;
 
-    /// <summary>A logo file, and the plate colour to draw it on (null: draw it as it is).</summary>
-    internal sealed record Logo(string Path, System.Windows.Media.Color? Plate);
+    /// <summary>
+    /// What to draw for the app: a logo file and the plate colour to draw it on (null: draw it as it is),
+    /// or, with <paramref name="IsExecutable"/>, the app's own executable whose icon is taken as it is.
+    /// </summary>
+    internal sealed record Logo(string Path, System.Windows.Media.Color? Plate, bool IsExecutable = false);
 
-    public PackagedAppLogos(IRegistryView registry)
+    public PackagedAppLogos(IRegistryView registry, Func<string, bool>? hasIcon = null)
+        : this(new PackagedApps(registry), hasIcon)
     {
-        _registry = registry;
-        _packages = new Lazy<IReadOnlyList<(string, string)>>(ReadPackages);
+    }
+
+    public PackagedAppLogos(PackagedApps apps, Func<string, bool>? hasIcon = null)
+    {
+        _apps = apps;
+        _hasIcon = hasIcon ?? (path => IconCacheService.HasIconResource(path, 0));
     }
 
     public Logo? Find(string displayName)
     {
-        var wanted = IconCacheService.CleanName(displayName);
-        if (wanted.Length == 0)
-            return null;
-
-        foreach (var package in _packages.Value)
+        foreach (var package in _apps.FindAll(displayName))
         {
-            if (string.Equals(package.Name, wanted, StringComparison.OrdinalIgnoreCase) && ReadLogo(package.Root) is { } logo)
+            // The app's own executable carries the icon the vendor made for it, finished and opaque; the
+            // manifest logo is only a white mark that needs a plate. So the executable wins when it has one.
+            if (_apps.FirstApplication(package, _hasIcon) is { } application)
+                return new Logo(application.ExecutablePath, null, IsExecutable: true);
+
+            if (ReadLogo(package.Root) is { } logo)
                 return logo;
         }
 
         return null;
-    }
-
-    private IReadOnlyList<(string Name, string Root)> ReadPackages()
-    {
-        var found = new List<(string, string)>();
-
-        // Newest first, so an old version left behind never wins over the current one.
-        foreach (var key in _registry.SubKeyNames(PackagesKey).OrderByDescending(k => k, StringComparer.OrdinalIgnoreCase))
-        {
-            var entry = $@"{PackagesKey}\{key}";
-            if (_registry.Value(entry, "DisplayName") is { Length: > 0 } name &&
-                _registry.Value(entry, "PackageRootFolder") is { Length: > 0 } root)
-            {
-                found.Add((name.Trim(), root));
-            }
-        }
-
-        return found;
     }
 
     private static Logo? ReadLogo(string root)

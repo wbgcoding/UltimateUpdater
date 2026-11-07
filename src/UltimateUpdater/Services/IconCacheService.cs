@@ -39,7 +39,7 @@ public sealed class IconCacheService
     /// older rule (a Python script launcher cached for a pip package) are never read again; they age
     /// out through <see cref="CleanupCache"/> like any other unused file.
     /// </summary>
-    internal const string CacheKeyVersion = "v3";
+    internal const string CacheKeyVersion = "v4";
 
     private int _writesSinceCleanup;
 
@@ -173,7 +173,7 @@ public sealed class IconCacheService
         // A Store app is named exactly by its package, which is stricter than any name match below, and it
         // has neither an Uninstall entry nor a shortcut file for those to find.
         if (_packages.Find(displayName) is { } packaged)
-            return new IconSource(packaged.Path, 0, IsImageFile: true, packaged.Plate);
+            return new IconSource(packaged.Path, 0, IsImageFile: !packaged.IsExecutable, packaged.Plate);
 
         var app = MatchInstalledApp(displayName);
 
@@ -315,7 +315,7 @@ public sealed class IconCacheService
     /// False for an executable with no icon resource (Windows would draw its generic program icon) and
     /// for a file that is not there. Plain image files always count.
     /// </summary>
-    private static bool HasIconResource(string path, int index)
+    internal static bool HasIconResource(string path, int index)
     {
         if (Path.GetExtension(path) is ".png" or ".jpg" or ".jpeg" or ".bmp")
             return File.Exists(path);
