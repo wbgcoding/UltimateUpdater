@@ -66,16 +66,19 @@
                                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                     </Grid>
                                 </Border>
+                                <!-- Margin and offsets as on the main menu card, so the shadow is not cut off. -->
                                 <Popup x:Name="PART_Popup" Placement="Right" AllowsTransparency="True"
                                        Focusable="False" PopupAnimation="Fade"
+                                       HorizontalOffset="-4" VerticalOffset="-11"
                                        IsOpen="{TemplateBinding IsSubmenuOpen}">
                                     <Border Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
                                             BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                                            BorderThickness="1" CornerRadius="7" Padding="3" MinWidth="150">
+                                            BorderThickness="1" CornerRadius="7" Padding="3" MinWidth="150"
+                                            Margin="10,8,10,12">
                                         <Border.Effect>
-                                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.35" Direction="270"/>
+                                            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.35" Direction="270"/>
                                         </Border.Effect>
-                                        <StackPanel IsItemsHost="True"/>
+                                        <StackPanel IsItemsHost="True" Grid.IsSharedSizeScope="True"/>
                                     </Border>
                                 </Popup>
                             </Grid>
@@ -97,15 +100,22 @@
                      rows through it. -->
                 <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+                <!-- The popup window is exactly the size of the template, so the card carries a margin as wide
+                     as its shadow; without it the shadow is cut off square at the card's edge. The negative
+                     offsets give that margin back, so the card still opens at the click or under its anchor. -->
+                <Setter Property="HorizontalOffset" Value="-10"/>
+                <Setter Property="VerticalOffset" Value="-8"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ContextMenu">
-                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="1" CornerRadius="7" Padding="3" MinWidth="180">
+                            <Border x:Name="MenuCard" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" CornerRadius="7" Padding="3" MinWidth="180" Margin="10,8,10,12">
                                 <Border.Effect>
-                                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.35" Direction="270"/>
+                                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.35" Direction="270"/>
                                 </Border.Effect>
-                                <StackPanel IsItemsHost="True"/>
+                                <!-- One size scope for all items, so the check, shortcut and arrow columns line up
+                                     between a ticked, a plain and a submenu item. -->
+                                <StackPanel IsItemsHost="True" Grid.IsSharedSizeScope="True"/>
                             </Border>
                         </ControlTemplate>
                     </Setter.Value>
@@ -128,13 +138,16 @@
                                         Padding="{TemplateBinding Padding}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="MenuCheck"/>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="MenuGesture"/>
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="MenuArrow"/>
                                         </Grid.ColumnDefinitions>
                                         <!-- Hidden, not collapsed, on an unchecked checkable item, so the labels
-                                             of a checkbox menu stay in one line whatever is ticked. -->
+                                             of a checkbox menu stay in one line whatever is ticked. The columns share
+                                             their width across the menu (see the size scope on the item list), so a
+                                             plain item in a menu that also has ticked ones, such as a reset entry,
+                                             keeps its label in the same line; a menu with no ticked item gets no gutter. -->
                                         <ui:SymbolIcon x:Name="Check" Grid.Column="0" Symbol="Checkmark16" FontSize="14"
                                                        Width="16" Margin="0,0,8,0" VerticalAlignment="Center"
                                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -149,16 +162,19 @@
                                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                     </Grid>
                                 </Border>
+                                <!-- Margin and offsets as on the main menu card, so the shadow is not cut off. -->
                                 <Popup x:Name="PART_Popup" Placement="Right" AllowsTransparency="True"
                                        Focusable="False" PopupAnimation="Fade"
+                                       HorizontalOffset="-4" VerticalOffset="-11"
                                        IsOpen="{TemplateBinding IsSubmenuOpen}">
                                     <Border Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
                                             BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                                            BorderThickness="1" CornerRadius="7" Padding="3" MinWidth="150">
+                                            BorderThickness="1" CornerRadius="7" Padding="3" MinWidth="150"
+                                            Margin="10,8,10,12">
                                         <Border.Effect>
-                                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.35" Direction="270"/>
+                                            <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.35" Direction="270"/>
                                         </Border.Effect>
-                                        <StackPanel IsItemsHost="True"/>
+                                        <StackPanel IsItemsHost="True" Grid.IsSharedSizeScope="True"/>
                                     </Border>
                                 </Popup>
                             </Grid>
