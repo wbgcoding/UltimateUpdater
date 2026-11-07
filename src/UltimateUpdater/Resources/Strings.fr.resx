@@ -2161,6 +2161,9 @@ Continuer avec les droits administrateur ?</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>Le Nettoyage de disque a duré plus de {0} minutes et a été arrêté.</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>Ignoré : des droits d'administrateur sont nécessaires.</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>La mise à jour sera installée une fois le travail en cours terminé.</value>
   </data>

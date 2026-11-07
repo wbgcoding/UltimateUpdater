@@ -2161,6 +2161,9 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>Schijfopruiming duurde langer dan {0} minuten en is beëindigd.</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>Overgeslagen: hiervoor zijn beheerdersrechten nodig.</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>De update wordt geïnstalleerd zodra het lopende werk klaar is.</value>
   </data>

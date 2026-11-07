@@ -2161,6 +2161,9 @@ Continuar com direitos de administrador?</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>A Limpeza de Disco demorou mais de {0} minutos e foi encerrada.</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>Ignorado: são necessários direitos de administrador.</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>A atualização será instalada quando o trabalho em curso terminar.</value>
   </data>

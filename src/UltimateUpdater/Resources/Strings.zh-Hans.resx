@@ -2161,6 +2161,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>磁盘清理耗时超过 {0} 分钟，已被结束。</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>已跳过：需要管理员权限。</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>正在运行的任务完成后，将自动安装更新。</value>
   </data>

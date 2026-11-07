@@ -16,7 +16,14 @@ namespace UltimateUpdater.Services.Cleanup;
 /// figures that was refused (no access, or the safety check said no) rather than in use: without admin
 /// rights that is most of a system folder, and calling it "in use" would send the user hunting for a
 /// program that holds nothing.
+/// <paramref name="NeedsAdmin"/> is true when the target was not started at all because only an
+/// administrator can run it and this process is not one: the row must say so, never read "done".
 /// </summary>
 public readonly record struct CleanupOutcome(
     long FreedBytes, int DeletedFiles, int SkippedFiles, long SkippedBytes = 0, bool WasStopped = false,
-    string? DriverBackupFolderName = null, bool TimedOut = false, int ProtectedFiles = 0, long ProtectedBytes = 0);
+    string? DriverBackupFolderName = null, bool TimedOut = false, int ProtectedFiles = 0, long ProtectedBytes = 0,
+    bool NeedsAdmin = false)
+{
+    /// <summary>A target that was never started because it needs administrator rights.</summary>
+    public static CleanupOutcome AdminRequired => new(0, 0, 0, NeedsAdmin: true);
+}

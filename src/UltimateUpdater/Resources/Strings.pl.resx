@@ -2161,6 +2161,9 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>Oczyszczanie dysku trwało dłużej niż {0} minut i zostało zakończone.</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>Pominięto: wymagane są uprawnienia administratora.</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>Aktualizacja zostanie zainstalowana po zakończeniu trwającej pracy.</value>
   </data>

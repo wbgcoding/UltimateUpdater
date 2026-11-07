@@ -708,11 +708,21 @@ public partial class CleanupViewModel
 
         string? failureText = null;
 
-        Task<CleanupOutcome> CleanLocallyAsync() => _service.CleanAsync(
+        // A target only an administrator can run is never started here unelevated: it would end at once
+        // (DISM exit 740) and read "done, 0 B". It is skipped and the row says why.
+        Task<CleanupOutcome> CleanLocallyAsync() => CleanupService.SkipsWithoutAdmin(item.Target.Kind, ElevationService.IsElevated)
+            ? SkipForMissingAdmin()
+            : _service.CleanAsync(
             item.Target, progress, cancellationToken, _pause, _settings.Current.RegistryCleanup,
             item.SelectedLeftoverPaths, item.RegistryFindings, ExcludedPathsForRun(item), _recycleInsteadOfDeleteForRun,
             item.RecycleBinMinAgeDays, item.SelectedDriverDeviceInstanceIds, item.SelectedDriverPackageNames,
             item.SelectedOldPythonVersionPaths, item.ConfirmedEntryPathsForRun);
+
+        Task<CleanupOutcome> SkipForMissingAdmin()
+        {
+            _logging.Warn($"Cleanup: '{item.Target.Id}' skipped, admin rights are required.");
+            return Task.FromResult(CleanupOutcome.AdminRequired);
+        }
 
         try
         {
@@ -782,7 +792,13 @@ public partial class CleanupViewModel
             // WasStopped (Disk Cleanup only, see CleanupOutcome) means this target swallowed its own
             // cancellation rather than letting it propagate: it must not read "done" for a run the user
             // just stopped.
-            if (outcome.TimedOut)
+            if (outcome.NeedsAdmin)
+            {
+                // Never started: only an administrator can run it, and no helper took it over.
+                item.RunState = CleanupTargetState.Skipped;
+                failureText = Loc["CleanupNeedsAdminSkipped"];
+            }
+            else if (outcome.TimedOut)
             {
                 // Ended by the time limit: neither done nor stopped by the user, so the row says why it
                 // freed nothing.

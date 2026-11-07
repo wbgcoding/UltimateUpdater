@@ -2161,6 +2161,9 @@ Continue with admin rights?</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>Disk Cleanup took longer than {0} minutes and was ended.</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>Skipped: this needs admin rights.</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>The update will be installed once the running work has finished.</value>
   </data>

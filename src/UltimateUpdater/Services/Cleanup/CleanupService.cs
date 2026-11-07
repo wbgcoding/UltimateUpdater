@@ -122,6 +122,16 @@ public class CleanupService(LoggingService logging)
         }, cancellationToken);
 
     /// <summary>
+    /// Kinds that only an administrator can run at all: started unelevated, DISM and sfc end at once with
+    /// exit code 740, defrag and pnputil refuse, and Disk Cleanup cannot write its profile. The cleanup
+    /// dialog skips and flags such a target instead of reporting it done with nothing freed. Everything
+    /// else frees what it can without admin and still runs.
+    /// </summary>
+    internal static bool SkipsWithoutAdmin(CleanupKind kind, bool processElevated) =>
+        !processElevated && kind is CleanupKind.SystemRepair or CleanupKind.Defragmentation
+            or CleanupKind.DriverCleanup or CleanupKind.DiskCleanup;
+
+    /// <summary>
     /// The exact command line <see cref="AnalyzeComponentStoreAsync"/> runs, split out so a test can
     /// assert on it without launching DISM. <c>/English</c> forces DISM's message text to English on any
     /// Windows display language; the German labels <see cref="ComponentStoreAnalysisParser"/> carries are

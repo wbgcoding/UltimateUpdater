@@ -2161,6 +2161,9 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>Die Datenträgerbereinigung dauerte länger als {0} Minuten und wurde beendet.</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>Übersprungen: dafür sind Admin-Rechte nötig.</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>Das Update wird installiert, sobald die laufende Arbeit fertig ist.</value>
   </data>

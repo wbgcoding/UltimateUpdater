@@ -2161,6 +2161,9 @@ Esto no se puede deshacer.</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>El Liberador de espacio en disco tardó más de {0} minutos y se finalizó.</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>Omitido: requiere derechos de administrador.</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>La actualización se instalará cuando termine el trabajo en curso.</value>
   </data>

@@ -2161,6 +2161,9 @@ Continuare con privilegi di amministratore?</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>La Pulizia disco ha impiegato più di {0} minuti ed è stata terminata.</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>Saltato: servono i diritti di amministratore.</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>L'aggiornamento verrà installato al termine del lavoro in corso.</value>
   </data>

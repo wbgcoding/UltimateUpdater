@@ -2161,6 +2161,9 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>Disk Temizleme {0} dakikadan uzun sürdü ve sonlandırıldı.</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>Atlandı: yönetici hakları gerekiyor.</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>Güncelleme, çalışan işlem bittiğinde yüklenecek.</value>
   </data>

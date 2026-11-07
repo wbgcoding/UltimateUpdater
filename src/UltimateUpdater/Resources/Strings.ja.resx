@@ -2161,6 +2161,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>ディスク クリーンアップが{0}分を超えたため、終了しました。</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>スキップ: 管理者権限が必要です。</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>実行中の処理が終わり次第、更新をインストールします。</value>
   </data>

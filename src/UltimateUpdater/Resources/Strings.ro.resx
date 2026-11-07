@@ -2161,6 +2161,9 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupDiskCleanupTimedOut" xml:space="preserve">
     <value>Curățarea discului a durat mai mult de {0} de minute și a fost încheiată.</value>
   </data>
+  <data name="CleanupNeedsAdminSkipped" xml:space="preserve">
+    <value>Omis: sunt necesare drepturi de administrator.</value>
+  </data>
   <data name="SelfUpdateWaitingForWork" xml:space="preserve">
     <value>Actualizarea va fi instalată după ce se termină lucrul în curs.</value>
   </data>
