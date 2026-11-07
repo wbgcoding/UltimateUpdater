@@ -59,8 +59,6 @@ internal static class VerifiedDelete
     private const int ErrorNotSupported = 50;
     private const int ErrorInvalidParameter = 87;
 
-    /// <summary>The Ex disposition call is unavailable on this volume or build (FAT and exFAT, old
-    /// Windows): only then is the older call tried. Any other failure stays a failure.</summary>
     /// <summary>Only the read-only bit goes; hidden, system and the other flags stay as they were. The Normal
     /// value is the "no attribute" spelling the call needs when nothing else is left.</summary>
     internal static uint WithoutReadOnly(uint attributes)
@@ -69,6 +67,8 @@ internal static class VerifiedDelete
         return remaining == 0 ? AttributeNormal : remaining;
     }
 
+    /// <summary>The Ex disposition call is unavailable on this volume or build (FAT and exFAT, old
+    /// Windows): only then is the older call tried. Any other failure stays a failure.</summary>
     internal static bool ShouldFallBack(int win32Error) =>
         win32Error is ErrorInvalidParameter or ErrorNotSupported or ErrorInvalidFunction;
 
