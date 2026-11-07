@@ -504,27 +504,18 @@ public sealed class InstallQueue
             // outright once the whole run was stopped: a cancellation is already unwinding every row the
             // same way, retrying into that would just fight the shutdown.
             if (!cancellationToken.IsCancellationRequested)
+            {
+                // A result still waiting on its delayed look-up is not settled yet; the retry round must not
+                // start next to an install whose outcome (and lane) is still open.
+                await AwaitInProcessRechecksAsync(run);
                 await RunAutomaticRetryRoundAsync(action, reported, throttle, run, cancellationToken);
+            }
         }
         finally
         {
             // Results still waiting on their delayed look-up are settled first (a stop ends each wait at once),
             // so the unreported-rows pass below never closes a row whose install actually succeeded.
-            Task[] rechecks;
-            lock (_queueLock)
-            {
-                rechecks = [.. run.InProcessRechecks];
-                run.InProcessRechecks.Clear();
-            }
-
-            try
-            {
-                await Task.WhenAll(rechecks);
-            }
-            catch (Exception ex)
-            {
-                _logging.Warn($"Delayed version re-check ended with an error: {ex.Message}");
-            }
+            await AwaitInProcessRechecksAsync(run);
 
             lock (_queueLock)
                 _activeRuns.Remove(run);
@@ -540,6 +531,27 @@ public sealed class InstallQueue
             // the rows are closed out without one. An item the user removed from the queue is neither: it
             // never ran because it was deliberately taken out, not because the batch stopped.
             FailRemaining(items, action, reported, reason, cancelled, run);
+        }
+    }
+
+    /// <summary>Waits for the delayed re-checks of in-process results started so far and forgets them; ones
+    /// started later (by the retry round) are collected by the next call.</summary>
+    private async Task AwaitInProcessRechecksAsync(RunState run)
+    {
+        Task[] rechecks;
+        lock (_queueLock)
+        {
+            rechecks = [.. run.InProcessRechecks];
+            run.InProcessRechecks.Clear();
+        }
+
+        try
+        {
+            await Task.WhenAll(rechecks);
+        }
+        catch (Exception ex)
+        {
+            _logging.Warn($"Delayed version re-check ended with an error: {ex.Message}");
         }
     }
 
