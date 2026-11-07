@@ -237,4 +237,23 @@ public class InstallerScriptTests
         Assert.Contains("goto :error", branch[release..warning]);
         Assert.Contains("goto :releasesigndone", branch[warning..]);
     }
+
+    [Fact]
+    public void The_installer_block_never_expands_the_compiler_path_unquoted_inside_parentheses()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "UltimateUpdater.slnx")))
+            directory = directory.Parent;
+        var build = File.ReadAllText(Path.Combine(directory!.FullName, "build.bat")).Replace("\r\n", "\n");
+
+        // A machine-wide Inno path contains "(x86)"; its ")" ends a parenthesised block at parse time.
+        var start = build.IndexOf("if not defined ISCC (", StringComparison.Ordinal);
+        Assert.True(start >= 0, "the installer block is gone");
+        var block = build[start..build.IndexOf("rem And the installer itself", start, StringComparison.Ordinal)];
+        foreach (var line in block.Split('\n'))
+        {
+            var bare = line.Replace("\"%ISCC%\"", "");
+            Assert.False(bare.Contains("%ISCC%") || bare.Contains("%PF86%"), "unquoted expansion: " + line.Trim());
+        }
+    }
 }

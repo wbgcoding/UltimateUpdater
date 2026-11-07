@@ -246,7 +246,7 @@ goto :error
 
 :havesigntool
 if not defined WU_SIGN_TIMESTAMP_URL set "WU_SIGN_TIMESTAMP_URL=http://timestamp.digicert.com"
-echo Using %SIGNTOOL%
+echo Using "%SIGNTOOL%"
 rem The staged executables are signed BEFORE the installer is built, so the installer carries signed
 rem payloads rather than wrapping unsigned ones.
 "%SIGNTOOL%" sign /sha1 %WU_SIGN_THUMBPRINT% /fd SHA256 /td SHA256 /tr "%WU_SIGN_TIMESTAMP_URL%" "%STAGE%\win-x64\UltimateUpdater.exe" "%STAGE%\win-arm64\UltimateUpdater.exe" "%STAGE%\installer-win-x64\UltimateUpdater.exe" "%STAGE%\installer-win-arm64\UltimateUpdater.exe"
@@ -277,7 +277,7 @@ if not defined ISCC if exist "%ProgramFiles%\Inno Setup 6\ISCC.exe" set "ISCC=%P
 if not defined ISCC (
     echo WARNING: Inno Setup ^(ISCC.exe^) not found - skipping the installer.
 ) else (
-    echo Using %ISCC%
+    echo Using "%ISCC%"
     rem Compiled outside dist and moved in finished: anything that opens a new exe the moment it
     rem appears in dist (an open Explorer window reading its icon, a sync client) held the half
     rem written Setup and failed the compile with "file in use".
