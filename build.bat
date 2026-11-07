@@ -66,6 +66,8 @@ echo.
 echo === ui snapshots + live style checks (not a gate, in the background) ===
 start "" /b cmd /c ""%ROOT%tools\run-snapshots.cmd" "%ROOT%tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj" %CONFIG% "%SNAP%-1.log" "%SNAP%-1.rc" 1"
 start "" /b cmd /c ""%ROOT%tools\run-snapshots.cmd" "%ROOT%tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj" %CONFIG% "%SNAP%-2.log" "%SNAP%-2.rc" 2"
+set "SNAPSTARTED=1"
+set "SNAPWAITS=0"
 
 echo.
 echo === test ===
@@ -93,6 +95,9 @@ echo === waiting for the ui snapshots ===
 if not exist "%SNAP%-1.rc" goto :snapshots_sleep
 if exist "%SNAP%-2.rc" goto :snapshots_read
 :snapshots_sleep
+rem Bounded (about 15 minutes): a job that died without writing its .rc must not hang the build.
+set /a SNAPWAITS+=1
+if !SNAPWAITS! gtr 450 goto :snapshots_warn
 ping -n 3 127.0.0.1 >nul
 goto :snapshots_wait
 :snapshots_read
@@ -346,6 +351,19 @@ endlocal
 exit /b 0
 
 :error
+rem The background snapshot jobs hold the test output DLLs and would write their .rc into the next
+rem run, so a failed build waits for them (bounded) instead of leaving them behind.
+if not defined SNAPSTARTED goto :error_report
+echo.
+echo Waiting for the background UI snapshot run to end...
+set "SNAPWAITS=0"
+:error_wait
+if exist "%SNAP%-1.rc" if exist "%SNAP%-2.rc" goto :error_report
+set /a SNAPWAITS+=1
+if !SNAPWAITS! gtr 450 goto :error_report
+ping -n 3 127.0.0.1 >nul
+goto :error_wait
+:error_report
 echo.
 echo BUILD FAILED
 rem Keep a double-clicked window open on failure so the error stays readable (INTERACTIVE, set at the
