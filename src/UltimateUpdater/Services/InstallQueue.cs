@@ -172,6 +172,10 @@ public sealed class InstallQueue
     /// already registered.</summary>
     internal Action<UpdateItem>? AfterItemTakenForTest { get; set; }
 
+    /// <summary>Test seam: runs right after an admin batch took its rows out of the pending list, before the
+    /// restore point decision, the settings flush and the elevation prompt.</summary>
+    internal Action<IReadOnlyList<UpdateItem>>? AfterAdminRowsTakenForTest { get; set; }
+
     /// <summary>Test seam: whether the calling thread holds the lock that guards the shared reported set.</summary>
     internal bool HoldsReportLock => Monitor.IsEntered(_reportLock);
 
@@ -952,15 +956,22 @@ public sealed class InstallQueue
         // right before this batch is built: this now starts alongside the user-scope call rather than
         // after it, but a queue-panel reorder or removal can still land in the brief window
         // between this run being registered and this line running.
+        // The handle is registered in the same step that takes the rows out of Pending: from here until the
+        // job is out, a stop on one of them can only be remembered by this handle and replayed once it is.
+        var jobHandle = new ElevatedJobHandle();
         lock (_queueLock)
         {
             var adminKeys = new HashSet<string>(items.Select(Key), StringComparer.OrdinalIgnoreCase);
             items = run.Pending.Where(i => adminKeys.Contains(Key(i))).ToList();
             run.Pending.RemoveAll(i => adminKeys.Contains(Key(i)));
+            if (items.Count > 0)
+                run.ElevatedHandle = jobHandle;
         }
 
         if (items.Count == 0)
             return;
+
+        AfterAdminRowsTakenForTest?.Invoke(items);
 
         // Same reset as the in-process path, per item, at the start of this batch (which is
         // also where a retry round's own batch begins).
@@ -1015,11 +1026,6 @@ public sealed class InstallQueue
 
         // The prompt, if this is the first admin job of the session. After that the same elevated helper
         // takes every later batch without asking again.
-        // Registered before the prompt: the rows are out of Pending by now and not yet with the helper, so a
-        // stop clicked while the prompt is open can only be remembered by this handle and replayed once the
-        // job is out.
-        var jobHandle = new ElevatedJobHandle();
-        run.ElevatedHandle = jobHandle;
         bool started;
         try
         {

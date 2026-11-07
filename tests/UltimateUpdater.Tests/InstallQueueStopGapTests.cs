@@ -209,4 +209,36 @@ public class InstallQueueStopGapTests
         workerEnd.Dispose();
         await run.WaitAsync(TimeSpan.FromSeconds(20));
     }
+
+    /// <summary>A stop that lands right after the admin batch took its rows out of the pending list, before
+    /// the prompt is even shown, must reach the helper as well.</summary>
+    [Fact]
+    public async Task A_stop_right_after_the_admin_batch_took_its_rows_is_sent_to_the_helper()
+    {
+        var host = new ElevatedHost(new LoggingService())
+        {
+            EnsureStartedOverrideForTest = _ => Task.FromResult(true),
+        };
+        using var workerToApp = new AnonymousPipeServerStream(PipeDirection.In);
+        using var workerEnd = new AnonymousPipeClientStream(PipeDirection.Out, workerToApp.ClientSafePipeHandle);
+        var written = new RecordingStream();
+        host.AttachSessionForTest(
+            new StreamReader(workerToApp, Encoding.UTF8),
+            new StreamWriter(written, new UTF8Encoding(false)) { AutoFlush = true });
+        var queue = Create(host);
+        queue.AfterAdminRowsTakenForTest = items => queue.CancelItem(items[0].SourceId, items[0].Id);
+
+        var run = queue.RunAsync([Item("x", "winget")], CancellationToken.None);
+
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (DateTime.UtcNow < deadline && !written.Written.Contains("cancel-item", StringComparison.Ordinal))
+            await Task.Delay(20);
+
+        var lines = written.Written.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Contains("\"kind\":\"install\"", lines[0]);
+        Assert.Contains(lines.Skip(1), line => line.Contains("\"action\":\"cancel-item\"") && line.Contains("\"itemId\":\"x\""));
+
+        workerEnd.Dispose();
+        await run.WaitAsync(TimeSpan.FromSeconds(20));
+    }
 }
