@@ -1,3 +1,4 @@
+using System.IO;
 using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
@@ -68,5 +69,25 @@ public class TrustedBinaryCatalogLoopTests
             released.Add));
 
         Assert.Equal([(IntPtr)7], released);
+    }
+
+    /// <summary>The real enumeration walked past the first catalog of a system file: the previous context goes
+    /// back to the API as a pointer to it, so the walk ends cleanly instead of reading the context as a handle.</summary>
+    [Fact]
+    public void The_real_enumeration_walks_every_catalog_of_a_system_file()
+    {
+        var cmd = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
+        var seen = new List<IntPtr>();
+
+        var result = TrustedBinary.IsCatalogSigned(cmd, pinned: null, verifyOverride: handle =>
+        {
+            seen.Add(handle);
+            return false;
+        });
+
+        Assert.False(result);
+        Assert.NotEmpty(seen);
+        Assert.DoesNotContain(IntPtr.Zero, seen);
+        Assert.True(seen.Count < 1000);
     }
 }

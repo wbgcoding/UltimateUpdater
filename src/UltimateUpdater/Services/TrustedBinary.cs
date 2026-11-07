@@ -96,7 +96,7 @@ internal static class TrustedBinary
 
     [DllImport("wintrust.dll", SetLastError = true)]
     private static extern IntPtr CryptCATAdminEnumCatalogFromHash(
-        IntPtr catAdmin, byte[] hash, uint hashSize, uint flags, IntPtr previousCatInfo);
+        IntPtr catAdmin, byte[] hash, uint hashSize, uint flags, ref IntPtr previousCatInfo);
 
     [DllImport("wintrust.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -133,7 +133,9 @@ internal static class TrustedBinary
         }
     }
 
-    private static bool IsCatalogSigned(string path, FileStream? pinned)
+    /// <param name="verifyOverride">Test seam: judges each catalog context instead of WinVerifyTrust, so a test
+    /// can walk the real enumeration of a system file past its first catalog.</param>
+    internal static bool IsCatalogSigned(string path, FileStream? pinned, Func<IntPtr, bool>? verifyOverride = null)
     {
         if (!CryptCATAdminAcquireContext2(out var catAdmin, IntPtr.Zero, "SHA256", IntPtr.Zero, 0))
             return false;
@@ -157,8 +159,14 @@ internal static class TrustedBinary
             // A hash can sit in several catalogs (an older, superseded one first), so every one is tried
             // until one verifies. Not in any catalog: the caller falls back to the embedded signature.
             return AnyCatalogVerifies(
-                previous => CryptCATAdminEnumCatalogFromHash(catAdmin, hash, hashSize, 0, previous),
-                catInfo => VerifyCatalog(catInfo, catAdmin, hash, hashSize, path, file),
+                previous =>
+                {
+                    // The API takes a POINTER to the previous handle; passing the handle itself would make it
+                    // read the context's own memory as a handle.
+                    var previousCatInfo = previous;
+                    return CryptCATAdminEnumCatalogFromHash(catAdmin, hash, hashSize, 0, ref previousCatInfo);
+                },
+                verifyOverride ?? (catInfo => VerifyCatalog(catInfo, catAdmin, hash, hashSize, path, file)),
                 catInfo => CryptCATAdminReleaseCatalogContext(catAdmin, catInfo, 0));
         }
         finally
