@@ -90,7 +90,7 @@ public partial class CleanupViewModel
                         result = ApplyComponentStoreMessage(message);
                 },
                 CancellationToken.None,
-                allowStart: false);
+                allowStart: MayStartHelperQuietly(ElevationService.IsElevated));
 
             // The worker session itself could not be reached at all (never started, or died mid-call): a
             // silent fallback to Unknown here would show the same quiet dashes a genuinely empty DISM run
@@ -125,6 +125,10 @@ public partial class CleanupViewModel
         message.ComponentStoreBackupsBytes,
         message.ComponentStoreCleanupRecommended,
         message.ComponentStoreTimedOut);
+
+    /// <summary>An app started with administrator rights still measures through the helper, and starting
+    /// it from there raises no prompt; refusing to start it left the card empty for good.</summary>
+    internal static bool MayStartHelperQuietly(bool processElevated) => processElevated;
 
     /// <summary>Whether the analysis can reach an elevated session without asking anything: the process
     /// itself is elevated, or the app-wide helper already runs.</summary>
