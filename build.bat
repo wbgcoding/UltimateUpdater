@@ -352,7 +352,7 @@ set "BSART=dist\UltimateUpdater.exe"
 for %%f in ("%DIST%\*.exe" "%DIST%\*.sig" "%DIST%\SHA256SUMS.txt") do if /i not "%%~nxf"=="UltimateUpdater.exe" set "BSART=!BSART!,dist\%%~nxf"
 if exist "%BS%" powershell -NoProfile -ExecutionPolicy RemoteSigned -File "%BS%" -Save -Project "%~dp0." -Key "%BSKEY%" -Extra "%BSEXTRA%" -Artifact "!BSART!" >nul 2>&1
 echo BUILD OK - artifacts are in dist\.
-if defined INTERACTIVE timeout /t 10
+if defined INTERACTIVE "%SystemRoot%\System32\timeout.exe" /t 10
 endlocal
 exit /b 0
 
