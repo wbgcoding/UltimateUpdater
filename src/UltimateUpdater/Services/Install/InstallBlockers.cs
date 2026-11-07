@@ -77,16 +77,17 @@ public sealed class InstallBlockers
     private readonly Func<IReadOnlyList<string>> _runningProcessNames;
     private readonly InstallLocationResolver? _locationResolver;
     private readonly Func<string, IReadOnlyList<string>> _topLevelExecutableNames;
-    private readonly Func<string, IReadOnlyList<string>> _imagePathsOf;
+    private readonly Func<string, IReadOnlyList<string?>> _imagePathsOf;
     private readonly Func<string?> _gitInstallFolder;
 
-    /// <param name="imagePathsOf">Process name (no ".exe") to the full image path of every running instance.</param>
+    /// <param name="imagePathsOf">Process name (no ".exe") to the full image path of every running instance;
+    /// null for an instance whose image cannot be read.</param>
     /// <param name="gitInstallFolder">Git's install folder, or null when it cannot be found.</param>
     public InstallBlockers(
         InstallLocationResolver? locationResolver = null,
         Func<IReadOnlyList<string>>? runningProcessNames = null,
         Func<string, IReadOnlyList<string>>? topLevelExecutableNames = null,
-        Func<string, IReadOnlyList<string>>? imagePathsOf = null,
+        Func<string, IReadOnlyList<string?>>? imagePathsOf = null,
         Func<string?>? gitInstallFolder = null)
     {
         _locationResolver = locationResolver;
@@ -96,24 +97,25 @@ public sealed class InstallBlockers
         _gitInstallFolder = gitInstallFolder ?? FindGitInstallFolder;
     }
 
-    private static IReadOnlyList<string> DefaultImagePathsOf(string processName)
+    private static IReadOnlyList<string?> DefaultImagePathsOf(string processName)
     {
         var processes = Array.Empty<System.Diagnostics.Process>();
         try
         {
             processes = System.Diagnostics.Process.GetProcessesByName(processName);
-            var paths = new List<string>(processes.Length);
+            var paths = new List<string?>(processes.Length);
             foreach (var process in processes)
             {
                 try
                 {
-                    if (process.MainModule?.FileName is { Length: > 0 } path)
-                        paths.Add(path);
+                    paths.Add(process.MainModule?.FileName is { Length: > 0 } path ? path : null);
                 }
                 catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception
                                                or NotSupportedException)
                 {
-                    // An elevated or protected process cannot be read; it cannot be a shell of this user either.
+                    // An elevated or protected process cannot be read: kept as an unknown image, which the
+                    // generic rule treats as possibly in the way and the Git rule as not Git's.
+                    paths.Add(null);
                 }
             }
 
@@ -121,7 +123,7 @@ public sealed class InstallBlockers
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
-            return [];
+            return [null];
         }
         finally
         {
@@ -163,6 +165,35 @@ public sealed class InstallBlockers
         return Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Whether a running program of this name can be one that sits in <paramref name="directory"/>. A
+    /// same-named program from another folder (a Python 3.11 script while 3.12 updates) does not hold these
+    /// files. Anything unclear counts as in the way: no instance found any more, an unreadable image or an
+    /// unusable path, because a missed blocker fails the install while a needless one only asks.</summary>
+    private bool MayHoldFilesIn(string processName, string directory)
+    {
+        var paths = _imagePathsOf(processName);
+        if (paths.Count == 0)
+            return true;
+
+        foreach (var path in paths)
+        {
+            if (path is null)
+                return true;
+
+            try
+            {
+                if (IsInside(path, directory))
+                    return true;
+            }
+            catch (ArgumentException)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>One entry per running instance of these names whose image lies in Git's install folder. A
     /// shell from anywhere else (Windows' own OpenSSH, another Git copy) does not hold Git's files. With no
     /// known install folder nothing counts, so an unfindable Git is installed rather than skipped for ever.</summary>
@@ -176,6 +207,9 @@ public sealed class InstallBlockers
         {
             foreach (var path in _imagePathsOf(name))
             {
+                if (path is null)
+                    continue;
+
                 try
                 {
                     if (IsInside(path, folder))
@@ -279,7 +313,9 @@ public sealed class InstallBlockers
         if (_locationResolver?.Resolve(item) is { } directory)
         {
             var exeNames = _topLevelExecutableNames(directory);
-            var matches = exeNames.Where(name => runningSet.Contains(name) && !NeverClose.Contains(name)).ToList();
+            var matches = exeNames
+                .Where(name => runningSet.Contains(name) && !NeverClose.Contains(name) && MayHoldFilesIn(name, directory))
+                .ToList();
             if (matches.Count > 0)
                 return new BlockedInstall(item, item.Name, matches);
         }
