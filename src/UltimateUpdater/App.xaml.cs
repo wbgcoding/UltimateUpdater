@@ -603,9 +603,31 @@ public partial class App : Application
     /// the app).</summary>
     protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
     {
+        // WPF's own hidden window also receives an installer's close request (it arrives as a session-end
+        // query) and shuts the app down unless this cancels it. A busy app refuses that request like the
+        // installer listener does; only a real logoff or shutdown is let through.
+        if (ShouldRefuseSessionEnd(_mainViewModel?.WorkIsRunning == true, SessionReallyEnding()))
+        {
+            e.Cancel = true;
+            LogRefusedCloseRequest();
+            return;
+        }
+
         _isExiting = true;
         base.OnSessionEnding(e);
     }
+
+    internal static bool ShouldRefuseSessionEnd(bool workRunning, bool sessionReallyEnding) =>
+        workRunning && !sessionReallyEnding;
+
+    private const int SmShuttingDown = 0x2000;
+
+    [DllImport("user32.dll")]
+    private static extern int GetSystemMetrics(int index);
+
+    /// <summary>Set by Windows only while the session itself is ending; a Restart Manager close request
+    /// from an installer leaves it clear.</summary>
+    private static bool SessionReallyEnding() => GetSystemMetrics(SmShuttingDown) != 0;
 
     /// <summary>Two things the installer relies on: it can see whether work is running (a mutex that exists
     /// exactly then), and it can ask the app to close even when the app only hides on "close". The close
