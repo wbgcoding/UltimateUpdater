@@ -1167,17 +1167,17 @@
                                              glyph), just smaller, a name alone was hard to place at a glance
                                              in a fast-moving queue. -->
                                         <Grid Grid.Column="1" Width="22" Height="22" Margin="0,0,10,0" VerticalAlignment="Center">
-                                            <Border CornerRadius="4" Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                            <Border CornerRadius="4" Background="{Binding TileBackground}"
                                                     Visibility="{Binding UsesTile, Converter={StaticResource BoolToVisibility}}">
                                                 <Grid>
                                                     <TextBlock Text="{Binding InitialLetter}" FontSize="11" FontWeight="SemiBold"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
                                                                Visibility="{Binding UsesLetterTile, Converter={StaticResource BoolToVisibility}}"/>
-                                                    <ui:SymbolIcon Symbol="Box24" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                    <ui:SymbolIcon Symbol="Box24" FontSize="12" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                    Visibility="{Binding UsesGlyphTile, Converter={StaticResource BoolToVisibility}}"/>
-                                                    <Path Data="{Binding BrandGeometry}" Fill="{DynamicResource TextFillColorSecondaryBrush}" Stretch="Uniform"
+                                                    <Path Data="{Binding BrandGeometry}" Fill="{Binding BrandBrush}" Stretch="Uniform"
                                                           Width="12" Height="12"
                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
                                                           Visibility="{Binding UsesBrandTile, Converter={StaticResource BoolToVisibility}}"/>
@@ -1857,15 +1857,15 @@
                                     <!-- Fallback only: it keeps the gutter from looking ragged when no icon
                                          resolves, and it disappears the moment a real one does, a round
                                          app icon otherwise showed the square tile through its corners. -->
-                                    <Border CornerRadius="4" Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                    <Border CornerRadius="4" Background="{Binding TileBackground}"
                                             Visibility="{Binding UsesTile, Converter={StaticResource BoolToVisibility}}">
                                         <Grid>
                                             <TextBlock Text="{Binding InitialLetter}" FontSize="12" FontWeight="SemiBold"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
                                                        Visibility="{Binding UsesLetterTile, Converter={StaticResource BoolToVisibility}}"/>
 
-                                            <ui:SymbolIcon FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                            <ui:SymbolIcon FontSize="13" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                                            Visibility="{Binding UsesGlyphTile, Converter={StaticResource BoolToVisibility}}">
                                                 <ui:SymbolIcon.Style>
@@ -1893,9 +1893,8 @@
                                                 </ui:SymbolIcon.Style>
                                             </ui:SymbolIcon>
 
-                                            <!-- bundled brand mark: monochrome on the tile colour, so
-                                                 no row invents a brand colour of its own -->
-                                            <Path Data="{Binding BrandGeometry}" Fill="{DynamicResource TextFillColorSecondaryBrush}" Stretch="Uniform"
+                                            <!-- bundled brand mark in its brand colour (the text colour where that colour would vanish on the tile) -->
+                                            <Path Data="{Binding BrandGeometry}" Fill="{Binding BrandBrush}" Stretch="Uniform"
                                                   Width="14" Height="14"
                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
                                                   Visibility="{Binding UsesBrandTile, Converter={StaticResource BoolToVisibility}}"/>
@@ -2595,17 +2594,17 @@
                                 <StackPanel Orientation="Horizontal" ToolTip="{Binding Name}"
                                             AutomationProperties.Name="{Binding Name}">
                                     <Grid Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,7,0">
-                                        <Border CornerRadius="4" Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                        <Border CornerRadius="4" Background="{Binding TileBackground}"
                                                 Visibility="{Binding UsesTile, Converter={StaticResource BoolToVisibility}}">
                                             <Grid>
                                                 <TextBlock Text="{Binding InitialLetter}" FontSize="10" FontWeight="SemiBold"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
                                                            Visibility="{Binding UsesLetterTile, Converter={StaticResource BoolToVisibility}}"/>
-                                                <ui:SymbolIcon FontSize="11" Symbol="Box24" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                <ui:SymbolIcon FontSize="11" Symbol="Box24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                Visibility="{Binding UsesGlyphTile, Converter={StaticResource BoolToVisibility}}"/>
-                                                <Path Data="{Binding BrandGeometry}" Fill="{DynamicResource TextFillColorSecondaryBrush}" Stretch="Uniform"
+                                                <Path Data="{Binding BrandGeometry}" Fill="{Binding BrandBrush}" Stretch="Uniform"
                                                       Width="12" Height="12"
                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
                                                       Visibility="{Binding UsesBrandTile, Converter={StaticResource BoolToVisibility}}"/>

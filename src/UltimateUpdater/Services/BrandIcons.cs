@@ -1,7 +1,63 @@
 using System.Collections.Concurrent;
 using System.Windows.Media;
+using Color = System.Windows.Media.Color;
 
 namespace UltimateUpdater.Services;
+
+/// <summary>A bundled brand mark together with the colour its owner publishes for it.</summary>
+internal sealed record BrandMark(Geometry Geometry, Color Color)
+{
+    /// <summary>
+    /// WCAG minimum for a graphical object (not text): a mark below this against its tile reads as a
+    /// smudge, which is what a black logo on a dark tile or a pale one on a light tile would be.
+    /// </summary>
+    internal const double MinimumContrast = 3.0;
+
+    /// <summary>How far a brand colour may be deepened or lightened to become legible and still be itself.</summary>
+    private const double MaximumShift = 0.35;
+
+    /// <summary>A brand colour with less spread between its channels than this is grey for all purposes.</summary>
+    private const int MinimumChroma = 0x28;
+
+    /// <summary>
+    /// True when the brand colour stands out from the tile it is drawn on.
+    /// </summary>
+    internal static bool IsLegibleOn(Color mark, Color tile) =>
+        AccentPalette.Contrast(mark, tile) >= MinimumContrast;
+
+    /// <summary>
+    /// The colour to draw a mark in on <paramref name="tile"/>: the brand colour itself, or, where that
+    /// is too faint, the same hue deepened (on a light tile) or lightened (on a dark one) just far enough
+    /// to read, so orange stays orange in the light theme. Null when no such shade exists or the brand has
+    /// no hue to keep (black, near-black, white): the caller then uses the theme's text colour.
+    /// </summary>
+    internal static Color? LegibleOn(Color mark, Color tile)
+    {
+        if (IsLegibleOn(mark, tile))
+            return mark;
+
+        if (Math.Max(mark.R, Math.Max(mark.G, mark.B)) - Math.Min(mark.R, Math.Min(mark.G, mark.B)) < MinimumChroma)
+            return null;
+
+        var towardsDark = AccentPalette.Luminance(tile) > 0.5;
+        for (var shift = 0.05; shift <= MaximumShift + 0.001; shift += 0.05)
+        {
+            var shifted = AccentPalette.Shift(mark, towardsDark ? -shift : shift);
+            if (IsLegibleOn(shifted, tile))
+                return shifted;
+        }
+
+        return null;
+    }
+
+    /// <summary>The colour that results from <paramref name="top"/> painted over an opaque <paramref name="below"/>.</summary>
+    internal static Color Composite(Color top, Color below)
+    {
+        var alpha = top.A / 255.0;
+        byte Channel(byte over, byte under) => (byte)Math.Round((over * alpha) + (under * (1 - alpha)));
+        return Color.FromRgb(Channel(top.R, below.R), Channel(top.G, below.G), Channel(top.B, below.B));
+    }
+}
 
 /// <summary>
 /// Bundled brand marks, used only when the row has no icon of its own. Package-manager rows are the
@@ -13,7 +69,7 @@ namespace UltimateUpdater.Services;
 /// </summary>
 internal static class BrandIcons
 {
-    private static readonly ConcurrentDictionary<string, Geometry?> Cache = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, BrandMark?> Cache = new(StringComparer.Ordinal);
 
     /// <summary>Names that do not already equal their slug. Keys are normalised, as lookups are.</summary>
     private static readonly Dictionary<string, string> Aliases = new(StringComparer.Ordinal)
@@ -101,12 +157,13 @@ internal static class BrandIcons
     private static readonly string[] VendorWords =
         ["mozilla", "google", "microsoft", "oracle", "apache", "jetbrains", "valve", "gnu", "the"];
 
-    public static Geometry? Resolve(string? name, string? sourceId, string? itemId)
+    /// <summary>The mark and the brand's own colour for a row, found together so they can never disagree.</summary>
+    public static BrandMark? Resolve(string? name, string? sourceId, string? itemId)
     {
         foreach (var candidate in Candidates(name, sourceId, itemId))
         {
-            if (Lookup(candidate) is { } geometry)
-                return geometry;
+            if (Lookup(candidate) is { } mark)
+                return mark;
         }
 
         return null;
@@ -139,7 +196,7 @@ internal static class BrandIcons
         }
     }
 
-    private static Geometry? Lookup(string key)
+    private static BrandMark? Lookup(string key)
     {
         if (string.IsNullOrEmpty(key))
             return null;
@@ -147,12 +204,15 @@ internal static class BrandIcons
         return Cache.GetOrAdd(key, static candidate =>
         {
             var slug = Aliases.GetValueOrDefault(candidate, candidate);
-            if (!BrandIconData.Paths.TryGetValue(slug, out var data))
+            if (!BrandIconData.Paths.TryGetValue(slug, out var data) ||
+                !BrandIconData.Colors.TryGetValue(slug, out var hex))
+            {
                 return null;
+            }
 
             var geometry = Geometry.Parse(data);
             geometry.Freeze();   // crosses to the UI thread and is shared by every row that matches
-            return geometry;
+            return new BrandMark(geometry, (Color)System.Windows.Media.ColorConverter.ConvertFromString(hex));
         });
     }
 

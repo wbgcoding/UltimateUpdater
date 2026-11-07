@@ -3,6 +3,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
+using Color = System.Windows.Media.Color;
+using Colors = System.Windows.Media.Colors;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using UltimateUpdater.Models;
@@ -650,9 +652,82 @@ public partial class UpdateRowViewModel : ObservableObject
     /// installed application on disk to take one from at all. Never preferred over the real icon,
     /// the Image on top of the tile covers this whenever one was extracted.
     /// </summary>
-    public Geometry? BrandGeometry { get; }
+    public Geometry? BrandGeometry => _brandMark?.Geometry;
 
-    public bool UsesBrandTile => BrandGeometry is not null;
+    private readonly BrandMark? _brandMark;
+
+    public bool UsesBrandTile => _brandMark is not null;
+
+    /// <summary>
+    /// The mark in its brand's own colour, a deepened or lightened shade of it where the plain colour
+    /// would be too faint on the tile, or the theme's text colour where the brand has no hue to keep
+    /// (a black mark on the dark theme, a white one on the light theme). Resolved
+    /// by hand from the live theme, so <see cref="RefreshThemeBrushes"/> re-raises it on a theme switch.
+    /// </summary>
+    public Brush BrandBrush => BrandPaint().Mark;
+
+    /// <summary>
+    /// What the tile behind the icon is filled with. A brand mark gets a faint wash of its own colour, a
+    /// letter or category glyph a faint wash of the accent (the app's only hue besides the brands'), and a
+    /// mark that fell back to the text colour sits on the plain neutral tile.
+    /// </summary>
+    public Brush TileBackground => BrandPaint().Tile;
+
+    /// <summary>Opacity of the colour wash on a tile: enough to read as tinted, little enough to stay a quiet backdrop.</summary>
+    private const byte TileWashAlpha = 0x2A;
+
+    private (Brush Mark, Brush Tile) BrandPaint()
+    {
+        var neutralTile = Brush("ControlFillColorSecondaryBrush");
+        var text = Brush("TextFillColorPrimaryBrush");
+
+        // High contrast is the user's own colour scheme: no wash and no brand colour may compete with it.
+        if (System.Windows.SystemParameters.HighContrast)
+            return (text, neutralTile);
+
+        if (_brandMark is not { } mark)
+            return (text, Wash(ThemeColor("AccentFillColorDefaultBrush")) ?? neutralTile);
+
+        var surface = SurfaceColor();
+        var tileColor = surface is { } below
+            ? BrandMark.Composite(Color.FromArgb(TileWashAlpha, mark.Color.R, mark.Color.G, mark.Color.B), below)
+            : (Color?)null;
+
+        // Without a theme to measure against (no Application) the brand colour is simply used.
+        var drawn = tileColor is { } tile ? BrandMark.LegibleOn(mark.Color, tile) : mark.Color;
+        if (drawn is not { } drawColor)
+            return (text, neutralTile);
+
+        var brush = new SolidColorBrush(drawColor);
+        brush.Freeze();
+        return (brush, Wash(mark.Color)!);
+    }
+
+    private static Brush? Wash(Color? color)
+    {
+        if (color is not { } value)
+            return null;
+
+        var brush = new SolidColorBrush(Color.FromArgb(TileWashAlpha, value.R, value.G, value.B));
+        brush.Freeze();
+        return brush;
+    }
+
+    private static Color? ThemeColor(string resourceKey) =>
+        (System.Windows.Application.Current?.TryFindResource(resourceKey) as SolidColorBrush)?.Color;
+
+    /// <summary>
+    /// The colour the tile sits on in the current theme: the card fill, laid over the page when the card
+    /// is translucent (the light theme), over white when even the page is not a plain colour.
+    /// </summary>
+    private static Color? SurfaceColor()
+    {
+        if (ThemeColor("CardBackgroundFillColorDefaultBrush") is not { } card)
+            return null;
+
+        var page = ThemeColor("ApplicationBackgroundBrush") is { A: 255 } opaquePage ? opaquePage : Colors.White;
+        return BrandMark.Composite(card, page);
+    }
 
     /// <summary>
     /// The coloured tile is a stand-in, so it must not sit behind a real icon: most application icons
@@ -899,7 +974,7 @@ public partial class UpdateRowViewModel : ObservableObject
         _actions = actions;
         _onShowErrorDetail = onShowErrorDetail;
         _onShowChangelog = onShowChangelog;
-        BrandGeometry = BrandIcons.Resolve(item.Name, item.SourceId, item.Id);
+        _brandMark = BrandIcons.Resolve(item.Name, item.SourceId, item.Id);
 
         // Children are rows in their own right (same actions, so Start/Uninstall still work on a game),
         // they are just presented inside their parent instead of in the table. The ignore callback is handed
@@ -1031,6 +1106,8 @@ public partial class UpdateRowViewModel : ObservableObject
     public void RefreshThemeBrushes()
     {
         OnPropertyChanged(nameof(InstallStateBrush));
+        OnPropertyChanged(nameof(BrandBrush));
+        OnPropertyChanged(nameof(TileBackground));
 
         foreach (var child in Children)
             child.RefreshThemeBrushes();
