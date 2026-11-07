@@ -1,15 +1,16 @@
 # Bundled brand icons
 
-`src/UltimateUpdater/Services/BrandIconData.g.cs` contains monochrome brand marks taken from
+`src/UltimateUpdater/Services/BrandIconData.g.cs` contains brand marks, with each brand's published colour, taken from
 [Simple Icons](https://github.com/simple-icons/simple-icons), which publishes them under
-**CC0 1.0 Universal** (public domain dedication). Only the path data is embedded; no image files
+**CC0 1.0 Universal** (public domain dedication). Only the path data and the hex colour are embedded; no image files
 are shipped, and nothing is downloaded at runtime.
 
 Regenerate after changing the curated list in the script:
 
 ```
 git clone --depth 1 --filter=blob:none --sparse https://github.com/simple-icons/simple-icons.git
-python tools/make-brand-icons.py --icons simple-icons/icons --out src/UltimateUpdater/Services/BrandIconData.g.cs
+git -C simple-icons sparse-checkout set icons data
+python tools/make-brand-icons.py --icons simple-icons/icons --data simple-icons/data/simple-icons.json --out src/UltimateUpdater/Services/BrandIconData.g.cs
 ```
 
 ## Trademarks
