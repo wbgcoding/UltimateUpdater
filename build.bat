@@ -278,7 +278,13 @@ if not defined ISCC (
     echo WARNING: Inno Setup ^(ISCC.exe^) not found - skipping the installer.
 ) else (
     echo Using %ISCC%
-    "%ISCC%" /DAppVersion=%VERSION% "%ROOT%installer\UltimateUpdater.iss"
+    rem Compiled outside dist and moved in finished: anything that opens a new exe the moment it
+    rem appears in dist (an open Explorer window reading its icon, a sync client) held the half
+    rem written Setup and failed the compile with "file in use".
+    if exist "%ROOT%build\setup-out" rmdir /s /q "%ROOT%build\setup-out"
+    "%ISCC%" /O"%ROOT%build\setup-out" /DAppVersion=%VERSION% "%ROOT%installer\UltimateUpdater.iss"
+    if errorlevel 1 goto :error
+    move /y "%ROOT%build\setup-out\Setup-UltimateUpdater-%VERSION%.exe" "%DIST%\" >nul
     if errorlevel 1 goto :error
 )
 
