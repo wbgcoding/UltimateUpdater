@@ -836,7 +836,7 @@ public static class ProcessRunner
         if (value.Any(c => char.IsWhiteSpace(c) || c is '"' or '\'' or '`'))
             return false;
 
-        if (!allowCmdMetacharacters && value.Any(c => c is '&' or '|' or '<' or '>' or '^' or '%'))
+        if (!allowCmdMetacharacters && value.Any(c => c is '&' or '|' or '<' or '>' or '^' or '%' or '!' or '(' or ')'))
             return false;
 
         // An npm scope is the one legitimate leading '@'; "@angular/cli" is a real package name,

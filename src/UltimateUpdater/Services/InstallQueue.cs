@@ -1010,8 +1010,7 @@ public sealed class InstallQueue
             }).ToList(),
         };
 
-        // The elevated helper is a separate process: whatever it reads, it reads from disk. Settings the
-        // user changed a moment ago may still be sitting in the deferred save, so they go out first.
+        // Flushed so the file on disk is current for the next app start.
         _settings.Flush();
 
         // The prompt, if this is the first admin job of the session. After that the same elevated helper

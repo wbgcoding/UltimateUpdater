@@ -70,6 +70,9 @@ public class ArgumentSafetyTests
     [InlineData("pkg^")]
     [InlineData("%APPDATA%")]
     [InlineData("1.0.0&calc")]
+    [InlineData("!PATH!")]
+    [InlineData("pkg(x)")]
+    [InlineData("pkg)")]
     public void Cmd_metacharacters_are_rejected(string hostile)
     {
         Assert.False(ProcessRunner.IsSafePositionalArgument(hostile));
@@ -79,6 +82,7 @@ public class ArgumentSafetyTests
     [Theory]
     [InlineData("Publisher.R&D")]
     [InlineData("Publisher.100%Tool")]
+    [InlineData("Publisher.Tool(x)")]
     public void A_native_target_may_opt_out_of_the_cmd_check(string packageId)
     {
         Assert.True(ProcessRunner.IsSafePositionalArgument(packageId, allowCmdMetacharacters: true));

@@ -807,6 +807,12 @@ public static class ElevatedWorker
             control.Pause.Resume();
             control.Cancellation.Dispose();
 
+            // What a stop registered for an item that never started (and nothing else removed) is released
+            // with the job.
+            foreach (var itemCancellation in control.ItemCancellations.Values)
+                itemCancellation.Dispose();
+            control.ItemCancellations.Clear();
+
             if (held && lane is not null)
                 lane.Release();
 

@@ -631,6 +631,10 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
         // pipe is gone, a caller waiting in RunAsync must not depend on that race resolving in time.
         _sessionEnded.TrySetResult(false);
 
+        // Taken before the writer goes away: a control line being written right now must finish (or the pipe
+        // must break) rather than meet a disposed writer. Bounded, because a write stuck on a pipe nobody reads
+        // is exactly what disposing the pipe below ends.
+        var gateHeld = await _sendGate.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
         try
         {
             TryDispose(_writer);
@@ -669,6 +673,9 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
             _server = null;
             _worker = null;
             _pump = null;
+
+            if (gateHeld)
+                _sendGate.Release();
         }
     }
 

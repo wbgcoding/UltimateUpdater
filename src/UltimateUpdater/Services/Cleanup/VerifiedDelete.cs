@@ -61,6 +61,14 @@ internal static class VerifiedDelete
 
     /// <summary>The Ex disposition call is unavailable on this volume or build (FAT and exFAT, old
     /// Windows): only then is the older call tried. Any other failure stays a failure.</summary>
+    /// <summary>Only the read-only bit goes; hidden, system and the other flags stay as they were. The Normal
+    /// value is the "no attribute" spelling the call needs when nothing else is left.</summary>
+    internal static uint WithoutReadOnly(uint attributes)
+    {
+        var remaining = attributes & ~AttributeReadOnly;
+        return remaining == 0 ? AttributeNormal : remaining;
+    }
+
     internal static bool ShouldFallBack(int win32Error) =>
         win32Error is ErrorInvalidParameter or ErrorNotSupported or ErrorInvalidFunction;
 
@@ -155,7 +163,7 @@ internal static class VerifiedDelete
 
         if (GetFileInformationByHandle(handle, out var info) && (info.FileAttributes & AttributeReadOnly) != 0)
         {
-            var basic = new FileBasicInfo { FileAttributes = AttributeNormal };
+            var basic = new FileBasicInfo { FileAttributes = WithoutReadOnly(info.FileAttributes) };
             if (!SetFileInformationByHandle(handle, FileBasicInfoClass, ref basic, (uint)Marshal.SizeOf<FileBasicInfo>()))
                 throw ExceptionFor(Marshal.GetLastWin32Error(), path);
         }

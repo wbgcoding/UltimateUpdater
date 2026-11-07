@@ -209,4 +209,14 @@ public class CleanupVerifiedDeleteTests : IDisposable
         Assert.False(VerifiedDelete.IsInsideRoot(@"\?\C:\Temp\x", @"\?\C:\Temp\xother\a.tmp"));
         Assert.False(VerifiedDelete.IsInsideRoot(@"\?\C:\Temp\x", @"\?\C:\Temp\x"));
     }
+
+    [Theory]
+    [InlineData(0x1u, 0x80u)]
+    [InlineData(0x21u, 0x20u)]
+    [InlineData(0x7u, 0x6u)]
+    [InlineData(0x20u, 0x20u)]
+    public void Clearing_the_read_only_bit_keeps_every_other_attribute(uint before, uint expected)
+    {
+        Assert.Equal(expected, VerifiedDelete.WithoutReadOnly(before));
+    }
 }
