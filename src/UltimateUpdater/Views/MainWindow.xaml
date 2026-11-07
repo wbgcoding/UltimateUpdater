@@ -1540,7 +1540,8 @@
                     </ui:Button>
                 </Grid>
 
-                <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Margin="12,0,26,0"
+                <!-- Edge to edge, like the row lines below it: an inset line read as broken off. -->
+                <Border x:Name="ColumnHeaderLine" Grid.Row="0" Height="1" VerticalAlignment="Bottom" Margin="0"
                         Background="{DynamicResource CardStrokeColorDefaultBrush}"/>
 
                 <!-- Rows and the manual-open block below share this ONE reserved-lane ScrollViewer
@@ -1674,7 +1675,11 @@
                                                      code-behind (Loaded) rather than hardcoded: WPF regenerates
                                                      these groups as the table refreshes, and a hardcoded default
                                                      would silently reopen whatever the user had collapsed. -->
-                                                <Expander Margin="0,8,0,0" Padding="0" BorderThickness="0"
+                                                <!-- The same hairline the rows use closes every category, so
+                                                     categories are told apart like rows instead of by a gap. -->
+                                                <Border x:Name="GroupDivider" BorderThickness="0,0,0,1"
+                                                        BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+                                                <Expander Margin="0" Padding="0" BorderThickness="0"
                                                           Background="Transparent" HorizontalContentAlignment="Stretch"
                                                           Loaded="OnGroupExpanderLoaded"
                                                           Expanded="OnGroupExpanderToggled"
@@ -1718,7 +1723,7 @@
                                                     </Expander.Template>
                                                     <Expander.Header>
                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                                                                    MinHeight="28" Margin="12,0,0,0">
+                                                                    MinHeight="38" Margin="12,0,0,0">
                                                             <!-- Ticks or clears every installable row in this
                                                                  category at once. The command decides which of
                                                                  the two by what is already selected. -->
@@ -1780,22 +1785,24 @@
                                                                     </Style>
                                                                 </Path.Style>
                                                             </Path>
-                                                            <!-- A modern Fluent glyph per category, left of its name. -->
+                                                            <!-- A Fluent glyph per category, sized to fill the header's line
+                                                                 height next to the capitals. -->
                                                             <ui:SymbolIcon Symbol="{Binding Items[0].CategoryKey, Converter={StaticResource CategoryIcon}}"
-                                                                           FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"
-                                                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-                                                            <!-- A small muted capitals label with its count, not a heading: the
+                                                                           FontSize="20" Margin="0,0,9,0" VerticalAlignment="Center"
+                                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                            <!-- A muted capitals label with its count, not a heading: the
                                                                  rows under it are the content. -->
                                                             <TextBlock Text="{Binding Name, Converter={StaticResource UpperCase}}" FontWeight="SemiBold"
-                                                                       FontSize="11.5" VerticalAlignment="Center"
+                                                                       FontSize="13" VerticalAlignment="Center"
                                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                                             <TextBlock Text="{Binding ItemCount, StringFormat=' ({0})'}"
-                                                                       FontSize="11.5" VerticalAlignment="Center"
+                                                                       FontSize="13" VerticalAlignment="Center"
                                                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                                                         </StackPanel>
                                                     </Expander.Header>
-                                                    <ItemsPresenter Margin="0,2,0,0"/>
+                                                    <ItemsPresenter/>
                                                 </Expander>
+                                                </Border>
                                             </ControlTemplate>
                                         </Setter.Value>
                                     </Setter>
