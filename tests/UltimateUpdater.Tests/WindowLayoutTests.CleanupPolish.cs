@@ -108,4 +108,64 @@ public partial class WindowLayoutTests
             WpfHarness.OnUiThread(() => ApplyTheme("dark"));
         }
     }
+
+    /// <summary>
+    /// Every section header of the cleanup table carries its glyph between the checkbox and the title,
+    /// all on one vertical line and centred on the checkbox, in the ring's blue.
+    /// </summary>
+    [Theory]
+    [InlineData("dark")]
+    [InlineData("light")]
+    public void Cleanup_window_every_group_header_has_an_aligned_icon(string themeName)
+    {
+        try
+        {
+            RenderResult? result = null;
+            var boxes = 0;
+            var icons = new List<SymbolIcon>();
+            var lefts = new List<double>();
+            var centreOffsets = new List<double>();
+            var ordered = true;
+            var accent = true;
+
+            WpfHarness.OnUiThread(() =>
+            {
+                LocalizationService.Instance.Apply("en");
+                ApplyTheme(themeName);
+
+                var viewModel = NewMeasuredCleanupViewModel();
+                var window = new Views.CleanupWindow(viewModel) { DisplayPercent = 0 };
+                var content = (FrameworkElement)window.Content;
+                result = WpfHarness.RenderWindow(window, $"cleanup-group-icons-{themeName}", (int)window.Width, (int)window.Height);
+
+                var checkBoxes = FindAllByName<CheckBox>(content, "GroupCheckBox");
+                boxes = checkBoxes.Count;
+                icons = FindAllByName<SymbolIcon>(content, "GroupHeaderIcon");
+                var ring = ColourOf(FindByName<System.Windows.Shapes.Path>(content, "RingFill")!.Stroke);
+
+                foreach (var icon in icons)
+                {
+                    var box = checkBoxes.First(c => ReferenceEquals(VisualTreeHelper.GetParent(c), VisualTreeHelper.GetParent(icon)));
+                    var iconRect = icon.TransformToAncestor(content).TransformBounds(new Rect(0, 0, icon.ActualWidth, icon.ActualHeight));
+                    var boxRect = box.TransformToAncestor(content).TransformBounds(new Rect(0, 0, box.ActualWidth, box.ActualHeight));
+                    lefts.Add(iconRect.Left);
+                    centreOffsets.Add((iconRect.Top + iconRect.Height / 2) - (boxRect.Top + boxRect.Height / 2));
+                    ordered &= iconRect.Left >= boxRect.Right - 0.5;
+                    accent &= ColourOf(icon.Foreground) == ring;
+                }
+            });
+
+            AssertRendered(result);
+            Assert.True(boxes >= 3, $"expected several group headers, found {boxes}");
+            Assert.Equal(boxes, icons.Count);
+            Assert.True(ordered, "an icon sits left of its checkbox's right edge");
+            Assert.True(accent, "a group icon is not in the ring colour");
+            Assert.All(lefts, x => Assert.Equal(lefts[0], x, 0.5));
+            Assert.All(centreOffsets, d => Assert.Equal(0, d, 1.0));
+        }
+        finally
+        {
+            WpfHarness.OnUiThread(() => ApplyTheme("dark"));
+        }
+    }
 }

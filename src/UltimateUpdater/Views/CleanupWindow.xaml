@@ -1702,7 +1702,7 @@
                                              exists while something ticked in the category is Moderate or
                                              Risky: it bubbles the item dots up so a collapsed card still
                                              warns, and it is never green. -->
-                                        <Grid Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                        <Grid Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Center">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
@@ -1711,6 +1711,7 @@
                                                        FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"
                                                        TextTrimming="CharacterEllipsis"
                                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                            <ColumnDefinition Width="Auto"/>
                                             <Border x:Name="GroupRiskDot" Grid.Column="1" Width="8" Height="8" CornerRadius="4"
                                                     Margin="8,0,0,0" VerticalAlignment="Center"
                                                     Visibility="{Binding ShowsSelectedRisk, Converter={StaticResource BoolToVisibility}}"
@@ -1727,11 +1728,19 @@
                                                         </Style>
                                                     </Border.Style>
                                             </Border>
+                                        <!-- The section's own glyph, the one the status block shows while
+                                             the section is being cleaned. Decorative: the title beside it
+                                             names the section. -->
+                                        <ui:SymbolIcon x:Name="GroupHeaderIcon" Grid.Column="1" FontSize="16" Margin="0,0,8,0"
+                                                       VerticalAlignment="Center"
+                                                       Symbol="{Binding Key, Converter={StaticResource GroupIcon}}"
+                                                       Foreground="{DynamicResource AccentFillColorDefaultBrush}"/>
+
                                         </Grid>
 
                                         <!-- Size/count/freed on the same baseline as the title, flushed
                                              right against the chevron. -->
-                                        <StackPanel x:Name="CleanupGroupMetaPanel" Grid.Column="2" Orientation="Horizontal"
+                                        <StackPanel x:Name="CleanupGroupMetaPanel" Grid.Column="3" Orientation="Horizontal"
                                                     VerticalAlignment="Center" Margin="16,0,0,0">
                                             <TextBlock Text="{Binding ChosenSizeText}" FontSize="11"
                                                        FontWeight="SemiBold"
