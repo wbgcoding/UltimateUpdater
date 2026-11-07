@@ -109,6 +109,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         OnPropertyChanged(nameof(RunStateIsSuccess));
         OnPropertyChanged(nameof(RunStateIsCaution));
         OnPropertyChanged(nameof(RunStateText));
+        OnPropertyChanged(nameof(ShowsRunNote));
     }
 
     /// <summary>
@@ -120,7 +121,17 @@ public sealed partial class CleanupItemViewModel : ObservableObject
 
     public bool HasDetail => DetailText.Length > 0;
 
-    partial void OnDetailTextChanged(string value) => OnPropertyChanged(nameof(HasDetail));
+    partial void OnDetailTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasDetail));
+        OnPropertyChanged(nameof(ShowsRunNote));
+    }
+
+    partial void OnIsCleaningChanged(bool value) => OnPropertyChanged(nameof(ShowsRunNote));
+
+    /// <summary>The reason a finished target freed nothing (admin rights missing, time limit), kept in
+    /// <see cref="DetailText"/> after the run; the live line that shows it while cleaning is hidden by then.</summary>
+    public bool ShowsRunNote => !IsCleaning && RunState == CleanupTargetState.Skipped && HasDetail;
 
     /// <summary>How far this target has got, 0-100.</summary>
     [ObservableProperty]

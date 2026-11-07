@@ -491,7 +491,10 @@ public partial class CleanupViewModel
             {
                 item.IsWaiting = false;
                 item.IsCleaning = false;
-                item.DetailText = string.Empty;
+
+                // A skipped target keeps its reason (admin rights missing, time limit) on the row.
+                if (item.RunState != CleanupTargetState.Skipped)
+                    item.DetailText = string.Empty;
 
                 // Still queued when the run ended: it was never started, so nothing of it was removed.
                 if (item.RunState == CleanupTargetState.Waiting)
