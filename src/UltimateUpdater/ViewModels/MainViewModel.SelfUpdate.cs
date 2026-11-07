@@ -57,7 +57,7 @@ public partial class MainViewModel
 
     public bool SelfUpdateShowsProgress => SelfUpdatePhaseText.Length > 0;
 
-    private readonly Services.SelfUpdate.DownloadRateMeter _selfUpdateRate = new();
+    private Services.SelfUpdate.DownloadRateMeter _selfUpdateRate = new();
     private System.Diagnostics.Stopwatch _selfUpdateClock = System.Diagnostics.Stopwatch.StartNew();
 
     [RelayCommand]
@@ -214,6 +214,9 @@ public partial class MainViewModel
 
             // Created here on the dispatcher, so readings from the download thread are posted back to it
             // and the window never waits on the network.
+            // A fresh meter with the fresh clock: the old one would hold the last run's readings and
+            // report a stale or zero speed until the new clock passed the old run's time.
+            _selfUpdateRate = new Services.SelfUpdate.DownloadRateMeter();
             _selfUpdateClock = System.Diagnostics.Stopwatch.StartNew();
             ShowSelfUpdateProgress(new Services.SelfUpdate.SelfUpdateProgress(Services.SelfUpdate.SelfUpdatePhase.Downloading));
             var progress = new Progress<Services.SelfUpdate.SelfUpdateProgress>(ShowSelfUpdateProgress);
