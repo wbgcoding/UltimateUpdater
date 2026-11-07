@@ -7,7 +7,7 @@ namespace UltimateUpdater.Services;
 
 /// <summary>
 /// Finds the icon an update should be shown with. The app's OWN icon always wins:
-/// the Uninstall entry's DisplayIcon first, then the main executable in its install directory, then
+/// the package logo of a Store app, then the Uninstall entry's DisplayIcon, then the main executable in its install directory, then
 /// whatever the source itself keeps (Steam stores an icon per game). Only when none of that exists
 /// does the row fall back to a lettered tile.
 /// </summary>
@@ -39,7 +39,7 @@ public sealed class IconCacheService
     /// older rule (a Python script launcher cached for a pip package) are never read again; they age
     /// out through <see cref="CleanupCache"/> like any other unused file.
     /// </summary>
-    internal const string CacheKeyVersion = "v2";
+    internal const string CacheKeyVersion = "v3";
 
     private int _writesSinceCleanup;
 
@@ -65,12 +65,13 @@ public sealed class IconCacheService
     private readonly LoggingService _logging;
     private readonly StartMenuShortcuts _startMenu;
     private readonly DriverVendorTools _driverTools;
+    private readonly PackagedAppLogos _packages;
     private readonly Lazy<IReadOnlyList<string>> _pathFolders;
 
     private sealed record InstalledApp(string Name, string? IconValue, string? InstallLocation);
 
     /// <summary>A file to take an icon from: either an icon resource at an index, or a plain image.</summary>
-    private sealed record IconSource(string Path, int Index, bool IsImageFile);
+    private sealed record IconSource(string Path, int Index, bool IsImageFile, System.Windows.Media.Color? Plate = null);
 
     public IconCacheService(LoggingService logging)
         : this(logging, null, null, null)
@@ -82,9 +83,11 @@ public sealed class IconCacheService
         LoggingService logging,
         StartMenuShortcuts? startMenu,
         DriverVendorTools? driverTools,
-        IReadOnlyList<string>? pathFolders)
+        IReadOnlyList<string>? pathFolders,
+        PackagedAppLogos? packages = null)
     {
         _logging = logging;
+        _packages = packages ?? new PackagedAppLogos(Sources.WindowsRegistryView.Instance);
         _startMenu = startMenu ?? new StartMenuShortcuts(StartMenuShortcuts.DefaultFolders());
         _driverTools = driverTools ?? new DriverVendorTools();
         _pathFolders = new Lazy<IReadOnlyList<string>>(() => pathFolders ?? ReadPathFolders());
@@ -130,6 +133,9 @@ public sealed class IconCacheService
             return null;
 
         var bitmap = source.IsImageFile ? LoadImageFile(source.Path) : ExtractIconBitmap(source);
+        if (bitmap is not null && source.Plate is { } plate)
+            bitmap = PackagedAppLogos.OnPlate(bitmap, plate);
+
         if (bitmap is null)
             return null;
 
@@ -163,6 +169,11 @@ public sealed class IconCacheService
         // A driver has no application of its own; the vendor's control program is what the user knows it by.
         if (DriverVendorTools.IsDriverSource(sourceId) && FindDriverToolIcon(sourceId, displayName) is { } driverIcon)
             return driverIcon;
+
+        // A Store app is named exactly by its package, which is stricter than any name match below, and it
+        // has neither an Uninstall entry nor a shortcut file for those to find.
+        if (_packages.Find(displayName) is { } packaged)
+            return new IconSource(packaged.Path, 0, IsImageFile: true, packaged.Plate);
 
         var app = MatchInstalledApp(displayName);
 
