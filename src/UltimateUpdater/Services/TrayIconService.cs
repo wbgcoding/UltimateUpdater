@@ -87,6 +87,10 @@ public sealed class TrayIconService : IDisposable
         if (e.Button != MouseButtons.Right)
             return;
 
+        // A second right-click while the menu is still up replaces it instead of stacking a second one.
+        if (_menu is { IsOpen: true })
+            _menu.IsOpen = false;
+
         var menu = BuildMenu();
 
         // A popup only closes on a click elsewhere while its window is the foreground one, and the tray
