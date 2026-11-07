@@ -562,7 +562,9 @@ public class InstallQueueTests
         Assert.Equal(1, secondAttemptFired);
         // Success == true, see the note on Install_version_recheck_null_makes_no_statement above.
         Assert.True(statuses.Last(s => s.ItemId == "eslint" && s.Success == true).Success);
-        Assert.Equal(2, history.Read().Count(e => e.ItemId == "eslint"));
+        // The first failure is not the row's outcome: one entry, the success of the retry.
+        var entry = Assert.Single(history.Read(), e => e.ItemId == "eslint");
+        Assert.True(entry.Success);
     }
 
     /// <summary>A second failure in the retry round is final: no third pass, whatever the cause.</summary>
@@ -577,7 +579,8 @@ public class InstallQueueTests
 
         Assert.Equal(2, source.AttemptCount);
         Assert.False(statuses.Last(s => s.ItemId == "eslint").Success);
-        Assert.Equal(2, history.Read().Count(e => e.ItemId == "eslint"));
+        var entry = Assert.Single(history.Read(), e => e.ItemId == "eslint");
+        Assert.False(entry.Success);
     }
 
     /// <summary>A cause the explainer table does not mark safe to retry blindly is never retried at all.</summary>
@@ -636,7 +639,7 @@ public class InstallQueueTests
     {
         var source = new StubSource("npm", throwsByAttempt: _ =>
             new InvalidOperationException("npm: install failed for 'eslint'. (exit code 1618)"));
-        var (queue, _, statuses) = Create(source);
+        var (queue, history, statuses) = Create(source);
         using var cts = new CancellationTokenSource();
         queue.SecondAttemptStarted += cts.Cancel;
 
@@ -644,6 +647,9 @@ public class InstallQueueTests
 
         Assert.Equal(1, source.AttemptCount);
         Assert.True(statuses.Last(s => s.ItemId == "eslint").IsCancelled);
+        // The first failure was real and nothing else ever ran: it is recorded once the retry is off.
+        var entry = Assert.Single(history.Read(), e => e.ItemId == "eslint");
+        Assert.False(entry.Success);
     }
 
     /// <summary>Stop on a row that waits for its automatic retry settles the row as stopped and the retry
@@ -664,7 +670,7 @@ public class InstallQueueTests
             throwsByAttempt: attempt => attempt == 1
                 ? new InvalidOperationException("npm: install failed for 'eslint'. (exit code 1618)")
                 : null);
-        (queue, _, var statuses) = Create(source);
+        (queue, var history, var statuses) = Create(source);
         var secondAttemptFired = 0;
         queue.SecondAttemptStarted += () => secondAttemptFired++;
 
@@ -674,6 +680,8 @@ public class InstallQueueTests
         Assert.Equal(0, secondAttemptFired);
         Assert.Single(statuses, s => s.ItemId == "eslint" && s.IsCancelled);
         Assert.True(statuses.Last(s => s.ItemId == "eslint").IsCancelled);
+        // The row ends as stopped: its outcome is that one entry, not the failure that preceded it.
+        Assert.True(Assert.Single(history.Read(), e => e.ItemId == "eslint").IsCancelled);
     }
 
     /// <summary>The elevated half's version of the rule above: a retryable failure from the helper is
@@ -705,7 +713,8 @@ public class InstallQueueTests
         Assert.Single(candidates);
         Assert.Empty(reported);
         Assert.DoesNotContain(statuses, s => s.IsTerminal || s.Error is not null);
-        Assert.Single(history.Read(), e => e.ItemId == "eslint" && !e.Success);
+        // Held back until the retry's own result (or the end of the run) decides the row's one entry.
+        Assert.Empty(history.Read());
     }
 
     /// <summary>

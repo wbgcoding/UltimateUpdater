@@ -905,14 +905,14 @@ public sealed class InstallQueue
             if (!isRetryRound && InstallErrorExplainer.Explain(item.SourceId, ex.Message)?.AllowsAutomaticRetry == true)
             {
                 run.AutomaticRetryCandidates[Key(item)] = item;
+                DeferFailure(item, message, ex.Message);
                 ReportAwaitingRetry(item);
             }
             else
             {
                 Report(new InstallItemStatus(item.SourceId, item.Id, 0, null, false, message) { Detail = ex.Message });
+                RecordHistory(item, action, success: false, error: message, detail: ex.Message);
             }
-
-            RecordHistory(item, action, success: false, error: message, detail: ex.Message);
         }
         finally
         {
@@ -1312,18 +1312,19 @@ public sealed class InstallQueue
             else
                 _logging.EventFailed(ActivityLog.Install, ActivityLog.InstallFailed(item, action, null, message.Detail));
 
-            RecordHistory(
-                item, action, message.Success && !terminalNonFailure, message.Error,
-                message.IsManualHandoff, message.IsNotApplicable, detail: message.Detail,
-                isCancelled: message.IsCancelled, versionUnchanged: message.VersionUnchanged);
-
             if (awaitsRetry)
             {
                 // Left out of reported, so FailRemaining still closes the row if the retry round never runs.
                 run.AutomaticRetryCandidates[Key(item)] = item;
+                DeferFailure(item, message.Error, message.Detail);
             }
             else
             {
+                RecordHistory(
+                    item, action, message.Success && !terminalNonFailure, message.Error,
+                    message.IsManualHandoff, message.IsNotApplicable, detail: message.Detail,
+                    isCancelled: message.IsCancelled, versionUnchanged: message.VersionUnchanged);
+
                 // This callback runs on the elevated pipe's own reader thread (ElevatedHost's pump task),
                 // while the in-process source groups mutate the SAME reported set from their own Task
                 // threads at the same time (RunAsync starts both halves together). reported is a plain
@@ -1342,16 +1343,22 @@ public sealed class InstallQueue
         // gets neither a status report nor a history line, exactly as if it had never been selected.
         // A row a stop is settling itself is skipped too: its key reaches the reported set only a moment
         // after it left the queue, and reporting it here in that moment would count it twice.
-        HashSet<string> removed;
+        HashSet<string> removedFromQueue, removed;
         lock (_queueLock)
         {
-            removed = new HashSet<string>(run.RemovedFromQueue, StringComparer.OrdinalIgnoreCase);
+            removedFromQueue = new HashSet<string>(run.RemovedFromQueue, StringComparer.OrdinalIgnoreCase);
+            removed = new HashSet<string>(removedFromQueue, StringComparer.OrdinalIgnoreCase);
             removed.UnionWith(run.CancelledPending);
         }
 
         HashSet<string> accountedFor;
         lock (_reportLock)
             accountedFor = new HashSet<string>(reported, StringComparer.OrdinalIgnoreCase);
+
+        // A row taken out of the queue is not reported, but a failure that was held back for its retry
+        // really happened.
+        foreach (var item in items.Where(i => removedFromQueue.Contains(Key(i))))
+            FlushDeferredFailure(item, action);
 
         foreach (var item in items.Where(i => !accountedFor.Contains(Key(i)) && !removed.Contains(Key(i))))
         {
@@ -1363,7 +1370,9 @@ public sealed class InstallQueue
                 IsCancelled = cancelled,
             });
 
-            if (!cancelled)
+            // The real failure of a first attempt that never got its retry beats the generic reason, and is
+            // a fact even in a stopped batch.
+            if (!FlushDeferredFailure(item, action) && !cancelled)
                 RecordHistory(item, action, success: false, error: reason);
         }
     }
@@ -1464,10 +1473,32 @@ public sealed class InstallQueue
         }
     }
 
+    /// <summary>First-round failures of rows waiting for the automatic retry, not yet in the history: the
+    /// second attempt's result is the row's one entry, so this one is written only when no later entry
+    /// replaces it (see <see cref="RecordHistory"/> and <see cref="FlushDeferredFailure"/>).</summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string? Error, string? Detail)> _deferredFailures =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    private void DeferFailure(UpdateItem item, string? error, string? detail) =>
+        _deferredFailures[Key(item)] = (error, detail);
+
+    /// <summary>Writes the held first failure of a row whose retry never produced an entry of its own
+    /// (the batch ended first, or the row was taken out of the queue). Returns whether one was held.</summary>
+    private bool FlushDeferredFailure(UpdateItem item, InstallAction action)
+    {
+        if (!_deferredFailures.TryRemove(Key(item), out var failure))
+            return false;
+
+        RecordHistory(item, action, success: false, failure.Error, detail: failure.Detail);
+        return true;
+    }
+
     private void RecordHistory(
         UpdateItem item, InstallAction action, bool success, string? error, bool isManualHandoff = false,
         bool isNotApplicable = false, string? detail = null, bool isCancelled = false, bool versionUnchanged = false)
     {
+        // Any entry for the row supersedes the first failure the retry round was holding back.
+        _deferredFailures.TryRemove(Key(item), out _);
         var entry = HistoryEntry.ForItem(
             item, action, success, error, isManualHandoff, isNotApplicable, detail, isCancelled, versionUnchanged);
 
