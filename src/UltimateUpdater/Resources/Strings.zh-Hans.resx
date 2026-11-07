@@ -2000,7 +2000,7 @@ Ultimate Updater 无法撤销此操作。</value>
     <value>较旧的 Python 版本</value>
   </data>
   <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
-    <value>已被同类型（32 位或 64 位）较新版本取代的 Python 安装。</value>
+    <value>已被较新版本取代的 Python 安装。</value>
   </data>
   <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
     <value>仍在使用此版本的程序和脚本将无法运行。其中安装的软件包也会一并删除。</value>

@@ -2000,7 +2000,7 @@ Continue with admin rights?</value>
     <value>Older Python versions</value>
   </data>
   <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
-    <value>Python installations superseded by a newer version of the same kind (32-bit or 64-bit).</value>
+    <value>Python installations replaced by a newer version.</value>
   </data>
   <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
     <value>Programs and scripts that still use this version stop working. Its installed packages are removed with it.</value>

@@ -2000,7 +2000,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
     <value>Eski Python sürümleri</value>
   </data>
   <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
-    <value>Aynı türden (32 bit veya 64 bit) daha yeni bir sürümle değiştirilmiş Python kurulumları.</value>
+    <value>Daha yeni bir sürümle değiştirilmiş Python kurulumları.</value>
   </data>
   <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
     <value>Bu sürümü hâlâ kullanan programlar ve betikler artık çalışmaz. İçindeki yüklü paketler de onunla birlikte kaldırılır.</value>
