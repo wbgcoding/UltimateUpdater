@@ -5,8 +5,8 @@ downsamples, which gives clean antialiasing without pulling in an SVG rasterizer
 is not worth the dependency). Assets/icon.svg holds the same design in editable form for humans;
 if you change one, change the other.
 
-Design intent: a dark glass disc carrying a progress ring (a dark track with a blue arc over four
-fifths of it, ending in a round dot) and a download arrow over a base bar.
+Design intent: a dark glass disc carrying a progress ring (a dark track with a blue arc over 85 %
+of it, ending in a round dot) and a download arrow over a base bar.
 The ring keeps the existing blue as the product colour (the family of the accent the UI itself
 uses); the UI itself still follows the Windows system accent rather than a fixed brand hue.
 
@@ -39,7 +39,7 @@ TRACK = (0x2A, 0x2F, 0x37, 255)  # #2A2F37, the unfilled part of the progress ri
 RING_RADIUS = 112
 RING_WIDTH = 16
 ARC_START = -90
-ARC_END = 198
+ARC_END = 216
 
 WHITE = (255, 255, 255, 255)
 
@@ -142,7 +142,7 @@ def disc_mask(radius: float) -> Image.Image:
 def draw_download_glyph(image: Image.Image, small: bool) -> None:
     """
     A download arrow standing over a short base bar: shaft and head in white, the bar in the ring's
-    bright end. Round caps on shaft and bar; at small sizes everything gets thicker so the glyph
+    middle blue. Round caps on shaft and bar; at small sizes everything gets thicker so the glyph
     does not dissolve into the disc.
     """
     layer = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
@@ -160,7 +160,7 @@ def draw_download_glyph(image: Image.Image, small: bool) -> None:
     half = 52 * (1.08 if small else 1.0)
     draw.polygon([(scaled(128 - half), scaled(122)), (scaled(128), scaled(180)), (scaled(128 + half), scaled(122))],
                  fill=WHITE)
-    capped_line(84, 202, 172, 202, 16 * grow, RING_BRIGHT + (255,))
+    capped_line(84, 202, 172, 202, 16 * grow, RING_MID + (255,))
     image.alpha_composite(layer)
 
 

@@ -4,7 +4,7 @@
     EDITABLE DESIGN REFERENCE. The shipped .ico is produced by tools/make-icon.py, which mirrors
     this design; change both together.
     A circular glass disc (near-black, lit from the top) carrying a progress ring: a dark track all
-    round and a blue arc from 12 o'clock clockwise over four fifths of it, ending in a bright dot. A
+    round and a blue arc from 12 o'clock clockwise over 85 % of it, ending in a bright dot. A
     download arrow over a base bar sits centred in the disc.
   -->
   <defs>
@@ -24,11 +24,11 @@
 
   <!-- 2. Progress ring: track, arc (centre line r=112, width 16), end dot. -->
   <circle cx="128" cy="128" r="112" fill="none" stroke="#2A2F37" stroke-width="16"/>
-  <path d="M 128 16 A 112 112 0 1 1 21.5 93.4" fill="none" stroke="url(#ringGradient)" stroke-width="16" stroke-linecap="round"/>
-  <circle cx="21.5" cy="93.4" r="12.8" fill="#6FD3FF"/>
+  <path d="M 128 16 A 112 112 0 1 1 37.4 62.2" fill="none" stroke="url(#ringGradient)" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="37.4" cy="62.2" r="12.8" fill="#6FD3FF"/>
 
-  <!-- 3. Download arrow: white shaft and head, base bar in the ring's bright end. -->
+  <!-- 3. Download arrow: white shaft and head, base bar in the ring's middle blue. -->
   <line x1="128" y1="62" x2="128" y2="132" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round"/>
   <polygon points="76,122 128,180 180,122" fill="#FFFFFF"/>
-  <line x1="84" y1="202" x2="172" y2="202" stroke="#6FD3FF" stroke-width="16" stroke-linecap="round"/>
+  <line x1="84" y1="202" x2="172" y2="202" stroke="#3D9EF0" stroke-width="16" stroke-linecap="round"/>
 </svg>
