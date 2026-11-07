@@ -17,10 +17,13 @@ internal sealed class BusySignal : IDisposable
     internal const string NamePrefix = @"Local\UltimateUpdater-Busy-";
 
     private readonly object _gate = new();
+    private readonly LoggingService? _logging;
     private Mutex? _mutex;
+    private bool _unavailableLogged;
 
-    internal BusySignal(string? sid = null)
+    internal BusySignal(string? sid = null, LoggingService? logging = null)
     {
+        _logging = logging;
         Name = NamePrefix + (sid ?? WindowsIdentity.GetCurrent().User?.Value ?? "unknown");
     }
 
@@ -36,7 +39,21 @@ internal sealed class BusySignal : IDisposable
 
             if (busy)
             {
-                _mutex = new Mutex(initiallyOwned: false, Name);
+                try
+                {
+                    _mutex = new Mutex(initiallyOwned: false, Name);
+                }
+                catch (Exception ex) when (ex is UnauthorizedAccessException or WaitHandleCannotBeOpenedException)
+                {
+                    // Something else already holds the name (a different kind of object, or a mutex this
+                    // user may not open). The signal is only a courtesy to Setup, so the app goes on
+                    // without it instead of crashing on the timer tick; the retry on the next tick is cheap.
+                    if (!_unavailableLogged)
+                    {
+                        _unavailableLogged = true;
+                        _logging?.Warn($"The busy signal for the installer is unavailable: {ex.Message}");
+                    }
+                }
             }
             else
             {

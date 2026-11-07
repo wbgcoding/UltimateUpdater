@@ -632,7 +632,7 @@ public partial class App : Application
     /// into the tray never gives the main window a handle.</summary>
     private void StartInstallerSignals(MainWindow mainWindow, MainViewModel mainViewModel)
     {
-        _busySignal = new BusySignal();
+        _busySignal = new BusySignal(logging: _logging);
         _busyTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(500) };
         _busyTimer.Tick += (_, _) => _busySignal.Set(mainViewModel.WorkIsRunning);
         _busyTimer.Start();
