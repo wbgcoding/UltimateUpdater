@@ -1302,7 +1302,7 @@
                             <ui:SymbolIcon.Style>
                                 <Style TargetType="ui:SymbolIcon">
                                     <Setter Property="Symbol" Value="{Binding CurrentGroupKey, Converter={StaticResource GroupIcon}}"/>
-                                    <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding StatusKind}" Value="Done">
                                             <Setter Property="Symbol" Value="CheckmarkCircle24"/>
