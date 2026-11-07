@@ -43,7 +43,7 @@ public class PackagedAppLogoTests : IDisposable
         }
     }
 
-    /// <summary>A package like the ChatGPT one: only white marks on transparent, the colour left to the manifest.</summary>
+    /// <summary>A package as many Store apps ship it: only white marks on transparent, the colour left to the manifest.</summary>
     private string WhiteMarkPackage(string background = "#3143FF", params string[] assetFiles)
     {
         var package = Path.Combine(_root, "pkg");
