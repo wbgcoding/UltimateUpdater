@@ -86,7 +86,21 @@ public static class ElevationService
 
         try
         {
-            _selfImageLock = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var opened = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            // The worker is started by this very path, so the handle must be the file that path names
+            // right now. A junction (or any reparse point) in the folder chain makes the handle land
+            // elsewhere, and repointing it later would send the admin launch to a different file.
+            if (!HandleIsAtPath(opened, path))
+            {
+                opened.Dispose();
+                RefuseElevation(logging, "the running executable is reached through a link, so the locked file is not the one that would be started");
+                return;
+            }
+
+            var previous = _selfImageLock;
+            _selfImageLock = opened;
+            previous?.Dispose();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -97,6 +111,45 @@ public static class ElevationService
             _elevationRefused = true;
         }
     }
+
+    /// <summary>True when the handle's final path is <paramref name="path"/> itself (casing aside), meaning no
+    /// reparse point sits anywhere in the chain. An unreadable final path counts as a mismatch.</summary>
+    internal static bool HandleIsAtPath(FileStream handle, string path)
+    {
+        var actual = Cleanup.RegistryBackupService.TryGetFinalPath(handle.SafeFileHandle);
+        if (actual is null)
+            return false;
+
+        try
+        {
+            var expected = Path.GetFullPath(path);
+            if (string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // The same spelling with 8.3 components expanded (a short TEMP path is the usual case).
+            return string.Equals(actual, LongPathOf(expected), StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+    }
+
+    private static string LongPathOf(string path)
+    {
+        var buffer = new System.Text.StringBuilder(512);
+        var length = GetLongPathNameW(path, buffer, (uint)buffer.Capacity);
+        if (length > buffer.Capacity)
+        {
+            buffer.Capacity = (int)length + 1;
+            length = GetLongPathNameW(path, buffer, (uint)buffer.Capacity);
+        }
+
+        return length == 0 ? path : buffer.ToString();
+    }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    private static extern uint GetLongPathNameW(string shortPath, System.Text.StringBuilder longPath, uint bufferLength);
 
     /// <summary>
     /// True once <see cref="LockSelfImage"/> has failed or <see cref="RefuseElevation"/> was called: no

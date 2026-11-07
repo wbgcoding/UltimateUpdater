@@ -537,11 +537,43 @@ public class SelfUpdateTests
             try { Directory.Delete(directory, recursive: true); } catch { }
         }
     }
+
+    /// <summary>After a successful swap the path holds a copy no lock vouches for, so no elevated worker may
+    /// be started from it for the rest of this process.</summary>
+    [Fact]
+    public void A_successful_portable_swap_refuses_elevation_for_the_rest_of_the_session()
+    {
+        var directory = Directory.CreateTempSubdirectory("wu-selfupdate-handover-").FullName;
+        var currentPath = Path.Combine(directory, "UltimateUpdater.exe");
+        var verifiedPath = Path.Combine(directory, "new.bin");
+        File.WriteAllBytes(currentPath, [1]);
+        // A real, harmless Windows program: the swap starts the new copy and rolls back when it cannot.
+        File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "hostname.exe"), verifiedPath);
+        var digest = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(verifiedPath)));
+
+        try
+        {
+            ElevationService.ResetElevationRefusalForTests();
+            var logging = new LoggingService();
+            ElevationService.LockSelfImage(logging, currentPath);
+            var service = new SelfUpdateService(new HttpClient(), logging, new PublicUpdateChannel(logging));
+
+            var applied = service.ApplyPortable(verifiedPath, currentPath, digest);
+
+            Assert.True(applied);
+            Assert.True(ElevationService.IsElevationRefused);
+        }
+        finally
+        {
+            ElevationService.ResetElevationRefusalForTests();
+            ElevationService.ReleaseSelfImageLock();
+            try { Directory.Delete(directory, recursive: true); } catch { }
+        }
+    }
 }
 
 /// <summary>Exposes the internal allowlist check; the rule is security-relevant enough to test directly.</summary>
 internal static class SelfUpdateServiceTestHook
 {
     public static bool IsAllowedUrl(string url) => SelfUpdateService.IsAllowedUrl(url);
-
 }

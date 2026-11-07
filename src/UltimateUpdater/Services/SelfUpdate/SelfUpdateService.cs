@@ -671,6 +671,9 @@ public sealed partial class SelfUpdateService
             }
         }
 
+        // The image at this path is now the new copy, which no lock vouches for: until this process exits,
+        // an elevated start would launch it by path.
+        ElevationService.RefuseElevation(_logging, "a self-update is handing over to the new copy");
         return true;
     }
 
