@@ -76,7 +76,22 @@ public static class ElevationService
     public static void LockSelfImage(LoggingService logging, string? path = null) =>
         LockSelfImageAt(logging, path ?? Environment.ProcessPath);
 
-    internal static void LockSelfImageAt(LoggingService logging, string? path)
+    /// <summary>Re-takes the lock after a self-update had to give it up, but only on the very file that was
+    /// locked before (<paramref name="released"/>, from <see cref="ReleaseSelfImageLock"/>). While the lock was
+    /// off, the image could be renamed away and another file put at its path; locking that one would vouch
+    /// for it, so anything else refuses elevation for the session.</summary>
+    internal static void RelockSelfImage(LoggingService logging, string path, (uint VolumeSerial, ulong FileIndex)? released)
+    {
+        if (released is null)
+        {
+            RefuseElevation(logging, "no lock was held on the running executable before the update, so the file at its path cannot be vouched for");
+            return;
+        }
+
+        LockSelfImageAt(logging, path, released);
+    }
+
+    internal static void LockSelfImageAt(LoggingService logging, string? path, (uint VolumeSerial, ulong FileIndex)? mustBe = null)
     {
         if (path is null)
         {
@@ -95,6 +110,15 @@ public static class ElevationService
             {
                 opened.Dispose();
                 RefuseElevation(logging, "the running executable is reached through a link, so the locked file is not the one that would be started");
+                return;
+            }
+
+            // Checked through the handle that then holds the file, so no swap can slip in after the check.
+            if (mustBe is { } expected
+                && !(Cleanup.VerifiedDelete.TryGetIdentity(opened.SafeFileHandle, out var identity) && identity == expected))
+            {
+                opened.Dispose();
+                RefuseElevation(logging, "the file at the executable's path is no longer the one that was running");
                 return;
             }
 
@@ -176,12 +200,18 @@ public static class ElevationService
     /// Releases the lock above. <see cref="SelfUpdateService"/>'s portable path renames THIS SAME FILE on
     /// purpose (moves the running exe aside, copies the verified update into its place) and must call this
     /// first, or that rename fails with the very sharing violation the lock exists to cause for everyone
-    /// else. Safe to call even if the lock was never taken.
+    /// else. Safe to call even if the lock was never taken. Returns the identity of the file that was locked
+    /// (null when none was held or it cannot be read), for <see cref="RelockSelfImage"/>.
     /// </summary>
-    public static void ReleaseSelfImageLock()
+    public static (uint VolumeSerial, ulong FileIndex)? ReleaseSelfImageLock()
     {
+        (uint VolumeSerial, ulong FileIndex)? released = null;
+        if (_selfImageLock is { } held && Cleanup.VerifiedDelete.TryGetIdentity(held.SafeFileHandle, out var identity))
+            released = identity;
+
         _selfImageLock?.Dispose();
         _selfImageLock = null;
+        return released;
     }
 
     /// <summary>

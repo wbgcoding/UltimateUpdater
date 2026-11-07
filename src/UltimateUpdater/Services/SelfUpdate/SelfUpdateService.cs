@@ -572,7 +572,7 @@ public sealed partial class SelfUpdateService
         // ElevationService holds this same file open (FileShare.Read, no delete) for the app's whole
         // lifetime so nobody else can rename it out from under a future elevated job, but that means we
         // cannot rename it either until we let go on purpose.
-        ElevationService.ReleaseSelfImageLock();
+        var lockedImage = ElevationService.ReleaseSelfImageLock();
 
         try
         {
@@ -583,13 +583,13 @@ public sealed partial class SelfUpdateService
             // Nothing was moved, so the running image is still the original: take the lock back, or the
             // rest of the session runs with nothing stopping a swap before the next elevated launch.
             _logging.EventFailed(ActivityLog.SelfUpdate, $"apply: could not move the running image aside: {ex.Message}");
-            ElevationService.LockSelfImage(_logging, currentPath);
+            ElevationService.RelockSelfImage(_logging, currentPath, lockedImage);
             return false;
         }
 
         try
         {
-            return SwapIn(verifiedPath, currentPath, backupPath, verifiedDigest);
+            return SwapIn(verifiedPath, currentPath, backupPath, verifiedDigest, lockedImage);
         }
         catch (Exception ex)
         {
@@ -597,7 +597,7 @@ public sealed partial class SelfUpdateService
             _logging.EventFailed(ActivityLog.SelfUpdate, $"apply: swap failed unexpectedly, rolling back: {ex.Message}");
             try
             {
-                RollBack(backupPath, currentPath, _logging);
+                RollBack(backupPath, currentPath, _logging, lockedImage);
             }
             catch (Exception rollbackFailure)
             {
@@ -608,7 +608,7 @@ public sealed partial class SelfUpdateService
         }
     }
 
-    private bool SwapIn(string verifiedPath, string currentPath, string backupPath, string? verifiedDigest)
+    private bool SwapIn(string verifiedPath, string currentPath, string backupPath, string? verifiedDigest, (uint VolumeSerial, ulong FileIndex)? lockedImage)
     {
         // The pin on the DOWNLOAD proves the downloaded bytes are the verified ones, but what gets
         // started is the COPY, and between File.Copy and Process.Start any process running as this user
@@ -625,7 +625,7 @@ public sealed partial class SelfUpdateService
         {
             _logging.EventFailed(ActivityLog.SelfUpdate, $"apply: swap failed, rolled back: {ex.Message}");
             copyPin?.Dispose();
-            RollBack(backupPath, currentPath, _logging);
+            RollBack(backupPath, currentPath, _logging, lockedImage);
             return false;
         }
 
@@ -641,7 +641,7 @@ public sealed partial class SelfUpdateService
             {
                 _logging.EventFailed(ActivityLog.SelfUpdate, "apply: installed copy does not match verified artifact, rolled back");
                 copyPin.Dispose();
-                RollBack(backupPath, currentPath, _logging);
+                RollBack(backupPath, currentPath, _logging, lockedImage);
                 return false;
             }
 
@@ -666,7 +666,7 @@ public sealed partial class SelfUpdateService
                 // unable to start.
                 _logging.EventFailed(ActivityLog.SelfUpdate, $"apply: new copy would not start, rolled back: {ex.Message}");
                 copyPin.Dispose();
-                RollBack(backupPath, currentPath, _logging);
+                RollBack(backupPath, currentPath, _logging, lockedImage);
                 return false;
             }
         }
@@ -681,11 +681,11 @@ public sealed partial class SelfUpdateService
     /// Puts the old image back and re-takes the anti-swap lock that had to be given up for the rename.
     /// Without the second half, a failed update left the app running for the rest of the session with
     /// nothing holding its own exe open, and the elevated worker is started BY PATH, which is exactly what
-    /// that lock exists to protect. <see cref="ElevationService.LockSelfImage"/> fails closed on its own
-    /// (elevation is refused for the session if it cannot retake the handle), so this needs no second
-    /// answer for the case where even the rollback cannot be pinned.
+    /// that lock exists to protect. <see cref="ElevationService.RelockSelfImage"/> fails closed on its own
+    /// (elevation is refused for the session if it cannot retake the handle, or the file put back is not
+    /// the one <paramref name="lockedImage"/> names), so this needs no second answer for that case.
     /// </summary>
-    internal static void RollBack(string backupPath, string currentPath, LoggingService logging)
+    internal static void RollBack(string backupPath, string currentPath, LoggingService logging, (uint VolumeSerial, ulong FileIndex)? lockedImage)
     {
         try
         {
@@ -700,7 +700,7 @@ public sealed partial class SelfUpdateService
             throw;
         }
 
-        ElevationService.LockSelfImage(logging, currentPath);
+        ElevationService.RelockSelfImage(logging, currentPath, lockedImage);
     }
 
     /// <summary>
