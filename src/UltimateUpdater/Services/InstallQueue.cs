@@ -164,6 +164,14 @@ public sealed class InstallQueue
     /// accounted for.</summary>
     internal Action<UpdateItem>? DeclinedItemRecordedForTest { get; set; }
 
+    /// <summary>Test seam: runs in <see cref="CancelItem"/> after a waiting row was taken out of the queue and
+    /// before it is settled, the window in which the run could otherwise end and report the row as well.</summary>
+    internal Action<UpdateItem>? AfterPendingStopForTest { get; set; }
+
+    /// <summary>Test seam: runs right after an in-process row left the pending list, with its stop source
+    /// already registered.</summary>
+    internal Action<UpdateItem>? AfterItemTakenForTest { get; set; }
+
     /// <summary>Test seam: whether the calling thread holds the lock that guards the shared reported set.</summary>
     internal bool HoldsReportLock => Monitor.IsEntered(_reportLock);
 
@@ -210,6 +218,11 @@ public sealed class InstallQueue
         /// <see cref="RunAsync"/> so a stop on a row waiting for the retry can settle it here.</summary>
         public ISet<string>? Reported;
         public InstallAction Action;
+
+        /// <summary>Rows <see cref="CancelItem"/> took out of the queue or the retry lists and settles itself
+        /// (guarded by the queue lock, set in the same block that removes them), so the end-of-run pass does
+        /// not report them a second time in the moment before the stop adds them to the reported set.</summary>
+        public readonly HashSet<string> CancelledPending = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>Set (under the queue lock) the moment the retry round's items go back into
         /// <see cref="Pending"/>: from then on a candidate missing from Pending is already being installed
@@ -393,11 +406,13 @@ public sealed class InstallQueue
                 break;
             }
 
+            retryRun?.CancelledPending.Add(key);
             handles = _activeRuns.Where(r => r.ElevatedHandle is not null).Select(r => r.ElevatedHandle!).ToList();
         }
 
         if (retryRun is not null && retryItem is not null)
         {
+            AfterPendingStopForTest?.Invoke(retryItem);
             lock (_reportLock)
                 retryRun.Reported?.Add(key);
 
@@ -615,6 +630,7 @@ public sealed class InstallQueue
                 await throttle.WaitAsync(cancellationToken);
                 try
                 {
+                    CancellationTokenSource itemCts;
                     lock (_queueLock)
                     {
                         var index = run.Pending.FindIndex(i => string.Equals(LaneKey(i), laneKey, StringComparison.OrdinalIgnoreCase));
@@ -623,9 +639,14 @@ public sealed class InstallQueue
 
                         item = run.Pending[index];
                         run.Pending.RemoveAt(index);
+
+                        // Registered in the block that takes the row out of Pending: a stop between the two
+                        // would otherwise find the row in neither place and the install would start anyway.
+                        itemCts = RegisterItemCancellation(run, item, cancellationToken);
                     }
 
-                    await InstallInProcessAsync(item, action, run, cancellationToken, isRetryRound, laneHeld: true);
+                    AfterItemTakenForTest?.Invoke(item);
+                    await InstallInProcessAsync(item, action, run, cancellationToken, isRetryRound, laneHeld: true, itemCts);
                 }
                 finally
                 {
@@ -650,14 +671,14 @@ public sealed class InstallQueue
     /// <param name="laneHeld">True when the caller already holds the item's lane (the batch path does).</param>
     private async Task InstallInProcessAsync(
         UpdateItem item, InstallAction action, RunState run, CancellationToken cancellationToken, bool isRetryRound = false,
-        bool laneHeld = false)
+        bool laneHeld = false, CancellationTokenSource? registeredCts = null)
     {
         // This item's own stop button, layered on top of the run's whole-batch token via a linked
         // CTS, so either one ends the same await; registered under the same key CancelItem looks up, and
-        // deregistered in every exit path via the outer try/finally.
+        // deregistered in every exit path via the outer try/finally. A caller that took the row out of its
+        // list under the queue lock registers the source there already and hands it in.
         var key = Key(item);
-        var itemCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        run.ItemCancellations[key] = itemCts;
+        var itemCts = registeredCts ?? RegisterItemCancellation(run, item, cancellationToken);
         var itemToken = itemCts.Token;
 
         try
@@ -670,6 +691,15 @@ public sealed class InstallQueue
             // a source that was disposed a moment earlier.
             ReleaseItemCancellation(run, key, itemCts);
         }
+    }
+
+    /// <summary>Creates the row's own stop source (linked to the run's) and registers it under the key
+    /// <see cref="CancelItem"/> looks up.</summary>
+    private CancellationTokenSource RegisterItemCancellation(RunState run, UpdateItem item, CancellationToken cancellationToken)
+    {
+        var itemCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        run.ItemCancellations[Key(item)] = itemCts;
+        return itemCts;
     }
 
     /// <summary>The success outcome of an in-process install: reported first, so the log reads
@@ -791,6 +821,9 @@ public sealed class InstallQueue
                 await laneGate.WaitAsync(cancellationToken);
                 laneHeld = true;
             }
+
+            // A stop that landed while the row waited for its slot or lane ends it here, before it is announced.
+            cancellationToken.ThrowIfCancellationRequested();
 
             started.Restart();
             _logging.Event(ActivityLog.Install, ActivityLog.InstallStarted(item, action, elevated: false));
@@ -971,8 +1004,26 @@ public sealed class InstallQueue
 
         // The prompt, if this is the first admin job of the session. After that the same elevated helper
         // takes every later batch without asking again.
-        if (!await _elevated.EnsureStartedAsync(cancellationToken))
+        // Registered before the prompt: the rows are out of Pending by now and not yet with the helper, so a
+        // stop clicked while the prompt is open can only be remembered by this handle and replayed once the
+        // job is out.
+        var jobHandle = new ElevatedJobHandle();
+        run.ElevatedHandle = jobHandle;
+        bool started;
+        try
         {
+            started = await _elevated.EnsureStartedAsync(cancellationToken);
+        }
+        catch
+        {
+            run.ElevatedHandle = null;
+            throw;
+        }
+
+        if (!started)
+        {
+            run.ElevatedHandle = null;
+
             // a declined UAC prompt is a decision, not a failed install, so it stays out of the history
             var declined = LocalizationService.Instance["InstallElevationDeclined"];
             foreach (var item in items)
@@ -1002,8 +1053,6 @@ public sealed class InstallQueue
         // This run's own stop-single button forwards here once nothing in its in-process
         // ItemCancellations dictionary matches; cleared again once the batch is over so a stale handle
         // from a finished job is never mistaken for a live one.
-        var jobHandle = new ElevatedJobHandle();
-        run.ElevatedHandle = jobHandle;
         run.CancellationToken = cancellationToken;
         try
         {
@@ -1057,6 +1106,7 @@ public sealed class InstallQueue
             try
             {
                 // Taken one at a time under the lock CancelItem uses, so a row stopped while it waited is gone.
+                CancellationTokenSource itemCts;
                 lock (_queueLock)
                 {
                     if (userScopeRetries.Count == 0)
@@ -1068,13 +1118,15 @@ public sealed class InstallQueue
 
                     item = userScopeRetries[0];
                     userScopeRetries.RemoveAt(0);
+                    itemCts = RegisterItemCancellation(run, item, cancellationToken);
                 }
 
+                AfterItemTakenForTest?.Invoke(item);
                 _logging.Info($"Retrying '{item.Id}' ({action}) without administrator rights.");
 
                 // Flagged as a retry round: this is already the item's second attempt, so a failure here is
                 // final and must not enrol it in the automatic retry pass for a third one.
-                await InstallInProcessAsync(item, action, run, cancellationToken, isRetryRound: true);
+                await InstallInProcessAsync(item, action, run, cancellationToken, isRetryRound: true, registeredCts: itemCts);
             }
             finally
             {
@@ -1288,11 +1340,20 @@ public sealed class InstallQueue
     {
         // An item the user removed from the queue is not "remaining", it was taken out on purpose, so it
         // gets neither a status report nor a history line, exactly as if it had never been selected.
+        // A row a stop is settling itself is skipped too: its key reaches the reported set only a moment
+        // after it left the queue, and reporting it here in that moment would count it twice.
         HashSet<string> removed;
         lock (_queueLock)
+        {
             removed = new HashSet<string>(run.RemovedFromQueue, StringComparer.OrdinalIgnoreCase);
+            removed.UnionWith(run.CancelledPending);
+        }
 
-        foreach (var item in items.Where(i => !reported.Contains(Key(i)) && !removed.Contains(Key(i))))
+        HashSet<string> accountedFor;
+        lock (_reportLock)
+            accountedFor = new HashSet<string>(reported, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in items.Where(i => !accountedFor.Contains(Key(i)) && !removed.Contains(Key(i))))
         {
             // A cancelled batch never ran these rows, so they end as stopped (neither success nor failure),
             // the same terminal state a row stopped with its own button gets.
