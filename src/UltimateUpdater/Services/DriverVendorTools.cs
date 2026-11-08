@@ -58,7 +58,11 @@ internal sealed class DriverVendorTools
         if (sourceId != "windowsupdate" || string.IsNullOrWhiteSpace(displayName))
             return null;
 
-        var first = displayName.Split([' ', '-', '(', ',', '®'], StringSplitOptions.RemoveEmptyEntries)[0];
+        var first = displayName.Split([' ', '-', '(', ',', '®'], StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault();
+        if (first is null)
+            return null;
+
         var word = TextNormalization.AlphanumericLower(first);
         return _vendors.FirstOrDefault(v => v.TitleWords.Contains(word));
     }

@@ -94,7 +94,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
     {
         // package ids come from winget's own output; one starting with '-' would arrive as an option
         if (!ProcessRunner.IsSafePositionalArgument(item.Id, allowCmdMetacharacters: true))
-throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; that is not a plain package id.");
+            throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; that is not a plain package id.");
 
         progress.Report(new InstallProgress { PercentComplete = 0, StatusText = item.Name });
 
@@ -136,7 +136,7 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
         string? lastLabel = null;
         var sawDidNothing = false;
 
-// Every rung's verdict, not just the last: the queue decides retry-unelevated from these codes.
+        // Every rung's verdict, not just the last: the queue decides retry-unelevated from these codes.
         var attempts = new List<string>();
 
         // The ladder, not a single command: winget refuses an upgrade for several different reasons and
@@ -176,16 +176,16 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
             sawDidNothing |= DidNothing(result.ExitCode);
             attempts.Add($"[{attempt.Label}] {FailureDetail("install", item.Id, result)}");
 
-// No rung can help a user-scope package while running elevated; stop and hand the queue the
+            // No rung can help a user-scope package while running elevated; stop and hand the queue the
             // refusal it needs to retry unelevated.
             if (ElevationService.IsElevated && NeedsUserScopeRetry(attempts[^1]))
                 break;
         }
 
-// Every ordinary rung refused with "no applicable upgrade" (0x8A15002B): winget knows a newer
+        // Every ordinary rung refused with "no applicable upgrade" (0x8A15002B): winget knows a newer
         // version exists but does not consider it a match for THIS installation (architecture, install
         // type, scope, or an installed version it cannot compare). One more try: read the exact version
-// list winget itself offers and pin the install to the newest one, still through winget's normal
+        // list winget itself offers and pin the install to the newest one, still through winget's normal
         // hash-verified path, never a `--force` fallback, which would reach the same class of package only
         // by disabling the installer hash check.
         string? offeredVersion = null;
@@ -300,7 +300,7 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
         }
     }
 
-/// <summary>Still hash-verified, with no --force, unlike the rung this replaced.</summary>
+    /// <summary>Still hash-verified, with no --force, unlike the rung this replaced.</summary>
     internal static IReadOnlyList<string> VersionPinnedInstallArguments(string packageId, string version) =>
     [
         "install", "--id", packageId, "--exact", "--version", version,
@@ -383,7 +383,7 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
     ];
 
     /// <summary>
-/// Whether the next rung is worth trying. Only for refusals another rung can actually address: winget
+    /// Whether the next rung is worth trying. Only for refusals another rung can actually address: winget
     /// declining to do anything, or refusing over scope/elevation. A genuine failure (a bad hash, no disk, a
     /// download that died) is reported straight away rather than repeated three times.
     /// </summary>
@@ -565,7 +565,7 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
     public async Task UninstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken)
     {
         if (!ProcessRunner.IsSafePositionalArgument(item.Id, allowCmdMetacharacters: true))
-throw new InvalidOperationException($"winget: refusing to uninstall '{item.Id}'; that is not a plain package id.");
+            throw new InvalidOperationException($"winget: refusing to uninstall '{item.Id}'; that is not a plain package id.");
 
         progress.Report(new InstallProgress { PercentComplete = 0, StatusText = item.Name });
 
@@ -640,7 +640,7 @@ throw new InvalidOperationException($"winget: refusing to uninstall '{item.Id}';
 
     /// <summary>
     /// winget passes an installer's own exit code straight through, and several of those mean success:
-/// 3010/1641 are "installed, reboot needed"; treating them as failures was a large part of why
+    /// 3010/1641 are "installed, reboot needed"; treating them as failures was a large part of why
     /// updates "mostly failed". A reboot-required update IS installed. Everything genuinely wrong still
     /// surfaces, with the real code and output carried back for the row's Details view.
     /// </summary>
@@ -717,7 +717,7 @@ throw new InvalidOperationException($"winget: refusing to uninstall '{item.Id}';
         return code is >= 0xC0000000u and <= 0xC0000FFFu && code != ControlCExitCode;
     }
 
-/// <summary>STATUS_CONTROL_C_EXIT: killed from outside, not a crash of its own.</summary>
+    /// <summary>STATUS_CONTROL_C_EXIT: killed from outside, not a crash of its own.</summary>
     private const uint ControlCExitCode = 0xC000013Au;
 
     /// <summary>Raw failure text for Details: the TAIL of winget's output plus exit code, never empty; a
@@ -755,12 +755,12 @@ throw new InvalidOperationException($"winget: refusing to uninstall '{item.Id}';
         "--include-unknown",
     ];
 
-/// <summary>The one deliberate exception to "never --interactive": a single user-triggered retry,
+    /// <summary>The one deliberate exception to "never --interactive": a single user-triggered retry,
     /// in-process and unelevated only, no ladder.</summary>
     public async Task InstallInteractiveAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken)
     {
         if (!ProcessRunner.IsSafePositionalArgument(item.Id, allowCmdMetacharacters: true))
-throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; that is not a plain package id.");
+            throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; that is not a plain package id.");
 
         progress.Report(new InstallProgress { PercentComplete = 0, StatusText = item.Name });
 
@@ -786,7 +786,7 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
     }
 
     /// <summary>
-/// The normal ladder's first rung, minus --silent and --disable-interactivity, plus --interactive:
+    /// The normal ladder's first rung, minus --silent and --disable-interactivity, plus --interactive:
     /// built by filtering <see cref="InstallArguments"/> rather than duplicating it, so the two can never
     /// drift apart (proven by <c>WingetInstallLadderTests</c>: no --silent, otherwise identical).
     /// </summary>
@@ -846,7 +846,7 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
             cancellationToken);
 
         // The Microsoft Store is a winget source of its own, and its packages are not all in the default
-// list: an app that was never matched to a winget manifest is only offered under `--source msstore`.
+        // list: an app that was never matched to a winget manifest is only offered under `--source msstore`.
         // Asked separately and merged by id, so a package that IS in both appears once.
         var known = new HashSet<string>(entries.Select(e => e.Id), StringComparer.OrdinalIgnoreCase);
         var store = await StoreUpgradesAsync(cancellationToken);
@@ -897,7 +897,7 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
     {
         var result = await RunQueryAsync(arguments, ScanTimeout, cancellationToken);
 
-// a timeout is a failed scan, not an empty one; "nothing found" would hide every winget update
+        // a timeout is a failed scan, not an empty one; "nothing found" would hide every winget update
         if (result.TimedOut)
             throw new TimeoutException($"winget: scan timed out after {ScanTimeout.TotalSeconds:0} seconds.");
 
@@ -966,7 +966,7 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
         }
     }
 
-/// <summary>winget reports an unknown installed version as the literal "Unknown"; show nothing instead.</summary>
+    /// <summary>winget reports an unknown installed version as the literal "Unknown"; show nothing instead.</summary>
     private static string? NormalizeVersion(string version) =>
         string.IsNullOrWhiteSpace(version) || version.Equals("Unknown", StringComparison.OrdinalIgnoreCase)
             ? null

@@ -59,6 +59,17 @@ public sealed class MockUpdateSource : IUpdateSource
         }
     }
 
+    /// <summary>A stable-but-varied fake size from a fixed character-sum hash: string.GetHashCode is
+    /// random per process, and Math.Abs(int.MinValue) throws.</summary>
+    internal static long FakeSizeFor(string name)
+    {
+        uint hash = 17;
+        foreach (var c in name)
+            hash = unchecked(hash * 31 + c);
+
+        return 15_000_000L + (hash % 60_000_000u);
+    }
+
     /// <summary>
     /// Simulates a real download instead of jumping straight to 100%: a one-shot report made every
     /// value in the progress window (throughput, MB transferred) look frozen when tested offline via
@@ -70,7 +81,7 @@ public sealed class MockUpdateSource : IUpdateSource
             throw new NotSupportedException($"{Id} cannot install.");
 
         // A stable-but-varied fake size per item, so different rows do not all look identical.
-        var total = 15_000_000L + (Math.Abs(item.Name.GetHashCode()) % 60_000_000L);
+        var total = FakeSizeFor(item.Name);
         const int steps = 12;
 
         for (var step = 1; step <= steps; step++)
