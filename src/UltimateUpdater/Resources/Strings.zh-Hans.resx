@@ -2263,4 +2263,31 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>全选</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>每次清理注册表前先备份</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>清理会立即显示结果</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>同时安装越多越快</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>每天最多一个</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>最旧的备份最先删除</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>杀毒软件检查下载的文件</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>关：应用蓝色。开：Windows 强调色</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>在清理中右键排除</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>便携版：数据在程序旁边</value>
+  </data>
 </root>

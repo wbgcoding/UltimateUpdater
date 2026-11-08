@@ -2263,4 +2263,31 @@ Doorgaan met beheerdersrechten?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Alles selecteren</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Back-up vóór elke registeropschoning</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Opschonen toont meteen resultaten</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Meer tegelijk is sneller</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Maximaal één per dag</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>De oudste back-up gaat als eerste weg</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>Antivirus controleert gedownloade bestanden</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Uit: app-blauw. Aan: Windows-accent</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Uitgesloten via rechtsklik in Opschonen</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Draagbaar: gegevens naast het programma</value>
+  </data>
 </root>

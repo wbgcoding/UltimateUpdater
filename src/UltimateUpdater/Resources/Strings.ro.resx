@@ -2263,4 +2263,31 @@ Continuați cu drepturi de administrator?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Selectează tot</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Copie de siguranță înainte de fiecare curățare a registrului</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Curățarea arată imediat rezultatele</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Mai multe simultan merge mai repede</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Cel mult unul pe zi</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>Cea mai veche copie dispare prima</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>Antivirusul verifică fișierele descărcate</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Oprit: albastrul aplicației. Pornit: accentul Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Excluse prin clic dreapta în Curățare</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portabil: date lângă program</value>
+  </data>
 </root>

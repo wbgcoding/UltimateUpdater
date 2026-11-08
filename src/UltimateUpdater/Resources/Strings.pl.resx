@@ -2263,4 +2263,31 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Zaznacz wszystko</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Kopia zapasowa przed każdym czyszczeniem rejestru</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Czyszczenie od razu pokazuje wyniki</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Więcej naraz działa szybciej</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Najwyżej jeden dziennie</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>Najstarsza kopia znika jako pierwsza</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>Antywirus sprawdza pobrane pliki</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Wył.: niebieski aplikacji. Wł.: akcent Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Wykluczone prawym przyciskiem w Czyszczeniu</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Przenośny: dane obok programu</value>
+  </data>
 </root>

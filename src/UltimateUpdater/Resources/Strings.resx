@@ -2263,4 +2263,31 @@ Continue with admin rights?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Select all</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Backup before every registry cleanup</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Cleanup shows results right away</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>More at once is faster</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>At most one per day</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>The oldest backup goes first</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>Antivirus checks downloaded files</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Off: app blue. On: Windows accent</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Excluded via right-click in Cleanup</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portable: data next to the program</value>
+  </data>
 </root>

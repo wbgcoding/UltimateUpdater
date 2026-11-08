@@ -2263,4 +2263,31 @@ Continuar com direitos de administrador?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Selecionar tudo</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Cópia de segurança antes de cada limpeza do registo</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>A limpeza mostra logo os resultados</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Mais em simultâneo é mais rápido</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>No máximo um por dia</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>A cópia mais antiga sai primeiro</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>O antivírus verifica os ficheiros transferidos</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Desligado: azul da app. Ligado: destaque do Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Excluídos com clique direito na Limpeza</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portátil: dados junto ao programa</value>
+  </data>
 </root>

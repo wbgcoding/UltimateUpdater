@@ -2263,4 +2263,31 @@ Continuer avec les droits administrateur ?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Tout sélectionner</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Sauvegarde avant chaque nettoyage du registre</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Le nettoyage affiche tout de suite les résultats</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Plus en parallèle, c'est plus rapide</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Un par jour au maximum</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>La plus ancienne sauvegarde part en premier</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>L'antivirus vérifie les fichiers téléchargés</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Désactivé : bleu de l'app. Activé : accent Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Exclus par clic droit dans Nettoyage</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portable : données à côté du programme</value>
+  </data>
 </root>

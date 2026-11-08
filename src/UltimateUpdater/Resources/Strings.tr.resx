@@ -2263,4 +2263,31 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Tümünü seç</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Her kayıt defteri temizliğinden önce yedek</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Temizlik sonuçları hemen gösterir</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Aynı anda daha fazlası daha hızlıdır</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Günde en fazla bir</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>En eski yedek ilk silinir</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>Antivirüs indirilen dosyaları denetler</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Kapalı: uygulama mavisi. Açık: Windows vurgusu</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Temizlik'te sağ tıklayarak hariç tutuldu</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Taşınabilir: veriler programın yanında</value>
+  </data>
 </root>

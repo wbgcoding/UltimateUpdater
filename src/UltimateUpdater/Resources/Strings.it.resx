@@ -2263,4 +2263,31 @@ Continuare con privilegi di amministratore?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Seleziona tutto</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Backup prima di ogni pulizia del registro</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>La pulizia mostra subito i risultati</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Più alla volta è più veloce</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Al massimo uno al giorno</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>Il backup più vecchio viene eliminato per primo</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>L'antivirus controlla i file scaricati</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Disattivato: blu dell'app. Attivato: colore di Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Esclusi con clic destro in Pulizia</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portatile: dati accanto al programma</value>
+  </data>
 </root>

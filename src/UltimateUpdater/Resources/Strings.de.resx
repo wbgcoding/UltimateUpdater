@@ -2263,4 +2263,31 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Alles auswählen</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Sicherung vor jeder Registry-Bereinigung</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Bereinigen zeigt sofort Werte</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Mehr gleichzeitig geht schneller</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Höchstens einer pro Tag</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>Die älteste Sicherung fällt zuerst weg</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>Virenschutz prüft geladene Dateien</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Aus: App-Blau. An: Windows-Akzent</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Per Rechtsklick im Bereinigen ausgeschlossen</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portabel: Daten neben dem Programm</value>
+  </data>
 </root>

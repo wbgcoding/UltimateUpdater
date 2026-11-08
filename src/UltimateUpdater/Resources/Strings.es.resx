@@ -2263,4 +2263,31 @@ Esto no se puede deshacer.</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Seleccionar todo</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Copia de seguridad antes de cada limpieza del registro</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Limpieza muestra resultados al instante</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Más a la vez es más rápido</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Como máximo uno al día</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>La copia más antigua se elimina primero</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>El antivirus revisa los archivos descargados</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Desactivado: azul de la app. Activado: acento de Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Excluidas con clic derecho en Limpieza</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portable: datos junto al programa</value>
+  </data>
 </root>

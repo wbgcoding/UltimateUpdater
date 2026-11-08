@@ -2263,4 +2263,31 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>すべて選択</value>
   </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>レジストリのクリーンアップ前に毎回バックアップ</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>クリーンアップの結果をすぐに表示</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>同時に多く実行すると速くなります</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>1日に最大1つ</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>最も古いバックアップから削除</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>ウイルス対策がダウンロード済みファイルを確認</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>オフ: アプリの青。オン: Windows のアクセント</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>クリーンアップで右クリックして除外</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>ポータブル: データはプログラムの隣</value>
+  </data>
 </root>
