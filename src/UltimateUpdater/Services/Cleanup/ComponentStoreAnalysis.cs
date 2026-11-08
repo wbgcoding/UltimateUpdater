@@ -4,8 +4,9 @@ namespace UltimateUpdater.Services.Cleanup;
 /// What DISM's own <c>/Online /Cleanup-Image /AnalyzeComponentStore</c> reported about the WinSxS
 /// component store. Each field is independently null when <see cref="ComponentStoreAnalysisParser"/>
 /// could not find or understand that one line in DISM's output, never guessed from the others.
-/// Read-only information: nothing in this app deletes anything from this result, the existing Windows
-/// Disk Cleanup entry stays the only way to act on it.
+/// Read-only information: the analysis itself changes nothing. What acts on the store is separate: the
+/// component cleanup repair steps (DISM /StartComponentCleanup, optionally with /ResetBase) and Windows'
+/// own Disk Cleanup; this result is only shown beside them.
 /// </summary>
 public sealed record ComponentStoreAnalysis(
     long? ActualSizeBytes,

@@ -86,4 +86,20 @@ public sealed record CleanupTarget(
     /// justifies setting one to false; each target keeps its own value.
     /// </summary>
     public bool DefaultVisible { get; init; } = true;
+
+    /// <summary>
+    /// Files younger than this are left alone by both the scan and the clean, so a running installer's
+    /// extracted payload, a download in progress or another user's live temp file is never taken. A file is
+    /// young when the newer of its creation and write time lies inside the window. Null keeps the old
+    /// behaviour (no age rule). Only <see cref="CleanupKind.Directories"/> and
+    /// <see cref="CleanupKind.AppCacheSweep"/> read it.
+    /// </summary>
+    public TimeSpan? MinFileAge { get; init; }
+
+    /// <summary>
+    /// The folder is owned by SYSTEM or TrustedInstaller and an ordinary user cannot delete anything in it,
+    /// so an unelevated run would free nothing and still read "done". Such a target is skipped and flagged
+    /// "needs admin" without an elevated helper (see <see cref="CleanupService.SkipsWithoutAdmin(CleanupTarget, bool)"/>).
+    /// </summary>
+    public bool AdminOnlyDelete { get; init; }
 }

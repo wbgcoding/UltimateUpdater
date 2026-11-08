@@ -30,6 +30,26 @@ public class AdminOnlyCleanupSkipTests
     public void A_kind_that_frees_part_without_admin_still_runs_unelevated(CleanupKind kind) =>
         Assert.False(CleanupService.SkipsWithoutAdmin(kind, processElevated: false));
 
+    [Theory]
+    [InlineData("windows-update-cache")]
+    public void A_folder_only_an_administrator_can_empty_is_skipped_unelevated(string id)
+    {
+        var target = CleanupCatalog.Build().First(t => t.Id == id);
+
+        Assert.True(CleanupService.SkipsWithoutAdmin(target, processElevated: false));
+        Assert.False(CleanupService.SkipsWithoutAdmin(target, processElevated: true));
+    }
+
+    [Theory]
+    [InlineData("user-temp")]
+    [InlineData("windows-temp")]
+    public void A_folder_that_frees_part_without_admin_still_runs_unelevated(string id)
+    {
+        var target = CleanupCatalog.Build().First(t => t.Id == id);
+
+        Assert.False(CleanupService.SkipsWithoutAdmin(target, processElevated: false));
+    }
+
     [Fact]
     public void The_skip_outcome_frees_nothing_and_says_admin_is_needed()
     {

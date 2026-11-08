@@ -1132,12 +1132,6 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   <data name="CleanupUpdateCacheDesc" xml:space="preserve">
     <value>Fișiere de instalare ale actualizărilor deja aplicate.</value>
   </data>
-  <data name="CleanupDeliveryOptimization" xml:space="preserve">
-    <value>Fișiere Delivery Optimization</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
-    <value>Părți de actualizare pe care Windows le păstrează pentru a le partaja cu alte PC-uri.</value>
-  </data>
   <data name="CleanupThumbnails" xml:space="preserve">
     <value>Cache de miniaturi și pictograme</value>
   </data>
@@ -1166,7 +1160,7 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
     <value>Rulează Curățarea de disc Windows</value>
   </data>
   <data name="CleanupDiskCleanupDesc" xml:space="preserve">
-    <value>Deschide propriul instrument al Windows; el decide ce elimină.</value>
+    <value>Deschide propriul instrument al Windows; el decide ce elimină, inclusiv fișierele Delivery Optimization.</value>
   </data>
   <data name="SourceDescAndroidSdk" xml:space="preserve">
     <value>Pachete Android SDK prin sdkmanager. Actualizează componentele învechite (platforme, instrumente de build) din locația standard, ANDROID_HOME sau PATH.</value>
@@ -1527,9 +1521,6 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
     <value>Windows Update descarcă pur și simplu fișierele din nou dacă are nevoie de ele.</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
-    <value>Doar un cache pentru partajarea actualizărilor cu alte PC-uri din rețea. Nimic altceva nu îl folosește.</value>
   </data>
   <data name="CleanupThumbnailsConsequence" xml:space="preserve">
     <value>Explorer redesenează miniaturile data viitoare când deschideți acel folder.</value>
@@ -2397,5 +2388,14 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="SelfUpdateCancelUpdate" xml:space="preserve">
     <value>Anulează actualizarea</value>
+  </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>Încheiat cu codul de eroare {0}</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>Oprit după {0} minute</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>Nu a putut fi rulat</value>
   </data>
 </root>

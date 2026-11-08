@@ -47,6 +47,7 @@ public static class PythonVersionCleanupExecutor
         var deferred = matched.Count - eligible.Count;
         var deleted = 0;
         var skipped = 0;
+        long freed = 0;
 
         if (runsElevated && deferred > 0)
         {
@@ -71,15 +72,20 @@ public static class PythonVersionCleanupExecutor
             // Returned, not thrown: the caller discards everything from a cancelled call, and the versions
             // already removed are real work the user must be told about.
             if (cancellationToken.IsCancellationRequested)
-                return new CleanupOutcome(0, deleted, skipped, WasStopped: true);
+                return new CleanupOutcome(freed, deleted, skipped, WasStopped: true);
 
             if (await RunUninstallAsync(candidate, logging, cancellationToken))
+            {
                 deleted++;
+                freed += candidate.SizeBytes;
+            }
             else
+            {
                 skipped++;
+            }
         }
 
-        return new CleanupOutcome(0, deleted, skipped);
+        return new CleanupOutcome(freed, deleted, skipped);
     }
 
     /// <summary>

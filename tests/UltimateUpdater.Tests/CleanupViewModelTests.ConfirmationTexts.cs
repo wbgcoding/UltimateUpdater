@@ -143,4 +143,44 @@ public partial class CleanupViewModelTests
 
         Assert.Contains(drivers.Title, detail);
     }
+
+    [Fact]
+    public void The_confirmation_does_not_promise_bytes_of_an_admin_only_area_without_admin()
+    {
+        ElevationService.IsElevatedForTest.Value = false;
+        LocalizationService.Instance.Apply("en");
+        var viewModel = Create(CreateSettings());
+        var updates = viewModel.Items.First(i => i.Target.Id == "windows-update-cache");
+        var temp = RecyclableFileTarget(viewModel);
+        updates.Bytes = 5L * 1024 * 1024 * 1024;
+        temp.Bytes = 2L * 1024 * 1024 * 1024;
+        SelectOnly(viewModel, updates, temp);
+
+        var detail = viewModel.BuildConfirmationDetail();
+        var (headline, _) = viewModel.BuildConfirmationTexts();
+
+        Assert.Contains($"{updates.Title}: {LocalizationService.Instance["CleanupNeedsAdmin"]}", detail);
+        Assert.DoesNotContain(ByteSize.Format(updates.Bytes), detail);
+        Assert.DoesNotContain(ByteSize.Format(updates.Bytes), headline);
+        Assert.Contains(ByteSize.Format(temp.Bytes), headline);
+        Assert.Equal(temp.Bytes, viewModel.ConfirmedBytes);
+    }
+
+    [Fact]
+    public void The_confirmation_counts_an_admin_only_area_when_the_elevated_helper_runs()
+    {
+        ElevationService.IsElevatedForTest.Value = false;
+        LocalizationService.Instance.Apply("en");
+        var logging = new LoggingService();
+        var elevated = new ElevatedHost(logging);
+        elevated.SetRunningForTest(true);
+        var viewModel = new CleanupViewModel(new CleanupService(logging), logging, CreateSettings(), elevated: elevated);
+        WpfHarness.WaitForCleanupCatalog(viewModel);
+        var updates = viewModel.Items.First(i => i.Target.Id == "windows-update-cache");
+        updates.Bytes = 5L * 1024 * 1024 * 1024;
+        SelectOnly(viewModel, updates);
+
+        Assert.Equal(updates.Bytes, viewModel.ConfirmedBytes);
+        Assert.Contains($"{updates.Title}: {ByteSize.Format(updates.Bytes)}", viewModel.BuildConfirmationDetail());
+    }
 }

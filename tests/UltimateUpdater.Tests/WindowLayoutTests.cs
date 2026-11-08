@@ -6680,7 +6680,7 @@ public partial class WindowLayoutTests
                 ["user-temp", "CleanupUserTemp", "900"], ["windows-update-cache", "CleanupUpdateCache", "600"],
                 ["thumbnail-cache", "CleanupThumbnails", "300"], ["recycle-bin", "CleanupRecycleBin", "200"],
                 ["browser-cache", "CleanupShaderCache", "120"], ["crash-dumps", "CleanupCrashDumps", "80"],
-                ["delivery-optimization", "CleanupDeliveryOptimization", "40"], ["system-temp", "CleanupWindowsTemp", "20"],
+                ["windows-logs", "CleanupWindowsLogs", "40"], ["system-temp", "CleanupWindowsTemp", "20"],
             ];
             for (var run = 0; run < 3; run++)
             {

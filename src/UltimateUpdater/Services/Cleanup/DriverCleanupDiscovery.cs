@@ -122,22 +122,33 @@ public static class DriverCleanupDiscovery
     /// joined in from <paramref name="packages"/> by the device's own bound package name, purely for
     /// display (the tooltip); a device whose package does not resolve still gets a row, just without them.
     /// A device is only offered once its last-seen date is older than <see cref="DeviceUnusedThreshold"/>
-    /// (any kind of date, so a recent install date hides it too); a device with no date at all stays offered,
-    /// because nothing says it was used lately.
+    /// (any kind of date, so a recent install date hides it too); a device with no date at all is not offered,
+    /// because the year cannot be shown for it. <paramref name="logInfo"/> receives one line with how many
+    /// such devices were left out.
     /// </summary>
     public static IReadOnlyList<DriverDeviceCandidate> DiscoverDisconnectedDevices(
         IReadOnlyList<DriverDeviceInfo> devices, IReadOnlyList<DriverPackageInfo> packages,
-        DateTimeOffset? now = null)
+        DateTimeOffset? now = null, Action<string>? logInfo = null)
     {
         var cutoff = (now ?? DateTimeOffset.UtcNow) - DeviceUnusedThreshold;
         var packagesByName = new Dictionary<string, DriverPackageInfo>(StringComparer.OrdinalIgnoreCase);
         foreach (var package in packages)
             packagesByName[package.PackageName] = package;
 
-        return devices
+        var undated = 0;
+        var candidates = devices
             .Where(d => !d.Present && IsOemPackagePath(d.InfPath) && !IsExcludedClass(d.ClassName))
             .Where(d => !(packagesByName.TryGetValue(Path.GetFileName(d.InfPath!), out var bound) && IsNeverOffered(bound)))
-            .Where(d => ResolveLastSeen(d).Date is not { } seen || seen < cutoff)
+            .Where(d =>
+            {
+                if (ResolveLastSeen(d).Date is not { } seen)
+                {
+                    undated++;
+                    return false;
+                }
+
+                return seen < cutoff;
+            })
             .Select(d =>
             {
                 var packageName = Path.GetFileName(d.InfPath!);
@@ -153,6 +164,11 @@ public static class DriverCleanupDiscovery
             })
             .OrderBy(c => c.LastConnected ?? DateTimeOffset.MaxValue)
             .ToList();
+
+        if (undated > 0)
+            logInfo?.Invoke($"Driver cleanup: {undated} disconnected device(s) without any known date were not listed.");
+
+        return candidates;
     }
 
     /// <summary>The fallback chain for "when was this last seen": a real connect/disconnect event first

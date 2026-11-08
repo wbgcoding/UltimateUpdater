@@ -207,11 +207,113 @@ public class PythonInterpretersTests
             Directory.CreateDirectory(Path.Combine(sitePackages, "~orchvision"));
             Directory.CreateDirectory(Path.Combine(sitePackages, "requests"));
             Directory.CreateDirectory(Path.Combine(sitePackages, "requests-2.32.0.dist-info"));
+            AgeFolder(Path.Combine(sitePackages, "~ip"), TimeSpan.FromDays(2));
+            AgeFolder(Path.Combine(sitePackages, "~orchvision"), TimeSpan.FromDays(2));
 
             var leftovers = PythonInterpreters.FindBrokenInstallLeftovers(sitePackages);
 
             Assert.Equal(2, leftovers.Count);
             Assert.All(leftovers, l => Assert.StartsWith("~", Path.GetFileName(l)));
+        }
+        finally
+        {
+            Directory.Delete(sitePackages, recursive: true);
+        }
+    }
+
+    private static void AgeFolder(string folder, TimeSpan age)
+    {
+        var stamp = DateTime.UtcNow - age;
+        foreach (var entry in Directory.EnumerateFileSystemEntries(folder, "*", SearchOption.AllDirectories))
+        {
+            File.SetCreationTimeUtc(entry, stamp);
+            File.SetLastWriteTimeUtc(entry, stamp);
+        }
+
+        Directory.SetCreationTimeUtc(folder, stamp);
+        Directory.SetLastWriteTimeUtc(folder, stamp);
+        Directory.SetLastWriteTimeUtc(Path.GetDirectoryName(folder)!, stamp);
+    }
+
+    [Fact]
+    public void An_old_tilde_folder_is_kept_while_site_packages_was_just_written()
+    {
+        // pip stashes the old package by renaming it: the stash keeps its old times, only the
+        // site-packages folder around it shows that an install is running.
+        var sitePackages = Directory.CreateTempSubdirectory("wu-sitepkgs-").FullName;
+        try
+        {
+            var stash = Path.Combine(sitePackages, "~equests");
+            Directory.CreateDirectory(stash);
+            AgeFolder(stash, TimeSpan.FromDays(200));
+            Directory.SetLastWriteTimeUtc(sitePackages, DateTime.UtcNow);
+            var skipped = new List<string>();
+
+            Assert.Empty(PythonInterpreters.FindBrokenInstallLeftovers(sitePackages, logSkip: skipped.Add));
+            Assert.Single(skipped);
+
+            Directory.SetLastWriteTimeUtc(sitePackages, DateTime.UtcNow.AddDays(-2));
+            Assert.Equal([stash], PythonInterpreters.FindBrokenInstallLeftovers(sitePackages));
+        }
+        finally
+        {
+            Directory.Delete(sitePackages, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_fresh_tilde_folder_of_a_running_install_is_kept_and_an_old_one_is_returned()
+    {
+        var sitePackages = Directory.CreateTempSubdirectory("wu-sitepkgs-").FullName;
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(sitePackages, "~live"));
+            Directory.CreateDirectory(Path.Combine(sitePackages, "~stale"));
+            AgeFolder(Path.Combine(sitePackages, "~stale"), TimeSpan.FromDays(2));
+            var skipped = new List<string>();
+
+            var leftovers = PythonInterpreters.FindBrokenInstallLeftovers(sitePackages, logSkip: skipped.Add);
+
+            Assert.Equal([Path.Combine(sitePackages, "~stale")], leftovers);
+            Assert.Single(skipped);
+            Assert.Contains("~live", skipped[0]);
+        }
+        finally
+        {
+            Directory.Delete(sitePackages, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void An_old_tilde_folder_with_a_freshly_written_file_inside_is_kept()
+    {
+        var sitePackages = Directory.CreateTempSubdirectory("wu-sitepkgs-").FullName;
+        try
+        {
+            var folder = Path.Combine(sitePackages, "~busy");
+            Directory.CreateDirectory(folder);
+            File.WriteAllText(Path.Combine(folder, "part.py"), "x");
+            AgeFolder(folder, TimeSpan.FromDays(2));
+            File.SetLastWriteTimeUtc(Path.Combine(folder, "part.py"), DateTime.UtcNow);
+
+            Assert.Empty(PythonInterpreters.FindBrokenInstallLeftovers(sitePackages));
+        }
+        finally
+        {
+            Directory.Delete(sitePackages, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_folder_is_returned_once_the_hour_has_passed_by_the_given_clock()
+    {
+        var sitePackages = Directory.CreateTempSubdirectory("wu-sitepkgs-").FullName;
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(sitePackages, "~ip"));
+
+            Assert.Empty(PythonInterpreters.FindBrokenInstallLeftovers(sitePackages));
+            Assert.Single(PythonInterpreters.FindBrokenInstallLeftovers(sitePackages, DateTime.UtcNow.AddHours(2)));
         }
         finally
         {

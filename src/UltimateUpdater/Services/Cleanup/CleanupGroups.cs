@@ -46,7 +46,6 @@ public static class CleanupGroups
         ["pip-install-leftovers"] = CleanupGroupKey.Caches,
 
         ["windows-update-cache"] = CleanupGroupKey.WindowsMaintenance,
-        ["delivery-optimization"] = CleanupGroupKey.WindowsMaintenance,
         ["windows-logs"] = CleanupGroupKey.WindowsMaintenance,
         ["disk-cleanup"] = CleanupGroupKey.WindowsMaintenance,
 

@@ -1132,12 +1132,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupUpdateCacheDesc" xml:space="preserve">
     <value>すでに適用された更新のインストールファイルです。</value>
   </data>
-  <data name="CleanupDeliveryOptimization" xml:space="preserve">
-    <value>配信の最適化ファイル</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
-    <value>Windows が他の PC と共有するために保持する更新の一部です。</value>
-  </data>
   <data name="CleanupThumbnails" xml:space="preserve">
     <value>サムネイルとアイコンのキャッシュ</value>
   </data>
@@ -1166,7 +1160,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
     <value>Windows ディスク クリーンアップを実行</value>
   </data>
   <data name="CleanupDiskCleanupDesc" xml:space="preserve">
-    <value>Windows 自体のツールを開きます。削除する内容はそのツールが判断します。</value>
+    <value>Windows 自体のツールを開きます。削除する内容はそのツールが判断し、配信の最適化ファイルも含まれます。</value>
   </data>
   <data name="SourceDescAndroidSdk" xml:space="preserve">
     <value>sdkmanager 経由の Android SDK パッケージです。標準の場所、ANDROID_HOME、または PATH から古くなったコンポーネント（プラットフォーム、ビルドツール）を更新します。</value>
@@ -1527,9 +1521,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
     <value>必要になれば Windows Update はファイルを単純に再度ダウンロードします。</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
-    <value>ネットワーク上の他の PC と更新を共有するためのキャッシュにすぎません。他には使用されません。</value>
   </data>
   <data name="CleanupThumbnailsConsequence" xml:space="preserve">
     <value>次にそのフォルダーを開いたときに、エクスプローラーがサムネイルを再描画します。</value>
@@ -2397,5 +2388,14 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="SelfUpdateCancelUpdate" xml:space="preserve">
     <value>更新をキャンセル</value>
+  </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>エラーコード {0} で終了しました</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>{0} 分後に中止しました</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>実行できませんでした</value>
   </data>
 </root>

@@ -1,4 +1,5 @@
 using System.IO;
+using Microsoft.Win32;
 
 namespace UltimateUpdater.Services.Cleanup;
 
@@ -72,6 +73,14 @@ public static class CleanupCatalog
         path.StartsWith(
             Path.TrimEndingDirectorySeparator(root) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>How old a file in a temp location must be before cleanup takes it: a day, so an installer
+    /// that is between two steps, a download in progress or another signed-in user's live files stay.</summary>
+    internal static readonly TimeSpan TempMinFileAge = TimeSpan.FromHours(24);
+
+    /// <summary>The same for a cache folder, which programs rewrite constantly and rebuild on demand: an hour
+    /// is enough to leave what is being written right now.</summary>
+    internal static readonly TimeSpan CacheMinFileAge = TimeSpan.FromHours(1);
+
     private static IReadOnlyList<CleanupTarget> BuildCatalog(
         Action<string>? logWarning, IReadOnlyList<string>? callerTempPaths, string? usersRoot)
     {
@@ -88,6 +97,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupUserTempConsequence")
             {
+                MinFileAge = TempMinFileAge,
                 Directories = Distinct([Path.GetTempPath(), Path.Combine(local, "Temp")]),
             },
 
@@ -95,6 +105,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupAllUsersTempConsequence", NeedsElevation: true)
             {
+                MinFileAge = TempMinFileAge,
                 Directories = OtherUsersTempDirectories(callerTempPaths, usersRoot, logWarning),
             },
 
@@ -102,6 +113,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupWindowsTempConsequence", NeedsElevation: true)
             {
+                MinFileAge = TempMinFileAge,
                 Directories = Distinct([Path.Combine(windows, "Temp")]),
             },
 
@@ -109,20 +121,16 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupUpdateCacheConsequence", NeedsElevation: true)
             {
+                MinFileAge = TempMinFileAge,
+                AdminOnlyDelete = true,
                 Directories = Distinct([Path.Combine(windows, "SoftwareDistribution", "Download")]),
-            },
-
-            new CleanupTarget("delivery-optimization", "CleanupDeliveryOptimization", "CleanupDeliveryOptimizationDesc",
-                CleanupKind.Directories, DefaultEnabled: true,
-                RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupDeliveryOptimizationConsequence", NeedsElevation: true)
-            {
-                Directories = Distinct([Path.Combine(windows, "SoftwareDistribution", "DeliveryOptimization")]),
             },
 
             new CleanupTarget("thumbnail-cache", "CleanupThumbnails", "CleanupThumbnailsDesc",
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupThumbnailsConsequence")
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Distinct([Path.Combine(local, "Microsoft", "Windows", "Explorer")]),
             },
 
@@ -130,6 +138,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupCrashDumpsConsequence")
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Distinct([Path.Combine(local, "CrashDumps")]),
             },
 
@@ -140,6 +149,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupShaderCacheConsequence")
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Existing(
                 [
                     Path.Combine(local, "D3DSCache"),
@@ -159,6 +169,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupPackageCacheConsequence")
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Existing(
                 [
                     Path.Combine(local, "pip", "Cache"),
@@ -176,6 +187,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupBuildCacheConsequence")
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Existing(
                 [
                     Path.Combine(profile, ".gradle", "caches", "build-cache-1"),
@@ -189,7 +201,10 @@ public static class CleanupCatalog
             // of this table, even though the same safety gate applies.
             new CleanupTarget("app-cache-sweep", "CleanupAppCacheSweep", "CleanupAppCacheSweepDesc",
                 CleanupKind.AppCacheSweep, DefaultEnabled: false,
-                RiskLevel: CleanupRiskLevel.Considered, ConsequenceKey: "CleanupAppCacheSweepConsequence"),
+                RiskLevel: CleanupRiskLevel.Considered, ConsequenceKey: "CleanupAppCacheSweepConsequence")
+            {
+                MinFileAge = CacheMinFileAge,
+            },
 
             // The LeftoverInstalls catalogue entry is intentionally absent. LeftoverInstallDiscovery and
             // LeftoverInstallSafety stay in the codebase, built and tested, for when a stronger detection
@@ -475,8 +490,9 @@ public static class CleanupCatalog
     }
 
     /// <summary>
-    /// Every OTHER user's Temp folder: this user's own is already the first target. Enumerating the users
-    /// directory needs no elevation, but deleting inside another user's profile does; a folder that cannot
+    /// Every OTHER user's Temp folder: this user's own is already the first target. The profile folders come
+    /// from the machine's profile list (a profile can live outside the Users folder); a test passes a users
+    /// folder to list instead. Deleting inside another user's profile needs elevation; a folder that cannot
     /// be touched is simply skipped at run time.
     /// </summary>
     private static IReadOnlyList<string> OtherUsersTempDirectories(
@@ -484,10 +500,18 @@ public static class CleanupCatalog
     {
         try
         {
-            var usersRoot = usersRootOverride ?? Path.Combine(
-                Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) ?? "C:\\", "Users");
-            if (!Directory.Exists(usersRoot))
-                return [];
+            IReadOnlyList<string> profiles;
+            if (usersRootOverride is not null)
+            {
+                if (!Directory.Exists(usersRootOverride))
+                    return [];
+
+                profiles = Directory.EnumerateDirectories(usersRootOverride).ToList();
+            }
+            else
+            {
+                profiles = ProfileFolders(ProfileListForTest.Value?.Invoke() ?? ReadProfileList());
+            }
 
             // This process's own Temp folders plus the caller's: they differ whenever another account elevated.
             List<string> ownTemps =
@@ -513,7 +537,8 @@ public static class CleanupCatalog
                 ownTemps.Add(Path.GetFullPath(callerTemp));
             }
 
-            return Distinct(ExcludeOwnTemp(Directory.EnumerateDirectories(usersRoot)
+            return Distinct(ExcludeOwnTemp(profiles
+                .Where(profile => IsUsableProfileFolder(profile, logWarning))
                 .Select(profile => Path.Combine(profile, "AppData", "Local", "Temp"))
                 .Where(Directory.Exists),
                 ownTemps, logWarning));
@@ -523,5 +548,117 @@ public static class CleanupCatalog
             // an unreadable users directory (or a malformed caller path) simply means this target has nothing to offer
             return [];
         }
+    }
+
+    private static readonly Environment.SpecialFolder[] SystemFolders =
+    [
+        Environment.SpecialFolder.Windows,
+        Environment.SpecialFolder.ProgramFiles,
+        Environment.SpecialFolder.ProgramFilesX86,
+        Environment.SpecialFolder.CommonApplicationData,
+    ];
+
+    /// <summary>
+    /// A profile path from the profile list is registry data, read and then walked with admin rights: its
+    /// Temp folder is only offered when the profile is a local folder reached through no link (a network
+    /// drive would make the admin account sign in to it), not a drive root and not inside Windows, Program
+    /// Files or ProgramData. Checked before anything on that path is opened.
+    /// </summary>
+    internal static bool IsUsableProfileFolder(string profile, Action<string>? logWarning = null)
+    {
+        string? reason = null;
+        try
+        {
+            var full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(profile));
+            if (!CleanupSafety.IsLocalPathWithoutLinks(full))
+                reason = "not a local folder or reached through a link";
+            else if (string.Equals(Path.TrimEndingDirectorySeparator(Path.GetPathRoot(full) ?? string.Empty), full, StringComparison.OrdinalIgnoreCase))
+                reason = "a drive root";
+            else if (SystemFolders
+                     .Select(folder => Environment.GetFolderPath(folder))
+                     .Where(folder => !string.IsNullOrEmpty(folder))
+                     .Any(folder => IsUnder(full, Path.TrimEndingDirectorySeparator(folder))))
+                reason = "inside a system folder";
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            reason = "an unusable path";
+        }
+
+        if (reason is null)
+            return true;
+
+        logWarning?.Invoke($"Cleanup: the profile folder '{profile}' is left out of the all-users Temp list: {reason}.");
+        return false;
+    }
+
+    private static bool IsUnder(string full, string ancestor) =>
+        string.Equals(full, ancestor, StringComparison.OrdinalIgnoreCase)
+        || full.StartsWith(ancestor + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Test seam for the machine's profile list (the registry read is not mockable otherwise): pairs
+    /// of account SID and the raw profile path. Per async flow.</summary>
+    internal static readonly AsyncLocal<Func<IReadOnlyList<KeyValuePair<string, string?>>>?> ProfileListForTest = new();
+
+    private const string ProfileListKey = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList";
+
+    private static IReadOnlyList<KeyValuePair<string, string?>> ReadProfileList()
+    {
+        try
+        {
+            using var list = Registry.LocalMachine.OpenSubKey(ProfileListKey);
+            if (list is null)
+                return [];
+
+            var entries = new List<KeyValuePair<string, string?>>();
+            foreach (var sid in list.GetSubKeyNames())
+            {
+                using var key = list.OpenSubKey(sid);
+                var path = key?.GetValue("ProfileImagePath", null, RegistryValueOptions.DoNotExpandEnvironmentNames) as string;
+                entries.Add(new KeyValuePair<string, string?>(sid, path));
+            }
+
+            return entries;
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// The profile folders of the real user accounts in a profile list: only local and domain accounts
+    /// (SID prefix S-1-5-21-), never the system, service or app-pool profiles. A path may use
+    /// %SystemDrive% or %SystemRoot%, read from the Windows folder, not from the environment (a variable the
+    /// caller could have changed before an elevated process started); any other variable, a relative or
+    /// network path leaves the entry out.
+    /// </summary>
+    internal static IReadOnlyList<string> ProfileFolders(IEnumerable<KeyValuePair<string, string?>> profileList)
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var systemDrive = Path.GetPathRoot(windows)?.TrimEnd('\\') ?? "C:";
+        var folders = new List<string>();
+
+        foreach (var (sid, raw) in profileList)
+        {
+            if (!sid.StartsWith("S-1-5-21-", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(raw))
+                continue;
+
+            var path = raw.Trim()
+                .Replace("%SystemDrive%", systemDrive, StringComparison.OrdinalIgnoreCase)
+                .Replace("%SystemRoot%", windows, StringComparison.OrdinalIgnoreCase);
+            if (path.Contains('%') || path.Length < 4 || !char.IsAsciiLetter(path[0]) || path[1] != ':' || path[2] != '\\')
+                continue;
+
+            try
+            {
+                folders.Add(Path.GetFullPath(path));
+            }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+            {
+            }
+        }
+
+        return folders;
     }
 }

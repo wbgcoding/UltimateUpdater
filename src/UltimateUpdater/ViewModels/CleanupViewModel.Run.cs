@@ -714,7 +714,7 @@ public partial class CleanupViewModel
 
         // A target only an administrator can run is never started here unelevated: it would end at once
         // (DISM exit 740) and read "done, 0 B". It is skipped and the row says why.
-        Task<CleanupOutcome> CleanLocallyAsync() => CleanupService.SkipsWithoutAdmin(item.Target.Kind, ElevationService.IsElevated)
+        Task<CleanupOutcome> CleanLocallyAsync() => CleanupService.SkipsWithoutAdmin(item.Target, ElevationService.IsElevated)
             ? SkipForMissingAdmin()
             : _service.CleanAsync(
             item.Target, progress, cancellationToken, _pause, _settings.Current.RegistryCleanup,
@@ -808,8 +808,13 @@ public partial class CleanupViewModel
                 // Ended by the time limit: neither done nor stopped by the user, so the row says why it
                 // freed nothing.
                 item.RunState = CleanupTargetState.Skipped;
-                failureText = string.Format(
-                    Loc["CleanupDiskCleanupTimedOut"], (int)CleanupService.DiskCleanupLimit.TotalMinutes);
+                failureText = TimedOutText(item.Target.Kind);
+            }
+            else if (outcome.Failed)
+            {
+                // A tool the target runs failed or never started: not done, and the row says why.
+                item.RunState = CleanupTargetState.Skipped;
+                failureText = FailedText(outcome);
             }
             else if (!outcome.WasStopped)
             {
@@ -857,6 +862,30 @@ public partial class CleanupViewModel
 
             RefreshRunProgress();
         }
+    }
+
+    /// <summary>The row text of a target ended by its time limit; each kind names its own limit.</summary>
+    internal static string TimedOutText(CleanupKind kind)
+    {
+        var loc = LocalizationService.Instance;
+        return kind switch
+        {
+            CleanupKind.SystemRepair => string.Format(loc["CleanupToolTimedOut"], (int)CleanupService.RepairStepTimeout.TotalMinutes),
+            CleanupKind.Defragmentation => string.Format(loc["CleanupToolTimedOut"], (int)CleanupService.DefragLimit.TotalMinutes),
+            _ => string.Format(loc["CleanupDiskCleanupTimedOut"], (int)CleanupService.DiskCleanupLimit.TotalMinutes),
+        };
+    }
+
+    /// <summary>The row text of a target whose tool failed: its exit code when it had one, else that it
+    /// could not be run at all. Codes outside the plain range (DISM's 0x800f0806 style) read as hex.</summary>
+    internal static string FailedText(CleanupOutcome outcome)
+    {
+        var loc = LocalizationService.Instance;
+        if (outcome.ExitCode is not { } code)
+            return loc["CleanupToolNotRun"];
+
+        var shown = code is < 0 or > 65535 ? $"0x{code:X8}" : code.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return string.Format(loc["CleanupToolFailed"], shown);
     }
 
     /// <summary>
@@ -1062,7 +1091,7 @@ public partial class CleanupViewModel
                 message.Freed, message.Files, message.Skipped, message.SkippedBytes,
                 WasStopped: message.Stopped, DriverBackupFolderName: message.DriverBackupFolderName,
                 TimedOut: message.TimedOut, ProtectedFiles: message.ProtectedFiles, ProtectedBytes: message.ProtectedBytes,
-                RepairResult: message.RepairResult);
+                RepairResult: message.RepairResult, Failed: message.Failed, ExitCode: message.ExitCode);
             return (state with { Finished = true, Outcome = outcome }, null);
         }
 
@@ -1139,6 +1168,7 @@ public partial class CleanupViewModel
                 : [],
             CallerTempPaths = CleanupCatalog.OwnTempPaths().ToList(),
             CallerProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            CallerSid = RecycleBinScanner.TryGetOwnSid(),
         };
 
         // "cleanup" for a scan (never takes a lane at all, Exclusive is false below) and for every

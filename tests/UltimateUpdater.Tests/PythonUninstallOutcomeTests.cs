@@ -193,4 +193,28 @@ public class PythonUninstallOutcomeTests : IDisposable
 
         Assert.True(round!.Stopped);
     }
+
+    private static void FillSitePackages(string pythonExe, int bytes)
+    {
+        var sitePackages = Path.Combine(Path.GetDirectoryName(pythonExe)!, "Lib", "site-packages", "pkg");
+        Directory.CreateDirectory(sitePackages);
+        File.WriteAllBytes(Path.Combine(sitePackages, "data.bin"), new byte[bytes]);
+    }
+
+    [Fact]
+    public async Task Freed_bytes_count_only_the_interpreters_that_were_really_uninstalled()
+    {
+        ElevationService.IsElevatedForTest.Value = false;
+        var (registry, selected, uninstallers) = ThreeInterpreters();
+        FillSitePackages(selected[0], 1000);
+        FillSitePackages(selected[1], 2000);
+        PythonVersionCleanupExecutor.RunnerForTest.Value = (file, _, _, _) =>
+            Task.FromResult(new ProcessResult(string.Equals(file, uninstallers[0], StringComparison.OrdinalIgnoreCase) ? 1 : 0, "", ""));
+
+        var outcome = await PythonVersionCleanupExecutor.CleanAsync(registry, selected, new LoggingService(), CancellationToken.None);
+
+        Assert.Equal(1, outcome.DeletedFiles);
+        Assert.Equal(1, outcome.SkippedFiles);
+        Assert.Equal(2000, outcome.FreedBytes);
+    }
 }

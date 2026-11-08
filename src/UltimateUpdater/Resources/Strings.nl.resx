@@ -1132,12 +1132,6 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   <data name="CleanupUpdateCacheDesc" xml:space="preserve">
     <value>Installatiebestanden van updates die al zijn toegepast.</value>
   </data>
-  <data name="CleanupDeliveryOptimization" xml:space="preserve">
-    <value>Bestanden van Delivery Optimization</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
-    <value>Updateonderdelen die Windows bewaart om te delen met andere pc's.</value>
-  </data>
   <data name="CleanupThumbnails" xml:space="preserve">
     <value>Miniatuur- en pictogramcache</value>
   </data>
@@ -1166,7 +1160,7 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
     <value>Schijfopruiming van Windows uitvoeren</value>
   </data>
   <data name="CleanupDiskCleanupDesc" xml:space="preserve">
-    <value>Opent de eigen tool van Windows; die bepaalt zelf wat wordt verwijderd.</value>
+    <value>Opent de eigen tool van Windows; die bepaalt zelf wat wordt verwijderd, ook de bestanden van Delivery Optimization.</value>
   </data>
   <data name="SourceDescAndroidSdk" xml:space="preserve">
     <value>Android SDK-pakketten via sdkmanager. Werkt verouderde onderdelen (platforms, buildtools) bij vanaf de standaardlocatie, ANDROID_HOME of PATH.</value>
@@ -1527,9 +1521,6 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
     <value>Windows Update downloadt de bestanden gewoon opnieuw als het ze nodig heeft.</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
-    <value>Slechts een cache om updates te delen met andere pc's op het netwerk. Niets anders gebruikt hem.</value>
   </data>
   <data name="CleanupThumbnailsConsequence" xml:space="preserve">
     <value>Verkenner tekent miniaturen opnieuw de volgende keer dat u die map opent.</value>
@@ -2397,5 +2388,14 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="SelfUpdateCancelUpdate" xml:space="preserve">
     <value>Update annuleren</value>
+  </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>Beëindigd met foutcode {0}</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>Gestopt na {0} minuten</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>Kon niet worden uitgevoerd</value>
   </data>
 </root>

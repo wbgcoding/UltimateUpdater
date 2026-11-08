@@ -54,9 +54,27 @@ public static class CleanupSafety
     /// touching <c>AppPaths</c> would run its static initializer, which creates directories and writes a
     /// probe file in locations the unelevated user controls.
     /// </summary>
-    private static readonly string[] OwnPaths = BuildOwnPaths();
+    private static readonly string[] OwnPaths = BuildOwnPaths(
+        AppContext.BaseDirectory, Environment.ProcessPath, Path.GetTempPath(), ResolveProtectedFolders());
 
-    private static string[] BuildOwnPaths()
+    /// <summary>Test seam: replaces <see cref="OwnPaths"/> for the current async flow, so a test can fake where
+    /// the program lives (a profile root, a drive root) without moving the running test host.</summary>
+    internal static readonly AsyncLocal<string[]?> OwnPathsOverrideForTest = new();
+
+    private static string[] CurrentOwnPaths => OwnPathsOverrideForTest.Value ?? OwnPaths;
+
+    private static List<string> ResolveProtectedFolders() =>
+        ProtectedFolders.Select(SafeFolderPath).OfType<string>().ToList();
+
+    /// <summary>
+    /// The set of directories cleanup must not touch. The program's own folder is protected as a whole, unless
+    /// that folder is so broad that protecting it would put the user's Temp and every cache below it off
+    /// limits (an exe started from the profile root, a drive root or the local app data folder): then only the
+    /// exe itself and the portable <c>data</c> folder beside it are protected, and everything else in that
+    /// folder is judged by the ordinary rules. Pure, so a test can feed it any location.
+    /// </summary>
+    internal static string[] BuildOwnPaths(
+        string? baseDirectory, string? processPath, string tempPath, IReadOnlyList<string> protectedPaths)
     {
         var paths = new List<string>();
 
@@ -75,13 +93,50 @@ public static class CleanupSafety
             }
         }
 
-        // Single-file extraction root (ours and everyone else's), our own base directory whatever form
-        // the build takes, and the Temp-resident data folder AppPaths falls back to.
-        Add(Path.Combine(Path.GetTempPath(), ".net"));
-        Add(AppContext.BaseDirectory);
-        Add(Path.Combine(Path.GetTempPath(), "UltimateUpdater"));
+        // Single-file extraction root (ours and everyone else's) and the Temp-resident data folder AppPaths
+        // falls back to.
+        Add(Path.Combine(tempPath, ".net"));
+        Add(Path.Combine(tempPath, "UltimateUpdater"));
+
+        if (string.IsNullOrWhiteSpace(baseDirectory))
+            return paths.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
+        if (IsTooBroadToProtect(baseDirectory, protectedPaths))
+        {
+            Add(processPath);
+            Add(Path.Combine(baseDirectory, "data"));
+        }
+        else
+        {
+            Add(baseDirectory);
+        }
 
         return paths.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+    }
+
+    /// <summary>True for a drive root, a protected known folder itself, or a folder that holds one (the profile
+    /// root, the AppData folder): protecting that as a whole would refuse the Temp below it.</summary>
+    private static bool IsTooBroadToProtect(string baseDirectory, IReadOnlyList<string> protectedPaths)
+    {
+        string full;
+        try
+        {
+            full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(baseDirectory));
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false; // unusable: keep the whole-folder protection
+        }
+
+        if (Path.GetPathRoot(full) is { } root
+            && string.Equals(Path.TrimEndingDirectorySeparator(root), full, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return protectedPaths.Any(protectedPath =>
+            string.Equals(full, protectedPath, StringComparison.OrdinalIgnoreCase)
+            || protectedPath.StartsWith(full + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>True when the path IS one of our protected directories, or sits inside one.</summary>
@@ -97,7 +152,7 @@ public static class CleanupSafety
             return false;
         }
 
-        return OwnPaths.Any(own =>
+        return CurrentOwnPaths.Any(own =>
             string.Equals(full, own, StringComparison.OrdinalIgnoreCase)
             || full.StartsWith(own + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
     }
@@ -119,17 +174,25 @@ public static class CleanupSafety
             return false;
         }
 
-        return OwnPaths.Any(own => own.StartsWith(full + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
+        return CurrentOwnPaths.Any(own => own.StartsWith(full + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
     /// True only for a path that is safe to empty: an existing, real (non-link) directory that is a temp or
     /// cache location, is not a protected folder or a parent of one, and is not named like user data.
     /// </summary>
-    public static bool IsSafeToEmpty(string path)
+    public static bool IsSafeToEmpty(string path) => IsSafeToEmpty(path, out _);
+
+    /// <summary>The same gate, naming the first rule that refused the path (plain English, for the support
+    /// log). <paramref name="reason"/> is empty when the path is safe.</summary>
+    internal static bool IsSafeToEmpty(string path, out string reason)
     {
+        reason = string.Empty;
         if (string.IsNullOrWhiteSpace(path))
+        {
+            reason = "empty path";
             return false;
+        }
 
         string full;
         try
@@ -138,6 +201,7 @@ public static class CleanupSafety
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {
+            reason = "unusable path";
             return false;
         }
 
@@ -145,23 +209,33 @@ public static class CleanupSafety
         if (Path.GetPathRoot(full) is { } root && string.Equals(
                 Path.TrimEndingDirectorySeparator(root), full, StringComparison.OrdinalIgnoreCase))
         {
+            reason = "drive root";
             return false;
         }
 
         var name = Path.GetFileName(full);
         if (ForbiddenNames.Contains(name, StringComparer.OrdinalIgnoreCase))
+        {
+            reason = $"named like user data ({name})";
             return false;
+        }
 
         // Never empty a directory that is ours (or another running app's extraction root).
         if (IsOwnPath(full))
+        {
+            reason = "inside the program's own folder or its single-file extraction folder";
             return false;
+        }
 
         // Must look like a temp/cache location. This is what stops a mistyped catalogue entry outright. Checked
         // before the protected-folder lookups below (every check here is an AND, so the order changes no
         // answer): almost every folder the app-cache sweep asks about fails this cheap name test, and should
         // not first pay for a dozen GetFolderPath calls.
         if (!LooksLikeTempOrCache(full))
+        {
+            reason = "not a temp or cache location";
             return false;
+        }
 
         foreach (var special in ProtectedFolders)
         {
@@ -173,6 +247,7 @@ public static class CleanupSafety
             if (string.Equals(full, protectedPath, StringComparison.OrdinalIgnoreCase)
                 || protectedPath.StartsWith(full + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
             {
+                reason = $"a protected folder or the folder that holds one ({protectedPath})";
                 return false;
             }
         }
@@ -180,14 +255,24 @@ public static class CleanupSafety
         try
         {
             if (!Directory.Exists(full))
+            {
+                reason = "does not exist";
                 return false;
+            }
 
             // A junction/symlink could aim anywhere at all, never delete through one. Checked the whole
             // way up, not just this directory: a parent can be replaced by a junction too.
-            return !AncestryLeadsThroughLink(full);
+            if (AncestryLeadsThroughLink(full))
+            {
+                reason = "the path leads through a link";
+                return false;
+            }
+
+            return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            reason = "could not be inspected";
             return false;
         }
     }
@@ -419,20 +504,26 @@ public static class CleanupSafety
         if (segments.Any(segment => NotACacheSegments.Contains(segment, StringComparer.OrdinalIgnoreCase)))
             return false;
 
-        return segments.Any(segment =>
+        return segments.Select((segment, index) => (segment, index)).Any(entry =>
+            IsTempOrCacheSegment(entry.segment, entry.index > 0 ? segments[entry.index - 1] : null));
+    }
+
+    private static bool IsTempOrCacheSegment(string segment, string? parent) =>
             segment.Equals("Temp", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("tmp", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("CrashDumps", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("Minidump", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("Logs", StringComparison.OrdinalIgnoreCase)
-            || segment.Equals("Download", StringComparison.OrdinalIgnoreCase)          // SoftwareDistribution\Download
+            // Only Windows Update's own cache: any other "Download" folder (a messenger's or download
+            // manager's per-app folder) holds files the user fetched and wants.
+            || (segment.Equals("Download", StringComparison.OrdinalIgnoreCase)
+                && parent is not null && parent.Equals("SoftwareDistribution", StringComparison.OrdinalIgnoreCase))
             || segment.Equals("DeliveryOptimization", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("Explorer", StringComparison.OrdinalIgnoreCase)          // thumbnail cache
             // Anything NAMED as a cache: "Cache", "D3DSCache", "NV_Cache", "npm-cache", ".gradle\caches",
             // matched by SUFFIX, not whole segment, so names like these are still caught.
             || segment.EndsWith("cache", StringComparison.OrdinalIgnoreCase)
-            || segment.EndsWith("caches", StringComparison.OrdinalIgnoreCase));
-    }
+            || segment.EndsWith("caches", StringComparison.OrdinalIgnoreCase);
 
     private static string? SafeFolderPath(Environment.SpecialFolder folder)
     {

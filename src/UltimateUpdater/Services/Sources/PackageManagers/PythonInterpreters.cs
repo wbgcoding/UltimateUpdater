@@ -122,25 +122,74 @@ public static class PythonInterpreters
     /// leaves behind when an install is interrupted mid-rename (the old package's folder is renamed to a
     /// "~"-prefixed placeholder before the new one takes its place, and a crash between the two steps
     /// strands it there). pip then warns "Ignoring invalid distribution" about it on every later run.
-    /// Only the name is matched, nothing about what is inside: a folder named this way is never a real,
-    /// importable package under any Python packaging convention, so there is nothing else to check.
+    /// A folder named this way is never a real, importable package. But pip creates the very same
+    /// "~name" folder as the rollback stash of every upgrade that is running RIGHT NOW, so a folder (or
+    /// anything directly inside it) created or written within <see cref="LeftoverMinAge"/> is a live
+    /// install and is skipped, as is one whose times cannot be read. pip makes that stash by RENAMING the
+    /// old package folder, which keeps the folder's old times, so a site-packages folder written within the
+    /// same window (every rename, create or delete in it moves its write time) keeps every "~" folder too.
+    /// <paramref name="utcNow"/> is a test seam; <paramref name="logSkip"/> hears every folder kept.
     /// </summary>
-    public static IReadOnlyList<string> FindBrokenInstallLeftovers(string sitePackages)
+    public static IReadOnlyList<string> FindBrokenInstallLeftovers(
+        string sitePackages, DateTime? utcNow = null, Action<string>? logSkip = null)
     {
         if (string.IsNullOrWhiteSpace(sitePackages) || !Directory.Exists(sitePackages))
             return [];
 
         try
         {
-            return Directory.GetDirectories(sitePackages, "~*")
-                .Where(d => Path.GetFileName(d).StartsWith('~'))
-                .ToList();
+            var cutoff = (utcNow ?? DateTime.UtcNow) - LeftoverMinAge;
+            var found = new List<string>();
+            var sitePackagesBusy = IsNewerThan(Directory.GetLastWriteTimeUtc(sitePackages), cutoff);
+            foreach (var directory in Directory.GetDirectories(sitePackages, "~*")
+                .Where(d => Path.GetFileName(d).StartsWith('~')))
+            {
+                if (sitePackagesBusy)
+                    logSkip?.Invoke($"pip leftover '{directory}' kept: its site-packages folder changed within the last {LeftoverMinAge.TotalMinutes:0} minutes, an install may be running");
+                else if (IsPossiblyLive(directory, cutoff))
+                    logSkip?.Invoke($"pip leftover '{directory}' kept: changed within the last {LeftoverMinAge.TotalMinutes:0} minutes, an install may be running");
+                else
+                    found.Add(directory);
+            }
+
+            return found;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             return [];
         }
     }
+
+    /// <summary>How long a "~" folder must have been untouched before it counts as a stranded leftover.</summary>
+    internal static readonly TimeSpan LeftoverMinAge = TimeSpan.FromHours(1);
+
+    /// <summary>True when the folder or anything directly inside it is newer than the cutoff, or a time
+    /// cannot be read (fail closed: when unsure, keep it).</summary>
+    private static bool IsPossiblyLive(string directory, DateTime cutoffUtc)
+    {
+        try
+        {
+            if (IsNewerThan(Directory.GetCreationTimeUtc(directory), cutoffUtc)
+                || IsNewerThan(Directory.GetLastWriteTimeUtc(directory), cutoffUtc))
+                return true;
+
+            foreach (var child in new DirectoryInfo(directory).EnumerateFileSystemInfos())
+            {
+                if (IsNewerThan(child.CreationTimeUtc, cutoffUtc) || IsNewerThan(child.LastWriteTimeUtc, cutoffUtc))
+                    return true;
+            }
+
+            return false;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return true;
+        }
+    }
+
+    // A missing or nonsensical stamp (the 1601 epoch a failed read returns, or a future date) is untrusted.
+    private static bool IsNewerThan(DateTime stampUtc, DateTime cutoffUtc) =>
+        stampUtc.Year <= 1601 || stampUtc > cutoffUtc;
 
     /// <summary><c>Lib\site-packages</c> under an interpreter's own install root, wherever that root
     /// turns out to be (per-user installs under <c>AppData\Local\Programs\Python</c>, a machine-wide one

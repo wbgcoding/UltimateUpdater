@@ -137,6 +137,14 @@ public class CleanupService(LoggingService logging)
             or CleanupKind.DriverCleanup or CleanupKind.DiskCleanup;
 
     /// <summary>
+    /// The target-level answer: the kinds above plus a folder an ordinary user cannot delete from at all
+    /// (<see cref="CleanupTarget.AdminOnlyDelete"/>), where an unelevated pass would report "done" with
+    /// nothing freed.
+    /// </summary>
+    internal static bool SkipsWithoutAdmin(CleanupTarget target, bool processElevated) =>
+        !processElevated && (SkipsWithoutAdmin(target.Kind, processElevated: false) || target.AdminOnlyDelete);
+
+    /// <summary>
     /// The exact command line <see cref="AnalyzeComponentStoreAsync"/> runs, split out so a test can
     /// assert on it without launching DISM. <c>/English</c> forces DISM's message text to English on any
     /// Windows display language; the German labels <see cref="ComponentStoreAnalysisParser"/> carries are
@@ -264,8 +272,34 @@ public class CleanupService(LoggingService logging)
         return Path.Combine(root, separatorIndex < 0 ? relative : relative[..separatorIndex]);
     }
 
+    /// <summary>The safety gate for one directory of a target. A catalogue folder that exists on disk but is
+    /// refused is logged with the rule that refused it, so the support log explains a row that reads "nothing
+    /// found". The discovered folders of the cache sweep are not logged: nearly all of them fail the name test.</summary>
+    private bool IsTargetDirectorySafe(CleanupTarget target, string directory)
+    {
+        if (CleanupSafety.IsSafeToEmpty(directory, out var reason))
+            return true;
+
+        if (target.Kind == CleanupKind.Directories && Directory.Exists(directory))
+            logging.Info($"cleanup target {target.Id} refused: {reason} ('{directory}')");
+
+        return false;
+    }
+
+    /// <summary>The moment before which a file must have been created AND last written to be taken, or null
+    /// when the target has no age rule.</summary>
+    internal static DateTime? AgeCutoffUtc(CleanupTarget target, DateTime nowUtc) =>
+        target.MinFileAge is { } age ? nowUtc - age : null;
+
+    /// <summary>True when a listed file lies inside the age window. A stamp that is unset (the FILETIME epoch
+    /// of 1601) or lies in the future cannot be trusted and reads as young: keep it.</summary>
+    internal static bool IsTooNew(DateTime creationUtc, DateTime lastWriteUtc, DateTime cutoffUtc) =>
+        creationUtc.Year <= 1601 || lastWriteUtc.Year <= 1601 || creationUtc > cutoffUtc || lastWriteUtc > cutoffUtc;
+
     private CleanupScanResult ScanDirectories(CleanupTarget target, CancellationToken cancellationToken)
     {
+        var cutoff = AgeCutoffUtc(target, DateTime.UtcNow);
+        var tooNew = 0;
         long bytes = 0;
         var files = 0;
         var skipped = 0;
@@ -275,7 +309,7 @@ public class CleanupService(LoggingService logging)
 
         foreach (var directory in ResolveDirectories(target, cancellationToken))
         {
-            if (!CleanupSafety.IsSafeToEmpty(directory))
+            if (!IsTargetDirectorySafe(target, directory))
                 continue;
 
             // Two spellings of one folder (an 8.3 %TEMP%, other casing) are measured once, under the first
@@ -294,6 +328,13 @@ public class CleanupService(LoggingService logging)
                 if (!CleanupSafety.IsDeletableFile(directory, file))
                     continue;
 
+                // Measured by the same rule the clean applies, so the figure is what a run would free.
+                if (cutoff is { } limit && IsTooNew(found.CreationUtc, found.LastWriteUtc, limit))
+                {
+                    tooNew++;
+                    continue;
+                }
+
                 bytes += found.Length;
                 files++;
 
@@ -303,6 +344,9 @@ public class CleanupService(LoggingService logging)
                 accumulator.Add(found.Length, found.LastWriteUtc, Path.GetExtension(file));
             }
         }
+
+        if (tooNew > 0)
+            logging.Info($"Cleanup: {tooNew} recent file(s) of '{target.Id}' are left out of the figure (younger than {target.MinFileAge}).");
 
         var (entries, omittedCount, omittedBytes) = CapEntries(buckets
             .Select(kv => kv.Value.ToEntry(kv.Key, isAppCacheSweep))
@@ -382,12 +426,14 @@ public class CleanupService(LoggingService logging)
         string? firstFolderKept = null;
         var isAppCacheSweep = target.Kind == CleanupKind.AppCacheSweep;
         var useRecycleBin = ShouldUseRecycleBin(recycleInsteadOfDelete, target.NeedsElevation);
+        var cutoff = AgeCutoffUtc(target, DateTime.UtcNow);
+        var tooNew = 0;
         var excludedEntries = excludedEntryPaths is { Count: > 0 }
             ? new HashSet<string>(excludedEntryPaths, StringComparer.OrdinalIgnoreCase)
             : null;
 
         var directories = ResolveDirectories(target, cancellationToken)
-            .Where(CleanupSafety.IsSafeToEmpty)
+            .Where(d => IsTargetDirectorySafe(target, d))
             // An AppCacheSweep row IS one whole directory (see BucketFor); deselecting it skips the
             // directory outright rather than needing a per-file check below.
             .Where(d => excludedEntries is null || !(isAppCacheSweep && excludedEntries.Contains(d)))
@@ -472,7 +518,7 @@ public class CleanupService(LoggingService logging)
                     VerifiedDelete.Outcome outcome;
                     if (useRecycleBin)
                     {
-                        outcome = VerifiedDelete.CheckFile(rootFinalPath!, file);
+                        outcome = VerifiedDelete.CheckFile(rootFinalPath!, file, cutoff);
                         if (outcome == VerifiedDelete.Outcome.Cleared)
                         {
                             size = new FileInfo(file).Length;
@@ -488,7 +534,7 @@ public class CleanupService(LoggingService logging)
                     }
                     else
                     {
-                        outcome = VerifiedDelete.TryDeleteFile(rootFinalPath!, file, out size);
+                        outcome = VerifiedDelete.TryDeleteFile(rootFinalPath!, file, out size, cutoff);
                     }
 
                     if (outcome == VerifiedDelete.Outcome.Deleted)
@@ -503,6 +549,12 @@ public class CleanupService(LoggingService logging)
                         skippedBytes += size;
                         protectedFiles++;
                         protectedBytes += size;
+                    }
+
+                    else if (outcome == VerifiedDelete.Outcome.TooNew)
+                    {
+                        // Judged on the opened file, so a file rewritten since the listing is kept too.
+                        tooNew++;
                     }
 
                     // A file that vanished meanwhile is neither deleted nor skipped: this run did nothing to it.
@@ -574,7 +626,7 @@ public class CleanupService(LoggingService logging)
                     // Through a handle that is checked to lie inside the root, so a folder swapped for a
                     // junction since the listing cannot redirect this delete. A non-empty directory fails
                     // exactly like the non-recursive path delete did.
-                    if (VerifiedDelete.TryDeleteEmptyDirectory(rootFinalPath!, subdirectory) == VerifiedDelete.Outcome.Refused)
+                    if (VerifiedDelete.TryDeleteEmptyDirectory(rootFinalPath!, subdirectory, cutoff) == VerifiedDelete.Outcome.Refused)
                         logging.Warn($"Cleanup: '{subdirectory}' no longer lies inside '{directory}'; left alone.");
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -588,6 +640,9 @@ public class CleanupService(LoggingService logging)
                 }
             }
         }
+
+        if (tooNew > 0)
+            logging.Info($"Cleanup: {tooNew} recent file(s) of '{target.Id}' were kept (younger than {target.MinFileAge}).");
 
         if (foldersKept > 0)
             logging.Info($"Cleanup: {foldersKept} folder(s) of '{target.Id}' were not removed (not empty or no access), first {firstFolderKept}");
@@ -688,7 +743,7 @@ public class CleanupService(LoggingService logging)
     }
 
     /// <summary>One listed file with the facts the directory listing already carries.</summary>
-    private readonly record struct ListedFile(string Path, long Length, DateTime LastWriteUtc);
+    private readonly record struct ListedFile(string Path, long Length, DateTime LastWriteUtc, DateTime CreationUtc);
 
     /// <summary>
     /// The same walk as <see cref="EnumerateFiles"/> (same options, same exclusion, same tolerance for an
@@ -713,7 +768,9 @@ public class CleanupService(LoggingService logging)
             enumerator = new FileSystemEnumerable<ListedFile>(
                 directory,
                 static (ref FileSystemEntry entry) =>
-                    new ListedFile(entry.ToFullPath(), entry.Length, entry.LastWriteTimeUtc.UtcDateTime),
+                    new ListedFile(
+                        entry.ToFullPath(), entry.Length, entry.LastWriteTimeUtc.UtcDateTime,
+                        entry.CreationTimeUtc.UtcDateTime),
                 options)
             {
                 ShouldIncludePredicate = static (ref FileSystemEntry entry) => !entry.IsDirectory,
@@ -1227,8 +1284,8 @@ public class CleanupService(LoggingService logging)
 
         if (registrySettings is null)
         {
-            logging.Error($"Registry cleanup: no backup settings available for '{target.Id}'; refusing to write.");
-            return new CleanupOutcome(0, 0, 0);
+            logging.Warn($"Registry cleanup: no backup settings available for '{target.Id}'; {cleanable.Count} finding(s) kept, nothing written.");
+            return new CleanupOutcome(0, 0, cleanable.Count, Failed: true);
         }
 
         // One combined backup ahead of the whole row's write, covering every root any of its categories
@@ -1243,8 +1300,8 @@ public class CleanupService(LoggingService logging)
 
         if (backup is null)
         {
-            logging.Error($"Registry cleanup: backup failed or found nothing for '{target.Id}'; nothing was deleted.");
-            return new CleanupOutcome(0, 0, 0);
+            logging.Warn($"Registry cleanup: backup failed or found nothing for '{target.Id}'; {cleanable.Count} finding(s) kept, nothing was deleted.");
+            return new CleanupOutcome(0, 0, cleanable.Count, Failed: true);
         }
 
         logging.Info($"Registry cleanup: backed up {backup.ExportedRoots.Count} key(s) to '{backup.Path}' before cleaning '{target.Id}'.");
@@ -1281,7 +1338,7 @@ public class CleanupService(LoggingService logging)
         var devices = provider.GatherDevices(cancellationToken);
         var packages = provider.GatherPackages(cancellationToken);
 
-        var disconnectedDevices = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, packages);
+        var disconnectedDevices = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, packages, logInfo: logging.Info);
         var oldPackages = DriverCleanupDiscovery.DiscoverOldPackages(devices, packages);
 
         return new CleanupScanResult(0, disconnectedDevices.Count + oldPackages.Count, 0)
@@ -1356,7 +1413,7 @@ public class CleanupService(LoggingService logging)
         var deleted = 0;
         var skipped = 0;
 
-        foreach (var candidate in PythonCleanupDiscovery.DiscoverPipLeftovers(WindowsRegistryView.Instance, measure: false))
+        foreach (var candidate in PythonCleanupDiscovery.DiscoverPipLeftovers(WindowsRegistryView.Instance, measure: false, logSkip: logging.Info))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -1429,6 +1486,11 @@ public class CleanupService(LoggingService logging)
         // is all it needs; anything left inside makes the call fail and the folder stays.
         try
         {
+            // A folder with a desktop.ini carries the read-only attribute and Windows refuses to remove it
+            // then. Cleared only on an emptied folder that is not a link, right before its own delete.
+            if (!Directory.EnumerateFileSystemEntries(path).Any())
+                ClearReadOnlyAttribute(path);
+
             Directory.Delete(path, recursive: false);
             return (true, freed);
         }
@@ -1724,6 +1786,7 @@ public class CleanupService(LoggingService logging)
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            logging.Warn($"Cleanup: a recycle-bin item could not be removed: '{entry.OriginalPath}' ({ex.Message})");
             return false;
         }
 
@@ -1765,6 +1828,22 @@ public class CleanupService(LoggingService logging)
         return false;
     }
 
+    /// <summary>Test seams: another cleanmgr path and another way to write the selection profile, so the
+    /// "tool missing" and "profile refused" outcomes can be proven without touching the machine.</summary>
+    internal string? CleanmgrExecutable { get; init; }
+
+    internal Func<bool>? SagesetProfileWriter { get; init; }
+
+    /// <summary>Test seams for the repair and defrag steps: a shorter time limit and another defrag path.</summary>
+    internal TimeSpan RepairTimeout { get; init; } = RepairStepTimeout;
+
+    internal TimeSpan DefragTimeout { get; init; } = DefragLimit;
+
+    internal string? DefragExecutable { get; init; }
+
+    /// <summary>How long drive optimisation may run before it is ended.</summary>
+    internal static readonly TimeSpan DefragLimit = TimeSpan.FromHours(6);
+
     /// <summary>
     /// Windows' own Disk Cleanup, run WITHOUT its dialogs. It can only run unattended from a saved
     /// profile, so the profile is written first: each handler under VolumeCaches gets a StateFlags value
@@ -1777,17 +1856,17 @@ public class CleanupService(LoggingService logging)
     /// </summary>
     private async Task<CleanupOutcome> RunDiskCleanupAsync(CancellationToken cancellationToken)
     {
-        var cleanmgr = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cleanmgr.exe");
+        var cleanmgr = CleanmgrExecutable ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cleanmgr.exe");
         if (!File.Exists(cleanmgr))
         {
             logging.Warn("Cleanup: cleanmgr.exe was not found.");
-            return new CleanupOutcome(0, 0, 0);
+            return CleanupOutcome.Failure();
         }
 
         // Without admin the profile cannot be written, and starting cleanmgr with its OWN dialogs would
         // leave this dialog waiting on a window the user did not ask for, and unable to cancel it.
         // Skip the target instead and say why.
-        var outcome = await RunUnderSagesetProfileAsync(TryWriteSagesetProfile, RemoveSagesetProfile, async () =>
+        var outcome = await RunUnderSagesetProfileAsync(SagesetProfileWriter ?? TryWriteSagesetProfile, RemoveSagesetProfile, async () =>
         {
             try
             {
@@ -1816,14 +1895,15 @@ public class CleanupService(LoggingService logging)
             catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or InvalidOperationException)
             {
                 logging.Warn($"Cleanup: Disk Cleanup could not be started: {ex.Message}");
-                return new CleanupOutcome(0, 0, 0);
+                return CleanupOutcome.Failure();
             }
         });
 
         if (outcome is null)
         {
-            logging.Info("Cleanup: Disk Cleanup skipped: an unattended run needs administrator rights.");
-            return new CleanupOutcome(0, 0, 0);
+            // The selection profile could not be written, so cleanmgr was never started.
+            logging.Warn("Cleanup: Disk Cleanup was not started: its selection profile could not be written.");
+            return CleanupOutcome.Failure();
         }
 
         return outcome.Value;
@@ -1959,6 +2039,9 @@ public class CleanupService(LoggingService logging)
         var cbsStart = judgesSfc ? SystemRepairResults.CbsLength(cbsPath) : null;
         var exitCodes = new int?[steps.Count];
         var sfcFinished = false;
+        var timedOut = false;
+        var couldNotRun = false;
+        int? failingExit = null;
 
         foreach (var (exe, args, label) in steps)
         {
@@ -1972,6 +2055,7 @@ public class CleanupService(LoggingService logging)
             if (!File.Exists(exe))
             {
                 logging.Warn($"Cleanup: {label} skipped; {Path.GetFileName(exe)} was not found.");
+                couldNotRun = true;
                 done++;
                 continue;
             }
@@ -1984,12 +2068,20 @@ public class CleanupService(LoggingService logging)
                 // defrag step, which passes its real token straight through). The timeout kills too, so it
                 // is set far beyond any healthy run and only ever ends a step that is truly stuck.
                 var result = await RunStreamedStepAsync(
-                    exe, args, label, stepBase, share, progress, RepairStepTimeout, CancellationToken.None);
+                    exe, args, label, stepBase, share, progress, RepairTimeout, CancellationToken.None);
 
                 if (result.TimedOut)
+                {
                     logging.Warn($"Cleanup: {label} timed out.");
+                    timedOut = true;
+                }
                 else if (result.ExitCode != 0)
+                {
                     logging.Info($"Cleanup: {label} finished with exit code {result.ExitCode}.");
+                    // 3010 is "done, restart needed": a success. The first other code is the one reported.
+                    if (result.ExitCode != RestartRequiredExitCode)
+                        failingExit ??= result.ExitCode;
+                }
                 else
                     logging.Info($"Cleanup: {label} completed.");
 
@@ -2007,6 +2099,7 @@ public class CleanupService(LoggingService logging)
             {
                 // Without admin these refuse to start at all; expected, and not worth failing the run over.
                 logging.Warn($"Cleanup: {label} could not be run: {ex.Message}");
+                couldNotRun = true;
             }
 
             done++;
@@ -2027,8 +2120,17 @@ public class CleanupService(LoggingService logging)
             repairResult = verdict == RepairResult.Ok && exitCodes[0] != 0 ? null : verdict;
         }
 
-        return new CleanupOutcome(0, 0, 0, RepairResult: repairResult);
+        // A check that reached a verdict (all clear, or repaired) is not a failure even though the tool's
+        // own exit code said "found something"; every other bad ending is.
+        var verdictIsFine = repairResult is RepairResult.Ok or RepairResult.Repaired;
+        var failed = couldNotRun || (failingExit is not null && !verdictIsFine);
+        return new CleanupOutcome(
+            0, 0, 0, TimedOut: timedOut, RepairResult: repairResult,
+            Failed: failed && !timedOut, ExitCode: failed && !timedOut ? failingExit : null);
     }
+
+    /// <summary>DISM's "completed, restart required": counts as success.</summary>
+    private const int RestartRequiredExitCode = 3010;
 
     /// <summary>
     /// Windows' own drive optimisation: defragmentation on a rotational disk, retrim on an SSD, the SAME
@@ -2049,11 +2151,11 @@ public class CleanupService(LoggingService logging)
             return new CleanupOutcome(0, 0, 0);
         }
 
-        var defrag = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "defrag.exe");
+        var defrag = DefragExecutable ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "defrag.exe");
         if (!File.Exists(defrag))
         {
             logging.Warn("Cleanup: drive optimisation skipped; defrag.exe was not found.");
-            return new CleanupOutcome(0, 0, 0);
+            return CleanupOutcome.Failure();
         }
 
         var label = string.Format(LocalizationService.Instance["CleanupDefragName"], target.DriveLetter);
@@ -2062,16 +2164,23 @@ public class CleanupService(LoggingService logging)
 
         var result = await RunStreamedStepAsync(
             defrag, [target.DriveLetter, "/O", "/U", "/V"], label, stepBase: 0, share: 100, progress,
-            TimeSpan.FromHours(6), cancellationToken);
-
-        if (result.TimedOut)
-            logging.Warn("Cleanup: drive optimisation timed out.");
-        else if (result.ExitCode != 0)
-            logging.Info($"Cleanup: drive optimisation finished with exit code {result.ExitCode}.");
-        else
-            logging.Info("Cleanup: drive optimisation completed.");
+            DefragTimeout, cancellationToken);
 
         progress?.Report(new CleanupProgress(string.Empty, 100, 0));
+
+        if (result.TimedOut)
+        {
+            logging.Warn("Cleanup: drive optimisation timed out.");
+            return new CleanupOutcome(0, 0, 0, TimedOut: true);
+        }
+
+        if (result.ExitCode != 0)
+        {
+            logging.Info($"Cleanup: drive optimisation finished with exit code {result.ExitCode}.");
+            return CleanupOutcome.Failure(result.ExitCode);
+        }
+
+        logging.Info("Cleanup: drive optimisation completed.");
         return new CleanupOutcome(0, 0, 0);
     }
 

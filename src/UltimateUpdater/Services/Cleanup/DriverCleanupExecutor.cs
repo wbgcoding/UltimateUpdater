@@ -65,13 +65,16 @@ public static class DriverCleanupExecutor
         var deletedPackages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var deleted = 0;
         var skipped = 0;
+        // Only a package that really left the driver store frees space, and a package several devices shared
+        // counts once, when it goes.
+        long freed = 0;
 
         foreach (var device in devicesToRemove)
         {
             // Returned, not thrown: the worker discards a cancelled call's outcome, and devices already
             // removed plus the backup made for them are real work the user must be told about.
             if (cancellationToken.IsCancellationRequested)
-                return new CleanupOutcome(0, deleted, skipped, WasStopped: true, DriverBackupFolderName: folderName);
+                return new CleanupOutcome(freed, deleted, skipped, WasStopped: true, DriverBackupFolderName: folderName);
 
             if (!DriverCleanupDiscovery.IsOemPackageName(device.PackageName))
             {
@@ -109,8 +112,11 @@ public static class DriverCleanupExecutor
                 .Any(d => !string.IsNullOrEmpty(d.InfPath)
                     && string.Equals(Path.GetFileName(d.InfPath), device.PackageName, StringComparison.OrdinalIgnoreCase));
 
-            if (!stillBound && await RunPnputilAsync(pnputil, ["/delete-driver", device.PackageName], logging, CancellationToken.None))
-                deletedPackages.Add(device.PackageName);
+            if (!stillBound && await RunPnputilAsync(pnputil, ["/delete-driver", device.PackageName], logging, CancellationToken.None)
+                && deletedPackages.Add(device.PackageName))
+            {
+                freed += device.SizeBytes;
+            }
         }
 
         foreach (var package in packagesToDelete)
@@ -118,7 +124,7 @@ public static class DriverCleanupExecutor
             // Returned, not thrown: the worker discards a cancelled call's outcome, and devices already
             // removed plus the backup made for them are real work the user must be told about.
             if (cancellationToken.IsCancellationRequested)
-                return new CleanupOutcome(0, deleted, skipped, WasStopped: true, DriverBackupFolderName: folderName);
+                return new CleanupOutcome(freed, deleted, skipped, WasStopped: true, DriverBackupFolderName: folderName);
 
             if (!DriverCleanupDiscovery.IsOemPackageName(package.PackageName))
             {
@@ -145,12 +151,17 @@ public static class DriverCleanupExecutor
             // rather than being torn out from under it.
             var removed = await RunPnputilAsync(pnputil, ["/delete-driver", package.PackageName], logging, CancellationToken.None);
             if (removed)
+            {
                 deleted++;
+                freed += package.SizeBytes;
+            }
             else
+            {
                 skipped++;
+            }
         }
 
-        return new CleanupOutcome(0, deleted, skipped, DriverBackupFolderName: folderName);
+        return new CleanupOutcome(freed, deleted, skipped, DriverBackupFolderName: folderName);
     }
 
     private static async Task<bool> ExportPackageAsync(
@@ -178,13 +189,19 @@ public static class DriverCleanupExecutor
     /// device removed that way must still get its now-unbound package deleted.</summary>
     internal static bool IsPnputilSuccess(int exitCode) => exitCode is 0 or 3010 or 1641;
 
+    /// <summary>Test seam for the pnputil launch (<see cref="ProcessRunner.RunAsync"/> is static): returns the
+    /// exit code for the given arguments. Per async flow, so parallel tests never see each other's.</summary>
+    internal static readonly AsyncLocal<Func<IReadOnlyList<string>, Task<int>>?> PnputilForTest = new();
+
     private static async Task<bool> RunPnputilAsync(
         string pnputil, IReadOnlyList<string> arguments, LoggingService logging, CancellationToken cancellationToken,
         string? failureMessage = null)
     {
         try
         {
-            var result = await ProcessRunner.RunAsync(pnputil, arguments, TimeSpan.FromMinutes(2), cancellationToken);
+            var result = PnputilForTest.Value is { } fake
+                ? new ProcessResult(await fake(arguments), "", "")
+                : await ProcessRunner.RunAsync(pnputil, arguments, TimeSpan.FromMinutes(2), cancellationToken);
             if (IsPnputilSuccess(result.ExitCode))
             {
                 if (result.ExitCode != 0)

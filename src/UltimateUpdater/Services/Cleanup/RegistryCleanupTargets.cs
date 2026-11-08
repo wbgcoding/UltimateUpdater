@@ -48,7 +48,9 @@ public static class RegistryCleanupCatalog
     /// temp folder does; and both elevated: App Paths/SharedDLLs/ActiveX-COM live
     /// under HKLM outright, and Autostart/Uninstall entries span both HKLM and HKCU; routing the whole
     /// row through the elevated worker uniformly is simpler than splitting by hive, and the elevated
-    /// process still resolves HKCU to the invoking user's own hive (same token, same logon session).
+    /// process resolves HKCU to the invoking user's own hive only while it runs as that same user: the
+    /// worker compares the caller's SID with its token user and skips these rows otherwise
+    /// (<see cref="CleanupWorker.UserHiveMismatchReason"/>).
     /// </summary>
     public static IReadOnlyList<CleanupTarget> Build() =>
     [

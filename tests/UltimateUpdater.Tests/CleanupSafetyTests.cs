@@ -252,6 +252,21 @@ public class CleanupSafetyTests
     public void Ordinary_caches_are_still_cache_locations(string path) =>
         Assert.True(CleanupSafety.LooksLikeTempOrCacheLocation(path));
 
+    /// <summary>"Download" counts as a cache only as Windows Update's own folder; an app's per-app
+    /// "Download" folder holds files the user fetched.</summary>
+    [Theory]
+    [InlineData(@"C:\Windows\SoftwareDistribution\Download")]
+    [InlineData(@"C:\Windows\softwaredistribution\download\abc")]
+    public void Only_the_windows_update_download_folder_counts_as_a_cache(string path) =>
+        Assert.True(CleanupSafety.LooksLikeTempOrCacheLocation(path));
+
+    [Theory]
+    [InlineData(@"C:\Users\x\AppData\Roaming\SomeApp\Download")]
+    [InlineData(@"C:\Users\x\AppData\Local\Vendor\SomeApp\Download")]
+    [InlineData(@"C:\Download")]
+    public void An_app_folder_named_download_is_not_a_cache_location(string path) =>
+        Assert.False(CleanupSafety.LooksLikeTempOrCacheLocation(path));
+
     [Theory]
     [InlineData(@"C:\Users\x\AppData\Local\Vendor\Cache", true, @"Vendor\Cache")]
     [InlineData(@"C:\Users\x\AppData\Local\Vendor\Cache\", true, @"Vendor\Cache")]
