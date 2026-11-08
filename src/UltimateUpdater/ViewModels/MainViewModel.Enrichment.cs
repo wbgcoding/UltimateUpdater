@@ -218,7 +218,7 @@ public partial class MainViewModel
 
                 // A Store app installed through winget has no Uninstall entry to find an exe by; its package
                 // names the application to start.
-                if (row.Item.SourceId == "winget" && _packagedApps.Find(row.Item.Name) is { } package)
+                if (row.Item.SourceId == "winget" && _packagedApps.FindForWingetRow(row.Item.Id, row.Item.Name) is { } package)
                 {
                     packagedApp = true;
                     launchExe ??= _packagedApps.StartTargetOf(package);
