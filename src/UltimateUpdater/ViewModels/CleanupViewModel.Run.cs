@@ -1137,6 +1137,7 @@ public partial class CleanupViewModel
             SelectedPythonVersionPaths = command == "clean" && targets is [{ Target.Kind: CleanupKind.OldPythonVersions } onlyPython]
                 ? onlyPython.SelectedOldPythonVersionPaths
                 : [],
+            CallerTempPaths = CleanupCatalog.OwnTempPaths().ToList(),
         };
 
         // "cleanup" for a scan (never takes a lane at all, Exclusive is false below) and for every
