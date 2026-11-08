@@ -696,10 +696,25 @@ public partial class CleanupWindow
     /// building a second one: the history it shows already lives there. Not modal: the cleanup dialog
     /// stays usable while it is open, same as HistoryWindow beside the main window.
     /// </summary>
-    private void OnShowHistory(object sender, RoutedEventArgs e) =>
-        new CleanupHistoryWindow(_viewModel) { Owner = this }.Show();
+    private void OnShowHistory(object sender, RoutedEventArgs e) => ShowHistoryWindow(expandNewest: false);
 
     /// <summary>The report of the run that just ended: the same window, with the newest entry unfolded.</summary>
-    private void OnShowReport(object sender, RoutedEventArgs e) =>
-        new CleanupHistoryWindow(_viewModel, expandNewest: true) { Owner = this }.Show();
+    private void OnShowReport(object sender, RoutedEventArgs e) => ShowHistoryWindow(expandNewest: true);
+
+    /// <summary>One history window per cleanup window: a second request (keyboard, or the report button
+    /// after the history button) brings the open one forward instead of stacking another on top of it.</summary>
+    internal void ShowHistoryWindow(bool expandNewest)
+    {
+        var existing = OwnedWindows.OfType<CleanupHistoryWindow>().FirstOrDefault();
+        if (existing is not null)
+        {
+            if (expandNewest)
+                existing.ShowNewestRun();
+
+            existing.Activate();
+            return;
+        }
+
+        new CleanupHistoryWindow(_viewModel, expandNewest) { Owner = this }.Show();
+    }
 }
