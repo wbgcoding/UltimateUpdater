@@ -14,11 +14,12 @@ public static class UpdateFilter
 
     /// <summary>
     /// Below this length the fuzzy pass is skipped and the substring check alone decides. It is the
-    /// expensive half of the filter and it runs per row and per field, on every keystroke, and it cannot
-    /// change the answer here anyway: a one- or two-character query needs every character to line up to
-    /// reach the threshold at all, which is exactly what the substring check already tested.
+    /// expensive half of the filter and it runs per row and per field, on every keystroke. A short query
+    /// also scores far too well against a long title through PartialRatio ("git" reached the threshold
+    /// against "Security Intelligence Update for Microsoft Defender Antivirus"), so a typo is only forgiven
+    /// where the query is long enough to be a word of its own.
     /// </summary>
-    public const int MinFuzzyQueryLength = 3;
+    public const int MinFuzzyQueryLength = 5;
 
     /// <summary>
     /// <paramref name="source"/> (the display name, e.g. "Windows Update") and
