@@ -30,6 +30,10 @@ public enum SelfUpdateDownloadOutcome { Downloaded, NetworkFailed, VerificationF
 /// <summary>Where a self-update is: bytes arriving, or the finished file being checked.</summary>
 public enum SelfUpdatePhase { Downloading, Verifying }
 
+/// <summary>What <see cref="SelfUpdateService.Apply"/> did: handed over to the new copy or the Setup, the user
+/// declined the elevation prompt (the verified file is kept for a second try), or it failed.</summary>
+public enum SelfUpdateApplyResult { Started, Declined, Failed }
+
 /// <summary>One progress reading; <see cref="Total"/> is null when the server did not say how big the file is.</summary>
 public readonly record struct SelfUpdateProgress(SelfUpdatePhase Phase, long Read = 0, long? Total = null);
 
@@ -98,11 +102,15 @@ public sealed partial class SelfUpdateService
     /// <summary>Whether this copy was set up by the installer; decides which asset it may take. A test passes its own.</summary>
     private readonly Func<bool> _isInstalled;
 
+    /// <summary>Starts the installer for an installed copy; a test replaces it so no process is ever launched.</summary>
+    private readonly Func<ProcessStartInfo, Process?> _startSetup;
+
     public SelfUpdateService(
         HttpClient httpClient, LoggingService logging, IUpdateChannel channel, Func<string?>? currentImagePath = null,
-        string? publicKeyPem = null, Func<bool>? isInstalled = null)
+        string? publicKeyPem = null, Func<bool>? isInstalled = null, Func<ProcessStartInfo, Process?>? startSetup = null)
     {
         _isInstalled = isInstalled ?? (() => AppPaths.IsInstalled);
+        _startSetup = startSetup ?? Process.Start;
         _httpClient = httpClient;
         _logging = logging;
         _channel = channel;
@@ -403,6 +411,36 @@ public sealed partial class SelfUpdateService
         TryDeleteStaged(path);
     }
 
+    /// <summary>The path of the verified artifact held for <paramref name="version"/>, or null when none is
+    /// held for it (or the file is gone). A held file survives a declined elevation prompt, so a second click
+    /// on the banner starts the Setup again instead of downloading it a second time.</summary>
+    public string? VerifiedPathFor(string version)
+    {
+        if (_verified is null || _verifiedDigest is null || _verifiedVersion is null
+            || !UpdateManifest.IsSameVersion(_verifiedVersion, version))
+            return null;
+
+        return File.Exists(_verified.Name) ? _verified.Name : null;
+    }
+
+    public bool HasVerified(string version) => VerifiedPathFor(version) is not null;
+
+    /// <summary>Drops a held verified artifact that is not the one for <paramref name="version"/> (a newer
+    /// release replaced it). A Setup that is already running from its file is not touched.</summary>
+    public void DiscardVerifiedExcept(string version)
+    {
+        if (_verified is not null && _verifiedDigest is not null && !HasVerified(version))
+            DiscardVerified(_verified.Name);
+    }
+
+    /// <summary>Drops a held verified artifact that was never started, at app exit. A Setup that is already
+    /// running from its file is not touched.</summary>
+    public void DiscardUnstartedVerified()
+    {
+        if (_verified is not null && _verifiedDigest is not null)
+            DiscardVerified(_verified.Name);
+    }
+
     /// <summary>Drops the handle that pins the verified artifact (see DownloadVerifiedAsync).</summary>
     private void ReleaseVerified()
     {
@@ -475,7 +513,7 @@ public sealed partial class SelfUpdateService
     /// Applies a verified artifact. Portable: swap the running exe aside and restart. Installed:
     /// run the verified installer silently, which updates in place and keeps settings.
     /// </summary>
-    public bool Apply(string verifiedPath)
+    public SelfUpdateApplyResult Apply(string verifiedPath)
     {
         // Only the artifact THIS service verified and still holds open may be applied. Without these two
         // the method is a "run any file you name" entry point, and the portable digest comparison further
@@ -483,22 +521,23 @@ public sealed partial class SelfUpdateService
         if (_verified is null || _verifiedDigest is null)
         {
             _logging.Error("Self-update: refusing to apply an artifact that was not verified in this session.");
-            return false;
+            return SelfUpdateApplyResult.Failed;
         }
 
         if (!string.Equals(
                 Path.GetFullPath(verifiedPath), Path.GetFullPath(_verified.Name), StringComparison.OrdinalIgnoreCase))
         {
             _logging.Error("Self-update: refusing to apply a file other than the verified one.");
-            return false;
+            return SelfUpdateApplyResult.Failed;
         }
 
         // The installer keeps running from this file after we return, so only the portable path and
         // every failure path may delete it. What an installed update leaves behind is cleared by
         // SweepStaleDownloads on a later start, once it is old enough that no setup can still use it.
         var artifactStillInUse = false;
+        var declined = false;
         var version = _verifiedVersion ?? "?";
-        var installed = verifiedPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && AppPaths.IsInstalled;
+        var installed = verifiedPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && _isInstalled();
 
         try
         {
@@ -509,27 +548,29 @@ public sealed partial class SelfUpdateService
                 {
                     var setupInfo = new ProcessStartInfo { UseShellExecute = true };
                     ConfigureSetupStartInfo(setupInfo, verifiedPath, machineScope);
-                    Process.Start(setupInfo);
+                    _startSetup(setupInfo)?.Dispose();
                 }
                 catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == ErrorCancelled)
                 {
-                    // The user declined the elevation prompt: nothing was started, nothing changes.
+                    // The user declined the elevation prompt: nothing was started, nothing changes. The
+                    // verified file stays pinned so a second click does not download it again.
                     _logging.EventFailed(ActivityLog.SelfUpdate, "apply cancelled: the elevation prompt was declined");
-                    return false;
+                    declined = true;
+                    return SelfUpdateApplyResult.Declined;
                 }
 
                 artifactStillInUse = true;
                 _logging.Event(ActivityLog.SelfUpdate, ActivityLog.SelfUpdateApplied(version, portable: false));
-                return true;
+                return SelfUpdateApplyResult.Started;
             }
 
             if (ApplyPortable(verifiedPath))
             {
                 _logging.Event(ActivityLog.SelfUpdate, ActivityLog.SelfUpdateApplied(version, portable: true));
-                return true;
+                return SelfUpdateApplyResult.Started;
             }
 
-            return false;
+            return SelfUpdateApplyResult.Failed;
         }
         catch (Exception ex)
         {
@@ -537,11 +578,15 @@ public sealed partial class SelfUpdateService
             // ArgumentException, and an update that cannot be applied must report a failure, never
             // take the app down.
             _logging.EventFailed(ActivityLog.SelfUpdate, $"apply failed: {ex.Message}");
-            return false;
+            return SelfUpdateApplyResult.Failed;
         }
         finally
         {
-            if (artifactStillInUse)
+            if (declined)
+            {
+                // Nothing started: the pinned, verified file waits for the next click.
+            }
+            else if (artifactStillInUse)
             {
                 // Setup is already running (elevated for an all-users install, so it never starts its own
                 // file again by path) and keeps running from this file after we return, so the pin is kept
@@ -662,7 +707,7 @@ public sealed partial class SelfUpdateService
                     // The new copy waits for this process before it takes the single-instance lock.
                     Arguments = $"{AfterUpdateHandoff.Argument} {Environment.ProcessId}",
                     UseShellExecute = true,
-                });
+                })?.Dispose();
             }
             catch (Exception ex)
             {

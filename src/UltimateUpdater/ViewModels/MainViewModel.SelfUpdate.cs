@@ -179,6 +179,11 @@ public partial class MainViewModel
             var result = await _selfUpdate.CheckAsync(cancellationToken);
             if (result.Update is { } update)
             {
+                // A newer release makes a held verified file of an older one useless; one already being
+                // applied (or waiting for running work) is left alone.
+                if (!SelfUpdateInProgress && !_selfUpdateApplying)
+                    _selfUpdate.DiscardVerifiedExcept(update.Version);
+
                 _pendingSelfUpdate = update;
                 SelfUpdateVersion = update.Version;
                 SelfUpdateAvailable = true;
@@ -221,8 +226,15 @@ public partial class MainViewModel
             ShowSelfUpdateProgress(new Services.SelfUpdate.SelfUpdateProgress(Services.SelfUpdate.SelfUpdatePhase.Downloading));
             var progress = new Progress<Services.SelfUpdate.SelfUpdateProgress>(ShowSelfUpdateProgress);
 
-            var download = await (SelfUpdateDownloadForTest?.Invoke(_pendingSelfUpdate, _selfUpdateCts.Token)
-                ?? _selfUpdate.DownloadVerifiedAsync(_pendingSelfUpdate, _selfUpdateCts.Token, progress));
+            // A verified file that survived a declined elevation prompt is applied again as it is: downloading
+            // it a second time would cost the whole transfer for nothing.
+            var held = SelfUpdateHeldPathForTest is { } heldForTest
+                ? heldForTest(_pendingSelfUpdate.Version)
+                : _selfUpdate.VerifiedPathFor(_pendingSelfUpdate.Version);
+            var download = held is not null
+                ? new Services.SelfUpdate.SelfUpdateDownloadResult(Services.SelfUpdate.SelfUpdateDownloadOutcome.Downloaded, held)
+                : await (SelfUpdateDownloadForTest?.Invoke(_pendingSelfUpdate, _selfUpdateCts.Token)
+                    ?? _selfUpdate.DownloadVerifiedAsync(_pendingSelfUpdate, _selfUpdateCts.Token, progress));
             if (download.Path is not { } verifiedPath)
             {
                 if (download.Outcome == Services.SelfUpdate.SelfUpdateDownloadOutcome.SignatureInvalid)
@@ -316,25 +328,27 @@ public partial class MainViewModel
         // Set on the UI thread in the same step as the caller's own "no work running" check, so no install
         // can start between that check and the process ending.
         _selfUpdateApplying = true;
-        var applied = false;
+        var result = Services.SelfUpdate.SelfUpdateApplyResult.Failed;
         ShowSelfUpdateInstalling();
         try
         {
             var apply = SelfUpdateApplyForTest ?? _selfUpdate.Apply;
-            applied = await Task.Run(() => apply(verifiedPath));
+            result = await Task.Run(() => apply(verifiedPath));
         }
         finally
         {
-            if (!applied)
+            if (result != Services.SelfUpdate.SelfUpdateApplyResult.Started)
             {
                 _selfUpdateApplying = false;
                 ClearSelfUpdateProgress();
             }
         }
 
-        if (applied)
+        // A declined elevation prompt is the user's own answer: no failure dialog, the banner just offers
+        // the install again.
+        if (result == Services.SelfUpdate.SelfUpdateApplyResult.Started)
             (SelfUpdateExitForTest ?? ExitForSelfUpdate)();
-        else
+        else if (result == Services.SelfUpdate.SelfUpdateApplyResult.Failed)
             Dialogs.Warn(Loc["SelfUpdateApplyFailed"]);
     }
 
@@ -390,9 +404,20 @@ public partial class MainViewModel
     // that this is a real exit and not a close to the tray.
     private static void ExitForSelfUpdate() => (Application.Current as App)?.ExitApplication();
 
+    /// <summary>At app exit: a verified download the user never started (a declined elevation prompt kept it)
+    /// is removed instead of waiting for the next start's sweep.</summary>
+    internal void DiscardUnstartedSelfUpdate()
+    {
+        if (!_selfUpdateApplying && !SelfUpdateWaitingForWork)
+            _selfUpdate.DiscardUnstartedVerified();
+    }
+
     internal Func<Services.SelfUpdate.AvailableUpdate, CancellationToken, Task<Services.SelfUpdate.SelfUpdateDownloadResult>>? SelfUpdateDownloadForTest { get; set; }
 
-    internal Func<string, bool>? SelfUpdateApplyForTest { get; set; }
+    internal Func<string, Services.SelfUpdate.SelfUpdateApplyResult>? SelfUpdateApplyForTest { get; set; }
+
+    /// <summary>Test-only: answers which verified file is held for a version, in place of the service.</summary>
+    internal Func<string, string?>? SelfUpdateHeldPathForTest { get; set; }
 
     internal Action? SelfUpdateExitForTest { get; set; }
 
