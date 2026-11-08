@@ -587,7 +587,8 @@ public partial class UpdateRowViewModel : ObservableObject
     /// <summary>A failed row offers a retry, which re-queues it through the same path as a fresh install;
     /// a row the user stopped themselves offers the very same button, for the very same reason.</summary>
     public bool ShowRetryButton =>
-        Item.CanInstall && !IsIgnored && InstallState is RowInstallState.Failed or RowInstallState.Cancelled;
+        Item.CanInstall && !IsIgnored && !IsSnoozed
+        && InstallState is RowInstallState.Failed or RowInstallState.Cancelled;
 
     public string RetryHeader => LocalizationService.Instance["RetryButton"];
 
@@ -1071,7 +1072,7 @@ public partial class UpdateRowViewModel : ObservableObject
 
     /// <summary>The visible way out of <see cref="RowInstallState.NeedsManualWork"/>: the context menu's
     /// "try normally again" alone left the row idle and needed a second click to install.</summary>
-    public bool ShowResetAndRetryButton => ShowResetPersistentFailureEntry && Item.CanInstall && !IsIgnored;
+    public bool ShowResetAndRetryButton => ShowResetPersistentFailureEntry && Item.CanInstall && !IsIgnored && !IsSnoozed;
 
     /// <summary>Clears the persistent-failure flag, then runs the same retry as a Failed row.</summary>
     [RelayCommand(CanExecute = nameof(ShowResetAndRetryButton))]
@@ -1578,7 +1579,11 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowInstallButton));
         OnPropertyChanged(nameof(ShowSnoozeMenu));
         OnPropertyChanged(nameof(ShowUnsnoozeEntry));
+        OnPropertyChanged(nameof(ShowRetryButton));
+        OnPropertyChanged(nameof(ShowResetAndRetryButton));
         InstallCommand.NotifyCanExecuteChanged();
+        RetryCommand.NotifyCanExecuteChanged();
+        ResetAndRetryCommand.NotifyCanExecuteChanged();
         if (value)
             IsSelected = false;
     }
