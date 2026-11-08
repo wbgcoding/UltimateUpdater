@@ -148,7 +148,7 @@ public sealed class InstallBlockers
     /// A running Store app holds its package files: winget registers the update and Windows applies it only
     /// after the app has closed. Every running process whose image lies inside the package's own folder
     /// counts (the app's executables live in a subfolder, which the top-level check never sees). The package
-    /// is matched by the row's exact name, and only a winget row can be one.
+    /// is matched by the row's exact name (and no classic install of that name), and only a winget row can be one.
     /// </summary>
     private BlockedInstall? DetectPackagedApp(UpdateItem item, HashSet<string> runningSet)
     {
@@ -157,7 +157,7 @@ public sealed class InstallBlockers
 
         // Every registration with this name, not only the newest: while an update waits for the app to
         // close, the running copy is the older folder.
-        var packages = _packagedApps.FindAll(item.Name).ToList();
+        var packages = _packagedApps.FindAllForWingetRow(item.Id, item.Name).ToList();
         if (packages.Count == 0)
             return null;
 

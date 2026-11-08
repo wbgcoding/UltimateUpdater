@@ -8,7 +8,8 @@ namespace UltimateUpdater.Services;
 
 /// <summary>
 /// The installed Store (MSIX) packages, read from the per-user package repository. A package is matched by
-/// its display name, exactly, never by similarity. Everything the manifest names (an executable, an
+/// its display name, exactly, never by similarity; a winget row additionally needs proof that the name is
+/// not a classic install (<see cref="FindAllForWingetRow"/>). Everything the manifest names (an executable, an
 /// application id) is untrusted text until it has been checked: an executable counts only when it lies
 /// inside the package's own folder, with no link on the way there.
 /// </summary>
@@ -26,6 +27,8 @@ public sealed class PackagedApps
     private readonly object _gate = new();
     private IReadOnlyList<Package>? _packages;
     private DateTime _readAt;
+    private HashSet<string>? _classicNames;
+    private DateTime _classicReadAt;
 
     /// <summary>One installed package: its display name, its folder and its package family name (null when
     /// the registry key is not shaped like a package full name; such a package still gives its icon).</summary>
@@ -67,6 +70,63 @@ public sealed class PackagedApps
     }
 
     public Package? Find(string displayName) => FindAll(displayName).FirstOrDefault();
+
+    /// <summary>
+    /// The packages behind a winget row, newest first. A display name alone is not enough: a classic install
+    /// can carry the very name of a Store app. winget's own <c>MSIX\&lt;package full name&gt;</c> id names the
+    /// package outright; any other id counts only when the name matches AND no Uninstall entry (which classic
+    /// installs write and packages do not) carries that name.
+    /// </summary>
+    public IEnumerable<Package> FindAllForWingetRow(string wingetId, string displayName)
+    {
+        const string MsixPrefix = @"MSIX\";
+        if (wingetId.StartsWith(MsixPrefix, StringComparison.OrdinalIgnoreCase) &&
+            FamilyNameOf(wingetId[MsixPrefix.Length..]) is { } family)
+        {
+            var byFamily = Packages()
+                .Where(p => string.Equals(p.FamilyName, family, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (byFamily.Count > 0)
+                return byFamily;
+        }
+
+        var byName = FindAll(displayName).ToList();
+        return byName.Count > 0 && !HasClassicEntry(byName[0].Name) ? byName : [];
+    }
+
+    public Package? FindForWingetRow(string wingetId, string displayName) =>
+        FindAllForWingetRow(wingetId, displayName).FirstOrDefault();
+
+    private bool HasClassicEntry(string displayName)
+    {
+        lock (_gate)
+        {
+            if (_classicNames is null || _now() - _classicReadAt > CacheLifetime)
+            {
+                _classicNames = ReadClassicNames();
+                _classicReadAt = _now();
+            }
+
+            return _classicNames.Contains(IconCacheService.CleanName(displayName));
+        }
+    }
+
+    private HashSet<string> ReadClassicNames()
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var root in WindowsRegistryRoots.Uninstall)
+        {
+            foreach (var key in _registry.SubKeyNames(root))
+            {
+                if (_registry.Value($@"{root}\{key}", "DisplayName") is { Length: > 0 } name &&
+                    IconCacheService.CleanName(name) is { Length: > 0 } clean)
+                {
+                    names.Add(clean);
+                }
+            }
+        }
+
+        return names;
+    }
 
     /// <summary>
     /// The launch target of the package's first Application, <c>shell:AppsFolder\&lt;family&gt;!&lt;app id&gt;</c>, which
