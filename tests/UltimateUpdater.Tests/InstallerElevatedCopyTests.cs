@@ -125,7 +125,7 @@ public class InstallerElevatedCopyTests
             "en.ElevatedCopyOpen={#AppName} is still running and did not close. It may be running with administrator rights. Close it, then try again.",
             script);
         Assert.Contains(
-            "de.ElevatedCopyOpen={#AppName} l\u00e4uft noch und hat sich nicht beendet, m\u00f6glicherweise mit Administratorrechten. Bitte schlie\u00dfe es und versuche es dann erneut.",
+            "de.ElevatedCopyOpen={#AppName} l\u00e4uft noch und hat sich nicht beendet, m\u00f6glicherweise mit Administratorrechten. Bitte schlie\u00dfen Sie es und versuchen Sie es dann erneut.",
             script);
     }
 
