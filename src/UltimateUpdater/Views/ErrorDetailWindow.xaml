@@ -146,24 +146,26 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="12"
+            <!-- Retrying interactively is offered only from the row's own context menu now (one
+                 visible place per action); shown only for a failure this app's own explainer
+                 classified as interactively maybe fixable, see InstallErrorExplainer.AllowsInteractiveRetry. -->
+            <TextBlock Grid.Row="0" HorizontalAlignment="Right" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="11"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                       Text="{Binding Loc[ErrorDetailRetryInMenu]}"
+                       Visibility="{Binding CanRetryInteractive, Converter={StaticResource BoolToVisibility}}"/>
+
+            <TextBlock Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Left" FontSize="12"
                        Text="{Binding Loc[ErrorDetailCopied]}"
                        Foreground="{DynamicResource SystemFillColorSuccessBrush}"
                        Visibility="{Binding Copied, Converter={StaticResource BoolToVisibility}}"/>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
                 <ui:Button x:Name="OpenLogFolderButton" Command="{Binding OpenLogFolderCommand}" Margin="0,0,8,0"
                            Icon="{ui:SymbolIcon FolderOpen24}"
                            ToolTip="{Binding LogFolder}"
                            Content="{Binding Loc[ErrorDetailOpenLogFolder]}"/>
-                <!-- Retrying interactively is offered only from the row's own context menu now (one
-                     visible place per action); shown only for a failure this app's own explainer
-                     classified as interactively maybe fixable, see InstallErrorExplainer.AllowsInteractiveRetry. -->
-                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" FontSize="11"
-                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                           Text="{Binding Loc[ErrorDetailRetryInMenu]}"
-                           Visibility="{Binding CanRetryInteractive, Converter={StaticResource BoolToVisibility}}"/>
                 <!-- Relabeled from the generic ErrorDetailCopy (still used by
                      MessageDialogWindow's own copy button) since this one now copies a whole formatted
                      report, not just the raw output text. -->
@@ -176,7 +178,7 @@
 
             <!-- Inline, under the Copy button: a failed copy is not worth a dialog, and the line goes away
                  again with the "Copied" one. -->
-            <TextBlock Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Right" FontSize="12" TextWrapping="Wrap"
+            <TextBlock Grid.Row="2" Margin="0,8,0,0" HorizontalAlignment="Right" FontSize="12" TextWrapping="Wrap"
                        Text="{Binding Loc[ErrorDetailCopyFailed]}"
                        Foreground="{DynamicResource SystemFillColorCautionBrush}"
                        Visibility="{Binding CopyFailed, Converter={StaticResource BoolToVisibility}}"/>
