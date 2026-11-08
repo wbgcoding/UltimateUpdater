@@ -2356,4 +2356,43 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Geen apparaat gebruikt dit stuurprogramma</value>
   </data>
+  <data name="WingetShortIdNote" xml:space="preserve">
+    <value>Sommige winget-updates konden niet worden weergegeven.</value>
+  </data>
+  <data name="WingetBootstrapDone" xml:space="preserve">
+    <value>winget is geïnstalleerd.</value>
+  </data>
+  <data name="WingetBootstrapFailed" xml:space="preserve">
+    <value>winget kon niet worden geïnstalleerd: {0}</value>
+  </data>
+  <data name="WingetBootstrapDownloading" xml:space="preserve">
+    <value>winget wordt gedownload… {0} %</value>
+  </data>
+  <data name="WingetBootstrapReasonNoRelease" xml:space="preserve">
+    <value>de nieuwste winget-release kon niet worden gelezen</value>
+  </data>
+  <data name="WingetBootstrapReasonNoPackage" xml:space="preserve">
+    <value>de nieuwste release bevat geen installatiepakket</value>
+  </data>
+  <data name="WingetBootstrapReasonNotSigned" xml:space="preserve">
+    <value>het gedownloade pakket is niet door Microsoft ondertekend</value>
+  </data>
+  <data name="WingetBootstrapReasonVirus" xml:space="preserve">
+    <value>de virusscan heeft de download gemarkeerd</value>
+  </data>
+  <data name="WingetBootstrapReasonInstallTimeout" xml:space="preserve">
+    <value>Windows heeft de installatie niet op tijd voltooid</value>
+  </data>
+  <data name="WingetBootstrapReasonRefused" xml:space="preserve">
+    <value>Windows heeft het pakket geweigerd</value>
+  </data>
+  <data name="WingetBootstrapReasonDownload" xml:space="preserve">
+    <value>de download is mislukt</value>
+  </data>
+  <data name="WingetBootstrapReasonFiles" xml:space="preserve">
+    <value>de gedownloade bestanden konden niet worden opgeslagen</value>
+  </data>
+  <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
+    <value>de download duurde te lang</value>
+  </data>
 </root>

@@ -27,6 +27,7 @@ public sealed class InstallLocationResolver
     private readonly Func<string, IEnumerable<string>> _subDirectoriesOf;
     private readonly string _winGetPackagesRoot;
     private readonly IReadOnlyList<string> _pathDirectories;
+    private readonly string _windowsDirectory;
     private readonly object _indexLock = new();
 
     /// <summary>
@@ -61,7 +62,8 @@ public sealed class InstallLocationResolver
         Func<string, IEnumerable<string>>? executablesIn = null,
         Func<string, IEnumerable<string>>? subDirectoriesOf = null,
         string? winGetPackagesRoot = null,
-        IReadOnlyList<string>? pathDirectories = null)
+        IReadOnlyList<string>? pathDirectories = null,
+        string? windowsDirectory = null)
     {
         _registry = registry;
         _directoryExists = directoryExists ?? Directory.Exists;
@@ -71,6 +73,20 @@ public sealed class InstallLocationResolver
         _winGetPackagesRoot = winGetPackagesRoot ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WinGet", "Packages");
         _pathDirectories = pathDirectories ?? DefaultPathDirectories();
+        _windowsDirectory = (windowsDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.Windows)).TrimEnd('\\', '/');
+    }
+
+    /// <summary>
+    /// MSI products often point DisplayIcon at a copy under the Windows Installer cache (or at msiexec in
+    /// System32), which is neither the program's folder nor something to start.
+    /// </summary>
+    private bool IsInWindowsSystemArea(string path)
+    {
+        if (_windowsDirectory.Length == 0)
+            return false;
+
+        return new[] { "Installer", "System32", "SysWOW64" }.Any(folder =>
+            path.StartsWith($@"{_windowsDirectory}\{folder}\", StringComparison.OrdinalIgnoreCase));
     }
 
     private static IEnumerable<string> DefaultSubDirectoriesOf(string directory)
@@ -358,21 +374,22 @@ public sealed class InstallLocationResolver
         }
     }
 
-    /// <summary>The install directory an uninstall entry points at: its InstallLocation, or the folder
-    /// of its DisplayIcon executable when it names one.</summary>
+    /// <summary>The install directory an uninstall entry points at: its InstallLocation when that folder
+    /// exists, else the folder of its DisplayIcon executable when it names one (never one in the Windows
+    /// Installer cache or a system folder).</summary>
     private string? LocationOf(string entry)
     {
         if (_registry.Value(entry, "InstallLocation") is { } installLocation)
         {
             var cleaned = NormalizeDirectory(CleanPath(installLocation));
-            if (cleaned.Length > 0)
+            if (cleaned.Length > 0 && _directoryExists(cleaned))
                 return cleaned;
         }
 
         if (_registry.Value(entry, "DisplayIcon") is { } icon)
         {
             var exe = CleanPath(StripIconIndex(icon));
-            if (exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            if (exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && !IsInWindowsSystemArea(exe))
             {
                 var directory = Path.GetDirectoryName(exe);
                 if (!string.IsNullOrEmpty(directory))
@@ -391,7 +408,9 @@ public sealed class InstallLocationResolver
             return null;
 
         var exe = CleanPath(StripIconIndex(icon));
-        return exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && !IsNotStartable(exe) ? exe : null;
+        return exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && !IsNotStartable(exe) && !IsInWindowsSystemArea(exe)
+            ? exe
+            : null;
     }
 
     private static string CleanPath(string value) => UninstallEntryPaths.Clean(value);

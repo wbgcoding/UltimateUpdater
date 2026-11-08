@@ -2356,4 +2356,43 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Kein Gerät nutzt diesen Treiber</value>
   </data>
+  <data name="WingetShortIdNote" xml:space="preserve">
+    <value>Einige winget-Updates konnten nicht aufgelistet werden.</value>
+  </data>
+  <data name="WingetBootstrapDone" xml:space="preserve">
+    <value>winget ist installiert.</value>
+  </data>
+  <data name="WingetBootstrapFailed" xml:space="preserve">
+    <value>winget konnte nicht installiert werden: {0}</value>
+  </data>
+  <data name="WingetBootstrapDownloading" xml:space="preserve">
+    <value>winget wird geladen… {0} %</value>
+  </data>
+  <data name="WingetBootstrapReasonNoRelease" xml:space="preserve">
+    <value>die neueste winget-Version konnte nicht abgerufen werden</value>
+  </data>
+  <data name="WingetBootstrapReasonNoPackage" xml:space="preserve">
+    <value>die neueste Version enthält kein Installationspaket</value>
+  </data>
+  <data name="WingetBootstrapReasonNotSigned" xml:space="preserve">
+    <value>das heruntergeladene Paket ist nicht von Microsoft signiert</value>
+  </data>
+  <data name="WingetBootstrapReasonVirus" xml:space="preserve">
+    <value>der Virenscan hat den Download gemeldet</value>
+  </data>
+  <data name="WingetBootstrapReasonInstallTimeout" xml:space="preserve">
+    <value>Windows hat die Einrichtung nicht rechtzeitig abgeschlossen</value>
+  </data>
+  <data name="WingetBootstrapReasonRefused" xml:space="preserve">
+    <value>Windows hat das Paket abgelehnt</value>
+  </data>
+  <data name="WingetBootstrapReasonDownload" xml:space="preserve">
+    <value>der Download ist fehlgeschlagen</value>
+  </data>
+  <data name="WingetBootstrapReasonFiles" xml:space="preserve">
+    <value>die heruntergeladenen Dateien konnten nicht gespeichert werden</value>
+  </data>
+  <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
+    <value>der Download hat zu lange gedauert</value>
+  </data>
 </root>

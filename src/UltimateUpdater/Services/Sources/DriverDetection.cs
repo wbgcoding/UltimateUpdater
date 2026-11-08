@@ -22,8 +22,8 @@ public sealed record GpuInfo(GpuVendor Vendor, string Name, string? DriverVersio
 [SupportedOSPlatform("windows")]
 public static class DriverDetection
 {
-    // Up to 3 driver sources (NVIDIA/AMD/Intel) each call this from both IsAvailableAsync and ScanAsync
-    // during the same scan pass, without a cache that is up to 6 redundant WMI round-trips for hardware
+    // The NVIDIA driver source calls this from both IsAvailableAsync and ScanAsync during the same scan
+    // pass; without a cache the second call is a redundant WMI round-trip for hardware
     // that never changes mid-scan. The TTL just needs to outlive one scan pass, not survive to the next.
     private static readonly object CacheLock = new();
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(10);
@@ -36,10 +36,11 @@ public static class DriverDetection
 
     public static IReadOnlyList<GpuInfo> DetectGpus()
     {
-        // Held for the WHOLE detection, not just the cache read/write: NVIDIA/AMD/Intel each
-        // call this from both IsAvailableAsync and ScanAsync; up to six calls at cold start, all racing
-        // an empty cache and each running the same expensive WMI query in parallel before any of them
-        // could populate it. A caller that loses the race now finds the cache already warm instead.
+        // Held for the WHOLE detection, not just the cache read/write: the NVIDIA source calls this
+        // from both IsAvailableAsync and ScanAsync, and a scan may overlap another caller, so calls
+        // at cold start race an empty cache and would each run the same expensive WMI query in
+        // parallel before any of them could populate it. A caller that loses the race now finds the
+        // cache already warm instead.
         lock (CacheLock)
         {
             if (_cached is not null && DateTime.UtcNow - _cachedAtUtc < CacheTtl)

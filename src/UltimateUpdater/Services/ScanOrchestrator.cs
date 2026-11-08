@@ -34,6 +34,10 @@ public sealed class ProviderStatus
     /// the pill itself. <see cref="ErrorMessage"/> stays the translated one-liner everyone sees at a glance.
     /// </summary>
     public string? Detail { get; set; }
+
+    /// <summary>A localized caveat about a scan that still ended Done (rows the source had to leave out),
+    /// shown under the pill's tooltip text. Not an error.</summary>
+    public string? Note { get; set; }
 }
 
 /// <summary>Runs all active providers in parallel; one provider's failure never kills the overall scan.</summary>
@@ -512,6 +516,9 @@ public sealed class ScanOrchestrator
                     Report(status, generation);
                     return;
                 }
+
+                if (source is IScanNoteSource noteSource)
+                    status.Note = noteSource.ScanNote;
 
                 status.State = ProviderScanState.Done;
                 Report(status, generation);

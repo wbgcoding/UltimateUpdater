@@ -2356,4 +2356,43 @@ Continue with admin rights?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>No device uses this driver</value>
   </data>
+  <data name="WingetShortIdNote" xml:space="preserve">
+    <value>Some winget updates could not be listed.</value>
+  </data>
+  <data name="WingetBootstrapDone" xml:space="preserve">
+    <value>winget is installed.</value>
+  </data>
+  <data name="WingetBootstrapFailed" xml:space="preserve">
+    <value>winget could not be installed: {0}</value>
+  </data>
+  <data name="WingetBootstrapDownloading" xml:space="preserve">
+    <value>Downloading winget… {0} %</value>
+  </data>
+  <data name="WingetBootstrapReasonNoRelease" xml:space="preserve">
+    <value>the latest winget release could not be read</value>
+  </data>
+  <data name="WingetBootstrapReasonNoPackage" xml:space="preserve">
+    <value>the latest release has no installer package</value>
+  </data>
+  <data name="WingetBootstrapReasonNotSigned" xml:space="preserve">
+    <value>the downloaded package is not signed by Microsoft</value>
+  </data>
+  <data name="WingetBootstrapReasonVirus" xml:space="preserve">
+    <value>the virus scan flagged the download</value>
+  </data>
+  <data name="WingetBootstrapReasonInstallTimeout" xml:space="preserve">
+    <value>Windows did not finish the setup in time</value>
+  </data>
+  <data name="WingetBootstrapReasonRefused" xml:space="preserve">
+    <value>Windows refused the package</value>
+  </data>
+  <data name="WingetBootstrapReasonDownload" xml:space="preserve">
+    <value>the download failed</value>
+  </data>
+  <data name="WingetBootstrapReasonFiles" xml:space="preserve">
+    <value>the downloaded files could not be saved</value>
+  </data>
+  <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
+    <value>the download took too long</value>
+  </data>
 </root>

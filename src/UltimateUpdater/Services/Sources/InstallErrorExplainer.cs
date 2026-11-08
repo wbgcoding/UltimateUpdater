@@ -97,7 +97,7 @@ public static class InstallErrorExplainer
     // (WindowsUpdateSource.VerifySucceeded), not extracted from a vendor's free-form text: so they are
     // matched against that fixed English exception wording instead of the vendor-exit-code regexes above.
     private static readonly Regex WuResultCodeRegex =
-        new(@"Windows Update install returned result code (\d+)", RegexOptions.Compiled);
+        new(@"Windows Update (?:install|download) returned result code (\d+)", RegexOptions.Compiled);
 
     // Every CLI-driven source (chocolatey, npm, pip, scoop, ollama, pyenv-win, volta, the PowerShell
     // module wrapper…) reports a failed install/uninstall through ToolOutput.Summarize's own wording .

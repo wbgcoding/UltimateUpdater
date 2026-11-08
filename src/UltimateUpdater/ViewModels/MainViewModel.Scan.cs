@@ -482,12 +482,47 @@ public partial class MainViewModel
 
     private async Task OfferWingetBootstrapAsync(Services.WingetBootstrapService bootstrap)
     {
-        await bootstrap.OfferAsync(CancellationToken.None);
+        // The winget pill shows the download as its state text; each report is queued on the dispatcher in
+        // order, so the clearing call below always lands after the last percentage.
+        void ShowDownload(int? percent) => _dispatcher.InvokeAsync(() =>
+        {
+            if (!_providerStatusById.TryGetValue("winget", out var pill))
+                return;
+
+            pill.SetupPercent = percent;
+            RefreshHeader(resortManualOnly: false);
+        });
+
+        Services.WingetBootstrapOutcome outcome;
+        try
+        {
+            outcome = await bootstrap.OfferAsync(new CallbackProgress<int>(percent => ShowDownload(percent)), CancellationToken.None);
+        }
+        finally
+        {
+            ShowDownload(null);
+        }
+
+        switch (outcome.Status)
+        {
+            case Services.WingetBootstrapStatus.Installed:
+                Dialogs.Success(Loc["WingetBootstrapDone"]);
+                break;
+            case Services.WingetBootstrapStatus.Failed:
+                var reason = Loc[outcome.ReasonKey ?? "WingetBootstrapReasonDownload"];
+                Dialogs.Error(string.Format(Loc["WingetBootstrapFailed"], reason), details: outcome.Detail);
+                break;
+        }
 
         // Only worth a rescan if the offer actually put winget on the machine; NeedsOffer is now false
         // either way (declined or installed), so ProcessRunner.Exists is the only way left to tell them apart.
         if (bootstrap.IsWingetPresent)
             await RescanSingleSourceAsync("winget");
+    }
+
+    private sealed class CallbackProgress<T>(Action<T> callback) : IProgress<T>
+    {
+        public void Report(T value) => callback(value);
     }
 
     /// <summary>True between a scan starting and the window leaving the scanning state.</summary>

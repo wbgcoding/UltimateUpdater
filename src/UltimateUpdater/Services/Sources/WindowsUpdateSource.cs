@@ -179,10 +179,10 @@ public sealed class WindowsUpdateSource : IUpdateSource
                 Category = Category,
                 Name = title,
                 InstalledVersion = null,
-                // WUApiLib never reports a version number itself. Most titles carry one anyway
-                // ("... Version 32.0.15.6094"), so try that before falling back to the KB number
-                // (the one identifier every title has) rather than showing nothing at all.
-                AvailableVersion = PackageManagerParsers.FirstVersionToken(title) ?? ExtractKbNumber(title),
+                // WUApiLib never reports a version number itself. Most titles carry one right after
+                // "Version" or "Driver" ("... Version 32.0.15.6094"), so take that before falling back to
+                // the KB number (the one identifier every title has) rather than showing nothing at all.
+                AvailableVersion = VersionFromTitle(title) ?? ExtractKbNumber(title),
                 IsCritical = isCritical,
                 // Windows Update is one of the few sources that knows the size and date up front.
                 DownloadSize = DownloadSizeFor(categoryIds, ReadDownloadSize(update)),
@@ -220,6 +220,28 @@ public sealed class WindowsUpdateSource : IUpdateSource
     /// <summary>Last-resort version fallback: every WU title carries a KB number even when it has no
     /// version string of its own.</summary>
     private static readonly Regex KbNumberPattern = new(@"KB\d{5,8}", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+
+    private static readonly Regex TitleVersionPattern = new(
+        @"\b(?:Version|Driver)\s+v?(\d{1,9}(?:\.\d{1,9}){1,3})\b",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
+
+    /// <summary>A driver title's own shape, "Vendor - Class - 31.0.15.5222": the version is its last part.</summary>
+    private static readonly Regex DriverTitleVersionPattern = new(
+        @"\s-\s+v?(\d{1,9}(?:\.\d{1,9}){1,3})\s*$",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
+
+    /// <summary>The dotted version a Windows Update title names right after "Version" or "Driver", or as
+    /// the last part of a driver title ("NVIDIA - Display - 31.0.15.5222"); a date or a build number
+    /// elsewhere in the title ("2024.05 Cumulative Update", "(KB5039212)") is no version, which is why the
+    /// shared first-number scan is not used here.</summary>
+    internal static string? VersionFromTitle(string title)
+    {
+        var match = TitleVersionPattern.Match(title);
+        if (!match.Success)
+            match = DriverTitleVersionPattern.Match(title);
+
+        return match.Success ? match.Groups[1].Value : null;
+    }
 
     private static string? ExtractKbNumber(string title)
     {

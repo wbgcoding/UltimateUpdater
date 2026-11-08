@@ -79,7 +79,8 @@ public static class WingetUpgradeParser
     /// Rows after a second separator ("explicit targeting required") are still real upgrades and
     /// are included.
     /// </summary>
-    public static IReadOnlyList<WingetUpgradeEntry> ParseCliTable(string stdout, Action<string>? onTruncatedId = null)
+    public static IReadOnlyList<WingetUpgradeEntry> ParseCliTable(
+        string stdout, Action<string>? onTruncatedId = null, Action<WingetUpgradeEntry>? onTruncatedRow = null)
     {
         var results = new List<WingetUpgradeEntry>();
         if (string.IsNullOrWhiteSpace(stdout))
@@ -128,6 +129,7 @@ public static class WingetUpgradeParser
             if (id.Contains('…'))
             {
                 onTruncatedId?.Invoke(id);
+                onTruncatedRow?.Invoke(new WingetUpgradeEntry(id, name, installed, available));
                 continue;
             }
 
@@ -135,6 +137,58 @@ public static class WingetUpgradeParser
         }
 
         return results;
+    }
+
+    /// <summary>
+    /// The full Id of the one installed package called <paramref name="name"/>, read from a
+    /// `winget list --name &lt;name&gt; --exact` table (narrow enough to leave the Id unshortened). Null when
+    /// the table has no such row, an Id that is still shortened, or more than one different Id.
+    /// </summary>
+    public static string? ParseListIdForName(string stdout, string name)
+    {
+        if (string.IsNullOrWhiteSpace(stdout))
+            return null;
+
+        var lines = stdout.Replace("\r\n", "\n").Split('\n');
+        int[]? columnStarts = null;
+        string? previousLine = null;
+        string? found = null;
+
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var line = lines[index].TrimEnd();
+            if (line.Length == 0)
+            {
+                previousLine = null;
+                continue;
+            }
+
+            if (IsSeparator(line))
+            {
+                columnStarts = previousLine is null ? null : FindColumnStarts(previousLine, BlockRows(lines, index + 1));
+                previousLine = line;
+                continue;
+            }
+
+            previousLine = line;
+
+            if (columnStarts is null || columnStarts.Length < 3)
+                continue;
+
+            if (!string.Equals(Slice(line, columnStarts, 0), name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var id = Slice(line, columnStarts, 1);
+            if (!IsPackageId(id) || id.Contains('…'))
+                return null;
+
+            if (found is not null && !string.Equals(found, id, StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            found = id;
+        }
+
+        return found;
     }
 
     /// <summary>

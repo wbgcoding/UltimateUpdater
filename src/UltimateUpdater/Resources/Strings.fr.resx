@@ -2356,4 +2356,43 @@ Continuer avec les droits administrateur ?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Aucun appareil n'utilise ce pilote</value>
   </data>
+  <data name="WingetShortIdNote" xml:space="preserve">
+    <value>Certaines mises à jour winget n'ont pas pu être listées.</value>
+  </data>
+  <data name="WingetBootstrapDone" xml:space="preserve">
+    <value>winget est installé.</value>
+  </data>
+  <data name="WingetBootstrapFailed" xml:space="preserve">
+    <value>winget n'a pas pu être installé : {0}</value>
+  </data>
+  <data name="WingetBootstrapDownloading" xml:space="preserve">
+    <value>Téléchargement de winget… {0} %</value>
+  </data>
+  <data name="WingetBootstrapReasonNoRelease" xml:space="preserve">
+    <value>la dernière version de winget n'a pas pu être lue</value>
+  </data>
+  <data name="WingetBootstrapReasonNoPackage" xml:space="preserve">
+    <value>la dernière version ne contient aucun paquet d'installation</value>
+  </data>
+  <data name="WingetBootstrapReasonNotSigned" xml:space="preserve">
+    <value>le paquet téléchargé n'est pas signé par Microsoft</value>
+  </data>
+  <data name="WingetBootstrapReasonVirus" xml:space="preserve">
+    <value>l'analyse antivirus a signalé le téléchargement</value>
+  </data>
+  <data name="WingetBootstrapReasonInstallTimeout" xml:space="preserve">
+    <value>Windows n'a pas terminé l'installation à temps</value>
+  </data>
+  <data name="WingetBootstrapReasonRefused" xml:space="preserve">
+    <value>Windows a refusé le paquet</value>
+  </data>
+  <data name="WingetBootstrapReasonDownload" xml:space="preserve">
+    <value>le téléchargement a échoué</value>
+  </data>
+  <data name="WingetBootstrapReasonFiles" xml:space="preserve">
+    <value>les fichiers téléchargés n'ont pas pu être enregistrés</value>
+  </data>
+  <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
+    <value>le téléchargement a pris trop de temps</value>
+  </data>
 </root>

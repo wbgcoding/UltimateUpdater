@@ -2356,4 +2356,43 @@ Continuar com direitos de administrador?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Nenhum dispositivo usa este driver</value>
   </data>
+  <data name="WingetShortIdNote" xml:space="preserve">
+    <value>Não foi possível listar algumas atualizações do winget.</value>
+  </data>
+  <data name="WingetBootstrapDone" xml:space="preserve">
+    <value>O winget está instalado.</value>
+  </data>
+  <data name="WingetBootstrapFailed" xml:space="preserve">
+    <value>Não foi possível instalar o winget: {0}</value>
+  </data>
+  <data name="WingetBootstrapDownloading" xml:space="preserve">
+    <value>Baixando o winget… {0} %</value>
+  </data>
+  <data name="WingetBootstrapReasonNoRelease" xml:space="preserve">
+    <value>não foi possível ler a versão mais recente do winget</value>
+  </data>
+  <data name="WingetBootstrapReasonNoPackage" xml:space="preserve">
+    <value>a versão mais recente não tem pacote de instalação</value>
+  </data>
+  <data name="WingetBootstrapReasonNotSigned" xml:space="preserve">
+    <value>o pacote baixado não é assinado pela Microsoft</value>
+  </data>
+  <data name="WingetBootstrapReasonVirus" xml:space="preserve">
+    <value>a verificação de vírus sinalizou o download</value>
+  </data>
+  <data name="WingetBootstrapReasonInstallTimeout" xml:space="preserve">
+    <value>o Windows não concluiu a instalação a tempo</value>
+  </data>
+  <data name="WingetBootstrapReasonRefused" xml:space="preserve">
+    <value>o Windows recusou o pacote</value>
+  </data>
+  <data name="WingetBootstrapReasonDownload" xml:space="preserve">
+    <value>o download falhou</value>
+  </data>
+  <data name="WingetBootstrapReasonFiles" xml:space="preserve">
+    <value>não foi possível salvar os arquivos baixados</value>
+  </data>
+  <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
+    <value>o download demorou demais</value>
+  </data>
 </root>

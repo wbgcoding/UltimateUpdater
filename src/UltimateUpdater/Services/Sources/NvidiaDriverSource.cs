@@ -37,11 +37,13 @@ public sealed class NvidiaDriverSource : IUpdateSource
 
     private readonly LoggingService _logging;
     private readonly HttpClient _httpClient;
+    private readonly Func<IReadOnlyList<GpuInfo>> _detectGpus;
 
-    public NvidiaDriverSource(LoggingService logging, HttpClient httpClient)
+    public NvidiaDriverSource(LoggingService logging, HttpClient httpClient, Func<IReadOnlyList<GpuInfo>>? detectGpus = null)
     {
         _logging = logging;
         _httpClient = httpClient;
+        _detectGpus = detectGpus ?? DriverDetection.DetectGpus;
     }
 
     public string Id => "nvidia-driver";
@@ -51,11 +53,11 @@ public sealed class NvidiaDriverSource : IUpdateSource
     public SourceTier Tier => SourceTier.A;
 
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken) =>
-        Task.FromResult(DriverDetection.DetectGpus().Any(g => g.Vendor == GpuVendor.Nvidia));
+        Task.FromResult(_detectGpus().Any(g => g.Vendor == GpuVendor.Nvidia));
 
     public async IAsyncEnumerable<UpdateItem> ScanAsync([EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var gpu = DriverDetection.DetectGpus().FirstOrDefault(g => g.Vendor == GpuVendor.Nvidia);
+        var gpu = _detectGpus().FirstOrDefault(g => g.Vendor == GpuVendor.Nvidia);
         if (gpu is null)
             yield break;
 
@@ -89,6 +91,13 @@ public sealed class NvidiaDriverSource : IUpdateSource
     private async Task<UpdateItem?> ResolveAsync(GpuInfo gpu, CancellationToken cancellationToken)
     {
         var installed = DriverDetection.DecodeNvidiaVersion(gpu.DriverVersion);
+
+        // Nothing was compared when the installed version cannot be read, so no row may claim an update.
+        if (installed is null)
+        {
+            _logging.Info($"nvidia-driver: the installed driver version of '{gpu.Name}' could not be read; no update is offered.");
+            return null;
+        }
 
         var productXml = await GetStringAsync(ProductLookupUrl, cancellationToken);
         var productId = NvidiaDriverLookup.FindProductId(productXml, gpu.Name);
