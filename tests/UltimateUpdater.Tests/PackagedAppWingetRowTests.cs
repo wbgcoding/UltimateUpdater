@@ -9,8 +9,8 @@ namespace UltimateUpdater.Tests;
 /// </summary>
 public class PackagedAppWingetRowTests
 {
-    private const string Full = "OpenAI.Codex_26.1.0.0_x64__2p2nqsd0c76g0";
-    private const string Root = @"C:\Program Files\WindowsApps\OpenAI.Codex_26.1.0.0_x64__2p2nqsd0c76g0";
+    private const string Full = "OpenAI.ChatterPkg_26.1.0.0_x64__2p2nqsd0c76g0";
+    private const string Root = @"C:\Program Files\WindowsApps\OpenAI.ChatterPkg_26.1.0.0_x64__2p2nqsd0c76g0";
     private const string ArpRoot = @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
 
     private sealed class Table(params string[] classicNames) : IRegistryView
@@ -23,7 +23,7 @@ public class PackagedAppWingetRowTests
         public string? Value(string keyPath, string valueName)
         {
             if (keyPath.StartsWith(PackagedApps.PackagesKey, StringComparison.Ordinal))
-                return valueName switch { "DisplayName" => "ChatGPT", "PackageRootFolder" => Root, _ => null };
+                return valueName switch { "DisplayName" => "Chatter", "PackageRootFolder" => Root, _ => null };
 
             return keyPath.StartsWith(ArpRoot + @"\App", StringComparison.Ordinal) && valueName == "DisplayName"
                 ? classicNames[int.Parse(keyPath[(ArpRoot.Length + 4)..])]
@@ -36,27 +36,27 @@ public class PackagedAppWingetRowTests
     {
         var apps = new PackagedApps(new Table("Git", "Visual Studio Code"));
 
-        var package = apps.FindForWingetRow("OpenAI.ChatGPT", "ChatGPT");
+        var package = apps.FindForWingetRow("OpenAI.Chatter", "Chatter");
 
         Assert.NotNull(package);
-        Assert.Equal("OpenAI.Codex_2p2nqsd0c76g0", package!.FamilyName);
+        Assert.Equal("OpenAI.ChatterPkg_2p2nqsd0c76g0", package!.FamilyName);
     }
 
     [Fact]
     public void A_classic_install_with_the_name_of_a_package_is_not_packaged()
     {
-        var apps = new PackagedApps(new Table("ChatGPT", "Git"));
+        var apps = new PackagedApps(new Table("Chatter", "Git"));
 
-        Assert.Null(apps.FindForWingetRow("Vendor.ChatGPTDesktop", "ChatGPT"));
-        Assert.Empty(apps.FindAllForWingetRow("Vendor.ChatGPTDesktop", "ChatGPT (64-bit)"));
+        Assert.Null(apps.FindForWingetRow("Vendor.ChatterDesktop", "Chatter"));
+        Assert.Empty(apps.FindAllForWingetRow("Vendor.ChatterDesktop", "Chatter (64-bit)"));
     }
 
     [Fact]
     public void A_winget_msix_id_names_the_package_even_when_the_display_name_differs()
     {
-        var apps = new PackagedApps(new Table("ChatGPT"));
+        var apps = new PackagedApps(new Table("Chatter"));
 
-        var package = apps.FindForWingetRow(@"MSIX\" + Full, "Codex");
+        var package = apps.FindForWingetRow(@"MSIX\" + Full, "ChatterPkg");
 
         Assert.Equal(Root, package?.Root);
     }
@@ -64,7 +64,7 @@ public class PackagedAppWingetRowTests
     [Fact]
     public void A_winget_msix_id_of_an_unknown_package_falls_back_to_the_name_rule()
     {
-        Assert.NotNull(new PackagedApps(new Table()).FindForWingetRow(@"MSIX\Other.App_1.0.0.0_x64__2p2nqsd0c76g0", "ChatGPT"));
-        Assert.Null(new PackagedApps(new Table("ChatGPT")).FindForWingetRow(@"MSIX\Other.App_1.0.0.0_x64__2p2nqsd0c76g0", "ChatGPT"));
+        Assert.NotNull(new PackagedApps(new Table()).FindForWingetRow(@"MSIX\Other.App_1.0.0.0_x64__2p2nqsd0c76g0", "Chatter"));
+        Assert.Null(new PackagedApps(new Table("Chatter")).FindForWingetRow(@"MSIX\Other.App_1.0.0.0_x64__2p2nqsd0c76g0", "Chatter"));
     }
 }
