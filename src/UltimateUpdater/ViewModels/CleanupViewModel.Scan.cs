@@ -335,6 +335,30 @@ public partial class CleanupViewModel
             // Admin rows a quiet pass handed to the helper but never got a figure for (it was gone by the
             // time the job went out, or dropped mid-scan): they must not be stamped as measured.
             var helperMissed = new List<CleanupItemViewModel>();
+
+            // An open scan has no later pass to catch these up, and their previous figures are not a
+            // measurement of now: cleared like a row whose scan failed, with the admin capsule saying why.
+            void MarkUnmeasured(IEnumerable<CleanupItemViewModel> rows)
+            {
+                if (!IsCurrentScan())
+                    return;
+
+                foreach (var row in rows)
+                {
+                    row.Bytes = 0;
+                    row.Files = 0;
+                    row.SetEntries(null);
+                    row.SetRegistryFindings(null);
+                    row.SetLeftoverCandidates(null);
+                    row.SetDriverCandidates(null, null);
+                    row.SetOldPythonVersionCandidates(null);
+                    row.ShowsElevationHint = true;
+                    row.IsScanning = false;
+                }
+
+                RefreshTotals();
+            }
+
             try
             {
                 // Asked before anything is measured: without admin the elevated targets report a floor
@@ -382,8 +406,11 @@ public partial class CleanupViewModel
                         allowStart: !quietMode,
                         backgroundPriority: quietMode && !_windowAttached);
 
+                    var unmeasured = elevated.Where(item => !measuredByHelper.Contains(item)).ToList();
                     if (quietMode && !reached)
-                        helperMissed.AddRange(elevated.Where(item => !measuredByHelper.Contains(item)));
+                        helperMissed.AddRange(unmeasured);
+                    else if (!quietMode)
+                        MarkUnmeasured(unmeasured);
 
                     // A helper that died mid-scan must not leave rows spinning for ever.
                     if (IsCurrentScan())
@@ -402,6 +429,8 @@ public partial class CleanupViewModel
                 _logging.Warn($"Cleanup elevation scan failed: {ex.Message}");
                 if (quietMode)
                     helperMissed.AddRange(elevated);
+                else
+                    MarkUnmeasured(elevated.Where(item => item.IsScanning));
 
                 if (IsCurrentScan())
                 {
