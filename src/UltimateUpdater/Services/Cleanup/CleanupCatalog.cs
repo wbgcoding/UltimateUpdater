@@ -1,4 +1,5 @@
 using System.IO;
+using Microsoft.Win32;
 
 namespace UltimateUpdater.Services.Cleanup;
 
@@ -489,8 +490,9 @@ public static class CleanupCatalog
     }
 
     /// <summary>
-    /// Every OTHER user's Temp folder: this user's own is already the first target. Enumerating the users
-    /// directory needs no elevation, but deleting inside another user's profile does; a folder that cannot
+    /// Every OTHER user's Temp folder: this user's own is already the first target. The profile folders come
+    /// from the machine's profile list (a profile can live outside the Users folder); a test passes a users
+    /// folder to list instead. Deleting inside another user's profile needs elevation; a folder that cannot
     /// be touched is simply skipped at run time.
     /// </summary>
     private static IReadOnlyList<string> OtherUsersTempDirectories(
@@ -498,10 +500,18 @@ public static class CleanupCatalog
     {
         try
         {
-            var usersRoot = usersRootOverride ?? Path.Combine(
-                Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) ?? "C:\\", "Users");
-            if (!Directory.Exists(usersRoot))
-                return [];
+            IReadOnlyList<string> profiles;
+            if (usersRootOverride is not null)
+            {
+                if (!Directory.Exists(usersRootOverride))
+                    return [];
+
+                profiles = Directory.EnumerateDirectories(usersRootOverride).ToList();
+            }
+            else
+            {
+                profiles = ProfileFolders(ProfileListForTest.Value?.Invoke() ?? ReadProfileList());
+            }
 
             // This process's own Temp folders plus the caller's: they differ whenever another account elevated.
             List<string> ownTemps =
@@ -527,7 +537,7 @@ public static class CleanupCatalog
                 ownTemps.Add(Path.GetFullPath(callerTemp));
             }
 
-            return Distinct(ExcludeOwnTemp(Directory.EnumerateDirectories(usersRoot)
+            return Distinct(ExcludeOwnTemp(profiles
                 .Select(profile => Path.Combine(profile, "AppData", "Local", "Temp"))
                 .Where(Directory.Exists),
                 ownTemps, logWarning));
@@ -537,5 +547,71 @@ public static class CleanupCatalog
             // an unreadable users directory (or a malformed caller path) simply means this target has nothing to offer
             return [];
         }
+    }
+
+    /// <summary>Test seam for the machine's profile list (the registry read is not mockable otherwise): pairs
+    /// of account SID and the raw profile path. Per async flow.</summary>
+    internal static readonly AsyncLocal<Func<IReadOnlyList<KeyValuePair<string, string?>>>?> ProfileListForTest = new();
+
+    private const string ProfileListKey = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList";
+
+    private static IReadOnlyList<KeyValuePair<string, string?>> ReadProfileList()
+    {
+        try
+        {
+            using var list = Registry.LocalMachine.OpenSubKey(ProfileListKey);
+            if (list is null)
+                return [];
+
+            var entries = new List<KeyValuePair<string, string?>>();
+            foreach (var sid in list.GetSubKeyNames())
+            {
+                using var key = list.OpenSubKey(sid);
+                var path = key?.GetValue("ProfileImagePath", null, RegistryValueOptions.DoNotExpandEnvironmentNames) as string;
+                entries.Add(new KeyValuePair<string, string?>(sid, path));
+            }
+
+            return entries;
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// The profile folders of the real user accounts in a profile list: only local and domain accounts
+    /// (SID prefix S-1-5-21-), never the system, service or app-pool profiles. A path may use
+    /// %SystemDrive% or %SystemRoot%, read from the Windows folder, not from the environment (a variable the
+    /// caller could have changed before an elevated process started); any other variable, a relative or
+    /// network path leaves the entry out.
+    /// </summary>
+    internal static IReadOnlyList<string> ProfileFolders(IEnumerable<KeyValuePair<string, string?>> profileList)
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var systemDrive = Path.GetPathRoot(windows)?.TrimEnd('\\') ?? "C:";
+        var folders = new List<string>();
+
+        foreach (var (sid, raw) in profileList)
+        {
+            if (!sid.StartsWith("S-1-5-21-", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(raw))
+                continue;
+
+            var path = raw.Trim()
+                .Replace("%SystemDrive%", systemDrive, StringComparison.OrdinalIgnoreCase)
+                .Replace("%SystemRoot%", windows, StringComparison.OrdinalIgnoreCase);
+            if (path.Contains('%') || path.Length < 4 || !char.IsAsciiLetter(path[0]) || path[1] != ':' || path[2] != '\\')
+                continue;
+
+            try
+            {
+                folders.Add(Path.GetFullPath(path));
+            }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+            {
+            }
+        }
+
+        return folders;
     }
 }

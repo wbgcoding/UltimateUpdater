@@ -14,7 +14,7 @@ namespace UltimateUpdater.Services.Cleanup;
 /// nothing is deleted this run; a registry writer earns no benefit of the doubt the rest of this app's
 /// cleanup does not need.
 /// </summary>
-public static class RegistryBackupService
+public static partial class RegistryBackupService
 {
     private const string FilePrefix = "ultimate updater registry backup ";
     private const string RegHeader = "Windows Registry Editor Version 5.00";
@@ -1079,6 +1079,32 @@ public static class RegistryBackupService
         return Path.Combine(backupFolder, $"{FilePrefix}{date} {timeOnly}.reg");
     }
 
+    /// <summary>The moment a backup file name stands for: its date, the time when the name carries one
+    /// (a day's first backup has none and sorts before the later ones of that day), and the collision
+    /// suffix. Null when the name does not follow <see cref="BuildBackupPath"/>'s shapes.</summary>
+    internal static (DateTime Moment, int Suffix)? BackupMoment(string fileName)
+    {
+        var match = BackupNamePattern().Match(fileName);
+        if (!match.Success)
+            return null;
+
+        var timeText = match.Groups["time"].Success ? match.Groups["time"].Value : "00-00";
+        if (!DateTime.TryParseExact(
+                match.Groups["date"].Value + " " + timeText, "dd.MM.yyyy HH-mm", CultureInfo.InvariantCulture,
+                DateTimeStyles.None, out var moment))
+        {
+            return null;
+        }
+
+        var suffix = match.Groups["n"].Success ? int.Parse(match.Groups["n"].Value, CultureInfo.InvariantCulture) : 0;
+        return (moment, suffix);
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex(
+        @"^ultimate updater registry backup (?<date>\d{2}\.\d{2}\.\d{4})(?: (?<time>\d{2}-\d{2}))?(?: \((?<n>\d{1,4})\))?\.reg$",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+    private static partial System.Text.RegularExpressions.Regex BackupNamePattern();
+
     internal static void PruneOldBackups(string backupFolder, int retentionCount, LoggingService logging)
     {
         if (retentionCount <= 0)
@@ -1086,9 +1112,12 @@ public static class RegistryBackupService
 
         try
         {
+            // Newest first by the moment in the file name, never by file times: a copied or restored backup
+            // folder resets creation times and would make the newest backup look like the oldest. A name
+            // that carries no readable moment counts as newest, so it is never pruned first.
             var backups = Directory.EnumerateFiles(backupFolder, $"{FilePrefix}*.reg")
                 .Select(path => new FileInfo(path))
-                .OrderByDescending(f => f.CreationTimeUtc)
+                .OrderByDescending(f => BackupMoment(f.Name) ?? (DateTime.MaxValue, int.MaxValue))
                 .ToList();
 
             foreach (var stale in backups.Skip(retentionCount))

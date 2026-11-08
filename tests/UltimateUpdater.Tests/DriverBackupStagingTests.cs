@@ -16,6 +16,7 @@ namespace UltimateUpdater.Tests;
 /// redirects the root to a throwaway temp directory so these can be proven without touching the real
 /// machine's <c>%ProgramData%</c>.
 /// </summary>
+[Collection("DriverStaging")]
 public sealed class DriverBackupStagingTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "wu-driverstaging-" + Guid.NewGuid());

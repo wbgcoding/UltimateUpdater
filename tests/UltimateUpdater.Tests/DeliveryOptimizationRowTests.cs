@@ -26,6 +26,9 @@ public class DeliveryOptimizationRowTests
     {
         var disk = CleanupCatalog.Build().Single(t => t.Id == "disk-cleanup");
 
-        Assert.Contains("Delivery Optimization", LocalizationService.Instance[disk.DescriptionKey]);
+        var text = LocalizationService.Instance[disk.DescriptionKey];
+        Assert.True(
+            text.Contains("Delivery Optimization", StringComparison.Ordinal) || text.Contains("Übermittlungsoptimierung", StringComparison.Ordinal),
+            text);
     }
 }

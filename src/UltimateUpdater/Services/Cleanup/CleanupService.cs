@@ -1781,6 +1781,7 @@ public class CleanupService(LoggingService logging)
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            logging.Warn($"Cleanup: a recycle-bin item could not be removed: '{entry.OriginalPath}' ({ex.Message})");
             return false;
         }
 
