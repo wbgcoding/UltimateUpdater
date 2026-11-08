@@ -238,6 +238,19 @@ public static class ParallelismAutoTune
 
     private const long GigaByte = 1024L * 1024 * 1024;
 
+    /// <summary>
+    /// The memory to judge the machine by. Windows shows a little less than is fitted (firmware and graphics
+    /// reserve some), which would put every 8 GB and 16 GB machine one shape too low: the fitted amount wins
+    /// when Windows knows it, otherwise the visible amount is rounded up to whole gigabytes. Zero stays zero.
+    /// </summary>
+    public static long RamForTuning(long installedKilobytes, long visibleBytes)
+    {
+        if (installedKilobytes > 0)
+            return installedKilobytes * 1024;
+
+        return visibleBytes <= 0 ? 0 : (visibleBytes + GigaByte - 1) / GigaByte * GigaByte;
+    }
+
     public static Result Compute(int processorCount, long totalRamBytes, bool hasBattery)
     {
         var step = 0;

@@ -775,6 +775,10 @@ public partial class App : Application
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GlobalMemoryStatusEx(ref MemoryStatusEx buffer);
 
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetPhysicallyInstalledSystemMemory(out ulong totalMemoryInKilobytes);
+
     /// <summary>
     /// Picks starting values for both parallelism sliders from this machine's own hardware, so a slow or
     /// battery-only PC does not inherit numbers tuned for a fast desktop. The caller only invokes this
@@ -788,7 +792,10 @@ public partial class App : Application
         var cores = Environment.ProcessorCount;
 
         var status = new MemoryStatusEx { Length = (uint)Marshal.SizeOf<MemoryStatusEx>() };
-        var totalRamBytes = GlobalMemoryStatusEx(ref status) ? (long)status.TotalPhys : 0L;
+        var visibleRamBytes = GlobalMemoryStatusEx(ref status) ? (long)status.TotalPhys : 0L;
+        var totalRamBytes = ParallelismAutoTune.RamForTuning(
+            GetPhysicallyInstalledSystemMemory(out var installedKilobytes) ? (long)installedKilobytes : 0L,
+            visibleRamBytes);
 
         var hasBattery = System.Windows.Forms.SystemInformation.PowerStatus.BatteryChargeStatus
             != System.Windows.Forms.BatteryChargeStatus.NoSystemBattery;

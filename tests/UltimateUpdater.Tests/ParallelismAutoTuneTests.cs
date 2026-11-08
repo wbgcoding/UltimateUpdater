@@ -75,4 +75,33 @@ public class ParallelismAutoTuneTests
         Assert.Equal(4, result.MaxParallelSources);
         Assert.Equal(1, result.MaxParallelInstalls);
     }
+
+    /// <summary>
+    /// Windows reports a little less memory than is fitted (firmware and graphics reserve some), so an 8 GB
+    /// machine reads about 7.8 GiB and would always fall one shape short of the 8 GB threshold.
+    /// </summary>
+    [Fact]
+    public void An_eight_gigabyte_machine_counts_as_eight_although_windows_shows_less()
+    {
+        var visible = 8 * GigaByte - 200L * 1024 * 1024;
+
+        var ram = ParallelismAutoTune.RamForTuning(installedKilobytes: 0, visibleBytes: visible);
+        var result = ParallelismAutoTune.Compute(processorCount: 6, totalRamBytes: ram, hasBattery: false);
+
+        Assert.Equal(2, result.MaxParallelInstalls);
+    }
+
+    [Fact]
+    public void The_fitted_memory_wins_over_the_visible_amount_when_windows_knows_it()
+    {
+        var ram = ParallelismAutoTune.RamForTuning(installedKilobytes: 16L * 1024 * 1024, visibleBytes: 13 * GigaByte);
+
+        Assert.Equal(16 * GigaByte, ram);
+    }
+
+    [Fact]
+    public void A_failed_memory_read_stays_zero()
+    {
+        Assert.Equal(0, ParallelismAutoTune.RamForTuning(installedKilobytes: 0, visibleBytes: 0));
+    }
 }
