@@ -216,6 +216,7 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(HeadlineText));
         OnPropertyChanged(nameof(SubheadlineText));
         RefreshFilteredState();
+        RefreshPillOpenCounts();
         RefreshPillViewIfKeysChanged();
         // IsIgnored is a sort key on this view (ignored rows sink to the bottom) but not a live-sorting
         // property, so a toggle needs an explicit re-apply.

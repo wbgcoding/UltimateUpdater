@@ -757,7 +757,10 @@ public partial class MainViewModel
 
             // The headline counts pending installs, so a row finishing (or failing) moves it.
             if (args.PropertyName == nameof(UpdateRowViewModel.InstallState))
+            {
                 OnPropertyChanged(nameof(HeadlineText));
+                RefreshPillOpenCounts();
+            }
 
             if (args.PropertyName is nameof(UpdateRowViewModel.IsSelected)
                 or nameof(UpdateRowViewModel.CanInstall)
@@ -890,6 +893,25 @@ public partial class MainViewModel
             vm.Apply(status);
             vm.RefreshSlowState(now);
         }
+
+        RefreshPillOpenCounts();
+    }
+
+    /// <summary>Sets each pill's chip number to the rows of its source that still offer an update. Cheap
+    /// enough for the flush tick: one pass over the rows, one lookup per pill.</summary>
+    private void RefreshPillOpenCounts()
+    {
+        var open = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in Updates)
+        {
+            if (row.InstallState == RowInstallState.Succeeded)
+                continue;
+
+            open[row.Item.SourceId] = open.GetValueOrDefault(row.Item.SourceId) + 1;
+        }
+
+        foreach (var pill in ProviderStatuses)
+            pill.OpenCount = open.GetValueOrDefault(pill.SourceId);
     }
 
     private void RemovePill(string key)

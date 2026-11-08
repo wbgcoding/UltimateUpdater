@@ -72,11 +72,14 @@ public static class SecurityRelevance
     {
         if (!string.IsNullOrWhiteSpace(itemId))
         {
-            // winget ids are Publisher.Product, sometimes with a version tail. Each part is compared on
-            // its own, so "Oracle.JDK.21" is recognised by "jdk" without the table listing versions.
+            // winget ids are Publisher.Product, sometimes with a version tail. Each part after the publisher
+            // is compared on its own, so "Oracle.JDK.21" is recognised by "jdk" without the table listing
+            // versions. The publisher segment is skipped: "Python.Launcher" is not the Python runtime just
+            // because its maker is called Python. An id with a single segment has no publisher to skip.
             yield return TextNormalization.AlphanumericLower(itemId);
 
-            foreach (var segment in itemId.Split('.', StringSplitOptions.RemoveEmptyEntries))
+            var segments = itemId.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var segment in segments.Length > 1 ? segments.Skip(1) : segments)
                 yield return TextNormalization.AlphanumericLower(segment);
         }
 

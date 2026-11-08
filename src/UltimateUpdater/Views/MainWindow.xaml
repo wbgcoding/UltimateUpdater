@@ -175,8 +175,8 @@
                     </TextBlock>
                     <Border Margin="6,0,0,0" Padding="5,0" CornerRadius="7" MinWidth="18"
                             Background="{DynamicResource AccentFillColorDefaultBrush}"
-                            Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="{Binding FoundCount}" FontSize="11" FontWeight="SemiBold"
+                            Visibility="{Binding HasOpenUpdates, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding OpenCount}" FontSize="11" FontWeight="SemiBold"
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
                     </Border>

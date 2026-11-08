@@ -62,6 +62,7 @@ public class SecurityRelevanceTests
     [InlineData("Google.ChromeRemoteDesktop", "Chrome Remote Desktop")]   // shares a word with the browser, and is not it
     [InlineData("dotnet-ef", "Entity Framework Core tools")]             // a.NET tool is not the.NET runtime
     [InlineData("eslint", "eslint")]
+    [InlineData("Python.Launcher", "Python Launcher")]                    // the publisher segment alone never counts
     public void Ordinary_software_is_not_critical(string id, string name) =>
         Assert.False(SecurityRelevance.IsSecurityRelevant(id, name));
 

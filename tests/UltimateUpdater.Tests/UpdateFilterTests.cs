@@ -58,6 +58,22 @@ public class UpdateFilterTests
     }
 
     [Fact]
+    public void A_short_query_does_not_fuzzy_match_a_long_unrelated_title()
+    {
+        Assert.False(UpdateFilter.MatchesQuery(
+            "git", "Security Intelligence Update for Microsoft Defender Antivirus", "KB2267602"));
+        Assert.True(UpdateFilter.MatchesQuery("git", "Git", "Git.Git"));
+    }
+
+    [Fact]
+    public void A_four_letter_typo_is_not_forgiven_but_a_five_letter_one_is()
+    {
+        Assert.False(UpdateFilter.MatchesQuery("frfx", "Mozilla Firefox", "Mozilla.Firefox"));
+        Assert.True(UpdateFilter.MatchesQuery("firfox", "Mozilla Firefox", "Mozilla.Firefox"));
+        Assert.True(UpdateFilter.MatchesQuery("frefox", "Mozilla Firefox", "Mozilla.Firefox"));
+    }
+
+    [Fact]
     public void Scoring_an_empty_candidate_is_zero_rather_than_a_throw()
     {
         Assert.Equal(0, UpdateFilter.Score("firefox", ""));
