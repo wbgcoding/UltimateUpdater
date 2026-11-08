@@ -1,5 +1,5 @@
 using System.Security.Principal;
-using System.Threading;
+using Microsoft.Win32.SafeHandles;
 
 namespace UltimateUpdater.Services;
 
@@ -9,7 +9,8 @@ namespace UltimateUpdater.Services;
 /// ever waits on it or owns it, the installer only looks whether it can be opened. That keeps it free of
 /// thread ownership, which a mutex held across a work run (started on one thread, finished on another) would
 /// otherwise need. The name carries the user's SID because Setup may run under a different administrator
-/// account than the one using the app.
+/// account than the one using the app. The mutex gets an explicit DACL because an elevated app would otherwise
+/// create it readable by Administrators only, and the unelevated Setup of the same person could not see it.
 /// </summary>
 internal sealed class BusySignal : IDisposable
 {
@@ -18,7 +19,7 @@ internal sealed class BusySignal : IDisposable
 
     private readonly object _gate = new();
     private readonly LoggingService? _logging;
-    private Mutex? _mutex;
+    private SafeWaitHandle? _mutex;
     private bool _unavailableLogged;
 
     internal BusySignal(string? sid = null, LoggingService? logging = null)
@@ -41,9 +42,10 @@ internal sealed class BusySignal : IDisposable
             {
                 try
                 {
-                    _mutex = new Mutex(initiallyOwned: false, Name);
+                    _mutex = NamedObjectSecurity.CreateMutex(
+                        Name, NamedObjectSecurity.BusyMutexSddl(NamedObjectSecurity.CurrentUserSid()), out _);
                 }
-                catch (Exception ex) when (ex is UnauthorizedAccessException or WaitHandleCannotBeOpenedException)
+                catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
                 {
                     // Something else already holds the name (a different kind of object, or a mutex this
                     // user may not open). The signal is only a courtesy to Setup, so the app goes on

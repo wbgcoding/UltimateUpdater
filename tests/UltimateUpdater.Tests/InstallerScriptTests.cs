@@ -162,7 +162,7 @@ public class InstallerScriptTests
         // only the app's own /FROMAPP run skips the busy check; every other run checks it
         Assert.Contains("(not HasSwitch('/FROMAPP')) and InstallingCopyRuns", prepare.Value);
 
-        var stop = Regex.Match(script, @"procedure StopRunningCopies.*?\r?\nend;", RegexOptions.Singleline);
+        var stop = Regex.Match(script, @"function StopRunningCopies.*?\r?\nend;", RegexOptions.Singleline);
         Assert.Contains("Stop-Process", stop.Value);
         Assert.Contains("Wait-Process -Timeout 5", stop.Value);
         // by path, never by image name: a portable copy elsewhere must survive
@@ -193,7 +193,7 @@ public class InstallerScriptTests
         Assert.True(probe.Success, "InstallingCopyRuns is gone");
 
         // no owner SID, mutex open error, PowerShell not started, any exit code but 0: all busy
-        Assert.Contains("if (-not $o -or -not $o.Sid) { $busy = $true; continue }", probe.Value);
+        Assert.Contains("if (-not $sid) { $busy = $true; continue }", probe.Value);
         Assert.Contains("catch { $busy = $true }", probe.Value);
         Assert.Contains("Result := (not Started) or (ResultCode <> 0);", probe.Value);
     }
@@ -210,7 +210,7 @@ public class InstallerScriptTests
         var probe = Regex.Match(script, @"function InstallingCopyRuns.*?\r?\nend;", RegexOptions.Singleline);
         Assert.True(probe.Success, "InstallingCopyRuns is gone");
         Assert.Contains("$c.SessionId -eq $s", probe.Value);
-        Assert.Contains("''Session\\'' + $c.SessionId + ''\\UltimateUpdater-Busy-'' + $o.Sid", probe.Value);
+        Assert.Contains("''Session\\'' + $c.SessionId + ''\\UltimateUpdater-Busy-'' + $sid", probe.Value);
         Assert.Contains("GetCurrentProcess().SessionId", probe.Value);
     }
 
@@ -247,7 +247,7 @@ public class InstallerScriptTests
             "StopRunningCopies must be declared before InitializeUninstall");
         Assert.True(
             uninstall.Value.IndexOf("Result := False;", StringComparison.Ordinal)
-                < uninstall.Value.IndexOf("StopRunningCopies;", StringComparison.Ordinal));
+                < uninstall.Value.IndexOf("if not StopRunningCopies then", StringComparison.Ordinal));
         Assert.DoesNotContain("taskkill", uninstall.Value, StringComparison.OrdinalIgnoreCase);
     }
 
