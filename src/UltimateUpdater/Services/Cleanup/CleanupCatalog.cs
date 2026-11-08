@@ -496,10 +496,21 @@ public static class CleanupCatalog
                 Path.GetFullPath(Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp")),
             ];
+            // A caller path is opened here with admin rights, so it must be a local, link-free folder: a share
+            // would make the admin account sign in to it. One that is not leaves nothing to offer (fail closed).
             foreach (var callerTemp in callerTempPaths ?? [])
             {
-                if (!string.IsNullOrWhiteSpace(callerTemp))
-                    ownTemps.Add(Path.GetFullPath(callerTemp));
+                if (string.IsNullOrWhiteSpace(callerTemp))
+                    continue;
+
+                if (!CleanupSafety.IsLocalPathWithoutLinks(callerTemp))
+                {
+                    logWarning?.Invoke(
+                        $"Cleanup: the all-users Temp list is empty because the caller's Temp is not a local folder: {callerTemp}");
+                    return [];
+                }
+
+                ownTemps.Add(Path.GetFullPath(callerTemp));
             }
 
             return Distinct(ExcludeOwnTemp(Directory.EnumerateDirectories(usersRoot)

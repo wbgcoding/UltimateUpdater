@@ -427,6 +427,40 @@ public class PythonCleanupDiscoveryTests : IDisposable
     }
 
     [Fact]
+    public void A_search_root_that_is_itself_a_junction_is_not_walked()
+    {
+        var (found, older, _) = OldAndNewCandidates();
+        var outside = Path.Combine(_root, "outside");
+        MakeVenv(outside, ".venv", older);
+        var link = Path.Combine(_root, "linked-root");
+        using (var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{outside}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        })!)
+        {
+            Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
+            Assert.Equal(0, mklink.ExitCode);
+        }
+
+        try
+        {
+            var counted = PythonCleanupDiscovery.CountVenvUses(
+                found, RootsOf(link), TimeSpan.FromSeconds(5), CancellationToken.None);
+
+            Assert.Equal(0, Assert.Single(counted).VenvUseCount);
+        }
+        finally
+        {
+            Directory.Delete(link);
+        }
+    }
+
+    [Fact]
     public void A_junction_in_the_walked_tree_is_not_followed()
     {
         var (found, older, _) = OldAndNewCandidates();

@@ -119,7 +119,9 @@ public static class PythonCleanupDiscovery
     /// account, whose profile would hold none of the signed-in user's environments. The path is only read.</summary>
     internal static string? ResolveProfile(string? callerProfilePath)
     {
-        if (!string.IsNullOrWhiteSpace(callerProfilePath) && Path.IsPathFullyQualified(callerProfilePath))
+        // Local and link-free only: the elevated worker walks this folder, and a share would make the admin
+        // account sign in to it.
+        if (CleanupSafety.IsLocalPathWithoutLinks(callerProfilePath))
         {
             try
             {
@@ -182,6 +184,11 @@ public static class PythonCleanupDiscovery
 
         foreach (var root in roots)
         {
+            // The listing below skips links, but a search root could be one itself (the profile the
+            // unelevated app reported is user-writable, and the elevated worker walks it).
+            if (CleanupSafety.AncestryLeadsThroughLink(root.Path))
+                continue;
+
             var pending = new Stack<(string Path, int Depth)>();
             pending.Push((root.Path, 0));
 
@@ -252,6 +259,10 @@ public static class PythonCleanupDiscovery
                 return null;
 
             isVenv = true;
+            // A linked config is never followed (it could point at a share): no evidence either way.
+            if (File.GetAttributes(cfgPath).HasFlag(FileAttributes.ReparsePoint))
+                return null;
+
             // A real config is a handful of lines; the cap keeps a planted huge file harmless.
             foreach (var line in File.ReadLines(cfgPath).Take(64))
             {

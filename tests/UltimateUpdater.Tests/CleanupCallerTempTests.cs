@@ -93,6 +93,71 @@ public class CleanupCallerTempTests : IDisposable
             directories.OrderBy(p => p, StringComparer.OrdinalIgnoreCase));
     }
 
+    [Theory]
+    [InlineData(@"\\fileserver.invalid\share\Temp")]
+    [InlineData(@"//fileserver.invalid/share/Temp")]
+    [InlineData(@"\\?\UNC\fileserver.invalid\share\Temp")]
+    [InlineData(@"relative\Temp")]
+    public void A_caller_temp_that_is_not_a_local_folder_is_never_opened_and_empties_the_list(string callerTemp)
+    {
+        ProfileTemp("signedin");
+        ProfileTemp("someoneelse");
+        var warnings = new List<string>();
+
+        var directories = AllUsersTemp(new CleanupCommand { CallerTempPaths = [callerTemp] }, warnings.Add, _usersRoot);
+
+        Assert.Empty(directories);
+        Assert.Contains(warnings, w => w.Contains("not a local folder", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_caller_temp_behind_a_junction_empties_the_list()
+    {
+        var callerTemp = ProfileTemp("signedin");
+        ProfileTemp("someoneelse");
+        var link = Path.Combine(_usersRoot, "linked-temp");
+        CreateJunction(link, callerTemp);
+
+        var directories = AllUsersTemp(new CleanupCommand { CallerTempPaths = [link] }, null, _usersRoot);
+
+        Assert.Empty(directories);
+    }
+
+    [Theory]
+    [InlineData(@"\\fileserver.invalid\share\Users\someone")]
+    [InlineData(@"\\?\C:\Users")]
+    [InlineData(@"relative\profile")]
+    public void A_caller_profile_that_is_not_a_local_folder_falls_back_to_the_own_profile(string callerProfile)
+    {
+        Assert.Equal(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            PythonCleanupDiscovery.ResolveProfile(callerProfile));
+    }
+
+    [Fact]
+    public void A_local_caller_profile_is_used()
+    {
+        var profile = Path.Combine(_usersRoot, "signedin");
+        Directory.CreateDirectory(profile);
+
+        Assert.Equal(profile, PythonCleanupDiscovery.ResolveProfile(profile));
+    }
+
+    private static void CreateJunction(string link, string target)
+    {
+        using var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        })!;
+        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
+        Assert.Equal(0, mklink.ExitCode);
+    }
+
     [Fact]
     public void The_apps_own_temp_paths_are_the_redirected_and_the_profile_temp()
     {

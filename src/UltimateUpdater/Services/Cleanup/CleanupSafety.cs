@@ -218,6 +218,45 @@ public static class CleanupSafety
     }
 
     /// <summary>
+    /// True for a fully qualified path on a local drive (fixed, removable or RAM disk) that leads through no
+    /// link. A path the unelevated app reports must pass this before the elevated worker opens or walks it:
+    /// a UNC path, a network drive or a link to a share would make the admin account sign in to whatever
+    /// server the path names. Checked by spelling and drive type only, so the check itself never touches
+    /// the network.
+    /// </summary>
+    internal static bool IsLocalPathWithoutLinks([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)
+            || path.StartsWith(@"\\", StringComparison.Ordinal)
+            || path.StartsWith("//", StringComparison.Ordinal)
+            || !Path.IsPathFullyQualified(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            var full = Path.GetFullPath(path);
+            var root = Path.GetPathRoot(full);
+            if (full.StartsWith(@"\\", StringComparison.Ordinal)
+                || root is null || root.Length != 3 || root[1] != ':' || !char.IsAsciiLetter(root[0]))
+            {
+                return false;
+            }
+
+            if (new DriveInfo(root).DriveType is not (DriveType.Fixed or DriveType.Removable or DriveType.Ram))
+                return false;
+
+            return !AncestryLeadsThroughLink(full);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+                                       or ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Opens a directory handle that, while it stays open, blocks any rename or delete of that exact
     /// filesystem object, Windows only allows those with FILE_SHARE_DELETE from every open handle, and this
     /// one does not grant it. Closes the gap between "checked safe" and "used minutes later while deleting
