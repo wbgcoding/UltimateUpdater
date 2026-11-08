@@ -180,7 +180,7 @@ de.PortableDirDescription=Wählen Sie einen Ordner für die portable Version von
 de.UpdateDirDescription={#AppName} ist auf diesem PC bereits installiert und wird im unten angezeigten Ordner aktualisiert. Klicken Sie auf Weiter, oder auf Durchsuchen, um einen anderen Ordner zu wählen.
 de.BusyPrompt={#AppName} installiert gerade Updates. Trotzdem beenden und fortfahren?
 de.BusyDeclined=Die Installation wurde angehalten, weil {#AppName} gerade Updates installiert.
-de.ElevatedCopyOpen={#AppName} läuft noch und hat sich nicht beendet, möglicherweise mit Administratorrechten. Bitte schließe es und versuche es dann erneut.
+de.ElevatedCopyOpen={#AppName} läuft noch und hat sich nicht beendet, möglicherweise mit Administratorrechten. Bitte schließen Sie es und versuchen Sie es dann erneut.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
