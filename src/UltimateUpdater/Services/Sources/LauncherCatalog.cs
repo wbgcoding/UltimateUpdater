@@ -63,6 +63,8 @@ public static class LauncherCatalog
                 Id = "rockstar",
                 DisplayName = "Rockstar Games Launcher",
                 Executables = ["Launcher.exe"],
+                GenericExecutables = ["Launcher.exe"],
+                VendorFolder = "Rockstar Games",
                 InstallDirectoryValues = [new RegistryValue(@"HKLM\SOFTWARE\WOW6432Node\Rockstar Games\Launcher", "InstallFolder")],
                 UninstallDisplayNames = ["Rockstar Games Launcher"],
                 FallbackPaths =
@@ -149,6 +151,7 @@ public static class LauncherCatalog
                 // HoYoverse's launcher (Genshin, Honkai, Zenless); replaced the older "miHoYo Launcher".
                 // The install directory is chosen by the user, so the uninstall entry is what finds it.
                 Executables = ["HYP.exe", "launcher.exe"],
+                GenericExecutables = ["launcher.exe"],
                 UninstallDisplayNames = ["HoYoPlay", "miHoYo Launcher", "miHoYoLauncher"],
                 FallbackPaths =
                 [

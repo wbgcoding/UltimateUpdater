@@ -22,6 +22,20 @@ public sealed class LauncherDefinition
     /// <summary>Executable file names, most likely first; also the keys of the App Paths lookup.</summary>
     public required IReadOnlyList<string> Executables { get; init; }
 
+    /// <summary>
+    /// Names from <see cref="Executables"/> too common to trust: any product can register a `Launcher.exe` App
+    /// Path, so these skip the App Paths lookup and are found only through the vendor's own keys, its
+    /// uninstall entry or its default folders.
+    /// </summary>
+    public IReadOnlyList<string> GenericExecutables { get; init; } = [];
+
+    /// <summary>
+    /// A folder name the vendor always installs under. When set, a path from any lookup is accepted only when
+    /// this folder is one of its directories, so a foreign product's file with the same name is never taken.
+    /// Null for launchers whose folder the user chooses.
+    /// </summary>
+    public string? VendorFolder { get; init; }
+
     /// <summary>Vendor keys holding the full path of the executable itself.</summary>
     public IReadOnlyList<RegistryValue> ExecutablePathValues { get; init; } = [];
 

@@ -28,11 +28,21 @@ public static class LauncherResolver
     {
         foreach (var candidate in Candidates(definition, registry))
         {
-            if (candidate.Length > 0 && fileExists(candidate))
+            if (candidate.Length > 0 && InVendorFolder(definition, candidate) && fileExists(candidate))
                 return candidate;
         }
 
         return null;
+    }
+
+    /// <summary>True when the definition names no vendor folder, or that folder is a directory of the path.</summary>
+    private static bool InVendorFolder(LauncherDefinition definition, string path)
+    {
+        if (definition.VendorFolder is not { Length: > 0 } folder)
+            return true;
+
+        var parts = path.Split('\\', '/');
+        return parts.Take(parts.Length - 1).Contains(folder, StringComparer.OrdinalIgnoreCase);
     }
 
     private static IEnumerable<string> Candidates(LauncherDefinition definition, IRegistryView registry)
@@ -57,6 +67,9 @@ public static class LauncherResolver
         {
             foreach (var executable in definition.Executables)
             {
+                if (definition.GenericExecutables.Contains(executable, StringComparer.OrdinalIgnoreCase))
+                    continue;
+
                 if (registry.Value($@"{root}\{executable}", string.Empty) is { } path)
                     yield return CleanPath(path);
             }
