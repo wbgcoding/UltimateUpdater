@@ -39,7 +39,7 @@ public partial class CleanupWindow
         new PropertyMetadata(0d, OnDisplayPercentChanged));
 
     /// <summary>The ring's radius, and the same number the track and the Path's box are built from.</summary>
-    private const double RingRadius = 90;
+    private const double RingRadius = 105;
 
     private static void OnDisplayPercentChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
     {

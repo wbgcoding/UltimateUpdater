@@ -1417,13 +1417,13 @@
                 <ui:Button.Icon><ui:SymbolIcon Symbol="History24" FontSize="18"/></ui:Button.Icon>
             </ui:Button>
 
-            <Grid Grid.Column="1" Width="208" Height="208" HorizontalAlignment="Center"
+            <Grid x:Name="CleanupRingBox" Grid.Column="1" Width="240" Height="240" HorizontalAlignment="Center"
                   VerticalAlignment="Top" Margin="0,10,0,0">
-                <!-- Track. 194 = 2*90 (the arc's radius) + 14 (the stroke), because a Shape draws its stroke
-                     INSIDE the box it is given: Width=194 with StrokeThickness=14 puts its centre line on
-                     exactly radius 90, which is the circle the arc is drawn on. At 180 the two ran on
+                <!-- Track. 226 = 2*105 (the arc's radius) + 16 (the stroke), because a Shape draws its stroke
+                     INSIDE the box it is given: Width=226 with StrokeThickness=16 puts its centre line on
+                     exactly radius 105, which is the circle the arc is drawn on. At 180 the two ran on
                      different circles and the fill sat outside its own track. -->
-                <Ellipse Width="194" Height="194" StrokeThickness="14"
+                <Ellipse x:Name="RingTrack" Width="226" Height="226" StrokeThickness="16"
                          Stroke="{DynamicResource ControlFillColorSecondaryBrush}"
                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
@@ -1431,7 +1431,7 @@
                      animated towards the real one, so ticking a box or a progress step GLIDES instead of
                      snapping from one arc to the next.
 
-                     The explicit 194x194 is what keeps it STRAIGHT. Without a size, a Path's layout box is
+                     The explicit 226x226 is what keeps it STRAIGHT. Without a size, a Path's layout box is
                      the bounds of whatever geometry it currently holds, and a part-filled arc only spans
                      one corner of the circle, so centring the element centred that corner instead and the
                      ring visibly leaned away from its track at every value below 100 %. Stretch=None so
@@ -1441,18 +1441,18 @@
                      to the window: the render harness detaches this content from its Window to photograph
                      it, and an ancestor binding then resolves to nothing, the ring came out as a bare track
                      in every snapshot, which is exactly the picture that was meant to prove it sits straight. -->
-                <Path x:Name="RingFill" Width="194" Height="194" Stretch="None"
-                      StrokeThickness="14" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                <Path x:Name="RingFill" Width="226" Height="226" Stretch="None"
+                      StrokeThickness="16" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                       Stroke="{DynamicResource AccentFillColorDefaultBrush}"
                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
                 <!-- centre while choosing: selected size, and the total underneath -->
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                             Visibility="{Binding IsChoosing, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="{Binding SelectedText}" FontSize="34" FontWeight="SemiBold"
+                    <TextBlock Text="{Binding SelectedText}" FontSize="39" FontWeight="SemiBold"
                                HorizontalAlignment="Center"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                    <TextBlock Text="{Binding TotalText}" FontSize="13" HorizontalAlignment="Center"
+                    <TextBlock Text="{Binding TotalText}" FontSize="15" HorizontalAlignment="Center"
                                Margin="0,2,0,0"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                     <!-- A window opened on the startup prescan's result says when that was measured. Quiet, and
@@ -1585,8 +1585,8 @@
                     <!-- Pushed down from 54 to 80: at 54 the text sat over the
                          drive body's own lower edge, which now also carries a visible stroke that made the
                          overlap obvious. 80 clears the body with a visible gap while staying well inside
-                         the 194px progress ring's own track. -->
-                    <TextBlock Text="{Binding CleanPercentText}" FontSize="15" FontWeight="SemiBold"
+                         the 226px progress ring's own track. -->
+                    <TextBlock Text="{Binding CleanPercentText}" FontSize="17" FontWeight="SemiBold"
                                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,80,0,0"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
 
@@ -1611,7 +1611,7 @@
                          animated window property (DisplayFreed). Same reason the arc's geometry is
                          assigned there, an ancestor binding does not resolve once the render harness has
                          detached this content from its window. -->
-                    <TextBlock x:Name="FreedNumber" FontSize="38" FontWeight="SemiBold"
+                    <TextBlock x:Name="FreedNumber" FontSize="44" FontWeight="SemiBold"
                                HorizontalAlignment="Center" Style="{StaticResource TabularNumberText}"
                                Foreground="{DynamicResource SystemFillColorSuccessBrush}"/>
                 </StackPanel>

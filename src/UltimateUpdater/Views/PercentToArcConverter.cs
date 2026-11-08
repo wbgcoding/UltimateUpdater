@@ -13,7 +13,7 @@ namespace UltimateUpdater.Views;
 /// </summary>
 public sealed class PercentToArcConverter : IValueConverter
 {
-    private const double StrokeAllowance = 14;
+    private const double StrokeAllowance = 16;
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
@@ -26,7 +26,7 @@ public sealed class PercentToArcConverter : IValueConverter
 
         var radius = parameter is string text && double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var r)
             ? r
-            : 90d;
+            : 105d;
 
         return Arc(percent, radius);
     }

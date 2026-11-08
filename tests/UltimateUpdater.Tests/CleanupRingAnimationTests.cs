@@ -554,7 +554,7 @@ public class CleanupRingAnimationTests : IDisposable
             var at75 = window.RingFill.Data!.ToString();
 
             Assert.NotEqual(at40, at75);
-            Assert.Equal(PercentToArcConverter.Arc(75, 90).ToString(), at75);
+            Assert.Equal(PercentToArcConverter.Arc(75, 105).ToString(), at75);
         });
     }
 
