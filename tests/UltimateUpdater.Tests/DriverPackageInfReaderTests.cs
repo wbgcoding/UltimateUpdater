@@ -262,4 +262,74 @@ public class DriverPackageInfReaderTests
             LocalizationService.Instance.Apply("en");
         }
     }
+
+    [Fact]
+    public void An_inline_comment_is_cut_from_every_value()
+    {
+        const string inf = """
+            [Version]
+            Class = Extension ; note
+            Provider = "Acme ; Corp" ; vendor
+            DriverVer = 03/15/2024,2.5.1.0 ; build
+            """;
+
+        var info = DriverPackageInfReader.Parse(inf);
+
+        Assert.Equal("Extension", info!.ClassName);
+        Assert.Equal("Acme ; Corp", info.Provider);
+        Assert.Equal("2.5.1.0", info.DriverVersion);
+    }
+
+    [Fact]
+    public void A_class_that_is_only_a_comment_falls_back_to_the_class_guid()
+    {
+        const string inf = """
+            [Version]
+            Class = ; none
+            ClassGuid = {e2f84ce7-8efa-411c-aa69-97454ca4cb57}
+            Provider = Acme
+            """;
+
+        var info = DriverPackageInfReader.Parse(inf);
+
+        Assert.Equal("Extension", info!.ClassName);
+    }
+
+    [Fact]
+    public void A_comment_after_a_section_header_still_opens_the_section()
+    {
+        const string inf = """
+            [Version] ; the package
+            Class = Sound
+            Provider = Acme
+            [Manufacturer] ; vendors
+            Acme = AcmeSection
+            """;
+
+        var info = DriverPackageInfReader.Parse(inf);
+
+        Assert.NotNull(info);
+        Assert.Equal("Sound", info!.ClassName);
+        Assert.True(info.HasManufacturerSection);
+    }
+
+    [Fact]
+    public void A_section_named_twice_is_merged_not_replaced()
+    {
+        const string inf = """
+            [Version]
+            Class = Sound
+
+            [Strings]
+            Vendor = "Acme"
+
+            [Version]
+            Provider = %Vendor%
+            """;
+
+        var info = DriverPackageInfReader.Parse(inf);
+
+        Assert.Equal("Sound", info!.ClassName);
+        Assert.Equal("Acme", info.Provider);
+    }
 }

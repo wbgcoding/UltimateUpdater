@@ -47,7 +47,7 @@ public static class DriverPackageInfReader
     private static extern int MultiByteToWideChar(
         uint codePage, uint flags, byte[] bytes, int byteCount, char[]? chars, int charCount);
 
-    private static readonly Regex SectionHeader = new(@"^\s*\[(?<name>[^\]]+)\]\s*$", RegexOptions.Compiled);
+    private static readonly Regex SectionHeader = new(@"^\s*\[(?<name>[^\]]+)\]\s*(;.*)?$", RegexOptions.Compiled);
     private static readonly Regex KeyValue = new(@"^\s*(?<key>[^;=\s][^=]*?)\s*=\s*(?<value>.*?)\s*$", RegexOptions.Compiled);
 
     /// <summary>
@@ -213,8 +213,10 @@ public static class DriverPackageInfReader
             var headerMatch = SectionHeader.Match(line);
             if (headerMatch.Success)
             {
-                current = new List<string>();
-                sections[headerMatch.Groups["name"].Value.Trim()] = current;
+                // A section named twice is one section: its lines are merged, never replaced.
+                var name = headerMatch.Groups["name"].Value.Trim();
+                if (!sections.TryGetValue(name, out current))
+                    sections[name] = current = new List<string>();
                 continue;
             }
 
@@ -234,9 +236,24 @@ public static class DriverPackageInfReader
 
             var match = KeyValue.Match(line);
             if (match.Success)
-                values[match.Groups["key"].Value.Trim()] = match.Groups["value"].Value;
+                values[match.Groups["key"].Value.Trim()] = StripComment(match.Groups["value"].Value);
         }
 
         return values;
+    }
+
+    /// <summary>Cuts a trailing ";" comment off a value; a ";" inside double quotes is part of the text.</summary>
+    private static string StripComment(string value)
+    {
+        var quoted = false;
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (value[i] == '"')
+                quoted = !quoted;
+            else if (value[i] == ';' && !quoted)
+                return value[..i].TrimEnd();
+        }
+
+        return value;
     }
 }
