@@ -1463,7 +1463,7 @@ Continuare con privilegi di amministratore?</value>
     <value>Cache del gestore di pacchetti</value>
   </data>
   <data name="CleanupPackageCacheDesc" xml:space="preserve">
-    <value>Download che pip, npm, Yarn, NuGet e Chocolatey conservano per le reinstallazioni. I pacchetti installati restano invariati.</value>
+    <value>Download e file di compilazione che conservano pip, uv, npm, pnpm, Yarn, NuGet, Cargo, Go e Chocolatey. I pacchetti installati restano invariati.</value>
   </data>
   <data name="CleanupBuildCache" xml:space="preserve">
     <value>Cache degli strumenti di compilazione</value>

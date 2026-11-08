@@ -1463,7 +1463,7 @@ Esto no se puede deshacer.</value>
     <value>Caché del administrador de paquetes</value>
   </data>
   <data name="CleanupPackageCacheDesc" xml:space="preserve">
-    <value>Descargas que pip, npm, Yarn, NuGet y Chocolatey conservan para reinstalaciones. Los paquetes instalados no se modifican.</value>
+    <value>Descargas y archivos de compilación que conservan pip, uv, npm, pnpm, Yarn, NuGet, Cargo, Go y Chocolatey. Los paquetes instalados no se modifican.</value>
   </data>
   <data name="CleanupBuildCache" xml:space="preserve">
     <value>Caché de herramientas de compilación</value>

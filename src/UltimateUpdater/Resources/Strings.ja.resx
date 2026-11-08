@@ -1463,7 +1463,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
     <value>パッケージマネージャーのキャッシュ</value>
   </data>
   <data name="CleanupPackageCacheDesc" xml:space="preserve">
-    <value>pip、npm、Yarn、NuGet、Chocolatey が再インストール用に保持するダウンロードファイルです。インストール済みのパッケージには影響しません。</value>
+    <value>pip、uv、npm、pnpm、Yarn、NuGet、Cargo、Go、Chocolatey が保持するダウンロードファイルとビルド中間ファイルです。インストール済みのパッケージには影響しません。</value>
   </data>
   <data name="CleanupBuildCache" xml:space="preserve">
     <value>ビルドツールのキャッシュ</value>

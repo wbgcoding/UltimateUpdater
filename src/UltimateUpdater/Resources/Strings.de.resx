@@ -1463,7 +1463,7 @@ Mit Admin-Rechten fortfahren?</value>
     <value>Paketmanager-Cache</value>
   </data>
   <data name="CleanupPackageCacheDesc" xml:space="preserve">
-    <value>Downloads, die pip, npm, Yarn, NuGet und Chocolatey für Neuinstallationen aufheben. Installierte Pakete bleiben unberührt.</value>
+    <value>Downloads und Build-Zwischenstände, die pip, uv, npm, pnpm, Yarn, NuGet, Cargo, Go und Chocolatey aufheben. Installierte Pakete bleiben unberührt.</value>
   </data>
   <data name="CleanupBuildCache" xml:space="preserve">
     <value>Build-Cache</value>

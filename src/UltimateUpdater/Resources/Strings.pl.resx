@@ -1463,7 +1463,7 @@ Kontynuować z uprawnieniami administratora?</value>
     <value>Pamięć podręczna menedżera pakietów</value>
   </data>
   <data name="CleanupPackageCacheDesc" xml:space="preserve">
-    <value>Pobrane pliki zachowywane przez pip, npm, Yarn, NuGet i Chocolatey do ponownych instalacji. Zainstalowane pakiety pozostają nietknięte.</value>
+    <value>Pobrane pliki i pliki kompilacji zachowywane przez pip, uv, npm, pnpm, Yarn, NuGet, Cargo, Go i Chocolatey. Zainstalowane pakiety pozostają nietknięte.</value>
   </data>
   <data name="CleanupBuildCache" xml:space="preserve">
     <value>Pamięć podręczna narzędzi kompilacji</value>

@@ -1463,7 +1463,7 @@ Continue with admin rights?</value>
     <value>Package manager cache</value>
   </data>
   <data name="CleanupPackageCacheDesc" xml:space="preserve">
-    <value>Downloads pip, npm, Yarn, NuGet and Chocolatey keep for reinstalls. Installed packages stay untouched.</value>
+    <value>Downloads and build files pip, uv, npm, pnpm, Yarn, NuGet, Cargo, Go and Chocolatey keep. Installed packages stay untouched.</value>
   </data>
   <data name="CleanupBuildCache" xml:space="preserve">
     <value>Build tool cache</value>

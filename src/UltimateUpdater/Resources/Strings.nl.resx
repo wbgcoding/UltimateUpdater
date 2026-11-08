@@ -1463,7 +1463,7 @@ Doorgaan met beheerdersrechten?</value>
     <value>Cache van pakketbeheerders</value>
   </data>
   <data name="CleanupPackageCacheDesc" xml:space="preserve">
-    <value>Downloads die pip, npm, Yarn, NuGet en Chocolatey bewaren voor herinstallaties. Geïnstalleerde pakketten blijven ongewijzigd.</value>
+    <value>Downloads en buildbestanden die pip, uv, npm, pnpm, Yarn, NuGet, Cargo, Go en Chocolatey bewaren. Geïnstalleerde pakketten blijven ongewijzigd.</value>
   </data>
   <data name="CleanupBuildCache" xml:space="preserve">
     <value>Cache van buildtools</value>
