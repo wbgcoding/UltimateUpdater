@@ -309,6 +309,42 @@ public static class RegistryCleanupScanner
     /// </summary>
     internal static bool ExistsInAnyView(string path) => ExistsInAnyView(path, IsRootReadyCached);
 
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    private static extern uint GetFileAttributesW(string lpFileName);
+
+    private const uint InvalidFileAttributes = 0xFFFFFFFF;
+    private const int ErrorFileNotFound = 2;
+    private const int ErrorPathNotFound = 3;
+
+    /// <summary>
+    /// The real probe behind <see cref="ExistsInAnyView(string, Func{string, bool})"/>. <c>File.Exists</c>
+    /// answers false for a file it merely may not look at (access denied on the file or a folder above it), so
+    /// an entry pointing into a locked folder would read as deleted. Here only "file not found" and "path not
+    /// found" mean missing; every other failure is "cannot tell" and counts as existing, because an entry is
+    /// only ever deleted on proof of absence. A folder counts too: the probe asks about the name, not its kind.
+    /// </summary>
+    internal static bool ExistsByAttributes(string path) =>
+        ExistsByAttributes(path, p =>
+        {
+            var attributes = GetFileAttributesW(p);
+            return attributes != InvalidFileAttributes
+                ? 0
+                : System.Runtime.InteropServices.Marshal.GetLastWin32Error();
+        });
+
+    /// <summary>The testable core: <paramref name="queryError"/> returns 0 for "attributes read", else the
+    /// Win32 error code.</summary>
+    internal static bool ExistsByAttributes(string path, Func<string, int> queryError)
+    {
+        // Past MAX_PATH the plain Win32 name is refused with "path not found" although the file is there.
+        var probe = path.Length >= 240 && !path.StartsWith(@"\\", StringComparison.Ordinal)
+            ? @"\\?\" + path
+            : path;
+
+        var error = queryError(probe);
+        return error != ErrorFileNotFound && error != ErrorPathNotFound;
+    }
+
     /// <summary>
     /// The testable core of <see cref="ExistsInAnyView(string)"/>. A path on a drive or share that is not
     /// available right now (unplugged USB stick, disconnected network drive, unreachable UNC share) is UNKNOWN,
@@ -320,13 +356,13 @@ public static class RegistryCleanupScanner
     {
         try
         {
-            if (File.Exists(path))
+            if (ExistsByAttributes(path))
                 return true;
 
             foreach (var (native, wow) in WowRedirectedFolders.Value)
             {
                 if (path.StartsWith(native + @"\", StringComparison.OrdinalIgnoreCase)
-                    && File.Exists(wow + path[native.Length..]))
+                    && ExistsByAttributes(wow + path[native.Length..]))
                 {
                     return true;
                 }
