@@ -49,6 +49,30 @@ public class InstallerScriptTests
         Assert.Contains(publisherMatch.Groups[1].Value, copyrightMatch.Groups[1].Value);
     }
 
+    /// <summary>
+    /// A silent upgrade reuses the previous task choice, which switched autostart back on for a user who had
+    /// turned it off in the app. Whether this is an upgrade is read once, before Setup writes anything.
+    /// </summary>
+    [Fact]
+    public void A_silent_upgrade_keeps_the_apps_own_autostart_setting()
+    {
+        var script = Script();
+
+        var init = Regex.Match(script, @"function InitializeSetup.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(init.Success, "InitializeSetup is gone");
+        Assert.Contains("WasUpgrade := ExistingInstallDir <> ''", init.Value);
+
+        var keeps = Regex.Match(script, @"function KeepsAutostartSetting.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(keeps.Success, "KeepsAutostartSetting is gone");
+        Assert.Contains("WizardSilent and WasUpgrade", keeps.Value);
+
+        var joined = script.Replace("\\\r\n", " ").Replace("\\\n", " ");
+        var setLine = joined.Split('\n').Single(line => line.Contains("--set-autostart", StringComparison.Ordinal)
+            && line.TrimStart().StartsWith("Filename:", StringComparison.Ordinal));
+        Assert.Contains("(not KeepsAutostartSetting)", setLine);
+        Assert.Contains("(not WantsRelaunch)", setLine);
+    }
+
     [Fact]
     public void Setup_never_writes_the_autostart_value_itself()
     {

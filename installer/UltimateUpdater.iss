@@ -223,11 +223,12 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{code:GetAppExePath}"; Tasks: deskt
 ; person installing - their Run key would stay empty while a stranger's filled up. runasoriginaluser
 ; puts the app back in the installing user's context, where its own HKCU is the right one. It writes
 ; the value and exits; nothing is shown. Never in portable mode: a portable copy leaves nothing behind.
-; Not on a self-update (/RELAUNCH=1): Inno reuses the previous install's task choices in a silent run, so
-; every update switched autostart back on for a user who had turned it off inside the app.
+; Not on a self-update (/RELAUNCH=1) and not on any other silent upgrade (WasUpgrade): Inno reuses the
+; previous install's task choices in a silent run, so every update switched autostart back on for a user
+; who had turned it off inside the app. A first silent install still honours the task.
 Filename: "{code:GetAppExePath}"; Parameters: "--set-autostart"; \
     Flags: runhidden waituntilterminated runasoriginaluser; \
-    Tasks: autostart; Check: (not IsPortableMode) and (not WantsRelaunch)
+    Tasks: autostart; Check: (not IsPortableMode) and (not WantsRelaunch) and (not KeepsAutostartSetting)
 ; Unticking the task in an interactive (re)install means "do not start with Windows": --clear-autostart
 ; was implemented in the app but never sent, so an existing value simply stayed.
 Filename: "{code:GetAppExePath}"; Parameters: "--clear-autostart"; \
@@ -290,6 +291,9 @@ var
   { True once the foreground has been asked for, so the first page that appears does it and no
     later page repeats it. }
   FrontRequested: Boolean;
+  { True when the standard installation of this scope was already there when Setup started, read once in
+    InitializeSetup before anything is written. }
+  WasUpgrade: Boolean;
 
 { Windows refuses SetForegroundWindow to a process that is not already in front, which is exactly the
   position Setup is in when it is launched from a browser, Explorer or another app - so the call alone is
@@ -420,6 +424,20 @@ begin
     Result := '';
   if (Result <> '') and not DirExists(Result) then
     Result := '';
+end;
+
+{ Read once, before Setup writes anything: afterwards the uninstall key is there on a first install too. }
+function InitializeSetup: Boolean;
+begin
+  WasUpgrade := ExistingInstallDir <> '';
+  Result := True;
+end;
+
+{ A silent upgrade keeps the app's own autostart setting: Inno would otherwise replay the old task choice
+  and switch back on what the user turned off in the app. }
+function KeepsAutostartSetting: Boolean;
+begin
+  Result := WizardSilent and WasUpgrade;
 end;
 
 function AddModeRadio(const Title: String; const ALeft, AWidth: Integer): TNewRadioButton;
