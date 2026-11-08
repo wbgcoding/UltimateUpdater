@@ -2062,12 +2062,6 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Yoksayılanları göster</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filtre</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filtre ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Temizle</value>
   </data>

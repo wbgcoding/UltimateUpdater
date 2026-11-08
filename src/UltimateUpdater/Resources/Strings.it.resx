@@ -2062,12 +2062,6 @@ Continuare con privilegi di amministratore?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Mostra ignorati</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filtra</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filtra ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Pulisci</value>
   </data>

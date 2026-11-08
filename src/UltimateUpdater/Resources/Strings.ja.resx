@@ -2062,12 +2062,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>無視した項目を表示</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>フィルター</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>フィルター ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>クリーンアップ</value>
   </data>

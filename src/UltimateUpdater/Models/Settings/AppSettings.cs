@@ -156,7 +156,7 @@ public sealed class UiSettings
     /// </summary>
     public bool CloseToTray { get; set; }
 
-    /// <summary>The two overview toggles in the table's filter menu; remembered between runs. Ignored and
+    /// <summary>The two overview toggles in the table's filter chips; remembered between runs. Ignored and
     /// snoozed rows stay out of the table unless <see cref="ShowIgnored"/> is on.</summary>
     public bool ShowIgnored { get; set; }
     public bool HideManual { get; set; }

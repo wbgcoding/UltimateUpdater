@@ -10,10 +10,10 @@ namespace UltimateUpdater.Tests;
 
 public partial class MainViewModelTests
 {
-    /// <summary>The filter menu's entries drive exactly what the toolbar switches did, and the button label
-    /// counts how many are on.</summary>
+    /// <summary>The filter chips are bound straight to these properties; each one changes what the table
+    /// shows.</summary>
     [Fact]
-    public void Filter_menu_entries_change_what_the_table_shows_and_the_button_counts_them()
+    public void Filter_properties_change_what_the_table_shows()
     {
         WpfHarness.OnUiThread(() =>
         {
@@ -22,62 +22,54 @@ public partial class MainViewModelTests
             viewModel.Updates.Add(new UpdateRowViewModel(ManualItem("launcher", "Some Launcher")));
             ((IRowActions)viewModel).IgnoreAllVersions(viewModel.Updates.First(u => u.Name == "eslint"));
 
-            var entries = viewModel.BuildFilterEntries();
-            Assert.Equal(["critical", "ignored", "manual"], entries.Select(e => e.Id));
-            Assert.Equal("Filter", viewModel.FilterButtonText);
-            Assert.Equal(0, viewModel.ActiveFilterCount);
-
             int Shown() => viewModel.UpdatesView.Cast<UpdateRowViewModel>().Count();
-            FilterEntry Entry(string id) => entries.Single(e => e.Id == id);
 
             // default: the ignored row is out, the manual row is in
             Assert.Equal(2, Shown());
             Assert.True(viewModel.HasManualOnlyResults);
 
-            Entry("critical").Set(true);
-            Assert.True(viewModel.ShowOnlyCritical);
+            viewModel.ShowOnlyCritical = true;
             Assert.Equal(1, Shown());
-            Assert.Equal("Filter (1)", viewModel.FilterButtonText);
 
-            Entry("ignored").Set(true);
-            Assert.True(viewModel.ShowIgnored);
-            Assert.Equal("Filter (2)", viewModel.FilterButtonText);
-            Entry("critical").Set(false);
+            viewModel.ShowIgnored = true;
+            viewModel.ShowOnlyCritical = false;
             Assert.Equal(3, Shown());
-            Assert.Equal("Filter (1)", viewModel.FilterButtonText);
 
-            Entry("manual").Set(true);
-            Assert.True(viewModel.HideManual);
+            viewModel.HideManual = true;
             Assert.False(viewModel.HasManualOnlyResults);
-            Assert.Equal("Filter (2)", viewModel.FilterButtonText);
 
-            Assert.True(Entry("manual").IsOn());
-            Entry("manual").Set(false);
-            Entry("ignored").Set(false);
-            Assert.Equal("Filter", viewModel.FilterButtonText);
+            viewModel.HideManual = false;
+            viewModel.ShowIgnored = false;
             Assert.True(viewModel.HasManualOnlyResults);
             Assert.Equal(2, Shown());
         });
     }
 
-    /// <summary>The persistent-failure entry is offered only while there is something to collect, or while
-    /// its filter is still on (so it can always be turned off again).</summary>
+    /// <summary>The failures chip is shown only while there is something to collect, or while its filter is
+    /// still on (so it can always be turned off again).</summary>
     [Fact]
-    public void The_failure_entry_of_the_filter_menu_appears_only_while_it_has_something_to_show()
+    public void The_failure_chip_appears_only_while_it_has_something_to_show()
     {
         WpfHarness.OnUiThread(() =>
         {
             var viewModel = Create();
             Populate(viewModel);
-            Assert.DoesNotContain(viewModel.BuildFilterEntries(), e => e.Id == "failures");
+            var changed = new List<string?>();
+            viewModel.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+            Assert.False(viewModel.ShowPersistentFailureFilter);
 
             viewModel.Updates.First(u => u.Name == "eslint").InstallState = RowInstallState.NeedsManualWork;
-            var entry = Assert.Single(viewModel.BuildFilterEntries(), e => e.Id == "failures");
+            Assert.True(viewModel.ShowPersistentFailureFilter);
+            Assert.Contains(nameof(MainViewModel.ShowPersistentFailureFilter), changed);
 
-            entry.Set(true);
-            Assert.True(viewModel.ShowOnlyPersistentFailures);
-            Assert.Equal("Filter (1)", viewModel.FilterButtonText);
+            viewModel.ShowOnlyPersistentFailures = true;
             Assert.Single(viewModel.UpdatesView.Cast<UpdateRowViewModel>());
+
+            // the only failing row leaves while the filter is on: the chip stays so it can be switched off
+            viewModel.Updates.First(u => u.Name == "eslint").InstallState = RowInstallState.Failed;
+            Assert.True(viewModel.ShowPersistentFailureFilter);
+            viewModel.ShowOnlyPersistentFailures = false;
+            Assert.False(viewModel.ShowPersistentFailureFilter);
         });
     }
 

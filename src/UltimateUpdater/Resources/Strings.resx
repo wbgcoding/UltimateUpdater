@@ -2062,12 +2062,6 @@ Continue with admin rights?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Show ignored</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filter</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filter ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Clean up</value>
   </data>

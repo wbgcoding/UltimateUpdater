@@ -2062,12 +2062,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>显示已忽略项</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>筛选</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>筛选 ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>清理</value>
   </data>

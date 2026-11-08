@@ -23,13 +23,11 @@ public partial class MainViewModel
     private string searchQuery = string.Empty;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(FilterButtonText))]
     private bool showOnlyCritical;
 
     /// <summary>Brings the ignored and snoozed rows back into the table, marked with their badge. Off by
     /// default: an ignored update is one the user has already decided about.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(FilterButtonText))]
     private bool showIgnored;
 
     partial void OnShowIgnoredChanged(bool value)
@@ -41,7 +39,6 @@ public partial class MainViewModel
 
     /// <summary>Hides the whole "Manual update" category (stores/launchers) and drops its bottom pill.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(FilterButtonText))]
     private bool hideManual;
 
     partial void OnHideManualChanged(bool value)
@@ -324,42 +321,12 @@ public partial class MainViewModel
     /// turning it off just goes back to the normal view, the rows themselves
     /// are untouched.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(FilterButtonText))]
     private bool showOnlyPersistentFailures;
 
-    partial void OnShowOnlyPersistentFailuresChanged(bool value) => ApplyFilter();
-
-    /// <summary>How many of the filter menu's switches are on right now (the search box is not one).</summary>
-    public int ActiveFilterCount =>
-        (ShowOnlyCritical ? 1 : 0) + (ShowIgnored ? 1 : 0) + (HideManual ? 1 : 0) + (ShowOnlyPersistentFailures ? 1 : 0);
-
-    /// <summary>The filter button's label: plain while nothing is filtered, with the number of active
-    /// filters in brackets otherwise, so a narrowed table is never a surprise.</summary>
-    public string FilterButtonText => ActiveFilterCount == 0
-        ? Loc["FilterButton"]
-        : string.Format(Loc["FilterButtonActive"], ActiveFilterCount);
-
-    /// <summary>
-    /// The filter menu's entries in display order. The persistent-failure entry is offered only while there
-    /// is something to collect (or while its filter is still on, so it can always be turned off again).
-    /// </summary>
-    public IReadOnlyList<FilterEntry> BuildFilterEntries()
+    partial void OnShowOnlyPersistentFailuresChanged(bool value)
     {
-        var entries = new List<FilterEntry>
-        {
-            new("critical", () => Loc["FilterCriticalOnly"], () => ShowOnlyCritical, v => ShowOnlyCritical = v),
-            new("ignored", () => Loc["FilterShowIgnored"], () => ShowIgnored, v => ShowIgnored = v),
-            new("manual", () => Loc["FilterHideManual"], () => HideManual, v => HideManual = v),
-        };
-
-        if (HasPersistentFailures || ShowOnlyPersistentFailures)
-        {
-            entries.Add(new FilterEntry(
-                "failures", () => PersistentFailureFilterLabel, () => ShowOnlyPersistentFailures,
-                v => ShowOnlyPersistentFailures = v));
-        }
-
-        return entries;
+        OnPropertyChanged(nameof(ShowPersistentFailureFilter));
+        ApplyFilter();
     }
 
     /// <summary>
@@ -479,12 +446,17 @@ public partial class MainViewModel
     /// <summary>Hidden entirely while there is nothing to collect, never a chip sitting there empty.</summary>
     public bool HasPersistentFailures => PersistentFailureCount > 0;
 
+    /// <summary>The "keeps failing" chip is offered only while there is something to collect, or while its
+    /// filter is still on, so it can always be turned off again.</summary>
+    public bool ShowPersistentFailureFilter => HasPersistentFailures || ShowOnlyPersistentFailures;
+
     public string PersistentFailureFilterLabel => string.Format(Loc["FilterPersistentFailures"], PersistentFailureCount);
 
     private void NotifyPersistentFailureCountChanged()
     {
         OnPropertyChanged(nameof(PersistentFailureCount));
         OnPropertyChanged(nameof(HasPersistentFailures));
+        OnPropertyChanged(nameof(ShowPersistentFailureFilter));
         OnPropertyChanged(nameof(PersistentFailureFilterLabel));
     }
 
