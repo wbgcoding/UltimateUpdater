@@ -71,7 +71,7 @@
                             <Border x:Name="ToggleButtonBorder" Grid.Row="0"
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="1"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
                                     CornerRadius="{TemplateBinding Border.CornerRadius}">
                                 <ToggleButton x:Name="ExpanderToggleButton" Margin="0"
                                               Padding="{TemplateBinding Padding}"
@@ -87,9 +87,9 @@
                                               Template="{StaticResource DefaultExpanderToggleButtonStyle}"/>
                             </Border>
                             <views:RevealDecorator Grid.Row="1" IsOpen="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
-                                <Border Background="{DynamicResource ExpanderContentBackground}"
+                                <Border Background="{TemplateBinding Background}"
                                         BorderBrush="{TemplateBinding BorderBrush}"
-                                        BorderThickness="1,0,1,1" CornerRadius="0,0,4,4">
+                                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="0">
                                     <ContentPresenter x:Name="ContentPresenter" Margin="{TemplateBinding Padding}"
                                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
@@ -98,9 +98,6 @@
                             </views:RevealDecorator>
                         </Grid>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsExpanded" Value="True">
-                                <Setter TargetName="ToggleButtonBorder" Property="CornerRadius" Value="4,4,0,0"/>
-                            </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource ExpanderHeaderDisabledForeground}"/>
                                 <Setter TargetName="ExpanderToggleButton" Property="Foreground" Value="{DynamicResource ExpanderHeaderDisabledForeground}"/>
