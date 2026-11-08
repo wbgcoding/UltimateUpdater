@@ -274,6 +274,7 @@ public static class CleanupWorker
                     StorePath = c.StorePath,
                     NewerVersion = c.NewerVersion,
                     NewerDate = c.NewerDate,
+                    IsSuperseded = c.IsSuperseded,
                 })
                 .ToList(),
             PythonVersionCandidates = result.PythonVersionCandidates?

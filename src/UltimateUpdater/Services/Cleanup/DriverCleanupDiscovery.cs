@@ -36,7 +36,9 @@ public sealed record DriverDeviceCandidate(
 
 /// <summary>Group B row: a third-party driver package unused by any device, or superseded by a newer one
 /// with the same original name and provider. <see cref="NewerVersion"/>/<see cref="NewerDate"/> are set only
-/// when this package IS superseded, carrying the newer package's own version/date.</summary>
+/// when this package IS superseded, carrying the newer package's own version/date. <see cref="IsSuperseded"/>
+/// is true exactly then: the only case the window preselects, because a newer copy of the same driver is
+/// installed and nothing is lost by removing this one.</summary>
 public sealed record DriverPackageCandidate(
     string PackageName,
     string Provider,
@@ -47,7 +49,8 @@ public sealed record DriverPackageCandidate(
     string? OriginalName,
     string? StorePath,
     string? NewerVersion,
-    DateTimeOffset? NewerDate);
+    DateTimeOffset? NewerDate,
+    bool IsSuperseded = false);
 
 /// <summary>
 /// Pure judgment over already-gathered device/package facts: which rows the driver cleanup category
@@ -103,6 +106,9 @@ public static class DriverCleanupDiscovery
     internal static bool IsNeverOffered(DriverPackageInfo package) =>
         IsUnboundByDesignClass(package.ClassName) || !package.HasManufacturerSection;
 
+    /// <summary>A disconnected device is offered only when it was last seen longer ago than this.</summary>
+    public static readonly TimeSpan DeviceUnusedThreshold = TimeSpan.FromDays(365);
+
     private static bool IsExcludedClass(string className) =>
         ExcludedClasses.Any(excluded => string.Equals(excluded, className, StringComparison.OrdinalIgnoreCase));
 
@@ -114,10 +120,15 @@ public static class DriverCleanupDiscovery
     /// Package facts (provider, class, INF file, original name, store path, version, date, size) are
     /// joined in from <paramref name="packages"/> by the device's own bound package name, purely for
     /// display (the tooltip); a device whose package does not resolve still gets a row, just without them.
+    /// A device is only offered once its last-seen date is older than <see cref="DeviceUnusedThreshold"/>
+    /// (any kind of date, so a recent install date hides it too); a device with no date at all stays offered,
+    /// because nothing says it was used lately.
     /// </summary>
     public static IReadOnlyList<DriverDeviceCandidate> DiscoverDisconnectedDevices(
-        IReadOnlyList<DriverDeviceInfo> devices, IReadOnlyList<DriverPackageInfo> packages)
+        IReadOnlyList<DriverDeviceInfo> devices, IReadOnlyList<DriverPackageInfo> packages,
+        DateTimeOffset? now = null)
     {
+        var cutoff = (now ?? DateTimeOffset.UtcNow) - DeviceUnusedThreshold;
         var packagesByName = new Dictionary<string, DriverPackageInfo>(StringComparer.OrdinalIgnoreCase);
         foreach (var package in packages)
             packagesByName[package.PackageName] = package;
@@ -125,6 +136,7 @@ public static class DriverCleanupDiscovery
         return devices
             .Where(d => !d.Present && IsOemPackagePath(d.InfPath) && !IsExcludedClass(d.ClassName))
             .Where(d => !(packagesByName.TryGetValue(Path.GetFileName(d.InfPath!), out var bound) && IsNeverOffered(bound)))
+            .Where(d => ResolveLastSeen(d).Date is not { } seen || seen < cutoff)
             .Select(d =>
             {
                 var packageName = Path.GetFileName(d.InfPath!);
@@ -193,7 +205,8 @@ public static class DriverCleanupDiscovery
                 var newer = superseded.Contains(p.PackageName) ? NewerPackageFor(p, packages) : null;
                 return new DriverPackageCandidate(
                     p.PackageName, p.Provider, p.ClassName, p.DriverVersion, p.DriverDate, p.StoreFolderSizeBytes,
-                    p.OriginalName, p.StorePath, newer?.DriverVersion, newer?.DriverDate);
+                    p.OriginalName, p.StorePath, newer?.DriverVersion, newer?.DriverDate,
+                    IsSuperseded: newer is not null);
             })
             .OrderBy(c => c.PackageName, StringComparer.OrdinalIgnoreCase)
             .ToList();

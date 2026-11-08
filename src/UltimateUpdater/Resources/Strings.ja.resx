@@ -2329,4 +2329,13 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
     <value>この数は最小値です。ユーザープロファイルと一般的なツールのフォルダー (pipx、Poetry) のみを調べるため、それ以外の場所にある仮想環境は検出されません。</value>
   </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>バージョン {0} ({1}) に置き換え済み</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>新しいバージョンに置き換え済み</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>このドライバーを使用しているデバイスはありません</value>
+  </data>
 </root>

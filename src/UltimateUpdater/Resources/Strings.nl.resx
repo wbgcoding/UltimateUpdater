@@ -2329,4 +2329,13 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
     <value>Dit aantal is een minimum. Er wordt geteld in uw gebruikersprofiel en de gebruikelijke toolmappen (pipx, Poetry); virtuele omgevingen op andere plekken worden niet gevonden.</value>
   </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>Vervangen door versie {0} ({1})</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>Vervangen door een nieuwere versie</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>Geen apparaat gebruikt dit stuurprogramma</value>
+  </data>
 </root>

@@ -43,8 +43,9 @@ public class DriverCandidateViewModelTests
     private static DriverPackageCandidateDto PackageDto(
         string? version = null, DateTimeOffset? date = null, long sizeBytes = 0,
         string? originalName = null, string? storePath = null,
-        string? newerVersion = null, DateTimeOffset? newerDate = null) => new()
+        string? newerVersion = null, DateTimeOffset? newerDate = null, bool isSuperseded = false) => new()
     {
+        IsSuperseded = isSuperseded,
         PackageName = "oem7.inf",
         Provider = "Acme",
         ClassName = "Sound",
@@ -182,5 +183,60 @@ public class DriverCandidateViewModelTests
         var vm = new DriverPackageCandidateViewModel(PackageDto(newerVersion: "4.0.0.0", newerDate: newerDate));
 
         Assert.Equal($"Installed now: version 4.0.0.0, {Day(newerDate)}", vm.DetailTooltipText.Split('\n')[^1]);
+    }
+
+    [Fact]
+    public void A_superseded_package_starts_checked_and_names_the_newer_version()
+    {
+        LocalizationService.Instance.Apply("en");
+        var vm = new DriverPackageCandidateViewModel(PackageDto(
+            newerVersion: "4.0.0.0", newerDate: SampleDate, isSuperseded: true));
+
+        Assert.True(vm.IsSelected);
+        Assert.Equal($"Replaced by version 4.0.0.0 ({Day(SampleDate)})", vm.ReasonText);
+    }
+
+    [Fact]
+    public void A_superseded_package_without_newer_facts_gives_the_plain_reason()
+    {
+        LocalizationService.Instance.Apply("en");
+        var vm = new DriverPackageCandidateViewModel(PackageDto(isSuperseded: true));
+
+        Assert.True(vm.IsSelected);
+        Assert.Equal("Replaced by a newer version", vm.ReasonText);
+    }
+
+    [Fact]
+    public void An_unused_package_starts_unchecked_and_says_no_device_uses_it()
+    {
+        LocalizationService.Instance.Apply("en");
+        var vm = new DriverPackageCandidateViewModel(PackageDto());
+
+        Assert.False(vm.IsSelected);
+        Assert.Equal("No device uses this driver", vm.ReasonText);
+    }
+
+    [Fact]
+    public void A_disconnected_device_row_never_starts_checked()
+    {
+        var vm = new DriverDeviceCandidateViewModel(DeviceDto(SampleDate.AddYears(-3), DriverLastSeenKind.Connected));
+
+        Assert.False(vm.IsSelected);
+    }
+
+    [Fact]
+    public void The_reason_text_follows_a_language_switch()
+    {
+        LocalizationService.Instance.Apply("en");
+        var vm = new DriverPackageCandidateViewModel(PackageDto());
+        var before = vm.ReasonText;
+
+        LocalizationService.Instance.Apply("de");
+        vm.RefreshLocalizedText();
+        var after = vm.ReasonText;
+        LocalizationService.Instance.Apply("en");
+
+        Assert.NotEqual(before, after);
+        Assert.Equal("Kein Gerät nutzt diesen Treiber", after);
     }
 }

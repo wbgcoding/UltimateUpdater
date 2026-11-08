@@ -643,8 +643,8 @@
                         </ScrollViewer>
                     </StackPanel>
 
-                    <!-- The driver cleanup row: two individually selectable groups, none pre-selected,
-                         same "never select for the user" rule as the leftover-installs list above. -->
+                    <!-- The driver cleanup row: two individually selectable groups. Only packages replaced
+                         by a newer version start checked; devices and unused packages never do. -->
                     <StackPanel Margin="0,6,12,0"
                                 Visibility="{Binding IsDriverCleanup, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="{Binding NothingText}" FontSize="11" Opacity="0.75"
@@ -713,6 +713,7 @@
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
                                             <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
@@ -727,9 +728,15 @@
                                                        FontSize="12" VerticalAlignment="Center"
                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
 
+                                            <!-- Why this package is offered: replaced by a newer version (the
+                                                 only rows that start checked) or used by no device. -->
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                                       Text="{Binding ReasonText}" FontSize="10"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
                                             <!-- Same empty-line guard as the run-state capsule: a version/date
                                                  line with nothing in it must never render at all. -->
-                                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
                                                        Text="{Binding VersionDateText}" FontSize="10"
                                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                                        Visibility="{Binding HasVersionDateText, Converter={StaticResource BoolToVisibility}}"/>

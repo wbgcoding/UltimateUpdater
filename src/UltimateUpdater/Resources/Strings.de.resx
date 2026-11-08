@@ -2329,4 +2329,13 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
     <value>Diese Zahl ist ein Mindestwert. Gezählt wird in Ihrem Benutzerprofil und in den üblichen Werkzeugordnern (pipx, Poetry); virtuelle Umgebungen an anderen Orten werden nicht gefunden.</value>
   </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>Ersetzt durch Version {0} ({1})</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>Durch eine neuere Version ersetzt</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>Kein Gerät nutzt diesen Treiber</value>
+  </data>
 </root>

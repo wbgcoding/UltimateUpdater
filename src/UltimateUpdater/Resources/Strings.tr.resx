@@ -2329,4 +2329,13 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
     <value>Bu sayı en az değerdir. Kullanıcı profilinizde ve yaygın araç klasörlerinde (pipx, Poetry) sayılır; başka yerlerde tutulan sanal ortamlar bulunmaz.</value>
   </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>{0} sürümüyle değiştirildi ({1})</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>Daha yeni bir sürümle değiştirildi</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>Hiçbir aygıt bu sürücüyü kullanmıyor</value>
+  </data>
 </root>

@@ -22,4 +22,7 @@ public sealed class DriverPackageCandidateDto
     public string? NewerVersion { get; set; }
 
     public DateTimeOffset? NewerDate { get; set; }
+
+    /// <summary>True when a newer copy of the same driver is installed (the only case the window preselects).</summary>
+    public bool IsSuperseded { get; set; }
 }

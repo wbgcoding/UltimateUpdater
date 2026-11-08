@@ -2329,4 +2329,13 @@ Continue with admin rights?</value>
   <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
     <value>This count is a minimum. It covers your user profile and the usual tool folders (pipx, Poetry); virtual environments kept anywhere else are not found.</value>
   </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>Replaced by version {0} ({1})</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>Replaced by a newer version</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>No device uses this driver</value>
+  </data>
 </root>

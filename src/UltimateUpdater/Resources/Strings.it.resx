@@ -2329,4 +2329,13 @@ Continuare con privilegi di amministratore?</value>
   <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
     <value>Questo numero è un minimo. Viene contato nel profilo utente e nelle cartelle abituali degli strumenti (pipx, Poetry); gli ambienti virtuali salvati altrove non vengono trovati.</value>
   </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>Sostituito dalla versione {0} ({1})</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>Sostituito da una versione più recente</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>Nessun dispositivo usa questo driver</value>
+  </data>
 </root>

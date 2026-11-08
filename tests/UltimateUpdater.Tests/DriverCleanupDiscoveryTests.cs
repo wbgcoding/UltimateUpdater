@@ -11,6 +11,12 @@ public class DriverCleanupDiscoveryTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 26, 12, 0, 0, TimeSpan.Zero);
 
+    /// <summary>Runs the device judgment at a clock far enough ahead that every fabricated last-seen date
+    /// counts as long unused; the one-year rule has its own tests below with an explicit clock.</summary>
+    private static IReadOnlyList<DriverDeviceCandidate> Discover(
+        IReadOnlyList<DriverDeviceInfo> devices, IReadOnlyList<DriverPackageInfo> packages) =>
+        DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, packages, Now.AddYears(10));
+
     private static DriverDeviceInfo Device(
         string instanceId, string friendlyName, string className, bool present, string? infPath,
         DateTimeOffset? lastArrival = null, DateTimeOffset? lastRemoval = null, string? driverVersion = null,
@@ -33,7 +39,7 @@ public class DriverCleanupDiscoveryTests
                 lastRemoval: Now.AddDays(-30)),
         };
 
-        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, []);
+        var found = Discover(devices, []);
 
         Assert.Single(found);
         Assert.Equal("oem12.inf", found[0].PackageName);
@@ -47,7 +53,7 @@ public class DriverCleanupDiscoveryTests
             Device("USB\\VID_1234", "Connected Scanner", "Image", present: true, @"C:\Windows\INF\oem12.inf"),
         };
 
-        Assert.Empty(DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, []));
+        Assert.Empty(Discover(devices, []));
     }
 
     [Fact]
@@ -60,7 +66,7 @@ public class DriverCleanupDiscoveryTests
                 lastRemoval: Now.AddDays(-500)),
         };
 
-        Assert.Empty(DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, []));
+        Assert.Empty(Discover(devices, []));
     }
 
     [Theory]
@@ -77,7 +83,7 @@ public class DriverCleanupDiscoveryTests
                 lastRemoval: Now.AddDays(-500)),
         };
 
-        Assert.Empty(DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, []));
+        Assert.Empty(Discover(devices, []));
     }
 
     [Fact]
@@ -88,7 +94,7 @@ public class DriverCleanupDiscoveryTests
             Device("ROOT\\PHANTOM", "Ghost device", "Unknown", present: false, infPath: null),
         };
 
-        Assert.Empty(DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, []));
+        Assert.Empty(Discover(devices, []));
     }
 
     [Fact]
@@ -102,7 +108,7 @@ public class DriverCleanupDiscoveryTests
             Device("D", "Uses arrival only", "Image", false, @"C:\Windows\INF\oem4.inf", lastArrival: Now.AddDays(-500)),
         };
 
-        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, []);
+        var found = Discover(devices, []);
 
         Assert.Equal(["B", "D", "A", "C"], found.Select(d => d.InstanceId));
     }
@@ -116,7 +122,7 @@ public class DriverCleanupDiscoveryTests
                 lastArrival: Now.AddDays(-5), lastRemoval: Now.AddDays(-800)),
         };
 
-        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, []);
+        var found = Discover(devices, []);
 
         Assert.Equal(Now.AddDays(-800), found[0].LastConnected);
     }
@@ -146,7 +152,7 @@ public class DriverCleanupDiscoveryTests
                 registryWriteDate: Now.AddDays(-5)),
         };
 
-        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, []);
+        var found = Discover(devices, []);
 
         Assert.Equal(expectedKind, found[0].LastConnectedKind);
         var expectedDate = hasRemoval ? Now.AddDays(-2)
@@ -165,7 +171,7 @@ public class DriverCleanupDiscoveryTests
             Device("A", "Device", "Sound", present: false, @"C:\Windows\INF\oem1.inf"),
         };
 
-        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, []);
+        var found = Discover(devices, []);
 
         Assert.Equal(DriverLastSeenKind.Unknown, found[0].LastConnectedKind);
         Assert.Null(found[0].LastConnected);
@@ -186,7 +192,7 @@ public class DriverCleanupDiscoveryTests
                 storePath: @"C:\Windows\System32\DriverStore\FileRepository\acmescan.inf_amd64_abc123"),
         };
 
-        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, packages);
+        var found = Discover(devices, packages);
 
         Assert.Equal("Acme", found[0].Provider);
         Assert.Equal("acmescan.inf", found[0].OriginalName);
@@ -204,7 +210,7 @@ public class DriverCleanupDiscoveryTests
             Device("A", "Old Scanner", "Image", present: false, @"C:\Windows\INF\oem12.inf", lastRemoval: Now.AddDays(-30)),
         };
 
-        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, []);
+        var found = Discover(devices, []);
 
         Assert.Single(found);
         Assert.Null(found[0].Provider);
@@ -351,7 +357,7 @@ public class DriverCleanupDiscoveryTests
                 null, HasManufacturerSection: false),
         };
 
-        Assert.Empty(DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, packages));
+        Assert.Empty(Discover(devices, packages));
     }
 
     [Fact]
@@ -383,7 +389,7 @@ public class DriverCleanupDiscoveryTests
             Package("oem9.inf", "Acme", "Sound", "2.0.0.0", Now.AddMonths(-1), "acmesnd.inf"),
         };
 
-        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, packages);
+        var found = Discover(devices, packages);
 
         Assert.Equal("2.0.0.0", found[0].NewerVersion);
         Assert.Equal(Now.AddMonths(-1), found[0].NewerDate);
@@ -496,4 +502,84 @@ public class DriverCleanupDiscoveryTests
     [InlineData(null, false)]
     public void IsOemPackageName_only_accepts_the_pnputil_shape(string? name, bool expected) =>
         Assert.Equal(expected, DriverCleanupDiscovery.IsOemPackageName(name));
+
+    private static DriverDeviceInfo OldDeviceSeen(DateTimeOffset? removal = null, DateTimeOffset? install = null) =>
+        Device("A", "Old Scanner", "Image", present: false, @"C:\Windows\INF\oem12.inf",
+            lastRemoval: removal, installDate: install);
+
+    [Theory]
+    [InlineData(366, true)]
+    [InlineData(365, false)]
+    [InlineData(364, false)]
+    [InlineData(10, false)]
+    public void A_disconnected_device_is_offered_only_after_a_year(int daysAgo, bool offered)
+    {
+        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices(
+            [OldDeviceSeen(removal: Now.AddDays(-daysAgo))], [], Now);
+
+        Assert.Equal(offered, found.Count == 1);
+    }
+
+    [Fact]
+    public void A_recent_install_date_hides_a_device_with_no_connection_event()
+    {
+        Assert.Empty(DriverCleanupDiscovery.DiscoverDisconnectedDevices(
+            [OldDeviceSeen(install: Now.AddDays(-20))], [], Now));
+        Assert.Single(DriverCleanupDiscovery.DiscoverDisconnectedDevices(
+            [OldDeviceSeen(install: Now.AddDays(-800))], [], Now));
+    }
+
+    [Fact]
+    public void A_date_in_the_future_hides_the_device()
+    {
+        Assert.Empty(DriverCleanupDiscovery.DiscoverDisconnectedDevices(
+            [OldDeviceSeen(removal: Now.AddDays(30))], [], Now));
+    }
+
+    [Fact]
+    public void A_device_with_no_date_at_all_stays_offered()
+    {
+        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices([OldDeviceSeen()], [], Now);
+
+        Assert.Single(found);
+        Assert.Equal(DriverLastSeenKind.Unknown, found[0].LastConnectedKind);
+    }
+
+    [Fact]
+    public void Only_a_superseded_package_is_marked_for_preselection()
+    {
+        var packages = new[]
+        {
+            Package("oem7.inf", "Acme", "Sound", "1.0.0.0", Now.AddYears(-2), "acmesnd.inf"),
+            Package("oem9.inf", "Acme", "Sound", "2.0.0.0", Now.AddMonths(-1), "acmesnd.inf"),
+            Package("oem11.inf", "Other", "Image", "1.0.0.0", Now.AddYears(-3), "unused.inf"),
+        };
+        var devices = new[]
+        {
+            Device("P", "Sound card", "Sound", present: true, @"C:\Windows\INF\oem9.inf"),
+        };
+
+        var found = DriverCleanupDiscovery.DiscoverOldPackages(devices, packages).ToDictionary(c => c.PackageName);
+
+        Assert.True(found["oem7.inf"].IsSuperseded);
+        Assert.Equal("2.0.0.0", found["oem7.inf"].NewerVersion);
+        Assert.False(found["oem11.inf"].IsSuperseded);
+        Assert.False(found.ContainsKey("oem9.inf"));
+    }
+
+    [Fact]
+    public void A_superseded_package_still_bound_to_a_connected_device_is_not_offered_at_all()
+    {
+        var packages = new[]
+        {
+            Package("oem7.inf", "Acme", "Sound", "1.0.0.0", Now.AddYears(-2), "acmesnd.inf"),
+            Package("oem9.inf", "Acme", "Sound", "2.0.0.0", Now.AddMonths(-1), "acmesnd.inf"),
+        };
+        var devices = new[]
+        {
+            Device("P", "Pinned", "Sound", present: true, @"C:\Windows\INF\oem7.inf"),
+        };
+
+        Assert.DoesNotContain(DriverCleanupDiscovery.DiscoverOldPackages(devices, packages), c => c.PackageName == "oem7.inf");
+    }
 }

@@ -6,11 +6,20 @@ using UltimateUpdater.Services.Cleanup;
 namespace UltimateUpdater.ViewModels;
 
 /// <summary>
-/// One "old driver package" row (Group B). Deliberately never pre-selected, same rule as
-/// <see cref="LeftoverCandidateViewModel"/>.
+/// One "old driver package" row (Group B). Pre-selected only when a newer copy of the same driver is
+/// installed (<see cref="DriverPackageCandidateDto.IsSuperseded"/>); a package no device uses is offered
+/// but left for the user to tick, same rule as <see cref="LeftoverCandidateViewModel"/>.
 /// </summary>
-public sealed partial class DriverPackageCandidateViewModel(DriverPackageCandidateDto candidate) : ObservableObject
+public sealed partial class DriverPackageCandidateViewModel : ObservableObject
 {
+    private readonly DriverPackageCandidateDto candidate;
+
+    public DriverPackageCandidateViewModel(DriverPackageCandidateDto candidate)
+    {
+        this.candidate = candidate;
+        isSelected = candidate.IsSuperseded;
+    }
+
     [ObservableProperty]
     private bool isSelected;
 
@@ -55,6 +64,23 @@ public sealed partial class DriverPackageCandidateViewModel(DriverPackageCandida
         }
     }
 
+    /// <summary>Why this row is offered: the newer version that replaces it (with its date when known),
+    /// or that no device uses it.</summary>
+    public string ReasonText
+    {
+        get
+        {
+            var loc = LocalizationService.Instance;
+            if (!candidate.IsSuperseded)
+                return loc["CleanupDriverReasonUnused"];
+
+            if (!string.IsNullOrWhiteSpace(candidate.NewerVersion) && candidate.NewerDate is { } newerDate)
+                return string.Format(loc["CleanupDriverReasonSuperseded"], candidate.NewerVersion, newerDate.ToLocalTime().ToString("d", CultureInfo.CurrentUICulture));
+
+            return loc["CleanupDriverReasonSupersededPlain"];
+        }
+    }
+
     public bool HasVersionDateText => !string.IsNullOrEmpty(VersionDateText);
 
     /// <summary>Themed multi-line tooltip: every fact this package's own INF and driver-store folder can
@@ -91,6 +117,7 @@ public sealed partial class DriverPackageCandidateViewModel(DriverPackageCandida
 
     public void RefreshLocalizedText()
     {
+        OnPropertyChanged(nameof(ReasonText));
         OnPropertyChanged(nameof(VersionDateText));
         OnPropertyChanged(nameof(HasVersionDateText));
         OnPropertyChanged(nameof(DetailTooltipText));
