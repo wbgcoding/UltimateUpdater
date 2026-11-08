@@ -290,7 +290,7 @@ public partial class MainViewModel
     /// A scan that finished while the pre-flight window was up may have replaced or removed a candidate's
     /// row. A replaced row that offers the same version is swapped for the live one, any other stale row is
     /// dropped: queuing it would orphan the entry while the live row stays installable a second time.
-    /// A row the lookup does not know at all counts as live only while it is still in the table.
+    /// A row the lookup does not know at all counts as live only while it is still in the table, as a row or as a sub-row.
     /// </summary>
     private List<UpdateRowViewModel> ResolveLiveRows(IReadOnlyList<UpdateRowViewModel> rows)
     {
@@ -299,7 +299,7 @@ public partial class MainViewModel
         {
             UpdateRowViewModel? target;
             if (!_rowsByKey.TryGetValue(PackageKey(row.Item), out var current))
-                target = Updates.Contains(row) ? row : null;
+                target = Updates.Contains(row) || Updates.Any(parent => parent.Children.Contains(row)) ? row : null;
             else if (ReferenceEquals(current, row))
                 target = row;
             else if (string.Equals(current.AvailableVersion, row.AvailableVersion, StringComparison.Ordinal))
