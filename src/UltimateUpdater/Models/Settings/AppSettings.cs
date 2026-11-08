@@ -3,7 +3,11 @@ namespace UltimateUpdater.Models.Settings;
 /// <summary>settings.json root. schemaVersion gates future migrations.</summary>
 public sealed class AppSettings
 {
-    public int SchemaVersion { get; set; } = 1;
+    /// <summary>2: the main table's publisher column starts shown; profiles saved before that keep it hidden
+    /// (see SettingsService.MigrateSchema).</summary>
+    public int SchemaVersion { get; set; } = CurrentSchemaVersion;
+
+    public const int CurrentSchemaVersion = 2;
     public ScanSettings Scan { get; set; } = new();
 
     /// <summary>Source id → scanned or not. Absent means enabled, so a new source is on by default.</summary>

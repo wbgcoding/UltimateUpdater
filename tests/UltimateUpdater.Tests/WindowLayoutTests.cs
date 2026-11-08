@@ -4855,6 +4855,61 @@ public partial class WindowLayoutTests
             $"the Size header with its sort arrow is {headerWidth:0.0} px in a {columnWidth:0.0} px column.");
     }
 
+    /// <summary>With every column shown (date, version, size, publisher) the default window keeps the name
+    /// column roomy and the table needs no horizontal scrolling.</summary>
+    [Fact]
+    public void Main_table_with_every_column_shown_fits_the_default_window_without_a_horizontal_scrollbar()
+    {
+        RenderResult? result = null;
+        double nameWidth = 0, publisherWidth = 0;
+        var horizontalBars = new List<string>();
+
+        WpfHarness.OnUiThread(() =>
+        {
+            var (viewModel, theme, settings) = CreateMainViewModel("de");
+            Populate(viewModel);
+            viewModel.ResetMainColumns();
+            foreach (var id in new[] { "date", "size", "publisher" })
+                viewModel.SetMainColumnHidden(id, hidden: false);
+
+            var window = new MainWindow(viewModel, theme, settings);
+            var content = (FrameworkElement)window.Content;
+            result = WpfHarness.RenderWindow(window, "main-all-columns-default-de", (int)window.Width, (int)window.Height);
+
+            var header = FindByName<StackPanel>(content, "SortHeaderSize");
+            Assert.NotNull(header);
+            var grid = (Grid)header!.Parent;
+            nameWidth = grid.ColumnDefinitions[2].ActualWidth;
+            publisherWidth = grid.ColumnDefinitions[3].ActualWidth;
+
+            foreach (var viewer in AllDescendants<ScrollViewer>(content))
+            {
+                if (viewer.ComputedHorizontalScrollBarVisibility == Visibility.Visible)
+                    horizontalBars.Add(viewer.Name);
+            }
+        });
+
+        AssertRendered(result);
+        Assert.Equal(120, publisherWidth);
+        Assert.True(nameWidth >= 240, $"the name column is only {nameWidth:0.0} px wide with every column shown.");
+        Assert.Empty(horizontalBars);
+    }
+
+    private static IEnumerable<T> AllDescendants<T>(DependencyObject root)
+        where T : DependencyObject
+    {
+        var count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is T match)
+                yield return match;
+
+            foreach (var inner in AllDescendants<T>(child))
+                yield return inner;
+        }
+    }
+
     /// <summary>The finished dialog keeps its Rescan button (the way to another run) and still hides Clean.</summary>
     [Fact]
     public void Cleanup_window_after_a_finished_run_shows_rescan_and_hides_clean()

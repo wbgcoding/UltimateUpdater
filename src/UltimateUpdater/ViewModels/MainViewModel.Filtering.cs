@@ -709,16 +709,14 @@ public partial class MainViewModel
         new("date", () => LocalizationService.Instance["ColumnDate"], CanHide: true),
         new("version", () => LocalizationService.Instance["ColumnVersion"], CanHide: true),
         new("size", () => LocalizationService.Instance["ColumnSize"], CanHide: true),
-        // Hidden by default (see DefaultHiddenMainColumns), unlike the three above; the full publisher
-        // name stays in each row's name tooltip.
         new("publisher", () => LocalizationService.Instance["ColumnPublisher"], CanHide: true),
     ];
 
     /// <summary>Which hideable columns start hidden on a fresh install (everything else starts shown);
-    /// also what "Reset columns" restores. The publisher is off by default, its full name lives in the
-    /// name tooltip; a settings.json saved before a default-hidden column existed keeps that column hidden
-    /// (silence about an id never reads as "shown", only <see cref="TableLayoutState.ShownColumns"/> does).</summary>
-    private static readonly HashSet<string> DefaultHiddenMainColumns = new(StringComparer.Ordinal) { "publisher" };
+    /// also what "Reset columns" restores. Empty today: every column shows by default. The field stays so a
+    /// future default-hidden column is one entry here (silence about an id never reads as "shown", only
+    /// <see cref="TableLayoutState.ShownColumns"/> does).</summary>
+    private static readonly HashSet<string> DefaultHiddenMainColumns = new(StringComparer.Ordinal);
 
     /// <summary>The default width of each hideable main-table column, restored when it is shown again.</summary>
     private static readonly Dictionary<string, double> MainColumnDefaultWidths = new(StringComparer.Ordinal)
