@@ -62,7 +62,7 @@ public sealed class PnpmSource(LoggingService logging, HttpClient httpClient) : 
             .ToList();
     }
 
-    private static bool IsOutdatedObject(string stdout)
+    internal static bool IsOutdatedObject(string stdout)
     {
         try
         {
