@@ -477,6 +477,32 @@ public class CleanupSafetyTests
         }
     }
 
+    /// <summary>With TEMP redirected the user has two Temp folders (the redirected one and the one under
+    /// the local profile); neither may reach the elevated all-users target.</summary>
+    [Fact]
+    public void ExcludeOwnTemp_drops_every_own_temp_when_TEMP_is_redirected()
+    {
+        var redirected = Path.Combine(Path.GetTempPath(), "wu-redirtemp-" + Guid.NewGuid());
+        var profileTemp = Path.Combine(Path.GetTempPath(), "wu-proftemp-" + Guid.NewGuid());
+        var foreign = Path.Combine(Path.GetTempPath(), "wu-foreigntemp-" + Guid.NewGuid());
+        Directory.CreateDirectory(redirected);
+        Directory.CreateDirectory(profileTemp);
+        Directory.CreateDirectory(foreign);
+        try
+        {
+            var kept = CleanupCatalog.ExcludeOwnTemp(
+                [redirected, profileTemp.ToUpperInvariant(), foreign], redirected, profileTemp);
+
+            Assert.Equal([foreign], kept);
+        }
+        finally
+        {
+            try { Directory.Delete(redirected, recursive: true); } catch { }
+            try { Directory.Delete(profileTemp, recursive: true); } catch { }
+            try { Directory.Delete(foreign, recursive: true); } catch { }
+        }
+    }
+
     [Fact]
     public void ExcludeOwnTemp_offers_nothing_when_the_own_temp_identity_cannot_be_read()
     {
@@ -544,32 +570,6 @@ public class CleanupSafetyTests
         Assert.False(CleanupSafety.IsInsideOwnRecycleBin($@"C:\$Recycle.Bin\{OwnSid}\$RAAA.txt", OtherSid));
     }
 
-    /// <summary>Without a real SID there is no own folder to be inside of, and a caller-composed wildcard
-    /// or relative segment must never widen it to every account on the machine.</summary>
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("*")]
-    [InlineData("..")]
-    [InlineData(@"S-1-5-21-1\..\S-1-5-18")]
-    [InlineData("not-a-sid")]
-    public void IsInsideOwnRecycleBin_refuses_anything_that_is_not_a_sid(string? sid)
-    {
-        Assert.False(CleanupSafety.IsInsideOwnRecycleBin($@"C:\$Recycle.Bin\{sid}\$RAAA.txt", sid));
-        Assert.False(CleanupSafety.IsInsideOwnRecycleBin(@"C:\$Recycle.Bin\S-1-5-18\$RAAA.txt", sid));
-    }
-
-    [Fact]
-    public void Every_catalogued_directory_passes_the_safety_gate()
-    {
-        foreach (var target in CleanupCatalog.Build())
-        {
-            // A folder this machine simply does not have is refused for that reason alone, which says
-            // nothing about the catalogue entry. Same "Default User"/"All Users" exception as the sibling
-            // test above, those are OS-created junctions, correctly refused.
-            foreach (var directory in target.Directories.Where(Directory.Exists)
-                         .Where(d => !CleanupSafety.AncestryLeadsThroughLink(d)))
-            {
     /// <summary>A recycled junction is itself a link: its leaf must not be what the ancestry check looks at,
     /// only the chain above it. The delegate records what it was asked about.</summary>
     [Fact]
@@ -604,6 +604,32 @@ public class CleanupSafetyTests
         Assert.Equal([$@"D:\$Recycle.Bin\{OwnSid}\$RDIR"], asked);
     }
 
+    /// <summary>Without a real SID there is no own folder to be inside of, and a caller-composed wildcard
+    /// or relative segment must never widen it to every account on the machine.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("*")]
+    [InlineData("..")]
+    [InlineData(@"S-1-5-21-1\..\S-1-5-18")]
+    [InlineData("not-a-sid")]
+    public void IsInsideOwnRecycleBin_refuses_anything_that_is_not_a_sid(string? sid)
+    {
+        Assert.False(CleanupSafety.IsInsideOwnRecycleBin($@"C:\$Recycle.Bin\{sid}\$RAAA.txt", sid));
+        Assert.False(CleanupSafety.IsInsideOwnRecycleBin(@"C:\$Recycle.Bin\S-1-5-18\$RAAA.txt", sid));
+    }
+
+    [Fact]
+    public void Every_catalogued_directory_passes_the_safety_gate()
+    {
+        foreach (var target in CleanupCatalog.Build())
+        {
+            // A folder this machine simply does not have is refused for that reason alone, which says
+            // nothing about the catalogue entry. Same "Default User"/"All Users" exception as the sibling
+            // test above, those are OS-created junctions, correctly refused.
+            foreach (var directory in target.Directories.Where(Directory.Exists)
+                         .Where(d => !CleanupSafety.AncestryLeadsThroughLink(d)))
+            {
                 Assert.True(
                     CleanupSafety.IsSafeToEmpty(directory),
                     $"'{target.Id}' names '{directory}', which CleanupSafety refuses, it would clean nothing.");

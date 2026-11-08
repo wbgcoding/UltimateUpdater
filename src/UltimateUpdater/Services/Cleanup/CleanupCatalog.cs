@@ -424,14 +424,22 @@ public static class CleanupCatalog
     /// differently cased path to the same folder must not slip through, because the elevated worker would
     /// then clean a folder the unelevated user can swap at will. Fail closed: an own Temp whose identity
     /// cannot be read yields nothing, and a candidate whose identity cannot be read is left out.
+    /// More than one own Temp can exist: with TEMP redirected, <c>Path.GetTempPath()</c> and
+    /// <c>%LOCALAPPDATA%\Temp</c> are two different folders, and both belong to the user.
     /// </summary>
-    internal static IReadOnlyList<string> ExcludeOwnTemp(IEnumerable<string> candidates, string ownTemp)
+    internal static IReadOnlyList<string> ExcludeOwnTemp(IEnumerable<string> candidates, params string[] ownTemps)
     {
-        if (!CleanupSafety.TryReadDirectoryIdentity(ownTemp, out var own))
-            return [];
+        var own = new List<(uint VolumeSerial, ulong FileIndex)>();
+        foreach (var ownTemp in ownTemps)
+        {
+            if (!CleanupSafety.TryReadDirectoryIdentity(ownTemp, out var identity))
+                return [];
+
+            own.Add(identity);
+        }
 
         return candidates
-            .Where(candidate => CleanupSafety.TryReadDirectoryIdentity(candidate, out var id) && id != own)
+            .Where(candidate => CleanupSafety.TryReadDirectoryIdentity(candidate, out var id) && !own.Contains(id))
             .ToList();
     }
 
@@ -451,7 +459,10 @@ public static class CleanupCatalog
 
             return Distinct(ExcludeOwnTemp(Directory.EnumerateDirectories(usersRoot)
                 .Select(profile => Path.Combine(profile, "AppData", "Local", "Temp"))
-                .Where(Directory.Exists), Path.GetFullPath(Path.GetTempPath())));
+                .Where(Directory.Exists),
+                Path.GetFullPath(Path.GetTempPath()),
+                Path.GetFullPath(Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp"))));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
