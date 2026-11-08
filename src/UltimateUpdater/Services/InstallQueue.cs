@@ -424,7 +424,10 @@ public sealed class InstallQueue
                 ? $"{retryRun.Action} for '{retryItem.Id}' was stopped before it started."
                 : $"{retryRun.Action} for '{retryItem.Id}' was stopped while waiting for its automatic retry.");
             Report(new InstallItemStatus(retryItem.SourceId, retryItem.Id, 100, null, null, null) { IsCancelled = true });
-            RecordHistory(retryItem, retryRun.Action, success: false, error: null, isCancelled: true);
+            // A real first failure held for the retry stays the row's entry, as when the whole batch stops,
+            // so a stop never hides a failure from the keeps-failing count.
+            if (!FlushDeferredFailure(retryItem, retryRun.Action))
+                RecordHistory(retryItem, retryRun.Action, success: false, error: null, isCancelled: true);
             return;
         }
 

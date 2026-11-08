@@ -707,8 +707,11 @@ public class InstallQueueTests
         Assert.Equal(0, secondAttemptFired);
         Assert.Single(statuses, s => s.ItemId == "eslint" && s.IsCancelled);
         Assert.True(statuses.Last(s => s.ItemId == "eslint").IsCancelled);
-        // The row ends as stopped: its outcome is that one entry, not the failure that preceded it.
-        Assert.True(Assert.Single(history.Read(), e => e.ItemId == "eslint").IsCancelled);
+        // The row ends as stopped, but the history keeps the real failure that preceded the stop, the
+        // same as when the whole batch stops before the retry round.
+        var entry = Assert.Single(history.Read(), e => e.ItemId == "eslint");
+        Assert.False(entry.IsCancelled);
+        Assert.False(entry.Success);
     }
 
     /// <summary>The elevated half's version of the rule above: a retryable failure from the helper is
