@@ -85,8 +85,9 @@ public class PythonCleanupDiscoveryTests : IDisposable
         return interpreterRoot;
     }
 
-    /// <summary>Stamps a folder and everything under it two days old: a fresh "~" folder is a running pip
-    /// install and is never offered.</summary>
+    /// <summary>Stamps a folder, everything under it and its site-packages folder two days old: a fresh
+    /// "~" folder, or one in a site-packages folder written just now, is a running pip install and is never
+    /// offered.</summary>
     private static void MakeStale(string folder)
     {
         var stamp = DateTime.UtcNow.AddDays(-2);
@@ -98,6 +99,7 @@ public class PythonCleanupDiscoveryTests : IDisposable
 
         Directory.SetCreationTimeUtc(folder, stamp);
         Directory.SetLastWriteTimeUtc(folder, stamp);
+        Directory.SetLastWriteTimeUtc(Path.GetDirectoryName(folder)!, stamp);
     }
 
     [Fact]
@@ -108,8 +110,8 @@ public class PythonCleanupDiscoveryTests : IDisposable
         var broken = Path.Combine(sitePackages, "~orchvision");
         Directory.CreateDirectory(broken);
         File.WriteAllText(Path.Combine(broken, "large.bin"), new string('x', 500));
-        MakeStale(broken);
         Directory.CreateDirectory(Path.Combine(sitePackages, "requests"));
+        MakeStale(broken);
 
         var registry = new FakeRegistry().AddTag(HkcuRoot, "3.13", Path.Combine(interpreterRoot, "python.exe"));
 

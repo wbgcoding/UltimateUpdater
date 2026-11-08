@@ -206,9 +206,9 @@ public class PythonInterpretersTests
             Directory.CreateDirectory(Path.Combine(sitePackages, "~ip"));
             Directory.CreateDirectory(Path.Combine(sitePackages, "~orchvision"));
             Directory.CreateDirectory(Path.Combine(sitePackages, "requests"));
+            Directory.CreateDirectory(Path.Combine(sitePackages, "requests-2.32.0.dist-info"));
             AgeFolder(Path.Combine(sitePackages, "~ip"), TimeSpan.FromDays(2));
             AgeFolder(Path.Combine(sitePackages, "~orchvision"), TimeSpan.FromDays(2));
-            Directory.CreateDirectory(Path.Combine(sitePackages, "requests-2.32.0.dist-info"));
 
             var leftovers = PythonInterpreters.FindBrokenInstallLeftovers(sitePackages);
 
@@ -232,6 +232,33 @@ public class PythonInterpretersTests
 
         Directory.SetCreationTimeUtc(folder, stamp);
         Directory.SetLastWriteTimeUtc(folder, stamp);
+        Directory.SetLastWriteTimeUtc(Path.GetDirectoryName(folder)!, stamp);
+    }
+
+    [Fact]
+    public void An_old_tilde_folder_is_kept_while_site_packages_was_just_written()
+    {
+        // pip stashes the old package by renaming it: the stash keeps its old times, only the
+        // site-packages folder around it shows that an install is running.
+        var sitePackages = Directory.CreateTempSubdirectory("wu-sitepkgs-").FullName;
+        try
+        {
+            var stash = Path.Combine(sitePackages, "~equests");
+            Directory.CreateDirectory(stash);
+            AgeFolder(stash, TimeSpan.FromDays(200));
+            Directory.SetLastWriteTimeUtc(sitePackages, DateTime.UtcNow);
+            var skipped = new List<string>();
+
+            Assert.Empty(PythonInterpreters.FindBrokenInstallLeftovers(sitePackages, logSkip: skipped.Add));
+            Assert.Single(skipped);
+
+            Directory.SetLastWriteTimeUtc(sitePackages, DateTime.UtcNow.AddDays(-2));
+            Assert.Equal([stash], PythonInterpreters.FindBrokenInstallLeftovers(sitePackages));
+        }
+        finally
+        {
+            Directory.Delete(sitePackages, recursive: true);
+        }
     }
 
     [Fact]

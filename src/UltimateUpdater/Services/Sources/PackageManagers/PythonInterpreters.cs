@@ -122,8 +122,10 @@ public static class PythonInterpreters
     /// A folder named this way is never a real, importable package. But pip creates the very same
     /// "~name" folder as the rollback stash of every upgrade that is running RIGHT NOW, so a folder (or
     /// anything directly inside it) created or written within <see cref="LeftoverMinAge"/> is a live
-    /// install and is skipped, as is one whose times cannot be read. <paramref name="utcNow"/> is a test
-    /// seam; <paramref name="logSkip"/> hears every folder kept for that reason.
+    /// install and is skipped, as is one whose times cannot be read. pip makes that stash by RENAMING the
+    /// old package folder, which keeps the folder's old times, so a site-packages folder written within the
+    /// same window (every rename, create or delete in it moves its write time) keeps every "~" folder too.
+    /// <paramref name="utcNow"/> is a test seam; <paramref name="logSkip"/> hears every folder kept.
     /// </summary>
     public static IReadOnlyList<string> FindBrokenInstallLeftovers(
         string sitePackages, DateTime? utcNow = null, Action<string>? logSkip = null)
@@ -135,10 +137,13 @@ public static class PythonInterpreters
         {
             var cutoff = (utcNow ?? DateTime.UtcNow) - LeftoverMinAge;
             var found = new List<string>();
+            var sitePackagesBusy = IsNewerThan(Directory.GetLastWriteTimeUtc(sitePackages), cutoff);
             foreach (var directory in Directory.GetDirectories(sitePackages, "~*")
                 .Where(d => Path.GetFileName(d).StartsWith('~')))
             {
-                if (IsPossiblyLive(directory, cutoff))
+                if (sitePackagesBusy)
+                    logSkip?.Invoke($"pip leftover '{directory}' kept: its site-packages folder changed within the last {LeftoverMinAge.TotalMinutes:0} minutes, an install may be running");
+                else if (IsPossiblyLive(directory, cutoff))
                     logSkip?.Invoke($"pip leftover '{directory}' kept: changed within the last {LeftoverMinAge.TotalMinutes:0} minutes, an install may be running");
                 else
                     found.Add(directory);
