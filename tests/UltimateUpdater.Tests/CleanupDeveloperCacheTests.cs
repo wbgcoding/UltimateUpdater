@@ -221,6 +221,8 @@ public class CleanupDeveloperCacheTests : IDisposable
 
     private CleanupService ServiceWith(FakeTool tool, string? resolved)
     {
+        // The run policy refuses an elevated app; these tests are about the unelevated case whatever runs them.
+        ElevationService.IsElevatedForTest.Value = false;
         var service = new CleanupService(new LoggingService());
         service.TrustedToolResolver = _ => resolved;
         service.ToolRunner = tool.Run;

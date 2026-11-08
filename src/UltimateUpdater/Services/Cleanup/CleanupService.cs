@@ -914,6 +914,11 @@ public class CleanupService(LoggingService logging)
         if (target.NeedsElevation || ElevationService.IsElevatedWorkerProcess)
             return "an elevated run never starts it";
 
+        // The tool is a user-writable file; an app that itself runs with administrator rights (UAC off, or
+        // started as administrator) would start it with those rights.
+        if (ElevationService.IsElevated)
+            return "this app runs with administrator rights and the tool is a user-writable file";
+
         if (excludedEntryPaths is not null && excludedEntryPaths.Any(e => IsExcluded(e, [directory])))
             return "a row inside it is unticked and a whole-folder clean cannot keep it";
 
@@ -957,6 +962,11 @@ public class CleanupService(LoggingService logging)
         long bytes = 0;
         var files = 0;
         var young = 0;
+
+        // A clean command may remove the whole root: that is an empty folder, not a listing failure.
+        if (!Directory.Exists(directory))
+            return (bytes, files, young);
+
         foreach (var found in EnumerateFileDetails(directory, [], cancellationToken))
         {
             bytes += found.Length;
