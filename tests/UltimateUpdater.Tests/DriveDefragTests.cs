@@ -93,7 +93,7 @@ public class DriveDefragTests
         var target = Assert.Single(CleanupCatalog.BuildDriveDefragTargets(facts));
 
         Assert.Equal("CleanupDefragRowSsd", target.TitleKey);
-        Assert.Equal(["System C:\\"], target.TitleArguments);
+        Assert.Equal(["System (C:)"], target.TitleArguments);
         Assert.Equal("CleanupDriveSubline", target.DescriptionKey);
         Assert.Equal(["MediaTypeSsd"], target.DescriptionWordKeys);
         Assert.Equal(2_000_000_000_000, target.DescriptionBytes);
@@ -132,7 +132,7 @@ public class DriveDefragTests
         var target = Assert.Single(CleanupCatalog.BuildDriveDefragTargets(facts));
 
         Assert.Equal("CleanupDefragRowUnspecified", target.TitleKey);
-        Assert.Equal(["DataNeu D:\\"], target.TitleArguments);
+        Assert.Equal(["DataNeu (D:)"], target.TitleArguments);
         Assert.Equal("CleanupDriveSubline", target.DescriptionKey);
         Assert.Equal(["MediaTypeUsbDrive"], target.DescriptionWordKeys);
         Assert.True(target.NeedsElevation);
