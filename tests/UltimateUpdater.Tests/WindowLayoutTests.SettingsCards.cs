@@ -90,6 +90,33 @@ public partial class WindowLayoutTests
     }
 
     /// <summary>
+    /// Every info icon next to a shortened setting description carries the full text for screen readers
+    /// as its help text, the same text its tooltip shows on hover.
+    /// </summary>
+    [Fact]
+    public void Settings_info_icons_expose_their_full_text_as_help_text()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var (window, root) = SettingsWindowForCards();
+            AssertRendered(WpfHarness.RenderWindow(window, "settings-info-icons-de", (int)window.Width, 4000));
+
+            var iconStyle = (Style)window.FindResource("CardInfoIcon");
+            var icons = VisualDescendants<Wpf.Ui.Controls.SymbolIcon>(root)
+                .Where(icon => ReferenceEquals(icon.Style, iconStyle))
+                .ToList();
+            Assert.True(icons.Count >= 8, $"expected the shortened settings to show info icons, found {icons.Count}");
+
+            foreach (var icon in icons)
+            {
+                var tip = Assert.IsType<string>(icon.ToolTip);
+                Assert.False(string.IsNullOrWhiteSpace(tip));
+                Assert.Equal(tip, System.Windows.Automation.AutomationProperties.GetHelpText(icon));
+            }
+        });
+    }
+
+    /// <summary>
     /// A collapsible settings card draws no frame of its own inside the rounded card: next to the
     /// expander's edges the pixels are the card's background.
     /// </summary>

@@ -53,6 +53,9 @@
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
             <Setter Property="Margin" Value="4,2,0,0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <!-- Screen readers get the full text the tooltip shows on hover. -->
+            <Setter Property="AutomationProperties.HelpText"
+                    Value="{Binding ToolTip, RelativeSource={RelativeSource Self}, TargetNullValue='', FallbackValue=''}"/>
         </Style>
 
         <!-- WPF-UI's Expander only slides its body with a render transform and drops the layout height in
