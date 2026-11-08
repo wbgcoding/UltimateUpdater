@@ -172,6 +172,10 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     /// <summary>How a system file or image check ended; null for every other row.</summary>
     public RepairResult? RepairResult { get; set; }
 
+    /// <summary>Why this row was not done in the last run (admin rights missing, time limit, failed tool);
+    /// null when it was done or no reason is known. Recorded in the history.</summary>
+    internal CleanupSkipReason? SkipReason { get; set; }
+
     /// <summary>"12,4 MB / 310 MB": what has gone of what was measured.</summary>
     public string ProgressText =>
         SelectedEntryBytes > 0 ? $"{ByteSize.Format(FreedBytes)} / {ByteSize.Format(SelectedEntryBytes)}" : ByteSize.Format(FreedBytes);
@@ -749,11 +753,15 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     /// row of a target that was stopped or never got through, are genuinely still on disk and say so. A
     /// target that ran to the end removed what it was handed, so whatever is left over reads as cleaned;
     /// what stayed behind in use is a figure only the target itself can give (<see cref="SkippedText"/>),
-    /// never attributable to one row.
+    /// never attributable to one row. Those rows share only what the target freed beyond the rows the reports
+    /// already credited, in list order and each capped at its own size, so the rows never add up to more than
+    /// the target freed.
     /// </summary>
     public void ResolveEntryStates(bool completed)
     {
         FinishRunningEntry(completed ? EntryState.Cleaned : EntryState.Skipped, _freedAtLastReport);
+
+        var uncredited = Math.Max(0, FreedBytes - Entries.Sum(e => e.FreedBytes));
 
         foreach (var entry in Entries)
         {
@@ -762,7 +770,9 @@ public sealed partial class CleanupItemViewModel : ObservableObject
 
             var cleaned = completed && entry.IsSelected;
             entry.State = cleaned ? EntryState.Cleaned : EntryState.Skipped;
-            entry.FreedBytes = cleaned ? entry.Model.Bytes : 0;
+            var credit = cleaned ? Math.Min(uncredited, entry.Model.Bytes) : 0;
+            entry.FreedBytes = credit;
+            uncredited -= credit;
         }
     }
 

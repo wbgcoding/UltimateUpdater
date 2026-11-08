@@ -171,6 +171,30 @@ public class CleanupHistoryServiceTests
         Assert.Equal(["Games E:\\"], area.TitleArguments);
     }
 
+    [Fact]
+    public void A_not_done_area_keeps_its_reason_across_a_reload()
+    {
+        var path = TempHistoryPath();
+        var service = new CleanupHistoryService(new LoggingService(), path);
+        service.Append(new CleanupHistoryEntry
+        {
+            Timestamp = DateTimeOffset.UtcNow,
+            Areas =
+            [
+                new CleanupHistoryArea
+                {
+                    Id = "system-repair-dism", TitleKey = "CleanupDefragRowHdd", NotDone = true,
+                    NoteKey = "CleanupToolFailed", NoteArguments = ["0x800F0806"],
+                },
+            ],
+        });
+
+        var area = Assert.Single(Assert.Single(new CleanupHistoryService(new LoggingService(), path).Load()).Areas);
+        Assert.True(area.NotDone);
+        Assert.Equal("CleanupToolFailed", area.NoteKey);
+        Assert.Equal(["0x800F0806"], area.NoteArguments);
+    }
+
     /// <summary>An area written before this field existed (or any ordinary, statically-titled area) must
     /// still load as an empty list, never null or a crash.</summary>
     [Fact]

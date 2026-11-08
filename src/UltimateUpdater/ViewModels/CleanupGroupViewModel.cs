@@ -17,15 +17,22 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
 {
     private readonly Func<Models.Settings.RegistryCleanupSettings>? _registrySettings;
     private readonly LoggingService? _logging;
+    private readonly Func<CleanupItemViewModel, bool> _skipsForMissingAdmin;
 
+    /// <param name="skipsForMissingAdmin">True for a row a run started now would skip for missing admin
+    /// rights. The window's view model hands in its own answer, which also knows about a running elevated
+    /// helper; without one the group asks only whether this process is elevated.</param>
     public CleanupGroupViewModel(
         CleanupGroupKey key, IReadOnlyList<CleanupItemViewModel> items,
-        Func<Models.Settings.RegistryCleanupSettings>? registrySettings = null, LoggingService? logging = null)
+        Func<Models.Settings.RegistryCleanupSettings>? registrySettings = null, LoggingService? logging = null,
+        Func<CleanupItemViewModel, bool>? skipsForMissingAdmin = null)
     {
         Key = key;
         Items = items;
         _registrySettings = registrySettings;
         _logging = logging;
+        _skipsForMissingAdmin = skipsForMissingAdmin
+            ?? (item => CleanupService.SkipsWithoutAdmin(item.Target, ElevationService.IsElevated));
 
         foreach (var item in items)
             item.PropertyChanged += OnItemPropertyChanged;
@@ -80,8 +87,9 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
         ? string.Format(LocalizationService.Instance[TotalFiles == 1 ? "CleanupRegistryEntryCountOne" : "CleanupRegistryEntryCount"], TotalFiles)
         : ByteSize.Format(TotalBytes);
 
-    /// <summary>What the ticked members would free: the first half of <see cref="ChosenSizeText"/>.</summary>
-    public long SelectedBytes => Items.Where(i => i.IsSelected).Sum(i => i.SelectedEntryBytes);
+    /// <summary>What the ticked members would free: the first half of <see cref="ChosenSizeText"/>. A row the
+    /// run skips for missing admin rights frees nothing, so it adds nothing here.</summary>
+    public long SelectedBytes => Items.Where(i => i.IsSelected && !_skipsForMissingAdmin(i)).Sum(i => i.SelectedEntryBytes);
 
     /// <summary>The header's size cell: always "ticked / found" so the user sees what a run would free while
     /// still choosing, fully ticked and unticked included. Registry entries are counted, not measured, so
@@ -122,7 +130,11 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
     /// <summary>Counted over the same eligible rows as <see cref="VisibleCount"/>: counting a ticked drive
     /// optimisation row here but not there made the header read "8 of 6", and kept the count out of step
     /// with the header checkbox beside it.</summary>
-    public int SelectedCount => Items.Count(i => IsEligibleForGroupToggle(i) && i.IsSelected);
+    public int SelectedCount => Items.Count(i => IsEligibleForGroupToggle(i) && i.IsSelected && !_skipsForMissingAdmin(i));
+
+    /// <summary>The rows the header checkbox acts on: eligible for a group toggle and not skipped for missing
+    /// admin rights, so ticking them all always ends in the checked state.</summary>
+    private int TogglableCount => Items.Count(i => IsEligibleForGroupToggle(i) && !_skipsForMissingAdmin(i));
 
     public string SelectedCountText =>
         string.Format(LocalizationService.Instance[VisibleCount == 1 ? "CleanupSelectedCountOne" : "CleanupSelectedCount"], SelectedCount, VisibleCount);
@@ -146,7 +158,7 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
     public bool? IsSelected => SelectedCount switch
     {
         0 => false,
-        var selected when selected == VisibleCount => true,
+        var selected when selected == TogglableCount => true,
         _ => null,
     };
 
@@ -156,8 +168,8 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
     [RelayCommand]
     private void ToggleSelection()
     {
-        var eligible = Items.Where(IsEligibleForGroupToggle).ToList();
-        var turnOn = eligible.Count(i => i.IsSelected) != VisibleCount;
+        var eligible = Items.Where(i => IsEligibleForGroupToggle(i) && !_skipsForMissingAdmin(i)).ToList();
+        var turnOn = eligible.Count(i => i.IsSelected) != eligible.Count;
         foreach (var item in eligible)
             item.IsSelected = turnOn;
     }
@@ -211,6 +223,17 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
                 OnPropertyChanged(nameof(ShowsFreed));
                 break;
         }
+    }
+
+    /// <summary>Admin rights appeared or went away, which changes which rows a run would skip: the figures
+    /// that leave those rows out are read again.</summary>
+    public void RefreshAdminDependentTotals()
+    {
+        OnPropertyChanged(nameof(IsSelected));
+        OnPropertyChanged(nameof(SelectedCount));
+        OnPropertyChanged(nameof(SelectedCountText));
+        OnPropertyChanged(nameof(SelectedBytes));
+        OnPropertyChanged(nameof(ChosenSizeText));
     }
 
     public void RefreshLocalizedText()

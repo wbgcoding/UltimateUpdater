@@ -399,8 +399,8 @@ public static class CleanupCatalog
             if (!isEligibleDriveType || f.MediaType == DriveMediaType.Unknown)
                 continue;
 
-            // "DataNeu D:\" with a volume label, "D:\" without one: the single title argument.
-            var displayName = string.IsNullOrEmpty(f.VolumeLabel) ? $"{f.Letter}\\" : $"{f.VolumeLabel} {f.Letter}\\";
+            // Explorer style, the single title argument: "DataNeu (D:)" with a volume label, "D:\" without one.
+            var displayName = string.IsNullOrEmpty(f.VolumeLabel) ? $"{f.Letter}\\" : $"{f.VolumeLabel} ({f.Letter})";
 
             var titleKey = f.MediaType switch
             {

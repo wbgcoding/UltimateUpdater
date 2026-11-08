@@ -75,6 +75,9 @@ public partial class CleanupViewModel
     {
         foreach (var item in Items)
             item.ShowsElevationHint = show && item.NeedsElevation;
+
+        foreach (var group in Groups)
+            group.RefreshAdminDependentTotals();
     }
 
     /// <summary>Which targets this run hands to the elevated helper, none when there is no helper. Reads

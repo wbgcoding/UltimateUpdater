@@ -252,7 +252,8 @@ public partial class CleanupViewModel : ObservableObject
             .Select(key => new CleanupGroupViewModel(
                 key, built.Where(i => CleanupGroups.For(i.Target) == key).ToList(),
                 key == CleanupGroupKey.Registry ? () => _settings.Current.RegistryCleanup : null,
-                key == CleanupGroupKey.Registry ? _logging : null))
+                key == CleanupGroupKey.Registry ? _logging : null,
+                WillSkipForMissingAdmin))
             .Where(group => group.Items.Count > 0)
             .ToList();
 

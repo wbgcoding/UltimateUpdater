@@ -770,6 +770,33 @@ public partial class CleanupViewModelTests
         Assert.Equal(string.Format(LocalizationService.Instance["CleanupHistoryEntrySummaryOne"], 1), row.SummaryText);
     }
 
+    /// <summary>The summary counts only the areas that were done, the number the run's own headline
+    /// reported, and an area that was not done follows the cleaned ones with its reason, never a freed figure.</summary>
+    [Fact]
+    public void A_history_entry_counts_only_done_areas_and_lists_skipped_ones_last_with_their_reason()
+    {
+        LocalizationService.Instance.Apply("en");
+        var areas = Enumerable.Range(1, 9)
+            .Select(i => new CleanupHistoryArea { Id = $"area-{i}", TitleKey = "CleanupGroupTempFiles", FreedBytes = i * 1000 })
+            .ToList();
+        areas.Insert(0, new CleanupHistoryArea
+        {
+            Id = "all-users-temp", TitleKey = "CleanupUserTemp", NotDone = true, NoteKey = "CleanupNeedsAdminSkipped",
+        });
+        var row = new CleanupHistoryRowViewModel(new CleanupHistoryEntry
+        {
+            Timestamp = DateTimeOffset.UtcNow, FreedBytes = 45_000, Areas = areas,
+        });
+
+        Assert.Equal(string.Format(LocalizationService.Instance["CleanupHistoryEntrySummary"], 9), row.SummaryText);
+        Assert.Equal(10, row.Areas.Count);
+        Assert.False(row.Areas[8].IsNotDone);
+        var skipped = row.Areas[9];
+        Assert.True(skipped.IsNotDone);
+        Assert.False(skipped.ShowsFreed);
+        Assert.Equal(LocalizationService.Instance["CleanupNeedsAdminSkipped"], skipped.NoteText);
+    }
+
     /// <summary>The history overview's four figures: everything freed across every run, how many runs,
     /// the newest one's date, and the three categories that gave up the most, summed across runs, not
     /// per run, since the same category can appear in several of them.</summary>
