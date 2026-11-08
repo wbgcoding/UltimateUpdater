@@ -2398,4 +2398,16 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="SelfUpdateCancelUpdate" xml:space="preserve">
     <value>Güncellemeyi iptal et</value>
   </data>
+  <data name="FilterChipCritical" xml:space="preserve">
+    <value>Kritik</value>
+  </data>
+  <data name="FilterChipIgnored" xml:space="preserve">
+    <value>Yoksayılan</value>
+  </data>
+  <data name="FilterChipManual" xml:space="preserve">
+    <value>Elle</value>
+  </data>
+  <data name="FilterChipFailures" xml:space="preserve">
+    <value>Başarısız ({0})</value>
+  </data>
 </root>

@@ -2398,4 +2398,16 @@ Continuați cu drepturi de administrator?</value>
   <data name="SelfUpdateCancelUpdate" xml:space="preserve">
     <value>Anulează actualizarea</value>
   </data>
+  <data name="FilterChipCritical" xml:space="preserve">
+    <value>Critice</value>
+  </data>
+  <data name="FilterChipIgnored" xml:space="preserve">
+    <value>Ignorate</value>
+  </data>
+  <data name="FilterChipManual" xml:space="preserve">
+    <value>Manual</value>
+  </data>
+  <data name="FilterChipFailures" xml:space="preserve">
+    <value>Eșuate ({0})</value>
+  </data>
 </root>

@@ -2398,4 +2398,16 @@ Doorgaan met beheerdersrechten?</value>
   <data name="SelfUpdateCancelUpdate" xml:space="preserve">
     <value>Update annuleren</value>
   </data>
+  <data name="FilterChipCritical" xml:space="preserve">
+    <value>Kritiek</value>
+  </data>
+  <data name="FilterChipIgnored" xml:space="preserve">
+    <value>Genegeerd</value>
+  </data>
+  <data name="FilterChipManual" xml:space="preserve">
+    <value>Handmatig</value>
+  </data>
+  <data name="FilterChipFailures" xml:space="preserve">
+    <value>Mislukt ({0})</value>
+  </data>
 </root>

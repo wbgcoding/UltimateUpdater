@@ -2398,4 +2398,16 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="SelfUpdateCancelUpdate" xml:space="preserve">
     <value>取消更新</value>
   </data>
+  <data name="FilterChipCritical" xml:space="preserve">
+    <value>严重</value>
+  </data>
+  <data name="FilterChipIgnored" xml:space="preserve">
+    <value>已忽略</value>
+  </data>
+  <data name="FilterChipManual" xml:space="preserve">
+    <value>手动</value>
+  </data>
+  <data name="FilterChipFailures" xml:space="preserve">
+    <value>失败（{0}）</value>
+  </data>
 </root>

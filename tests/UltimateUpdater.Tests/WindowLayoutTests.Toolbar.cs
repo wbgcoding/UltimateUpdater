@@ -79,4 +79,50 @@ public partial class WindowLayoutTests
         // whatever the width, all four labels or none: a mix would look broken
         Assert.True(visibleLabels is 0 or 4, $"[{language} {windowWidth}, panel {panelWidth:0}] {visibleLabels} labels shown");
     }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    [InlineData("pt")]
+    [InlineData("pl")]
+    [InlineData("tr")]
+    [InlineData("zh-Hans")]
+    public void Filter_chips_keep_their_text_at_the_default_width(string language)
+    {
+        RenderResult? result = null;
+        var hidden = new List<string>();
+        var tops = new List<double>();
+        double panelWidth = 0;
+
+        WpfHarness.OnUiThread(() =>
+        {
+            var (viewModel, theme, settings) = CreateMainViewModel(language);
+            Populate(viewModel);
+            viewModel.Updates[0].InstallState = RowInstallState.NeedsManualWork;
+            Assert.True(viewModel.ShowPersistentFailureFilter);
+
+            var window = new MainWindow(viewModel, theme, settings);
+            var content = (FrameworkElement)window.Content;
+            Assert.Equal(1160, window.Width);
+            result = WpfHarness.RenderWindow(window, $"main-chiptext-{language}", (int)window.Width, 700);
+
+            var panel = FindByName<WrapPanel>(content, "ToolbarWrapPanel")!;
+            panelWidth = panel.ActualWidth;
+            tops.Add(FindByName<FrameworkElement>(content, "SearchBox")!.TranslatePoint(default, panel).Y);
+            foreach (var name in FilterChipNames)
+            {
+                var chip = FindByName<FrameworkElement>(content, name)!;
+                tops.Add(chip.TranslatePoint(default, panel).Y);
+                Assert.True(chip.ActualHeight >= 32, $"{name} is {chip.ActualHeight} high");
+                var label = (TextBlock)((Panel)((ContentControl)chip).Content).Children[1];
+                if (label.Visibility != Visibility.Visible)
+                    hidden.Add(name);
+            }
+        });
+
+        AssertRendered(result);
+        Assert.True(hidden.Count == 0, $"[{language}, panel {panelWidth:0}] labels hidden: {string.Join(", ", hidden)}");
+        // search box and all four chips on one row: their tops differ only by the search box's own height offset
+        Assert.True(tops.Max() - tops.Min() < 8, $"[{language}] toolbar wraps: tops {string.Join(", ", tops.Select(t => t.ToString("0.#")))}");
+    }
 }

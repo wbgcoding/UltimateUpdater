@@ -277,7 +277,8 @@ public partial class MainWindow : FluentWindow
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainViewModel.ShowPersistentFailureFilter)
-            or nameof(MainViewModel.PersistentFailureFilterLabel) or "")
+            or nameof(MainViewModel.PersistentFailureFilterLabel)
+            or nameof(MainViewModel.PersistentFailureChipLabel) or "")
         {
             ScheduleFilterChipLabelUpdate();
         }

@@ -2398,4 +2398,16 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="SelfUpdateCancelUpdate" xml:space="preserve">
     <value>更新をキャンセル</value>
   </data>
+  <data name="FilterChipCritical" xml:space="preserve">
+    <value>重要</value>
+  </data>
+  <data name="FilterChipIgnored" xml:space="preserve">
+    <value>無視</value>
+  </data>
+  <data name="FilterChipManual" xml:space="preserve">
+    <value>手動</value>
+  </data>
+  <data name="FilterChipFailures" xml:space="preserve">
+    <value>失敗（{0}）</value>
+  </data>
 </root>

@@ -2398,4 +2398,16 @@ Continuer avec les droits administrateur ?</value>
   <data name="SelfUpdateCancelUpdate" xml:space="preserve">
     <value>Annuler la mise à jour</value>
   </data>
+  <data name="FilterChipCritical" xml:space="preserve">
+    <value>Critiques</value>
+  </data>
+  <data name="FilterChipIgnored" xml:space="preserve">
+    <value>Ignorés</value>
+  </data>
+  <data name="FilterChipManual" xml:space="preserve">
+    <value>Manuel</value>
+  </data>
+  <data name="FilterChipFailures" xml:space="preserve">
+    <value>Échecs ({0})</value>
+  </data>
 </root>
