@@ -146,7 +146,7 @@ public class ExitRequestListenerTests
         // Windows reports the auto-inherited flag (S:AI) on read-back; the label ACE itself is what is pinned
         Assert.StartsWith("S:", label);
         Assert.EndsWith("(ML;;NW;;;ME)", label);
-        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(label, @"\(ML;").Count);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(label, @"\(ML;"));
     }
 
     [Fact]
