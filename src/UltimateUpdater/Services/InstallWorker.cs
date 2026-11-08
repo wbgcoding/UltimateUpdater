@@ -27,6 +27,13 @@ public static class InstallWorker
     /// <summary>Hard ceiling on the parallel-install budget, whatever the job claims (see <see cref="InstallJobFile.MaxParallelInstalls"/>).</summary>
     private const int MaxParallelInstallsCap = 5;
 
+    /// <summary>The source name from the job, kept only when it is a plain name: it lands on an elevated winget
+    /// command line, and <see cref="WingetSource.SafeSource"/> checks it once more right there.</summary>
+    private static Dictionary<string, string> PackageSourceMeta(string? name) =>
+        name is not null && WingetSource.IsSafeSourceName(name)
+            ? new Dictionary<string, string> { [WingetSource.SourceMetaKey] = name }
+            : new Dictionary<string, string>();
+
     /// <summary>
     /// How often the buffer is flushed purely on a clock, on top of the explicit drains around each step
     /// below. Those explicit calls cover the boundary between steps; this covers the inside of one, a
@@ -376,7 +383,8 @@ public static class InstallWorker
             || jobItem.Name.Length > MaxFieldLength
             || (jobItem.InstalledVersion?.Length ?? 0) > MaxFieldLength
             || (jobItem.AvailableVersion?.Length ?? 0) > MaxFieldLength
-            || (jobItem.PinnedVersion?.Length ?? 0) > MaxFieldLength)
+            || (jobItem.PinnedVersion?.Length ?? 0) > MaxFieldLength
+            || (jobItem.PackageSource?.Length ?? 0) > MaxFieldLength)
         {
             logging.Error($"Elevated worker: rejecting item '{jobItem.ItemId}', a field exceeds {MaxFieldLength} characters.");
             if (!Send(writer, jobId, Result(jobItem.SourceId, jobItem.ItemId, false, "Rejected: a field exceeds the allowed length.")))
@@ -418,6 +426,7 @@ public static class InstallWorker
             // would in-process (WingetSource.InstallAsync).
             PinnedVersion = jobItem.PinnedVersion,
             InstallScope = InstallScopes.Normalize(jobItem.Scope),
+            Meta = PackageSourceMeta(jobItem.PackageSource),
         };
 
         // NOT System.Progress<T>: it posts its callback to the captured

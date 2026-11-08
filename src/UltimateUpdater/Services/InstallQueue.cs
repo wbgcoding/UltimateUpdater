@@ -105,6 +105,20 @@ public sealed class InstallQueue
 
     public event Action<InstallItemStatus>? StatusChanged;
 
+    /// <summary>The reference the elevated worker gets for one item: never a live object, only what it needs
+    /// to rebuild the item itself.</summary>
+    internal static InstallJobItem ToJobItem(UpdateItem item, InstallAction action) => new()
+    {
+        SourceId = item.SourceId,
+        ItemId = item.Id,
+        Name = item.Name,
+        InstalledVersion = item.InstalledVersion,
+        AvailableVersion = item.AvailableVersion,
+        PinnedVersion = item.PinnedVersion,
+        Scope = action == InstallAction.FreshInstall ? item.InstallScope : null,
+        PackageSource = Sources.WingetSource.SafeSource(item),
+    };
+
     /// <summary>
     /// Fires once, right before the batch's own automatic second attempt actually starts (there
     /// is something eligible to retry). Purely a UI cue, so the queue panel can show the retry round as
@@ -1028,16 +1042,7 @@ public sealed class InstallQueue
             // not reduced by anything this half is running at the same time; it clamps this itself
             // regardless of what is sent.
             MaxParallelInstalls = _settings.Current.Install.MaxParallelInstalls,
-            Items = items.Select(i => new InstallJobItem
-            {
-                SourceId = i.SourceId,
-                ItemId = i.Id,
-                Name = i.Name,
-                InstalledVersion = i.InstalledVersion,
-                AvailableVersion = i.AvailableVersion,
-                PinnedVersion = i.PinnedVersion,
-                Scope = action == InstallAction.FreshInstall ? i.InstallScope : null,
-            }).ToList(),
+            Items = items.Select(i => ToJobItem(i, action)).ToList(),
         };
 
         // Flushed so the file on disk is current for the next app start.

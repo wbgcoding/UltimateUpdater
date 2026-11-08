@@ -15,4 +15,9 @@ public sealed class InstallJobItem
     /// <summary>A fresh install's scope, "user" or "machine" (<see cref="InstallScopes"/>); null = none named.
     /// The worker checks it again and refuses anything else.</summary>
     public string? Scope { get; set; }
+
+    /// <summary>The winget source the app's scan found the package in, so the worker, which rebuilds the item
+    /// from this job without a scan of its own, pins the install to it too. Only a plain name is ever passed
+    /// on; the worker checks it again and drops anything else.</summary>
+    public string? PackageSource { get; set; }
 }

@@ -42,11 +42,11 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
     /// own argument, never inside a shell string.
     /// </summary>
     internal static string? SafeSource(UpdateItem item) =>
-        item.Meta.TryGetValue(SourceMetaKey, out var name)
-        && SourceNamePattern.IsMatch(name)
-        && ProcessRunner.IsSafePositionalArgument(name)
-            ? name
-            : null;
+        item.Meta.TryGetValue(SourceMetaKey, out var name) && IsSafeSourceName(name) ? name : null;
+
+    /// <summary>A plain source name: letters, digits, dot, dash and underscore, never option-shaped.</summary>
+    internal static bool IsSafeSourceName(string name) =>
+        SourceNamePattern.IsMatch(name) && ProcessRunner.IsSafePositionalArgument(name);
 
     private static IEnumerable<string> SourceArguments(string? source) =>
         source is null ? [] : ["--source", source];
