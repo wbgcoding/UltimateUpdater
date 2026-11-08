@@ -337,9 +337,19 @@ public static class RegistryCleanupScanner
     internal static bool ExistsByAttributes(string path, Func<string, int> queryError)
     {
         // Past MAX_PATH the plain Win32 name is refused with "path not found" although the file is there.
-        var probe = path.Length >= 240 && !path.StartsWith(@"\\", StringComparison.Ordinal)
-            ? @"\\?\" + path
-            : path;
+        // The prefix also switches off Win32 name normalisation, so the path is normalised first: an
+        // unresolved "..", a forward slash or a trailing dot would otherwise name nothing and read as missing.
+        string probe;
+        try
+        {
+            probe = path.Length >= 240 && !path.StartsWith(@"\\", StringComparison.Ordinal)
+                ? @"\\?\" + Path.GetFullPath(path)
+                : path;
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or IOException)
+        {
+            return true;
+        }
 
         var error = queryError(probe);
         return error != ErrorFileNotFound && error != ErrorPathNotFound;

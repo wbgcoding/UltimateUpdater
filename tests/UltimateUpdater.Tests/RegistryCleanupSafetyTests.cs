@@ -349,7 +349,7 @@ public class RegistryBackupServiceTests
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
             })!;
-            mklink.WaitForExit(5000);
+            Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
             Assert.Equal(0, mklink.ExitCode);
 
             var result = await RegistryBackupService.BackupBeforeWriteAsync(
@@ -615,6 +615,20 @@ public class RegistryCleanupExistenceTests : IDisposable
         Assert.Equal(@"C:\short\x.exe", seen);
     }
 
+    /// <summary>The extended prefix turns off name normalisation, so a long path is normalised before it gets
+    /// one: a "..", a forward slash or a trailing dot must not make a present file read as missing.</summary>
+    [Fact]
+    public void A_long_path_is_normalised_before_it_gets_the_extended_prefix()
+    {
+        string? seen = null;
+        var folder = @"C:\" + new string('a', 250);
+        RegistryCleanupScanner.ExistsByAttributes(folder + @"\sub\..\x.exe.", p => { seen = p; return 2; });
+        Assert.Equal(@"\\?\" + folder + @"\x.exe", seen);
+
+        RegistryCleanupScanner.ExistsByAttributes(folder.Replace('\\', '/') + "/x.exe", p => { seen = p; return 2; });
+        Assert.Equal(@"\\?\" + folder + @"\x.exe", seen);
+    }
+
     [Fact]
     public void A_present_file_exists_and_a_deleted_one_does_not()
     {
@@ -686,8 +700,8 @@ public class RegistryCleanupInstallLocationTests
     {
         using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey($@"{UninstallRoot}\{name}");
         key!.SetValue("DisplayName", "Test App");
-        key.SetValue("DisplayIcon", @"C:\this-folder-does-not-exist-617\app.exe,0");
-        key.SetValue("UninstallString", @"""C:\this-folder-does-not-exist-617\unins000.exe""");
+        key.SetValue("DisplayIcon", @"C:\this-folder-does-not-exist\app.exe,0");
+        key.SetValue("UninstallString", @"""C:\this-folder-does-not-exist\unins000.exe""");
         if (installLocation is not null)
             key.SetValue("InstallLocation", installLocation);
 
@@ -740,7 +754,7 @@ public class RegistryCleanupInstallLocationTests
         var none = "wu-test-installloc-none-" + Guid.NewGuid().ToString("N");
         try
         {
-            var goneKey = MakeEntry(gone, @"C:\this-folder-does-not-exist-617\install");
+            var goneKey = MakeEntry(gone, @"C:\this-folder-does-not-exist\install");
             var noneKey = MakeEntry(none, null);
 
             Assert.True(RegistryCleanupScanner.TryJudgeUninstallEntryBroken(goneKey, out _));
