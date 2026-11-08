@@ -873,7 +873,10 @@ public class CleanupService(LoggingService logging)
                 continue;
 
             var command = target.CleanCommands[directory];
-            var (beforeBytes, beforeFiles, youngFiles) = MeasureFolder(directory, cutoff, cancellationToken);
+            // uv hardlinks cache files into environments, so a name that vanishes can leave its data on disk.
+            // Only a file nothing else links to frees its bytes; one that was already in use that way never does.
+            var soleOwned = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+            var (beforeBytes, beforeFiles, youngFiles) = MeasureFolder(directory, cutoff, cancellationToken, soleOwned);
             var notRun = await TryRunCleanCommandAsync(
                 target, directory, command, excludedEntryPaths, youngFiles, cancellationToken);
 
@@ -888,7 +891,12 @@ public class CleanupService(LoggingService logging)
             // What the folder holds now decides what was freed; a tool that said yes but left files behind
             // does not get credit for them.
             var (afterBytes, afterFiles, _) = MeasureFolder(directory, null, cancellationToken);
-            freed += Math.Max(0, beforeBytes - afterBytes);
+            foreach (var (file, length) in soleOwned)
+            {
+                if (!File.Exists(file))
+                    freed += length;
+            }
+
             deleted += Math.Max(0, beforeFiles - afterFiles);
             skipped += afterFiles;
             skippedBytes += afterBytes;
@@ -943,7 +951,8 @@ public class CleanupService(LoggingService logging)
     /// <summary>Size and count of every file below a folder, links not followed, plus how many of them lie
     /// inside the age window (<paramref name="cutoffUtc"/> null counts none).</summary>
     private (long Bytes, int Files, int Young) MeasureFolder(
-        string directory, DateTime? cutoffUtc, CancellationToken cancellationToken)
+        string directory, DateTime? cutoffUtc, CancellationToken cancellationToken,
+        Dictionary<string, long>? soleOwned = null)
     {
         long bytes = 0;
         var files = 0;
@@ -952,6 +961,9 @@ public class CleanupService(LoggingService logging)
         {
             bytes += found.Length;
             files++;
+            if (soleOwned is not null && VerifiedDelete.HasSingleLink(found.Path))
+                soleOwned[found.Path] = found.Length;
+
             if (cutoffUtc is { } limit && IsTooNew(found.CreationUtc, found.LastWriteUtc, limit))
                 young++;
         }

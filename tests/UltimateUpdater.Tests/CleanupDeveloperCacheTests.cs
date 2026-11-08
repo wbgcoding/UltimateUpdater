@@ -279,6 +279,37 @@ public class CleanupDeveloperCacheTests : IDisposable
         Assert.False(File.Exists(file));
     }
 
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool CreateHardLinkW(string newName, string existingName, IntPtr reserved);
+
+    [Fact]
+    public async Task A_cache_file_that_another_name_still_keeps_is_not_credited_as_freed()
+    {
+        var uv = Folder(_local, "uv", "cache");
+        var linked = AgedFile(uv, "linked.bin", TimeSpan.FromDays(3), 500);
+        AgedFile(uv, "alone.bin", TimeSpan.FromDays(3), 300);
+        var venvName = Path.Combine(Folder(_root, "venv"), "linked.bin");
+        Assert.True(CreateHardLinkW(venvName, linked, IntPtr.Zero));
+        var tool = new FakeTool
+        {
+            Behaviour = (_, args) =>
+            {
+                foreach (var entry in Directory.GetFiles(args[3]))
+                    File.Delete(entry);
+                return new ProcessResult(0, "", "");
+            },
+        };
+
+        var outcome = await ServiceWith(tool, @"C:\tools\uv.exe")
+            .CleanAsync(UvTarget(uv), progress: null, CancellationToken.None);
+
+        Assert.Equal(300, outcome.FreedBytes);
+        Assert.Equal(2, outcome.DeletedFiles);
+        Assert.Equal(0, outcome.SkippedFiles);
+        Assert.True(File.Exists(venvName));
+    }
+
     [Fact]
     public async Task A_failing_command_leaves_the_folder_untouched_and_counted_as_not_freed()
     {
