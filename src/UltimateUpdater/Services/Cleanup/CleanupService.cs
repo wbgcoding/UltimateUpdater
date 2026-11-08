@@ -1284,8 +1284,8 @@ public class CleanupService(LoggingService logging)
 
         if (registrySettings is null)
         {
-            logging.Error($"Registry cleanup: no backup settings available for '{target.Id}'; refusing to write.");
-            return new CleanupOutcome(0, 0, 0);
+            logging.Warn($"Registry cleanup: no backup settings available for '{target.Id}'; {cleanable.Count} finding(s) kept, nothing written.");
+            return new CleanupOutcome(0, 0, cleanable.Count, Failed: true);
         }
 
         // One combined backup ahead of the whole row's write, covering every root any of its categories
@@ -1300,8 +1300,8 @@ public class CleanupService(LoggingService logging)
 
         if (backup is null)
         {
-            logging.Error($"Registry cleanup: backup failed or found nothing for '{target.Id}'; nothing was deleted.");
-            return new CleanupOutcome(0, 0, 0);
+            logging.Warn($"Registry cleanup: backup failed or found nothing for '{target.Id}'; {cleanable.Count} finding(s) kept, nothing was deleted.");
+            return new CleanupOutcome(0, 0, cleanable.Count, Failed: true);
         }
 
         logging.Info($"Registry cleanup: backed up {backup.ExportedRoots.Count} key(s) to '{backup.Path}' before cleaning '{target.Id}'.");
