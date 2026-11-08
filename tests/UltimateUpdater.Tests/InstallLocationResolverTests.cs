@@ -156,6 +156,67 @@ public class InstallLocationResolverTests
         Assert.Equal(folder, resolver.Resolve(Item("Bar")));
     }
 
+    /// <summary>A stale InstallLocation (the program was moved or removed by hand) must not win over a
+    /// DisplayIcon that still points at the real folder.</summary>
+    [Fact]
+    public void An_install_location_that_no_longer_exists_falls_back_to_the_display_icon_folder()
+    {
+        const string real = @"C:\Program Files\Moved App";
+        var registry = new FakeRegistry()
+            .Set($@"{MachineUninstall}\MovedApp", "DisplayName", "Moved App")
+            .Set($@"{MachineUninstall}\MovedApp", "InstallLocation", @"C:\Old\Gone")
+            .Set($@"{MachineUninstall}\MovedApp", "DisplayIcon", $@"{real}\moved.exe,0");
+        var resolver = new InstallLocationResolver(registry, dir => dir == real, _ => false, windowsDirectory: @"C:\Windows");
+
+        Assert.Equal(real, resolver.Resolve(Item("Moved App", id: "MovedApp")));
+    }
+
+    [Fact]
+    public void An_existing_install_location_still_wins_over_the_display_icon()
+    {
+        const string location = @"C:\Program Files\Kept App";
+        var registry = new FakeRegistry()
+            .Set($@"{MachineUninstall}\KeptApp", "DisplayName", "Kept App")
+            .Set($@"{MachineUninstall}\KeptApp", "InstallLocation", location)
+            .Set($@"{MachineUninstall}\KeptApp", "DisplayIcon", @"C:\Other\icon.exe");
+        var resolver = new InstallLocationResolver(registry, dir => dir == location, _ => false, windowsDirectory: @"C:\Windows");
+
+        Assert.Equal(location, resolver.Resolve(Item("Kept App", id: "KeptApp")));
+    }
+
+    /// <summary>An MSI entry usually has no InstallLocation and a DisplayIcon inside the Windows Installer
+    /// cache; that folder is not where the program lives and nothing there should be started.</summary>
+    [Theory]
+    [InlineData(@"C:\Windows\Installer\{1234}\app.ico.exe")]
+    [InlineData(@"C:\WINDOWS\installer\{1234}\icon.exe")]
+    [InlineData(@"C:\Windows\System32\msiexec.exe")]
+    [InlineData(@"C:\Windows\SysWOW64\setup.exe")]
+    public void A_display_icon_inside_the_windows_system_area_is_neither_a_folder_nor_a_launch_target(string icon)
+    {
+        var registry = new FakeRegistry()
+            .Set($@"{MachineUninstall}\MsiApp", "DisplayName", "Msi App")
+            .Set($@"{MachineUninstall}\MsiApp", "DisplayIcon", icon);
+        var resolver = new InstallLocationResolver(registry, _ => true, _ => true, windowsDirectory: @"C:\Windows");
+        var item = Item("Msi App", id: "MsiApp");
+
+        Assert.Null(resolver.Resolve(item));
+        Assert.Null(resolver.ResolveLaunchExe(item));
+    }
+
+    [Fact]
+    public void A_display_icon_outside_the_windows_folder_is_still_used()
+    {
+        const string folder = @"C:\Program Files\Normal";
+        var registry = new FakeRegistry()
+            .Set($@"{MachineUninstall}\Normal", "DisplayName", "Normal")
+            .Set($@"{MachineUninstall}\Normal", "DisplayIcon", $@"{folder}\normal.exe");
+        var resolver = new InstallLocationResolver(registry, dir => dir == folder, _ => true, windowsDirectory: @"C:\Windows");
+        var item = Item("Normal", id: "Normal");
+
+        Assert.Equal(folder, resolver.Resolve(item));
+        Assert.Equal($@"{folder}\normal.exe", resolver.ResolveLaunchExe(item));
+    }
+
     [Fact]
     public void The_uninstall_key_name_matches_when_it_equals_the_package_id()
     {
