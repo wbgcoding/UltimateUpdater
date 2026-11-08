@@ -1918,9 +1918,6 @@ Esto no se puede deshacer.</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Acerca de</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Un solo lugar para cada actualización pendiente en este PC.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Versión {0}</value>
   </data>
@@ -2262,5 +2259,35 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Abrir carpeta de registros</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Copia de seguridad antes de cada limpieza del registro</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Limpieza muestra resultados al instante</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Más a la vez es más rápido</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Como máximo uno al día</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>La copia más antigua se elimina primero</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>El antivirus revisa los archivos descargados</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Desactivado: azul de la app. Activado: acento de Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Excluidas con clic derecho en Limpieza</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portable: datos junto al programa</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Proyecto independiente. Las marcas pertenecen a sus propietarios.</value>
   </data>
 </root>

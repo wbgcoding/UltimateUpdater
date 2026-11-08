@@ -1918,9 +1918,6 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Über</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Alle Updates dieses PCs an einem Ort.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Version {0}</value>
   </data>
@@ -2262,5 +2259,35 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Protokollordner öffnen</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Sicherung vor jeder Registry-Bereinigung</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Bereinigen zeigt sofort Werte</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Mehr gleichzeitig geht schneller</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Höchstens einer pro Tag</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>Die älteste Sicherung fällt zuerst weg</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>Virenschutz prüft geladene Dateien</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Aus: App-Blau. An: Windows-Akzent</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Per Rechtsklick im Bereinigen ausgeschlossen</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portabel: Daten neben dem Programm</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Unabhängiges Projekt. Marken gehören ihren Inhabern.</value>
   </data>
 </root>

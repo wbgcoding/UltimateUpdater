@@ -328,6 +328,10 @@ public partial class SettingsViewModel : ObservableObject
     public string AboutVersionText =>
         string.Format(Loc["AboutVersion"], Services.SelfUpdate.SelfUpdateService.CurrentVersion);
 
+    /// <summary>The full legal notes behind the short About line, one paragraph each, for its tooltip.</summary>
+    public string AboutLegalFull =>
+        string.Join("\n\n", Loc["AboutThirdParty"], Loc["AboutTrademarks"], Loc["AboutIcons"]);
+
     /// <summary>
     /// One row of outbound traffic this program itself generates, mirroring
     /// the outbound traffic table of the design notes; when those notes are present, a test asserts the two
@@ -675,6 +679,7 @@ public partial class SettingsViewModel : ObservableObject
         // Computed text bound in this very window, not reached by the Loc[...] bindings.
         OnPropertyChanged(nameof(ExcludedPathsHeaderText));
         OnPropertyChanged(nameof(AboutVersionText));
+        OnPropertyChanged(nameof(AboutLegalFull));
 
         // Loc[...] bindings refresh through the localization service itself, but the interval items
         // are ordinary objects with their own Display property. Without this the one list in the very

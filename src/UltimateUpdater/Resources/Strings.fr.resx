@@ -1918,9 +1918,6 @@ Continuer avec les droits administrateur ?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>À propos</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Un seul endroit pour toutes les mises à jour en attente sur ce PC.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Version {0}</value>
   </data>
@@ -2262,5 +2259,35 @@ Continuer avec les droits administrateur ?</value>
   </data>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Ouvrir le dossier des journaux</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Sauvegarde avant chaque nettoyage du registre</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Le nettoyage affiche tout de suite les résultats</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Plus en parallèle, c'est plus rapide</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Un par jour au maximum</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>La plus ancienne sauvegarde part en premier</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>L'antivirus vérifie les fichiers téléchargés</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Désactivé : bleu de l'app. Activé : accent Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Exclus par clic droit dans Nettoyage</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portable : données à côté du programme</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Projet indépendant. Les marques appartiennent à leurs propriétaires.</value>
   </data>
 </root>

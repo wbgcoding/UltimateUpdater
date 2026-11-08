@@ -1918,9 +1918,6 @@ Continuați cu drepturi de administrator?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Despre</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Un singur loc pentru fiecare actualizare care așteaptă pe acest PC.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Versiunea {0}</value>
   </data>
@@ -2262,5 +2259,35 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Deschide folderul de jurnale</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Copie de siguranță înainte de fiecare curățare a registrului</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Curățarea arată imediat rezultatele</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Mai multe simultan merge mai repede</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Cel mult unul pe zi</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>Cea mai veche copie dispare prima</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>Antivirusul verifică fișierele descărcate</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Oprit: albastrul aplicației. Pornit: accentul Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Excluse prin clic dreapta în Curățare</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portabil: date lângă program</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Proiect independent. Mărcile aparțin proprietarilor lor.</value>
   </data>
 </root>

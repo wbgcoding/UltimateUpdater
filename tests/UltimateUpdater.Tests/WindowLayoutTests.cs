@@ -865,8 +865,8 @@ public partial class WindowLayoutTests
 
             result = WpfHarness.RenderWindow(window, "settings-about-portable-de", (int)window.Width, (int)window.Height + 140);
 
-            Assert.Equal(Visibility.Visible, note!.Visibility);
-            Assert.Equal(LocalizationService.Instance["AboutPortable"], note.Text);
+            Assert.Equal(Visibility.Visible, ((FrameworkElement)window.FindName("AboutPortableRow")!).Visibility);
+            Assert.Equal(LocalizationService.Instance["AboutPortableShort"], note.Text);
             Assert.True(note.ActualHeight > 0, "the portable note was never laid out");
         });
 

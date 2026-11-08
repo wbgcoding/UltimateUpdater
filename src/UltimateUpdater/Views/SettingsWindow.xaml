@@ -39,6 +39,22 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <!-- A hairline between two rows of one card, in the same divider tone as the main table. The
+             negative side margin cancels the card padding so it runs from edge to edge. -->
+        <Style x:Key="CardSeparator" TargetType="Border">
+            <Setter Property="Height" Value="1"/>
+            <Setter Property="Background" Value="{DynamicResource DividerStrokeColorDefaultBrush}"/>
+            <Setter Property="Margin" Value="-14,10,-14,10"/>
+        </Style>
+
+        <!-- The small info mark after a shortened description; its tooltip holds the full text. -->
+        <Style x:Key="CardInfoIcon" TargetType="ui:SymbolIcon">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+            <Setter Property="Margin" Value="4,2,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
         <!-- WPF-UI's Expander only slides its body with a render transform and drops the layout height in
              one frame afterwards, which is the hitch when a card closes. This copy of its template keeps
              the look (header, chevron, hover) and puts the body in a RevealDecorator, which animates the
@@ -55,7 +71,7 @@
                             <Border x:Name="ToggleButtonBorder" Grid.Row="0"
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="1"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
                                     CornerRadius="{TemplateBinding Border.CornerRadius}">
                                 <ToggleButton x:Name="ExpanderToggleButton" Margin="0"
                                               Padding="{TemplateBinding Padding}"
@@ -71,9 +87,9 @@
                                               Template="{StaticResource DefaultExpanderToggleButtonStyle}"/>
                             </Border>
                             <views:RevealDecorator Grid.Row="1" IsOpen="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
-                                <Border Background="{DynamicResource ExpanderContentBackground}"
+                                <Border Background="{TemplateBinding Background}"
                                         BorderBrush="{TemplateBinding BorderBrush}"
-                                        BorderThickness="1,0,1,1" CornerRadius="0,0,4,4">
+                                        BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="0">
                                     <ContentPresenter x:Name="ContentPresenter" Margin="{TemplateBinding Padding}"
                                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
@@ -82,9 +98,6 @@
                             </views:RevealDecorator>
                         </Grid>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsExpanded" Value="True">
-                                <Setter TargetName="ToggleButtonBorder" Property="CornerRadius" Value="4,4,0,0"/>
-                            </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource ExpanderHeaderDisabledForeground}"/>
                                 <Setter TargetName="ExpanderToggleButton" Property="Foreground" Value="{DynamicResource ExpanderHeaderDisabledForeground}"/>
@@ -387,7 +400,7 @@
                             </ComboBox>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -405,7 +418,7 @@
                                              AutomationProperties.Name="{Binding Loc[SettingsScanOnStart]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -503,8 +516,7 @@
                                        Icon="{ui:SymbolIcon EyeOff24}"
                                        Content="{Binding Loc[IgnoreListTitle]}"
                                        Command="{Binding ShowIgnoreListCommand}"/>
-                            <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}"
-                                    Margin="0,0,0,10"/>
+                            <Border Style="{StaticResource CardSeparator}" Margin="-34,0,-34,10"/>
                             <!-- The SAME FilterChip ToggleButton already used for history's own filters
                                  (App.xaml): one control, one "this is on" signal, and the whole pill is
                                  the click target, a checkbox glyph inside an already-clickable coloured
@@ -560,7 +572,7 @@
                                              AutomationProperties.Name="{Binding Loc[SettingsPreselectCritical]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -571,16 +583,20 @@
                             <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
                             <!-- Now explains the at-most-once-per-24-hours rule, so the toggle no
                                  longer needs to say the whole thing on its own. -->
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsRestorePointDesc]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsRestorePoint]}"/>
-                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsRestorePointDesc]}"/>
+                                <WrapPanel>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsRestorePointDescShort]}"/>
+                                    <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                                   ToolTip="{Binding Loc[SettingsRestorePointDesc]}"/>
+                                </WrapPanel>
                             </StackPanel>
                             <ui:ToggleSwitch x:Name="InstallRestorePointToggle" Grid.Column="2" VerticalAlignment="Center"
                                              IsChecked="{Binding CreateRestorePoint}"
                                              AutomationProperties.Name="{Binding Loc[SettingsRestorePoint]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <!-- Optional virus check on the files this app downloads itself. -->
                         <Grid>
@@ -590,16 +606,20 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="ShieldTask24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsScanDownloadsDesc]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsScanDownloads]}"/>
-                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsScanDownloadsDesc]}"/>
+                                <WrapPanel>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsScanDownloadsDescShort]}"/>
+                                    <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                                   ToolTip="{Binding Loc[SettingsScanDownloadsDesc]}"/>
+                                </WrapPanel>
                             </StackPanel>
                             <ui:ToggleSwitch x:Name="InstallScanDownloadsToggle" Grid.Column="2" VerticalAlignment="Center"
                                              IsChecked="{Binding ScanDownloads}"
                                              AutomationProperties.Name="{Binding Loc[SettingsScanDownloads]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <!-- How many installs may run at once; winget among itself, and every
                              source against every other source. -->
@@ -610,9 +630,13 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="ArrowSort24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[InstallParallelHint]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[InstallParallelLabel]}"/>
-                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[InstallParallelHint]}"/>
+                                <WrapPanel>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[InstallParallelHintShort]}"/>
+                                    <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                                   ToolTip="{Binding Loc[InstallParallelHint]}"/>
+                                </WrapPanel>
                                 <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsParallelAuto]}"
                                            Visibility="{Binding ShowParallelismAutoNote, Converter={StaticResource BoolToVisibility}}"/>
                             </StackPanel>
@@ -642,9 +666,13 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="FolderOpen24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsRegistryBackupFolderDesc]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsRegistryBackupFolder]}"/>
-                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsRegistryBackupFolderDesc]}"/>
+                                <WrapPanel>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsRegistryBackupFolderDescShort]}"/>
+                                    <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                                   ToolTip="{Binding Loc[SettingsRegistryBackupFolderDesc]}"/>
+                                </WrapPanel>
                             </StackPanel>
                             <StackPanel x:Name="CleanupBackupFolderLane" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                 <!-- Committed on LostFocus and again when the window closes (SettingsWindow.xaml.cs):
@@ -661,7 +689,7 @@
                             </StackPanel>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -670,9 +698,13 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsRegistryBackupRetentionDesc]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsRegistryBackupRetention]}"/>
-                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsRegistryBackupRetentionDesc]}"/>
+                                <WrapPanel>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsRegistryBackupRetentionDescShort]}"/>
+                                    <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                                   ToolTip="{Binding Loc[SettingsRegistryBackupRetentionDesc]}"/>
+                                </WrapPanel>
                             </StackPanel>
                             <ComboBox x:Name="CleanupRetentionCombo" AutomationProperties.Name="{Binding Loc[SettingsRegistryBackupRetention]}" Grid.Column="2" Style="{StaticResource CardCombo}"
                                       MinWidth="120" HorizontalAlignment="Right"
@@ -687,7 +719,7 @@
                             </ComboBox>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -705,7 +737,7 @@
                                              AutomationProperties.Name="{Binding Loc[CleanupRecycleInsteadOfDelete]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -714,16 +746,20 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="ArrowSync24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[CleanupPrescanAtStartupHint]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[CleanupPrescanAtStartup]}"/>
-                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[CleanupPrescanAtStartupHint]}"/>
+                                <WrapPanel>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[CleanupPrescanAtStartupHintShort]}"/>
+                                    <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                                   ToolTip="{Binding Loc[CleanupPrescanAtStartupHint]}"/>
+                                </WrapPanel>
                             </StackPanel>
                             <ui:ToggleSwitch x:Name="CleanupPrescanToggle" Grid.Column="2" VerticalAlignment="Center"
                                              IsChecked="{Binding CleanupPrescanAtStartup}"
                                              AutomationProperties.Name="{Binding Loc[CleanupPrescanAtStartup]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <!-- Permanently-excluded cleanup paths: a right-click in the cleanup dialog adds to
                              this list, and this is where an entry is released again. Same
@@ -738,9 +774,13 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <ui:SymbolIcon Grid.Column="0" Symbol="FolderOpen24" Style="{StaticResource CardIcon}"/>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsExcludedPathsDesc]}">
                                         <TextBlock Style="{StaticResource CardTitle}" Text="{Binding ExcludedPathsHeaderText}"/>
-                                        <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsExcludedPathsDesc]}"/>
+                                        <WrapPanel>
+                                            <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsExcludedPathsDescShort]}"/>
+                                            <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                                           ToolTip="{Binding Loc[SettingsExcludedPathsDesc]}"/>
+                                        </WrapPanel>
                                     </StackPanel>
                                 </Grid>
                             </Expander.Header>
@@ -835,7 +875,7 @@
                             </StackPanel>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <!-- The logs block: log folder, error reports folder and the log's own retention, plain
                              rows on the same card surface as the data folder row above. -->
@@ -862,7 +902,7 @@
                                            Command="{Binding OpenLogFolderCommand}"/>
                             </Grid>
 
-                            <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                            <Border Style="{StaticResource CardSeparator}"/>
 
                             <!-- The last ten one-click error reports, same row shape as the log
                                  folder above it (a card's action button lives in its own third Auto column,
@@ -886,7 +926,7 @@
                                            Command="{Binding OpenReportsCommand}"/>
                             </Grid>
 
-                            <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                            <Border Style="{StaticResource CardSeparator}"/>
 
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -1030,7 +1070,7 @@
                             </ComboBox>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid x:Name="AccentRow">
                             <Grid.ColumnDefinitions>
@@ -1039,16 +1079,20 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="PaintBrush24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[ThemeSystemAccentDesc]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[ThemeSystemAccent]}"/>
-                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[ThemeSystemAccentDesc]}"/>
+                                <WrapPanel>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[ThemeSystemAccentDescShort]}"/>
+                                    <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                                   ToolTip="{Binding Loc[ThemeSystemAccentDesc]}"/>
+                                </WrapPanel>
                             </StackPanel>
                             <ui:ToggleSwitch x:Name="SystemAccentToggle" Grid.Column="2" VerticalAlignment="Center"
                                              IsChecked="{Binding UseSystemAccent}" IsEnabled="{Binding CanChooseAccent}"
                                              AutomationProperties.Name="{Binding Loc[ThemeSystemAccent]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -1243,25 +1287,27 @@
                                        RenderOptions.BitmapScalingMode="HighQuality"/>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[AppTitle]}"/>
-                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[AboutTagline]}"/>
                                     <TextBlock Style="{StaticResource CardDesc}" Text="{Binding AboutVersionText}"/>
                                     <!-- Only for a portable copy; AppPaths.IsPortable never changes after the process
                                          starts, so a one-time x:Static read is enough. -->
-                                    <TextBlock x:Name="AboutPortableText" Style="{StaticResource CardDesc}" TextWrapping="Wrap"
-                                               Text="{Binding Loc[AboutPortable]}"
-                                               Visibility="{Binding Source={x:Static services:AppPaths.IsPortable}, Converter={StaticResource BoolToVisibility}}"/>
+                                    <WrapPanel x:Name="AboutPortableRow" ToolTip="{Binding Loc[AboutPortable]}"
+                                                Visibility="{Binding Source={x:Static services:AppPaths.IsPortable}, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock x:Name="AboutPortableText" Style="{StaticResource CardDesc}"
+                                                   Text="{Binding Loc[AboutPortableShort]}"/>
+                                        <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                                       ToolTip="{Binding Loc[AboutPortable]}"/>
+                                    </WrapPanel>
                                     <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[AboutLicence]}"/>
                                 </StackPanel>
                                 <ui:Button Grid.Column="2" VerticalAlignment="Center"
                                            Content="{Binding Loc[AboutRepository]}"
                                            Command="{Binding OpenRepositoryCommand}"/>
                             </Grid>
-                            <TextBlock Style="{StaticResource CardDesc}" Margin="0,12,0,0" TextWrapping="Wrap"
-                                       Text="{Binding Loc[AboutThirdParty]}"/>
-                            <TextBlock Style="{StaticResource CardDesc}" Margin="0,4,0,0" TextWrapping="Wrap"
-                                       Text="{Binding Loc[AboutTrademarks]}"/>
-                            <TextBlock Style="{StaticResource CardDesc}" Margin="0,4,0,0" TextWrapping="Wrap"
-                                       Text="{Binding Loc[AboutIcons]}"/>
+                            <WrapPanel Margin="0,12,0,0" ToolTip="{Binding AboutLegalFull}">
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[AboutLegalShort]}"/>
+                                <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                               ToolTip="{Binding AboutLegalFull}"/>
+                            </WrapPanel>
                         </StackPanel>
                     </Expander>
                 </Border>

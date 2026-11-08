@@ -1918,9 +1918,6 @@ Continuar com direitos de administrador?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Sobre</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Um único lugar para cada atualização pendente neste PC.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Versão {0}</value>
   </data>
@@ -2262,5 +2259,35 @@ Continuar com direitos de administrador?</value>
   </data>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Abrir pasta de logs</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Cópia de segurança antes de cada limpeza do registo</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>A limpeza mostra logo os resultados</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Mais em simultâneo é mais rápido</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>No máximo um por dia</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>A cópia mais antiga sai primeiro</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>O antivírus verifica os ficheiros transferidos</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Desligado: azul da app. Ligado: destaque do Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Excluídos com clique direito na Limpeza</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portátil: dados junto ao programa</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Projeto independente. As marcas pertencem aos respetivos proprietários.</value>
   </data>
 </root>

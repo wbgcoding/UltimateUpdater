@@ -1918,9 +1918,6 @@ Continuare con privilegi di amministratore?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Informazioni</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Un unico posto per ogni aggiornamento in attesa su questo PC.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Versione {0}</value>
   </data>
@@ -2262,5 +2259,35 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Apri la cartella dei registri</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Backup prima di ogni pulizia del registro</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>La pulizia mostra subito i risultati</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Più alla volta è più veloce</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Al massimo uno al giorno</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>Il backup più vecchio viene eliminato per primo</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>L'antivirus controlla i file scaricati</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Disattivato: blu dell'app. Attivato: colore di Windows</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Esclusi con clic destro in Pulizia</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Portatile: dati accanto al programma</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Progetto indipendente. I marchi appartengono ai rispettivi proprietari.</value>
   </data>
 </root>

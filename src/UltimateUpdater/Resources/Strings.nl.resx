@@ -1918,9 +1918,6 @@ Doorgaan met beheerdersrechten?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Over</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Eén plek voor elke update die op deze pc wacht.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Versie {0}</value>
   </data>
@@ -2262,5 +2259,35 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Logmap openen</value>
+  </data>
+  <data name="SettingsRegistryBackupFolderDescShort" xml:space="preserve">
+    <value>Back-up vóór elke registeropschoning</value>
+  </data>
+  <data name="CleanupPrescanAtStartupHintShort" xml:space="preserve">
+    <value>Opschonen toont meteen resultaten</value>
+  </data>
+  <data name="InstallParallelHintShort" xml:space="preserve">
+    <value>Meer tegelijk is sneller</value>
+  </data>
+  <data name="SettingsRestorePointDescShort" xml:space="preserve">
+    <value>Maximaal één per dag</value>
+  </data>
+  <data name="SettingsRegistryBackupRetentionDescShort" xml:space="preserve">
+    <value>De oudste back-up gaat als eerste weg</value>
+  </data>
+  <data name="SettingsScanDownloadsDescShort" xml:space="preserve">
+    <value>Antivirus controleert gedownloade bestanden</value>
+  </data>
+  <data name="ThemeSystemAccentDescShort" xml:space="preserve">
+    <value>Uit: app-blauw. Aan: Windows-accent</value>
+  </data>
+  <data name="SettingsExcludedPathsDescShort" xml:space="preserve">
+    <value>Uitgesloten via rechtsklik in Opschonen</value>
+  </data>
+  <data name="AboutPortableShort" xml:space="preserve">
+    <value>Draagbaar: gegevens naast het programma</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Onafhankelijk project. Merken zijn eigendom van hun eigenaren.</value>
   </data>
 </root>
