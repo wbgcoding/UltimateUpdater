@@ -13,7 +13,7 @@ namespace UltimateUpdater.Services.Sources;
 /// </summary>
 public sealed class AndroidStudioSource(LoggingService logging) : IUpdateSource
 {
-    private static readonly Lazy<string?> ResolvedStudio = new(FindStudio);
+    private static readonly FoundOnceCache<string?> ResolvedStudio = new(FindStudio, studio => studio is not null);
 
     public string Id => "android-studio";
 

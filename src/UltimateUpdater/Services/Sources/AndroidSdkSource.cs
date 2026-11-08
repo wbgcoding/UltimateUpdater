@@ -22,8 +22,8 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
     /// <summary>A few MB in practice; refuse anything wildly larger rather than buffer it whole.</summary>
     private const long MaxManifestBytes = 32L * 1024 * 1024;
 
-    private static readonly Lazy<(string? Executable, string? SdkRoot, bool UseAndroidCli)> Resolved =
-        new(ResolveTool);
+    private static readonly FoundOnceCache<(string? Executable, string? SdkRoot, bool UseAndroidCli)> Resolved =
+        new(ResolveTool, tool => tool.Executable is not null);
 
     /// <summary>The newest command-line tools ship `android.exe` beside `sdkmanager.bat`, which only
     /// forwards to it. When it is there it is run directly: no Java needed, and it updates ONE package
@@ -40,7 +40,7 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
     // (not a normal sdkmanager error) when the java.exe it finds is older than the 17+ its bundled
     // cmdline-tools require. Resolving JAVA_HOME ourselves and handing it to the
     // child process removes the dependency on whatever "java" happens to be first on PATH.
-    private static readonly Lazy<string?> ResolvedJavaHome = new(FindJavaHome);
+    private static readonly FoundOnceCache<string?> ResolvedJavaHome = new(FindJavaHome, home => home is not null);
 
     // Fetched once per process lifetime and shared across every package row this scan enriches, the
     // manifest is the same few-MB file regardless of which package is being looked up, so fetching it
