@@ -120,6 +120,9 @@ public sealed partial class HistoryRowViewModel(
     /// <summary>The result word is read from the resources in code, so a language change has to re-raise it.</summary>
     public void RefreshLocalizedText()
     {
+        OnPropertyChanged(nameof(When));
+        OnPropertyChanged(nameof(SizeText));
+        OnPropertyChanged(nameof(AutomationName));
         OnPropertyChanged(nameof(Result));
         OnPropertyChanged(nameof(ResultTooltip));
         OnPropertyChanged(nameof(ShowDetailsTooltip));
@@ -517,6 +520,9 @@ public partial class HistoryViewModel : ObservableObject
 
         foreach (var filter in SourceFilters)
             filter.RefreshLocalizedText();
+
+        // Source and result sort by their translated text, so the order may differ in the new language.
+        ApplySort();
     }
 
     private void RefreshSortGlyphs()

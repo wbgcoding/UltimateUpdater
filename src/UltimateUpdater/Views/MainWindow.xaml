@@ -121,8 +121,9 @@
         <DataTemplate x:Key="SourcePillTemplate">
             <!-- Error pills open their tooltip fast (150ms vs WPF's ~1000ms default): a "!" pill is
                  exactly when someone wants to know why right now, not after a deliberate pause.
-                 Right-click copies the raw reason, MouseRightButtonUp, not a
-                 MouseBinding, since InputBindings has no right-click MouseAction. -->
+                 Right-click copies the raw reason through a MouseRightButtonUp handler rather than a
+                 MouseBinding (RightClick exists, but the copy needs the clipboard guard in code-behind);
+                 Ctrl+C on the focused pill does the same. -->
             <Border x:Name="PillBorder" Background="{DynamicResource ControlFillColorSecondaryBrush}"
                     BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
                     BorderThickness="1"

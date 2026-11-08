@@ -195,4 +195,30 @@ public class HistoryViewModelTests
             }
         });
     }
+
+    [Fact]
+    public void A_language_change_re_raises_the_date_size_and_automation_texts_of_a_history_row()
+    {
+        var row = Row("App", "1.0", "2.0", "winget");
+        var raised = new List<string>();
+        row.PropertyChanged += (_, e) => raised.Add(e.PropertyName!);
+
+        row.RefreshLocalizedText();
+
+        Assert.Contains(nameof(HistoryRowViewModel.When), raised);
+        Assert.Contains(nameof(HistoryRowViewModel.SizeText), raised);
+        Assert.Contains(nameof(HistoryRowViewModel.AutomationName), raised);
+    }
+
+    [Fact]
+    public void A_language_change_re_raises_the_freed_size_of_a_cleanup_history_area()
+    {
+        var area = new CleanupHistoryAreaViewModel(new UltimateUpdater.Services.Cleanup.CleanupHistoryArea { Id = "temp", TitleKey = "CleanupHistoryFreed", FreedBytes = 1536 });
+        var raised = new List<string>();
+        area.PropertyChanged += (_, e) => raised.Add(e.PropertyName!);
+
+        area.RefreshLocalizedText();
+
+        Assert.Contains(nameof(CleanupHistoryAreaViewModel.FreedText), raised);
+    }
 }

@@ -706,23 +706,40 @@ public partial class MainWindow : FluentWindow
     }
 
     /// <summary>Enter/Space on a sortable column header or the source pill; see
-    /// <see cref="KeyboardActivation"/>.</summary>
-    private void OnClickTargetKeyDown(object sender, System.Windows.Input.KeyEventArgs e) => KeyboardActivation.ActivateOnEnterOrSpace(sender, e);
+    /// <see cref="KeyboardActivation"/>. Ctrl+C on an error pill copies its reason, the keyboard twin of
+    /// the right-click.</summary>
+    private void OnClickTargetKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            if (CopyErrorReason(sender))
+                e.Handled = true;
+
+            return;
+        }
+
+        KeyboardActivation.ActivateOnEnterOrSpace(sender, e);
+    }
 
     /// <summary>Right-click a source pill to copy its raw error reason: the tooltip says so.
     /// Silent no-op for a pill with nothing to copy.</summary>
-    private void OnErrorPillRightClick(object sender, MouseButtonEventArgs e)
+    private void OnErrorPillRightClick(object sender, MouseButtonEventArgs e) => CopyErrorReason(sender);
+
+    /// <summary>True when the element is a pill with a reason and that reason was put on the clipboard.</summary>
+    private static bool CopyErrorReason(object sender)
     {
         if ((sender as FrameworkElement)?.DataContext is not ProviderStatusViewModel { CopyableErrorText.Length: > 0 } status)
-            return;
+            return false;
 
         try
         {
             System.Windows.Clipboard.SetText(status.CopyableErrorText);
+            return true;
         }
         catch (System.Runtime.InteropServices.ExternalException)
         {
             // the clipboard can be held open by another process; a failed copy is not worth surfacing
+            return false;
         }
     }
 

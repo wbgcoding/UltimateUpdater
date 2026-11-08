@@ -52,6 +52,7 @@ public sealed class CleanupHistoryAreaViewModel : ObservableObject
     public void RefreshLocalizedText()
     {
         OnPropertyChanged(nameof(Title));
+        OnPropertyChanged(nameof(FreedText));
         OnPropertyChanged(nameof(SkippedText));
     }
 }

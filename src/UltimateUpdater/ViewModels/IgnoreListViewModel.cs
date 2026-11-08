@@ -41,6 +41,8 @@ public sealed partial class IgnoreListViewModel : ObservableObject
 
     /// <summary>Rebuilt from the live settings list every time it changes, same "read the source of truth
     /// back" discipline <see cref="SettingsViewModel.RebuildExcludedPaths"/> already uses for its own list.</summary>
+    internal void Refresh() => Rebuild();
+
     private void Rebuild()
     {
         Entries.Clear();

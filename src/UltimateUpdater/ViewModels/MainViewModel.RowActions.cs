@@ -98,6 +98,10 @@ public partial class MainViewModel
     /// <summary>Ignore the package whatever its version. "source:id". Also the row-reconcile identity.</summary>
     private static string PackageKey(UpdateItem item) => $"{item.SourceId}:{item.Id}";
 
+    /// <summary>Raised after a row action changed the ignore list (ignore, ignore all versions, un-ignore, or a
+    /// snooze that replaced an ignore), so an ignore list dialog that is open beside the table re-reads it.</summary>
+    public event Action? IgnoreMarksChanged;
+
     /// <summary>
     /// Toggle: ignore THIS version of an update, or show an already-ignored one again. An ignored row
     /// leaves the table at once unless "show ignored" is on (then it stays, marked); either way this
@@ -135,6 +139,7 @@ public partial class MainViewModel
 
         ReseatInVisible(row);
         Persist();
+        IgnoreMarksChanged?.Invoke();
         ApplyFilter();
         RefreshSelectionState();
         RefreshHeader();
@@ -155,6 +160,7 @@ public partial class MainViewModel
 
         ReseatInVisible(row);
         Persist();
+        IgnoreMarksChanged?.Invoke();
         ApplyFilter();
         RefreshSelectionState();
         RefreshHeader();
@@ -183,6 +189,7 @@ public partial class MainViewModel
         row.SnoozedUntil = until;
 
         Persist();
+        IgnoreMarksChanged?.Invoke();
         ApplyFilter();
         RefreshSelectionState();
         RefreshHeader();

@@ -390,6 +390,14 @@ public partial class MainViewModel
         // Removing an entry in the ignore list dialog takes effect in the table at once.
         settingsViewModel.IgnoreListChanged += ResyncIgnoreState;
         settingsViewModel.DataReset += OnDataReset;
+
+        // An ignore made in the table while the ignore list dialog is open shows up there at once. The
+        // forwarder is removed again when the settings window closes, so this view model never keeps a
+        // dead settings view model alive.
+        if (_forwardIgnoreMarks is not null)
+            IgnoreMarksChanged -= _forwardIgnoreMarks;
+        _forwardIgnoreMarks = settingsViewModel.RefreshOpenIgnoreList;
+        IgnoreMarksChanged += _forwardIgnoreMarks;
         return settingsViewModel;
     }
 
@@ -421,8 +429,16 @@ public partial class MainViewModel
         return names;
     }
 
+    private Action? _forwardIgnoreMarks;
+
     private void OnSettingsClosed()
     {
+        if (_forwardIgnoreMarks is not null)
+        {
+            IgnoreMarksChanged -= _forwardIgnoreMarks;
+            _forwardIgnoreMarks = null;
+        }
+
         // the settings window can change theme/language, so mirror them back into the main window's own pickers
         SelectedTheme = _settings.Current.Ui.Theme;
         SelectedLanguage = _settings.Current.Ui.Language;
