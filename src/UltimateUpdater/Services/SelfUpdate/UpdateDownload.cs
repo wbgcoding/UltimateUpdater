@@ -39,8 +39,33 @@ internal static class UpdateDownload
             }
 
             await using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
-            await using var target = File.Create(targetPath);
+            var complete = false;
+            try
+            {
+                complete = await CopyAsync(source, targetPath, advertised, maxBytes, logging, cancellationToken, progress);
+            }
+            finally
+            {
+                // A partial file is never left for a later step to find; the stream is closed by now.
+                if (!complete)
+                    FileDeletion.TryDelete(targetPath);
+            }
 
+            return complete;
+        }
+    }
+
+    private static async Task<bool> CopyAsync(
+        Stream source,
+        string targetPath,
+        long? advertised,
+        long maxBytes,
+        LoggingService logging,
+        CancellationToken cancellationToken,
+        IProgress<(long Read, long? Total)>? progress)
+    {
+        await using (var target = File.Create(targetPath))
+        {
             var buffer = new byte[81920];
             long total = 0;
             int read;
@@ -63,6 +88,14 @@ internal static class UpdateDownload
                     lastReport = clock.Elapsed;
                     progress.Report((total, advertised));
                 }
+            }
+
+            // A stream that ended before the advertised length is a dropped connection, not a bad file: it is
+            // reported as a failed (retryable) download instead of failing the hash check later.
+            if (advertised is { } expected && total != expected)
+            {
+                logging.Warn($"Self-update: download ended after {total} of {expected} bytes.");
+                return false;
             }
 
             // The closing reading is always delivered, so a bar never stops short of the end.
