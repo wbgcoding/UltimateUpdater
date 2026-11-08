@@ -509,7 +509,8 @@ public partial class MainViewModel
                 Dialogs.Success(Loc["WingetBootstrapDone"]);
                 break;
             case Services.WingetBootstrapStatus.Failed:
-                Dialogs.Error(string.Format(Loc["WingetBootstrapFailed"], outcome.Reason));
+                var reason = Loc[outcome.ReasonKey ?? "WingetBootstrapReasonDownload"];
+                Dialogs.Error(string.Format(Loc["WingetBootstrapFailed"], reason), details: outcome.Detail);
                 break;
         }
 

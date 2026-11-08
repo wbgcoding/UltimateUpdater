@@ -84,15 +84,19 @@ public sealed class WingetBootstrapService(
         {
             var outcome = await InstallCoreAsync(progress, cancellationToken);
             if (outcome.Status == WingetBootstrapStatus.Failed)
-                _logging.Warn($"winget bootstrap: {outcome.Reason}");
+                _logging.Warn($"winget bootstrap: {outcome.ReasonKey} {outcome.Detail}".TrimEnd());
             return outcome;
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidOperationException
             or UnauthorizedAccessException or OperationCanceledException)
         {
             _logging.Warn($"winget bootstrap: {ex.Message}");
-            return WingetBootstrapOutcome.Failed(
-                ex is OperationCanceledException ? "the operation timed out or was cancelled" : ex.Message);
+            return ex switch
+            {
+                OperationCanceledException => WingetBootstrapOutcome.Failed("WingetBootstrapReasonTimeout"),
+                IOException or UnauthorizedAccessException => WingetBootstrapOutcome.Failed("WingetBootstrapReasonFiles", ex.Message),
+                _ => WingetBootstrapOutcome.Failed("WingetBootstrapReasonDownload", ex.Message),
+            };
         }
     }
 
@@ -100,11 +104,11 @@ public sealed class WingetBootstrapService(
     {
         var json = await GetStringAsync(ReleaseApiUrl, cancellationToken);
         if (json is null)
-            return WingetBootstrapOutcome.Failed("the latest App Installer release could not be read");
+            return WingetBootstrapOutcome.Failed("WingetBootstrapReasonNoRelease");
 
         var assetUrl = SelectAssetUrl(json);
         if (assetUrl is null)
-            return WingetBootstrapOutcome.Failed($"the latest release has no '{AssetName}' package");
+            return WingetBootstrapOutcome.Failed("WingetBootstrapReasonNoPackage", AssetName);
 
         var staging = Path.Combine(StagingRoot ?? Path.GetTempPath(), $"winget-bootstrap-{Guid.NewGuid():N}");
         var target = Path.Combine(staging, "installer.msixbundle");
@@ -121,13 +125,13 @@ public sealed class WingetBootstrapService(
             // thread that showed the confirmation, so they run on the thread pool instead.
             var trusted = await Task.Run(() => IsTrustedPackage(target), cancellationToken);
             if (!trusted)
-                return WingetBootstrapOutcome.Failed("the downloaded package is not signed by Microsoft");
+                return WingetBootstrapOutcome.Failed("WingetBootstrapReasonNotSigned");
 
             if (Security.MalwareScanner.ScanDownloads)
             {
                 var outcome = await new Security.MalwareScanner(_logging).ScanFileAsync(target, cancellationToken);
                 if (outcome.IsThreat)
-                    return WingetBootstrapOutcome.Failed($"the virus scan flagged the download ({outcome.Detail})");
+                    return WingetBootstrapOutcome.Failed("WingetBootstrapReasonVirus", outcome.Detail);
             }
 
             // A machine without the framework packages (an LTSC edition, typically) cannot install the
@@ -146,13 +150,13 @@ public sealed class WingetBootstrapService(
             // install (InstallQueue.NeedsElevation), which is a different question about a different tool.
             var result = await AddPackageAsync(target, cancellationToken);
             if (result.TimedOut)
-                return WingetBootstrapOutcome.Failed("Windows did not finish installing the package in time");
+                return WingetBootstrapOutcome.Failed("WingetBootstrapReasonInstallTimeout");
 
             if (result.ExitCode != 0)
             {
                 var detail = FirstLine(result.StandardError);
                 return WingetBootstrapOutcome.Failed(
-                    detail.Length > 0 ? detail : $"Windows refused the package (exit {result.ExitCode})");
+                    "WingetBootstrapReasonRefused", detail.Length > 0 ? detail : $"exit {result.ExitCode}");
             }
 
             _logging.Info("winget was installed on user request.");
@@ -435,12 +439,14 @@ public enum WingetBootstrapStatus
     Failed,
 }
 
-/// <summary>What an offer came to. <see cref="Reason"/> is short English text for a failure, fit for the dialog.</summary>
-public sealed record WingetBootstrapOutcome(WingetBootstrapStatus Status, string? Reason = null)
+/// <summary>What an offer came to. For a failure, <see cref="ReasonKey"/> names the localized reason and
+/// <see cref="Detail"/> carries the raw text behind it (tool output, an exception's message), shown as is.</summary>
+public sealed record WingetBootstrapOutcome(WingetBootstrapStatus Status, string? ReasonKey = null, string? Detail = null)
 {
     public static WingetBootstrapOutcome NotOffered { get; } = new(WingetBootstrapStatus.NotOffered);
 
     public static WingetBootstrapOutcome Succeeded { get; } = new(WingetBootstrapStatus.Installed);
 
-    public static WingetBootstrapOutcome Failed(string reason) => new(WingetBootstrapStatus.Failed, reason);
+    public static WingetBootstrapOutcome Failed(string reasonKey, string? detail = null) =>
+        new(WingetBootstrapStatus.Failed, reasonKey, string.IsNullOrWhiteSpace(detail) ? null : detail);
 }

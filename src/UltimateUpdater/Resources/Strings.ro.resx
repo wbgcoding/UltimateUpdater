@@ -2356,4 +2356,31 @@ Continuați cu drepturi de administrator?</value>
   <data name="WingetBootstrapDownloading" xml:space="preserve">
     <value>Se descarcă winget… {0} %</value>
   </data>
+  <data name="WingetBootstrapReasonNoRelease" xml:space="preserve">
+    <value>cea mai recentă versiune winget nu a putut fi citită</value>
+  </data>
+  <data name="WingetBootstrapReasonNoPackage" xml:space="preserve">
+    <value>cea mai recentă versiune nu conține niciun pachet de instalare</value>
+  </data>
+  <data name="WingetBootstrapReasonNotSigned" xml:space="preserve">
+    <value>pachetul descărcat nu este semnat de Microsoft</value>
+  </data>
+  <data name="WingetBootstrapReasonVirus" xml:space="preserve">
+    <value>scanarea antivirus a semnalat descărcarea</value>
+  </data>
+  <data name="WingetBootstrapReasonInstallTimeout" xml:space="preserve">
+    <value>Windows nu a terminat instalarea la timp</value>
+  </data>
+  <data name="WingetBootstrapReasonRefused" xml:space="preserve">
+    <value>Windows a refuzat pachetul</value>
+  </data>
+  <data name="WingetBootstrapReasonDownload" xml:space="preserve">
+    <value>descărcarea a eșuat</value>
+  </data>
+  <data name="WingetBootstrapReasonFiles" xml:space="preserve">
+    <value>fișierele descărcate nu au putut fi salvate</value>
+  </data>
+  <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
+    <value>descărcarea a durat prea mult</value>
+  </data>
 </root>

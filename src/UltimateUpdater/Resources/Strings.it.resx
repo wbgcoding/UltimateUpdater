@@ -2356,4 +2356,31 @@ Continuare con privilegi di amministratore?</value>
   <data name="WingetBootstrapDownloading" xml:space="preserve">
     <value>Download di winget in corso… {0} %</value>
   </data>
+  <data name="WingetBootstrapReasonNoRelease" xml:space="preserve">
+    <value>impossibile leggere l'ultima versione di winget</value>
+  </data>
+  <data name="WingetBootstrapReasonNoPackage" xml:space="preserve">
+    <value>l'ultima versione non contiene alcun pacchetto di installazione</value>
+  </data>
+  <data name="WingetBootstrapReasonNotSigned" xml:space="preserve">
+    <value>il pacchetto scaricato non è firmato da Microsoft</value>
+  </data>
+  <data name="WingetBootstrapReasonVirus" xml:space="preserve">
+    <value>la scansione antivirus ha segnalato il download</value>
+  </data>
+  <data name="WingetBootstrapReasonInstallTimeout" xml:space="preserve">
+    <value>Windows non ha completato l'installazione in tempo</value>
+  </data>
+  <data name="WingetBootstrapReasonRefused" xml:space="preserve">
+    <value>Windows ha rifiutato il pacchetto</value>
+  </data>
+  <data name="WingetBootstrapReasonDownload" xml:space="preserve">
+    <value>il download non è riuscito</value>
+  </data>
+  <data name="WingetBootstrapReasonFiles" xml:space="preserve">
+    <value>impossibile salvare i file scaricati</value>
+  </data>
+  <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
+    <value>il download ha richiesto troppo tempo</value>
+  </data>
 </root>

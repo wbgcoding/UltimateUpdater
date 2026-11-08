@@ -2356,4 +2356,31 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="WingetBootstrapDownloading" xml:space="preserve">
     <value>正在下载 winget… {0} %</value>
   </data>
+  <data name="WingetBootstrapReasonNoRelease" xml:space="preserve">
+    <value>无法读取最新的 winget 版本</value>
+  </data>
+  <data name="WingetBootstrapReasonNoPackage" xml:space="preserve">
+    <value>最新版本中没有安装包</value>
+  </data>
+  <data name="WingetBootstrapReasonNotSigned" xml:space="preserve">
+    <value>下载的包没有 Microsoft 签名</value>
+  </data>
+  <data name="WingetBootstrapReasonVirus" xml:space="preserve">
+    <value>病毒扫描标记了下载内容</value>
+  </data>
+  <data name="WingetBootstrapReasonInstallTimeout" xml:space="preserve">
+    <value>Windows 未能及时完成安装</value>
+  </data>
+  <data name="WingetBootstrapReasonRefused" xml:space="preserve">
+    <value>Windows 拒绝了该包</value>
+  </data>
+  <data name="WingetBootstrapReasonDownload" xml:space="preserve">
+    <value>下载失败</value>
+  </data>
+  <data name="WingetBootstrapReasonFiles" xml:space="preserve">
+    <value>无法保存下载的文件</value>
+  </data>
+  <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
+    <value>下载耗时过长</value>
+  </data>
 </root>

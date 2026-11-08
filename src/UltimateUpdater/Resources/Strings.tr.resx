@@ -2356,4 +2356,31 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="WingetBootstrapDownloading" xml:space="preserve">
     <value>winget indiriliyor… {0} %</value>
   </data>
+  <data name="WingetBootstrapReasonNoRelease" xml:space="preserve">
+    <value>en son winget sürümü okunamadı</value>
+  </data>
+  <data name="WingetBootstrapReasonNoPackage" xml:space="preserve">
+    <value>en son sürümde kurulum paketi yok</value>
+  </data>
+  <data name="WingetBootstrapReasonNotSigned" xml:space="preserve">
+    <value>indirilen paket Microsoft tarafından imzalanmamış</value>
+  </data>
+  <data name="WingetBootstrapReasonVirus" xml:space="preserve">
+    <value>virüs taraması indirmeyi işaretledi</value>
+  </data>
+  <data name="WingetBootstrapReasonInstallTimeout" xml:space="preserve">
+    <value>Windows kurulumu zamanında tamamlamadı</value>
+  </data>
+  <data name="WingetBootstrapReasonRefused" xml:space="preserve">
+    <value>Windows paketi reddetti</value>
+  </data>
+  <data name="WingetBootstrapReasonDownload" xml:space="preserve">
+    <value>indirme başarısız oldu</value>
+  </data>
+  <data name="WingetBootstrapReasonFiles" xml:space="preserve">
+    <value>indirilen dosyalar kaydedilemedi</value>
+  </data>
+  <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
+    <value>indirme çok uzun sürdü</value>
+  </data>
 </root>

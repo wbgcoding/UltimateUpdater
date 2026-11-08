@@ -2356,4 +2356,31 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="WingetBootstrapDownloading" xml:space="preserve">
     <value>wingetをダウンロード中… {0} %</value>
   </data>
+  <data name="WingetBootstrapReasonNoRelease" xml:space="preserve">
+    <value>最新の winget リリースを読み取れませんでした</value>
+  </data>
+  <data name="WingetBootstrapReasonNoPackage" xml:space="preserve">
+    <value>最新リリースにインストール パッケージがありません</value>
+  </data>
+  <data name="WingetBootstrapReasonNotSigned" xml:space="preserve">
+    <value>ダウンロードしたパッケージに Microsoft の署名がありません</value>
+  </data>
+  <data name="WingetBootstrapReasonVirus" xml:space="preserve">
+    <value>ウイルス スキャンがダウンロードを検出しました</value>
+  </data>
+  <data name="WingetBootstrapReasonInstallTimeout" xml:space="preserve">
+    <value>Windows が時間内にセットアップを完了しませんでした</value>
+  </data>
+  <data name="WingetBootstrapReasonRefused" xml:space="preserve">
+    <value>Windows がパッケージを拒否しました</value>
+  </data>
+  <data name="WingetBootstrapReasonDownload" xml:space="preserve">
+    <value>ダウンロードに失敗しました</value>
+  </data>
+  <data name="WingetBootstrapReasonFiles" xml:space="preserve">
+    <value>ダウンロードしたファイルを保存できませんでした</value>
+  </data>
+  <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
+    <value>ダウンロードに時間がかかりすぎました</value>
+  </data>
 </root>

@@ -149,7 +149,7 @@ public sealed class WingetBootstrapOutcomeTests : IDisposable
         var outcome = await service.InstallAsync(null, CancellationToken.None);
 
         Assert.Equal(WingetBootstrapStatus.Failed, outcome.Status);
-        Assert.Contains("not signed by Microsoft", outcome.Reason);
+        Assert.Equal("WingetBootstrapReasonNotSigned", outcome.ReasonKey);
         Assert.Empty(installed);
         Assert.Empty(Directory.EnumerateFileSystemEntries(_staging));
     }
@@ -165,7 +165,8 @@ public sealed class WingetBootstrapOutcomeTests : IDisposable
         var outcome = await service.InstallAsync(null, CancellationToken.None);
 
         Assert.Equal(WingetBootstrapStatus.Failed, outcome.Status);
-        Assert.Equal("Deployment failed: a dependency is missing.", outcome.Reason);
+        Assert.Equal("WingetBootstrapReasonRefused", outcome.ReasonKey);
+        Assert.Equal("Deployment failed: a dependency is missing.", outcome.Detail);
     }
 
     [Fact]
@@ -176,7 +177,7 @@ public sealed class WingetBootstrapOutcomeTests : IDisposable
         var outcome = await service.InstallAsync(null, CancellationToken.None);
 
         Assert.Equal(WingetBootstrapStatus.Failed, outcome.Status);
-        Assert.Contains("could not be read", outcome.Reason);
+        Assert.Equal("WingetBootstrapReasonNoRelease", outcome.ReasonKey);
     }
 
     [Fact]
@@ -187,7 +188,7 @@ public sealed class WingetBootstrapOutcomeTests : IDisposable
         var outcome = await service.InstallAsync(null, CancellationToken.None);
 
         Assert.Equal(WingetBootstrapStatus.Failed, outcome.Status);
-        Assert.Contains("could not be read", outcome.Reason);
+        Assert.Equal("WingetBootstrapReasonNoRelease", outcome.ReasonKey);
     }
 
     [Theory]
