@@ -252,8 +252,30 @@ public static class PythonInterpreters
             return quiet;
 
         var plain = registry.Value(keyPath, "UninstallString");
-        return string.IsNullOrWhiteSpace(plain) ? null : $"{plain} /uninstall /quiet";
+        if (string.IsNullOrWhiteSpace(plain))
+            return null;
+
+        // An MSI-installed Python (2.7, 3.4) registers "MsiExec.exe /I{GUID}": a bare program name no caller can
+        // locate, and /I would only open the maintenance dialog. The removal is built from the product code
+        // instead, with msiexec at its fixed System32 path, never looked up through PATH or an environment variable.
+        if (MsiExecProductCode.Match(plain) is { Success: true } msi)
+        {
+            return $"\"{Path.Combine(Environment.SystemDirectory, "msiexec.exe")}\" /x {msi.Groups["code"].Value} /quiet /norestart";
+        }
+
+        if (IsMsiExecCommand(plain))
+            return null;
+
+        return $"{plain} /uninstall /quiet";
     }
+
+    /// <summary>msiexec (quoted or not, with or without a folder or extension) followed by /I or /X and a product code.</summary>
+    private static readonly Regex MsiExecProductCode = new(
+        @"^\s*""?(?:[^""]*[\\/])?msiexec(?:\.exe)?""?\s+/[IX]\s*(?<code>\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\})",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    private static bool IsMsiExecCommand(string command) =>
+        Regex.IsMatch(command, @"^\s*""?(?:[^""]*[\\/])?msiexec(?:\.exe)?""?(\s|$)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     private static string? NormalizeDirectory(string? path) =>
         string.IsNullOrWhiteSpace(path) ? null : path.Trim().Trim('"').TrimEnd('\\', '/');
