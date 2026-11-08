@@ -11,7 +11,7 @@ namespace UltimateUpdater.Tests;
 /// </summary>
 public class PackagedAppsTests : IDisposable
 {
-    private const string FullName = "Zq.Codex_26.1.0.0_x64__2p2nqsd0c76g0";
+    private const string FullName = "Zq.Pad_26.1.0.0_x64__2p2nqsd0c76g0";
     private readonly string _temp = Directory.CreateTempSubdirectory().FullName;
 
     public void Dispose() => Directory.Delete(_temp, recursive: true);
@@ -30,7 +30,7 @@ public class PackagedAppsTests : IDisposable
         }
     }
 
-    /// <summary>The ChatGPT shape: the first Application runs app\Zq.exe, two more sit under app\resources.</summary>
+    /// <summary>The usual shape: the first Application runs app\Zq.exe, two more sit under app\resources.</summary>
     private string Package(string firstExecutable = "app/Zq.exe", bool createFirst = true)
     {
         var root = Path.Combine(_temp, "pkg");
@@ -52,10 +52,10 @@ public class PackagedAppsTests : IDisposable
     }
 
     private static PackagedApps Apps(string root) =>
-        new(new Table(new() { [FullName] = ("Zq Codex", root) }));
+        new(new Table(new() { [FullName] = ("Zq Pad", root) }));
 
     [Theory]
-    [InlineData("OpenAI.Codex_26.1.0.0_x64__2p2nqsd0c76g0", "OpenAI.Codex_2p2nqsd0c76g0")]
+    [InlineData("Contoso.Pad_26.1.0.0_x64__2p2nqsd0c76g0", "Contoso.Pad_2p2nqsd0c76g0")]
     [InlineData("Microsoft.WindowsTerminal_1.21.0.0_neutral__8wekyb3d8bbwe", "Microsoft.WindowsTerminal_8wekyb3d8bbwe")]
     [InlineData("Name_1.0.0.0_x64_2p2nqsd0c76g0", null)]
     [InlineData("NoUnderscore", null)]
@@ -69,9 +69,9 @@ public class PackagedAppsTests : IDisposable
     {
         var apps = Apps(Package());
 
-        Assert.Equal("Zq.Codex_2p2nqsd0c76g0", apps.Find("Zq Codex")?.FamilyName);
+        Assert.Equal("Zq.Pad_2p2nqsd0c76g0", apps.Find("Zq Pad")?.FamilyName);
         Assert.Null(apps.Find("Zq"));
-        Assert.Null(apps.Find("Zq Codex Pro"));
+        Assert.Null(apps.Find("Zq Pad Pro"));
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class PackagedAppsTests : IDisposable
     {
         var apps = Apps(Package());
 
-        var application = apps.FirstApplication(apps.Find("Zq Codex")!);
+        var application = apps.FirstApplication(apps.Find("Zq Pad")!);
 
         Assert.Equal("App", application?.Id);
         Assert.EndsWith(Path.Combine("app", "Zq.exe"), application?.ExecutablePath);
@@ -90,7 +90,7 @@ public class PackagedAppsTests : IDisposable
     {
         var apps = Apps(Package());
 
-        var application = apps.FirstApplication(apps.Find("Zq Codex")!, path => !path.EndsWith("Zq.exe"));
+        var application = apps.FirstApplication(apps.Find("Zq Pad")!, path => !path.EndsWith("Zq.exe"));
 
         Assert.Equal("Cli", application?.Id);
     }
@@ -110,7 +110,7 @@ public class PackagedAppsTests : IDisposable
         File.WriteAllText(Path.Combine(_temp, "outside", "evil.exe"), "x");
         var apps = Apps(root);
 
-        var application = apps.FirstApplication(apps.Find("Zq Codex")!);
+        var application = apps.FirstApplication(apps.Find("Zq Pad")!);
 
         Assert.Equal("Cli", application?.Id);
     }
@@ -133,7 +133,7 @@ public class PackagedAppsTests : IDisposable
         Assert.True(Directory.Exists(link), "the junction could not be created");
         var apps = Apps(root);
 
-        var application = apps.FirstApplication(apps.Find("Zq Codex")!);
+        var application = apps.FirstApplication(apps.Find("Zq Pad")!);
 
         Assert.Equal("Cli", application?.Id);
         Directory.Delete(link);
@@ -144,6 +144,72 @@ public class PackagedAppsTests : IDisposable
     {
         var apps = Apps(Package(createFirst: false));
 
-        Assert.Equal("Cli", apps.FirstApplication(apps.Find("Zq Codex")!)?.Id);
+        Assert.Equal("Cli", apps.FirstApplication(apps.Find("Zq Pad")!)?.Id);
+    }
+
+    [Fact]
+    public void A_package_is_started_by_its_family_and_first_application_id()
+    {
+        var apps = Apps(Package());
+
+        Assert.Equal(@"shell:AppsFolder\Zq.Pad_2p2nqsd0c76g0!App", apps.StartTargetOf(apps.Find("Zq Pad")!));
+    }
+
+    [Fact]
+    public void An_application_without_an_executable_is_still_started_by_its_id()
+    {
+        var root = Package();
+        File.WriteAllText(Path.Combine(root, "AppxManifest.xml"),
+            """
+            <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10">
+              <Applications><Application Id="Main" /></Applications>
+            </Package>
+            """);
+        var apps = Apps(root);
+
+        Assert.Equal(@"shell:AppsFolder\Zq.Pad_2p2nqsd0c76g0!Main", apps.StartTargetOf(apps.Find("Zq Pad")!));
+        Assert.Null(apps.FirstApplication(apps.Find("Zq Pad")!));
+    }
+
+    [Fact]
+    public void No_start_target_without_a_family_or_an_application()
+    {
+        var root = Package();
+        var noFamily = new PackagedApps(new Table(new() { ["Odd_key"] = ("Zq Odd", root) }));
+        Assert.Null(noFamily.StartTargetOf(noFamily.Find("Zq Odd")!));
+
+        File.Delete(Path.Combine(root, "AppxManifest.xml"));
+        var apps = Apps(root);
+        Assert.Null(apps.StartTargetOf(apps.Find("Zq Pad")!));
+    }
+
+    [Fact]
+    public void A_manifest_id_that_is_not_a_plain_id_gives_no_start_target()
+    {
+        var root = Package();
+        File.WriteAllText(Path.Combine(root, "AppxManifest.xml"),
+            """
+            <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10">
+              <Applications><Application Id="..\..\Windows\x" Executable="app/Zq.exe" /></Applications>
+            </Package>
+            """);
+        var apps = Apps(root);
+
+        Assert.Null(apps.StartTargetOf(apps.Find("Zq Pad")!));
+    }
+
+    [Fact]
+    public void The_package_list_is_read_again_after_the_cache_lifetime()
+    {
+        var packages = new Dictionary<string, (string Name, string Root)>();
+        var now = DateTime.UtcNow;
+        var apps = new PackagedApps(new Table(packages), () => now);
+        Assert.Null(apps.Find("Zq Pad"));
+
+        packages[FullName] = ("Zq Pad", Package());
+        Assert.Null(apps.Find("Zq Pad"));
+
+        now = now.AddMinutes(1);
+        Assert.NotNull(apps.Find("Zq Pad"));
     }
 }

@@ -530,7 +530,14 @@ public partial class MainViewModel
         // The source's own target first (a launcher URI, a Steam game); otherwise the executable resolved
         // for the row from the uninstall registry, which is what gives an ordinary package a Start at all.
         var target = SourceFor(row.Item)?.LaunchTarget(row.Item) ?? row.LaunchTargetPath;
-        if (!string.IsNullOrEmpty(target))
+        if (string.IsNullOrEmpty(target))
+            return;
+
+        // A Store app has no exe to run; its application id is started through explorer, and nothing else
+        // starting with "shell:" ever gets that far (the URI launcher refuses the scheme).
+        if (PackagedAppLauncher.IsPackagedAppTarget(target))
+            PackagedAppLauncher.LaunchDetached(target, _logging);
+        else
             UriLauncher.LaunchDetached(target, _logging);
     }
 

@@ -12,7 +12,7 @@ namespace UltimateUpdater.Services;
 /// application id) is untrusted text until it has been checked: an executable counts only when it lies
 /// inside the package's own folder, with no link on the way there.
 /// </summary>
-internal sealed class PackagedApps
+public sealed class PackagedApps
 {
     internal const string PackagesKey =
         @"HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages";
@@ -22,19 +22,39 @@ internal sealed class PackagedApps
     private static readonly Regex PublisherId = new("^[a-z0-9]{13}$", RegexOptions.CultureInvariant);
 
     private readonly IRegistryView _registry;
-    private readonly Lazy<IReadOnlyList<Package>> _packages;
+    private readonly Func<DateTime> _now;
+    private readonly object _gate = new();
+    private IReadOnlyList<Package>? _packages;
+    private DateTime _readAt;
 
     /// <summary>One installed package: its display name, its folder and its package family name (null when
     /// the registry key is not shaped like a package full name; such a package still gives its icon).</summary>
-    internal sealed record Package(string Name, string Root, string? FamilyName);
+    public sealed record Package(string Name, string Root, string? FamilyName);
 
     /// <summary>An Application of a package whose executable was verified to be a real file inside the package folder.</summary>
-    internal sealed record Application(string Id, string ExecutablePath);
+    public sealed record Application(string Id, string ExecutablePath);
 
-    public PackagedApps(IRegistryView registry)
+    /// <summary>How long a read of the package list is reused: an app installed or removed while this one runs shows up soon.</summary>
+    private static readonly TimeSpan CacheLifetime = TimeSpan.FromSeconds(30);
+
+    public PackagedApps(IRegistryView registry, Func<DateTime>? now = null)
     {
         _registry = registry;
-        _packages = new Lazy<IReadOnlyList<Package>>(ReadPackages);
+        _now = now ?? (() => DateTime.UtcNow);
+    }
+
+    private IReadOnlyList<Package> Packages()
+    {
+        lock (_gate)
+        {
+            if (_packages is null || _now() - _readAt > CacheLifetime)
+            {
+                _packages = ReadPackages();
+                _readAt = _now();
+            }
+
+            return _packages;
+        }
     }
 
     /// <summary>The packages whose display name is exactly this one (a trailing bracketed note ignored), newest first.</summary>
@@ -43,13 +63,32 @@ internal sealed class PackagedApps
         var wanted = IconCacheService.CleanName(displayName);
         return wanted.Length == 0
             ? []
-            : _packages.Value.Where(p => string.Equals(p.Name, wanted, StringComparison.OrdinalIgnoreCase));
+            : Packages().Where(p => string.Equals(p.Name, wanted, StringComparison.OrdinalIgnoreCase));
     }
 
     public Package? Find(string displayName) => FindAll(displayName).FirstOrDefault();
 
     /// <summary>
-    /// "OpenAI.Codex_26.1.0.0_x64__2p2nqsd0c76g0" (the registry key) to "OpenAI.Codex_2p2nqsd0c76g0".
+    /// The launch target of the package's first Application, <c>shell:AppsFolder\&lt;family&gt;!&lt;app id&gt;</c>, which
+    /// starts the app the way the Start menu does (also for apps whose manifest names no usable executable).
+    /// Null when the family name is unknown, the manifest has no Application, or the pair is not well formed.
+    /// </summary>
+    public string? StartTargetOf(Package package)
+    {
+        if (package.FamilyName is null)
+            return null;
+
+        foreach (var (id, _) in ReadApplications(package.Root))
+        {
+            if (PackagedAppLauncher.TargetFor(package.FamilyName, id) is { } target)
+                return target;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// "Contoso.Pad_26.1.0.0_x64__2p2nqsd0c76g0" (the registry key) to "Contoso.Pad_2p2nqsd0c76g0".
     /// Null for a key that does not have the five-part full-name shape.
     /// </summary>
     internal static string? FamilyNameOf(string packageFullName)
@@ -110,11 +149,9 @@ internal sealed class PackagedApps
             using var reader = XmlReader.Create(manifest, settings);
             foreach (var element in XDocument.Load(reader).Descendants().Where(e => e.Name.LocalName == "Application"))
             {
-                if (element.Attribute("Id")?.Value is { Length: > 0 } id
-                    && element.Attribute("Executable")?.Value is { Length: > 0 } executable)
-                {
-                    applications.Add((id, executable));
-                }
+                // An application without an Executable (some UWP manifests) still has an id to start it by.
+                if (element.Attribute("Id")?.Value is { Length: > 0 } id)
+                    applications.Add((id, element.Attribute("Executable")?.Value ?? ""));
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or XmlException or ArgumentException or NotSupportedException)
