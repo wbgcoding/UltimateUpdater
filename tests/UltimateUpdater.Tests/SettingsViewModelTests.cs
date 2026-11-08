@@ -84,6 +84,42 @@ public class SettingsViewModelTests
     public void An_unlisted_history_retention_is_shown_as_the_next_offered_one(int stored, int shown) =>
         Assert.Equal(shown, Create().NearestHistoryRetention(stored));
 
+    /// <summary>The scan interval dropdown offers five values; a hand-edited one snaps to the closest, and
+    /// a positive value never turns into "Off".</summary>
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(-5, 0)]
+    [InlineData(720, 720)]
+    [InlineData(60, 360)]
+    [InlineData(1000, 720)]
+    [InlineData(100000, 10080)]
+    public void An_unlisted_scan_interval_snaps_to_the_closest_offered_one(int stored, int shown) =>
+        Assert.Equal(shown, Create().NearestScanInterval(stored));
+
+    /// <summary>Same round-up rule as the log retention: never fewer backups than the stored count.</summary>
+    [Theory]
+    [InlineData(5, 5)]
+    [InlineData(7, 10)]
+    [InlineData(1, 3)]
+    [InlineData(99, 20)]
+    public void An_unlisted_registry_backup_count_is_shown_as_the_next_offered_one(int stored, int shown) =>
+        Assert.Equal(shown, Create().NearestRegistryBackupRetention(stored));
+
+    [Fact]
+    public void Unlisted_interval_and_backup_count_never_leave_a_dropdown_blank_after_construction()
+    {
+        var logging = new LoggingService();
+        var path = Path.Combine(Directory.CreateTempSubdirectory("wu-settings-viewmodel-").FullName, "settings.json");
+        var settings = new SettingsService(logging, path);
+        settings.Current.Scan.IntervalMinutes = 60;
+        settings.Current.RegistryCleanup.RetentionCount = 7;
+
+        var viewModel = new SettingsViewModel(settings, logging, new ThemeService(), new AutostartService(logging));
+
+        Assert.Contains(viewModel.IntervalOptions, o => o.Minutes == viewModel.ScanIntervalMinutes);
+        Assert.Contains(viewModel.RetentionCountOptions, o => o.Count == viewModel.RegistryBackupRetentionCount);
+    }
+
     /// <summary>The constructor must set every backing field directly from settings, not rely on
     /// ReloadFromSettings alone, a field wired only into the latter leaves its dropdown blank right after
     /// construction (0 matches none of the offered days).</summary>

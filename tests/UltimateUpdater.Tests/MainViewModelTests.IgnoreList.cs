@@ -53,4 +53,27 @@ public partial class MainViewModelTests
             Assert.Contains(row, viewModel.UpdatesView.Cast<UpdateRowViewModel>());
         });
     }
+
+    [Fact]
+    public void Ignoring_in_the_table_updates_an_open_ignore_list_at_once()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create();
+            var row = new UpdateRowViewModel(Item("eslint", "ESLint", "npm"));
+            viewModel.Updates.Add(row);
+
+            var ignoreList = viewModel.CreateSettingsViewModel().CreateIgnoreListViewModel();
+            Assert.Empty(ignoreList.Entries);
+
+            ((IRowActions)viewModel).IgnoreAllVersions(row);
+            Assert.Single(ignoreList.Entries);
+
+            viewModel.IgnoreCommand.Execute(row);
+            Assert.Empty(ignoreList.Entries);
+
+            viewModel.IgnoreCommand.Execute(row);
+            Assert.Single(ignoreList.Entries);
+        });
+    }
 }

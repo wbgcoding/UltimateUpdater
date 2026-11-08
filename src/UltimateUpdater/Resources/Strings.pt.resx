@@ -2398,4 +2398,16 @@ Continuar com direitos de administrador?</value>
   <data name="CleanupToolNotRun" xml:space="preserve">
     <value>Não foi possível executar</value>
   </data>
+  <data name="FilterChipCritical" xml:space="preserve">
+    <value>Críticos</value>
+  </data>
+  <data name="FilterChipIgnored" xml:space="preserve">
+    <value>Ignorados</value>
+  </data>
+  <data name="FilterChipManual" xml:space="preserve">
+    <value>Manual</value>
+  </data>
+  <data name="FilterChipFailures" xml:space="preserve">
+    <value>Com falhas ({0})</value>
+  </data>
 </root>

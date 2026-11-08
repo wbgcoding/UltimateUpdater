@@ -455,12 +455,17 @@ public partial class MainViewModel
 
     public string PersistentFailureFilterLabel => string.Format(Loc["FilterPersistentFailures"], PersistentFailureCount);
 
+    /// <summary>The chip's visible text: a word short enough for the default window width; the long
+    /// <see cref="PersistentFailureFilterLabel"/> stays the tooltip and the accessible name.</summary>
+    public string PersistentFailureChipLabel => string.Format(Loc["FilterChipFailures"], PersistentFailureCount);
+
     private void NotifyPersistentFailureCountChanged()
     {
         OnPropertyChanged(nameof(PersistentFailureCount));
         OnPropertyChanged(nameof(HasPersistentFailures));
         OnPropertyChanged(nameof(ShowPersistentFailureFilter));
         OnPropertyChanged(nameof(PersistentFailureFilterLabel));
+        OnPropertyChanged(nameof(PersistentFailureChipLabel));
     }
 
     /// <summary>

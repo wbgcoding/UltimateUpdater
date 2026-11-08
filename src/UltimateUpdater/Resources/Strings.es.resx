@@ -2398,4 +2398,16 @@ Esto no se puede deshacer.</value>
   <data name="CleanupToolNotRun" xml:space="preserve">
     <value>No se pudo ejecutar</value>
   </data>
+  <data name="FilterChipCritical" xml:space="preserve">
+    <value>Críticas</value>
+  </data>
+  <data name="FilterChipIgnored" xml:space="preserve">
+    <value>Ignorados</value>
+  </data>
+  <data name="FilterChipManual" xml:space="preserve">
+    <value>Manual</value>
+  </data>
+  <data name="FilterChipFailures" xml:space="preserve">
+    <value>Con fallos ({0})</value>
+  </data>
 </root>

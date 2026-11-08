@@ -489,7 +489,7 @@ public partial class SettingsViewModel : ObservableObject
             .ToList();
 
         var current = settings.Current;
-        scanIntervalMinutes = current.Scan.IntervalMinutes;
+        scanIntervalMinutes = NearestScanInterval(current.Scan.IntervalMinutes);
         scanOnStart = current.Scan.OnStart;
         scanRespectMetered = current.Scan.RespectMetered;
         preselectCritical = current.Install.PreselectCritical;
@@ -499,7 +499,7 @@ public partial class SettingsViewModel : ObservableObject
         parallelismChosenByUser = current.ParallelismChosenByUser;
         registryBackupFolder = current.RegistryCleanup.BackupFolder;
         _acceptedRegistryBackupFolder = registryBackupFolder;
-        registryBackupRetentionCount = current.RegistryCleanup.RetentionCount;
+        registryBackupRetentionCount = NearestRegistryBackupRetention(current.RegistryCleanup.RetentionCount);
         logRetentionDays = NearestLogRetention(current.Logs.RetentionDays);
         historyRetentionDays = NearestHistoryRetention(current.HistoryRetentionDays);
         scanDownloads = current.Security.ScanDownloads;
@@ -632,6 +632,26 @@ public partial class SettingsViewModel : ObservableObject
     internal int NearestLogRetention(int days) =>
         LogRetentionOptions.FirstOrDefault(option => option.Days >= days)?.Days
         ?? LogRetentionOptions[^1].Days;
+
+    /// <summary>Same rule as <see cref="NearestLogRetention"/> for the registry backup count: never fewer
+    /// backups than the stored number promises, and never a blank dropdown for an unlisted value.</summary>
+    internal int NearestRegistryBackupRetention(int count) =>
+        RetentionCountOptions.FirstOrDefault(option => option.Count >= count)?.Count
+        ?? RetentionCountOptions[^1].Count;
+
+    /// <summary>The offered interval closest to the stored one, so a hand-edited value never leaves the
+    /// dropdown blank. Off (0) is only ever picked for 0 itself or below: a stored 60 minutes means a
+    /// scan was wanted, so it must not silently turn into "never".</summary>
+    internal int NearestScanInterval(int minutes)
+    {
+        if (minutes <= 0)
+            return 0;
+
+        return IntervalOptions
+            .Where(option => option.Minutes > 0)
+            .OrderBy(option => Math.Abs(option.Minutes - minutes))
+            .First().Minutes;
+    }
 
     /// <summary>Same reasoning as <see cref="NearestLogRetention"/>, its own method since the two lists
     /// could diverge later even though they share the same four values today.</summary>
@@ -893,7 +913,13 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        var window = new Views.IgnoreListWindow(CreateIgnoreListViewModel());
+        var ignoreList = CreateIgnoreListViewModel();
+        var window = new Views.IgnoreListWindow(ignoreList);
+        window.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_openIgnoreList, ignoreList))
+                _openIgnoreList = null;
+        };
 
         // Owned by the settings window it was opened from, so it closes with it; the main window only when
         // there is no settings window (it cannot be opened any other way, but the fallback keeps an owner).
@@ -913,8 +939,16 @@ public partial class SettingsViewModel : ObservableObject
     {
         var viewModel = new IgnoreListViewModel(_settings, _ignoredPackageNames);
         viewModel.Changed += () => IgnoreListChanged?.Invoke();
+        _openIgnoreList = viewModel;
         return viewModel;
     }
+
+    /// <summary>The ignore list dialog while it is open, so a reset or an ignore made in the table can make it
+    /// re-read the list it shows.</summary>
+    private IgnoreListViewModel? _openIgnoreList;
+
+    /// <summary>The table changed the ignore list (the main view model forwards its marks event here).</summary>
+    internal void RefreshOpenIgnoreList() => _openIgnoreList?.Refresh();
 
     /// <summary>
     /// Factory state in ONE action: every
@@ -943,6 +977,7 @@ public partial class SettingsViewModel : ObservableObject
         var failed = await Task.Run(() => AppDataCleaner.DeleteCachesAndHistory(_logging));
         _logging.Info("Application reset to factory state on user request.");
         DataReset?.Invoke();
+        RefreshOpenIgnoreList();
 
         if (failed)
             Dialogs.Warn(Loc["SettingsDeleteDataPartialHeadline"], Loc["SettingsDeleteDataPartialBody"]);
@@ -962,7 +997,7 @@ public partial class SettingsViewModel : ObservableObject
         var current = _settings.Current;
 
         // through the generated properties, so theme/language/autostart really re-apply
-        ScanIntervalMinutes = current.Scan.IntervalMinutes;
+        ScanIntervalMinutes = NearestScanInterval(current.Scan.IntervalMinutes);
         ScanOnStart = current.Scan.OnStart;
         ScanRespectMetered = current.Scan.RespectMetered;
         PreselectCritical = current.Install.PreselectCritical;
@@ -982,7 +1017,7 @@ public partial class SettingsViewModel : ObservableObject
 
         _acceptedRegistryBackupFolder = current.RegistryCleanup.BackupFolder;
         SetRegistryBackupFolderProgrammatically(current.RegistryCleanup.BackupFolder);
-        RegistryBackupRetentionCount = current.RegistryCleanup.RetentionCount;
+        RegistryBackupRetentionCount = NearestRegistryBackupRetention(current.RegistryCleanup.RetentionCount);
         LogRetentionDays = NearestLogRetention(current.Logs.RetentionDays);
         HistoryRetentionDays = NearestHistoryRetention(current.HistoryRetentionDays);
         ScanDownloads = current.Security.ScanDownloads;
