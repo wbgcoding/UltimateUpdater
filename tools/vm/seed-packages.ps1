@@ -10,7 +10,7 @@ $st = if (Test-Path $stateFile) { Get-Content $stateFile -Raw | ConvertFrom-Json
 function Save-State { $st | ConvertTo-Json | Set-Content $stateFile -Encoding Ascii }
 function Prop($name, $value) { if ($null -eq $st.PSObject.Properties[$name]) { $st | Add-Member -NotePropertyName $name -NotePropertyValue $value } else { $st.$name = $value } }
 
-$wg = @('--silent', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
+$wg = @('--source', 'winget', '--silent', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
 # uninstall rejects the agreement flags
 $wgRemove = @('--silent', '--disable-interactivity')
 $oldGit = '2.45.2'

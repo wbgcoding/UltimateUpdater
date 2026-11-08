@@ -3,7 +3,7 @@
 $ErrorActionPreference = 'Continue'
 $state = 'C:\Users\claude\uu-seed'
 $stateFile = Join-Path $state 'state.json'
-$wg = @('--silent', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
+$wg = @('--source', 'winget', '--silent', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
 # uninstall rejects the agreement flags
 $wgRemove = @('--silent', '--disable-interactivity')
 if (-not (Test-Path $stateFile)) { 'no seed state, nothing to undo'; return }

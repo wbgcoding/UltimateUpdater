@@ -14,8 +14,8 @@ while (`$true) { `$held += `$l.AcceptTcpClient() }
 "@ -Encoding Ascii
 
 $repo = Join-Path $dir 'repo'
-if (-not (Test-Path (Join-Path $repo '.git'))) { git init -q $repo }
-Set-Content (Join-Path $dir 'uu-hang-fetch.ps1') "Set-Location '$repo'; git fetch git://127.0.0.1:$port/none.git" -Encoding Ascii
+# the repo is created by the fetch task itself: one made by this (administrator) session is refused by git as foreign-owned
+Set-Content (Join-Path $dir 'uu-hang-fetch.ps1') "`$g = 'C:\Program Files\Git\cmd\git.exe'; if (-not (Test-Path '$repo\.git')) { & `$g init -q '$repo' }; Set-Location '$repo'; & `$g fetch git://127.0.0.1:$port/none.git *> '$dir\fetch.log'" -Encoding Ascii
 
 $task = 'uuHangGit'
 $p = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\claude" -LogonType Interactive -RunLevel Limited
