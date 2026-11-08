@@ -79,6 +79,10 @@ public class AppPathsTests
     [InlineData(@"D:\Data\UltimateUpdater2", false)]
     [InlineData(@"D:\UltimateUpdater\logs", false)]
     [InlineData("", false)]
+    [InlineData(@"UltimateUpdater", false)]
+    [InlineData(@"..\Data\UltimateUpdater", false)]
+    [InlineData(@"\Data\UltimateUpdater", false)]
+    [InlineData(@"D:Data\UltimateUpdater", false)]
     public void A_pointer_target_is_accepted_only_as_a_dedicated_subfolder(string target, bool expected) =>
         Assert.Equal(expected, AppPaths.IsDedicatedDataFolder(target));
 

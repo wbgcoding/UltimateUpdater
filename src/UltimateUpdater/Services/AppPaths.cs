@@ -492,6 +492,10 @@ public static class AppPaths
     {
         try
         {
+            // A relative pointer would resolve against whatever the current directory is at the time.
+            if (!Path.IsPathFullyQualified(path))
+                return false;
+
             var trimmed = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             return string.Equals(Path.GetFileName(trimmed), DedicatedSubfolderName, StringComparison.OrdinalIgnoreCase);
         }

@@ -33,6 +33,20 @@ public class EnrichmentAndDiagnosticsTests
         Assert.True(survivors <= 5000, $"cache held {survivors} entries, expected at most 5000");
     }
 
+    /// <summary>Eviction goes below the cap, so the next few hundred Sets do not each sort the whole cache again.</summary>
+    [Fact]
+    public void Eviction_leaves_room_below_the_cap()
+    {
+        var cache = new EnrichmentCache(new LoggingService());
+
+        for (var i = 0; i < 5001; i++)
+            cache.Set($"room-test:{i}", new UpdateEnrichment(null, null));
+
+        var survivors = Enumerable.Range(0, 5001).Count(i => cache.TryGet($"room-test:{i}", out _));
+
+        Assert.Equal(4500, survivors);
+    }
+
     /// <summary>The in-memory icon cache has no public way to read a cache hit back (a miss and a hit
     /// both return null for an item with no resolvable icon), so its FIFO cap is checked through the
     /// private dictionary directly rather than through GetIcon's return value.</summary>

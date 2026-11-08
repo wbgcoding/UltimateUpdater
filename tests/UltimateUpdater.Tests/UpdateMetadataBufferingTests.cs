@@ -60,6 +60,32 @@ public class UpdateMetadataBufferingTests
         Assert.True(body.BytesServed < 16L * 1024 * 1024, $"{body.BytesServed} bytes were pulled before the limit applied");
     }
 
+    private sealed class FixedHandler(Func<HttpContent> content) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content(), RequestMessage = request });
+    }
+
+    /// <summary>The buffer follows the advertised length and grows for a body without one; the text must come back whole either way.</summary>
+    [Theory]
+    [InlineData(100, true)]
+    [InlineData(100, false)]
+    [InlineData(40000, false)]
+    [InlineData(3 * 1024 * 1024, false)]
+    [InlineData(3 * 1024 * 1024, true)]
+    public async Task A_metadata_body_comes_back_whole_whatever_it_advertises(int size, bool declareLength)
+    {
+        var text = new string('x', size);
+        using var client = new HttpClient(new FixedHandler(() => declareLength
+            ? new StringContent(text)
+            : new StreamContent(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text)))));
+
+        var result = await new PublicUpdateChannel(new LoggingService()).GetStringAsync(
+            client, "https://api.github.com/repos/wbgcoding/UltimateUpdater/releases/latest", CancellationToken.None);
+
+        Assert.Equal(text, result);
+    }
+
     /// <summary>Checked in the source so no channel can slip in a call that buffers the body: every SendAsync in the self-update folder must ask for the headers only.</summary>
     [Fact]
     public void Every_self_update_request_reads_the_headers_first()

@@ -27,12 +27,18 @@ internal static class UpdateMetadata
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
 
         // One byte more than the limit is enough to tell "at the limit" from "over it", whatever the
-        // advertised length said.
-        var buffer = new byte[MaxBytes + 1];
+        // advertised length said. The buffer starts at the advertised size (a real release list is a few
+        // KB, not 4 MB) and doubles only when the body turns out larger, never past the limit.
+        const int Ceiling = MaxBytes + 1;
+        var advertised = response.Content.Headers.ContentLength is { } length ? (int)Math.Min(length + 1, Ceiling) : 0;
+        var buffer = new byte[Math.Clamp(advertised, 16 * 1024, Ceiling)];
         var total = 0;
 
-        while (total < buffer.Length)
+        while (total < Ceiling)
         {
+            if (total == buffer.Length)
+                Array.Resize(ref buffer, (int)Math.Min((long)buffer.Length * 2, Ceiling));
+
             var read = await stream.ReadAsync(buffer.AsMemory(total), cancellationToken);
             if (read == 0)
                 break;
