@@ -2356,4 +2356,13 @@ Continuer avec les droits administrateur ?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Aucun appareil n'utilise ce pilote</value>
   </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>Terminé avec le code d'erreur {0}</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>Arrêté après {0} minutes</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>N'a pas pu être exécuté</value>
+  </data>
 </root>

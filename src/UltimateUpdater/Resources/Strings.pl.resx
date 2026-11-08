@@ -2356,4 +2356,13 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Żadne urządzenie nie używa tego sterownika</value>
   </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>Zakończono z kodem błędu {0}</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>Zatrzymano po {0} minutach</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>Nie udało się uruchomić</value>
+  </data>
 </root>

@@ -2356,4 +2356,13 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Geen apparaat gebruikt dit stuurprogramma</value>
   </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>Beëindigd met foutcode {0}</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>Gestopt na {0} minuten</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>Kon niet worden uitgevoerd</value>
+  </data>
 </root>

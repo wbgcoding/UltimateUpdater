@@ -37,6 +37,13 @@ public sealed class CleanupWorkerMessage
     /// (see <see cref="CleanupOutcome.TimedOut"/>).</summary>
     public bool TimedOut { get; set; }
 
+    /// <summary>Set only on a "result" message: a tool the target runs failed or could not be started
+    /// (see <see cref="CleanupOutcome.Failed"/>).</summary>
+    public bool Failed { get; set; }
+
+    /// <summary>Set only on a "result" message: the failing tool's exit code, when there was one.</summary>
+    public int? ExitCode { get; set; }
+
     /// <summary>Set only on a "result" message of a system repair target: how the check ended (see
     /// <see cref="CleanupOutcome.RepairResult"/>). Travels here because the elevated worker writes no files;
     /// the app records it in the history.</summary>

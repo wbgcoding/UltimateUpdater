@@ -1832,19 +1832,35 @@ public class CleanupService(LoggingService logging)
     /// Writing the profile needs admin. Without it the target is skipped with a log line: starting
     /// cleanmgr with its own UI would leave the dialog waiting on a window it cannot cancel.
     /// </summary>
+    /// <summary>Test seams: another cleanmgr path and another way to write the selection profile, so the
+    /// "tool missing" and "profile refused" outcomes can be proven without touching the machine.</summary>
+    internal string? CleanmgrExecutable { get; init; }
+
+    internal Func<bool>? SagesetProfileWriter { get; init; }
+
+    /// <summary>Test seams for the repair and defrag steps: a shorter time limit and another defrag path.</summary>
+    internal TimeSpan RepairTimeout { get; init; } = RepairStepTimeout;
+
+    internal TimeSpan DefragTimeout { get; init; } = DefragLimit;
+
+    internal string? DefragExecutable { get; init; }
+
+    /// <summary>How long drive optimisation may run before it is ended.</summary>
+    internal static readonly TimeSpan DefragLimit = TimeSpan.FromHours(6);
+
     private async Task<CleanupOutcome> RunDiskCleanupAsync(CancellationToken cancellationToken)
     {
-        var cleanmgr = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cleanmgr.exe");
+        var cleanmgr = CleanmgrExecutable ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cleanmgr.exe");
         if (!File.Exists(cleanmgr))
         {
             logging.Warn("Cleanup: cleanmgr.exe was not found.");
-            return new CleanupOutcome(0, 0, 0);
+            return CleanupOutcome.Failure();
         }
 
         // Without admin the profile cannot be written, and starting cleanmgr with its OWN dialogs would
         // leave this dialog waiting on a window the user did not ask for, and unable to cancel it.
         // Skip the target instead and say why.
-        var outcome = await RunUnderSagesetProfileAsync(TryWriteSagesetProfile, RemoveSagesetProfile, async () =>
+        var outcome = await RunUnderSagesetProfileAsync(SagesetProfileWriter ?? TryWriteSagesetProfile, RemoveSagesetProfile, async () =>
         {
             try
             {
@@ -1873,14 +1889,15 @@ public class CleanupService(LoggingService logging)
             catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or InvalidOperationException)
             {
                 logging.Warn($"Cleanup: Disk Cleanup could not be started: {ex.Message}");
-                return new CleanupOutcome(0, 0, 0);
+                return CleanupOutcome.Failure();
             }
         });
 
         if (outcome is null)
         {
-            logging.Info("Cleanup: Disk Cleanup skipped: an unattended run needs administrator rights.");
-            return new CleanupOutcome(0, 0, 0);
+            // The selection profile could not be written, so cleanmgr was never started.
+            logging.Warn("Cleanup: Disk Cleanup was not started: its selection profile could not be written.");
+            return CleanupOutcome.Failure();
         }
 
         return outcome.Value;
@@ -2016,6 +2033,9 @@ public class CleanupService(LoggingService logging)
         var cbsStart = judgesSfc ? SystemRepairResults.CbsLength(cbsPath) : null;
         var exitCodes = new int?[steps.Count];
         var sfcFinished = false;
+        var timedOut = false;
+        var couldNotRun = false;
+        int? failingExit = null;
 
         foreach (var (exe, args, label) in steps)
         {
@@ -2029,6 +2049,7 @@ public class CleanupService(LoggingService logging)
             if (!File.Exists(exe))
             {
                 logging.Warn($"Cleanup: {label} skipped; {Path.GetFileName(exe)} was not found.");
+                couldNotRun = true;
                 done++;
                 continue;
             }
@@ -2041,12 +2062,20 @@ public class CleanupService(LoggingService logging)
                 // defrag step, which passes its real token straight through). The timeout kills too, so it
                 // is set far beyond any healthy run and only ever ends a step that is truly stuck.
                 var result = await RunStreamedStepAsync(
-                    exe, args, label, stepBase, share, progress, RepairStepTimeout, CancellationToken.None);
+                    exe, args, label, stepBase, share, progress, RepairTimeout, CancellationToken.None);
 
                 if (result.TimedOut)
+                {
                     logging.Warn($"Cleanup: {label} timed out.");
+                    timedOut = true;
+                }
                 else if (result.ExitCode != 0)
+                {
                     logging.Info($"Cleanup: {label} finished with exit code {result.ExitCode}.");
+                    // 3010 is "done, restart needed": a success. The first other code is the one reported.
+                    if (result.ExitCode != RestartRequiredExitCode)
+                        failingExit ??= result.ExitCode;
+                }
                 else
                     logging.Info($"Cleanup: {label} completed.");
 
@@ -2064,6 +2093,7 @@ public class CleanupService(LoggingService logging)
             {
                 // Without admin these refuse to start at all; expected, and not worth failing the run over.
                 logging.Warn($"Cleanup: {label} could not be run: {ex.Message}");
+                couldNotRun = true;
             }
 
             done++;
@@ -2084,8 +2114,17 @@ public class CleanupService(LoggingService logging)
             repairResult = verdict == RepairResult.Ok && exitCodes[0] != 0 ? null : verdict;
         }
 
-        return new CleanupOutcome(0, 0, 0, RepairResult: repairResult);
+        // A check that reached a verdict (all clear, or repaired) is not a failure even though the tool's
+        // own exit code said "found something"; every other bad ending is.
+        var verdictIsFine = repairResult is RepairResult.Ok or RepairResult.Repaired;
+        var failed = couldNotRun || (failingExit is not null && !verdictIsFine);
+        return new CleanupOutcome(
+            0, 0, 0, TimedOut: timedOut, RepairResult: repairResult,
+            Failed: failed && !timedOut, ExitCode: failed && !timedOut ? failingExit : null);
     }
+
+    /// <summary>DISM's "completed, restart required": counts as success.</summary>
+    private const int RestartRequiredExitCode = 3010;
 
     /// <summary>
     /// Windows' own drive optimisation: defragmentation on a rotational disk, retrim on an SSD, the SAME
@@ -2106,11 +2145,11 @@ public class CleanupService(LoggingService logging)
             return new CleanupOutcome(0, 0, 0);
         }
 
-        var defrag = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "defrag.exe");
+        var defrag = DefragExecutable ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "defrag.exe");
         if (!File.Exists(defrag))
         {
             logging.Warn("Cleanup: drive optimisation skipped; defrag.exe was not found.");
-            return new CleanupOutcome(0, 0, 0);
+            return CleanupOutcome.Failure();
         }
 
         var label = string.Format(LocalizationService.Instance["CleanupDefragName"], target.DriveLetter);
@@ -2119,16 +2158,23 @@ public class CleanupService(LoggingService logging)
 
         var result = await RunStreamedStepAsync(
             defrag, [target.DriveLetter, "/O", "/U", "/V"], label, stepBase: 0, share: 100, progress,
-            TimeSpan.FromHours(6), cancellationToken);
-
-        if (result.TimedOut)
-            logging.Warn("Cleanup: drive optimisation timed out.");
-        else if (result.ExitCode != 0)
-            logging.Info($"Cleanup: drive optimisation finished with exit code {result.ExitCode}.");
-        else
-            logging.Info("Cleanup: drive optimisation completed.");
+            DefragTimeout, cancellationToken);
 
         progress?.Report(new CleanupProgress(string.Empty, 100, 0));
+
+        if (result.TimedOut)
+        {
+            logging.Warn("Cleanup: drive optimisation timed out.");
+            return new CleanupOutcome(0, 0, 0, TimedOut: true);
+        }
+
+        if (result.ExitCode != 0)
+        {
+            logging.Info($"Cleanup: drive optimisation finished with exit code {result.ExitCode}.");
+            return CleanupOutcome.Failure(result.ExitCode);
+        }
+
+        logging.Info("Cleanup: drive optimisation completed.");
         return new CleanupOutcome(0, 0, 0);
     }
 

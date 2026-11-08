@@ -2356,4 +2356,13 @@ Continuar com direitos de administrador?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Nenhum dispositivo usa este driver</value>
   </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>Terminou com o código de erro {0}</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>Interrompido após {0} minutos</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>Não foi possível executar</value>
+  </data>
 </root>

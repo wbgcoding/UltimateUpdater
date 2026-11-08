@@ -2356,4 +2356,13 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Niciun dispozitiv nu folosește acest driver</value>
   </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>Încheiat cu codul de eroare {0}</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>Oprit după {0} minute</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>Nu a putut fi rulat</value>
+  </data>
 </root>

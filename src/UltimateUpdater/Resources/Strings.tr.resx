@@ -2356,4 +2356,13 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Hiçbir aygıt bu sürücüyü kullanmıyor</value>
   </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>{0} hata koduyla bitti</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>{0} dakika sonra durduruldu</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>Çalıştırılamadı</value>
+  </data>
 </root>

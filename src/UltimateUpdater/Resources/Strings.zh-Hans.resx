@@ -2356,4 +2356,13 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>没有设备使用此驱动程序</value>
   </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>已结束，错误代码 {0}</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>已在 {0} 分钟后停止</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>无法运行</value>
+  </data>
 </root>

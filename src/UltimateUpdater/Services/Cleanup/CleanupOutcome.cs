@@ -20,12 +20,19 @@ namespace UltimateUpdater.Services.Cleanup;
 /// administrator can run it and this process is not one: the row must say so, never read "done".
 /// <paramref name="RepairResult"/> is how a system file or image check ended; null for every other target and
 /// when the tool's own verdict could not be read.
+/// <paramref name="Failed"/> is true when an external tool the target runs (DISM, sfc, defrag, Disk Cleanup)
+/// ended with an error, could not be started, or its setup was refused: the row must say so and never read
+/// "done". <paramref name="ExitCode"/> is the tool's exit code when there was one to report; a timeout is
+/// <paramref name="TimedOut"/>, not Failed.
 /// </summary>
 public readonly record struct CleanupOutcome(
     long FreedBytes, int DeletedFiles, int SkippedFiles, long SkippedBytes = 0, bool WasStopped = false,
     string? DriverBackupFolderName = null, bool TimedOut = false, int ProtectedFiles = 0, long ProtectedBytes = 0,
-    bool NeedsAdmin = false, RepairResult? RepairResult = null)
+    bool NeedsAdmin = false, RepairResult? RepairResult = null, bool Failed = false, int? ExitCode = null)
 {
+    /// <summary>A run that could not do its job: the tool or its setup failed, nothing was freed.</summary>
+    public static CleanupOutcome Failure(int? exitCode = null) => new(0, 0, 0, Failed: true, ExitCode: exitCode);
+
     /// <summary>A target that was never started because it needs administrator rights.</summary>
     public static CleanupOutcome AdminRequired => new(0, 0, 0, NeedsAdmin: true);
 }

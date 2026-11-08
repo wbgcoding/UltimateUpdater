@@ -2356,4 +2356,13 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Kein Gerät nutzt diesen Treiber</value>
   </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>Beendet mit Fehlercode {0}</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>Nach {0} Minuten abgebrochen</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>Konnte nicht ausgeführt werden</value>
+  </data>
 </root>

@@ -2356,4 +2356,13 @@ Esto no se puede deshacer.</value>
   <data name="CleanupDriverReasonUnused" xml:space="preserve">
     <value>Ningún dispositivo usa este controlador</value>
   </data>
+  <data name="CleanupToolFailed" xml:space="preserve">
+    <value>Finalizó con el código de error {0}</value>
+  </data>
+  <data name="CleanupToolTimedOut" xml:space="preserve">
+    <value>Detenido tras {0} minutos</value>
+  </data>
+  <data name="CleanupToolNotRun" xml:space="preserve">
+    <value>No se pudo ejecutar</value>
+  </data>
 </root>

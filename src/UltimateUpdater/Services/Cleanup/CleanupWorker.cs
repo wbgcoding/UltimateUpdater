@@ -334,6 +334,8 @@ public static class CleanupWorker
             ProtectedBytes = outcome.ProtectedBytes,
             Stopped = outcome.WasStopped,
             TimedOut = outcome.TimedOut,
+            Failed = outcome.Failed,
+            ExitCode = outcome.ExitCode,
             RepairResult = outcome.RepairResult,
             DriverBackupFolderName = outcome.DriverBackupFolderName,
         });
