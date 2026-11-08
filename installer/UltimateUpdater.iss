@@ -654,16 +654,7 @@ begin
   end;
 end;
 
-{ Uninstalling while the app runs blocks on files that cannot be deleted, and a silent uninstall has
-  nobody to ask. Measured on a test machine, it waits for ever. So the app is closed first, always:
-  an interactive uninstall would have asked for exactly this anyway, and there is nothing unsaved to
-  lose. Deliberately NOT conditional on UninstallSilent, which did not report silent runs reliably.
-
-  Closed by PATH, not by image name. taskkill /IM matches every process with that name anywhere on
-  the machine, so removing an installed copy also shot down a portable copy running from a stick or
-  another folder - possibly in the middle of its own install or cleanup run. Only a copy inside the
-  installation folder can hold this uninstall's files, and that is the only one closed. Both names
-  are covered because that folder may hold either (portable first, then installed over). }
+{ Quotes a value for a PowerShell single-quoted string. }
 function PsQuote(const Value: String): String;
 begin
   { A single quote inside a PowerShell single-quoted string is written twice. A folder name may
@@ -672,27 +663,13 @@ begin
   StringChangeEx(Result, '''', '''''', True);
 end;
 
-function InitializeUninstall: Boolean;
-var
-  ResultCode: Integer;
-  Script: String;
-begin
-  Result := True;
-  Script :=
-    '$p = @(''' + PsQuote(ExpandConstant('{app}\{#AppExeName}')) + ''', ''' +
-    PsQuote(ExpandConstant('{app}\{#PortableExeName}')) + '''); ' +
-    'Get-Process -ErrorAction SilentlyContinue | ' +
-    'Where-Object { $_.Path -and ($p -contains $_.Path) } | ' +
-    'Stop-Process -Force -ErrorAction SilentlyContinue';
-  Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
-       '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
-       SW_HIDE, ewWaitUntilTerminated, ResultCode);
-end;
-
 { The app holds a named mutex exactly while it installs updates or cleans up (BusySignal in the app). The
   name carries the SID of the user who runs the app, which is not necessarily the account Setup runs
   under (a separate administrator approves the prompt), so the SID is taken from the owner of the running
-  process instead of from Setup. Exit code 10 means: a copy in this folder is busy. Only a clean exit 0
+  process instead of from Setup. The mutex lives in the session of the app, and Local\ is the session of
+  the process that opens it: a copy in Setup's own session is probed as Local\, a copy in another session
+  (an elevated per-machine Setup started by a different account) as Session\<id>\, so it is not mistaken
+  for idle. Exit code 10 means: a copy in this folder is busy. Only a clean exit 0
   means idle: a mutex that exists but cannot be opened, an owner that cannot be looked up, a PowerShell
   that does not start or any other exit code all count as busy, because the probe is what stands between
   a silent Setup and an install that is cut off. }
@@ -724,18 +701,52 @@ begin
   Script :=
     RunningCopiesScript +
     '$busy = $false; ' +
+    '$s = [System.Diagnostics.Process]::GetCurrentProcess().SessionId; ' +
     'foreach ($c in $copies) { ' +
     '$o = Get-CimInstance Win32_Process -Filter (''ProcessId='' + $c.Id) -ErrorAction SilentlyContinue | ' +
     'Invoke-CimMethod -MethodName GetOwnerSid -ErrorAction SilentlyContinue; ' +
     'if (-not $o -or -not $o.Sid) { $busy = $true; continue }; ' +
     '$m = $null; ' +
-    'try { if ([System.Threading.Mutex]::TryOpenExisting(''Local\UltimateUpdater-Busy-'' + $o.Sid, [ref]$m)) ' +
+    '$n = if ($c.SessionId -eq $s) { ''Local\UltimateUpdater-Busy-'' + $o.Sid } ' +
+    'else { ''Session\'' + $c.SessionId + ''\UltimateUpdater-Busy-'' + $o.Sid }; ' +
+    'try { if ([System.Threading.Mutex]::TryOpenExisting($n, [ref]$m)) ' +
     '{ $m.Dispose(); $busy = $true } } catch { $busy = $true } }; ' +
     'if ($busy) { exit ' + IntToStr(BusyExitCode) + ' } else { exit 0 }';
   Started := Exec(PowerShellPath,
        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
        SW_HIDE, ewWaitUntilTerminated, ResultCode);
   Result := (not Started) or (ResultCode <> 0);
+end;
+
+{ Uninstalling while the app runs blocks on files that cannot be deleted, and a silent uninstall has
+  nobody to ask. Measured on a test machine, it waits for ever. So the app is closed first, always.
+  An interactive uninstall asks first when the app is installing or cleaning up (the same question
+  Setup asks before it replaces a running copy); declining stops the uninstall and leaves the app
+  running. A silent uninstall cannot ask and closes it. Deliberately keyed to UninstallSilent only for
+  that question: the closing itself never depends on it, because UninstallSilent did not report silent
+  runs reliably.
+
+  Closed by PATH, not by image name. taskkill /IM matches every process with that name anywhere on
+  the machine, so removing an installed copy also shot down a portable copy running from a stick or
+  another folder - possibly in the middle of its own install or cleanup run. Only a copy inside the
+  installation folder can hold this uninstall's files, and that is the only one closed. Both names
+  are covered because that folder may hold either (portable first, then installed over). }
+function InitializeUninstall: Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := True;
+  if (not UninstallSilent) and InstallingCopyRuns then
+    if MsgBox(CustomMessage('BusyPrompt'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) <> IDYES then
+    begin
+      Result := False;
+      Exit;
+    end;
+
+  Exec(PowerShellPath,
+       '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + RunningCopiesScript +
+       '$copies | Stop-Process -Force -ErrorAction SilentlyContinue"', '',
+       SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 { True when Setup was started with the given bare switch. The param constant only reads /Name=value, and the

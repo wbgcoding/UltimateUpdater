@@ -205,6 +205,42 @@ public class InstallerScriptTests
 
         Assert.Contains(BusySignal.NamePrefix, script);
         Assert.Contains("TryOpenExisting", script);
+
+        // a copy in another session keeps its mutex in that session's namespace: Local\ would miss it
+        var probe = Regex.Match(script, @"function InstallingCopyRuns.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(probe.Success, "InstallingCopyRuns is gone");
+        Assert.Contains("$c.SessionId -eq $s", probe.Value);
+        Assert.Contains("''Session\\'' + $c.SessionId + ''\\UltimateUpdater-Busy-'' + $o.Sid", probe.Value);
+        Assert.Contains("GetCurrentProcess().SessionId", probe.Value);
+    }
+
+    /// <summary>
+    /// An interactive uninstall asks before it closes an app that is installing or cleaning up, with the same
+    /// text Setup uses; declining aborts the uninstall. A silent one never asks. The probe has to be declared
+    /// above the function that calls it (Pascal Script).
+    /// </summary>
+    [Fact]
+    public void Uninstall_asks_before_closing_a_busy_app_and_a_no_aborts_it()
+    {
+        var script = Script();
+        var uninstall = Regex.Match(script, @"function InitializeUninstall.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(uninstall.Success, "InitializeUninstall is gone");
+
+        Assert.True(
+            script.IndexOf("function InstallingCopyRuns", StringComparison.Ordinal)
+                < script.IndexOf("function InitializeUninstall", StringComparison.Ordinal),
+            "InstallingCopyRuns must be declared before InitializeUninstall");
+        Assert.Contains("(not UninstallSilent) and InstallingCopyRuns", uninstall.Value);
+        Assert.Contains("CustomMessage('BusyPrompt')", uninstall.Value);
+        Assert.Contains("<> IDYES", uninstall.Value);
+        Assert.Contains("Result := False;", uninstall.Value);
+
+        // the prompt and its abort come before the app is stopped, and the stop stays by path
+        Assert.True(
+            uninstall.Value.IndexOf("Result := False;", StringComparison.Ordinal)
+                < uninstall.Value.IndexOf("Stop-Process", StringComparison.Ordinal));
+        Assert.Contains("RunningCopiesScript", uninstall.Value);
+        Assert.DoesNotContain("taskkill", uninstall.Value, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
