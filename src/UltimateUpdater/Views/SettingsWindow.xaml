@@ -39,6 +39,14 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
+        <!-- A hairline between two rows of one card, in the same divider tone as the main table. The
+             negative side margin cancels the card padding so it runs from edge to edge. -->
+        <Style x:Key="CardSeparator" TargetType="Border">
+            <Setter Property="Height" Value="1"/>
+            <Setter Property="Background" Value="{DynamicResource DividerStrokeColorDefaultBrush}"/>
+            <Setter Property="Margin" Value="-14,10,-14,10"/>
+        </Style>
+
         <!-- The small info mark after a shortened description; its tooltip holds the full text. -->
         <Style x:Key="CardInfoIcon" TargetType="ui:SymbolIcon">
             <Setter Property="FontSize" Value="12"/>
@@ -395,7 +403,7 @@
                             </ComboBox>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -413,7 +421,7 @@
                                              AutomationProperties.Name="{Binding Loc[SettingsScanOnStart]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -511,8 +519,7 @@
                                        Icon="{ui:SymbolIcon EyeOff24}"
                                        Content="{Binding Loc[IgnoreListTitle]}"
                                        Command="{Binding ShowIgnoreListCommand}"/>
-                            <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}"
-                                    Margin="0,0,0,10"/>
+                            <Border Style="{StaticResource CardSeparator}" Margin="-34,0,-34,10"/>
                             <!-- The SAME FilterChip ToggleButton already used for history's own filters
                                  (App.xaml): one control, one "this is on" signal, and the whole pill is
                                  the click target, a checkbox glyph inside an already-clickable coloured
@@ -568,7 +575,7 @@
                                              AutomationProperties.Name="{Binding Loc[SettingsPreselectCritical]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -592,7 +599,7 @@
                                              AutomationProperties.Name="{Binding Loc[SettingsRestorePoint]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <!-- Optional virus check on the files this app downloads itself. -->
                         <Grid>
@@ -615,7 +622,7 @@
                                              AutomationProperties.Name="{Binding Loc[SettingsScanDownloads]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <!-- How many installs may run at once; winget among itself, and every
                              source against every other source. -->
@@ -685,7 +692,7 @@
                             </StackPanel>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -715,7 +722,7 @@
                             </ComboBox>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -733,7 +740,7 @@
                                              AutomationProperties.Name="{Binding Loc[CleanupRecycleInsteadOfDelete]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -755,7 +762,7 @@
                                              AutomationProperties.Name="{Binding Loc[CleanupPrescanAtStartup]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <!-- Permanently-excluded cleanup paths: a right-click in the cleanup dialog adds to
                              this list, and this is where an entry is released again. Same
@@ -871,7 +878,7 @@
                             </StackPanel>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <!-- The logs block: log folder, error reports folder and the log's own retention, plain
                              rows on the same card surface as the data folder row above. -->
@@ -898,7 +905,7 @@
                                            Command="{Binding OpenLogFolderCommand}"/>
                             </Grid>
 
-                            <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                            <Border Style="{StaticResource CardSeparator}"/>
 
                             <!-- The last ten one-click error reports, same row shape as the log
                                  folder above it (a card's action button lives in its own third Auto column,
@@ -922,7 +929,7 @@
                                            Command="{Binding OpenReportsCommand}"/>
                             </Grid>
 
-                            <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                            <Border Style="{StaticResource CardSeparator}"/>
 
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -1066,7 +1073,7 @@
                             </ComboBox>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid x:Name="AccentRow">
                             <Grid.ColumnDefinitions>
@@ -1088,7 +1095,7 @@
                                              AutomationProperties.Name="{Binding Loc[ThemeSystemAccent]}"/>
                         </Grid>
 
-                        <Border Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,10,0,10"/>
+                        <Border Style="{StaticResource CardSeparator}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
