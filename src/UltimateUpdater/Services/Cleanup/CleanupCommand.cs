@@ -81,6 +81,11 @@ public sealed class CleanupCommand
     /// </summary>
     public List<string> CallerTempPaths { get; set; } = new();
 
+    /// <summary>The unelevated app's user profile folder. The worker may run as another account, so its own
+    /// profile is not the signed-in user's; the old-Python scan searches this one for virtual environments.
+    /// Only ever read to count, never to delete.</summary>
+    public string? CallerProfilePath { get; set; }
+
     /// <summary>Which "older Python versions" rows to actually uninstall on a "clean" (each identified by
     /// its interpreter's python.exe path); never "everything the last scan found", same none-pre-selected
     /// rule as <see cref="SelectedDriverDeviceInstanceIds"/>. Ignored for every other target.</summary>

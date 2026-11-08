@@ -2326,4 +2326,7 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Încă folosit de medii virtuale ({0})</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>Acest număr este un minim. Se numără în profilul de utilizator și în folderele obișnuite ale instrumentelor (pipx, Poetry); mediile virtuale păstrate în altă parte nu sunt găsite.</value>
+  </data>
 </root>

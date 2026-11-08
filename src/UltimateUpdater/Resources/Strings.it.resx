@@ -2326,4 +2326,7 @@ Continuare con privilegi di amministratore?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Ancora usato da ambienti virtuali ({0})</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>Questo numero è un minimo. Viene contato nel profilo utente e nelle cartelle abituali degli strumenti (pipx, Poetry); gli ambienti virtuali salvati altrove non vengono trovati.</value>
+  </data>
 </root>

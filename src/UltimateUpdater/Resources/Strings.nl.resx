@@ -2326,4 +2326,7 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Nog in gebruik door virtuele omgevingen ({0})</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>Dit aantal is een minimum. Er wordt geteld in uw gebruikersprofiel en de gebruikelijke toolmappen (pipx, Poetry); virtuele omgevingen op andere plekken worden niet gevonden.</value>
+  </data>
 </root>

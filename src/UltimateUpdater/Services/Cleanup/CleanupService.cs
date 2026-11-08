@@ -38,7 +38,7 @@ public class CleanupService(LoggingService logging)
                     CleanupKind.LeftoverInstalls => ScanLeftovers(cancellationToken),
                     CleanupKind.DriverCleanup => ScanDrivers(cancellationToken),
                     CleanupKind.PipInstallLeftovers => ScanPipLeftovers(cancellationToken),
-                    CleanupKind.OldPythonVersions => ScanOldPythonVersions(cancellationToken),
+                    CleanupKind.OldPythonVersions => ScanOldPythonVersions(CallerProfilePath, cancellationToken),
                     // Disk Cleanup reports nothing before it runs, and guessing a figure would be a lie.
                     _ => new CleanupScanResult(0, 0, 0),
                 };
@@ -52,6 +52,11 @@ public class CleanupService(LoggingService logging)
 
     /// <summary>How often a file pass reports what it has freed so far: about four times a second.</summary>
     internal TimeSpan ProgressInterval { get; set; } = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>The signed-in user's profile folder when this runs in the elevated worker (which may be another
+    /// account); null in the app itself, where the own profile is the right one. Only used to count virtual
+    /// environments for the old-Python rows.</summary>
+    internal string? CallerProfilePath { get; set; }
 
     /// <summary>Test seam: what the caller asked for, readable from inside an overridden
     /// <see cref="ScanAsync(CleanupTarget, CancellationToken, int)"/> that stands in for the real walk.</summary>
@@ -1460,10 +1465,10 @@ public class CleanupService(LoggingService logging)
     /// <summary>Every interpreter older than the newest of its own architecture, gathered fresh every scan;
     /// no byte total worth trusting across the whole target, the same reasoning as <see cref="ScanDrivers"/>,
     /// the per-row size is what the dialog actually shows.</summary>
-    private static CleanupScanResult ScanOldPythonVersions(CancellationToken cancellationToken)
+    internal static CleanupScanResult ScanOldPythonVersions(string? callerProfilePath, CancellationToken cancellationToken)
     {
         var candidates = PythonCleanupDiscovery.CountVenvUses(
-            PythonCleanupDiscovery.DiscoverOldVersions(WindowsRegistryView.Instance), cancellationToken);
+            PythonCleanupDiscovery.DiscoverOldVersions(WindowsRegistryView.Instance), callerProfilePath, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
         return new CleanupScanResult(candidates.Sum(c => c.SizeBytes), candidates.Count, 0)

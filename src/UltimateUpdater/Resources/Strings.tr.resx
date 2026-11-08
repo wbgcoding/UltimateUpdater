@@ -2326,4 +2326,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Hâlâ sanal ortamlar tarafından kullanılıyor ({0})</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>Bu sayı en az değerdir. Kullanıcı profilinizde ve yaygın araç klasörlerinde (pipx, Poetry) sayılır; başka yerlerde tutulan sanal ortamlar bulunmaz.</value>
+  </data>
 </root>

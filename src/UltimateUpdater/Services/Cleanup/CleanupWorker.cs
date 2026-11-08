@@ -74,6 +74,7 @@ public static class CleanupWorker
             _ => DrainLog(writer, jobId), null, LogFlushInterval, LogFlushInterval);
 
         var service = serviceOverride ?? new CleanupService(logging);
+        service.CallerProfilePath = command.CallerProfilePath;
         var registrySettings = new Models.Settings.RegistryCleanupSettings
         {
             BackupFolder = ChooseRegistryBackupFolder(

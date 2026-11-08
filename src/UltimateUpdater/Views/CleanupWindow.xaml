@@ -783,6 +783,7 @@
 
                                             <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
                                                        Text="{Binding VenvUseText}" FontSize="10"
+                                                       ToolTip="{Binding VenvUseTip}"
                                                        Visibility="{Binding HasVenvUses, Converter={StaticResource BoolToVisibility}}"
                                                        Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
                                         </Grid>

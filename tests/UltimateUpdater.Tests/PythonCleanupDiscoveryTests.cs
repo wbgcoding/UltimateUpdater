@@ -462,4 +462,44 @@ public class PythonCleanupDiscoveryTests : IDisposable
             Directory.Delete(Path.Combine(profile, "link"));
         }
     }
+
+    [Fact]
+    public void The_search_roots_follow_the_profile_the_caller_reported()
+    {
+        var profile = Path.Combine(_root, "signed-in");
+        Directory.CreateDirectory(profile);
+
+        var roots = PythonCleanupDiscovery.DefaultVenvRoots(profile);
+
+        Assert.Equal(profile, roots[0].Path);
+        Assert.Contains(roots, r => r.Path == Path.Combine(profile, "AppData", "Local", "pipx", "venvs"));
+        Assert.Contains(roots, r => r.Path == Path.Combine(profile, "AppData", "Roaming", "pypoetry", "virtualenvs"));
+        Assert.Contains(roots, r => r.Path == Path.Combine(profile, "AppData", "Local", "pypoetry", "Cache", "virtualenvs"));
+        Assert.All(roots, r => Assert.StartsWith(profile, r.Path, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("relative\\folder")]
+    [InlineData("C:\\no-such-folder-for-the-venv-search")]
+    public void An_unusable_caller_profile_falls_back_to_the_process_own_profile(string? reported)
+    {
+        var own = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        Assert.Equal(own, PythonCleanupDiscovery.ResolveProfile(reported));
+    }
+
+    [Fact]
+    public void The_reported_profiles_own_temp_folder_is_not_walked()
+    {
+        var (found, older, _) = OldAndNewCandidates();
+        var profile = Path.Combine(_root, "signed-in");
+        MakeVenv(Path.Combine(profile, "AppData", "Local", "Temp", "scratch"), ".venv", older);
+        MakeVenv(Path.Combine(profile, "projects"), ".venv", older);
+
+        var counted = PythonCleanupDiscovery.CountVenvUses(found, profile, CancellationToken.None);
+
+        Assert.Equal(1, Assert.Single(counted).VenvUseCount);
+    }
 }

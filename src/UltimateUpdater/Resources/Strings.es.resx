@@ -2326,4 +2326,7 @@ Esto no se puede deshacer.</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Aún lo usan entornos virtuales ({0})</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>Este número es un mínimo. Se cuenta en su perfil de usuario y en las carpetas habituales de herramientas (pipx, Poetry); los entornos virtuales guardados en otro lugar no se encuentran.</value>
+  </data>
 </root>

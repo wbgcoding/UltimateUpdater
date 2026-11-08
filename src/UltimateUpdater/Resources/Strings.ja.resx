@@ -2326,4 +2326,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>仮想環境がまだ使用中です ({0})</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>この数は最小値です。ユーザープロファイルと一般的なツールのフォルダー (pipx、Poetry) のみを調べるため、それ以外の場所にある仮想環境は検出されません。</value>
+  </data>
 </root>

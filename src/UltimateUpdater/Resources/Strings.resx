@@ -2326,4 +2326,7 @@ Continue with admin rights?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Still used by virtual environments ({0})</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>This count is a minimum. It covers your user profile and the usual tool folders (pipx, Poetry); virtual environments kept anywhere else are not found.</value>
+  </data>
 </root>

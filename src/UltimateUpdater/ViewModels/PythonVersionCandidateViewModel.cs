@@ -36,6 +36,9 @@ public sealed partial class PythonVersionCandidateViewModel(PythonVersionCandida
     public string VenvUseText => string.Format(
         LocalizationService.Instance["CleanupOldPythonVenvUses"], candidate.VenvUseCount);
 
+    /// <summary>Says the venv count is a lower bound (only the signed-in profile and the usual tool folders are searched).</summary>
+    public string VenvUseTip => LocalizationService.Instance["CleanupOldPythonVenvUsesTip"];
+
     public string DetailText => string.Format(
         LocalizationService.Instance["CleanupOldPythonVersionDetail"], PythonExe, PackageCount);
 
@@ -43,5 +46,6 @@ public sealed partial class PythonVersionCandidateViewModel(PythonVersionCandida
     {
         OnPropertyChanged(nameof(DetailText));
         OnPropertyChanged(nameof(VenvUseText));
+        OnPropertyChanged(nameof(VenvUseTip));
     }
 }

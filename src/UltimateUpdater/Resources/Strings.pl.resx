@@ -2326,4 +2326,7 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Nadal używany przez środowiska wirtualne ({0})</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>Ta liczba to minimum. Obejmuje profil użytkownika i typowe foldery narzędzi (pipx, Poetry); środowiska wirtualne przechowywane gdzie indziej nie są wykrywane.</value>
+  </data>
 </root>
