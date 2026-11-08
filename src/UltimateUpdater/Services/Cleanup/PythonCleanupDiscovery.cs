@@ -40,7 +40,8 @@ public static class PythonCleanupDiscovery
     /// <summary>Every "~"-prefixed folder under every registered interpreter's own site-packages, across
     /// the whole machine. <paramref name="measure"/> false leaves every size at 0 for a caller that only
     /// needs the paths (the cleanup itself counts what it actually frees), sparing a walk of each folder.</summary>
-    public static IReadOnlyList<PipLeftoverCandidate> DiscoverPipLeftovers(IRegistryView registry, bool measure = true)
+    public static IReadOnlyList<PipLeftoverCandidate> DiscoverPipLeftovers(
+        IRegistryView registry, bool measure = true, Action<string>? logSkip = null)
     {
         var found = new List<PipLeftoverCandidate>();
 
@@ -50,7 +51,7 @@ public static class PythonCleanupDiscovery
             if (sitePackages is null)
                 continue;
 
-            foreach (var directory in PythonInterpreters.FindBrokenInstallLeftovers(sitePackages))
+            foreach (var directory in PythonInterpreters.FindBrokenInstallLeftovers(sitePackages, logSkip: logSkip))
             {
                 var size = measure
                     ? DirectorySizeWalker.Measure(directory, DirectorySizeWalker.DefaultMaxDepth, MaxFilesScannedPerCandidate)

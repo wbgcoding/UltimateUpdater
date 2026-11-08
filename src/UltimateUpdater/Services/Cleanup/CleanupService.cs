@@ -1413,7 +1413,7 @@ public class CleanupService(LoggingService logging)
         var deleted = 0;
         var skipped = 0;
 
-        foreach (var candidate in PythonCleanupDiscovery.DiscoverPipLeftovers(WindowsRegistryView.Instance, measure: false))
+        foreach (var candidate in PythonCleanupDiscovery.DiscoverPipLeftovers(WindowsRegistryView.Instance, measure: false, logSkip: logging.Info))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
