@@ -1045,9 +1045,6 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} çalıştırma · son: {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>En büyük alanlar</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Henüz hiçbir şey boşaltılmadı.</value>
   </data>
@@ -2268,5 +2265,11 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Raporu aç</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Diğer</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>Boşaltılan her şeyin %{0} kadarı · {1}</value>
   </data>
 </root>

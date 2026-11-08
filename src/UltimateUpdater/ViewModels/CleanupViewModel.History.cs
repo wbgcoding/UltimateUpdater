@@ -106,28 +106,15 @@ public partial class CleanupViewModel
 
     public string HistoryEmptyOverviewText => LocalizationService.Instance["CleanupHistoryEmptyOverview"];
 
-    /// <summary>The three categories that gave up the most, summed across every run on record; a
-    /// category that appears in several runs counts once, with its own combined total and its share of
-    /// everything ever freed.</summary>
-    public IReadOnlyList<CleanupHistoryTopCategoryViewModel> HistoryTopCategories
+    /// <summary>The pie and its legend: areas summed across every run on record, the six biggest as slices
+    /// of their own and the rest as one "other" slice (see <see cref="CleanupHistoryOverview"/>).</summary>
+    public IReadOnlyList<CleanupHistorySliceViewModel> HistorySlices
     {
         get
         {
-            var total = History.Sum(h => h.FreedBytes);
-            if (total <= 0)
-                return [];
-
-            return History
-                .SelectMany(h => h.Areas)
-                // Grouped by the formatted title, not the bare key: a per-drive area ("Defragment {0}") would
-                // otherwise show its raw placeholder. Areas that freed nothing (defrag, repair, Disk Cleanup)
-                // are not "areas that gave up the most" and must not fill the list at 0 B.
-                .GroupBy(a => a.Title)
-                .Select(g => new CleanupHistoryTopCategoryViewModel(g.Key, g.Sum(a => a.FreedBytes), total))
-                .Where(c => c.Bytes > 0)
-                .OrderByDescending(c => c.Bytes)
-                .Take(3)
-                .ToList();
+            var slices = CleanupHistoryOverview.BuildSlices(History.Select(h => h.Entry));
+            var total = slices.Sum(s => s.Bytes);
+            return slices.Select((s, i) => new CleanupHistorySliceViewModel(s, i, total)).ToList();
         }
     }
 
@@ -137,7 +124,7 @@ public partial class CleanupViewModel
         OnPropertyChanged(nameof(HistoryRunCountText));
         OnPropertyChanged(nameof(HasFreedAnything));
         OnPropertyChanged(nameof(HasNotFreedAnything));
-        OnPropertyChanged(nameof(HistoryTopCategories));
+        OnPropertyChanged(nameof(HistorySlices));
     }
 
     /// <summary>One row's own delete button; the file on disk is rewritten right away, same as

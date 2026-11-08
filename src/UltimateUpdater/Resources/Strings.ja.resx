@@ -1045,9 +1045,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} 回実行 · 最終実行 {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>容量の大きい領域</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>まだ何も解放されていません。</value>
   </data>
@@ -2268,5 +2265,11 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>レポートを開く</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>その他</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>解放した全体の {0}% · {1}</value>
   </data>
 </root>

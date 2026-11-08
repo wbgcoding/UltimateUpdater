@@ -60,7 +60,7 @@ public class XamlBindingTests
             typeof(CleanupViewModel),
             typeof(CleanupHistoryRowViewModel),
             typeof(CleanupHistoryAreaViewModel),
-            typeof(CleanupHistoryTopCategoryViewModel));
+            typeof(CleanupHistorySliceViewModel));
 
     [Fact]
     public void HistoryWindow_bindings_all_exist() =>

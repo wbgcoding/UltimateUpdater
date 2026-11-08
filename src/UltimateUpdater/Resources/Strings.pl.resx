@@ -1045,9 +1045,6 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} uruchomienie, ostatnie: {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>Największe obszary</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Nic nie zostało jeszcze zwolnione.</value>
   </data>
@@ -2268,5 +2265,11 @@ Kontynuować z uprawnieniami administratora?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Otwórz raport</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Inne</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>{0}% wszystkiego, co zwolniono · {1}</value>
   </data>
 </root>

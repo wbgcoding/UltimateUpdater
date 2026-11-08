@@ -1045,9 +1045,6 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} esecuzione · ultima il {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>Aree più grandi</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Non è stato ancora liberato nulla.</value>
   </data>
@@ -2268,5 +2265,11 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Apri rapporto</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Altro</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>{0}% di tutto lo spazio liberato · {1}</value>
   </data>
 </root>

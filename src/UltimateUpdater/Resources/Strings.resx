@@ -1045,9 +1045,6 @@ This cannot be undone by Ultimate Updater.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} run · last on {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>Biggest areas</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Nothing has been freed yet.</value>
   </data>
@@ -2268,5 +2265,11 @@ Continue with admin rights?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Open report</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>{0}% of everything freed · {1}</value>
   </data>
 </root>

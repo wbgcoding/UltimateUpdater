@@ -1045,9 +1045,6 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} Lauf · zuletzt am {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>Größte Bereiche</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Bisher wurde nichts freigegeben.</value>
   </data>
@@ -2268,5 +2265,11 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Bericht öffnen</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Sonstige</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>{0} % von allem · {1}</value>
   </data>
 </root>

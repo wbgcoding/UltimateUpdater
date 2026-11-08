@@ -1045,9 +1045,6 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} keer uitgevoerd · laatst op {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>Grootste gebieden</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Er is nog niets vrijgemaakt.</value>
   </data>
@@ -2268,5 +2265,11 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Rapport openen</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Overig</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>{0}% van alles wat is vrijgemaakt · {1}</value>
   </data>
 </root>

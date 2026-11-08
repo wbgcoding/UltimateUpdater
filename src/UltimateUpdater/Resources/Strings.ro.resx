@@ -1045,9 +1045,6 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} rulare · ultima pe {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>Cele mai mari zone</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Nu s-a eliberat încă nimic.</value>
   </data>
@@ -2268,5 +2265,11 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Deschide raportul</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Altele</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>{0}% din tot ce s-a eliberat · {1}</value>
   </data>
 </root>

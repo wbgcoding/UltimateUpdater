@@ -1045,9 +1045,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} 次运行 · 最近一次于 {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>占用最大的区域</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>尚未释放任何空间。</value>
   </data>
@@ -2268,5 +2265,11 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>打开报告</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>其他</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>占所有已释放空间的 {0}% · {1}</value>
   </data>
 </root>

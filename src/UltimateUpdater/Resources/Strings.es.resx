@@ -1045,9 +1045,6 @@ Esto no se puede deshacer con Ultimate Updater.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} ejecución · la última el {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>Áreas más grandes</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Aún no se ha liberado nada.</value>
   </data>
@@ -2268,5 +2265,11 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Abrir informe</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Otros</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>{0} % de todo lo liberado · {1}</value>
   </data>
 </root>

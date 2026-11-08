@@ -22,12 +22,16 @@ public sealed class CleanupHistoryAreaViewModel : ObservableObject
     /// (<see cref="CleanupHistoryArea.TitleArguments"/>), the same shape <see
     /// cref="CleanupItemViewModel.Title"/> already formats live during a run, so a history row shows the
     /// drive too instead of the raw "{0}" placeholder.</summary>
-    public string Title => _area.TitleArguments.Count == 0
-        ? LocalizationService.Instance[_area.TitleKey]
+    public string Title => FormatTitle(_area.TitleKey, _area.TitleArguments);
+
+    /// <summary>The name for a key plus its formatting arguments in the current language; shared with the
+    /// history pie so both read an area the same way.</summary>
+    public static string FormatTitle(string titleKey, IReadOnlyList<string> titleArguments) => titleArguments.Count == 0
+        ? LocalizationService.Instance[titleKey]
         : string.Format(
             CultureInfo.CurrentUICulture,
-            LocalizationService.Instance[_area.TitleKey],
-            _area.TitleArguments.Cast<object>().ToArray());
+            LocalizationService.Instance[titleKey],
+            titleArguments.Cast<object>().ToArray());
 
     public override string ToString() => Title;
 
@@ -83,6 +87,9 @@ public sealed partial class CleanupHistoryRowViewModel : ObservableObject
 
     public override string ToString() => $"{WhenText}, {FreedText}";
 
+    /// <summary>The stored run, for the overview's arithmetic.</summary>
+    public CleanupHistoryEntry Entry => _entry;
+
     /// <summary>The identity <see cref="CleanupHistoryService.Remove"/> matches on.</summary>
     public DateTimeOffset Timestamp => _entry.Timestamp;
 
@@ -93,7 +100,9 @@ public sealed partial class CleanupHistoryRowViewModel : ObservableObject
     /// <summary>Local time, to the minute, a cleanup is not a sub-second event. The date follows the
     /// chosen UI language's own short-date order;
     /// the 24h time stays fixed either way.</summary>
-    public string WhenText => _entry.Timestamp.LocalDateTime.ToString(
+    public string WhenText => FormatWhen(_entry.Timestamp);
+
+    public static string FormatWhen(DateTimeOffset timestamp) => timestamp.LocalDateTime.ToString(
         $"{CultureInfo.CurrentUICulture.DateTimeFormat.ShortDatePattern} HH:mm", CultureInfo.CurrentUICulture);
 
     public string FreedText =>
@@ -128,28 +137,4 @@ public sealed partial class CleanupHistoryRowViewModel : ObservableObject
     /// log is a much lighter action than the "clear everything" button, which does confirm.</summary>
     [RelayCommand]
     private void Delete() => _onDelete?.Invoke(this);
-}
-
-/// <summary>One line of the history overview's "biggest categories" list, a category summed across
-/// every run in the list, not just one. Built fresh whenever the overview is read, never stored, so it
-/// is always in step with whichever runs are still in the history.</summary>
-public sealed class CleanupHistoryTopCategoryViewModel
-{
-    public CleanupHistoryTopCategoryViewModel(string title, long bytes, long totalBytes)
-    {
-        Title = title;
-        Bytes = bytes;
-        FreedText = ByteSize.Format(bytes);
-        ShareText = (totalBytes > 0 ? (double)bytes / totalBytes : 0).ToString("P0", CultureInfo.CurrentUICulture);
-    }
-
-    public string Title { get; }
-
-    public long Bytes { get; }
-
-    public string FreedText { get; }
-
-    public string ShareText { get; }
-
-    public override string ToString() => $"{Title}, {FreedText}";
 }

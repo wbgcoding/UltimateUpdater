@@ -1045,9 +1045,6 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} execução · última em {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>Maiores áreas</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Ainda não foi liberado espaço.</value>
   </data>
@@ -2268,5 +2265,11 @@ Continuar com direitos de administrador?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Abrir relatório</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Outros</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>{0}% de tudo o que foi liberado · {1}</value>
   </data>
 </root>
