@@ -798,16 +798,17 @@ public partial class CleanupViewModelTests
         var viewModel = Create(settings, history);
 
         Assert.Contains("150", viewModel.HistoryTotalFreedText);
-        Assert.Contains("2", viewModel.HistoryRunCountText);
-        Assert.Contains(viewModel.History[0].WhenText, viewModel.HistoryRunCountText);
+        Assert.Equal("2", viewModel.HistoryStats.Single(s => s.Label == LocalizationService.Instance["CleanupHistoryStatRuns"]).Value);
+        Assert.Contains("75", viewModel.HistoryStats.Single(s => s.Label == LocalizationService.Instance["CleanupHistoryStatAverage"]).Value);
         Assert.True(viewModel.HasFreedAnything);
 
-        var top = viewModel.HistoryTopCategories;
-        Assert.Equal(2, top.Count);
+        var slices = viewModel.HistorySlices;
+        Assert.Equal(2, slices.Count);
         // "User Temp" summed across both runs (90+50=140MB) outranks "Thumbnails" (10MB alone).
-        Assert.Equal(LocalizationService.Instance["CleanupUserTemp"], top[0].Title);
-        Assert.Contains("140", top[0].FreedText);
-        Assert.Equal("93%", top[0].ShareText);
+        Assert.Equal(LocalizationService.Instance["CleanupUserTemp"], slices[0].Title);
+        Assert.Contains("140", slices[0].FreedText);
+        Assert.Equal("93%", slices[0].PercentText);
+        Assert.Equal(100, slices.Sum(s => (int)Math.Round(s.Fraction * 100)));
     }
 
     /// <summary>A history where every run found nothing to free has no categories to rank, the overview
@@ -822,7 +823,7 @@ public partial class CleanupViewModelTests
 
         Assert.False(viewModel.HasFreedAnything);
         Assert.True(viewModel.HasNotFreedAnything);
-        Assert.Empty(viewModel.HistoryTopCategories);
+        Assert.Empty(viewModel.HistorySlices);
     }
 
     /// <summary><see cref="CleanupHistoryRowViewModel.WhenText"/> composes its format STRING from

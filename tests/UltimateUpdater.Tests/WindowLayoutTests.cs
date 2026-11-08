@@ -6643,6 +6643,55 @@ public partial class WindowLayoutTests
             $"List bottom {listBottom:0.0} exceeds the rendered height {renderedHeight:0}, it is clipped.");
     }
 
+    /// <summary>The overview card with a pie over eight areas (six slices and "other"), in both languages.</summary>
+    [Theory]
+    [InlineData("en")]
+    [InlineData("de")]
+    public void CleanupHistoryWindow_renders_the_overview_pie(string language)
+    {
+        RenderResult? result = null;
+
+        WpfHarness.OnUiThread(() =>
+        {
+            LocalizationService.Instance.Apply(language);
+            var logging = new LoggingService();
+            var settings = new SettingsService(logging, Path.Combine(Path.GetTempPath(), $"wu-test-settings-{Guid.NewGuid():N}.json"));
+            var history = new CleanupHistoryService(logging, Path.Combine(Path.GetTempPath(), $"wu-test-cleanup-history-{Guid.NewGuid():N}.json"));
+            var viewModel = new CleanupViewModel(new CleanupService(logging), logging, settings, history: history);
+            WpfHarness.WaitForCleanupCatalog(viewModel);
+
+            string[][] areas =
+            [
+                ["user-temp", "CleanupUserTemp", "900"], ["windows-update-cache", "CleanupUpdateCache", "600"],
+                ["thumbnail-cache", "CleanupThumbnails", "300"], ["recycle-bin", "CleanupRecycleBin", "200"],
+                ["browser-cache", "CleanupShaderCache", "120"], ["crash-dumps", "CleanupCrashDumps", "80"],
+                ["delivery-optimization", "CleanupDeliveryOptimization", "40"], ["system-temp", "CleanupWindowsTemp", "20"],
+            ];
+            for (var run = 0; run < 3; run++)
+            {
+                var runAreas = areas.Where((_, i) => i % 3 != run).Select(a => new CleanupHistoryArea
+                {
+                    Id = a[0], TitleKey = a[1], FreedBytes = long.Parse(a[2]) * 1024 * 1024,
+                }).ToList();
+                if (run == 0)
+                    runAreas.Add(new CleanupHistoryArea { Id = "system-repair-sfc", TitleKey = "CleanupSystemRepairSfc", RepairResult = RepairResult.Repaired });
+                if (run == 1)
+                    runAreas.Add(new CleanupHistoryArea { Id = "system-repair-dism", TitleKey = "CleanupSystemRepairDism", RepairResult = RepairResult.ProblemsFound });
+                viewModel.History.Add(new CleanupHistoryRowViewModel(new CleanupHistoryEntry
+                {
+                    Timestamp = new DateTimeOffset(2026, 8, 7 - run * 2, 21, 40, 0, TimeSpan.Zero),
+                    FreedBytes = runAreas.Sum(a => a.FreedBytes),
+                    Areas = runAreas,
+                }));
+            }
+
+            var window = new CleanupHistoryWindow(viewModel);
+            result = WpfHarness.RenderWindow(window, $"cleanup-history-pie-{language}", (int)window.Width, 560);
+        });
+
+        AssertRendered(result);
+    }
+
     /// <summary>The empty state used to sit inside the same fixed 700px window as a full list.
     /// Shrunk down, its icon and text must still land centred in whatever height remains.</summary>
     [Fact]

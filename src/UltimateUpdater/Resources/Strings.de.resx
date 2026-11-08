@@ -1042,9 +1042,6 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} Lauf · zuletzt am {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>Größte Bereiche</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Bisher wurde nichts freigegeben.</value>
   </data>
@@ -2289,5 +2286,41 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="AboutLegalShort" xml:space="preserve">
     <value>Unabhängiges Projekt. Marken gehören ihren Inhabern.</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Sonstige</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>{0} % von allem · {1}</value>
+  </data>
+  <data name="CleanupHistoryStatSfc" xml:space="preserve">
+    <value>Letzte Systemdateiprüfung (SFC)</value>
+  </data>
+  <data name="CleanupHistoryStatDism" xml:space="preserve">
+    <value>Letzte Abbildprüfung (DISM)</value>
+  </data>
+  <data name="CleanupHistoryRepairOk" xml:space="preserve">
+    <value>{0} · in Ordnung</value>
+  </data>
+  <data name="CleanupHistoryRepairRepaired" xml:space="preserve">
+    <value>{0} · repariert</value>
+  </data>
+  <data name="CleanupHistoryRepairProblems" xml:space="preserve">
+    <value>{0} · Fehler gefunden</value>
+  </data>
+  <data name="CleanupHistoryRepairNever" xml:space="preserve">
+    <value>noch nie</value>
+  </data>
+  <data name="CleanupHistoryStatRuns" xml:space="preserve">
+    <value>Läufe</value>
+  </data>
+  <data name="CleanupHistoryStatAverage" xml:space="preserve">
+    <value>Im Schnitt pro Lauf</value>
+  </data>
+  <data name="CleanupHistoryStatLast30" xml:space="preserve">
+    <value>Letzte 30 Tage</value>
+  </data>
+  <data name="CleanupHistoryStatFree" xml:space="preserve">
+    <value>Frei auf {0}</value>
   </data>
 </root>

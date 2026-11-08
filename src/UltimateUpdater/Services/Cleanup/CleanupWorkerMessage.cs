@@ -37,6 +37,11 @@ public sealed class CleanupWorkerMessage
     /// (see <see cref="CleanupOutcome.TimedOut"/>).</summary>
     public bool TimedOut { get; set; }
 
+    /// <summary>Set only on a "result" message of a system repair target: how the check ended (see
+    /// <see cref="CleanupOutcome.RepairResult"/>). Travels here because the elevated worker writes no files;
+    /// the app records it in the history.</summary>
+    public RepairResult? RepairResult { get; set; }
+
     public string? Current { get; set; }
 
     /// <summary>A log line the worker could not write itself.</summary>

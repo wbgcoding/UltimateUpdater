@@ -44,6 +44,7 @@ public partial class CleanupViewModel
                     FreedBytes = i.FreedBytes,
                     SkippedBytes = i.SkippedBytes,
                     ProtectedBytes = i.ProtectedBytes,
+                    RepairResult = i.RepairResult,
                 }).ToList(),
             };
 
@@ -88,13 +89,10 @@ public partial class CleanupViewModel
     public string HistoryTotalFreedText => string.Format(
         LocalizationService.Instance["CleanupHistoryTotalFreed"], ByteSize.Format(History.Sum(h => h.FreedBytes)));
 
-    /// <summary>How many runs are on record and when the newest one ran; <see cref="History"/> is
-    /// already newest first, so its own head row has that date.</summary>
-    public string HistoryRunCountText => History.Count == 0
-        ? string.Empty
-        : string.Format(
-            LocalizationService.Instance[History.Count == 1 ? "CleanupHistoryRunCountOne" : "CleanupHistoryRunCount"],
-            History.Count, History[0].WhenText);
+    /// <summary>The label and value lines under the total: the last system file and image check, run count,
+    /// average per run, the last 30 days and the system drive's free space (read live each time).</summary>
+    public IReadOnlyList<CleanupHistoryStatViewModel> HistoryStats => CleanupHistoryStatViewModel.Build(
+        History.Select(h => h.Entry).ToList(), DateTimeOffset.Now, CleanupHistoryStatViewModel.ReadSystemDrive());
 
     /// <summary>Whether any run actually freed anything; a history of runs that all found nothing has
     /// no categories to rank, so the card says that plainly instead of showing an empty list.</summary>
@@ -106,38 +104,25 @@ public partial class CleanupViewModel
 
     public string HistoryEmptyOverviewText => LocalizationService.Instance["CleanupHistoryEmptyOverview"];
 
-    /// <summary>The three categories that gave up the most, summed across every run on record; a
-    /// category that appears in several runs counts once, with its own combined total and its share of
-    /// everything ever freed.</summary>
-    public IReadOnlyList<CleanupHistoryTopCategoryViewModel> HistoryTopCategories
+    /// <summary>The pie and its legend: areas summed across every run on record, the six biggest as slices
+    /// of their own and the rest as one "other" slice (see <see cref="CleanupHistoryOverview"/>).</summary>
+    public IReadOnlyList<CleanupHistorySliceViewModel> HistorySlices
     {
         get
         {
-            var total = History.Sum(h => h.FreedBytes);
-            if (total <= 0)
-                return [];
-
-            return History
-                .SelectMany(h => h.Areas)
-                // Grouped by the formatted title, not the bare key: a per-drive area ("Defragment {0}") would
-                // otherwise show its raw placeholder. Areas that freed nothing (defrag, repair, Disk Cleanup)
-                // are not "areas that gave up the most" and must not fill the list at 0 B.
-                .GroupBy(a => a.Title)
-                .Select(g => new CleanupHistoryTopCategoryViewModel(g.Key, g.Sum(a => a.FreedBytes), total))
-                .Where(c => c.Bytes > 0)
-                .OrderByDescending(c => c.Bytes)
-                .Take(3)
-                .ToList();
+            var slices = CleanupHistoryOverview.BuildSlices(History.Select(h => h.Entry));
+            var total = slices.Sum(s => s.Bytes);
+            return slices.Select((s, i) => new CleanupHistorySliceViewModel(s, i, total)).ToList();
         }
     }
 
     private void RaiseHistoryOverviewChanged()
     {
         OnPropertyChanged(nameof(HistoryTotalFreedText));
-        OnPropertyChanged(nameof(HistoryRunCountText));
+        OnPropertyChanged(nameof(HistoryStats));
         OnPropertyChanged(nameof(HasFreedAnything));
         OnPropertyChanged(nameof(HasNotFreedAnything));
-        OnPropertyChanged(nameof(HistoryTopCategories));
+        OnPropertyChanged(nameof(HistorySlices));
     }
 
     /// <summary>One row's own delete button; the file on disk is rewritten right away, same as

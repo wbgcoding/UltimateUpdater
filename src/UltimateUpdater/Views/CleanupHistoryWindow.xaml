@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:local="clr-namespace:UltimateUpdater.Views"
         Title="{Binding Loc[CleanupHistoryTitle]}"
         Width="760" MinWidth="560" MinHeight="420"
         SizeToContent="Height" MaxHeight="700"
@@ -41,44 +42,84 @@
                 Visibility="{Binding HasHistory, Converter={StaticResource BoolToVisibility}}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}">
-            <StackPanel Margin="14,10">
-                <TextBlock Text="{Binding HistoryTotalFreedText}" FontSize="16" FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                <TextBlock Text="{Binding HistoryRunCountText}" FontSize="12" Margin="0,2,0,0"
-                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+            <Grid Margin="14,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <!-- Only the categories that actually gave something up, a history of runs that all
-                     found nothing has no ranking to show, so the calm sentence takes its place instead. -->
-                <TextBlock Text="{Binding HistoryEmptyOverviewText}" FontSize="12" Margin="0,8,0,0"
-                           Visibility="{Binding HasNotFreedAnything, Converter={StaticResource BoolToVisibility}}"
-                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                <StackPanel Grid.Column="0" VerticalAlignment="Top">
+                    <TextBlock Text="{Binding HistoryTotalFreedText}" FontSize="16" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
 
-                <StackPanel Visibility="{Binding HasFreedAnything, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="{Binding Loc[CleanupHistoryTopCategories]}" FontSize="11" Margin="0,10,0,4"
-                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-                    <ItemsControl ItemsSource="{Binding HistoryTopCategories}">
+                    <!-- Label and value lines; the labels share one column width so the values line up. -->
+                    <ItemsControl ItemsSource="{Binding HistoryStats}" Margin="0,8,0,0"
+                                  Grid.IsSharedSizeScope="True">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,2">
+                                <Grid Margin="0,1">
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="StatLabel"/>
                                         <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="12" Margin="0,0,16,0"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- A history of runs that all found nothing has no areas to draw, so the calm
+                         sentence takes the chart's place instead. -->
+                    <TextBlock Text="{Binding HistoryEmptyOverviewText}" FontSize="12" Margin="0,8,0,0"
+                               TextWrapping="Wrap"
+                               Visibility="{Binding HasNotFreedAnything, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                </StackPanel>
+
+                <!-- Every area summed over all runs: the six biggest as blue slices, the rest as one grey
+                     one. Legend lines carry the same tooltip as the slices. -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center"
+                            Visibility="{Binding HasFreedAnything, Converter={StaticResource BoolToVisibility}}">
+                    <local:PieChart Slices="{Binding HistorySlices}"
+                                    NeutralFill="{DynamicResource TextFillColorDisabledBrush}"/>
+                    <ItemsControl ItemsSource="{Binding HistorySlices}" Margin="16,0,0,0" VerticalAlignment="Center">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2" Background="Transparent"
+                                      ToolTip="{Binding ToolTipText}"
+                                      AutomationProperties.Name="{Binding ToolTipText}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="12"
+                                    <Ellipse Grid.Column="0" Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="{Binding Shade}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsOther}" Value="True">
+                                                        <Setter Property="Fill" Value="{DynamicResource TextFillColorDisabledBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="12" MaxWidth="190"
                                                TextTrimming="CharacterEllipsis"
                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                                    <TextBlock Grid.Column="1" FontSize="12" Margin="12,0,0,0"
-                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                                        <Run Text="{Binding FreedText, Mode=OneWay}"/>
-                                        <Run Text=" · "/>
-                                        <Run Text="{Binding ShareText, Mode=OneWay}"/>
-                                    </TextBlock>
+                                    <TextBlock Grid.Column="2" Text="{Binding PercentText}" FontSize="12" Margin="12,0,0,0"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
-            </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Bulk delete gets its own row rather than sharing the TitleBar row, that row is WPF-UI's

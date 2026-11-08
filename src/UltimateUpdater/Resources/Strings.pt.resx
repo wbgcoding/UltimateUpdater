@@ -1042,9 +1042,6 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
   <data name="CleanupHistoryRunCountOne" xml:space="preserve">
     <value>{0} execução · última em {1}</value>
   </data>
-  <data name="CleanupHistoryTopCategories" xml:space="preserve">
-    <value>Maiores áreas</value>
-  </data>
   <data name="CleanupHistoryEmptyOverview" xml:space="preserve">
     <value>Ainda não foi liberado espaço.</value>
   </data>
@@ -2289,5 +2286,41 @@ Continuar com direitos de administrador?</value>
   </data>
   <data name="AboutLegalShort" xml:space="preserve">
     <value>Projeto independente. As marcas pertencem aos respetivos proprietários.</value>
+  </data>
+  <data name="CleanupHistoryOther" xml:space="preserve">
+    <value>Outros</value>
+  </data>
+  <data name="CleanupHistorySliceShare" xml:space="preserve">
+    <value>{0}% de tudo o que foi liberado · {1}</value>
+  </data>
+  <data name="CleanupHistoryStatSfc" xml:space="preserve">
+    <value>Última verificação de arquivos do sistema (SFC)</value>
+  </data>
+  <data name="CleanupHistoryStatDism" xml:space="preserve">
+    <value>Última verificação da imagem (DISM)</value>
+  </data>
+  <data name="CleanupHistoryRepairOk" xml:space="preserve">
+    <value>{0} · tudo certo</value>
+  </data>
+  <data name="CleanupHistoryRepairRepaired" xml:space="preserve">
+    <value>{0} · reparado</value>
+  </data>
+  <data name="CleanupHistoryRepairProblems" xml:space="preserve">
+    <value>{0} · problemas encontrados</value>
+  </data>
+  <data name="CleanupHistoryRepairNever" xml:space="preserve">
+    <value>nunca</value>
+  </data>
+  <data name="CleanupHistoryStatRuns" xml:space="preserve">
+    <value>Execuções</value>
+  </data>
+  <data name="CleanupHistoryStatAverage" xml:space="preserve">
+    <value>Média por execução</value>
+  </data>
+  <data name="CleanupHistoryStatLast30" xml:space="preserve">
+    <value>Últimos 30 dias</value>
+  </data>
+  <data name="CleanupHistoryStatFree" xml:space="preserve">
+    <value>Livre em {0}</value>
   </data>
 </root>
