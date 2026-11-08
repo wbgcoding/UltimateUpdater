@@ -1,7 +1,7 @@
 # Guest side. Undoes seed-packages.ps1: stops the hanging git child, removes the seeded pip packages, removes a
 # Python 3.11 the seed installed, and puts the recorded Git version back. Safe to run twice.
 $ErrorActionPreference = 'Continue'
-$state = 'C:\Users\claude\uu-seed'
+$state = (Join-Path $env:USERPROFILE 'uu-seed')
 $stateFile = Join-Path $state 'state.json'
 $wg = @('--source', 'winget', '--silent', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
 # uninstall rejects the agreement flags
@@ -31,5 +31,5 @@ if ($st.gitSeeded) {
   'Git restored: ' + (winget list -e --id Git.Git --disable-interactivity 2>&1 | Select-Object -Last 1)
 }
 Remove-Item -Recurse -Force $state
-Remove-Item -Recurse -Force 'C:\Users\claude\uu-hang' -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force (Join-Path $env:USERPROFILE 'uu-hang') -ErrorAction SilentlyContinue
 'unseed done'

@@ -1,6 +1,6 @@
 # Guest side: removes the test package, its files and the trusted test certificate.
 $ErrorActionPreference = 'Continue'
-$dir = 'C:\Users\claude\uu-store-test'
+$dir = (Join-Path $env:USERPROFILE 'uu-store-test')
 Get-Process -Name TestStoreApp -ErrorAction SilentlyContinue | Stop-Process -Force
 New-Item -ItemType Directory -Force $dir | Out-Null
 # Remove-AppxPackage needs the same interactive session as the install (SSH sessions get 0x80070005)

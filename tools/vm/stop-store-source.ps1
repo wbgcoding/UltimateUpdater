@@ -11,6 +11,6 @@ foreach ($store in 'My', 'Root') {
   Get-ChildItem "Cert:\LocalMachine\$store" | Where-Object { $_.Subject -eq 'CN=uu-store-source' } |
     ForEach-Object { Remove-Item $_.PSPath -Force; "removed cert from $store" }
 }
-Remove-Item -Recurse -Force 'C:\Users\claude\uu-store-source' -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force (Join-Path $env:USERPROFILE 'uu-store-source') -ErrorAction SilentlyContinue
 winget source list 2>&1 | Select-String uutest
 'source stopped'

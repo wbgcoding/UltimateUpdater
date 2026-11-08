@@ -1,9 +1,9 @@
 # Guest side (run through the VM driver's script verb). Seeds outdated real packages so a scan has something to find:
 #   - a second per-user Python (3.11) next to the one already there, both with old pip packages (pip --user)
 #   - an older Git (the current one is recorded, removed and put back by unseed-packages.ps1)
-# Idempotent: every step checks its own result first. State goes to C:\Users\claude\uu-seed\state.json.
+# Idempotent: every step checks its own result first. State goes to %USERPROFILE%\uu-seed\state.json.
 $ErrorActionPreference = 'Continue'
-$state = 'C:\Users\claude\uu-seed'
+$state = (Join-Path $env:USERPROFILE 'uu-seed')
 $stateFile = Join-Path $state 'state.json'
 New-Item -ItemType Directory -Force $state | Out-Null
 $st = if (Test-Path $stateFile) { Get-Content $stateFile -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }

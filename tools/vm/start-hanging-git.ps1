@@ -2,7 +2,7 @@
 # connection and never answers. It runs in the interactive session of the user (a one-shot task), so it outlives
 # the SSH call, the way a stuck git of a real user does. Stop it with stop-hanging-git.ps1.
 $ErrorActionPreference = 'Stop'
-$dir = 'C:\Users\claude\uu-hang'
+$dir = (Join-Path $env:USERPROFILE 'uu-hang')
 New-Item -ItemType Directory -Force $dir | Out-Null
 $port = 19418
 

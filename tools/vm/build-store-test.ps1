@@ -132,7 +132,7 @@ try {
     $guest = @"
 # Guest side: trust the test certificate (LocalMachine only) and install or update the test package to $ver.
 `$ErrorActionPreference = 'Stop'
-`$dir = 'C:\Users\claude\uu-store-test'
+`$dir = Join-Path `$env:USERPROFILE 'uu-store-test'
 New-Item -ItemType Directory -Force `$dir | Out-Null
 `$cer = Join-Path `$dir 'UUTestStore.cer'
 `$msix = Join-Path `$dir 'UUTestStore-$ver.msix'
@@ -177,7 +177,7 @@ $msixB64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($newestMsix)
 $startScript = @"
 # Guest side: serve version $newest of the test package through a local winget REST source named uutest.
 `$ErrorActionPreference = 'Stop'
-`$dir = 'C:\Users\claude\uu-store-source'
+`$dir = Join-Path `$env:USERPROFILE 'uu-store-source'
 New-Item -ItemType Directory -Force `$dir | Out-Null
 [IO.File]::WriteAllBytes((Join-Path `$dir 'server.ps1'), [Convert]::FromBase64String('$serverB64'))
 [IO.File]::WriteAllBytes((Join-Path `$dir 'package.msix'), [Convert]::FromBase64String('$msixB64'))
