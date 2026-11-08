@@ -570,6 +570,40 @@ public class CleanupSafetyTests
             foreach (var directory in target.Directories.Where(Directory.Exists)
                          .Where(d => !CleanupSafety.AncestryLeadsThroughLink(d)))
             {
+    /// <summary>A recycled junction is itself a link: its leaf must not be what the ancestry check looks at,
+    /// only the chain above it. The delegate records what it was asked about.</summary>
+    [Fact]
+    public void IsInsideOwnRecycleBin_checks_the_parent_chain_only_so_a_link_leaf_passes()
+    {
+        var asked = new List<string>();
+        var item = $@"C:\$Recycle.Bin\{OwnSid}\$RLINK";
+
+        var allowed = CleanupSafety.IsInsideOwnRecycleBin(item, OwnSid, p => { asked.Add(p); return false; });
+
+        Assert.True(allowed);
+        Assert.Equal([$@"C:\$Recycle.Bin\{OwnSid}"], asked);
+    }
+
+    [Fact]
+    public void IsInsideOwnRecycleBin_still_refuses_an_item_below_a_link()
+    {
+        var nested = $@"C:\$Recycle.Bin\{OwnSid}\$RDIR\inner\file.txt";
+
+        // A link anywhere in the parent chain (here: the answer is "yes, a link") refuses the item.
+        Assert.False(CleanupSafety.IsInsideOwnRecycleBin(nested, OwnSid, _ => true));
+        Assert.True(CleanupSafety.IsInsideOwnRecycleBin(nested, OwnSid, _ => false));
+    }
+
+    [Fact]
+    public void IsInsideOwnRecycleBin_asks_about_the_item_parent_not_the_item_for_a_nested_path()
+    {
+        var asked = new List<string>();
+        CleanupSafety.IsInsideOwnRecycleBin(
+            $@"D:\$Recycle.Bin\{OwnSid}\$RDIR\inner", OwnSid, p => { asked.Add(p); return false; });
+
+        Assert.Equal([$@"D:\$Recycle.Bin\{OwnSid}\$RDIR"], asked);
+    }
+
                 Assert.True(
                     CleanupSafety.IsSafeToEmpty(directory),
                     $"'{target.Id}' names '{directory}', which CleanupSafety refuses, it would clean nothing.");

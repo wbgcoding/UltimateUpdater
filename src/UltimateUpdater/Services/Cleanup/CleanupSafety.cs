@@ -413,8 +413,17 @@ public static class CleanupSafety
     /// path that IS the folder rather than something in it, and anything whose ancestry leads through a
     /// reparse point, a junction inside the bin would make a delete land wherever it aims.
     /// Another user's SID folder is refused by construction, elevated or not.
+    /// The ancestry check starts at the item's PARENT: a recycled junction or symlink is itself a link, and
+    /// the delete removes only the link (never what it points at), so the item being a link must not refuse
+    /// it; only a link further up, between the bin and the item, can redirect the delete.
     /// </summary>
-    public static bool IsInsideOwnRecycleBin(string path, string? ownSid)
+    public static bool IsInsideOwnRecycleBin(string path, string? ownSid) =>
+        IsInsideOwnRecycleBin(path, ownSid, AncestryLeadsThroughLink);
+
+    /// <summary>The same gate with the link check injected, so a test can pin the "parent chain only" rule
+    /// without a real recycle bin.</summary>
+    internal static bool IsInsideOwnRecycleBin(
+        string path, string? ownSid, Func<string, bool> ancestryLeadsThroughLink)
     {
         if (string.IsNullOrWhiteSpace(path) || string.IsNullOrWhiteSpace(ownSid) || !LooksLikeSid(ownSid))
             return false;
@@ -447,7 +456,8 @@ public static class CleanupSafety
         if (!full.StartsWith(ownBin + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
             return false;
 
-        return !AncestryLeadsThroughLink(full);
+        var parent = Path.GetDirectoryName(full);
+        return !string.IsNullOrEmpty(parent) && !ancestryLeadsThroughLink(parent);
     }
 
     /// <summary>A textual SID and nothing else, no separators, no wildcards, no relative segments.</summary>
