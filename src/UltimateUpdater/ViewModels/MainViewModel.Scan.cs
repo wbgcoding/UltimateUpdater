@@ -245,8 +245,8 @@ public partial class MainViewModel
     /// Returns false when it stepped aside without scanning, so the scheduler keeps it due.</summary>
     public async Task<bool> RunScheduledScanAsync()
     {
-        // The first thing ScanAsync does is cancel whatever is running, so without this a due
-        // interval scan would kill the scan the user is sitting in front of.
+        // ScanAsync ignores a request while a scan runs, which would count as "scanned" to the scheduler;
+        // stepping aside here instead keeps the scan due. It does the same while an install runs.
         if (IsScanning || IsInstalling)
             return false;
 
@@ -290,8 +290,8 @@ public partial class MainViewModel
             return;
         }
 
-        // Taken before the cache await below: a second click during a slow first cache read then owns
-        // the scan, and this one steps aside instead of cancelling and restarting it on resume.
+        // Taken before the cache await below: a request made during a slow first cache read bumps the
+        // generation, and this one steps aside on resume instead of scanning twice.
         var myGeneration = ++_scanGeneration;
 
         // The window says "searching" from the click on, not only once the gate is won: after Stop the old
@@ -967,9 +967,9 @@ public partial class MainViewModel
                     seenThisRescan.Add(PackageKey(item));
         }
 
-        // Neither a scheduled offer nor the "no longer offered" repair above runs on the UI thread, and
-        // this whole method must work from either; every touch of view-model state below goes through the
-        // dispatcher rather than assuming one.
+        // This method must start on the UI thread: the key snapshot above reads the row index before the
+        // first await. Its continuations may then run on a pool thread, so every touch of view-model state
+        // below goes through the dispatcher rather than assuming one.
         // Below, so the pill's own spinner and the top progress bar read exactly like a full scan for as
         // long as this one source is being checked; this rescan holds a lease on the scanning state rather
         // than reading and restoring it, so a full scan starting or ending meanwhile is never overridden.
@@ -1036,6 +1036,7 @@ public partial class MainViewModel
                 // Anything from before that this rescan did not rediscover is genuinely gone; drop it
                 // exactly like RemoveStaleRows does for a full scan, but scoped to this one source's own
                 // rows only.
+                var gone = new List<UpdateRowViewModel>();
                 foreach (var key in beforeKeys)
                 {
                     if (seenThisRescan.Contains(key))
@@ -1045,10 +1046,13 @@ public partial class MainViewModel
                         && row.InstallState is not (RowInstallState.Queued or RowInstallState.Running)
                         && !HeldByReinstall(row))
                     {
-                        Updates.Remove(row);
+                        gone.Add(row);
                         _rowsByKey.Remove(key);
                     }
                 }
+
+                // One Reset for the whole sweep, not one Remove (and one filter pass) per row.
+                Updates.RemoveRange(gone);
             }
 
             RefreshHeader(resortManualOnly: false);
