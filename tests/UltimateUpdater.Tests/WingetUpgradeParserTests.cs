@@ -299,7 +299,7 @@ public class WingetUpgradeParserTests
         var entries = WingetUpgradeParser.ParseCliTable(table);
 
         Assert.Equal(2, entries.Count);
-        Assert.Equal(new WingetUpgradeEntry("Tencent.WeChat", WideName, "3.9.0", "3.9.1"), entries[0]);
+        Assert.Equal(new WingetUpgradeEntry("Tencent.WeChat", WideName, "3.9.0", "3.9.1", "winget"), entries[0]);
         Assert.Equal("Git.Git", entries[1].Id);
     }
 
