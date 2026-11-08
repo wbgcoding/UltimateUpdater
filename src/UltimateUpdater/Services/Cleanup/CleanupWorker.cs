@@ -272,6 +272,7 @@ public static class CleanupWorker
                     SizeBytes = c.SizeBytes,
                     PackageCount = c.PackageCount,
                     PerUser = c.PerUser,
+                    VenvUseCount = c.VenvUseCount,
                 })
                 .ToList(),
         };

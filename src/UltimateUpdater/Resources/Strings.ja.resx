@@ -2323,4 +2323,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupHistoryStatFree" xml:space="preserve">
     <value>{0} の空き容量</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>仮想環境がまだ使用中です ({0})</value>
+  </data>
 </root>

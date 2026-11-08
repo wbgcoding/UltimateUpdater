@@ -1052,7 +1052,11 @@ public class CleanupService(LoggingService logging)
             // An index file that could not be read may stand for an item that is not on the list either.
             // The whole-bin call also takes anything that arrived after the scan, so it needs the bin to hold
             // exactly what was confirmed.
-            var complete = !drive.AgeFilterHidItems && drive.SkippedIndexCount == 0
+            // A drive without a listing is never "complete": its one aggregate row stands for the whole bin, so
+            // "every listed row is selected" says nothing, and the whole-bin call would take items recycled
+            // after the confirm. It falls to the per-row path, which refuses the aggregate row and counts it
+            // as skipped.
+            var complete = drive.DetailsAvailable && !drive.AgeFilterHidItems && drive.SkippedIndexCount == 0
                 && drive.FoundCount == drive.ListedCount && selected.Count == drive.ListedCount
                 && (confirmedOnDrive is null || confirmedOnDrive == drive.FoundCount);
             plans.Add(new RecycleBinDrivePlan(drive.Root, drive.Label, complete, complete ? [] : selected));
@@ -1266,9 +1270,9 @@ public class CleanupService(LoggingService logging)
     /// <summary>Disconnected devices plus old driver packages, gathered fresh every scan the same
     /// way <see cref="ScanRegistry"/> re-reads the registry every time. No byte total, same as a registry
     /// finding: the count travels in Files.</summary>
-    private static CleanupScanResult ScanDrivers(CancellationToken cancellationToken)
+    private CleanupScanResult ScanDrivers(CancellationToken cancellationToken)
     {
-        IDriverInventoryProvider provider = new SetupApiDriverInventoryProvider();
+        IDriverInventoryProvider provider = new SetupApiDriverInventoryProvider(logging.Warn);
         var devices = provider.GatherDevices(cancellationToken);
         var packages = provider.GatherPackages(cancellationToken);
 
@@ -1303,7 +1307,7 @@ public class CleanupService(LoggingService logging)
         }
 
         return await DriverCleanupExecutor.CleanAsync(
-            new SetupApiDriverInventoryProvider(), selectedDeviceInstanceIds ?? [], selectedPackageNames ?? [],
+            new SetupApiDriverInventoryProvider(logging.Warn), selectedDeviceInstanceIds ?? [], selectedPackageNames ?? [],
             logging, cancellationToken);
     }
 
@@ -1458,7 +1462,8 @@ public class CleanupService(LoggingService logging)
     /// the per-row size is what the dialog actually shows.</summary>
     private static CleanupScanResult ScanOldPythonVersions(CancellationToken cancellationToken)
     {
-        var candidates = PythonCleanupDiscovery.DiscoverOldVersions(WindowsRegistryView.Instance);
+        var candidates = PythonCleanupDiscovery.CountVenvUses(
+            PythonCleanupDiscovery.DiscoverOldVersions(WindowsRegistryView.Instance), cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
         return new CleanupScanResult(candidates.Sum(c => c.SizeBytes), candidates.Count, 0)
@@ -1651,7 +1656,9 @@ public class CleanupService(LoggingService logging)
         }
     }
 
-    private static bool IsReparsePoint(string path)
+    /// <summary>Unreadable attributes count as a link: the caller then only tries a non-recursive delete,
+    /// which fails on a folder with content, so an unknown folder is kept rather than walked.</summary>
+    internal static bool IsReparsePoint(string path)
     {
         try
         {
@@ -1659,7 +1666,7 @@ public class CleanupService(LoggingService logging)
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return false;
+            return true;
         }
     }
 
@@ -1670,10 +1677,14 @@ public class CleanupService(LoggingService logging)
     /// original path is the aggregate fallback row for a drive that could not be enumerated; deleting its
     /// path would mean deleting a drive root, so it is never attempted.
     /// </summary>
-    private bool DeleteRecycledItem(CleanupEntry entry, string? ownSid)
+    internal bool DeleteRecycledItem(CleanupEntry entry, string? ownSid)
     {
         if (entry.OriginalPath is null)
+        {
+            logging.Warn(
+                $"Cleanup: the recycle bin on '{entry.Path}' could not be listed, so it was left as it is.");
             return false;
+        }
 
         if (!CleanupSafety.IsInsideOwnRecycleBin(entry.Path, ownSid))
         {

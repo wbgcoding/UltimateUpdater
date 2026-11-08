@@ -21,4 +21,7 @@ public sealed class PythonVersionCandidateDto
     /// <see cref="PythonVersionCleanupExecutor"/>). The pipe never trusts this flag for anything other than
     /// showing the row; the executor re-derives it itself from a fresh registry read.</summary>
     public bool PerUser { get; set; }
+
+    /// <summary>Virtual environments whose interpreter lives in this version's folder; 0 when none or not looked at.</summary>
+    public int VenvUseCount { get; set; }
 }

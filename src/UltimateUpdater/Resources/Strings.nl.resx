@@ -2323,4 +2323,7 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupHistoryStatFree" xml:space="preserve">
     <value>Vrij op {0}</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>Nog in gebruik door virtuele omgevingen ({0})</value>
+  </data>
 </root>

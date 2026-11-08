@@ -29,8 +29,19 @@ public sealed partial class PythonVersionCandidateViewModel(PythonVersionCandida
 
     public int PackageCount => candidate.PackageCount;
 
+    public int VenvUseCount => candidate.VenvUseCount;
+
+    public bool HasVenvUses => candidate.VenvUseCount > 0;
+
+    public string VenvUseText => string.Format(
+        LocalizationService.Instance["CleanupOldPythonVenvUses"], candidate.VenvUseCount);
+
     public string DetailText => string.Format(
         LocalizationService.Instance["CleanupOldPythonVersionDetail"], PythonExe, PackageCount);
 
-    public void RefreshLocalizedText() => OnPropertyChanged(nameof(DetailText));
+    public void RefreshLocalizedText()
+    {
+        OnPropertyChanged(nameof(DetailText));
+        OnPropertyChanged(nameof(VenvUseText));
+    }
 }

@@ -14,6 +14,47 @@ namespace UltimateUpdater.Tests;
 /// </summary>
 public class SetupApiDriverInventoryProviderTests
 {
+    /// <summary>A failing lookup is no proof of absence: only "no such devnode" (0x0D) makes a device
+    /// non-present and thus a removal candidate; success and every other error keep it connected.</summary>
+    [Theory]
+    [InlineData(0x00, true)]    // CR_SUCCESS
+    [InlineData(0x0D, false)]   // CR_NO_SUCH_DEVNODE
+    [InlineData(0x03, true)]    // CR_OUT_OF_MEMORY
+    [InlineData(0x16, true)]    // CR_NO_SUCH_VALUE
+    [InlineData(0x1A, true)]    // CR_ACCESS_DENIED
+    [InlineData(0x39, true)]    // CR_FAILURE
+    public void Only_no_such_devnode_means_the_device_is_not_present(int result, bool expectedPresent) =>
+        Assert.Equal(expectedPresent, SetupApiDriverInventoryProvider.PresenceFromLocateResult(result));
+
+    /// <summary>A package counts as unused only when no device is bound to it, so packages are listed only
+    /// after a complete device pass; before one, nothing may be offered at all.</summary>
+    [Fact]
+    public void GatherPackages_lists_nothing_before_a_complete_device_pass()
+    {
+        var provider = new SetupApiDriverInventoryProvider();
+
+        Assert.Empty(provider.GatherPackages(CancellationToken.None));
+    }
+
+    [Theory]
+    [InlineData(259, true)]   // ERROR_NO_MORE_ITEMS: the list is done
+    [InlineData(0, false)]
+    [InlineData(5, false)]    // ERROR_ACCESS_DENIED
+    [InlineData(8, false)]    // ERROR_NOT_ENOUGH_MEMORY
+    public void Only_no_more_items_ends_the_device_walk_cleanly(int lastError, bool expected) =>
+        Assert.Equal(expected, SetupApiDriverInventoryProvider.EnumerationEndedCleanly(lastError));
+
+    [Theory]
+    [InlineData(true, 0x12, 0, true)]        // a string path
+    [InlineData(true, 0x2012, 0, false)]     // a string list is no single path
+    [InlineData(false, 0, 1168, true)]       // ERROR_NOT_FOUND: no driver bound
+    [InlineData(false, 0, 122, false)]       // ERROR_INSUFFICIENT_BUFFER
+    [InlineData(false, 0, 5, false)]         // ERROR_ACCESS_DENIED
+    [InlineData(false, 0, 13, false)]        // ERROR_INVALID_DATA
+    public void Only_a_string_or_not_found_settles_a_driver_binding(
+        bool succeeded, int propertyType, int lastError, bool expected) =>
+        Assert.Equal(expected, SetupApiDriverInventoryProvider.InfPathReadIsConclusive(succeeded, propertyType, lastError));
+
     [Fact]
     public void GatherDevices_resolves_every_device_property_without_throwing()
     {
@@ -46,6 +87,7 @@ public class SetupApiDriverInventoryProviderTests
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var provider = new SetupApiDriverInventoryProvider();
+        provider.GatherDevices(CancellationToken.None);
         var packages = provider.GatherPackages(CancellationToken.None);
 
         Assert.NotEmpty(expectedNames);

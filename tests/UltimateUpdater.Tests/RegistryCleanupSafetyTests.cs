@@ -37,6 +37,31 @@ public class RegistryCleanupSafetyTests
         Assert.Equal(@"C:\Foo\Bar\app.exe", path);
     }
 
+    /// <summary>A switch or a name glued to the file ("tray.exe/min", "app.exe,Main") means the whole value
+    /// is not a file name: it can never exist, so it is never a finding. A missing icon or a missing
+    /// library with a real index stays one.</summary>
+    [Theory]
+    [InlineData(@"C:\Tools\tray.exe/min")]
+    [InlineData(@"C:\App\app.exe,Main")]
+    [InlineData(@"C:\App\app.exe/silent/x")]
+    public void A_file_glued_to_a_switch_is_never_judged_broken(string value)
+    {
+        Assert.Null(RegistryCleanupSafety.ExtractFilePath(value, _ => false));
+        Assert.False(RegistryCleanupSafety.IsBrokenFileReference(value, _ => false));
+    }
+
+    [Theory]
+    [InlineData(@"C:\Gone\icon.ico", @"C:\Gone\icon.ico")]
+    [InlineData(@"C:\Gone\x.dll,3", @"C:\Gone\x.dll")]
+    [InlineData(@"C:\Gone\x.dll,-3", @"C:\Gone\x.dll")]
+    [InlineData(@"C:\Gone\ctl.ocx", @"C:\Gone\ctl.ocx")]
+    [InlineData(@"C:\Gone\drv.sys", @"C:\Gone\drv.sys")]
+    public void A_missing_plain_file_or_indexed_resource_is_still_a_finding(string value, string expectedPath)
+    {
+        Assert.Equal(expectedPath, RegistryCleanupSafety.ExtractFilePath(value, _ => false));
+        Assert.True(RegistryCleanupSafety.IsBrokenFileReference(value, _ => false));
+    }
+
     /// <summary>The proven splitter: an unquoted value with a space is only parseable when a prefix ends on
     /// a token boundary AND carries a known executable extension, existence of that candidate anywhere
     /// then decides the whole judgment, never a guess about where the argument boundary really is.</summary>
@@ -324,7 +349,7 @@ public class RegistryBackupServiceTests
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
             })!;
-            mklink.WaitForExit(5000);
+            Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
             Assert.Equal(0, mklink.ExitCode);
 
             var result = await RegistryBackupService.BackupBeforeWriteAsync(
@@ -547,6 +572,198 @@ public class RegistryCleanupScannerMsiEntryTests
         finally
         {
             Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree($@"{UninstallRoot}\{name}", throwOnMissingSubKey: false);
+        }
+    }
+}
+
+/// <summary>
+/// Existence probing for registry references: only "file not found" / "path not found" mean missing, any
+/// other failure (access denied, invalid name, network) counts as existing, because an entry is deleted
+/// only on proof that its target is gone.
+/// </summary>
+public class RegistryCleanupExistenceTests : IDisposable
+{
+    private readonly string _root = Directory.CreateTempSubdirectory("wu-exists-test-").FullName;
+
+    public void Dispose() => Directory.Delete(_root, recursive: true);
+
+    [Theory]
+    [InlineData(0, true)]     // attributes read: it is there
+    [InlineData(2, false)]    // ERROR_FILE_NOT_FOUND
+    [InlineData(3, false)]    // ERROR_PATH_NOT_FOUND
+    [InlineData(5, true)]     // ERROR_ACCESS_DENIED
+    [InlineData(32, true)]    // ERROR_SHARING_VIOLATION
+    [InlineData(53, true)]    // ERROR_BAD_NETPATH
+    [InlineData(123, true)]   // ERROR_INVALID_NAME
+    public void Only_file_or_path_not_found_counts_as_missing(int error, bool expectedExists)
+    {
+        Assert.Equal(expectedExists, RegistryCleanupScanner.ExistsByAttributes(@"C:\x\y.exe", _ => error));
+    }
+
+    [Fact]
+    public void A_very_long_path_is_probed_with_the_extended_prefix_and_a_share_path_is_not()
+    {
+        string? seen = null;
+        var longPath = @"C:\" + new string('a', 250) + @"\x.exe";
+        RegistryCleanupScanner.ExistsByAttributes(longPath, p => { seen = p; return 2; });
+        Assert.Equal(@"\\?\" + longPath, seen);
+
+        RegistryCleanupScanner.ExistsByAttributes(@"\\server\share\x.exe", p => { seen = p; return 2; });
+        Assert.Equal(@"\\server\share\x.exe", seen);
+
+        RegistryCleanupScanner.ExistsByAttributes(@"C:\short\x.exe", p => { seen = p; return 2; });
+        Assert.Equal(@"C:\short\x.exe", seen);
+    }
+
+    /// <summary>The extended prefix turns off name normalisation, so a long path is normalised before it gets
+    /// one: a "..", a forward slash or a trailing dot must not make a present file read as missing.</summary>
+    [Fact]
+    public void A_long_path_is_normalised_before_it_gets_the_extended_prefix()
+    {
+        string? seen = null;
+        var folder = @"C:\" + new string('a', 250);
+        RegistryCleanupScanner.ExistsByAttributes(folder + @"\sub\..\x.exe.", p => { seen = p; return 2; });
+        Assert.Equal(@"\\?\" + folder + @"\x.exe", seen);
+
+        RegistryCleanupScanner.ExistsByAttributes(folder.Replace('\\', '/') + "/x.exe", p => { seen = p; return 2; });
+        Assert.Equal(@"\\?\" + folder + @"\x.exe", seen);
+    }
+
+    [Fact]
+    public void A_present_file_exists_and_a_deleted_one_does_not()
+    {
+        var file = Path.Combine(_root, "present.exe");
+        File.WriteAllText(file, "x");
+
+        Assert.True(RegistryCleanupScanner.ExistsByAttributes(file));
+        Assert.True(RegistryCleanupScanner.ExistsByAttributes(_root));
+        Assert.False(RegistryCleanupScanner.ExistsByAttributes(Path.Combine(_root, "gone.exe")));
+        Assert.False(RegistryCleanupScanner.ExistsByAttributes(Path.Combine(_root, "no-folder", "gone.exe")));
+    }
+
+    /// <summary>A file the account may not even look at: <c>File.Exists</c> says false (it reads access
+    /// denied as "no"), the probe must say it exists so the entry is kept.</summary>
+    [Fact]
+    public void A_file_in_an_acl_denied_folder_counts_as_existing()
+    {
+        var locked = Path.Combine(_root, "locked");
+        Directory.CreateDirectory(locked);
+        var file = Path.Combine(locked, "tool.exe");
+        File.WriteAllText(file, "x");
+
+        var me = System.Security.Principal.WindowsIdentity.GetCurrent().User!;
+        var folderRule = new System.Security.AccessControl.FileSystemAccessRule(
+            me, System.Security.AccessControl.FileSystemRights.ListDirectory
+                | System.Security.AccessControl.FileSystemRights.ReadAttributes,
+            System.Security.AccessControl.AccessControlType.Deny);
+        var fileRule = new System.Security.AccessControl.FileSystemAccessRule(
+            me, System.Security.AccessControl.FileSystemRights.ReadAttributes,
+            System.Security.AccessControl.AccessControlType.Deny);
+
+        var folderInfo = new DirectoryInfo(locked);
+        var fileInfo = new FileInfo(file);
+        try
+        {
+            var folderSecurity = folderInfo.GetAccessControl();
+            folderSecurity.AddAccessRule(folderRule);
+            folderInfo.SetAccessControl(folderSecurity);
+            var fileSecurity = fileInfo.GetAccessControl();
+            fileSecurity.AddAccessRule(fileRule);
+            fileInfo.SetAccessControl(fileSecurity);
+
+            // The setup only proves anything when the old check really was fooled.
+            Assert.False(File.Exists(file), "precondition: File.Exists must read the denied file as missing");
+            Assert.True(RegistryCleanupScanner.ExistsByAttributes(file));
+            Assert.True(RegistryCleanupScanner.ExistsInAnyView(file, _ => true));
+        }
+        finally
+        {
+            var fileSecurity = fileInfo.GetAccessControl();
+            fileSecurity.RemoveAccessRule(fileRule);
+            fileInfo.SetAccessControl(fileSecurity);
+            var folderSecurity = folderInfo.GetAccessControl();
+            folderSecurity.RemoveAccessRule(folderRule);
+            folderInfo.SetAccessControl(folderSecurity);
+        }
+    }
+}
+
+/// <summary>
+/// A non-MSI uninstall entry whose icon/uninstaller moved is still a program on the machine while its
+/// install folder exists: it stays in Apps and Features.
+/// </summary>
+public class RegistryCleanupInstallLocationTests
+{
+    private const string UninstallRoot = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+
+    private static string MakeEntry(string name, string? installLocation)
+    {
+        using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey($@"{UninstallRoot}\{name}");
+        key!.SetValue("DisplayName", "Test App");
+        key.SetValue("DisplayIcon", @"C:\this-folder-does-not-exist\app.exe,0");
+        key.SetValue("UninstallString", @"""C:\this-folder-does-not-exist\unins000.exe""");
+        if (installLocation is not null)
+            key.SetValue("InstallLocation", installLocation);
+
+        return $@"HKCU\{UninstallRoot}\{name}";
+    }
+
+    private static void Remove(string name) =>
+        Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree($@"{UninstallRoot}\{name}", throwOnMissingSubKey: false);
+
+    [Fact]
+    public void A_moved_uninstaller_with_an_existing_install_folder_is_kept()
+    {
+        var name = "wu-test-installloc-present-" + Guid.NewGuid().ToString("N");
+        var folder = Directory.CreateTempSubdirectory("wu-installloc-").FullName;
+        try
+        {
+            var keyPath = MakeEntry(name, folder);
+
+            Assert.False(RegistryCleanupScanner.TryJudgeUninstallEntryBroken(keyPath, out _));
+        }
+        finally
+        {
+            Remove(name);
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_quoted_install_location_that_exists_also_keeps_the_entry()
+    {
+        var name = "wu-test-installloc-quoted-" + Guid.NewGuid().ToString("N");
+        var folder = Directory.CreateTempSubdirectory("wu-installloc-").FullName;
+        try
+        {
+            var keyPath = MakeEntry(name, "\"" + folder + "\"");
+
+            Assert.False(RegistryCleanupScanner.TryJudgeUninstallEntryBroken(keyPath, out _));
+        }
+        finally
+        {
+            Remove(name);
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_missing_install_folder_or_none_at_all_leaves_the_entry_reported()
+    {
+        var gone = "wu-test-installloc-gone-" + Guid.NewGuid().ToString("N");
+        var none = "wu-test-installloc-none-" + Guid.NewGuid().ToString("N");
+        try
+        {
+            var goneKey = MakeEntry(gone, @"C:\this-folder-does-not-exist\install");
+            var noneKey = MakeEntry(none, null);
+
+            Assert.True(RegistryCleanupScanner.TryJudgeUninstallEntryBroken(goneKey, out _));
+            Assert.True(RegistryCleanupScanner.TryJudgeUninstallEntryBroken(noneKey, out _));
+        }
+        finally
+        {
+            Remove(gone);
+            Remove(none);
         }
     }
 }

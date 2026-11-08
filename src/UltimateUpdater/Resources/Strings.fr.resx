@@ -2323,4 +2323,7 @@ Continuer avec les droits administrateur ?</value>
   <data name="CleanupHistoryStatFree" xml:space="preserve">
     <value>Libre sur {0}</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>Encore utilisé par des environnements virtuels ({0})</value>
+  </data>
 </root>

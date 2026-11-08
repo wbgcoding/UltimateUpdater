@@ -14,13 +14,15 @@ public sealed record PipLeftoverCandidate(string Path, long SizeBytes);
 /// through its own registered uninstaller. Never built for: the newest interpreter of
 /// an architecture, the only interpreter on the machine (both already ruled out by
 /// <see cref="PythonInterpreters.FindOlderVersions"/> itself), one PATH resolves <c>python</c>/<c>pip</c>
-/// to, or one with no registered uninstaller at all (a portable/embeddable Python). A venv, a conda
+/// to, or one with no registered uninstaller at all (a portable/embeddable Python). <c>VenvUseCount</c> is
+/// filled in by <see cref="PythonCleanupDiscovery.CountVenvUses(IReadOnlyList{PythonVersionCandidate}, CancellationToken)"/>
+/// on the scan path only; 0 also means "not looked at". A venv, a conda
 /// environment and the Windows Store alias are never even discovered in the first place, see
 /// <see cref="PythonInterpreters.Discover(IRegistryView)"/>'s own doc comment.
 /// </summary>
 public sealed record PythonVersionCandidate(
     string PythonExe, string DisplayLabel, string? SitePackages, long SizeBytes, int PackageCount,
-    string UninstallCommand, bool PerUser);
+    string UninstallCommand, bool PerUser, int VenvUseCount = 0);
 
 /// <summary>
 /// Turns the pure judgments already in <see cref="PythonInterpreters"/> into the two rows the cleanup
@@ -94,6 +96,171 @@ public static class PythonCleanupDiscovery
         }
 
         return candidates;
+    }
+
+    /// <summary>The whole walk for virtual environments stops after this long: the count is a warning
+    /// shown next to a checkbox, never worth a scan that hangs on a huge profile.</summary>
+    private static readonly TimeSpan VenvScanTimeCap = TimeSpan.FromSeconds(5);
+
+    private const int VenvProfileDepth = 6;
+
+    /// <summary>Adds, per candidate, how many virtual environments (<c>pyvenv.cfg</c> whose <c>home</c> lies
+    /// inside that interpreter's folder) would break if it were uninstalled. Called from the scan only: the
+    /// elevated executor re-discovers without it, because the count never gates a deletion, it only warns.</summary>
+    public static IReadOnlyList<PythonVersionCandidate> CountVenvUses(
+        IReadOnlyList<PythonVersionCandidate> candidates, CancellationToken cancellationToken) =>
+        CountVenvUses(candidates, DefaultVenvRoots(), VenvScanTimeCap, cancellationToken);
+
+    internal readonly record struct VenvSearchRoot(string Path, int MaxDepth);
+
+    internal static IReadOnlyList<VenvSearchRoot> DefaultVenvRoots()
+    {
+        var roots = new List<VenvSearchRoot>();
+        void Add(Environment.SpecialFolder folder, string? sub, int depth)
+        {
+            var baseDir = Environment.GetFolderPath(folder);
+            if (!string.IsNullOrEmpty(baseDir))
+                roots.Add(new VenvSearchRoot(sub is null ? baseDir : Path.Combine(baseDir, sub), depth));
+        }
+
+        Add(Environment.SpecialFolder.UserProfile, null, VenvProfileDepth);
+        Add(Environment.SpecialFolder.LocalApplicationData, @"pipx\venvs", 2);
+        Add(Environment.SpecialFolder.ApplicationData, @"pypoetry\virtualenvs", 2);
+        Add(Environment.SpecialFolder.LocalApplicationData, @"pypoetry\Cache\virtualenvs", 2);
+        return roots;
+    }
+
+    internal static IReadOnlyList<PythonVersionCandidate> CountVenvUses(
+        IReadOnlyList<PythonVersionCandidate> candidates, IReadOnlyList<VenvSearchRoot> roots,
+        TimeSpan timeCap, CancellationToken cancellationToken)
+    {
+        if (candidates.Count == 0)
+            return candidates;
+
+        var homes = FindVenvHomes(roots, timeCap, cancellationToken);
+        if (homes.Count == 0)
+            return candidates;
+
+        return candidates
+            .Select(c => c with { VenvUseCount = homes.Count(h => IsInsideFolder(h, SafeDirectoryName(c.PythonExe))) })
+            .ToList();
+    }
+
+    /// <summary>The <c>home</c> directory of every virtual environment found under <paramref name="roots"/>.
+    /// Never descends a junction or symlink, a Temp folder, <c>node_modules</c> or <c>.git</c>; a found
+    /// environment is not searched further. Unreadable folders and files are skipped, never fatal.</summary>
+    internal static IReadOnlyList<string> FindVenvHomes(
+        IReadOnlyList<VenvSearchRoot> roots, TimeSpan timeCap, CancellationToken cancellationToken)
+    {
+        var homes = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var skippedTemp = TempFoldersToSkip();
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        foreach (var root in roots)
+        {
+            var pending = new Stack<(string Path, int Depth)>();
+            pending.Push((root.Path, 0));
+
+            while (pending.Count > 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (clock.Elapsed > timeCap)
+                    return homes;
+
+                var (directory, depth) = pending.Pop();
+                if (!seen.Add(directory))
+                    continue;
+
+                var home = TryReadVenvHome(Path.Combine(directory, "pyvenv.cfg"), out var isVenv);
+                if (isVenv)
+                {
+                    if (home is not null)
+                        homes.Add(home);
+                    continue;
+                }
+
+                if (depth >= root.MaxDepth)
+                    continue;
+
+                foreach (var sub in SafeEnumerate.Directories(directory))
+                {
+                    var name = Path.GetFileName(sub);
+                    if (string.Equals(name, "node_modules", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(name, ".git", StringComparison.OrdinalIgnoreCase)
+                        || skippedTemp.Contains(TrimSeparators(sub)))
+                    {
+                        continue;
+                    }
+
+                    pending.Push((sub, depth + 1));
+                }
+            }
+        }
+
+        return homes;
+    }
+
+    private static HashSet<string> TempFoldersToSkip()
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (!string.IsNullOrEmpty(local))
+            set.Add(TrimSeparators(Path.Combine(local, "Temp")));
+
+        set.Add(TrimSeparators(Path.GetTempPath()));
+        return set;
+    }
+
+    private static string TrimSeparators(string path) =>
+        path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+    /// <summary>The <c>home = ...</c> value of a <c>pyvenv.cfg</c>; <paramref name="isVenv"/> tells a
+    /// readable config apart from no file at all, so a venv without a usable home still stops the descent.</summary>
+    private static string? TryReadVenvHome(string cfgPath, out bool isVenv)
+    {
+        isVenv = false;
+        try
+        {
+            if (!File.Exists(cfgPath))
+                return null;
+
+            isVenv = true;
+            // A real config is a handful of lines; the cap keeps a planted huge file harmless.
+            foreach (var line in File.ReadLines(cfgPath).Take(64))
+            {
+                var eq = line.IndexOf('=');
+                if (eq <= 0 || !line[..eq].Trim().Equals("home", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var value = line[(eq + 1)..].Trim().Trim('"');
+                return value.Length == 0 ? null : value;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Unreadable: no evidence either way.
+        }
+
+        return null;
+    }
+
+    private static bool IsInsideFolder(string path, string? folder)
+    {
+        if (folder is null)
+            return false;
+
+        try
+        {
+            var full = TrimSeparators(Path.GetFullPath(path));
+            var root = TrimSeparators(Path.GetFullPath(folder));
+            return full.Equals(root, StringComparison.OrdinalIgnoreCase)
+                || full.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
     }
 
     /// <summary>

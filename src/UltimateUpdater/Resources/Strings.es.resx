@@ -2323,4 +2323,7 @@ Esto no se puede deshacer.</value>
   <data name="CleanupHistoryStatFree" xml:space="preserve">
     <value>Libre en {0}</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>Aún lo usan entornos virtuales ({0})</value>
+  </data>
 </root>

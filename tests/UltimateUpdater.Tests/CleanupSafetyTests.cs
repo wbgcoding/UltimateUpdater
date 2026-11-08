@@ -275,7 +275,7 @@ public class CleanupSafetyTests
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         })!;
-        mklink.WaitForExit(5000);
+        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
         Assert.Equal(0, mklink.ExitCode);
     }
 
@@ -477,6 +477,32 @@ public class CleanupSafetyTests
         }
     }
 
+    /// <summary>With TEMP redirected the user has two Temp folders (the redirected one and the one under
+    /// the local profile); neither may reach the elevated all-users target.</summary>
+    [Fact]
+    public void ExcludeOwnTemp_drops_every_own_temp_when_TEMP_is_redirected()
+    {
+        var redirected = Path.Combine(Path.GetTempPath(), "wu-redirtemp-" + Guid.NewGuid());
+        var profileTemp = Path.Combine(Path.GetTempPath(), "wu-proftemp-" + Guid.NewGuid());
+        var foreign = Path.Combine(Path.GetTempPath(), "wu-foreigntemp-" + Guid.NewGuid());
+        Directory.CreateDirectory(redirected);
+        Directory.CreateDirectory(profileTemp);
+        Directory.CreateDirectory(foreign);
+        try
+        {
+            var kept = CleanupCatalog.ExcludeOwnTemp(
+                [redirected, profileTemp.ToUpperInvariant(), foreign], redirected, profileTemp);
+
+            Assert.Equal([foreign], kept);
+        }
+        finally
+        {
+            try { Directory.Delete(redirected, recursive: true); } catch { }
+            try { Directory.Delete(profileTemp, recursive: true); } catch { }
+            try { Directory.Delete(foreign, recursive: true); } catch { }
+        }
+    }
+
     [Fact]
     public void ExcludeOwnTemp_offers_nothing_when_the_own_temp_identity_cannot_be_read()
     {
@@ -542,6 +568,40 @@ public class CleanupSafetyTests
 
         // A path under one SID is never inside another's.
         Assert.False(CleanupSafety.IsInsideOwnRecycleBin($@"C:\$Recycle.Bin\{OwnSid}\$RAAA.txt", OtherSid));
+    }
+
+    /// <summary>A recycled junction is itself a link: its leaf must not be what the ancestry check looks at,
+    /// only the chain above it. The delegate records what it was asked about.</summary>
+    [Fact]
+    public void IsInsideOwnRecycleBin_checks_the_parent_chain_only_so_a_link_leaf_passes()
+    {
+        var asked = new List<string>();
+        var item = $@"C:\$Recycle.Bin\{OwnSid}\$RLINK";
+
+        var allowed = CleanupSafety.IsInsideOwnRecycleBin(item, OwnSid, p => { asked.Add(p); return false; });
+
+        Assert.True(allowed);
+        Assert.Equal([$@"C:\$Recycle.Bin\{OwnSid}"], asked);
+    }
+
+    [Fact]
+    public void IsInsideOwnRecycleBin_still_refuses_an_item_below_a_link()
+    {
+        var nested = $@"C:\$Recycle.Bin\{OwnSid}\$RDIR\inner\file.txt";
+
+        // A link anywhere in the parent chain (here: the answer is "yes, a link") refuses the item.
+        Assert.False(CleanupSafety.IsInsideOwnRecycleBin(nested, OwnSid, _ => true));
+        Assert.True(CleanupSafety.IsInsideOwnRecycleBin(nested, OwnSid, _ => false));
+    }
+
+    [Fact]
+    public void IsInsideOwnRecycleBin_asks_about_the_item_parent_not_the_item_for_a_nested_path()
+    {
+        var asked = new List<string>();
+        CleanupSafety.IsInsideOwnRecycleBin(
+            $@"D:\$Recycle.Bin\{OwnSid}\$RDIR\inner", OwnSid, p => { asked.Add(p); return false; });
+
+        Assert.Equal([$@"D:\$Recycle.Bin\{OwnSid}\$RDIR"], asked);
     }
 
     /// <summary>Without a real SID there is no own folder to be inside of, and a caller-composed wildcard

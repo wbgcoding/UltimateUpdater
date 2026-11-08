@@ -95,11 +95,26 @@ public static class DriverPackageInfReader
 
         var provider = Resolve(values.GetValueOrDefault("Provider"), strings);
         var className = Resolve(values.GetValueOrDefault("Class"), strings);
+        if (string.IsNullOrWhiteSpace(className))
+            className = ClassNameForKnownGuid(Resolve(values.GetValueOrDefault("ClassGuid"), strings));
 
         var driverVerRaw = values.GetValueOrDefault("DriverVer");
         var (date, version) = ParseDriverVer(driverVerRaw);
 
         return new DriverInfVersionInfo(provider ?? string.Empty, className ?? string.Empty, version, date);
+    }
+
+    /// <summary>An INF may name its class by GUID only. The two additive classes the driver cleanup must
+    /// recognise are mapped here; any other GUID stays unnamed, as before.</summary>
+    private static string? ClassNameForKnownGuid(string? classGuid)
+    {
+        classGuid = classGuid?.Trim();
+        if (string.Equals(classGuid, "{e2f84ce7-8efa-411c-aa69-97454ca4cb57}", StringComparison.OrdinalIgnoreCase))
+            return "Extension";
+
+        return string.Equals(classGuid, "{5c4c3332-344d-483c-8739-259e934c9cc8}", StringComparison.OrdinalIgnoreCase)
+            ? "SoftwareComponent"
+            : null;
     }
 
     private static (DateTimeOffset? Date, string? Version) ParseDriverVer(string? driverVer)

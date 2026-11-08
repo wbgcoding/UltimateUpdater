@@ -2323,4 +2323,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupHistoryStatFree" xml:space="preserve">
     <value>{0} üzerinde boş</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>Hâlâ sanal ortamlar tarafından kullanılıyor ({0})</value>
+  </data>
 </root>

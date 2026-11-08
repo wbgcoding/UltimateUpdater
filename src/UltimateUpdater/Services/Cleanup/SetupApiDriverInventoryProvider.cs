@@ -18,6 +18,18 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
     private const int SPDRP_FRIENDLYNAME = 0x0000000C;
     private const int SPDRP_CLASS = 0x00000007;
     private const int CR_SUCCESS = 0;
+    private const int CR_NO_SUCH_DEVNODE = 0x0D;
+    private const int ERROR_NO_MORE_ITEMS = 259;
+    private const int ERROR_NOT_FOUND = 1168;
+
+    private readonly Action<string>? _logWarning;
+    private bool _loggedLookupError;
+    // Set by GatherDevices: true only when every device was read and every driver binding was conclusive.
+    // A package is judged unused by the absence of a device bound to it, so a partial device pass would
+    // turn every missed binding into a removal offer; GatherPackages hands back nothing until this is true.
+    private bool _devicesComplete;
+
+    public SetupApiDriverInventoryProvider(Action<string>? logWarning = null) => _logWarning = logWarning;
 
     private static readonly Guid GUID_NULL = Guid.Empty;
 
@@ -43,15 +55,23 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
 
     public IReadOnlyList<DriverDeviceInfo> GatherDevices(CancellationToken cancellationToken)
     {
+        _devicesComplete = false;
         var devices = new List<DriverDeviceInfo>();
         var deviceInfoSet = SetupDiGetClassDevs(IntPtr.Zero, null, IntPtr.Zero, DIGCF_ALLCLASSES);
         if (deviceInfoSet == IntPtr.Zero || deviceInfoSet == new IntPtr(-1))
+        {
+            _logWarning?.Invoke("Driver cleanup: the device list could not be read; no driver package is offered.");
             return devices;
+        }
+
+        var complete = true;
 
         try
         {
             var data = new SP_DEVINFO_DATA();
             data.cbSize = (uint)Marshal.SizeOf<SP_DEVINFO_DATA>();
+            var infPathBuffer = new byte[4096];
+            var infPathKey = DEVPKEY_Device_DriverInfPath;
 
             for (uint index = 0; SetupDiEnumDeviceInfo(deviceInfoSet, index, ref data); index++)
             {
@@ -59,13 +79,24 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
 
                 var instanceId = GetDeviceInstanceId(deviceInfoSet, ref data);
                 if (instanceId is null)
+                {
+                    complete = false;
                     continue;
+                }
 
                 var friendlyName = GetStringProperty(deviceInfoSet, ref data, SPDRP_FRIENDLYNAME)
                     ?? GetStringProperty(deviceInfoSet, ref data, SPDRP_DEVICEDESC) ?? instanceId;
                 var className = GetDevicePropertyString(deviceInfoSet, ref data, DEVPKEY_Device_Class)
                     ?? GetStringProperty(deviceInfoSet, ref data, SPDRP_CLASS) ?? string.Empty;
-                var infPath = GetDevicePropertyString(deviceInfoSet, ref data, DEVPKEY_Device_DriverInfPath);
+                var infPathRead = SetupDiGetDeviceProperty(
+                    deviceInfoSet, ref data, ref infPathKey, out var infPathType,
+                    infPathBuffer, infPathBuffer.Length, out var infPathLength, 0);
+                var infPathError = infPathRead ? 0 : Marshal.GetLastWin32Error();
+                if (!InfPathReadIsConclusive(infPathRead, infPathType, infPathError))
+                    complete = false;
+                var infPath = infPathRead && infPathType == DEVPROP_TYPE_STRING
+                    ? System.Text.Encoding.Unicode.GetString(infPathBuffer, 0, infPathLength).TrimEnd('\0')
+                    : null;
                 var driverVersion = GetDevicePropertyString(deviceInfoSet, ref data, DEVPKEY_Device_DriverVersion);
                 var driverDate = GetDevicePropertyFileTime(deviceInfoSet, ref data, DEVPKEY_Device_DriverDate);
                 var lastArrival = GetDevicePropertyFileTime(deviceInfoSet, ref data, DEVPKEY_Device_LastArrivalDate);
@@ -77,20 +108,38 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
                 var registryWriteDate = lastArrival is null && lastRemoval is null && installDate is null && firstInstallDate is null
                     ? GetRegistryKeyLastWriteDate(deviceInfoSet, ref data)
                     : null;
-                var present = IsPresent(instanceId);
+                var present = IsPresent(instanceId, CM_Locate_DevNode(out _, instanceId, 0));
 
                 devices.Add(new DriverDeviceInfo(
                     instanceId, friendlyName, className, present, infPath, driverVersion, driverDate,
                     lastArrival, lastRemoval, installDate, firstInstallDate, registryWriteDate));
             }
+
+            // Read right after the failing SetupDiEnumDeviceInfo call that ended the loop.
+            if (!EnumerationEndedCleanly(Marshal.GetLastWin32Error()))
+                complete = false;
         }
         finally
         {
             SetupDiDestroyDeviceInfoList(deviceInfoSet);
         }
 
+        if (!complete)
+            _logWarning?.Invoke("Driver cleanup: not every device could be read; no driver package is offered.");
+        _devicesComplete = complete;
         return devices;
     }
+
+    /// <summary>The device walk ended because the list was done, not because a read failed midway.</summary>
+    internal static bool EnumerationEndedCleanly(int lastError) => lastError == ERROR_NO_MORE_ITEMS;
+
+    /// <summary>
+    /// Whether a driver INF path read settles which package the device uses: a string answer does, and
+    /// "not found" means the device has no driver. Any other failure (buffer, access, a busy service) or
+    /// an unexpected type leaves the binding unknown, so the device pass counts as incomplete.
+    /// </summary>
+    internal static bool InfPathReadIsConclusive(bool succeeded, int propertyType, int lastError) =>
+        succeeded ? propertyType == DEVPROP_TYPE_STRING : lastError == ERROR_NOT_FOUND;
 
     /// <summary>
     /// A driver store FileRepository folder is named after the package's ORIGINAL inf file, never after the
@@ -110,6 +159,9 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
     public IReadOnlyList<DriverPackageInfo> GatherPackages(CancellationToken cancellationToken)
     {
         var packages = new List<DriverPackageInfo>();
+        if (!_devicesComplete)
+            return packages;
+
         var infDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "INF");
 
         if (!Directory.Exists(infDirectory))
@@ -171,10 +223,24 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
         return new string(buffer, 0, Math.Min(required - 1, buffer.Length));
     }
 
-    private static bool IsPresent(string instanceId)
+    /// <summary>
+    /// What a <c>CM_Locate_DevNode</c> result says about the device. Only "no such devnode" means the device
+    /// is not connected; any other failure (out of memory, a busy configuration manager, ...) tells nothing
+    /// about the device, so it counts as present and is never offered as a disconnected one.
+    /// </summary>
+    internal static bool PresenceFromLocateResult(int result) => result != CR_NO_SUCH_DEVNODE;
+
+    private bool IsPresent(string instanceId, int result)
     {
-        var result = CM_Locate_DevNode(out var devInst, instanceId, 0);
-        return result == CR_SUCCESS;
+        if (result != CR_SUCCESS && result != CR_NO_SUCH_DEVNODE && !_loggedLookupError)
+        {
+            _loggedLookupError = true;
+            _logWarning?.Invoke(
+                $"Driver cleanup: a device lookup failed with 0x{result:X} (first seen for '{instanceId}'); " +
+                "devices whose lookup fails are treated as connected.");
+        }
+
+        return PresenceFromLocateResult(result);
     }
 
     /// <summary>

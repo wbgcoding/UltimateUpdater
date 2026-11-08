@@ -762,6 +762,7 @@
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
                                             <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
@@ -779,6 +780,11 @@
                                             <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                                        Text="{Binding DetailText}" FontSize="10"
                                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                                       Text="{Binding VenvUseText}" FontSize="10"
+                                                       Visibility="{Binding HasVenvUses, Converter={StaticResource BoolToVisibility}}"
+                                                       Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
