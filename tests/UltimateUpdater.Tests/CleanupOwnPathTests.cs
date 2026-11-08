@@ -86,7 +86,7 @@ public class CleanupOwnPathTests : IDisposable
     }
 
     [Fact]
-    public void A_refused_existing_target_names_the_rule_that_refused_it()
+    public async Task A_refused_existing_target_names_the_rule_that_refused_it()
     {
         var folder = Path.Combine(_temp, "wu-ownpath-" + Guid.NewGuid());
         Directory.CreateDirectory(folder);
@@ -97,7 +97,7 @@ public class CleanupOwnPathTests : IDisposable
             var target = new CleanupTarget("test-target", "x", "y", CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "x") { Directories = [folder] };
 
-            var result = new CleanupService(logging).ScanAsync(target, CancellationToken.None).GetAwaiter().GetResult();
+            var result = await new CleanupService(logging).ScanAsync(target, CancellationToken.None);
 
             Assert.Equal(0, result.Files);
             Assert.False(CleanupSafety.IsSafeToEmpty(folder, out var reason));
