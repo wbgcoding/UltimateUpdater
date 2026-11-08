@@ -125,15 +125,6 @@ public static class CleanupCatalog
                 Directories = Distinct([Path.Combine(windows, "SoftwareDistribution", "Download")]),
             },
 
-            new CleanupTarget("delivery-optimization", "CleanupDeliveryOptimization", "CleanupDeliveryOptimizationDesc",
-                CleanupKind.Directories, DefaultEnabled: true,
-                RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupDeliveryOptimizationConsequence", NeedsElevation: true)
-            {
-                MinFileAge = CacheMinFileAge,
-                AdminOnlyDelete = true,
-                Directories = Distinct([Path.Combine(windows, "SoftwareDistribution", "DeliveryOptimization")]),
-            },
-
             new CleanupTarget("thumbnail-cache", "CleanupThumbnails", "CleanupThumbnailsDesc",
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupThumbnailsConsequence")

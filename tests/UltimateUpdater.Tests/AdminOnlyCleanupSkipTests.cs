@@ -32,7 +32,6 @@ public class AdminOnlyCleanupSkipTests
 
     [Theory]
     [InlineData("windows-update-cache")]
-    [InlineData("delivery-optimization")]
     public void A_folder_only_an_administrator_can_empty_is_skipped_unelevated(string id)
     {
         var target = CleanupCatalog.Build().First(t => t.Id == id);

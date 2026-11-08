@@ -1132,12 +1132,6 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   <data name="CleanupUpdateCacheDesc" xml:space="preserve">
     <value>Pliki instalacyjne aktualizacji, które zostały już zastosowane.</value>
   </data>
-  <data name="CleanupDeliveryOptimization" xml:space="preserve">
-    <value>Pliki optymalizacji dostarczania</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
-    <value>Części aktualizacji zachowywane przez Windows w celu udostępniania innym komputerom.</value>
-  </data>
   <data name="CleanupThumbnails" xml:space="preserve">
     <value>Pamięć podręczna miniatur i ikon</value>
   </data>
@@ -1166,7 +1160,7 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
     <value>Uruchom Windows Disk Cleanup</value>
   </data>
   <data name="CleanupDiskCleanupDesc" xml:space="preserve">
-    <value>Otwiera własne narzędzie Windows; ono decyduje, co usuwa.</value>
+    <value>Otwiera własne narzędzie Windows; ono decyduje, co usuwa, także pliki optymalizacji dostarczania.</value>
   </data>
   <data name="SourceDescAndroidSdk" xml:space="preserve">
     <value>Pakiety Android SDK przez sdkmanager. Aktualizuje nieaktualne składniki (platformy, narzędzia kompilacji) ze standardowej lokalizacji, ANDROID_HOME lub PATH.</value>
@@ -1527,9 +1521,6 @@ Kontynuować z uprawnieniami administratora?</value>
   </data>
   <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
     <value>Windows Update po prostu ponownie pobierze pliki, jeśli będą potrzebne.</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
-    <value>To tylko pamięć podręczna do udostępniania aktualizacji innym komputerom w sieci. Nic innego z niej nie korzysta.</value>
   </data>
   <data name="CleanupThumbnailsConsequence" xml:space="preserve">
     <value>Eksplorator ponownie utworzy miniatury przy następnym otwarciu tego folderu.</value>

@@ -1132,12 +1132,6 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="CleanupUpdateCacheDesc" xml:space="preserve">
     <value>Zaten uygulanmış güncellemelerin yükleme dosyaları.</value>
   </data>
-  <data name="CleanupDeliveryOptimization" xml:space="preserve">
-    <value>Delivery Optimization dosyaları</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
-    <value>Windows'un diğer bilgisayarlarla paylaşmak için tuttuğu güncelleme parçaları.</value>
-  </data>
   <data name="CleanupThumbnails" xml:space="preserve">
     <value>Küçük resim ve simge önbelleği</value>
   </data>
@@ -1166,7 +1160,7 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
     <value>Windows Disk Temizleme'yi çalıştır</value>
   </data>
   <data name="CleanupDiskCleanupDesc" xml:space="preserve">
-    <value>Windows'un kendi aracını açar; neyi kaldıracağına kendisi karar verir.</value>
+    <value>Windows'un kendi aracını açar; neyi kaldıracağına kendisi karar verir, Delivery Optimization dosyaları dahil.</value>
   </data>
   <data name="SourceDescAndroidSdk" xml:space="preserve">
     <value>sdkmanager üzerinden Android SDK paketleri. Standart konumdan, ANDROID_HOME veya PATH'ten eski bileşenleri (platformlar, derleme araçları) günceller.</value>
@@ -1527,9 +1521,6 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
     <value>Windows Update, ihtiyaç duyarsa dosyaları basitçe yeniden indirir.</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
-    <value>Ağdaki diğer bilgisayarlarla güncellemeleri paylaşmak için yalnızca bir önbellek. Başka hiçbir şey onu kullanmaz.</value>
   </data>
   <data name="CleanupThumbnailsConsequence" xml:space="preserve">
     <value>Gezgin, o klasörü bir sonraki açışınızda küçük resimleri yeniden çizer.</value>

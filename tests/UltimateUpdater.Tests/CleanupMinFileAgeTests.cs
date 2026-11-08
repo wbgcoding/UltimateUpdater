@@ -151,7 +151,7 @@ public class CleanupMinFileAgeTests : IDisposable
 
         foreach (var id in new[]
                  {
-                     "delivery-optimization", "thumbnail-cache", "crash-dumps", "shader-cache",
+                     "thumbnail-cache", "crash-dumps", "shader-cache",
                      "package-manager-cache", "build-tool-cache", "app-cache-sweep",
                  })
         {

@@ -1132,12 +1132,6 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
   <data name="CleanupUpdateCacheDesc" xml:space="preserve">
     <value>Arquivos de instalação de atualizações que já foram aplicadas.</value>
   </data>
-  <data name="CleanupDeliveryOptimization" xml:space="preserve">
-    <value>Arquivos da Otimização de Entrega</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
-    <value>Partes de atualizações que o Windows mantém para compartilhar com outros PCs.</value>
-  </data>
   <data name="CleanupThumbnails" xml:space="preserve">
     <value>Cache de miniaturas e ícones</value>
   </data>
@@ -1166,7 +1160,7 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
     <value>Executar a Limpeza de Disco do Windows</value>
   </data>
   <data name="CleanupDiskCleanupDesc" xml:space="preserve">
-    <value>Abre a ferramenta do próprio Windows; ela decide o que remove.</value>
+    <value>Abre a ferramenta do próprio Windows; ela decide o que remove, inclusive os arquivos da Otimização de Entrega.</value>
   </data>
   <data name="SourceDescAndroidSdk" xml:space="preserve">
     <value>Pacotes do Android SDK via sdkmanager. Atualiza componentes desatualizados (plataformas, ferramentas de compilação) da localização padrão, ANDROID_HOME ou PATH.</value>
@@ -1527,9 +1521,6 @@ Continuar com direitos de administrador?</value>
   </data>
   <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
     <value>O Windows Update simplesmente baixa os arquivos novamente se precisar deles.</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
-    <value>Apenas um cache para compartilhar atualizações com outros PCs na rede. Nada mais o utiliza.</value>
   </data>
   <data name="CleanupThumbnailsConsequence" xml:space="preserve">
     <value>O Explorer volta a desenhar as miniaturas da próxima vez que abrir essa pasta.</value>

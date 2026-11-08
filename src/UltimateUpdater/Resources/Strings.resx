@@ -1132,12 +1132,6 @@ This cannot be undone by Ultimate Updater.</value>
   <data name="CleanupUpdateCacheDesc" xml:space="preserve">
     <value>Installation files of updates that have already been applied.</value>
   </data>
-  <data name="CleanupDeliveryOptimization" xml:space="preserve">
-    <value>Delivery Optimization files</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
-    <value>Update parts Windows keeps to share with other PCs.</value>
-  </data>
   <data name="CleanupThumbnails" xml:space="preserve">
     <value>Thumbnail and icon cache</value>
   </data>
@@ -1166,7 +1160,7 @@ This cannot be undone by Ultimate Updater.</value>
     <value>Run Windows Disk Cleanup</value>
   </data>
   <data name="CleanupDiskCleanupDesc" xml:space="preserve">
-    <value>Opens Windows' own tool; it decides what it removes.</value>
+    <value>Opens Windows' own tool; it decides what it removes, including Delivery Optimization files.</value>
   </data>
   <data name="SourceDescAndroidSdk" xml:space="preserve">
     <value>Android SDK packages via sdkmanager. Updates outdated components (platforms, build tools) from the standard location, ANDROID_HOME or PATH.</value>
@@ -1527,9 +1521,6 @@ Continue with admin rights?</value>
   </data>
   <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
     <value>Windows Update simply downloads the files again if it needs them.</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
-    <value>Just a cache for sharing updates with other PCs on the network. Nothing else uses it.</value>
   </data>
   <data name="CleanupThumbnailsConsequence" xml:space="preserve">
     <value>Explorer redraws thumbnails the next time you open that folder.</value>

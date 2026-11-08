@@ -1132,12 +1132,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupUpdateCacheDesc" xml:space="preserve">
     <value>已应用更新的安装文件。</value>
   </data>
-  <data name="CleanupDeliveryOptimization" xml:space="preserve">
-    <value>传递优化文件</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
-    <value>Windows 保留用于与其他电脑共享的更新部件。</value>
-  </data>
   <data name="CleanupThumbnails" xml:space="preserve">
     <value>缩略图和图标缓存</value>
   </data>
@@ -1166,7 +1160,7 @@ Ultimate Updater 无法撤销此操作。</value>
     <value>运行 Windows 磁盘清理</value>
   </data>
   <data name="CleanupDiskCleanupDesc" xml:space="preserve">
-    <value>打开 Windows 自带工具；由它决定删除的内容。</value>
+    <value>打开 Windows 自带工具；由它决定删除的内容，包括传递优化文件。</value>
   </data>
   <data name="SourceDescAndroidSdk" xml:space="preserve">
     <value>通过 sdkmanager 管理的 Android SDK 软件包。从标准位置、ANDROID_HOME 或 PATH 更新过时的组件（平台、构建工具）。</value>
@@ -1527,9 +1521,6 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
     <value>如果 Windows 更新需要这些文件，会直接再次下载。</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
-    <value>只是用于与网络上其他电脑共享更新的缓存。没有其他用途。</value>
   </data>
   <data name="CleanupThumbnailsConsequence" xml:space="preserve">
     <value>您下次打开该文件夹时，资源管理器会重新绘制缩略图。</value>

@@ -1132,12 +1132,6 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="CleanupUpdateCacheDesc" xml:space="preserve">
     <value>File di installazione degli aggiornamenti già applicati.</value>
   </data>
-  <data name="CleanupDeliveryOptimization" xml:space="preserve">
-    <value>File di Ottimizzazione recapito</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
-    <value>Parti di aggiornamenti che Windows conserva per condividerle con altri PC.</value>
-  </data>
   <data name="CleanupThumbnails" xml:space="preserve">
     <value>Cache di miniature e icone</value>
   </data>
@@ -1166,7 +1160,7 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
     <value>Esegui Pulizia disco di Windows</value>
   </data>
   <data name="CleanupDiskCleanupDesc" xml:space="preserve">
-    <value>Apre lo strumento di Windows; decide autonomamente cosa rimuovere.</value>
+    <value>Apre lo strumento di Windows; decide autonomamente cosa rimuovere, compresi i file di Ottimizzazione recapito.</value>
   </data>
   <data name="SourceDescAndroidSdk" xml:space="preserve">
     <value>Pacchetti Android SDK tramite sdkmanager. Aggiorna i componenti obsoleti (piattaforme, strumenti di compilazione) dalla posizione standard, ANDROID_HOME o PATH.</value>
@@ -1527,9 +1521,6 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
     <value>Windows Update scarica semplicemente di nuovo i file se ne ha bisogno.</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
-    <value>È solo una cache per condividere gli aggiornamenti con altri PC nella rete. Non viene usata per altro.</value>
   </data>
   <data name="CleanupThumbnailsConsequence" xml:space="preserve">
     <value>Explorer ridisegna le miniature la prossima volta che si apre quella cartella.</value>

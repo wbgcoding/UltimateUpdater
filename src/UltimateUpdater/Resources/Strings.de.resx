@@ -1132,12 +1132,6 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="CleanupUpdateCacheDesc" xml:space="preserve">
     <value>Installationsdateien bereits installierter Updates.</value>
   </data>
-  <data name="CleanupDeliveryOptimization" xml:space="preserve">
-    <value>Dateien der Übermittlungsoptimierung</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationDesc" xml:space="preserve">
-    <value>Update-Teile, die Windows zum Teilen mit anderen PCs behält.</value>
-  </data>
   <data name="CleanupThumbnails" xml:space="preserve">
     <value>Cache für Miniaturansichten und Symbole</value>
   </data>
@@ -1166,7 +1160,7 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
     <value>Windows-Datenträgerbereinigung ausführen</value>
   </data>
   <data name="CleanupDiskCleanupDesc" xml:space="preserve">
-    <value>Öffnet das Windows-eigene Tool; es entscheidet selbst, was es entfernt.</value>
+    <value>Öffnet das Windows-eigene Tool; es entscheidet selbst, was es entfernt, auch die Dateien der Übermittlungsoptimierung.</value>
   </data>
   <data name="SourceDescAndroidSdk" xml:space="preserve">
     <value>Android-SDK-Pakete über sdkmanager. Aktualisiert veraltete Komponenten (Plattformen, Build-Tools) vom Standardort, aus ANDROID_HOME oder PATH.</value>
@@ -1527,9 +1521,6 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="CleanupUpdateCacheConsequence" xml:space="preserve">
     <value>Windows Update lädt benötigte Dateien bei Bedarf einfach neu herunter.</value>
-  </data>
-  <data name="CleanupDeliveryOptimizationConsequence" xml:space="preserve">
-    <value>Nur ein Zwischenspeicher für die Update-Weitergabe an andere PCs im Netzwerk. Sonst nutzt ihn nichts.</value>
   </data>
   <data name="CleanupThumbnailsConsequence" xml:space="preserve">
     <value>Der Explorer zeichnet Miniaturansichten beim nächsten Öffnen des Ordners neu.</value>
