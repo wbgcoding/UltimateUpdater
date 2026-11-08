@@ -37,7 +37,10 @@ public class EnrichmentAndDiagnosticsTests
     [Fact]
     public void Eviction_leaves_room_below_the_cap()
     {
-        var cache = new EnrichmentCache(new LoggingService());
+        // A file of its own that does not exist: entries another test saved to the shared cache file in the
+        // same second would otherwise tie with these and change which ones are evicted.
+        var cache = new EnrichmentCache(
+            new LoggingService(), Path.Combine(Path.GetTempPath(), "enrichment-room-" + Guid.NewGuid() + ".json"));
 
         for (var i = 0; i < 5001; i++)
             cache.Set($"room-test:{i}", new UpdateEnrichment(null, null));
