@@ -81,6 +81,17 @@ public static class DriverCleanupDiscovery
     private static bool IsOemPackagePath(string? infPath) =>
         !string.IsNullOrWhiteSpace(infPath) && IsOemPackageName(Path.GetFileName(infPath));
 
+    /// <summary>
+    /// Package classes that only ever ADD to another driver: an Extension INF is applied on top of a device's
+    /// base driver, a SoftwareComponent INF installs a helper component. Neither is what a device's
+    /// <c>DriverInfPath</c> reports, so "no device points at it" proves nothing for them; they are never
+    /// offered, bound or not, superseded or not. The elevated executor goes through the same discovery, so it
+    /// refuses them too.
+    /// </summary>
+    internal static bool IsAdditiveDriverClass(string? className) =>
+        string.Equals(className?.Trim(), "Extension", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(className?.Trim(), "SoftwareComponent", StringComparison.OrdinalIgnoreCase);
+
     private static bool IsExcludedClass(string className) =>
         ExcludedClasses.Any(excluded => string.Equals(excluded, className, StringComparison.OrdinalIgnoreCase));
 
@@ -162,6 +173,7 @@ public static class DriverCleanupDiscovery
         var superseded = SupersededPackageNames(packages);
 
         return packages
+            .Where(p => !IsAdditiveDriverClass(p.ClassName))
             .Where(p => !presentBoundPackageNames.Contains(p.PackageName)
                 && (!boundPackageNames.Contains(p.PackageName) || superseded.Contains(p.PackageName)))
             .Select(p =>

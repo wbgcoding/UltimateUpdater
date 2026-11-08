@@ -48,6 +48,18 @@ public class DriverPackageInfReaderTests
         Assert.Equal("Literal Vendor", info!.Provider);
     }
 
+    [Theory]
+    [InlineData("{e2f84ce7-8efa-411c-aa69-97454ca4cb57}", "Extension")]
+    [InlineData("{E2F84CE7-8EFA-411C-AA69-97454CA4CB57}", "Extension")]
+    [InlineData("{5c4c3332-344d-483c-8739-259e934c9cc8}", "SoftwareComponent")]
+    [InlineData("{4d36e968-e325-11ce-bfc1-08002be10318}", "")]
+    public void A_class_given_by_guid_only_is_named_for_the_additive_classes(string guid, string expected)
+    {
+        var inf = "[Version]\nSignature=\"$WINDOWS NT$\"\nClassGuid=" + guid + "\nProvider=Acme\n";
+
+        Assert.Equal(expected, DriverPackageInfReader.Parse(inf)!.ClassName);
+    }
+
     [Fact]
     public void An_unresolvable_token_is_returned_as_is_rather_than_blanked()
     {

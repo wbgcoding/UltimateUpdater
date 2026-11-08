@@ -268,6 +268,39 @@ public class DriverCleanupDiscoveryTests
         Assert.Null(only.NewerDate);
     }
 
+    /// <summary>An Extension INF is layered on a device's base driver and never is that device's own
+    /// DriverInfPath, so "nothing points at it" proves nothing: it must not be offered for removal.</summary>
+    [Theory]
+    [InlineData("Extension")]
+    [InlineData("extension")]
+    [InlineData("SoftwareComponent")]
+    public void An_additive_class_package_is_never_offered_even_with_no_device_bound(string className)
+    {
+        var packages = new[]
+        {
+            Package("oem20.inf", "Acme", className, "1.0.0.0", Now.AddYears(-2), "acmeext.inf"),
+            Package("oem21.inf", "Acme", "Sound", "1.0.0.0", Now.AddYears(-2), "acmesnd.inf"),
+        };
+
+        var found = DriverCleanupDiscovery.DiscoverOldPackages([], packages);
+
+        var only = Assert.Single(found);
+        Assert.Equal("oem21.inf", only.PackageName);
+    }
+
+    [Fact]
+    public void A_superseded_additive_class_package_is_never_offered_either()
+    {
+        var devices = new[] { Device("A", "Device", "Sound", present: true, @"C:\Windows\INF\oem9.inf") };
+        var packages = new[]
+        {
+            Package("oem7.inf", "Acme", "Extension", "1.0.0.0", Now.AddYears(-2), "acmeext.inf"),
+            Package("oem9.inf", "Acme", "Extension", "2.0.0.0", Now.AddMonths(-1), "acmeext.inf"),
+        };
+
+        Assert.Empty(DriverCleanupDiscovery.DiscoverOldPackages(devices, packages));
+    }
+
     [Fact]
     public void A_disconnected_devices_row_carries_the_newer_version_when_its_bound_package_is_superseded()
     {
