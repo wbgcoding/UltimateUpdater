@@ -10,6 +10,7 @@ public class ExitRequestListenerTests
 {
     private const uint ReadControl = 0x00020000;
     private const uint Synchronize = 0x00100000;
+    private const uint EventModifyState = 0x0002;
     private const uint DaclInformation = 0x4;
     private const uint LabelInformation = 0x10;
 
@@ -55,7 +56,7 @@ public class ExitRequestListenerTests
             userSid: NamedObjectSecurity.CurrentUserSid(), exeFolder: UniqueFolder());
         Assert.True(live.IsListening);
 
-        using var signal = EventWaitHandle.OpenExisting(live.Name);
+        using var signal = OpenToSignal(live.Name);
         signal.Set();
         Assert.True(seen.Wait(TimeSpan.FromSeconds(10)));
         signal.Set();
@@ -77,7 +78,7 @@ public class ExitRequestListenerTests
             },
             userSid: NamedObjectSecurity.CurrentUserSid(), exeFolder: UniqueFolder());
 
-        using var signal = EventWaitHandle.OpenExisting(listener.Name);
+        using var signal = OpenToSignal(listener.Name);
         signal.Set();
         Assert.True(seen.Wait(TimeSpan.FromSeconds(10)));
         signal.Set();
@@ -99,8 +100,9 @@ public class ExitRequestListenerTests
     }
 
     /// <summary>
-    /// The person may signal and wait (modify state plus synchronize, nothing more), SYSTEM and Administrators
-    /// have everything, nobody else anything, and nothing is inherited.
+    /// The person may signal and nothing more (no synchronize: a process of the same user must not be able to
+    /// wait on the auto-reset event and swallow the installer's signal), SYSTEM and Administrators have
+    /// everything, nobody else anything, and nothing is inherited.
     /// </summary>
     [Fact]
     public void The_events_dacl_lets_the_user_signal_and_nobody_else_in()
@@ -111,10 +113,27 @@ public class ExitRequestListenerTests
         var dacl = ReadSddl(OpenEventW, listener.Name, DaclInformation);
 
         Assert.StartsWith("D:P", dacl);
-        Assert.Contains($"(A;;0x100002;;;{sid})", dacl);
+        // Windows prints the bare modify-state bit 0x2 with the directory-service alias DC
+        Assert.Contains($"(A;;DC;;;{sid})", dacl);
         Assert.Contains("(A;;0x1f0003;;;SY)", dacl);
         Assert.Contains("(A;;0x1f0003;;;BA)", dacl);
         Assert.Equal(3, System.Text.RegularExpressions.Regex.Matches(dacl, @"\(A;").Count);
+    }
+
+    [Fact]
+    public void The_user_can_signal_the_event_but_not_wait_on_it()
+    {
+        // an elevated test host would pass through the Administrators entry, so only an unelevated one proves it
+        if (new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent())
+                .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator))
+            return;
+
+        using var listener = ExitRequestListener.Start(() => { }, exeFolder: UniqueFolder());
+
+        var signal = OpenEventW(EventModifyState, false, listener.Name);
+        Assert.NotEqual(IntPtr.Zero, signal);
+        CloseHandle(signal);
+        Assert.Equal(IntPtr.Zero, OpenEventW(Synchronize, false, listener.Name));
     }
 
     [Fact]
@@ -202,9 +221,13 @@ public class ExitRequestListenerTests
         Assert.False(listener.IsListening);
     }
 
+    /// <summary>Opens the event the way Setup does: with the right to signal it and no other.</summary>
+    private static EventWaitHandle OpenToSignal(string name) =>
+        EventWaitHandleAcl.OpenExisting(name, System.Security.AccessControl.EventWaitHandleRights.Modify);
+
     private static bool Exists(string name)
     {
-        if (!EventWaitHandle.TryOpenExisting(name, out var found))
+        if (!EventWaitHandleAcl.TryOpenExisting(name, System.Security.AccessControl.EventWaitHandleRights.Modify, out var found))
             return false;
 
         found.Dispose();

@@ -18,8 +18,12 @@ internal static class NamedObjectSecurity
     private const int ErrorAlreadyExists = 183;
     private const uint SddlRevision1 = 1;
 
-    /// <summary>The rights the person's own unelevated Setup gets on the exit event: signal it and wait on it.</summary>
-    internal const uint UserEventRights = EventModifyState | Synchronize;
+    /// <summary>
+    /// The rights the person's own unelevated Setup gets on the exit event: signal it, nothing else. Without
+    /// Synchronize no other process of the user (a low integrity one included) can wait on the auto-reset event
+    /// and swallow the signal; the app keeps the handle it got when it created the event.
+    /// </summary>
+    internal const uint UserEventRights = EventModifyState;
 
     /// <summary>Mutex: the person may only open it to see that it exists.</summary>
     internal const uint UserMutexRights = Synchronize;
