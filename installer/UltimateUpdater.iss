@@ -718,37 +718,6 @@ begin
   Result := (not Started) or (ResultCode <> 0);
 end;
 
-{ Uninstalling while the app runs blocks on files that cannot be deleted, and a silent uninstall has
-  nobody to ask. Measured on a test machine, it waits for ever. So the app is closed first, always.
-  An interactive uninstall asks first when the app is installing or cleaning up (the same question
-  Setup asks before it replaces a running copy); declining stops the uninstall and leaves the app
-  running. A silent uninstall cannot ask and closes it. Deliberately keyed to UninstallSilent only for
-  that question: the closing itself never depends on it, because UninstallSilent did not report silent
-  runs reliably.
-
-  Closed by PATH, not by image name. taskkill /IM matches every process with that name anywhere on
-  the machine, so removing an installed copy also shot down a portable copy running from a stick or
-  another folder - possibly in the middle of its own install or cleanup run. Only a copy inside the
-  installation folder can hold this uninstall's files, and that is the only one closed. Both names
-  are covered because that folder may hold either (portable first, then installed over). }
-function InitializeUninstall: Boolean;
-var
-  ResultCode: Integer;
-begin
-  Result := True;
-  if (not UninstallSilent) and InstallingCopyRuns then
-    if MsgBox(CustomMessage('BusyPrompt'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) <> IDYES then
-    begin
-      Result := False;
-      Exit;
-    end;
-
-  Exec(PowerShellPath,
-       '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + RunningCopiesScript +
-       '$copies | Stop-Process -Force -ErrorAction SilentlyContinue"', '',
-       SW_HIDE, ewWaitUntilTerminated, ResultCode);
-end;
-
 { True when Setup was started with the given bare switch. The param constant only reads /Name=value, and the
   self-updater's switch carries no value. }
 function HasSwitch(const Name: String): Boolean;
@@ -779,6 +748,35 @@ begin
   Exec(PowerShellPath,
        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
        SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
+{ Uninstalling while the app runs blocks on files that cannot be deleted, and a silent uninstall has
+  nobody to ask. Measured on a test machine, it waits for ever. So the app is closed first, always.
+  An interactive uninstall asks first when the app is installing or cleaning up (the same question
+  Setup asks before it replaces a running copy); declining stops the uninstall and leaves the app
+  running. A silent uninstall cannot ask and closes it. Deliberately keyed to UninstallSilent only for
+  that question: the closing itself never depends on it, because UninstallSilent did not report silent
+  runs reliably. That is also why the question is a suppressible one: should a run with
+  /SUPPRESSMSGBOXES still not count as silent, the box never waits for a click nobody can give, and the
+  answer is the silent one (close the app). The copies are waited for, so their files are free before the
+  uninstaller deletes them.
+
+  Closed by PATH, not by image name. taskkill /IM matches every process with that name anywhere on
+  the machine, so removing an installed copy also shot down a portable copy running from a stick or
+  another folder - possibly in the middle of its own install or cleanup run. Only a copy inside the
+  installation folder can hold this uninstall's files, and that is the only one closed. Both names
+  are covered because that folder may hold either (portable first, then installed over). }
+function InitializeUninstall: Boolean;
+begin
+  Result := True;
+  if (not UninstallSilent) and InstallingCopyRuns then
+    if SuppressibleMsgBox(CustomMessage('BusyPrompt'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDYES) <> IDYES then
+    begin
+      Result := False;
+      Exit;
+    end;
+
+  StopRunningCopies;
 end;
 
 { Runs before the Restart Manager looks for running applications. Only the app's own self-update, which

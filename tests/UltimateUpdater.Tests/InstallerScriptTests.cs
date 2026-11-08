@@ -216,8 +216,8 @@ public class InstallerScriptTests
 
     /// <summary>
     /// An interactive uninstall asks before it closes an app that is installing or cleaning up, with the same
-    /// text Setup uses; declining aborts the uninstall. A silent one never asks. The probe has to be declared
-    /// above the function that calls it (Pascal Script).
+    /// text Setup uses; declining aborts the uninstall. A silent one never asks. The probe and the stop have
+    /// to be declared above the function that calls them (Pascal Script).
     /// </summary>
     [Fact]
     public void Uninstall_asks_before_closing_a_busy_app_and_a_no_aborts_it()
@@ -235,11 +235,19 @@ public class InstallerScriptTests
         Assert.Contains("<> IDYES", uninstall.Value);
         Assert.Contains("Result := False;", uninstall.Value);
 
-        // the prompt and its abort come before the app is stopped, and the stop stays by path
+        // a box that /SUPPRESSMSGBOXES cannot suppress would hang an unattended uninstall; suppressed, it
+        // gives the silent answer (close the app)
+        Assert.DoesNotContain(" MsgBox(", uninstall.Value);
+        Assert.Contains("SuppressibleMsgBox(CustomMessage('BusyPrompt'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDYES)", uninstall.Value);
+
+        // the prompt and its abort come before the app is stopped; the stop is the by-path one that waits
+        Assert.True(
+            script.IndexOf("procedure StopRunningCopies", StringComparison.Ordinal)
+                < script.IndexOf("function InitializeUninstall", StringComparison.Ordinal),
+            "StopRunningCopies must be declared before InitializeUninstall");
         Assert.True(
             uninstall.Value.IndexOf("Result := False;", StringComparison.Ordinal)
-                < uninstall.Value.IndexOf("Stop-Process", StringComparison.Ordinal));
-        Assert.Contains("RunningCopiesScript", uninstall.Value);
+                < uninstall.Value.IndexOf("StopRunningCopies;", StringComparison.Ordinal));
         Assert.DoesNotContain("taskkill", uninstall.Value, StringComparison.OrdinalIgnoreCase);
     }
 
