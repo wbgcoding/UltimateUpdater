@@ -763,6 +763,43 @@ begin
     end;
 end;
 
+{ Needed for the exe write lock without PowerShell (see StopRunningCopies). }
+const
+  GENERIC_WRITE = $40000000;
+  FILE_SHARE_READ_WRITE = 3;
+  OPEN_EXISTING = 3;
+
+function CreateFileW(FileName: String; DesiredAccess, ShareMode: Cardinal; Security: Integer;
+  Disposition, Flags: Cardinal; Template: Integer): Integer;
+  external 'CreateFileW@kernel32.dll stdcall';
+
+function CloseHandle(Handle: Integer): Integer;
+  external 'CloseHandle@kernel32.dll stdcall';
+
+{ True while an exe of the install folder cannot be opened for writing: a running exe is locked, and that
+  needs no rights on the process, so it also sees an elevated copy. Opened with OPEN_EXISTING, so nothing is
+  created or cut off, and shared for reading and writing like the script's own probe. Any open failure of an
+  exe that exists counts as in use, because the question is only whether Setup may go on. }
+function InstallFolderExeInUse: Boolean;
+var
+  Names: array[0..1] of String;
+  I, Handle: Integer;
+begin
+  Result := False;
+  Names[0] := ExpandConstant('{app}\{#AppExeName}');
+  Names[1] := ExpandConstant('{app}\{#PortableExeName}');
+  for I := 0 to 1 do
+    if FileExists(Names[I]) then
+    begin
+      Handle := CreateFileW(Names[I], GENERIC_WRITE, FILE_SHARE_READ_WRITE, 0, OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL, 0);
+      if Handle = -1 then
+        Result := True
+      else
+        CloseHandle(Handle);
+    end;
+end;
+
 { Ends the copies in the install folder and waits for them to be gone. A tray-resident copy used to answer
   the Restart Manager's close request with "ok" and stay alive, which left Setup on the "applications in
   use" page; doing it here, before the Restart Manager looks, keeps that page from appearing at all.
@@ -772,6 +809,7 @@ end;
   10 seconds, any exe of the folder still in use means Setup cannot go on: False. }
 function StopRunningCopies: Boolean;
 var
+  Started: Boolean;
   ResultCode: Integer;
   Script: String;
 begin
@@ -798,12 +836,20 @@ begin
     '$w = [System.Diagnostics.Stopwatch]::StartNew(); ' +
     'while ((Running) -and $w.Elapsed.TotalSeconds -lt 10) { Start-Sleep -Milliseconds 250 }; ' +
     'if (Running) { exit ' + IntToStr(StillRunningExitCode) + ' } else { exit 0 }';
-  Exec(PowerShellPath,
+  Started := Exec(PowerShellPath,
        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
        SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  { Only the script's own verdict counts: a PowerShell that did not run or failed leaves things as they
-    were before this check existed. }
-  Result := ResultCode <> StillRunningExitCode;
+  { Only the script's own verdict (closed, or still running) is taken at its word. A PowerShell that did not
+    start or failed some other way proves nothing about the copies, and calling that "closed" let a silent
+    uninstall hang on an elevated copy: fail closed, with the same still-running question asked directly. }
+  if Started and ((ResultCode = 0) or (ResultCode = StillRunningExitCode)) then
+    Result := ResultCode <> StillRunningExitCode
+  else
+  begin
+    Log('The close script gave no verdict (started: ' + IntToStr(Ord(Started)) + ', exit code: ' +
+      IntToStr(ResultCode) + '); checking the exe lock instead.');
+    Result := not InstallFolderExeInUse;
+  end;
 end;
 
 { Uninstalling while the app runs blocks on files that cannot be deleted, and a silent uninstall has

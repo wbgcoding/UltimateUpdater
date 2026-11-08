@@ -78,7 +78,7 @@ public class InstallerElevatedCopyTests
 
         Assert.Contains("$w.Elapsed.TotalSeconds -lt 10", stop);
         Assert.Contains("if (Running) { exit ' + IntToStr(StillRunningExitCode) + ' }", stop);
-        Assert.Contains("Result := ResultCode <> StillRunningExitCode;", stop);
+        Assert.Matches(@"Result := ResultCode <> StillRunningExitCode\s+else", stop);
         Assert.DoesNotContain("taskkill", stop, StringComparison.OrdinalIgnoreCase);
     }
 
