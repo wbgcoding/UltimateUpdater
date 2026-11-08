@@ -272,7 +272,7 @@ public sealed class DriverBackupStagingTests : IDisposable
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         })!;
-        mklink.WaitForExit(5000);
+        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
         Assert.Equal(0, mklink.ExitCode);
     }
 
