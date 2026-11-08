@@ -192,7 +192,7 @@ public class CleanupDeveloperCacheTests : IDisposable
         var command = Assert.Single(commands);
         Assert.Equal(Path.GetFullPath(uv), command.Key, ignoreCase: true);
         Assert.Equal("uv", command.Value.ToolName);
-        Assert.Equal(TimeSpan.FromSeconds(120), command.Value.Timeout);
+        Assert.Equal(TimeSpan.FromMinutes(10), command.Value.Timeout);
         Assert.Equal(["cache", "clean", "--cache-dir", DirectoryCleanCommand.FolderToken, "--no-config", "--no-progress"],
             command.Value.Arguments);
         Assert.Equal(Path.Combine(_profile, ".local", "bin", "uv.exe"), command.Value.FallbackPath);
@@ -227,11 +227,13 @@ public class CleanupDeveloperCacheTests : IDisposable
         return service;
     }
 
-    private CleanupTarget UvTarget(string uvFolder, string? other = null, bool needsElevation = false)
+    private CleanupTarget UvTarget(
+        string uvFolder, string? other = null, bool needsElevation = false, TimeSpan? timeout = null)
     {
         var command = new DirectoryCleanCommand(
             "uv", Path.Combine(_profile, ".local", "bin", "uv.exe"),
-            ["cache", "clean", "--cache-dir", DirectoryCleanCommand.FolderToken], "uv cache clean", TimeSpan.FromSeconds(120));
+            ["cache", "clean", "--cache-dir", DirectoryCleanCommand.FolderToken], "uv cache clean",
+            timeout ?? TimeSpan.FromSeconds(120));
         return new CleanupTarget("test-pkg", "x", "y", CleanupKind.Directories, DefaultEnabled: true,
             RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "x", NeedsElevation: needsElevation)
         {
@@ -341,6 +343,38 @@ public class CleanupDeveloperCacheTests : IDisposable
         Assert.Equal(0, outcome.FreedBytes);
         Assert.Equal(1, outcome.SkippedFiles);
         Assert.True(File.Exists(file));
+    }
+
+    [Fact]
+    public async Task A_command_past_its_timeout_is_left_running_and_the_folder_counts_as_not_freed()
+    {
+        var uv = Folder(_local, "uv", "cache");
+        var file = AgedFile(uv, "a.bin", TimeSpan.FromDays(3), 700);
+        var child = new LingeringChild();
+        ProcessRunner.ChildFactoryForTest.Value = () => child;
+        try
+        {
+            // The real runner, so the choice of not killing is the one the cleanup makes.
+            var service = new CleanupService(new LoggingService());
+            service.TrustedToolResolver = _ => Environment.ProcessPath;
+
+            var outcome = await service.CleanAsync(
+                UvTarget(uv, timeout: TimeSpan.FromMilliseconds(300)), progress: null, CancellationToken.None)
+                .WaitAsync(TimeSpan.FromSeconds(30));
+
+            Assert.Equal(0, child.KillCalls);
+            Assert.Equal(0, outcome.FreedBytes);
+            Assert.Equal(1, outcome.SkippedFiles);
+            Assert.Equal(700, outcome.SkippedBytes);
+            Assert.True(File.Exists(file));
+
+            child.Exit();
+            await child.Disposed.WaitAsync(TimeSpan.FromSeconds(30));
+        }
+        finally
+        {
+            ProcessRunner.ChildFactoryForTest.Value = null;
+        }
     }
 
     [Fact]

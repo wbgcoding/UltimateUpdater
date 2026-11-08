@@ -489,8 +489,9 @@ public static class CleanupCatalog
         Path.Combine(local, "go-build", "fuzz"),
     ]);
 
-    /// <summary>How long uv may take to clear its cache; a run that waits on a lock held by a running uv ends here.</summary>
-    internal static readonly TimeSpan UvCacheCleanTimeout = TimeSpan.FromSeconds(120);
+    /// <summary>How long the cleanup waits for uv to clear its cache. Past it uv is not ended (a kill would leave
+    /// half a cache): the cleanup stops waiting and counts the folder as not freed.</summary>
+    internal static readonly TimeSpan UvCacheCleanTimeout = TimeSpan.FromMinutes(10);
 
     /// <summary>The uv cache is emptied by uv itself, never file by file: a half-emptied entry would still be
     /// linked into new environments. The folder is passed explicitly so uv cleans exactly the folder that was

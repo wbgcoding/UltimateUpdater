@@ -817,7 +817,7 @@ public class CleanupService(LoggingService logging)
 
     /// <summary>How a folder's clean command is started; tests replace it so no real tool runs.</summary>
     internal Func<string, IReadOnlyList<string>, TimeSpan, CancellationToken, Task<ProcessResult>> ToolRunner { get; set; } =
-        (exe, arguments, timeout, token) => ProcessRunner.RunAsync(exe, arguments, timeout, token);
+        (exe, arguments, timeout, token) => ProcessRunner.RunAsync(exe, arguments, timeout, token, killOnTimeout: false);
 
     /// <summary>The tool for a folder's clean command: the trusted lookup first, then the one fixed fallback
     /// location, accepted only as a plain file reached through no link. Null when neither is usable.</summary>
@@ -937,7 +937,7 @@ public class CleanupService(LoggingService logging)
         {
             var result = await ToolRunner(tool, arguments, command.Timeout, cancellationToken);
             if (result.TimedOut)
-                return $"{command.Label} ran past {command.Timeout.TotalSeconds:0} s and was stopped";
+                return $"{command.Label} ran past {command.Timeout.TotalSeconds:0} s; it was left to finish on its own";
 
             return result.ExitCode != 0 ? $"{command.Label} ended with exit code {result.ExitCode}" : null;
         }
