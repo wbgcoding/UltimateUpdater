@@ -299,6 +299,7 @@ public class DriverCleanupDiscoveryTests
     [InlineData("NetTrans")]
     [InlineData("NetClient")]
     [InlineData("LegacyDriver")]
+    [InlineData("Printer")]
     [InlineData("netservice")]
     public void A_service_loaded_class_package_is_never_offered_even_with_no_device_bound(string className)
     {

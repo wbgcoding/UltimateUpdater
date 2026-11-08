@@ -56,6 +56,7 @@ public class DriverPackageInfReaderTests
     [InlineData("{4d36e974-e325-11ce-bfc1-08002be10318}", "NetService")]
     [InlineData("{4d36e975-e325-11ce-bfc1-08002be10318}", "NetTrans")]
     [InlineData("{8ecc055d-047f-11d1-a537-0000f8753ed1}", "LegacyDriver")]
+    [InlineData("{4d36e979-e325-11ce-bfc1-08002be10318}", "Printer")]
     [InlineData("{4d36e968-e325-11ce-bfc1-08002be10318}", "")]
     public void A_class_given_by_guid_only_is_named_for_the_additive_classes(string guid, string expected)
     {

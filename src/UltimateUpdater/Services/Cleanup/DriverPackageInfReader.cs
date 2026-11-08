@@ -128,6 +128,7 @@ public static class DriverPackageInfReader
         ("{4d36e974-e325-11ce-bfc1-08002be10318}", "NetService"),
         ("{4d36e975-e325-11ce-bfc1-08002be10318}", "NetTrans"),
         ("{8ecc055d-047f-11d1-a537-0000f8753ed1}", "LegacyDriver"),
+        ("{4d36e979-e325-11ce-bfc1-08002be10318}", "Printer"),
     ];
 
     private static (DateTimeOffset? Date, string? Version) ParseDriverVer(string? driverVer)

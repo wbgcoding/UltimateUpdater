@@ -89,14 +89,15 @@ public static class DriverCleanupDiscovery
     /// nothing for them. An Extension INF is applied on top of a device's base driver and a SoftwareComponent
     /// INF installs a helper component. NetService, NetTrans and NetClient packages (network protocols and
     /// clients) and LegacyDriver packages are loaded by services straight from the driver store and never bound
-    /// to a devnode. They are never offered, bound or not, superseded or not. The elevated executor goes through
-    /// the same discovery, so it refuses them too.
+    /// to a devnode. A Printer package also serves print queues on a network port, which the spooler runs
+    /// without any devnode. They are never offered, bound or not, superseded or not. The elevated executor goes
+    /// through the same discovery, so it refuses them too.
     /// </summary>
     internal static bool IsUnboundByDesignClass(string? className) =>
         UnboundByDesignClasses.Any(c => string.Equals(className?.Trim(), c, StringComparison.OrdinalIgnoreCase));
 
     private static readonly string[] UnboundByDesignClasses =
-        ["Extension", "SoftwareComponent", "NetService", "NetTrans", "NetClient", "LegacyDriver"];
+        ["Extension", "SoftwareComponent", "NetService", "NetTrans", "NetClient", "LegacyDriver", "Printer"];
 
     /// <summary>
     /// True for a package this category never offers: one of the classes above, or a primitive INF without a
