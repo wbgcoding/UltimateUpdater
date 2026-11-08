@@ -15,7 +15,7 @@ namespace UltimateUpdater.Services.Sources;
 /// missed results, versus 5 s (module) / 16 s (CLI) against the system winget.
 /// Installs always run through winget itself, so its manifest hash verification is untouched.
 /// </summary>
-public sealed class WingetSource : IUpdateSource, IFreshInstallSource
+public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNoteSource
 {
     private static readonly TimeSpan ScanTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan InstallTimeout = TimeSpan.FromMinutes(30);
@@ -29,6 +29,11 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource
     }
 
     public string Id => "winget";
+
+    /// <summary>Set when a scan had to leave out rows whose shortened Id could not be completed.</summary>
+    public string? ScanNote { get; private set; }
+
+    private int _unresolvedShortIds;
 
     public UpdateCategory Category => UpdateCategory.Software;
 
@@ -46,6 +51,8 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource
         // The CLI is the authority, NOT the PowerShell module; the module misses packages winget's own
         // upgrade list shows.
         IReadOnlyList<WingetUpgradeEntry>? entries = null;
+        _unresolvedShortIds = 0;
+        ScanNote = null;
 
         try
         {
@@ -62,6 +69,9 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource
 
         entries ??= await ScanViaModuleAsync(cancellationToken)
                     ?? throw new InvalidOperationException("winget: neither the CLI nor the PowerShell module could be read.");
+
+        if (_unresolvedShortIds > 0)
+            ScanNote = LocalizationService.Instance["WingetShortIdNote"];
 
         foreach (var entry in entries)
         {
@@ -885,7 +895,7 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
     private async Task<IReadOnlyList<WingetUpgradeEntry>> RunUpgradeListAsync(
         IReadOnlyList<string> arguments, CancellationToken cancellationToken)
     {
-        var result = await ProcessRunner.RunAsync("winget", arguments, ScanTimeout, cancellationToken);
+        var result = await RunQueryAsync(arguments, ScanTimeout, cancellationToken);
 
 // a timeout is a failed scan, not an empty one; "nothing found" would hide every winget update
         if (result.TimedOut)
@@ -894,9 +904,66 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
         if (result.ExitCode != 0 && !IsEmptyListExitCode(result.ExitCode))
             throw new InvalidOperationException($"winget: the upgrade list failed (exit 0x{result.ExitCode:X8}).");
 
-        return WingetUpgradeParser.ParseCliTable(
+        var shortened = new List<WingetUpgradeEntry>();
+        var entries = WingetUpgradeParser.ParseCliTable(
             result.StandardOutput,
-            id => _logging.Warn($"winget: skipped a row whose Id winget shortened to '{id}'; it cannot be installed by that Id."));
+            id => _logging.Warn($"winget: a row's Id was shortened to '{id}'; looking it up by name."),
+            shortened.Add);
+        if (shortened.Count == 0)
+            return entries;
+
+        var completed = entries.ToList();
+        var known = new HashSet<string>(completed.Select(e => e.Id), StringComparer.OrdinalIgnoreCase);
+        foreach (var row in shortened)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var fullId = await ResolveShortenedIdAsync(row, cancellationToken);
+            if (fullId is null)
+            {
+                _unresolvedShortIds++;
+                _logging.Warn($"winget: could not complete the shortened Id '{row.Id}'; the row is left out.");
+            }
+            else if (known.Add(fullId))
+            {
+                completed.Add(row with { Id = fullId });
+            }
+        }
+
+        return completed;
+    }
+
+    /// <summary>
+    /// A narrow console shortens the Id of a long row, and the name is the only other key the row has. Asking
+    /// for that one package alone gives a table small enough that winget prints its Id whole. A name that
+    /// was shortened itself, or that could be read as an option, is not asked for.
+    /// </summary>
+    private async Task<string?> ResolveShortenedIdAsync(WingetUpgradeEntry row, CancellationToken cancellationToken)
+    {
+        var name = row.Name;
+        if (name.Length == 0 || name.Contains('…') || name[0] is '-' or '/' || name.Any(char.IsControl) || name.Contains('"'))
+            return null;
+
+        try
+        {
+            var result = await RunQueryAsync(
+                ["list", "--name", name, "--exact", "--disable-interactivity", "--accept-source-agreements"],
+                ShowTimeout,
+                cancellationToken);
+
+            return result.TimedOut || result.ExitCode != 0
+                ? null
+                : WingetUpgradeParser.ParseListIdForName(result.StandardOutput, name);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException)
+        {
+            _logging.Warn($"winget: could not look up '{name}': {ex.Message}");
+            return null;
+        }
     }
 
 /// <summary>winget reports an unknown installed version as the literal "Unknown"; show nothing instead.</summary>

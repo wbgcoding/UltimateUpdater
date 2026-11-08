@@ -2344,4 +2344,7 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="ReinstallInstallFailed" xml:space="preserve">
     <value>Usunięto, ale nowa instalacja się nie powiodła. Użyj opcji Ponów próbę, aby spróbować jeszcze raz.</value>
   </data>
+  <data name="WingetShortIdNote" xml:space="preserve">
+    <value>Nie udało się wyświetlić niektórych aktualizacji winget.</value>
+  </data>
 </root>

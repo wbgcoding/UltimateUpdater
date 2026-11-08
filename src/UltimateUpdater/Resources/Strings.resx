@@ -2344,4 +2344,7 @@ Continue with admin rights?</value>
   <data name="ReinstallInstallFailed" xml:space="preserve">
     <value>Removed, but the new install failed. Use Retry to try again.</value>
   </data>
+  <data name="WingetShortIdNote" xml:space="preserve">
+    <value>Some winget updates could not be listed.</value>
+  </data>
 </root>

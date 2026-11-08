@@ -2344,4 +2344,7 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="ReinstallInstallFailed" xml:space="preserve">
     <value>已卸载，但新的安装失败。请使用“重试”再试一次。</value>
   </data>
+  <data name="WingetShortIdNote" xml:space="preserve">
+    <value>部分 winget 更新无法列出。</value>
+  </data>
 </root>

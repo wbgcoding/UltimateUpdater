@@ -2344,4 +2344,7 @@ Esto no se puede deshacer.</value>
   <data name="ReinstallInstallFailed" xml:space="preserve">
     <value>Se quitó, pero la nueva instalación falló. Usa Reintentar para volver a probar.</value>
   </data>
+  <data name="WingetShortIdNote" xml:space="preserve">
+    <value>No se pudieron mostrar algunas actualizaciones de winget.</value>
+  </data>
 </root>

@@ -2344,4 +2344,7 @@ Continuați cu drepturi de administrator?</value>
   <data name="ReinstallInstallFailed" xml:space="preserve">
     <value>Eliminat, dar noua instalare a eșuat. Folosește Reîncearcă pentru a încerca din nou.</value>
   </data>
+  <data name="WingetShortIdNote" xml:space="preserve">
+    <value>Unele actualizări winget nu au putut fi listate.</value>
+  </data>
 </root>
