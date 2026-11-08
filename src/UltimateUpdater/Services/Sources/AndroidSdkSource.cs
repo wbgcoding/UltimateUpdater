@@ -47,7 +47,7 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
     // again per row would multiply a several-second download by however many packages are outdated.
     private readonly SemaphoreSlim _manifestGate = new(1, 1);
     private string? _manifestXml;
-    private bool _manifestFetched;
+    private volatile bool _manifestFetched;
 
     public override string Id => "android-sdk";
 
@@ -362,7 +362,7 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
         return new UpdateEnrichment(null, size, ChangelogUrl: ChangelogUrl);
     }
 
-    private async Task<string?> GetRepositoryManifestAsync(CancellationToken cancellationToken)
+    internal async Task<string?> GetRepositoryManifestAsync(CancellationToken cancellationToken)
     {
         if (_manifestFetched)
             return _manifestXml;
@@ -382,7 +382,11 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
             if (response.IsSuccessStatusCode && response.Content.Headers.ContentLength is not > MaxManifestBytes)
                 _manifestXml = await ReadLimitedAsync(response, cancellationToken);
 
-            _manifestFetched = true;
+            // Only a manifest in hand or a definite 404 is final. A 5xx, a 429 or an oversized body is a
+            // transient answer, so the next scan asks again instead of losing the size column until restart.
+            if (_manifestXml is not null || response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                _manifestFetched = true;
+
             return _manifestXml;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
