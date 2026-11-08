@@ -301,11 +301,16 @@ public static class AppPaths
     private static volatile string? _pendingDataFolder;
 
     /// <summary>The files the running app keeps appending to or replacing after a data folder copy. The rest
-    /// of the folder (caches, logs, backups) is either rebuilt or tolerates a stale copy.</summary>
-    private static readonly string[] LiveWrittenEntries = ["history.jsonl", "history.jsonl.1", "cleanup-history.json", "reports"];
+    /// of the folder (logs, the rebuildable caches) tolerates a stale copy.</summary>
+    private static readonly string[] LiveWrittenEntries =
+    [
+        "history.jsonl", "history.jsonl.1", "cleanup-history.json", "reports",
+        "driver-backups", "restore-point.json", "pip-blocked.json", "last-scan.json", "enrichment-cache.json",
+    ];
 
-    /// <summary>Brings the history, cleanup history and reports in the new data folder up to date with the
-    /// folder this run writes to. Called right before the pointer is written, so the copy made earlier does not
+    /// <summary>Brings the live-written entries (history, cleanup history, reports, driver backups, the
+    /// restore point, the pip block list, the last scan and the enrichment cache) in the new data folder up
+    /// to date with the folder this run writes to. Called right before the pointer is written, so the copy made earlier does not
     /// miss what happened meanwhile.</summary>
     public static bool SyncLiveDataTo(string destination) => SyncLiveData(DataDirectory, destination, includeSettings: false);
 
@@ -337,9 +342,9 @@ public static class AppPaths
                     if (IsReparsePoint(from))
                         return false;
 
-                    // A report the user deleted meanwhile must not come back with the restart.
-                    TryDeleteBestEffort(to);
-                    if (!TryCopyDirectory(from, to, out var skipped) || skipped.Count > 0)
+                    // Mirrored file by file: a report the user deleted meanwhile must not come back with the
+                    // restart, and a large folder (driver backups) is not copied over again in full.
+                    if (!MirrorDirectory(from, to))
                         return false;
                 }
                 else if (File.Exists(from))
@@ -364,6 +369,78 @@ public static class AppPaths
         {
             return false;
         }
+    }
+
+    /// <summary>Makes <paramref name="to"/> hold exactly what <paramref name="from"/> holds, recursively: files
+    /// that are missing or differ are copied, files and folders the source no longer has are removed. A link
+    /// anywhere in the source fails it, like every other copy of the data folder. False when something could
+    /// not be written.</summary>
+    private static bool MirrorDirectory(string from, string to)
+    {
+        if (File.Exists(to))
+            File.Delete(to);
+
+        Directory.CreateDirectory(to);
+
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in Directory.EnumerateFiles(from))
+        {
+            var kind = ClassifyEntry(file);
+            if (kind == EntryKind.Gone)
+                continue;
+
+            if (kind == EntryKind.Link)
+                return false;
+
+            var name = Path.GetFileName(file);
+            var target = Path.Combine(to, name);
+            try
+            {
+                if (Directory.Exists(target))
+                    Directory.Delete(target, recursive: true);
+
+                var source = new FileInfo(file);
+                var existing = new FileInfo(target);
+
+                // Copy keeps the write time, so equal length and write time means the file did not change.
+                if (!existing.Exists || existing.Length != source.Length || existing.LastWriteTimeUtc != source.LastWriteTimeUtc)
+                    File.Copy(file, target, overwrite: true);
+
+                names.Add(name);
+            }
+            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+            {
+                // Deleted by the running app after it was listed: nothing left to carry over.
+            }
+        }
+
+        foreach (var directory in Directory.EnumerateDirectories(from))
+        {
+            var kind = ClassifyEntry(directory);
+            if (kind == EntryKind.Gone)
+                continue;
+
+            if (kind == EntryKind.Link)
+                return false;
+
+            var name = Path.GetFileName(directory);
+            names.Add(name);
+            if (!MirrorDirectory(directory, Path.Combine(to, name)))
+                return false;
+        }
+
+        foreach (var stale in Directory.EnumerateFileSystemEntries(to))
+        {
+            if (names.Contains(Path.GetFileName(stale)))
+                continue;
+
+            if (Directory.Exists(stale))
+                Directory.Delete(stale, recursive: true);
+            else
+                File.Delete(stale);
+        }
+
+        return true;
     }
 
     internal static bool WriteDataFolderPointer(string newPath, string pointerFilePath)
