@@ -30,6 +30,27 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
 
     public string Id => "winget";
 
+    /// <summary>Meta key holding the winget source the scan found the package in.</summary>
+    public const string SourceMetaKey = "wingetSource";
+
+    private static readonly System.Text.RegularExpressions.Regex SourceNamePattern =
+        new("^[A-Za-z0-9._-]{1,64}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// The source to pin an install to, or null for none. The name comes from scan output and a cache, and
+    /// this also runs in the elevated worker: only a plain name (never option-shaped) reaches winget, as its
+    /// own argument, never inside a shell string.
+    /// </summary>
+    internal static string? SafeSource(UpdateItem item) =>
+        item.Meta.TryGetValue(SourceMetaKey, out var name)
+        && SourceNamePattern.IsMatch(name)
+        && ProcessRunner.IsSafePositionalArgument(name)
+            ? name
+            : null;
+
+    private static IEnumerable<string> SourceArguments(string? source) =>
+        source is null ? [] : ["--source", source];
+
     /// <summary>Set when a scan had to leave out rows whose shortened Id could not be completed.</summary>
     public string? ScanNote { get; private set; }
 
@@ -86,6 +107,9 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
                 InstalledVersion = NormalizeVersion(entry.InstalledVersion),
                 AvailableVersion = NormalizeVersion(entry.AvailableVersion),
                 IsCritical = SecurityRelevance.IsSecurityRelevant(entry.Id, entry.Name),
+                Meta = entry.Source is { Length: > 0 } scanSource
+                    ? new Dictionary<string, string> { [SourceMetaKey] = scanSource }
+                    : new Dictionary<string, string>(),
             };
         }
     }
@@ -111,7 +135,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
 
             var pinnedResult = await ProcessRunner.RunStreamingAsync(
                 "winget",
-                VersionPinnedInstallArguments(item.Id, pinnedVersion),
+                VersionPinnedInstallArguments(item.Id, pinnedVersion, SafeSource(item)),
                 InstallTimeout,
                 segment => Report(progress, item.Name, segment),
                 cancellationToken,
@@ -142,7 +166,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         // The ladder, not a single command: winget refuses an upgrade for several different reasons and
         // NAMES the remedy in its own message each time. Each rung is tried only when the
         // previous failure is one this rung actually addresses, so an ordinary failure still fails at once.
-        foreach (var attempt in InstallLadder(item.Id))
+        foreach (var attempt in InstallLadder(item.Id, SafeSource(item)))
         {
             if (last is not null && !ShouldEscalate(last, lastLabel))
                 break;
@@ -192,7 +216,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         string? offeredVersion = null;
         if (last is not null && sawDidNothing && IsInapplicableOutcome(last.ExitCode))
         {
-            var versions = await ListVersionsAsync(item.Id, cancellationToken);
+            var versions = await ListVersionsAsync(item.Id, SafeSource(item), cancellationToken);
             offeredVersion = versions.FirstOrDefault();
 
             if (offeredVersion is not null)
@@ -200,7 +224,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var pinned = await RunInstallStepAsync(
-                    VersionPinnedInstallArguments(item.Id, offeredVersion), item.Name, progress, cancellationToken);
+                    VersionPinnedInstallArguments(item.Id, offeredVersion, SafeSource(item)), item.Name, progress, cancellationToken);
 
                 if (pinned.TimedOut)
                     throw new InvalidOperationException($"winget install timed out for '{item.Id}'.");
@@ -247,12 +271,12 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
 
     /// <summary>The exact versions winget knows about for `id`, newest first, or empty on any failure:
     /// best effort, same fail-closed contract as everywhere else this app shells out to winget.</summary>
-    private async Task<IReadOnlyList<string>> ListVersionsAsync(string packageId, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<string>> ListVersionsAsync(string packageId, string? source, CancellationToken cancellationToken)
     {
         try
         {
             var result = await RunQueryAsync(
-                ["show", "--id", packageId, "--exact", "--versions", "--disable-interactivity", "--accept-source-agreements"],
+                ["show", "--id", packageId, "--exact", "--versions", .. SourceArguments(source), "--disable-interactivity", "--accept-source-agreements"],
                 ShowTimeout,
                 cancellationToken);
 
@@ -302,11 +326,12 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
     }
 
     /// <summary>Still hash-verified, with no --force, unlike the rung this replaced.</summary>
-    internal static IReadOnlyList<string> VersionPinnedInstallArguments(string packageId, string version) =>
+    internal static IReadOnlyList<string> VersionPinnedInstallArguments(string packageId, string version, string? source = null) =>
     [
         "install", "--id", packageId, "--exact", "--version", version,
         "--silent", "--disable-interactivity",
         "--accept-package-agreements", "--accept-source-agreements",
+        .. SourceArguments(source),
     ];
 
     /// <summary>
@@ -372,14 +397,15 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
     /// </summary>
     private const string UserScopeRungLabel = "upgrade --scope user";
 
-    internal static IReadOnlyList<WingetAttempt> InstallLadder(string packageId) =>
+    internal static IReadOnlyList<WingetAttempt> InstallLadder(string packageId, string? source = null) =>
     [
-        new("upgrade", InstallArguments(packageId)),
-        new(UserScopeRungLabel, [.. InstallArguments(packageId), "--scope", "user"]),
+        new("upgrade", InstallArguments(packageId, source)),
+        new(UserScopeRungLabel, [.. InstallArguments(packageId, source), "--scope", "user"]),
         new("install", [
             "install", "--id", packageId, "--exact",
             "--silent", "--disable-interactivity",
             "--accept-package-agreements", "--accept-source-agreements",
+            .. SourceArguments(source),
         ]),
     ];
 
@@ -491,7 +517,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
 
         var result = await ProcessRunner.RunStreamingAsync(
             "winget",
-            FreshInstallArguments(item.Id, item.InstallScope),
+            FreshInstallArguments(item.Id, item.InstallScope, SafeSource(item)),
             InstallTimeout,
             segment => Report(progress, item.Name, segment),
             cancellationToken,
@@ -514,7 +540,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
     /// <summary>The install command of a fresh install. With a known scope it names it, so winget does not pick
     /// the installer by its own preference (per-user first); a value that is not exactly one of the two scopes
     /// names none.</summary>
-    internal static IReadOnlyList<string> FreshInstallArguments(string packageId, string? scope = null)
+    internal static IReadOnlyList<string> FreshInstallArguments(string packageId, string? scope = null, string? source = null)
     {
         List<string> args =
         [
@@ -524,6 +550,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         ];
         if (InstallScopes.Normalize(scope) is { } known)
             args.AddRange(["--scope", known]);
+        args.AddRange(SourceArguments(source));
         return args;
     }
 
@@ -745,7 +772,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
     /// of that. Nothing here may become --interactive, --wait or --open-logs: each puts a window in front
     /// of the user in the middle of an unattended batch.
     /// </summary>
-    internal static IReadOnlyList<string> InstallArguments(string packageId) =>
+    internal static IReadOnlyList<string> InstallArguments(string packageId, string? source = null) =>
     [
         "upgrade", "--id", packageId, "--exact",
         "--silent", "--disable-interactivity",
@@ -754,6 +781,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         // otherwise winget lists packages as upgradable and then refuses to upgrade them ("Die Versionsnummer dieses Pakets kann nicht bestimmt werden…",
         // PokeMMO).
         "--include-unknown",
+        .. SourceArguments(source),
     ];
 
     /// <summary>The one deliberate exception to "never --interactive": a single user-triggered retry,
@@ -767,7 +795,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
 
         var result = await ProcessRunner.RunStreamingAsync(
             "winget",
-            InteractiveInstallArguments(item.Id),
+            InteractiveInstallArguments(item.Id, SafeSource(item)),
             InstallTimeout,
             segment => Report(progress, item.Name, segment),
             cancellationToken);
@@ -791,9 +819,9 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
     /// built by filtering <see cref="InstallArguments"/> rather than duplicating it, so the two can never
     /// drift apart (proven by <c>WingetInstallLadderTests</c>: no --silent, otherwise identical).
     /// </summary>
-    internal static IReadOnlyList<string> InteractiveInstallArguments(string packageId) =>
+    internal static IReadOnlyList<string> InteractiveInstallArguments(string packageId, string? source = null) =>
     [
-        .. InstallArguments(packageId).Where(arg => arg is not ("--silent" or "--disable-interactivity")),
+        .. InstallArguments(packageId, source).Where(arg => arg is not ("--silent" or "--disable-interactivity")),
         "--interactive",
     ];
 
@@ -805,7 +833,8 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
             "Import-Module Microsoft.WinGet.Client; " +
             "Get-WinGetPackage | Where-Object { $_.IsUpdateAvailable } | " +
             "ForEach-Object { [pscustomobject]@{ Id=$_.Id; Name=$_.Name; " +
-            "InstalledVersion=$_.InstalledVersion; AvailableVersion=($_.AvailableVersions | Select-Object -First 1) } } | " +
+            "InstalledVersion=$_.InstalledVersion; AvailableVersion=($_.AvailableVersions | Select-Object -First 1); " +
+            "Source=$_.Source } } | " +
             "ConvertTo-Json -Compress";
 
         try

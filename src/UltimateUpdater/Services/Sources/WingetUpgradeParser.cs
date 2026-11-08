@@ -4,7 +4,10 @@ using System.Text.Json;
 
 namespace UltimateUpdater.Services.Sources;
 
-public sealed record WingetUpgradeEntry(string Id, string Name, string InstalledVersion, string AvailableVersion);
+/// <param name="Source">The winget source the package was found in ("winget", "msstore"), or null when the output
+/// does not name one. Only a hint: the install side validates it again before it reaches a command line.</param>
+public sealed record WingetUpgradeEntry(
+    string Id, string Name, string InstalledVersion, string AvailableVersion, string? Source = null);
 
 /// <summary>
 /// Parses the machine-facing winget outputs this app uses. Everything here is hostile input:
@@ -61,12 +64,14 @@ public static class WingetUpgradeParser
         var name = GetString(element, "Name");
         var installed = GetString(element, "InstalledVersion");
         var available = GetString(element, "AvailableVersion");
+        var source = GetString(element, "Source");
 
         results.Add(new WingetUpgradeEntry(
             id,
             string.IsNullOrWhiteSpace(name) ? id : name,
             installed,
-            available));
+            available,
+            string.IsNullOrWhiteSpace(source) ? null : source.Trim()));
     }
 
     private static string GetString(JsonElement element, string propertyName) =>
@@ -119,6 +124,10 @@ public static class WingetUpgradeParser
             var installed = Slice(line, columnStarts, 2);
             var available = Slice(line, columnStarts, 3);
 
+            // The last column is "Source"/"Quelle" (header text is localized, so by position only); a
+            // table with fewer than five columns names none.
+            var source = columnStarts.Length >= 5 ? Slice(line, columnStarts, columnStarts.Length - 1) : string.Empty;
+
             // A real Id is one word: Publisher.Package, or a Microsoft Store product id with no dot at all.
             // This also filters the trailing summary lines.
             if (!IsPackageId(id) || available.Length == 0)
@@ -129,11 +138,11 @@ public static class WingetUpgradeParser
             if (id.Contains('…'))
             {
                 onTruncatedId?.Invoke(id);
-                onTruncatedRow?.Invoke(new WingetUpgradeEntry(id, name, installed, available));
+                onTruncatedRow?.Invoke(new WingetUpgradeEntry(id, name, installed, available, source.Length == 0 ? null : source));
                 continue;
             }
 
-            results.Add(new WingetUpgradeEntry(id, name.Length == 0 ? id : name, installed, available));
+            results.Add(new WingetUpgradeEntry(id, name.Length == 0 ? id : name, installed, available, source.Length == 0 ? null : source));
         }
 
         return results;
