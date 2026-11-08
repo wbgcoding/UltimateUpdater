@@ -35,7 +35,7 @@ public static class CleanupWorker
     public static async Task RunCommandAsync(
         CleanupCommand? command, StreamWriter writer, string jobId, LoggingService logging,
         CancellationToken cancellationToken, PauseGate pause, CleanupService? serviceOverride = null,
-        Func<string, bool>? isTrustedDirectory = null)
+        Func<string, bool>? isTrustedDirectory = null, string? workerSidOverride = null)
     {
         if (command is null || command.Command is not ("scan" or "clean" or "analyze"))
         {
@@ -84,6 +84,7 @@ public static class CleanupWorker
         };
 
         var targets = ResolveElevatedTargets(command, logging.Warn);
+        var workerSid = workerSidOverride ?? RecycleBinScanner.TryGetOwnSid();
 
         // A restore point before installs already exists (InstallWorker), and a cleaning run that
         // touches the registry, repairs Windows' own files, or removes a driver gets one too: those are
@@ -129,6 +130,19 @@ public static class CleanupWorker
             // Flushed before this target starts, not only after it finishes below: an earlier target
             // can have run for a while, and its lines should not make a later target's own lines wait.
             DrainLog(writer, jobId);
+
+            // The elevated process may be another account (over-the-shoulder elevation): its HKCU is then
+            // not the signed-in user's, so a per-user registry target would read and write the wrong hive.
+            if (UserHiveMismatchReason(target, command.CallerSid, workerSid) is { } mismatch)
+            {
+                logging.Warn(mismatch);
+                if (command.Command == "scan")
+                    Send(writer, jobId, ScanMessage(target.Id, new CleanupScanResult(0, 0, 0)));
+                else
+                    Send(writer, jobId, new CleanupWorkerMessage { Type = "result", Id = target.Id, Failed = true });
+                DrainLog(writer, jobId);
+                continue;
+            }
 
             try
             {
@@ -187,6 +201,30 @@ public static class CleanupWorker
         CleanupCatalog.BuildFor(logWarning, callerTempPaths, usersRoot)
             .Where(target => target.NeedsElevation && targetIds.Contains(target.Id, StringComparer.Ordinal))
             .ToList();
+
+    /// <summary>Whether the target reads or writes a per-user registry hive (any root under HKCU).</summary>
+    internal static bool TouchesCurrentUserHive(CleanupTarget target) =>
+        target.Kind == CleanupKind.RegistryCleanup
+        && target.RegistryCategories
+            .SelectMany(RegistryCleanupScanner.RootKeys)
+            .Any(root => root.StartsWith(@"HKCU\",StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Why a target must not run in this worker, or null when it may. A per-user registry target runs only
+    /// when the worker's token user is the caller's user; a missing SID on either side counts as a
+    /// mismatch (fail closed).
+    /// </summary>
+    internal static string? UserHiveMismatchReason(CleanupTarget target, string? callerSid, string? workerSid)
+    {
+        if (!TouchesCurrentUserHive(target))
+            return null;
+
+        if (!string.IsNullOrWhiteSpace(callerSid) && !string.IsNullOrWhiteSpace(workerSid)
+            && string.Equals(callerSid, workerSid, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return $"Cleanup: '{target.Id}' skipped; the elevated account is not the signed-in user, so its per-user registry is not theirs.";
+    }
 
     private static async Task ScanOneAsync(
         CleanupService service, CleanupTarget target, StreamWriter writer, string jobId, bool background,

@@ -1168,6 +1168,7 @@ public partial class CleanupViewModel
                 : [],
             CallerTempPaths = CleanupCatalog.OwnTempPaths().ToList(),
             CallerProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            CallerSid = RecycleBinScanner.TryGetOwnSid(),
         };
 
         // "cleanup" for a scan (never takes a lane at all, Exclusive is false below) and for every

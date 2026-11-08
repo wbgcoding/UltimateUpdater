@@ -86,6 +86,11 @@ public sealed class CleanupCommand
     /// Only ever read to count, never to delete.</summary>
     public string? CallerProfilePath { get; set; }
 
+    /// <summary>The unelevated app's user SID. The worker may run as another account, whose own HKCU is
+    /// not the signed-in user's; it compares this with its token user and leaves the per-user registry
+    /// targets alone when they differ or this is missing.</summary>
+    public string? CallerSid { get; set; }
+
     /// <summary>Which "older Python versions" rows to actually uninstall on a "clean" (each identified by
     /// its interpreter's python.exe path); never "everything the last scan found", same none-pre-selected
     /// rule as <see cref="SelectedDriverDeviceInstanceIds"/>. Ignored for every other target.</summary>
