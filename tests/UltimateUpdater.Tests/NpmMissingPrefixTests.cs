@@ -88,4 +88,37 @@ public class NpmMissingPrefixTests
         Assert.Equal("left-pad", item.Id);
         Assert.Equal("1.3.0", item.AvailableVersion);
     }
+
+    [Fact]
+    public void A_registry_error_object_with_exit_one_fails_the_scan()
+    {
+        var source = new NpmSource(new LoggingService(), new HttpClient());
+        var json = """{"error":{"code":"ENOTFOUND","summary":"request to https://registry.example.test/ failed","detail":""}}""";
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            source.ScanFromResult(new ProcessResult(1, json, string.Empty), Prefix));
+
+        Assert.Contains("request to", ex.Message);
+    }
+
+    [Fact]
+    public void An_error_object_without_a_summary_names_its_code()
+    {
+        var source = new NpmSource(new LoggingService(), new HttpClient());
+        var json = """{"error":{"code":"ENOTFOUND"}}""";
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            source.ScanFromResult(new ProcessResult(1, json, string.Empty), Prefix));
+
+        Assert.Contains("ENOTFOUND", ex.Message);
+    }
+
+    [Fact]
+    public void Exit_one_without_parsable_output_fails_the_scan()
+    {
+        var source = new NpmSource(new LoggingService(), new HttpClient());
+
+        Assert.Throws<InvalidOperationException>(() =>
+            source.ScanFromResult(new ProcessResult(1, string.Empty, "npm error boom"), Prefix));
+    }
 }

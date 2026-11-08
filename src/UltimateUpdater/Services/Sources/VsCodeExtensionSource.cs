@@ -31,7 +31,8 @@ public sealed class VsCodeExtensionSource(LoggingService logging, HttpClient htt
             return Task.FromResult<UpdateEnrichment?>(null);
 
         return RegistryEnrichment.FetchAsync(
-            httpClient, MarketplaceUrl(publisher, extension), PackageMetadataParsers.ParseVsMarketplaceExtension,
+            httpClient, MarketplaceUrl(publisher, extension),
+            json => PackageMetadataParsers.ParseVsMarketplaceExtension(json, _installedEngine),
             Logging, Id, item.Id, cancellationToken);
     }
 
@@ -47,17 +48,49 @@ public sealed class VsCodeExtensionSource(LoggingService logging, HttpClient htt
     protected override async Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken)
     {
         var result = EnsureScanCompleted(await RunAsync(["--list-extensions", "--show-versions"], cancellationToken));
-        return await CheckAgainstMarketplaceAsync(PackageManagerParsers.ParseVsCodeExtensions(result.StandardOutput), cancellationToken);
+        var engine = await ReadInstalledEngineAsync(cancellationToken);
+        return await CheckAgainstMarketplaceAsync(PackageManagerParsers.ParseVsCodeExtensions(result.StandardOutput), cancellationToken, engine);
+    }
+
+    /// <summary>The VS Code version of the latest scan; the enrichment of a row reads it so it names the same
+    /// version the scan offered. Null until a version was read.</summary>
+    private volatile Version? _installedEngine;
+
+    /// <summary>`code --version` once per scan: its first line is the VS Code version. Any failure is null,
+    /// which keeps every Marketplace version in play (today's behaviour).</summary>
+    private async Task<Version?> ReadInstalledEngineAsync(CancellationToken cancellationToken)
+    {
+        Version? engine = null;
+        try
+        {
+            var run = await RunAsync(["--version"], cancellationToken);
+            if (!run.TimedOut && run.ExitCode == 0)
+                engine = ParseCodeVersion(run.StandardOutput);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Logging.Warn($"{Id}: could not read the VS Code version: {ex.Message}");
+        }
+
+        _installedEngine = engine;
+        return engine;
+    }
+
+    /// <summary>The first line of `code --version` (for example `1.95.3`); null when it is not a version.</summary>
+    internal static Version? ParseCodeVersion(string stdout)
+    {
+        var first = stdout.Split('\n').Select(line => line.Trim()).FirstOrDefault(line => line.Length > 0);
+        return first is not null && Version.TryParse(first, out var version) ? version : null;
     }
 
     /// <summary>The Marketplace half of the scan, split out so a test can hand in the installed list and a
     /// fake client. Every lookup failing is a failed source (see <see cref="RegistryFetch.ThrowIfAllFailed"/>).</summary>
     internal async Task<IReadOnlyList<UpdateItem>> CheckAgainstMarketplaceAsync(
-        IReadOnlyList<OutdatedPackage> installed, CancellationToken cancellationToken)
+        IReadOnlyList<OutdatedPackage> installed, CancellationToken cancellationToken, Version? installedEngine = null)
     {
         var checks = await BoundedFanOut.SelectAsync(installed, async (extension, token) =>
         {
-            var (latest, fetch) = await LatestOnMarketplaceAsync(extension.Id, token);
+            var (latest, fetch) = await LatestOnMarketplaceAsync(extension.Id, installedEngine, token);
             var row = PackageManagerParsers.IsNewer(extension.Installed, latest)
                 ? CreateItem(extension.Id, extension.Name, extension.Installed, latest)
                 : null;
@@ -74,7 +107,7 @@ public sealed class VsCodeExtensionSource(LoggingService logging, HttpClient htt
         "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/"
         + $"{Uri.EscapeDataString(publisher)}/extensions/{Uri.EscapeDataString(extension)}?api-version=3.0-preview.1";
 
-    private async Task<(string? Latest, RegistryFetch? Fetch)> LatestOnMarketplaceAsync(string extensionId, CancellationToken cancellationToken)
+    private async Task<(string? Latest, RegistryFetch? Fetch)> LatestOnMarketplaceAsync(string extensionId, Version? installedEngine, CancellationToken cancellationToken)
     {
         if (!TrySplitExtensionId(extensionId, out var publisher, out var extension))
             return (null, null);
@@ -82,7 +115,7 @@ public sealed class VsCodeExtensionSource(LoggingService logging, HttpClient htt
         var fetch = await RegistryEnrichment.FetchRawOutcomeAsync(
             httpClient, MarketplaceUrl(publisher, extension), Logging, Id, extensionId, cancellationToken);
 
-        return (fetch.Body is null ? null : PackageMetadataParsers.ParseVsMarketplaceExtension(fetch.Body).AvailableVersion, fetch);
+        return (fetch.Body is null ? null : PackageMetadataParsers.ParseVsMarketplaceExtension(fetch.Body, installedEngine).AvailableVersion, fetch);
     }
 
     // --force re-installs at the latest marketplace version; without it a same-version reinstall is a no-op

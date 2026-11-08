@@ -18,8 +18,16 @@ public sealed class NpmSource(LoggingService logging, HttpClient httpClient) : C
     public override Task<UpdateEnrichment?> EnrichAsync(UpdateItem item, CancellationToken cancellationToken) =>
         NpmEnrichment.FetchAsync(httpClient, Logging, Id, item.Id, item.AvailableVersion, item.Id, cancellationToken);
 
-    /// <summary>`npm outdated` exits 1 precisely WHEN it finds outdated packages; its success case.</summary>
-    protected override bool IsAcceptedScanExitCode(int exitCode) => exitCode is 0 or 1;
+    /// <summary>
+    /// Zero only. `npm outdated` also exits 1 WHEN it finds outdated packages, but npm uses 1 for registry and
+    /// network errors too, so that code is judged by its output (<see cref="IsOutdatedReport"/>).
+    /// </summary>
+    protected override bool IsAcceptedScanExitCode(int exitCode) => exitCode == 0;
+
+    /// <summary>Exit 1 is the "found outdated packages" success only when stdout is a plain JSON object of
+    /// packages; npm's own failures print an object with a top level `error` member (or nothing parsable).</summary>
+    private static bool IsOutdatedReport(ProcessResult result) =>
+        result.ExitCode == 1 && PnpmSource.IsOutdatedObject(result.StandardOutput);
 
     protected override async Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken)
     {
@@ -27,7 +35,7 @@ public sealed class NpmSource(LoggingService logging, HttpClient httpClient) : C
 
         // The prefix is only needed to judge a failure, so the extra npm call stays off the normal path.
         string? prefix = null;
-        if (!result.TimedOut && !IsAcceptedScanExitCode(result.ExitCode) && MentionsEnoent(result))
+        if (!result.TimedOut && !IsAcceptedScanExitCode(result.ExitCode) && !IsOutdatedReport(result) && MentionsEnoent(result))
             prefix = await ReadGlobalPrefixAsync(cancellationToken);
 
         return ScanFromResult(result, prefix);
@@ -37,19 +45,52 @@ public sealed class NpmSource(LoggingService logging, HttpClient httpClient) : C
     /// the global prefix.</summary>
     internal IReadOnlyList<UpdateItem> ScanFromResult(ProcessResult outdated, string? globalPrefix)
     {
-        if (!outdated.TimedOut && !IsAcceptedScanExitCode(outdated.ExitCode) && IsMissingGlobalPrefix(outdated, globalPrefix))
+        if (!outdated.TimedOut && !IsAcceptedScanExitCode(outdated.ExitCode) && !IsOutdatedReport(outdated) && IsMissingGlobalPrefix(outdated, globalPrefix))
         {
             Logging.Info($"{Id}: the global npm folder does not exist yet, nothing is installed globally.");
             return [];
         }
 
-        // `npm outdated` exits 1 precisely WHEN it finds outdated packages: that is the success case
-        // here, so only stdout decides. Any OTHER code is a broken npm and now says so.
-        var result = EnsureScanCompleted(outdated);
+        // `npm outdated` exits 1 precisely WHEN it finds outdated packages, but also on a registry or
+        // network error, so exit 1 counts only with an error-free JSON object. Anything else fails the scan.
+        var result = IsOutdatedReport(outdated) ? outdated : FailWithNpmError(outdated);
 
         return PackageManagerParsers.ParseNpmJson(result.StandardOutput)
             .Select(p => CreateItem(p.Id, p.Name, p.Installed, p.Available))
             .ToList();
+    }
+
+    /// <summary>Fails the scan; npm's own `error.summary` (or `error.code`) leads the message when stdout carries one.</summary>
+    private ProcessResult FailWithNpmError(ProcessResult result)
+    {
+        if (!result.TimedOut && result.ExitCode == 1 && NpmErrorSummary(result.StandardOutput) is { Length: > 0 } summary)
+            throw new InvalidOperationException($"{Id}: scan failed; '{Executable}' exited with code 1. {LoggingService.Redact(summary)}");
+
+        return EnsureScanCompleted(result);
+    }
+
+    private static string? NpmErrorSummary(string stdout)
+    {
+        try
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(stdout);
+            if (document.RootElement.ValueKind != System.Text.Json.JsonValueKind.Object
+                || !document.RootElement.TryGetProperty("error", out var error)
+                || error.ValueKind != System.Text.Json.JsonValueKind.Object)
+                return null;
+
+            foreach (var name in new[] { "summary", "code" })
+            {
+                if (error.TryGetProperty(name, out var value) && value.ValueKind == System.Text.Json.JsonValueKind.String
+                    && value.GetString() is { Length: > 0 } text)
+                    return text.Length <= 300 ? text : text[..300];
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+        }
+
+        return null;
     }
 
     private async Task<string?> ReadGlobalPrefixAsync(CancellationToken cancellationToken)

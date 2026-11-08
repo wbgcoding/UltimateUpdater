@@ -37,7 +37,11 @@ public sealed class PyenvWinSource(LoggingService logging) : IUpdateSource
         if (string.IsNullOrWhiteSpace(item.AvailableVersion))
             return null;
 
-        var url = $"https://www.python.org/ftp/python/{item.AvailableVersion}/python-{item.AvailableVersion}-amd64.exe";
+        var architecture = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture
+            == System.Runtime.InteropServices.Architecture.Arm64
+            ? "arm64"
+            : "amd64";
+        var url = $"https://www.python.org/ftp/python/{item.AvailableVersion}/python-{item.AvailableVersion}-{architecture}.exe";
         var size = await RegistryEnrichment.HeadContentLengthAsync(url, logging, Id, item.Id, cancellationToken);
         return size is null ? null : new UpdateEnrichment(null, size);
     }

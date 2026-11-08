@@ -6,7 +6,7 @@ namespace UltimateUpdater.Services.Sources.PackageManagers;
 /// <summary>One Python interpreter this machine actually has installed, found through the registry
 /// rather than trusted from PATH.</summary>
 public readonly record struct PythonInterpreter(
-    string PythonExe, Version Version, bool PerUser, bool Is64Bit)
+    string PythonExe, Version Version, bool PerUser, bool Is64Bit, bool IsArm64 = false)
 {
     /// <summary>A short label for a row's detail/tooltip when more than one interpreter exists
     /// ("Python 3.14").</summary>
@@ -75,7 +75,10 @@ public static class PythonInterpreters
                 // root as the 64-bit ones (PEP 514): the tag says so, not only the WOW6432Node root.
                 var is64Bit = !rootPath.Contains("WOW6432Node", StringComparison.OrdinalIgnoreCase)
                               && !tag.EndsWith("-32", StringComparison.OrdinalIgnoreCase);
-                found.Add(new PythonInterpreter(full, version, perUser, is64Bit));
+                // An ARM64 build registers as "3.13-arm64" (PEP 514); it is a separate architecture from x64,
+                // although both are "64-bit".
+                var isArm64 = tag.EndsWith("-arm64", StringComparison.OrdinalIgnoreCase);
+                found.Add(new PythonInterpreter(full, version, perUser, is64Bit, isArm64));
             }
         }
 
@@ -252,23 +255,45 @@ public static class PythonInterpreters
             return quiet;
 
         var plain = registry.Value(keyPath, "UninstallString");
-        return string.IsNullOrWhiteSpace(plain) ? null : $"{plain} /uninstall /quiet";
+        if (string.IsNullOrWhiteSpace(plain))
+            return null;
+
+        // An MSI-installed Python (2.7, 3.4) registers "MsiExec.exe /I{GUID}": a bare program name no caller can
+        // locate, and /I would only open the maintenance dialog. The removal is built from the product code
+        // instead, with msiexec at its fixed System32 path, never looked up through PATH or an environment variable.
+        if (MsiExecProductCode.Match(plain) is { Success: true } msi)
+        {
+            return $"\"{Path.Combine(Environment.SystemDirectory, "msiexec.exe")}\" /x {msi.Groups["code"].Value} /quiet /norestart";
+        }
+
+        if (IsMsiExecCommand(plain))
+            return null;
+
+        return $"{plain} /uninstall /quiet";
     }
+
+    /// <summary>msiexec (quoted or not, with or without a folder or extension) followed by /I or /X and a product code.</summary>
+    private static readonly Regex MsiExecProductCode = new(
+        @"^\s*""?(?:[^""]*[\\/])?msiexec(?:\.exe)?""?\s+/[IX]\s*(?<code>\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\})",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    private static bool IsMsiExecCommand(string command) =>
+        Regex.IsMatch(command, @"^\s*""?(?:[^""]*[\\/])?msiexec(?:\.exe)?""?(\s|$)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     private static string? NormalizeDirectory(string? path) =>
         string.IsNullOrWhiteSpace(path) ? null : path.Trim().Trim('"').TrimEnd('\\', '/');
 
     /// <summary>
     /// Every installed interpreter whose major.minor is lower than the newest installed one of the SAME
-    /// architecture (a 32-bit build is never compared against a 64-bit one; they serve different
-    /// software and neither makes the other obsolete). The single newest interpreter of an architecture
+    /// architecture (x86, x64 and ARM64 are three groups; they serve different software, such as x64-only
+    /// wheels on an ARM64 PC, and neither makes the other obsolete). The single newest interpreter of an architecture
     /// is never itself "older", so an architecture with only one interpreter contributes nothing here.
     /// </summary>
     public static IReadOnlyList<PythonInterpreter> FindOlderVersions(IReadOnlyList<PythonInterpreter> interpreters)
     {
         var older = new List<PythonInterpreter>();
 
-        foreach (var group in interpreters.GroupBy(i => i.Is64Bit))
+        foreach (var group in interpreters.GroupBy(i => (i.Is64Bit, i.IsArm64)))
         {
             var newest = group.Max(i => i.Version);
             older.AddRange(group.Where(i => i.Version < newest));

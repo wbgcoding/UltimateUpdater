@@ -27,15 +27,38 @@ public sealed class GhExtensionSource(LoggingService logging, HttpClient httpCli
             Logging, Id, item.Id, cancellationToken, GitHubReleases.Headers);
     }
 
-    /// <summary>
-    /// `gh extension list` exits 1 when NO extensions are installed, which is a perfectly ordinary answer
-    /// and parses to an empty list. Anything above that is a broken gh and fails the source.
-    /// </summary>
-    protected override bool IsAcceptedScanExitCode(int exitCode) => exitCode is 0 or 1;
+    /// <summary>Zero only; exit 1 is judged by <see cref="ScanFromResult"/> because gh uses it for errors too.</summary>
+    protected override bool IsAcceptedScanExitCode(int exitCode) => exitCode == 0;
 
-    protected override async Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken)
+    protected override async Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken) =>
+        ScanFromResult(await RunAsync(["extension", "list"], cancellationToken));
+
+    private const string NoExtensionsMarker = "no installed extensions found";
+
+    /// <summary>
+    /// `gh extension list` exits 1 when NO extensions are installed (empty stdout, that sentence on stderr),
+    /// which is an ordinary answer. gh also uses 1 for every other error, so exit 1 counts only with empty
+    /// stdout and either an empty stderr or that sentence; anything else fails the source with stderr's first line.
+    /// </summary>
+    internal IReadOnlyList<UpdateItem> ScanFromResult(ProcessResult raw)
     {
-        var result = EnsureScanCompleted(await RunAsync(["extension", "list"], cancellationToken));
+        var emptyAnswer = raw is { TimedOut: false, ExitCode: 1 }
+            && string.IsNullOrWhiteSpace(raw.StandardOutput)
+            && (string.IsNullOrWhiteSpace(raw.StandardError)
+                || raw.StandardError.Contains(NoExtensionsMarker, StringComparison.OrdinalIgnoreCase));
+        if (emptyAnswer)
+            return [];
+
+        if (raw is { TimedOut: false, ExitCode: 1 })
+        {
+            var first = raw.StandardError.Split('\n').Select(line => line.Trim()).FirstOrDefault(line => line.Length > 0)
+                ?? raw.StandardOutput.Split('\n').Select(line => line.Trim()).FirstOrDefault(line => line.Length > 0)
+                ?? string.Empty;
+            var suffix = first.Length > 0 ? $" {LoggingService.Redact(first.Length <= 300 ? first : first[..300])}" : string.Empty;
+            throw new InvalidOperationException($"{Id}: scan failed; '{Executable}' exited with code 1.{suffix}");
+        }
+
+        var result = EnsureScanCompleted(raw);
 
         return PackageManagerParsers.ParseGhExtensionList(result.StandardOutput)
             .Select(p => CreateItem(p.Id, p.Name, p.Installed, p.Available))

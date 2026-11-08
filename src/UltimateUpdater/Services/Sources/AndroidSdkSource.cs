@@ -22,8 +22,8 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
     /// <summary>A few MB in practice; refuse anything wildly larger rather than buffer it whole.</summary>
     private const long MaxManifestBytes = 32L * 1024 * 1024;
 
-    private static readonly Lazy<(string? Executable, string? SdkRoot, bool UseAndroidCli)> Resolved =
-        new(ResolveTool);
+    private static readonly FoundOnceCache<(string? Executable, string? SdkRoot, bool UseAndroidCli)> Resolved =
+        new(ResolveTool, tool => tool.Executable is not null);
 
     /// <summary>The newest command-line tools ship `android.exe` beside `sdkmanager.bat`, which only
     /// forwards to it. When it is there it is run directly: no Java needed, and it updates ONE package
@@ -40,14 +40,14 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
     // (not a normal sdkmanager error) when the java.exe it finds is older than the 17+ its bundled
     // cmdline-tools require. Resolving JAVA_HOME ourselves and handing it to the
     // child process removes the dependency on whatever "java" happens to be first on PATH.
-    private static readonly Lazy<string?> ResolvedJavaHome = new(FindJavaHome);
+    private static readonly FoundOnceCache<string?> ResolvedJavaHome = new(FindJavaHome, home => home is not null);
 
     // Fetched once per process lifetime and shared across every package row this scan enriches, the
     // manifest is the same few-MB file regardless of which package is being looked up, so fetching it
     // again per row would multiply a several-second download by however many packages are outdated.
     private readonly SemaphoreSlim _manifestGate = new(1, 1);
     private string? _manifestXml;
-    private bool _manifestFetched;
+    private volatile bool _manifestFetched;
 
     public override string Id => "android-sdk";
 
@@ -362,7 +362,7 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
         return new UpdateEnrichment(null, size, ChangelogUrl: ChangelogUrl);
     }
 
-    private async Task<string?> GetRepositoryManifestAsync(CancellationToken cancellationToken)
+    internal async Task<string?> GetRepositoryManifestAsync(CancellationToken cancellationToken)
     {
         if (_manifestFetched)
             return _manifestXml;
@@ -382,7 +382,11 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
             if (response.IsSuccessStatusCode && response.Content.Headers.ContentLength is not > MaxManifestBytes)
                 _manifestXml = await ReadLimitedAsync(response, cancellationToken);
 
-            _manifestFetched = true;
+            // Only a manifest in hand or a definite 404 is final. A 5xx, a 429 or an oversized body is a
+            // transient answer, so the next scan asks again instead of losing the size column until restart.
+            if (_manifestXml is not null || response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                _manifestFetched = true;
+
             return _manifestXml;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

@@ -121,7 +121,11 @@ public sealed class VoltaSource(LoggingService logging, HttpClient httpClient) :
         var json = await RegistryEnrichment.FetchRawAsync(httpClient, NodeReleaseIndexUrl, logging, Id, item.Id, cancellationToken);
         var date = json is null ? null : VoltaParsers.ParseNodeReleaseDate(json, item.AvailableVersion!);
 
-        var archiveUrl = $"https://nodejs.org/dist/v{item.AvailableVersion}/node-v{item.AvailableVersion}-win-x64.zip";
+        var platform = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture
+            == System.Runtime.InteropServices.Architecture.Arm64
+            ? "win-arm64"
+            : "win-x64";
+        var archiveUrl = $"https://nodejs.org/dist/v{item.AvailableVersion}/node-v{item.AvailableVersion}-{platform}.zip";
         var size = await RegistryEnrichment.HeadContentLengthAsync(archiveUrl, logging, Id, item.Id, cancellationToken);
 
         return date is null && size is null ? null : new UpdateEnrichment(date, size);

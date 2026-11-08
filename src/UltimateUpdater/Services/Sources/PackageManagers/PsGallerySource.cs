@@ -22,10 +22,11 @@ public sealed class PsGallerySource(LoggingService logging, HttpClient httpClien
     // download fails, the error is raised past -ErrorAction SilentlyContinue, $ErrorActionPreference='Stop'
     // aborts the whole script, and the source reports nothing but "exited with code 1". The gallery's own
     // web feed answers the same question over plain HTTP instead, with no provider and no bootstrap in the
-    // way: the same shape DotnetToolSource already uses for NuGet.
-    private const string ScanScript =
+    // way: the same shape DotnetToolSource already uses for NuGet. Only PSGallery modules are listed, a module
+    // from a private feed is unknown to the public gallery and would get a made-up update.
+    internal const string ScanScript =
         "$ErrorActionPreference='Stop'; " +
-        "Get-InstalledModule | Where-Object { $_.InstalledLocation -and " +
+        "Get-InstalledModule | Where-Object { $_.Repository -eq 'PSGallery' -and $_.InstalledLocation -and " +
         "  $_.InstalledLocation.StartsWith($env:USERPROFILE, [System.StringComparison]::OrdinalIgnoreCase) } | " +
         "ForEach-Object { [pscustomobject]@{ Name=$_.Name; Installed=$_.Version.ToString() } } | " +
         "ConvertTo-Json -Compress";

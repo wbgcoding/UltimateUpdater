@@ -396,4 +396,73 @@ public class PythonInterpretersTests
         var interpreter = Assert.Single(PythonInterpreters.Discover(registry, _ => true));
         Assert.False(interpreter.Is64Bit);
     }
+
+    [Theory]
+    [InlineData("MsiExec.exe /I{4A656C6C-D24A-473F-9747-3A8D00907A04}")]
+    [InlineData("MsiExec.exe /X{4A656C6C-D24A-473F-9747-3A8D00907A04}")]
+    [InlineData(@"C:\Windows\System32\msiexec.exe /i {4A656C6C-D24A-473F-9747-3A8D00907A04}")]
+    [InlineData("\"C:\\Windows\\System32\\MsiExec.exe\" /I{4A656C6C-D24A-473F-9747-3A8D00907A04}")]
+    public void An_msi_python_is_removed_through_the_system_msiexec_by_product_code(string uninstallString)
+    {
+        var registry = new FakeRegistry();
+        registry.AddUninstallEntry(HklmUninstallRoot, "{4A656C6C-D24A-473F-9747-3A8D00907A04}", "Python 2.7.18",
+            uninstallString: uninstallString);
+        var interpreter = new PythonInterpreter(@"C:\Python27\python.exe", new Version(2, 7), PerUser: false, Is64Bit: true);
+
+        var command = PythonInterpreters.FindUninstallCommand(registry, interpreter);
+
+        var expected = $"\"{Path.Combine(Environment.SystemDirectory, "msiexec.exe")}\" /x {{4A656C6C-D24A-473F-9747-3A8D00907A04}} /quiet /norestart";
+        Assert.Equal(expected, command);
+        Assert.True(Path.IsPathRooted(UltimateUpdater.Services.Cleanup.PythonVersionCleanupExecutor.SplitCommand(command!)!.Value.Executable));
+    }
+
+    [Fact]
+    public void An_msiexec_entry_without_a_product_code_gives_no_uninstaller()
+    {
+        var registry = new FakeRegistry();
+        registry.AddUninstallEntry(HklmUninstallRoot, "{x}", "Python 2.7.18", uninstallString: "MsiExec.exe /I");
+        var interpreter = new PythonInterpreter(@"C:\Python27\python.exe", new Version(2, 7), PerUser: false, Is64Bit: true);
+
+        Assert.Null(PythonInterpreters.FindUninstallCommand(registry, interpreter));
+    }
+
+    [Fact]
+    public void An_arm64_tag_is_discovered_as_its_own_architecture()
+    {
+        var registry = new FakeRegistry()
+            .AddTag(HkcuRoot, "3.13-arm64", @"C:\Py313a", executablePath: @"C:\Py313a\python.exe")
+            .AddTag(HkcuRoot, "3.12", @"C:\Py312", executablePath: @"C:\Py312\python.exe");
+
+        var found = PythonInterpreters.Discover(registry, _ => true);
+
+        Assert.True(found.Single(i => i.Version.Minor == 13).IsArm64);
+        Assert.False(found.Single(i => i.Version.Minor == 12).IsArm64);
+    }
+
+    [Fact]
+    public void An_x64_python_beside_a_newer_arm64_one_is_not_older()
+    {
+        var registry = new FakeRegistry()
+            .AddTag(HkcuRoot, "3.13-arm64", @"C:\Py313a", executablePath: @"C:\Py313a\python.exe")
+            .AddTag(HkcuRoot, "3.12", @"C:\Py312", executablePath: @"C:\Py312\python.exe");
+
+        var older = PythonInterpreters.FindOlderVersions(PythonInterpreters.Discover(registry, _ => true));
+
+        Assert.Empty(older);
+    }
+
+    [Fact]
+    public void An_older_arm64_python_is_still_older_than_a_newer_arm64_one()
+    {
+        var interpreters = new[]
+        {
+            new PythonInterpreter(@"C:\Py313a\python.exe", new Version(3, 13), PerUser: true, Is64Bit: true, IsArm64: true),
+            new PythonInterpreter(@"C:\Py312a\python.exe", new Version(3, 12), PerUser: true, Is64Bit: true, IsArm64: true),
+            new PythonInterpreter(@"C:\Py311\python.exe", new Version(3, 11), PerUser: true, Is64Bit: true),
+        };
+
+        var older = PythonInterpreters.FindOlderVersions(interpreters);
+
+        Assert.Equal(new Version(3, 12), Assert.Single(older).Version);
+    }
 }

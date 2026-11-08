@@ -186,9 +186,10 @@ public sealed class SteamSource : IUpdateSource
     /// <summary>
     /// The id was read out of an ACF file in a library folder that need not belong to this user, and it
     /// reaches the shell through LaunchTarget/UninstallAsync; Steam app ids are numeric, the icon lookup
-    /// already insists on that, and so does this, an empty id is not a number either.
+    /// already insists on that, and so does this: ASCII digits only (no other script's digits), at most 10 of them
+    /// (an app id is a 32-bit number), and an empty id is not a number either.
     /// </summary>
-    private static bool IsAppId(string id) => id.Length > 0 && id.All(char.IsDigit);
+    private static bool IsAppId(string id) => id.Length is > 0 and <= 10 && id.All(char.IsAsciiDigit);
 
     // internal: exercised directly by tests against a real temp directory tree (the malicious-installdir
     // regression needs a genuine appmanifest_*.acf on disk, not a mock).
