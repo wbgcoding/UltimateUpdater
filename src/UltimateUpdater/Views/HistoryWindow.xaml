@@ -60,7 +60,7 @@
             <ui:TitleBar.Icon>
                 <!-- Assembly-qualified like MainWindow's so it resolves whichever assembly is
                      the entry point -->
-                <ui:ImageIcon Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+                <ui:ImageIcon Style="{StaticResource TitleBarAppIcon}" Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 

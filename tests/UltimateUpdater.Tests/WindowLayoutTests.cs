@@ -904,6 +904,12 @@ public partial class WindowLayoutTests
             var titleBar = FindFirstDescendant<Wpf.Ui.Controls.TitleBar>(content);
             Assert.NotNull(titleBar);
             AssertNoChildClips(titleBar!, [titleText]);
+
+            // the shared TitleBarAppIcon style makes the app icon 20 px, not WPF-UI's 16 px default
+            var icon = FindFirstDescendant<Wpf.Ui.Controls.ImageIcon>(titleBar!);
+            Assert.NotNull(icon);
+            Assert.Equal(20, icon!.ActualWidth);
+            Assert.Equal(20, icon.ActualHeight);
         });
 
         AssertRendered(result);
