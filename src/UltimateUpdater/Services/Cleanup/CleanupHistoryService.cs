@@ -28,6 +28,18 @@ public sealed class CleanupHistoryArea
     /// <summary>How a system file or image check ended; null for every other area and for runs where the
     /// tool gave no verdict (and for files written before this existed).</summary>
     public RepairResult? RepairResult { get; set; }
+
+    /// <summary>True when the area was not done (skipped for missing admin rights, ended by its time limit,
+    /// failed or stopped). Such an area is listed apart from the cleaned ones and is not counted as
+    /// cleaned; false in entries written before this existed.</summary>
+    public bool NotDone { get; set; }
+
+    /// <summary>The resource key of the sentence saying why the area was not done; null when no reason is
+    /// known (a stopped run).</summary>
+    public string? NoteKey { get; set; }
+
+    /// <summary>Formatting arguments for <see cref="NoteKey"/>.</summary>
+    public List<string> NoteArguments { get; set; } = [];
 }
 
 /// <summary>One cleanup run.</summary>

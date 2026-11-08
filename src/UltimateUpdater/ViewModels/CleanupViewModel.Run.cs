@@ -452,6 +452,7 @@ public partial class CleanupViewModel
             item.SkippedBytes = 0;
             item.ProtectedBytes = 0;
             item.RepairResult = null;
+            item.SkipReason = null;
             item.DetailText = string.Empty;
             item.RunState = CleanupTargetState.Waiting;
             item.ResetEntryStates();
@@ -838,20 +839,23 @@ public partial class CleanupViewModel
             {
                 // Never started: only an administrator can run it, and no helper took it over.
                 item.RunState = CleanupTargetState.Skipped;
-                failureText = Loc["CleanupNeedsAdminSkipped"];
+                item.SkipReason = new CleanupSkipReason("CleanupNeedsAdminSkipped");
+                failureText = item.SkipReason.Text;
             }
             else if (outcome.TimedOut)
             {
                 // Ended by the time limit: neither done nor stopped by the user, so the row says why it
                 // freed nothing.
                 item.RunState = CleanupTargetState.Skipped;
-                failureText = TimedOutText(item.Target.Kind);
+                item.SkipReason = TimedOutReason(item.Target.Kind);
+                failureText = item.SkipReason.Text;
             }
             else if (outcome.Failed)
             {
                 // A tool the target runs failed or never started: not done, and the row says why.
                 item.RunState = CleanupTargetState.Skipped;
-                failureText = FailedText(outcome);
+                item.SkipReason = FailedReason(outcome);
+                failureText = item.SkipReason.Text;
             }
             else if (!outcome.WasStopped)
             {
@@ -902,27 +906,29 @@ public partial class CleanupViewModel
     }
 
     /// <summary>The row text of a target ended by its time limit; each kind names its own limit.</summary>
-    internal static string TimedOutText(CleanupKind kind)
+    internal static string TimedOutText(CleanupKind kind) => TimedOutReason(kind).Text;
+
+    internal static CleanupSkipReason TimedOutReason(CleanupKind kind) => kind switch
     {
-        var loc = LocalizationService.Instance;
-        return kind switch
-        {
-            CleanupKind.SystemRepair => string.Format(loc["CleanupToolTimedOut"], (int)CleanupService.RepairStepTimeout.TotalMinutes),
-            CleanupKind.Defragmentation => string.Format(loc["CleanupToolTimedOut"], (int)CleanupService.DefragLimit.TotalMinutes),
-            _ => string.Format(loc["CleanupDiskCleanupTimedOut"], (int)CleanupService.DiskCleanupLimit.TotalMinutes),
-        };
-    }
+        CleanupKind.SystemRepair => new("CleanupToolTimedOut", MinutesOf(CleanupService.RepairStepTimeout)),
+        CleanupKind.Defragmentation => new("CleanupToolTimedOut", MinutesOf(CleanupService.DefragLimit)),
+        _ => new("CleanupDiskCleanupTimedOut", MinutesOf(CleanupService.DiskCleanupLimit)),
+    };
+
+    private static string MinutesOf(TimeSpan limit) =>
+        ((int)limit.TotalMinutes).ToString(System.Globalization.CultureInfo.CurrentCulture);
 
     /// <summary>The row text of a target whose tool failed: its exit code when it had one, else that it
     /// could not be run at all. Codes outside the plain range (DISM's 0x800f0806 style) read as hex.</summary>
-    internal static string FailedText(CleanupOutcome outcome)
+    internal static string FailedText(CleanupOutcome outcome) => FailedReason(outcome).Text;
+
+    internal static CleanupSkipReason FailedReason(CleanupOutcome outcome)
     {
-        var loc = LocalizationService.Instance;
         if (outcome.ExitCode is not { } code)
-            return loc["CleanupToolNotRun"];
+            return new CleanupSkipReason("CleanupToolNotRun");
 
         var shown = code is < 0 or > 65535 ? $"0x{code:X8}" : code.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        return string.Format(loc["CleanupToolFailed"], shown);
+        return new CleanupSkipReason("CleanupToolFailed", shown);
     }
 
     /// <summary>

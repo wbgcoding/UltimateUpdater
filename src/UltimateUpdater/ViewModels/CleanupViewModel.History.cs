@@ -36,7 +36,8 @@ public partial class CleanupViewModel
                 SkippedFiles = SkippedFiles,
                 SkippedBytes = SkippedBytes,
                 Stopped = stopped,
-                Areas = ran.Select(i => new CleanupHistoryArea
+                // An area the run never put on its list (folded into another one) is not part of the run.
+                Areas = ran.Where(i => i.RunState != CleanupTargetState.Idle).Select(i => new CleanupHistoryArea
                 {
                     Id = i.Target.Id,
                     TitleKey = i.Target.TitleKey,
@@ -45,6 +46,9 @@ public partial class CleanupViewModel
                     SkippedBytes = i.SkippedBytes,
                     ProtectedBytes = i.ProtectedBytes,
                     RepairResult = i.RepairResult,
+                    NotDone = i.RunState != CleanupTargetState.Done,
+                    NoteKey = i.SkipReason?.Key,
+                    NoteArguments = i.SkipReason?.Argument is { } argument ? [argument] : [],
                 }).ToList(),
             };
 

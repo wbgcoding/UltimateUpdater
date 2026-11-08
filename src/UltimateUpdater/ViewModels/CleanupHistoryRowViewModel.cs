@@ -43,7 +43,19 @@ public sealed class CleanupHistoryAreaViewModel : ObservableObject
 
     public string FreedText => ByteSize.Format(_area.FreedBytes);
 
-    public bool HasSkipped => _area.SkippedBytes > 0;
+    public bool HasSkipped => !IsNotDone && _area.SkippedBytes > 0;
+
+    /// <summary>The area was skipped, stopped or failed: the row says why instead of a freed figure, never
+    /// "0,0 B".</summary>
+    public bool IsNotDone => _area.NotDone;
+
+    /// <summary>False only for an area that was not done and freed nothing; a stopped area that freed part
+    /// of its size keeps that figure beside its note.</summary>
+    public bool ShowsFreed => !_area.NotDone || _area.FreedBytes > 0;
+
+    /// <summary>Why the area was not done, in the current language. An area with no recorded reason (a
+    /// stopped run) reads as the plain word "skipped".</summary>
+    public string NoteText => CleanupSkipReason.Format(_area.NoteKey ?? "CleanupStateSkipped", _area.NoteArguments);
 
     public string SkippedText => CleanupItemViewModel.FormatSkippedShares(
         LocalizationService.Instance["CleanupHistorySkipped"], _area.SkippedBytes, _area.ProtectedBytes);
@@ -54,6 +66,7 @@ public sealed class CleanupHistoryAreaViewModel : ObservableObject
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(FreedText));
         OnPropertyChanged(nameof(SkippedText));
+        OnPropertyChanged(nameof(NoteText));
     }
 }
 
@@ -73,8 +86,9 @@ public sealed partial class CleanupHistoryRowViewModel : ObservableObject
     {
         _entry = entry;
         _onDelete = onDelete;
-        Areas = entry.Areas
-            .OrderByDescending(a => a.FreedBytes)
+        // The cleaned areas by size, the ones that were not done after them in the order the run listed them.
+        Areas = entry.Areas.Where(a => !a.NotDone).OrderByDescending(a => a.FreedBytes)
+            .Concat(entry.Areas.Where(a => a.NotDone))
             .Select(a => new CleanupHistoryAreaViewModel(a))
             .ToList();
     }
@@ -109,10 +123,17 @@ public sealed partial class CleanupHistoryRowViewModel : ObservableObject
     public string FreedText =>
         string.Format(LocalizationService.Instance["CleanupHistoryFreed"], ByteSize.Format(_entry.FreedBytes));
 
-    public string SummaryText =>
-        string.Format(
-            LocalizationService.Instance[_entry.Areas.Count == 1 ? "CleanupHistoryEntrySummaryOne" : "CleanupHistoryEntrySummary"],
-            _entry.Areas.Count);
+    /// <summary>Counts only the areas that were done, the same number the run's own headline reported.</summary>
+    public string SummaryText
+    {
+        get
+        {
+            var cleaned = _entry.Areas.Count(a => !a.NotDone);
+            return string.Format(
+                LocalizationService.Instance[cleaned == 1 ? "CleanupHistoryEntrySummaryOne" : "CleanupHistoryEntrySummary"],
+                cleaned);
+        }
+    }
 
     /// <summary>A run the user stopped freed what it freed and no more, worth saying, not worth shouting.</summary>
     public bool WasStopped => _entry.Stopped;

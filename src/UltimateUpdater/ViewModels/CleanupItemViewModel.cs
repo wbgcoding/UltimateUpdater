@@ -172,6 +172,10 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     /// <summary>How a system file or image check ended; null for every other row.</summary>
     public RepairResult? RepairResult { get; set; }
 
+    /// <summary>Why this row was not done in the last run (admin rights missing, time limit, failed tool);
+    /// null when it was done or no reason is known. Recorded in the history.</summary>
+    internal CleanupSkipReason? SkipReason { get; set; }
+
     /// <summary>"12,4 MB / 310 MB": what has gone of what was measured.</summary>
     public string ProgressText =>
         SelectedEntryBytes > 0 ? $"{ByteSize.Format(FreedBytes)} / {ByteSize.Format(SelectedEntryBytes)}" : ByteSize.Format(FreedBytes);
@@ -757,12 +761,12 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     {
         FinishRunningEntry(completed ? EntryState.Cleaned : EntryState.Skipped, _freedAtLastReport);
 
+        var uncredited = Math.Max(0, FreedBytes - Entries.Sum(e => e.FreedBytes));
+
         foreach (var entry in Entries)
         {
             if (entry.State is EntryState.Cleaned or EntryState.Skipped)
                 continue;
-        var uncredited = Math.Max(0, FreedBytes - Entries.Sum(e => e.FreedBytes));
-
 
             var cleaned = completed && entry.IsSelected;
             entry.State = cleaned ? EntryState.Cleaned : EntryState.Skipped;
