@@ -9,6 +9,7 @@ namespace UltimateUpdater.Tests;
 public class ExitRequestListenerTests
 {
     private const uint ReadControl = 0x00020000;
+    private const uint WriteDac = 0x00040000;
     private const uint Synchronize = 0x00100000;
     private const uint EventModifyState = 0x0002;
     private const uint DaclInformation = 0x4;
@@ -117,7 +118,22 @@ public class ExitRequestListenerTests
         Assert.Contains($"(A;;DC;;;{sid})", dacl);
         Assert.Contains("(A;;0x1f0003;;;SY)", dacl);
         Assert.Contains("(A;;0x1f0003;;;BA)", dacl);
-        Assert.Equal(3, System.Text.RegularExpressions.Regex.Matches(dacl, @"\(A;").Count);
+        // the owner keeps only reading: its implicit right to rewrite the DACL would let it grant itself the wait right
+        Assert.Contains("(A;;RC;;;OW)", dacl);
+        Assert.Equal(4, System.Text.RegularExpressions.Regex.Matches(dacl, @"\(A;").Count);
+    }
+
+    [Fact]
+    public void Not_even_the_owner_can_rewrite_the_events_dacl()
+    {
+        // an elevated test host would pass through the Administrators entry, so only an unelevated one proves it
+        if (new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent())
+                .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator))
+            return;
+
+        using var listener = ExitRequestListener.Start(() => { }, exeFolder: UniqueFolder());
+
+        Assert.Equal(IntPtr.Zero, OpenEventW(WriteDac, false, listener.Name));
     }
 
     [Fact]
@@ -162,7 +178,8 @@ public class ExitRequestListenerTests
         Assert.Contains($"(A;;0x100000;;;{NamedObjectSecurity.CurrentUserSid()})", dacl);
         Assert.Contains("(A;;0x1f0001;;;SY)", dacl);
         Assert.Contains("(A;;0x1f0001;;;BA)", dacl);
-        Assert.Equal(3, System.Text.RegularExpressions.Regex.Matches(dacl, @"\(A;").Count);
+        Assert.Contains("(A;;RC;;;OW)", dacl);
+        Assert.Equal(4, System.Text.RegularExpressions.Regex.Matches(dacl, @"\(A;").Count);
         var probe = OpenMutexW(Synchronize, false, name);
         Assert.NotEqual(IntPtr.Zero, probe);
         CloseHandle(probe);

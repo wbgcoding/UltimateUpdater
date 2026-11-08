@@ -30,13 +30,15 @@ internal static class NamedObjectSecurity
 
     /// <summary>
     /// DACL: the user gets exactly <paramref name="userRights"/>, SYSTEM and Administrators everything, nobody
-    /// else anything. Protected, so nothing is ever inherited. With <paramref name="noWriteUp"/> the object also
+    /// else anything. Protected, so nothing is ever inherited. The owner rights entry takes away the owner's
+    /// implicit right to rewrite the DACL (an object an unelevated copy creates is owned by the user, who could
+    /// otherwise grant itself the wait right and swallow the exit signal); reading the descriptor stays allowed. With <paramref name="noWriteUp"/> the object also
     /// carries a Medium mandatory label with no-write-up: a process below Medium integrity (a sandboxed one)
     /// cannot change it even where the DACL would allow it.
     /// </summary>
     internal static string BuildSddl(string userSid, uint userRights, uint fullRights, bool noWriteUp)
     {
-        var sddl = $"D:P(A;;0x{userRights:x};;;{userSid})(A;;0x{fullRights:x};;;SY)(A;;0x{fullRights:x};;;BA)";
+        var sddl = $"D:P(A;;0x{userRights:x};;;{userSid})(A;;0x{fullRights:x};;;SY)(A;;0x{fullRights:x};;;BA)(A;;RC;;;OW)";
         return noWriteUp ? sddl + "S:(ML;;NW;;;ME)" : sddl;
     }
 
