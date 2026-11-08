@@ -439,9 +439,11 @@ public partial class MainViewModel
     /// <summary>The "keeps failing" filter chip's own count, over the live rows rather than the
     /// settings dictionary directly, so it always matches exactly what turning the chip on would show.</summary>
     // Only rows the filter itself would show: an ignored stuck row (its own hint offers Ignore) kept the
-    // chip at "(1)" and turning it on showed an empty table.
+    // chip at "(1)" and turning it on showed an empty table; a snoozed row and a row of the hidden manual
+    // category are held back by PassesFilters the same way.
     public int PersistentFailureCount => Updates.Count(u => u.InstallState == RowInstallState.NeedsManualWork
-        && !IsIgnored(u.Item) && IsSourceEnabled(u.Item.SourceId) && !_mergedAway.Contains(u));
+        && !IsIgnored(u.Item) && (ShowIgnored || !IsSnoozed(u.Item)) && !(HideManual && u.IsManualOnly)
+        && IsSourceEnabled(u.Item.SourceId) && !_mergedAway.Contains(u));
 
     /// <summary>Hidden entirely while there is nothing to collect, never a chip sitting there empty.</summary>
     public bool HasPersistentFailures => PersistentFailureCount > 0;
@@ -930,6 +932,10 @@ public partial class MainViewModel
         SyncVisible();
         RecomputeAutoHiddenMainColumns();
         RefreshFilteredState();
+
+        // Snoozing, un-snoozing, "show ignored" and the manual toggle all end here, and each moves the
+        // chip's count.
+        NotifyPersistentFailureCountChanged();
 
         // A filter change touches no row's own properties, so the selection-summary properties need an
         // explicit refresh here.
