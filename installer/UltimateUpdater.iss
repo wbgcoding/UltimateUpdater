@@ -708,12 +708,12 @@ begin
     PsQuote(ExpandConstant('{app}\{#PortableExeName}')) + '''); ' +
     '$copies = @(Get-Process -ErrorAction SilentlyContinue | ' +
     'Where-Object { $_.Path -and ($p -contains $_.Path) }); ' +
-    '$hidden = @(Get-Process -Name ''' + PsQuote(ChangeFileExt('{#AppExeName}', '')) + ''' -ErrorAction SilentlyContinue | ' +
-    'Where-Object { -not $_.Path }); ' +
+    'function Hidden { @(Get-Process -Name ''' + PsQuote(ChangeFileExt('{#AppExeName}', '')) + ''' -ErrorAction SilentlyContinue | ' +
+    'Where-Object { -not $_.Path }) }; $hidden = Hidden; ' +
     'function Running { foreach ($f in $p) { if (Test-Path -LiteralPath $f) { ' +
     'try { $fs = [System.IO.File]::Open($f, ''Open'', ''Write'', ''ReadWrite''); $fs.Dispose() } ' +
     'catch [System.IO.IOException] { if (($_.Exception.HResult -band 0xFFFF) -eq 32) { return $true } } ' +
-    'catch { if ($hidden.Count -gt 0) { return $true } } } }; return $false }; ' +
+    'catch { if ((Hidden).Count -gt 0) { return $true } } } }; return $false }; ' +
     '$watch = @($copies); if ($hidden.Count -gt 0 -and (Running)) { $watch += $hidden }; ';
 end;
 

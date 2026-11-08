@@ -48,7 +48,9 @@ public class InstallerElevatedCopyTests
         Assert.Contains("-band 0xFFFF) -eq 32", shared);
         // any other open failure (read-only exe, a deny entry) proves nothing either way: like the Pascal check,
         // it counts as in use while a hidden copy exists, so an elevated copy is never left running
-        Assert.Contains("catch { if ($hidden.Count -gt 0) { return $true } }", shared);
+        // asked again each time, not the snapshot from the start: a copy that has exited since must not hold setup
+        Assert.Contains("catch { if ((Hidden).Count -gt 0) { return $true } }", shared);
+        Assert.Contains("$hidden = Hidden;", shared);
         Assert.DoesNotContain("catch { } } }; return $false", shared);
         Assert.Contains("$hidden.Count -gt 0 -and (Running)", shared);
         // by image name alone would reach a portable copy in another folder
