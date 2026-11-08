@@ -105,6 +105,21 @@ public class WingetShortenedIdTests
     }
 
     [Fact]
+    public async Task A_name_lookup_that_finds_a_package_with_another_id_is_not_taken()
+    {
+        const string otherPackage = """
+            Name                Id                       Version  Source
+            ----------------------------------------------------------------
+            Visual Studio 2022  Contoso.VisualStudioKit  17.10    winget
+            """;
+
+        var (rows, source, _) = await ScanAsync(otherPackage);
+
+        Assert.Equal("Git.Git", Assert.Single(rows).Id);
+        Assert.False(string.IsNullOrWhiteSpace(source.ScanNote));
+    }
+
+    [Fact]
     public async Task A_shortened_id_that_cannot_be_completed_leaves_the_row_out_and_sets_the_note()
     {
         var (rows, source, _) = await ScanAsync("", listExit: NoInstalledPackage);

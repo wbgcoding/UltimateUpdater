@@ -952,9 +952,15 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
                 ShowTimeout,
                 cancellationToken);
 
-            return result.TimedOut || result.ExitCode != 0
-                ? null
-                : WingetUpgradeParser.ParseListIdForName(result.StandardOutput, name);
+            if (result.TimedOut || result.ExitCode != 0)
+                return null;
+
+            // The name alone can belong to another package: the Id must continue what winget printed.
+            var fullId = WingetUpgradeParser.ParseListIdForName(result.StandardOutput, name);
+            var shownPart = row.Id[..row.Id.IndexOf('…')];
+            return fullId is not null && shownPart.Length > 0 && fullId.StartsWith(shownPart, StringComparison.OrdinalIgnoreCase)
+                ? fullId
+                : null;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
