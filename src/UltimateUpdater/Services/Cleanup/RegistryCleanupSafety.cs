@@ -70,6 +70,11 @@ public static partial class RegistryCleanupSafety
             if (stripped.Length == 0 || stripped.StartsWith(','))
                 return null;
 
+            // "tray.exe/min" or "app.exe,Main": a switch or a name glued to the file, never a file name, so
+            // the whole value cannot be checked for existence. A real ",<index>" was already stripped above.
+            if (FileGluedToSwitchRegex().IsMatch(stripped))
+                return null;
+
             return IsConfidentlyQualified(stripped) ? stripped : null;
         }
 
@@ -93,6 +98,9 @@ public static partial class RegistryCleanupSafety
         // FIRST in reading order, and the last one is the longest - exactly the two the contract asks for.
         return candidates.FirstOrDefault(fileExists) ?? candidates[^1];
     }
+
+    [GeneratedRegex(@"\.\w{2,4}[/,]")]
+    private static partial Regex FileGluedToSwitchRegex();
 
     [GeneratedRegex(
         @"^""?msiexec(\.exe)?""?\s+/[xi]\s*(\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\})",

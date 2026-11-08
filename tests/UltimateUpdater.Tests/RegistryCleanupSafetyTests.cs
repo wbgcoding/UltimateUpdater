@@ -37,6 +37,31 @@ public class RegistryCleanupSafetyTests
         Assert.Equal(@"C:\Foo\Bar\app.exe", path);
     }
 
+    /// <summary>A switch or a name glued to the file ("tray.exe/min", "app.exe,Main") means the whole value
+    /// is not a file name: it can never exist, so it is never a finding. A missing icon or a missing
+    /// library with a real index stays one.</summary>
+    [Theory]
+    [InlineData(@"C:\Tools\tray.exe/min")]
+    [InlineData(@"C:\App\app.exe,Main")]
+    [InlineData(@"C:\App\app.exe/silent/x")]
+    public void A_file_glued_to_a_switch_is_never_judged_broken(string value)
+    {
+        Assert.Null(RegistryCleanupSafety.ExtractFilePath(value, _ => false));
+        Assert.False(RegistryCleanupSafety.IsBrokenFileReference(value, _ => false));
+    }
+
+    [Theory]
+    [InlineData(@"C:\Gone\icon.ico", @"C:\Gone\icon.ico")]
+    [InlineData(@"C:\Gone\x.dll,3", @"C:\Gone\x.dll")]
+    [InlineData(@"C:\Gone\x.dll,-3", @"C:\Gone\x.dll")]
+    [InlineData(@"C:\Gone\ctl.ocx", @"C:\Gone\ctl.ocx")]
+    [InlineData(@"C:\Gone\drv.sys", @"C:\Gone\drv.sys")]
+    public void A_missing_plain_file_or_indexed_resource_is_still_a_finding(string value, string expectedPath)
+    {
+        Assert.Equal(expectedPath, RegistryCleanupSafety.ExtractFilePath(value, _ => false));
+        Assert.True(RegistryCleanupSafety.IsBrokenFileReference(value, _ => false));
+    }
+
     /// <summary>The proven splitter: an unquoted value with a space is only parseable when a prefix ends on
     /// a token boundary AND carries a known executable extension, existence of that candidate anywhere
     /// then decides the whole judgment, never a guess about where the argument boundary really is.</summary>
