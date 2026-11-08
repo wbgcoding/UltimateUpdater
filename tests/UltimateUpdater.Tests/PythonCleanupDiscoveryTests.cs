@@ -336,4 +336,130 @@ public class PythonCleanupDiscoveryTests : IDisposable
 
         Assert.Single(eligibleForElevatedWorker);
     }
+
+    // ---- virtual environments that still use an old interpreter ----
+
+    private string MakeVenv(string parent, string name, string home)
+    {
+        var venv = Path.Combine(parent, name);
+        Directory.CreateDirectory(venv);
+        File.WriteAllText(Path.Combine(venv, "pyvenv.cfg"),
+            $"home = {home}\ninclude-system-site-packages = false\nversion = 3.11.9\n");
+        return venv;
+    }
+
+    private (IReadOnlyList<PythonVersionCandidate> Found, string OldFolder, string NewFolder) OldAndNewCandidates()
+    {
+        var older = CreateInterpreter("Python311");
+        var newer = CreateInterpreter("Python313");
+        var olderExe = Path.Combine(older, "python.exe");
+        var registry = new FakeRegistry()
+            .AddTag(HkcuRoot, "3.11", olderExe)
+            .AddTag(HkcuRoot, "3.13", Path.Combine(newer, "python.exe"))
+            .AddUninstallEntry(HkcuUninstallRoot, "{python-3.11}", "Python 3.11.9 (64-bit)",
+                uninstallString: olderExe, quietUninstallString: olderExe + " /quiet");
+        return (PythonCleanupDiscovery.DiscoverOldVersions(registry, _ => null), older, newer);
+    }
+
+    private static IReadOnlyList<PythonCleanupDiscovery.VenvSearchRoot> RootsOf(string path, int depth = 6) =>
+        [new PythonCleanupDiscovery.VenvSearchRoot(path, depth)];
+
+    [Fact]
+    public void A_venv_pointing_into_the_old_version_flags_the_candidate_and_it_stays_unticked()
+    {
+        var (found, older, newer) = OldAndNewCandidates();
+        var projects = Path.Combine(_root, "profile", "projects", "app");
+        MakeVenv(projects, ".venv", older);
+        MakeVenv(projects, "other-venv", newer);
+
+        var counted = PythonCleanupDiscovery.CountVenvUses(
+            found, RootsOf(Path.Combine(_root, "profile")), TimeSpan.FromSeconds(5), CancellationToken.None);
+
+        var candidate = Assert.Single(counted);
+        Assert.Equal(1, candidate.VenvUseCount);
+
+        var row = new UltimateUpdater.ViewModels.PythonVersionCandidateViewModel(new PythonVersionCandidateDto
+        {
+            PythonExe = candidate.PythonExe,
+            DisplayLabel = candidate.DisplayLabel,
+            VenvUseCount = candidate.VenvUseCount,
+        });
+        Assert.False(row.IsSelected);
+        Assert.True(row.HasVenvUses);
+        Assert.Contains("1", row.VenvUseText);
+    }
+
+    [Fact]
+    public void The_plain_discovery_the_executor_uses_never_walks_for_venvs()
+    {
+        var (found, older, _) = OldAndNewCandidates();
+        Assert.All(found, c => Assert.Equal(0, c.VenvUseCount));
+        Assert.True(Directory.Exists(older));
+    }
+
+    [Fact]
+    public void A_venv_with_its_home_in_a_subfolder_of_the_version_counts_and_a_sibling_prefix_does_not()
+    {
+        var (found, older, _) = OldAndNewCandidates();
+        var profile = Path.Combine(_root, "profile");
+        MakeVenv(profile, "a", Path.Combine(older, "Scripts"));
+        MakeVenv(profile, "b", older + "9"); // Python3119 is another folder, not inside Python311
+
+        var counted = PythonCleanupDiscovery.CountVenvUses(
+            found, RootsOf(profile), TimeSpan.FromSeconds(5), CancellationToken.None);
+
+        Assert.Equal(1, Assert.Single(counted).VenvUseCount);
+    }
+
+    [Fact]
+    public void Folders_the_walk_must_skip_and_venvs_beyond_the_depth_are_not_counted()
+    {
+        var (found, older, _) = OldAndNewCandidates();
+        var profile = Path.Combine(_root, "profile");
+        MakeVenv(Path.Combine(profile, "node_modules", "pkg"), ".venv", older);
+        MakeVenv(Path.Combine(profile, "repo", ".git"), "v", older);
+        MakeVenv(Path.Combine(profile, "a", "b", "c"), "deep", older);
+
+        var counted = PythonCleanupDiscovery.CountVenvUses(
+            found, RootsOf(profile, depth: 2), TimeSpan.FromSeconds(5), CancellationToken.None);
+
+        Assert.Equal(0, Assert.Single(counted).VenvUseCount);
+    }
+
+    [Fact]
+    public void A_junction_in_the_walked_tree_is_not_followed()
+    {
+        var (found, older, _) = OldAndNewCandidates();
+        var profile = Path.Combine(_root, "profile");
+        var outside = Path.Combine(_root, "outside");
+        MakeVenv(outside, ".venv", older);
+        Directory.CreateDirectory(profile);
+        using (var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{Path.Combine(profile, "link")}\" \"{outside}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        })!)
+        {
+            mklink.WaitForExit(5000);
+            Assert.Equal(0, mklink.ExitCode);
+        }
+
+        try
+        {
+            var counted = PythonCleanupDiscovery.CountVenvUses(
+                found, RootsOf(profile), TimeSpan.FromSeconds(5), CancellationToken.None);
+
+            Assert.Equal(0, Assert.Single(counted).VenvUseCount);
+            Assert.True(File.Exists(Path.Combine(outside, ".venv", "pyvenv.cfg")));
+        }
+        finally
+        {
+            // Remove the link itself first so the recursive teardown never walks through it.
+            Directory.Delete(Path.Combine(profile, "link"));
+        }
+    }
 }

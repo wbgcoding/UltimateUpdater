@@ -2263,4 +2263,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Tümünü seç</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>Hâlâ sanal ortamlar tarafından kullanılıyor ({0})</value>
+  </data>
 </root>

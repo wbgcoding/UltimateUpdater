@@ -2263,4 +2263,7 @@ Continuați cu drepturi de administrator?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Selectează tot</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>Încă folosit de medii virtuale ({0})</value>
+  </data>
 </root>

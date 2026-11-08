@@ -1458,7 +1458,8 @@ public class CleanupService(LoggingService logging)
     /// the per-row size is what the dialog actually shows.</summary>
     private static CleanupScanResult ScanOldPythonVersions(CancellationToken cancellationToken)
     {
-        var candidates = PythonCleanupDiscovery.DiscoverOldVersions(WindowsRegistryView.Instance);
+        var candidates = PythonCleanupDiscovery.CountVenvUses(
+            PythonCleanupDiscovery.DiscoverOldVersions(WindowsRegistryView.Instance), cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
         return new CleanupScanResult(candidates.Sum(c => c.SizeBytes), candidates.Count, 0)

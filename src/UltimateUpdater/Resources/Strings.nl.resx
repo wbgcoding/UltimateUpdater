@@ -2263,4 +2263,7 @@ Doorgaan met beheerdersrechten?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Alles selecteren</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>Nog in gebruik door virtuele omgevingen ({0})</value>
+  </data>
 </root>

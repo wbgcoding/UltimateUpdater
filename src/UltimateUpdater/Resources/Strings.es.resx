@@ -2263,4 +2263,7 @@ Esto no se puede deshacer.</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Seleccionar todo</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>Aún lo usan entornos virtuales ({0})</value>
+  </data>
 </root>

@@ -2263,4 +2263,7 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>全选</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>仍被虚拟环境使用 ({0})</value>
+  </data>
 </root>

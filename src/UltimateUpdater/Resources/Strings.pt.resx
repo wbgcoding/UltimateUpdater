@@ -2263,4 +2263,7 @@ Continuar com direitos de administrador?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Selecionar tudo</value>
   </data>
+  <data name="CleanupOldPythonVenvUses" xml:space="preserve">
+    <value>Ainda usado por ambientes virtuais ({0})</value>
+  </data>
 </root>
