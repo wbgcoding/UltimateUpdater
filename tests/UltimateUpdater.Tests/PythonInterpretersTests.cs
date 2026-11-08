@@ -425,4 +425,44 @@ public class PythonInterpretersTests
 
         Assert.Null(PythonInterpreters.FindUninstallCommand(registry, interpreter));
     }
+
+    [Fact]
+    public void An_arm64_tag_is_discovered_as_its_own_architecture()
+    {
+        var registry = new FakeRegistry()
+            .AddTag(HkcuRoot, "3.13-arm64", @"C:\Py313a", executablePath: @"C:\Py313a\python.exe")
+            .AddTag(HkcuRoot, "3.12", @"C:\Py312", executablePath: @"C:\Py312\python.exe");
+
+        var found = PythonInterpreters.Discover(registry, _ => true);
+
+        Assert.True(found.Single(i => i.Version.Minor == 13).IsArm64);
+        Assert.False(found.Single(i => i.Version.Minor == 12).IsArm64);
+    }
+
+    [Fact]
+    public void An_x64_python_beside_a_newer_arm64_one_is_not_older()
+    {
+        var registry = new FakeRegistry()
+            .AddTag(HkcuRoot, "3.13-arm64", @"C:\Py313a", executablePath: @"C:\Py313a\python.exe")
+            .AddTag(HkcuRoot, "3.12", @"C:\Py312", executablePath: @"C:\Py312\python.exe");
+
+        var older = PythonInterpreters.FindOlderVersions(PythonInterpreters.Discover(registry, _ => true));
+
+        Assert.Empty(older);
+    }
+
+    [Fact]
+    public void An_older_arm64_python_is_still_older_than_a_newer_arm64_one()
+    {
+        var interpreters = new[]
+        {
+            new PythonInterpreter(@"C:\Py313a\python.exe", new Version(3, 13), PerUser: true, Is64Bit: true, IsArm64: true),
+            new PythonInterpreter(@"C:\Py312a\python.exe", new Version(3, 12), PerUser: true, Is64Bit: true, IsArm64: true),
+            new PythonInterpreter(@"C:\Py311\python.exe", new Version(3, 11), PerUser: true, Is64Bit: true),
+        };
+
+        var older = PythonInterpreters.FindOlderVersions(interpreters);
+
+        Assert.Equal(new Version(3, 12), Assert.Single(older).Version);
+    }
 }
