@@ -1460,7 +1460,7 @@ Continuați cu drepturi de administrator?</value>
     <value>Cache al managerilor de pachete</value>
   </data>
   <data name="CleanupPackageCacheDesc" xml:space="preserve">
-    <value>Descărcări pe care pip, npm, Yarn, NuGet și Chocolatey le păstrează pentru reinstalări. Pachetele instalate rămân neatinse.</value>
+    <value>Descărcări și fișiere de compilare pe care pip, uv, npm, pnpm, Yarn, NuGet, Cargo, Go și Chocolatey le păstrează. Pachetele instalate rămân neatinse.</value>
   </data>
   <data name="CleanupBuildCache" xml:space="preserve">
     <value>Cache al instrumentelor de build</value>

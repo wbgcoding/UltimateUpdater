@@ -277,6 +277,80 @@ public static class CleanupSafety
         }
     }
 
+    /// <summary>The only kinds of single file a catalogue target may name: memory dumps.</summary>
+    private static readonly string[] FixedFileExtensions = [".dmp"];
+
+    /// <summary>
+    /// The gate for a single file a catalogue target names (<see cref="CleanupTarget.Files"/>). The file must
+    /// be reachable by an absolute local path with no link on the way, must be a plain file (a link of any
+    /// kind, a folder or a missing path is refused), must not belong to this program, and must be a kind of
+    /// file the catalogue is allowed to name. The parent folder is deliberately not held to the temp or
+    /// cache name rule: the one file this exists for lives directly in the Windows folder, which that rule
+    /// and the protected-folder rule would both refuse.
+    /// </summary>
+    internal static bool IsSafeToDeleteFile(string path, out string reason)
+    {
+        reason = string.Empty;
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            reason = "empty path";
+            return false;
+        }
+
+        try
+        {
+            if (!IsLocalPathWithoutLinks(path))
+            {
+                reason = "not a local path or leads through a link";
+                return false;
+            }
+
+            var full = Path.GetFullPath(path);
+            if (Path.GetPathRoot(full) is { } root && string.Equals(
+                    Path.TrimEndingDirectorySeparator(root), Path.TrimEndingDirectorySeparator(full),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                reason = "drive root";
+                return false;
+            }
+
+            if (!FixedFileExtensions.Contains(Path.GetExtension(full), StringComparer.OrdinalIgnoreCase))
+            {
+                reason = "not a kind of file the catalogue may name";
+                return false;
+            }
+
+            if (IsOwnPath(full))
+            {
+                reason = "inside the program's own folder or its single-file extraction folder";
+                return false;
+            }
+
+            // The ancestry walk only inspects folders, so the file itself is asked here: a symlink named like
+            // the dump would otherwise be measured and deleted through.
+            var info = new FileInfo(full);
+            if (!info.Exists)
+            {
+                reason = "does not exist";
+                return false;
+            }
+
+            if (info.LinkTarget is not null || (info.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                reason = "is a link";
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+                                       or ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            reason = "could not be inspected";
+            return false;
+        }
+    }
+
     /// <summary>
     /// True when the directory itself, or ANY ancestor on the way up to the drive root, is a reparse point.
     /// A junction anywhere on the path silently redirects the whole thing at resolution time, checking only
@@ -514,6 +588,12 @@ public static class CleanupSafety
             || segment.Equals("CrashDumps", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("Minidump", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("Logs", StringComparison.OrdinalIgnoreCase)
+            // Windows' kernel report folder and the Go toolchain's build cache carry no "cache" in their name.
+            // Pinned to their parent so a same-named folder somewhere else is not taken for one.
+            || (segment.Equals("LiveKernelReports", StringComparison.OrdinalIgnoreCase)
+                && parent is not null && parent.Equals("Windows", StringComparison.OrdinalIgnoreCase))
+            || (segment.Equals("go-build", StringComparison.OrdinalIgnoreCase)
+                && parent is not null && parent.Equals("Local", StringComparison.OrdinalIgnoreCase))
             // Only Windows Update's own cache: any other "Download" folder (a messenger's or download
             // manager's per-app folder) holds files the user fetched and wants.
             || (segment.Equals("Download", StringComparison.OrdinalIgnoreCase)

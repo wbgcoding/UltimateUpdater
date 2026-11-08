@@ -39,9 +39,13 @@ public static class PythonCleanupDiscovery
 
     /// <summary>Every "~"-prefixed folder under every registered interpreter's own site-packages, across
     /// the whole machine. <paramref name="measure"/> false leaves every size at 0 for a caller that only
-    /// needs the paths (the cleanup itself counts what it actually frees), sparing a walk of each folder.</summary>
+    /// needs the paths (the cleanup itself counts what it actually frees), sparing a walk of each folder.
+    /// The per-user site-packages under the roaming profile (<paramref name="roamingAppData"/>, the signed-in
+    /// user's AppData\Roaming unless a test names another) is searched as well: pip installs there when the
+    /// interpreter folder is not writable.</summary>
     public static IReadOnlyList<PipLeftoverCandidate> DiscoverPipLeftovers(
-        IRegistryView registry, bool measure = true, Action<string>? logSkip = null)
+        IRegistryView registry, bool measure = true, Action<string>? logSkip = null, string? roamingAppData = null,
+        DateTime? utcNow = null)
     {
         var found = new List<PipLeftoverCandidate>();
 
@@ -60,7 +64,69 @@ public static class PythonCleanupDiscovery
             }
         }
 
+        var roaming = roamingAppData ?? Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        foreach (var sitePackages in UserSitePackages(roaming))
+        {
+            foreach (var directory in PythonInterpreters.FindBrokenInstallLeftovers(sitePackages, utcNow, logSkip))
+            {
+                // A "~" folder that is a link could point anywhere; only a real folder is ever offered.
+                if (IsLink(directory))
+                    continue;
+
+                var size = measure
+                    ? DirectorySizeWalker.Measure(directory, DirectorySizeWalker.DefaultMaxDepth, MaxFilesScannedPerCandidate)
+                    : 0;
+                found.Add(new PipLeftoverCandidate(directory, size));
+            }
+        }
+
         return found;
+    }
+
+    /// <summary>The <c>site-packages</c> folders of <c>Roaming\Python\Python3*</c> that exist. Neither the
+    /// Python folder, a version folder nor site-packages itself may be a link: the walk below them would
+    /// otherwise leave the profile.</summary>
+    internal static IReadOnlyList<string> UserSitePackages(string? roamingAppData)
+    {
+        if (string.IsNullOrWhiteSpace(roamingAppData) || !CleanupSafety.IsLocalPathWithoutLinks(roamingAppData))
+            return [];
+
+        try
+        {
+            var pythonRoot = Path.Combine(roamingAppData, "Python");
+            if (!Directory.Exists(pythonRoot) || CleanupSafety.AncestryLeadsThroughLink(pythonRoot))
+                return [];
+
+            var result = new List<string>();
+            foreach (var versionFolder in Directory.GetDirectories(pythonRoot, "Python3*"))
+            {
+                if (IsLink(versionFolder))
+                    continue;
+
+                var sitePackages = Path.Combine(versionFolder, "site-packages");
+                if (Directory.Exists(sitePackages) && !IsLink(sitePackages))
+                    result.Add(sitePackages);
+            }
+
+            return result;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return [];
+        }
+    }
+
+    private static bool IsLink(string directory)
+    {
+        try
+        {
+            var info = new DirectoryInfo(directory);
+            return info.LinkTarget is not null || (info.Attributes & FileAttributes.ReparsePoint) != 0;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return true;
+        }
     }
 
     /// <summary>

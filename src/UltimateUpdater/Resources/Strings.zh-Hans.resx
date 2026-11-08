@@ -1460,7 +1460,7 @@ Ultimate Updater 无法撤销此操作。</value>
     <value>包管理器缓存</value>
   </data>
   <data name="CleanupPackageCacheDesc" xml:space="preserve">
-    <value>pip、npm、Yarn、NuGet 和 Chocolatey 为重新安装保留的下载内容。已安装的软件包不受影响。</value>
+    <value>pip、uv、npm、pnpm、Yarn、NuGet、Cargo、Go 和 Chocolatey 保留的下载内容和构建文件。已安装的软件包不受影响。</value>
   </data>
   <data name="CleanupBuildCache" xml:space="preserve">
     <value>构建工具缓存</value>

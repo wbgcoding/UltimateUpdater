@@ -97,6 +97,89 @@ public class ProcessRunnerStopTests
     }
 
     [Fact]
+    public async Task A_timeout_without_kill_leaves_the_child_running_and_releases_it_once_it_exits()
+    {
+        var child = new LingeringChild();
+        ProcessRunner.ChildFactoryForTest.Value = () => child;
+        try
+        {
+            using var executable = new ResolvedExecutable(Environment.ProcessPath!, null);
+
+            var result = await ProcessRunner.RunResolvedAsync(
+                executable, [], TimeSpan.FromMilliseconds(300), CancellationToken.None, null, null, null, null,
+                elevated: false, killOnTimeout: false)
+                .WaitAsync(TimeSpan.FromSeconds(30));
+
+            Assert.True(result.TimedOut);
+            Assert.Equal(0, child.KillCalls);
+            Assert.False(child.IsDisposed);
+
+            child.Exit();
+            await child.Disposed.WaitAsync(TimeSpan.FromSeconds(30));
+            Assert.Equal(0, child.KillCalls);
+        }
+        finally
+        {
+            ProcessRunner.ChildFactoryForTest.Value = null;
+        }
+    }
+
+    [Fact]
+    public async Task A_child_that_never_exits_is_let_go_after_the_detached_lifetime_without_a_kill()
+    {
+        var child = new LingeringChild();
+        ProcessRunner.ChildFactoryForTest.Value = () => child;
+        ProcessRunner.DetachedLifetimeForTest.Value = TimeSpan.FromMilliseconds(300);
+        try
+        {
+            using var executable = new ResolvedExecutable(Environment.ProcessPath!, null);
+
+            var result = await ProcessRunner.RunResolvedAsync(
+                executable, [], TimeSpan.FromMilliseconds(300), CancellationToken.None, null, null, null, null,
+                elevated: false, killOnTimeout: false)
+                .WaitAsync(TimeSpan.FromSeconds(30));
+
+            Assert.True(result.TimedOut);
+            await child.Disposed.WaitAsync(TimeSpan.FromSeconds(30));
+            Assert.Equal(0, child.KillCalls);
+            Assert.False(child.HasExited);
+        }
+        finally
+        {
+            ProcessRunner.ChildFactoryForTest.Value = null;
+            ProcessRunner.DetachedLifetimeForTest.Value = null;
+        }
+    }
+
+    [Fact]
+    public async Task A_stop_request_without_kill_on_timeout_leaves_the_child_running_and_releases_it_once_it_exits()
+    {
+        var child = new LingeringChild();
+        ProcessRunner.ChildFactoryForTest.Value = () => child;
+        try
+        {
+            using var executable = new ResolvedExecutable(Environment.ProcessPath!, null);
+            using var stop = new CancellationTokenSource(TimeSpan.FromMilliseconds(300));
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => ProcessRunner.RunResolvedAsync(
+                executable, [], TimeSpan.FromSeconds(60), stop.Token, null, null, null, null,
+                elevated: false, killOnTimeout: false)
+                .WaitAsync(TimeSpan.FromSeconds(30)));
+
+            Assert.Equal(0, child.KillCalls);
+            Assert.False(child.IsDisposed);
+
+            child.Exit();
+            await child.Disposed.WaitAsync(TimeSpan.FromSeconds(30));
+            Assert.Equal(0, child.KillCalls);
+        }
+        finally
+        {
+            ProcessRunner.ChildFactoryForTest.Value = null;
+        }
+    }
+
+    [Fact]
     public async Task A_stop_request_returns_although_the_output_pipe_is_never_closed()
     {
         var child = new UnkillableChild();

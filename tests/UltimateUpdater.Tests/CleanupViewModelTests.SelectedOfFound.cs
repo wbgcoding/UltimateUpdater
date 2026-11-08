@@ -53,7 +53,8 @@ public partial class CleanupViewModelTests
     public void A_group_header_always_shows_ticked_against_found()
     {
         var viewModel = Create(CreateSettings());
-        var group = viewModel.Groups.First(g => g.Items.Count > 1 && !g.IsRegistryGroup);
+        var group = viewModel.Groups.First(g => g.Items.Count > 1 && !g.IsRegistryGroup
+            && g.Items.All(i => !CleanupService.SkipsWithoutAdmin(i.Target, processElevated: false)));
         SetFoundSizes(viewModel, 2 * 1024 * 1024);
         var found = ByteSize.Format(group.TotalBytes);
 

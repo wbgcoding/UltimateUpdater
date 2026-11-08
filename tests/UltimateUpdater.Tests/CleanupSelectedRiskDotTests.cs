@@ -64,7 +64,8 @@ public class CleanupSelectedRiskDotTests
     }
 
     private static CleanupItemViewModel FirstWithTargetLevel(CleanupViewModel viewModel, CleanupRiskLevel level) =>
-        viewModel.Items.First(i => i.Target.RiskLevel == level && i.Target.Kind == CleanupKind.Directories);
+        viewModel.Items.First(i => i.Target.RiskLevel == level && i.Target.Kind == CleanupKind.Directories
+                                   && !CleanupService.SkipsWithoutAdmin(i.Target, processElevated: false));
 
     private static CleanupGroupViewModel GroupOf(CleanupViewModel viewModel, CleanupItemViewModel item) =>
         viewModel.Groups.First(g => g.Items.Contains(item));
@@ -147,7 +148,8 @@ public class CleanupSelectedRiskDotTests
         var considered = FirstWithTargetLevel(vm, CleanupRiskLevel.Considered);
         var group = GroupOf(vm, considered);
         var expected = group.Items
-            .Where(i => i.Target.Kind != CleanupKind.Defragmentation)
+            .Where(i => i.Target.Kind != CleanupKind.Defragmentation
+                        && !CleanupService.SkipsWithoutAdmin(i.Target, processElevated: false))
             .Max(i => i.Target.RiskLevel);
 
         var raised = new List<string?>();

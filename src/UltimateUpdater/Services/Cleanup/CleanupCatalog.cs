@@ -47,7 +47,7 @@ public static class CleanupCatalog
     internal static IReadOnlyList<CleanupTarget> WithDisjointPaths(IReadOnlyList<CleanupTarget> targets)
     {
         var owned = targets
-            .SelectMany(target => target.Directories.Select(directory => (target.Id, Directory: directory)))
+            .SelectMany(target => target.Directories.Concat(target.Files).Select(directory => (target.Id, Directory: directory)))
             .ToList();
 
         return targets.Select(target =>
@@ -64,7 +64,13 @@ public static class CleanupCatalog
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
-            return excluded.Count == 0 ? target : target with { ExcludedDirectories = excluded };
+            return excluded.Count == 0
+                ? target
+                : target with
+                {
+                    ExcludedDirectories = target.ExcludedDirectories.Concat(excluded)
+                        .Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                };
         }).ToList();
     }
 
@@ -150,16 +156,7 @@ public static class CleanupCatalog
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupShaderCacheConsequence")
             {
                 MinFileAge = CacheMinFileAge,
-                Directories = Existing(
-                [
-                    Path.Combine(local, "D3DSCache"),
-                    Path.Combine(local, "NVIDIA", "DXCache"),
-                    Path.Combine(local, "NVIDIA", "GLCache"),
-                    Path.Combine(local, "NVIDIA Corporation", "NV_Cache"),
-                    Path.Combine(local, "AMD", "DxCache"),
-                    Path.Combine(local, "AMD", "DxcCache"),
-                    Path.Combine(local, "Intel", "ShaderCache"),
-                ]),
+                Directories = ShaderCacheDirectories(local, KnownFolderPaths.LocalAppDataLow()),
             },
 
             // What package managers keep so a reinstall need not download again. Safe to drop: every one of
@@ -170,15 +167,9 @@ public static class CleanupCatalog
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupPackageCacheConsequence")
             {
                 MinFileAge = CacheMinFileAge,
-                Directories = Existing(
-                [
-                    Path.Combine(local, "pip", "Cache"),
-                    Path.Combine(local, "npm-cache", "_cacache"),
-                    Path.Combine(local, "Yarn", "Cache"),
-                    Path.Combine(local, "NuGet", "v3-cache"),
-                    Path.Combine(Path.GetTempPath(), "chocolatey"),
-                    Path.Combine(Path.GetTempPath(), "NuGetScratch"),
-                ]),
+                Directories = PackageCacheDirectories(local, profile, Path.GetTempPath()),
+                CleanCommands = PackageCacheCleanCommands(local, profile),
+                ExcludedDirectories = PackageCacheKeptFolders(local),
             },
 
             // Build-tool caches. Gradle's build cache and the Android SDK's download cache are both
@@ -224,7 +215,12 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: false,
                 RiskLevel: CleanupRiskLevel.Considered, ConsequenceKey: "CleanupMemoryDumpsConsequence", NeedsElevation: true)
             {
-                Directories = Existing([Path.Combine(windows, "Minidump")]),
+                // The full dump is one file in the Windows folder, which only an administrator may delete: an
+                // unelevated run skips the row as needs-admin instead of reading "done" with nothing freed.
+                MinFileAge = CacheMinFileAge,
+                AdminOnlyDelete = true,
+                Directories = Existing([Path.Combine(windows, "Minidump"), Path.Combine(windows, "LiveKernelReports")]),
+                Files = ExistingFiles([Path.Combine(windows, "MEMORY.DMP")]),
             },
 
             // Windows' own logs (CBS, DISM, setup). Safe to delete (Windows recreates them) but they are
@@ -440,6 +436,84 @@ public static class CleanupCatalog
 
         return targets;
     }
+
+    /// <summary>The shader caches that exist. <paramref name="localLow"/> null (the shell could not name the
+    /// LocalLow folder) leaves its paths out rather than guessing them.</summary>
+    internal static IReadOnlyList<string> ShaderCacheDirectories(string local, string? localLow)
+    {
+        var candidates = new List<string>
+        {
+            Path.Combine(local, "D3DSCache"),
+            Path.Combine(local, "NVIDIA", "DXCache"),
+            Path.Combine(local, "NVIDIA", "GLCache"),
+            Path.Combine(local, "NVIDIA Corporation", "NV_Cache"),
+            Path.Combine(local, "AMD", "DxCache"),
+            Path.Combine(local, "AMD", "DxcCache"),
+            Path.Combine(local, "AMD", "VkCache"),
+            Path.Combine(local, "AMD", "GLCache"),
+            Path.Combine(local, "Intel", "ShaderCache"),
+        };
+
+        if (localLow is not null)
+        {
+            candidates.Add(Path.Combine(localLow, "NVIDIA", "PerDriverVersion", "DXCache"));
+            candidates.Add(Path.Combine(localLow, "NVIDIA", "PerDriverVersion", "GLCache"));
+        }
+
+        return Existing(candidates);
+    }
+
+    /// <summary>The package and build caches that exist. Not here on purpose: the package STORES (NuGet
+    /// packages, node_modules, the pnpm content store, Yarn Berry zips, Cargo's unpacked sources), which are
+    /// the installed packages themselves or break a build when half emptied.</summary>
+    internal static IReadOnlyList<string> PackageCacheDirectories(string local, string profile, string temp) => Existing(
+    [
+        Path.Combine(local, "pip", "Cache"),
+        Path.Combine(local, "npm-cache", "_cacache"),
+        Path.Combine(local, "Yarn", "Cache"),
+        Path.Combine(local, "NuGet", "v3-cache"),
+        Path.Combine(local, "go-build"),
+        Path.Combine(local, "pnpm-cache"),
+        Path.Combine(local, "uv", "cache"),
+        Path.Combine(profile, ".cargo", "registry", "cache"),
+        Path.Combine(temp, "chocolatey"),
+        Path.Combine(temp, "NuGetScratch"),
+    ]);
+
+    /// <summary>Folders inside the package caches that are not cache and stay: pnpm's dlx installs (linked
+    /// into place and reused as a whole for a day, so a half-emptied one breaks the next run) and Go's fuzzing
+    /// corpus, which <c>go clean -cache</c> keeps as well.</summary>
+    internal static IReadOnlyList<string> PackageCacheKeptFolders(string local) => Distinct(
+    [
+        Path.Combine(local, "pnpm-cache", "dlx"),
+        Path.Combine(local, "go-build", "fuzz"),
+    ]);
+
+    /// <summary>How long the cleanup waits for uv to clear its cache. Past it uv is not ended (a kill would leave
+    /// half a cache): the cleanup stops waiting and counts the folder as not freed.</summary>
+    internal static readonly TimeSpan UvCacheCleanTimeout = TimeSpan.FromMinutes(10);
+
+    /// <summary>The uv cache is emptied by uv itself, never file by file: a half-emptied entry would still be
+    /// linked into new environments. The folder is passed explicitly so uv cleans exactly the folder that was
+    /// measured, whatever its own settings or environment say.</summary>
+    internal static IReadOnlyDictionary<string, DirectoryCleanCommand> PackageCacheCleanCommands(string local, string profile)
+    {
+        var commands = new Dictionary<string, DirectoryCleanCommand>(StringComparer.OrdinalIgnoreCase);
+        var uvCache = Path.TrimEndingDirectorySeparator(Path.GetFullPath(Path.Combine(local, "uv", "cache")));
+        if (Directory.Exists(uvCache))
+        {
+            commands[uvCache] = new DirectoryCleanCommand(
+                "uv", Path.Combine(profile, ".local", "bin", "uv.exe"),
+                ["cache", "clean", "--cache-dir", DirectoryCleanCommand.FolderToken, "--no-config", "--no-progress"],
+                "uv cache clean", UvCacheCleanTimeout);
+        }
+
+        return commands;
+    }
+
+    /// <summary>Like <see cref="Existing"/>, for single files: drops what is not there.</summary>
+    private static IReadOnlyList<string> ExistingFiles(IEnumerable<string> paths) =>
+        Distinct(paths).Where(File.Exists).ToList();
 
     /// <summary>
     /// Like <see cref="Distinct"/>, but drops what is not there. These targets name places that only exist

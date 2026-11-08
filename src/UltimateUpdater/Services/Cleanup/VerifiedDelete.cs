@@ -137,6 +137,27 @@ internal static class VerifiedDelete
             ? standard.NumberOfLinks > 1 ? 0 : standard.AllocationSize
             : 0;
 
+    /// <summary>True when no other name keeps the file's data, by the same rule <see cref="FreedBytes"/>
+    /// applies. False when the file cannot be read, so an unknown file is never credited.</summary>
+    internal static bool HasSingleLink(string file)
+    {
+        string extended;
+        try
+        {
+            extended = ToExtendedPath(file);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+
+        using var handle = CreateFileW(extended, FileReadAttributes, ShareAll, IntPtr.Zero, OpenExisting,
+            FlagOpenReparsePoint | FlagBackupSemantics, IntPtr.Zero);
+        return !handle.IsInvalid
+            && GetFileInformationByHandleEx(handle, FileStandardInfoClass, out FileStandardInfo standard, (uint)Marshal.SizeOf<FileStandardInfo>())
+            && standard.NumberOfLinks == 1;
+    }
+
     /// <summary>Deletes one file. Throws IOException or UnauthorizedAccessException when the file is in use
     /// or not ours to delete, exactly where the path-based delete did.</summary>
     internal static Outcome TryDeleteFile(

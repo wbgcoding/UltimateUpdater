@@ -83,6 +83,12 @@ public static class ProcessRunner
     /// <see cref="Encoding.Latin1"/>, which preserves a tool's raw bytes losslessly (1:1 byte-to-char) for a
     /// caller that decodes them itself, such as <see cref="Cleanup.OemTextRecovery"/>. Null keeps UTF-8.
     /// </param>
+    /// <param name="killOnTimeout">
+    /// False: when <paramref name="timeout"/> runs out the tool is NOT killed. The call returns a timed-out
+    /// result, the tool is left to finish on its own, and its handle is released once it exits. For a tool
+    /// that must not be cut off mid-work (a cache clean that would leave half a cache). A caller-requested
+    /// cancel leaves it running the same way, then surfaces as cancellation.
+    /// </param>
     public static Task<ProcessResult> RunAsync(
         string fileName,
         IReadOnlyList<string> arguments,
@@ -90,8 +96,10 @@ public static class ProcessRunner
         CancellationToken cancellationToken,
         IReadOnlyDictionary<string, string>? environment = null,
         TimeSpan? idleTimeout = null,
-        Encoding? outputEncoding = null) =>
-        ExecuteAsync(fileName, arguments, timeout, cancellationToken, environment, onOutput: null, idleTimeout, outputEncoding);
+        Encoding? outputEncoding = null,
+        bool killOnTimeout = true) =>
+        ExecuteAsync(fileName, arguments, timeout, cancellationToken, environment, onOutput: null, idleTimeout, outputEncoding,
+            killOnTimeout: killOnTimeout);
 
     /// <summary>
     /// Same safety contract as <see cref="RunAsync"/>, but stdout is streamed segment by segment to
@@ -120,7 +128,8 @@ public static class ProcessRunner
         Action<string>? onOutput,
         TimeSpan? idleTimeout = null,
         Encoding? outputEncoding = null,
-        StallWatchOptions? stallWatch = null)
+        StallWatchOptions? stallWatch = null,
+        bool killOnTimeout = true)
     {
         // Defense in depth, checked before anything else and regardless of elevation or caller
         // (Security.CommandDenyList): every current caller only ever issues package-manager-
@@ -143,7 +152,7 @@ public static class ProcessRunner
 
         return await RunResolvedAsync(
             executable, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding, elevated,
-            scrubEnvironment, stallWatch);
+            scrubEnvironment, stallWatch, killOnTimeout);
     }
 
     /// <summary>The launch and the wait for an already resolved executable. Separate from
@@ -160,7 +169,8 @@ public static class ProcessRunner
         Encoding? outputEncoding,
         bool elevated,
         bool? scrubEnvironment = null,
-        StallWatchOptions? stallWatch = null)
+        StallWatchOptions? stallWatch = null,
+        bool killOnTimeout = true)
     {
         var startInfo = BuildStartInfo(executable, arguments, environment, outputEncoding, elevated, scrubEnvironment: scrubEnvironment);
 
@@ -170,7 +180,12 @@ public static class ProcessRunner
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(timeout);
 
-        using var process = ChildFactoryForTest.Value?.Invoke() ?? StartChild(executable, startInfo, ScanScope.IsActive);
+        // Owns the child, and with killOnTimeout false its own pump token source too: both outlive this call
+        // when the tool is left running after a timeout or a cancel (FinishDetachedAsync releases them then).
+        // Not linked to the caller's token, or a cancel would stop the readers while the tool still writes.
+        var process = ChildFactoryForTest.Value?.Invoke() ?? StartChild(executable, startInfo, ScanScope.IsActive);
+        using var lease = new ChildLease(process, killOnTimeout ? null : new CancellationTokenSource());
+        var pumpCts = lease.PumpCts ?? timeoutCts;
 
         // Ticks, not a DateTime: written from whichever pump last saw a byte and read from the idle
         // watchdog below, so it has to be a single value both sides can exchange/read atomically.
@@ -183,8 +198,8 @@ public static class ProcessRunner
         // CancelOutputRead/CancelErrorRead does not guarantee an already-dispatched callback has finished
         // appending before the caller reads the same StringBuilder (torn text, or an exception out of
         // ToString()). An awaited Task gives that guarantee.
-        var stdoutPump = PumpAsync(process.StandardOutput, stdout, onOutput ?? NoOp, timeoutCts.Token, OnActivity);
-        var stderrPump = PumpAsync(process.StandardError, stderr, NoOp, timeoutCts.Token, OnActivity);
+        var stdoutPump = PumpAsync(process.StandardOutput, stdout, onOutput ?? NoOp, pumpCts.Token, OnActivity);
+        var stderrPump = PumpAsync(process.StandardError, stderr, NoOp, pumpCts.Token, OnActivity);
         var pumps = Task.WhenAll(stdoutPump, stderrPump);
 
         // Runs only when the caller asked for idle detection; stopped in the finally below regardless of
@@ -213,10 +228,22 @@ public static class ProcessRunner
                 // arrives if a grandchild (an MSI custom action, a vendor updater, node behind npm.cmd)
                 // inherited a handle, and without a bound the wait would run to the full install timeout;
                 // the row sitting "installing" for half an hour and still reporting success.
-                await DrainPumpsAsync(pumps, timeoutCts, DrainTimeout, CancelDrainTimeout);
+                await DrainPumpsAsync(pumps, pumpCts, DrainTimeout, CancelDrainTimeout);
             }
             catch (OperationCanceledException)
             {
+                if (!killOnTimeout && !idleTriggered && !stallTriggered)
+                {
+                    // Out of time or asked to stop: the tool keeps running and the pumps keep draining so
+                    // it never blocks on a full pipe.
+                    lease.Detach();
+                    _ = FinishDetachedAsync(lease, pumps, executable.Path);
+
+                    // a caller-requested cancel must surface as cancellation; a timeout is a normal result
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return new ProcessResult(-1, ReadSink(stdout), ReadSink(stderr)) { TimedOut = true };
+                }
+
                 process.Kill();
 
                 // WaitForExitAsync drains the async readers before it returns, but killing the process does
@@ -243,6 +270,81 @@ public static class ProcessRunner
             await idleWatchStopCts.CancelAsync();
             await SwallowAsync(idleWatchdog);
             await SwallowAsync(stallWatchTask);
+        }
+    }
+
+    /// <summary>How long a tool left running after a timeout keeps its handle and pumps before they are let go
+    /// (the tool itself is never ended).</summary>
+    private static readonly TimeSpan DetachedLifetime = TimeSpan.FromHours(1);
+
+    /// <summary>Test seam for <see cref="DetachedLifetime"/>, per async flow.</summary>
+    internal static readonly AsyncLocal<TimeSpan?> DetachedLifetimeForTest = new();
+
+    /// <summary>The child of one run, plus its own pump token source when the run may leave the child
+    /// running. Disposed with the run unless <see cref="Detach"/> handed it to the background release.</summary>
+    private sealed class ChildLease(IChildProcess child, CancellationTokenSource? pumpCts) : IDisposable
+    {
+        private bool _detached;
+        private int _released;
+
+        public IChildProcess Child => child;
+
+        public CancellationTokenSource? PumpCts => pumpCts;
+
+        public void Detach() => _detached = true;
+
+        public void Dispose()
+        {
+            if (!_detached)
+                Release();
+        }
+
+        public void Release()
+        {
+            if (Interlocked.Exchange(ref _released, 1) != 0)
+                return;
+
+            try
+            {
+                child.Dispose();
+            }
+            catch
+            {
+                // best effort: the child may be gone already
+            }
+
+            pumpCts?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Lets a tool that ran past its timeout finish on its own: waits for it to exit (at most
+    /// <see cref="DetachedLifetime"/>), drains its output so it never blocks on a full pipe, then releases the
+    /// handle and the readers. Never throws, never ends the tool.
+    /// </summary>
+    private static async Task FinishDetachedAsync(ChildLease lease, Task pumps, string tool)
+    {
+        try
+        {
+            using var lifetime = new CancellationTokenSource(DetachedLifetimeForTest.Value ?? DetachedLifetime);
+            try
+            {
+                await lease.Child.WaitForExitAsync(lifetime.Token);
+                await DrainPumpsAsync(pumps, lease.PumpCts!, DrainTimeout, CancelDrainTimeout);
+            }
+            catch (OperationCanceledException)
+            {
+                await lease.PumpCts!.CancelAsync();
+                await StopPumpsAsync(pumps, lease.Child, CancelDrainTimeout, tool);
+            }
+        }
+        catch
+        {
+            // nobody waits for this task; the release below is all that is left to do
+        }
+        finally
+        {
+            lease.Release();
         }
     }
 

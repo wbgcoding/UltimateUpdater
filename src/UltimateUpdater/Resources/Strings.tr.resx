@@ -1460,7 +1460,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
     <value>Paket yöneticisi önbelleği</value>
   </data>
   <data name="CleanupPackageCacheDesc" xml:space="preserve">
-    <value>pip, npm, Yarn, NuGet ve Chocolatey'nin yeniden yüklemeler için sakladığı indirmeler. Yüklü paketler değişmeden kalır.</value>
+    <value>pip, uv, npm, pnpm, Yarn, NuGet, Cargo, Go ve Chocolatey'nin sakladığı indirmeler ve derleme dosyaları. Yüklü paketler değişmeden kalır.</value>
   </data>
   <data name="CleanupBuildCache" xml:space="preserve">
     <value>Derleme aracı önbelleği</value>
