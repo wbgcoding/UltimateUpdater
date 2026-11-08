@@ -383,6 +383,39 @@ public class InstallBlockersTests
         Assert.False(blocked.SkipOnly);
     }
 
+    private sealed class TwoVersions(string oldRoot, string newRoot) : IRegistryView
+    {
+        private const string Old = "Zq.Chat_1.0.0.0_x64__0123456789abc";
+        private const string New = "Zq.Chat_2.0.0.0_x64__0123456789abc";
+
+        public IReadOnlyList<string> SubKeyNames(string keyPath) => keyPath == PackagedApps.PackagesKey ? [Old, New] : [];
+
+        public string? Value(string keyPath, string valueName) => valueName switch
+        {
+            "DisplayName" => "Zq Chat",
+            "PackageRootFolder" => keyPath.EndsWith(New, StringComparison.Ordinal) ? newRoot : oldRoot,
+            _ => null,
+        };
+    }
+
+    /// <summary>While a newer version waits to be applied, both are registered and the app still runs from
+    /// the older folder; that running copy must still block, and closing is limited to that folder.</summary>
+    [Fact]
+    public void A_running_older_registration_of_the_store_app_still_blocks()
+    {
+        const string oldRoot = @"C:\Program Files\WindowsApps\Zq.Chat_1.0.0.0_x64__0123456789abc";
+        const string newRoot = @"C:\Program Files\WindowsApps\Zq.Chat_2.0.0.0_x64__0123456789abc";
+        var blockers = new InstallBlockers(
+            runningProcessNames: () => ["Chat"],
+            packagedApps: new PackagedApps(new TwoVersions(oldRoot, newRoot)),
+            processImages: () => [("Chat", oldRoot + @"\app\Chat.exe")]);
+
+        var blocked = blockers.Detect(Item("Zq.Chat", "Zq Chat"));
+
+        Assert.NotNull(blocked);
+        Assert.Equal(oldRoot, blocked!.OnlyInsideFolder);
+    }
+
     [Fact]
     public void A_same_named_process_from_another_folder_does_not_block_a_store_update()
     {

@@ -151,24 +151,37 @@ public sealed class InstallBlockers
     /// </summary>
     private BlockedInstall? DetectPackagedApp(UpdateItem item, HashSet<string> runningSet)
     {
-        if (_packagedApps is null || item.SourceId != "winget" || _packagedApps.Find(item.Name) is not { } package)
+        if (_packagedApps is null || item.SourceId != "winget")
             return null;
 
-        var names = new List<string>();
-        foreach (var (name, path) in _processImages())
+        // Every registration with this name, not only the newest: while an update waits for the app to
+        // close, the running copy is the older folder.
+        var packages = _packagedApps.FindAll(item.Name).ToList();
+        if (packages.Count == 0)
+            return null;
+
+        var images = _processImages();
+        foreach (var package in packages)
         {
-            try
+            var names = new List<string>();
+            foreach (var (name, path) in images)
             {
-                if (runningSet.Contains(name) && !NeverClose.Contains(name) && IsInside(path, package.Root))
-                    names.Add(name);
+                try
+                {
+                    if (runningSet.Contains(name) && !NeverClose.Contains(name) && IsInside(path, package.Root))
+                        names.Add(name);
+                }
+                catch (ArgumentException)
+                {
+                    // a malformed path cannot be inside anything
+                }
             }
-            catch (ArgumentException)
-            {
-                // a malformed path cannot be inside anything
-            }
+
+            if (names.Count > 0)
+                return new BlockedInstall(item, item.Name, names, OnlyInsideFolder: package.Root);
         }
 
-        return names.Count > 0 ? new BlockedInstall(item, item.Name, names, OnlyInsideFolder: package.Root) : null;
+        return null;
     }
 
     private static IReadOnlyList<string> DefaultImagePathsOf(string processName)
