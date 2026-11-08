@@ -182,6 +182,41 @@ public class CleanupGroupsTests
         Assert.Equal(false, group.IsSelected);
     }
 
+    /// <summary>A row the run skips for missing admin rights frees nothing, so the group header must neither
+    /// add its size nor count it as chosen while there are no admin rights.</summary>
+    [Fact]
+    public void An_admin_only_row_is_left_out_of_the_group_totals_while_unelevated()
+    {
+        var temp = Item("user-temp");
+        var cache = new CleanupItemViewModel(
+            new CleanupTarget(
+                "update-cache", "x", "y", CleanupKind.Directories, DefaultEnabled: true,
+                RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "x", NeedsElevation: true)
+            { AdminOnlyDelete = true },
+            () => { });
+        temp.Bytes = 10 * 1024 * 1024;
+        cache.Bytes = 282 * 1024 * 1024;
+        var elevated = false;
+        var group = new CleanupGroupViewModel(
+            CleanupGroupKey.WindowsMaintenance, [temp, cache],
+            skipsForMissingAdmin: item => CleanupService.SkipsWithoutAdmin(item.Target, elevated));
+
+        Assert.Equal(10 * 1024 * 1024, group.SelectedBytes);
+        Assert.Equal(1, group.SelectedCount);
+        Assert.Equal(true, group.IsSelected);
+        Assert.True(cache.ShowsElevationCapsule);
+
+        elevated = true;
+        var changed = new List<string?>();
+        group.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+        group.RefreshAdminDependentTotals();
+
+        Assert.Equal(292 * 1024 * 1024, group.SelectedBytes);
+        Assert.Equal(2, group.SelectedCount);
+        Assert.Contains(nameof(CleanupGroupViewModel.ChosenSizeText), changed);
+        Assert.Contains(nameof(CleanupGroupViewModel.SelectedCountText), changed);
+    }
+
     /// <summary>Every group actually named in the dialog order has at least one real catalogue entry,
     /// an empty group would be a header over nothing.</summary>
     [Fact]
