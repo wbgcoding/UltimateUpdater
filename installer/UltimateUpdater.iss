@@ -713,7 +713,7 @@ begin
     'function Running { foreach ($f in $p) { if (Test-Path -LiteralPath $f) { ' +
     'try { $fs = [System.IO.File]::Open($f, ''Open'', ''Write'', ''ReadWrite''); $fs.Dispose() } ' +
     'catch [System.IO.IOException] { if (($_.Exception.HResult -band 0xFFFF) -eq 32) { return $true } } ' +
-    'catch { } } }; return $false }; ' +
+    'catch { if ($hidden.Count -gt 0) { return $true } } } }; return $false }; ' +
     '$watch = @($copies); if ($hidden.Count -gt 0 -and (Running)) { $watch += $hidden }; ';
 end;
 

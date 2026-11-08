@@ -46,6 +46,10 @@ public class InstallerElevatedCopyTests
         // a running exe refuses a write open with a sharing violation (32): a test that needs no rights on the process
         Assert.Contains("[System.IO.File]::Open($f, ''Open'', ''Write'', ''ReadWrite'')", shared);
         Assert.Contains("-band 0xFFFF) -eq 32", shared);
+        // any other open failure (read-only exe, a deny entry) proves nothing either way: like the Pascal check,
+        // it counts as in use while a hidden copy exists, so an elevated copy is never left running
+        Assert.Contains("catch { if ($hidden.Count -gt 0) { return $true } }", shared);
+        Assert.DoesNotContain("catch { } } }; return $false", shared);
         Assert.Contains("$hidden.Count -gt 0 -and (Running)", shared);
         // by image name alone would reach a portable copy in another folder
         Assert.DoesNotContain("Stop-Process", shared);
