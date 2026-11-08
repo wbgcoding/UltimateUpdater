@@ -14,6 +14,12 @@ public partial class ProviderStatusViewModel : ObservableObject
     [ObservableProperty]
     private int foundCount;
 
+    /// <summary>The number on the pill's chip: this source's rows that still offer an update, so rows that
+    /// finished installing stop counting. <see cref="FoundCount"/> stays what the scan found.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasOpenUpdates))]
+    private int openCount;
+
     [ObservableProperty]
     private string? errorMessage;
 
@@ -81,6 +87,8 @@ public partial class ProviderStatusViewModel : ObservableObject
     }
 
     public bool HasFindings => FoundCount > 0;
+
+    public bool HasOpenUpdates => OpenCount > 0;
 
     public bool HasError => State == ProviderScanState.Error;
 

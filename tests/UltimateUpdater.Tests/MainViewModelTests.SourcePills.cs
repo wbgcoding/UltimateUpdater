@@ -26,6 +26,31 @@ public partial class MainViewModelTests
         });
     }
 
+    [Fact]
+    public void A_pill_chip_counts_only_the_rows_of_its_source_that_still_offer_an_update()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create([new OneShotSource("winget",
+                Item("a", "A", "winget"), Item("b", "B", "winget"), Item("c", "C", "winget"), Item("d", "D", "winget"))]);
+            Pump(viewModel.ScanCommand.ExecuteAsync(null));
+            var pill = viewModel.ProviderStatuses.Single(p => p.SourceId == "winget");
+            Assert.Equal(4, pill.OpenCount);
+
+            foreach (var row in viewModel.Updates.Take(3))
+                row.InstallState = RowInstallState.Succeeded;
+
+            Assert.Equal(1, pill.OpenCount);
+            Assert.Equal(4, pill.FoundCount);
+            Assert.True(pill.HasOpenUpdates);
+
+            viewModel.Updates.First(r => r.InstallState != RowInstallState.Succeeded).InstallState = RowInstallState.Succeeded;
+
+            Assert.Equal(0, pill.OpenCount);
+            Assert.False(pill.HasOpenUpdates);
+        });
+    }
+
     /// <summary>A pill view reset rebuilds every pill button, closing its tooltip or context menu. The
     /// flush tick runs several times a second during a scan, so it resets the view only when a pill's sort
     /// or filter key actually moved.</summary>
