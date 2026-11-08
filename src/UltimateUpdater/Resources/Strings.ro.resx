@@ -182,9 +182,6 @@
   <data name="RetryButton" xml:space="preserve">
     <value>Reîncearcă</value>
   </data>
-  <data name="FilterHideManual" xml:space="preserve">
-    <value>Ascunde intrările de deschis manual</value>
-  </data>
   <data name="FilterPersistentFailures" xml:space="preserve">
     <value>Eșuează constant ({0})</value>
   </data>
@@ -2409,5 +2406,8 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="FilterChipFailures" xml:space="preserve">
     <value>Eșuate ({0})</value>
+  </data>
+  <data name="FilterShowManual" xml:space="preserve">
+    <value>Arată intrările de deschis manual</value>
   </data>
 </root>

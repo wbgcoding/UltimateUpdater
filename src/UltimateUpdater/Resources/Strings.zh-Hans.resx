@@ -182,9 +182,6 @@
   <data name="RetryButton" xml:space="preserve">
     <value>重试</value>
   </data>
-  <data name="FilterHideManual" xml:space="preserve">
-    <value>隐藏需手动打开的条目</value>
-  </data>
   <data name="FilterPersistentFailures" xml:space="preserve">
     <value>持续失败（{0}）</value>
   </data>
@@ -2409,5 +2406,8 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="FilterChipFailures" xml:space="preserve">
     <value>失败（{0}）</value>
+  </data>
+  <data name="FilterShowManual" xml:space="preserve">
+    <value>显示需手动打开的条目</value>
   </data>
 </root>

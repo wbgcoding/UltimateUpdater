@@ -182,9 +182,6 @@
   <data name="RetryButton" xml:space="preserve">
     <value>Retry</value>
   </data>
-  <data name="FilterHideManual" xml:space="preserve">
-    <value>Hide entries to open yourself</value>
-  </data>
   <data name="FilterPersistentFailures" xml:space="preserve">
     <value>Keeps failing ({0})</value>
   </data>
@@ -2409,5 +2406,8 @@ Continue with admin rights?</value>
   </data>
   <data name="FilterChipFailures" xml:space="preserve">
     <value>Failing ({0})</value>
+  </data>
+  <data name="FilterShowManual" xml:space="preserve">
+    <value>Show entries to open yourself</value>
   </data>
 </root>

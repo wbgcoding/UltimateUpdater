@@ -182,9 +182,6 @@
   <data name="RetryButton" xml:space="preserve">
     <value>Reintentar</value>
   </data>
-  <data name="FilterHideManual" xml:space="preserve">
-    <value>Ocultar entradas para abrir manualmente</value>
-  </data>
   <data name="FilterPersistentFailures" xml:space="preserve">
     <value>Sigue fallando ({0})</value>
   </data>
@@ -2409,5 +2406,8 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="FilterChipFailures" xml:space="preserve">
     <value>Con fallos ({0})</value>
+  </data>
+  <data name="FilterShowManual" xml:space="preserve">
+    <value>Mostrar entradas para abrir manualmente</value>
   </data>
 </root>
