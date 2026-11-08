@@ -66,7 +66,9 @@ public partial class MeasuringDots
 
     private void Start()
     {
+        // With Windows animations off the dots stay at their resting opacity.
         if (_pulse is not null
+            || !MotionPreference.AnimationsEnabled
             || _window is { WindowState: WindowState.Minimized }
             || TryFindResource("PulseStoryboard") is not Storyboard storyboard)
             return;

@@ -568,11 +568,13 @@
                                 <Style.Triggers>
                                     <!-- Scanning AND shown: WPF keeps ticking an animation clock for a window
                                          hidden to the tray, which every background interval scan would run
-                                         at 60 fps for nothing. -->
+                                         at 60 fps for nothing. With Windows animations off the icon stays
+                                         still. -->
                                     <MultiDataTrigger>
                                         <MultiDataTrigger.Conditions>
                                             <Condition Binding="{Binding IsScanning}" Value="True"/>
                                             <Condition Binding="{Binding IsVisible, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                            <Condition Binding="{Binding Source={x:Static views:MotionPreference.AnimationsEnabled}}" Value="True"/>
                                         </MultiDataTrigger.Conditions>
                                         <MultiDataTrigger.EnterActions>
                                             <BeginStoryboard Name="ScanSpinStory">
@@ -901,6 +903,7 @@
                                                     <Condition Binding="{Binding InstallHasRealProgress}" Value="False"/>
                                                     <Condition Binding="{Binding IsInstalling}" Value="True"/>
                                                     <Condition Binding="{Binding IsVisible, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                                    <Condition Binding="{Binding Source={x:Static views:MotionPreference.AnimationsEnabled}}" Value="True"/>
                                                 </MultiDataTrigger.Conditions>
                                                 <MultiDataTrigger.EnterActions>
                                                     <BeginStoryboard Name="InstallBarShineStory">
