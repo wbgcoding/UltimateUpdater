@@ -308,6 +308,11 @@ public partial class CleanupViewModel
         var cts = new CancellationTokenSource();
         _scanCts = cts;
 
+        // A scan that measures the bin starts from the age as it stands now; only a change after this point
+        // needs a rescan of its own.
+        if (scope.Any(item => item.IsRecycleBin))
+            _recycleBinRescanPending = false;
+
         // A newer scan replaces _scanCts; from then on this one is stale and must not write a number or reset
         // any state the newer scan owns (its cancelled loop can still be mid-await and deliver a late result).
         bool IsCurrentScan() => ReferenceEquals(_scanCts, cts);
@@ -538,6 +543,10 @@ public partial class CleanupViewModel
                 // out are measured now rather than waiting for the window.
                 if (mode == ScanMode.Prescan && !cts.IsCancellationRequested)
                     StartLateMeasuring();
+
+                // An age change the scan swallowed (the row was being measured with the old one).
+                if (!cts.IsCancellationRequested)
+                    RunPendingRecycleBinRescan();
             }
         }
     }
