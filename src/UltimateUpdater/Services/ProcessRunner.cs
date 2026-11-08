@@ -87,7 +87,7 @@ public static class ProcessRunner
     /// False: when <paramref name="timeout"/> runs out the tool is NOT killed. The call returns a timed-out
     /// result, the tool is left to finish on its own, and its handle is released once it exits. For a tool
     /// that must not be cut off mid-work (a cache clean that would leave half a cache). A caller-requested
-    /// cancel still ends the tool.
+    /// cancel leaves it running the same way, then surfaces as cancellation.
     /// </param>
     public static Task<ProcessResult> RunAsync(
         string fileName,
@@ -181,10 +181,10 @@ public static class ProcessRunner
         timeoutCts.CancelAfter(timeout);
 
         // Owns the child, and with killOnTimeout false its own pump token source too: both outlive this call
-        // when the tool is left running after a timeout (FinishDetachedAsync releases them then).
+        // when the tool is left running after a timeout or a cancel (FinishDetachedAsync releases them then).
+        // Not linked to the caller's token, or a cancel would stop the readers while the tool still writes.
         var process = ChildFactoryForTest.Value?.Invoke() ?? StartChild(executable, startInfo, ScanScope.IsActive);
-        using var lease = new ChildLease(
-            process, killOnTimeout ? null : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken));
+        using var lease = new ChildLease(process, killOnTimeout ? null : new CancellationTokenSource());
         var pumpCts = lease.PumpCts ?? timeoutCts;
 
         // Ticks, not a DateTime: written from whichever pump last saw a byte and read from the idle
@@ -232,12 +232,15 @@ public static class ProcessRunner
             }
             catch (OperationCanceledException)
             {
-                if (!killOnTimeout && !cancellationToken.IsCancellationRequested && !idleTriggered && !stallTriggered)
+                if (!killOnTimeout && !idleTriggered && !stallTriggered)
                 {
-                    // Out of time, not asked to stop: the tool keeps running and the pumps keep draining so
+                    // Out of time or asked to stop: the tool keeps running and the pumps keep draining so
                     // it never blocks on a full pipe.
                     lease.Detach();
                     _ = FinishDetachedAsync(lease, pumps, executable.Path);
+
+                    // a caller-requested cancel must surface as cancellation; a timeout is a normal result
+                    cancellationToken.ThrowIfCancellationRequested();
                     return new ProcessResult(-1, ReadSink(stdout), ReadSink(stderr)) { TimedOut = true };
                 }
 

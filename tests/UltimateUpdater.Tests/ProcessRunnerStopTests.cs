@@ -152,7 +152,7 @@ public class ProcessRunnerStopTests
     }
 
     [Fact]
-    public async Task A_stop_request_still_ends_a_child_started_without_kill_on_timeout()
+    public async Task A_stop_request_without_kill_on_timeout_leaves_the_child_running_and_releases_it_once_it_exits()
     {
         var child = new LingeringChild();
         ProcessRunner.ChildFactoryForTest.Value = () => child;
@@ -166,8 +166,12 @@ public class ProcessRunnerStopTests
                 elevated: false, killOnTimeout: false)
                 .WaitAsync(TimeSpan.FromSeconds(30)));
 
-            Assert.Equal(1, child.KillCalls);
-            Assert.True(child.IsDisposed);
+            Assert.Equal(0, child.KillCalls);
+            Assert.False(child.IsDisposed);
+
+            child.Exit();
+            await child.Disposed.WaitAsync(TimeSpan.FromSeconds(30));
+            Assert.Equal(0, child.KillCalls);
         }
         finally
         {
