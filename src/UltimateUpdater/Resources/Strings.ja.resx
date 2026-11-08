@@ -182,9 +182,6 @@
   <data name="RetryButton" xml:space="preserve">
     <value>再試行</value>
   </data>
-  <data name="FilterHideManual" xml:space="preserve">
-    <value>手動で開く項目を非表示</value>
-  </data>
   <data name="FilterPersistentFailures" xml:space="preserve">
     <value>失敗が続いています（{0}）</value>
   </data>
@@ -2409,5 +2406,8 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="FilterChipFailures" xml:space="preserve">
     <value>失敗（{0}）</value>
+  </data>
+  <data name="FilterShowManual" xml:space="preserve">
+    <value>手動で開く項目を表示</value>
   </data>
 </root>

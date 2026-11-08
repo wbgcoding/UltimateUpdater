@@ -45,6 +45,45 @@ public partial class MainViewModelTests
         });
     }
 
+    /// <summary>The manual chip is lit when manual rows are SHOWN: unlit hides them, lit shows them, and the
+    /// persisted setting keeps its old HideManual meaning.</summary>
+    [Fact]
+    public void The_manual_chip_is_lit_while_manual_rows_are_shown()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = CreateWithSettings([], out var settings);
+            Populate(viewModel);
+            viewModel.Updates.Add(new UpdateRowViewModel(ManualItem("launcher", "Some Launcher")));
+            var changed = new List<string?>();
+            viewModel.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+            // launcher rows sit in the compact block's own view, not in the main one
+            int ManualShown() => viewModel.UpdatesView.Cast<UpdateRowViewModel>().Concat(viewModel.ManualOnlyView.Cast<UpdateRowViewModel>())
+                .Count(u => u.IsManualOnly);
+
+            Assert.True(viewModel.ShowManual);
+            Assert.Equal(1, ManualShown());
+
+            viewModel.ShowManual = false;
+            Assert.True(viewModel.HideManual);
+            Assert.True(settings.Current.Ui.HideManual);
+            Assert.Equal(0, ManualShown());
+            Assert.Contains(nameof(MainViewModel.ShowManual), changed);
+
+            changed.Clear();
+            viewModel.ShowManual = true;
+            Assert.False(viewModel.HideManual);
+            Assert.False(settings.Current.Ui.HideManual);
+            Assert.Equal(1, ManualShown());
+            Assert.Contains(nameof(MainViewModel.ShowManual), changed);
+
+            // the old setting drives the chip too
+            viewModel.HideManual = true;
+            Assert.False(viewModel.ShowManual);
+        });
+    }
+
     /// <summary>The failures chip is shown only while there is something to collect, or while its filter is
     /// still on (so it can always be turned off again).</summary>
     [Fact]

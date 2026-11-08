@@ -41,8 +41,17 @@ public partial class MainViewModel
     [ObservableProperty]
     private bool hideManual;
 
+    /// <summary>The filter chip's own polarity: lit = manual rows shown, like the ignored chip. The persisted
+    /// setting stays <see cref="HideManual"/>, so this is only its mirror image.</summary>
+    public bool ShowManual
+    {
+        get => !HideManual;
+        set => HideManual = !value;
+    }
+
     partial void OnHideManualChanged(bool value)
     {
+        OnPropertyChanged(nameof(ShowManual));
         _settings.Current.Ui.HideManual = value;
         Persist();
         ApplyFilter();

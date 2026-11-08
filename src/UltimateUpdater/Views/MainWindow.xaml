@@ -54,18 +54,92 @@
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
-        <!-- The shared pill chip (App.xaml) at the search box's height, so chips and search box share one
-             row line. The label (FilterChipLabel) is a short word so all four fit at the default window width; it is collapsed by
-             MainWindow.UpdateFilterChipLabels only in a narrower window, where icon and tooltip (the long text) stay. -->
-        <Style x:Key="ToolbarFilterChip" TargetType="ToggleButton" BasedOn="{StaticResource FilterChip}">
+        <!-- The toolbar's own filter chip: a full pill at the search box's height, so chips and search box share one
+             row line, with primary-colour text and the controls' own fills so it reads as part of the toolbar rather than
+             as a washed-out tag. It does not derive from the shared App.xaml FilterChip, whose smaller look the history and
+             settings lists keep. The label (FilterChipLabel) is a short word so all four fit at the default window width; it is
+             collapsed by MainWindow.UpdateFilterChipLabels only in a narrower window, where icon and tooltip (the long text) stay. -->
+        <Style x:Key="ToolbarFilterChip" TargetType="ToggleButton">
             <Setter Property="Height" Value="34"/>
-            <Setter Property="Margin" Value="0,0,6,4"/>
-            <Setter Property="Padding" Value="11,0"/>
+            <Setter Property="Margin" Value="0,0,8,4"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" CornerRadius="17" Padding="{TemplateBinding Padding}"
+                                Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                BorderThickness="1">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush"
+                                        Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                <Setter Property="Foreground"
+                                        Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource AccentFillColorSecondaryBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush"
+                                        Value="{DynamicResource AccentFillColorSecondaryBrush}"/>
+                            </MultiTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="False"/>
+                                    <Condition Property="IsPressed" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
+                            </MultiTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsPressed" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource AccentFillColorTertiaryBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush"
+                                        Value="{DynamicResource AccentFillColorTertiaryBrush}"/>
+                            </MultiTrigger>
+                            <!-- Same cue as the other focusable surfaces: the border turns accent text colour. On a lit chip
+                                 the fill is the accent already, so the border takes the on-accent text colour instead. -->
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush"
+                                        Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsKeyboardFocused" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="BorderBrush"
+                                        Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="FilterChipLabel" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="5,0,0,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="6,0,0,0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
@@ -723,7 +797,7 @@
                                 ToolTip="{Binding Loc[SearchPlaceholder], Converter={StaticResource ShortcutTooltip}, ConverterParameter=SearchPlaceholder}"
                                 AutomationProperties.Name="{Binding Loc[SearchPlaceholder]}"/>
 
-                    <!-- The filter switches (critical only, show ignored, hide entries to open yourself, and
+                    <!-- The filter switches (critical only, show ignored, show entries to open yourself, and
                          the persistent-failure collector while it has something) as toggle chips, one click
                          each and always visible. The labels hide (code-behind) when the
                          toolbar cannot hold the search box and every chip with its text in one row, so
@@ -733,7 +807,7 @@
                                   ToolTip="{Binding Loc[FilterCriticalOnly]}"
                                   AutomationProperties.Name="{Binding Loc[FilterCriticalOnly]}">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Shield24" FontSize="14"/>
+                            <ui:SymbolIcon Symbol="Shield24" FontSize="16"/>
                             <TextBlock Text="{Binding Loc[FilterChipCritical]}" Style="{StaticResource FilterChipLabel}"/>
                         </StackPanel>
                     </ToggleButton>
@@ -742,16 +816,16 @@
                                   ToolTip="{Binding Loc[FilterShowIgnored]}"
                                   AutomationProperties.Name="{Binding Loc[FilterShowIgnored]}">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="EyeOff24" FontSize="14"/>
+                            <ui:SymbolIcon Symbol="EyeOff24" FontSize="16"/>
                             <TextBlock Text="{Binding Loc[FilterChipIgnored]}" Style="{StaticResource FilterChipLabel}"/>
                         </StackPanel>
                     </ToggleButton>
                     <ToggleButton x:Name="FilterManualChip" Style="{StaticResource ToolbarFilterChip}"
-                                  IsChecked="{Binding HideManual, Mode=TwoWay}"
-                                  ToolTip="{Binding Loc[FilterHideManual]}"
-                                  AutomationProperties.Name="{Binding Loc[FilterHideManual]}">
+                                  IsChecked="{Binding ShowManual, Mode=TwoWay}"
+                                  ToolTip="{Binding Loc[FilterShowManual]}"
+                                  AutomationProperties.Name="{Binding Loc[FilterShowManual]}">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="HandRight24" FontSize="14"/>
+                            <ui:SymbolIcon Symbol="HandRight24" FontSize="16"/>
                             <TextBlock Text="{Binding Loc[FilterChipManual]}" Style="{StaticResource FilterChipLabel}"/>
                         </StackPanel>
                     </ToggleButton>
@@ -761,7 +835,7 @@
                                   AutomationProperties.Name="{Binding PersistentFailureFilterLabel}"
                                   Visibility="{Binding ShowPersistentFailureFilter, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="ErrorCircle24" FontSize="14"/>
+                            <ui:SymbolIcon Symbol="ErrorCircle24" FontSize="16"/>
                             <TextBlock Text="{Binding PersistentFailureChipLabel}" Style="{StaticResource FilterChipLabel}"/>
                         </StackPanel>
                     </ToggleButton>

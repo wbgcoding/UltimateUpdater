@@ -182,9 +182,6 @@
   <data name="RetryButton" xml:space="preserve">
     <value>Riprova</value>
   </data>
-  <data name="FilterHideManual" xml:space="preserve">
-    <value>Nascondi voci da aprire manualmente</value>
-  </data>
   <data name="FilterPersistentFailures" xml:space="preserve">
     <value>Continua a fallire ({0})</value>
   </data>
@@ -2409,5 +2406,8 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="FilterChipFailures" xml:space="preserve">
     <value>In errore ({0})</value>
+  </data>
+  <data name="FilterShowManual" xml:space="preserve">
+    <value>Mostra voci da aprire manualmente</value>
   </data>
 </root>

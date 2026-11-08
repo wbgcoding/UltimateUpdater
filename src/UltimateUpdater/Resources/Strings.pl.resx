@@ -182,9 +182,6 @@
   <data name="RetryButton" xml:space="preserve">
     <value>Ponów</value>
   </data>
-  <data name="FilterHideManual" xml:space="preserve">
-    <value>Ukryj pozycje do otwarcia ręcznie</value>
-  </data>
   <data name="FilterPersistentFailures" xml:space="preserve">
     <value>Wciąż się nie udaje ({0})</value>
   </data>
@@ -2409,5 +2406,8 @@ Kontynuować z uprawnieniami administratora?</value>
   </data>
   <data name="FilterChipFailures" xml:space="preserve">
     <value>Błędy ({0})</value>
+  </data>
+  <data name="FilterShowManual" xml:space="preserve">
+    <value>Pokaż pozycje do otwarcia ręcznie</value>
   </data>
 </root>

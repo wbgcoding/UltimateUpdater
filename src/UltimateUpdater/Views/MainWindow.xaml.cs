@@ -337,8 +337,9 @@ public partial class MainWindow : FluentWindow
                 new Typeface(label.FontFamily, label.FontStyle, label.FontWeight, label.FontStretch),
                 label.FontSize, System.Windows.Media.Brushes.Black, pixelsPerDip);
 
-            // 2 = the chip's border, 14 = the icon (its font size), 4 = rounding slack
-            needed += chip.Margin.Left + chip.Margin.Right + chip.Padding.Left + chip.Padding.Right + 2 + 14
+            // 2 = the chip's border, the icon is as wide as its font size, 4 = rounding slack
+            var iconWidth = content.Children.OfType<Wpf.Ui.Controls.SymbolIcon>().FirstOrDefault()?.FontSize ?? 16;
+            needed += chip.Margin.Left + chip.Margin.Right + chip.Padding.Left + chip.Padding.Right + 2 + iconWidth
                 + label.Margin.Left + text.WidthIncludingTrailingWhitespace + 4;
         }
 

@@ -182,9 +182,6 @@
   <data name="RetryButton" xml:space="preserve">
     <value>Opnieuw</value>
   </data>
-  <data name="FilterHideManual" xml:space="preserve">
-    <value>Zelf te openen items verbergen</value>
-  </data>
   <data name="FilterPersistentFailures" xml:space="preserve">
     <value>Blijft mislukken ({0})</value>
   </data>
@@ -2409,5 +2406,8 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="FilterChipFailures" xml:space="preserve">
     <value>Mislukt ({0})</value>
+  </data>
+  <data name="FilterShowManual" xml:space="preserve">
+    <value>Zelf te openen items tonen</value>
   </data>
 </root>
