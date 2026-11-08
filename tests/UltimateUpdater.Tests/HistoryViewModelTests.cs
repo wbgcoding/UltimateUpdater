@@ -169,4 +169,30 @@ public class HistoryViewModelTests
         Assert.Equal(2, viewModel.Entries.Count);
         Assert.Equal(new HistoryViewModel(history).Entries.Select(e => e.Name), viewModel.Entries.Select(e => e.Name));
     }
+
+    [Fact]
+    public void A_new_view_model_without_saved_table_state_restores_a_collapsed_column_width()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var resources = System.Windows.Application.Current!.Resources;
+            var history = new HistoryService(
+                new LoggingService(), Path.Combine(Directory.CreateTempSubdirectory("wu-history-vm-").FullName, "history.jsonl"));
+            try
+            {
+                // A column hidden earlier leaves its app-wide width at 0; a full reset deletes the saved
+                // state, so the next window must put the width back instead of inheriting the 0.
+                resources["HistoryColWidthSource"] = new System.Windows.GridLength(0);
+
+                var viewModel = new HistoryViewModel(history);
+
+                Assert.False(viewModel.IsColumnHidden("source"));
+                Assert.Equal(110, ((System.Windows.GridLength)resources["HistoryColWidthSource"]).Value);
+            }
+            finally
+            {
+                resources["HistoryColWidthSource"] = new System.Windows.GridLength(110);
+            }
+        });
+    }
 }

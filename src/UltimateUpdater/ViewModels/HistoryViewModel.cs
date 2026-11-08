@@ -384,7 +384,12 @@ public partial class HistoryViewModel : ObservableObject
     private void LoadTableLayout()
     {
         if (_settings is null || !_settings.Current.Ui.Tables.TryGetValue("history", out var state))
+        {
+            // The widths live in app-wide resources that outlive this view model: with no saved state
+            // (first run, or after a full reset) a column hidden earlier would otherwise stay at width 0.
+            ApplyColumnWidths();
             return;
+        }
 
         _hiddenColumns.Clear();
         foreach (var id in state.HiddenColumns)
