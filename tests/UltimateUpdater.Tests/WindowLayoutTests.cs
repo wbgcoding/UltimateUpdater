@@ -2838,11 +2838,26 @@ public partial class WindowLayoutTests
 
             var entry = nav.Items.OfType<ListBoxItem>().Single(i => (string)i.Tag == "NotifyHeader");
             nav.SelectedItem = entry;
-            scroll.UpdateLayout();
+
+            // Wait for the page to arrive instead of reading it after one layout pass: the tolerance stays
+            // 1.5 px, only the moment of reading is polled (dispatcher pumped, 3 s at most).
+            var deadline = DateTime.UtcNow.AddSeconds(3);
+            while (true)
+            {
+                scroll.UpdateLayout();
+                if (scroll.VerticalOffset > 0 && Math.Abs(HeaderTopInViewport(window, scroll, "NotifyHeader")) < 1.5)
+                    break;
+                if (DateTime.UtcNow >= deadline)
+                    break;
+                System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
+                    System.Windows.Threading.DispatcherPriority.Background, new Action(() => { }));
+                System.Threading.Thread.Sleep(20);
+            }
 
             Assert.True(scroll.VerticalOffset > 0, "the page did not scroll at all");
             Assert.True(Math.Abs(HeaderTopInViewport(window, scroll, "NotifyHeader")) < 1.5,
-                $"the Notifications header sits {HeaderTopInViewport(window, scroll, "NotifyHeader"):0.#}px from the top");
+                $"the Notifications header sits {HeaderTopInViewport(window, scroll, "NotifyHeader"):0.#}px from the top "
+                + $"(offset {scroll.VerticalOffset:0.#} of {scroll.ScrollableHeight:0.#})");
 
             window.Close();
         });
