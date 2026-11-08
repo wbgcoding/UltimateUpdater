@@ -789,6 +789,16 @@ public partial class MainViewModel
     /// <summary>Test seam (null in production): answers the reinstall confirmation.</summary>
     internal Func<bool>? ReinstallConfirmOverride { get; set; }
 
+    /// <summary>Packages whose reinstall is between its confirmation and its end. Their row is the only
+    /// way back to the program once the old version is gone, so a scan neither drops nor replaces it
+    /// (<see cref="HeldByReinstall"/>).</summary>
+    private readonly HashSet<string> _reinstallingKeys = new(StringComparer.Ordinal);
+
+    /// <summary>A row a scan must leave alone: a reinstall is running on it, or its old version is removed
+    /// and only the install is left (the row carries that install's retry).</summary>
+    private bool HeldByReinstall(UpdateRowViewModel row) =>
+        row.PendingFreshInstall || _reinstallingKeys.Contains(PackageKey(row.Item));
+
     void IRowActions.Reinstall(UpdateRowViewModel row) => _ = Background.Run(ReinstallRowAsync(row), _logging, "reinstall");
 
     void IRowActions.RetryFreshInstall(UpdateRowViewModel row) => _ = Background.Run(RetryFreshInstallAsync(row), _logging, "retry fresh install");
@@ -857,17 +867,26 @@ public partial class MainViewModel
         if (RefusedWhileSelfUpdateApplies("Reinstall"))
             return;
 
-        _logging.Info($"Reinstall of '{row.Item.Id}': removing the old version.");
-        await RunSingleRowActionAsync(row, InstallAction.Uninstall);
-        if (row.InstallState != RowInstallState.Succeeded)
+        var key = PackageKey(row.Item);
+        _reinstallingKeys.Add(key);
+        try
         {
-            // The row carries the failed removal and its own retry (a removal again); nothing was installed.
-            _logging.Warn($"Reinstall of '{row.Item.Id}': the removal did not finish; the new version was not installed.");
-            return;
-        }
+            _logging.Info($"Reinstall of '{row.Item.Id}': removing the old version.");
+            await RunSingleRowActionAsync(row, InstallAction.Uninstall);
+            if (row.InstallState != RowInstallState.Succeeded)
+            {
+                // The row carries the failed removal and its own retry (a removal again); nothing was installed.
+                _logging.Warn($"Reinstall of '{row.Item.Id}': the removal did not finish; the new version was not installed.");
+                return;
+            }
 
-        row.PendingFreshInstall = true;
-        await RunFreshInstallAsync(row);
+            row.PendingFreshInstall = true;
+            await RunFreshInstallAsync(row);
+        }
+        finally
+        {
+            _reinstallingKeys.Remove(key);
+        }
     }
 
     /// <summary>The row's retry after a reinstall already removed the old version: the install alone.</summary>

@@ -35,7 +35,11 @@ public partial class MainViewModelTests
 
         public Task<bool> IsAvailableAsync(CancellationToken cancellationToken) => Task.FromResult(true);
 
-        public IAsyncEnumerable<UpdateItem> ScanAsync(CancellationToken cancellationToken) => AsyncEnumerable.Empty<UpdateItem>();
+        /// <summary>What a scan reports; null = the package is not listed at all.</summary>
+        public UpdateItem? Listed { get; set; }
+
+        public IAsyncEnumerable<UpdateItem> ScanAsync(CancellationToken cancellationToken) =>
+            Listed is { } item ? new[] { item }.ToAsyncEnumerable() : AsyncEnumerable.Empty<UpdateItem>();
 
         public bool CanUninstall(UpdateItem item) => true;
 
@@ -219,6 +223,37 @@ public partial class MainViewModelTests
             Assert.Equal(["fresh"], source.Calls);
             Assert.False(row.PendingFreshInstall);
             Assert.Equal(1, confirms());
+        });
+    }
+
+    /// <summary>After the old version is gone and the new install failed, the row is the only way back to
+    /// the program: a scan that no longer lists the package, or still lists it from before the removal,
+    /// must neither drop the row nor replace it with a plain update row.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void A_scan_keeps_the_row_of_a_reinstall_whose_install_is_still_pending(bool stillListed)
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, manualRow, _) = CreateReinstall();
+            viewModel.Updates.Remove(manualRow);
+            source.Listed = Item("Example.Widget", "Example Widget", "winget");
+            Pump(viewModel.ScanCommand.ExecuteAsync(null));
+            var row = Assert.Single(viewModel.Updates);
+            row.ApplyInstallStatus(new InstallItemStatus("winget", "Example.Widget", 0, null, false, "failed") { Detail = DifferentTechnologyDetail });
+
+            source.FailFresh = true;
+            RunPumped(viewModel.ReinstallRowAsync(row));
+            Assert.True(row.PendingFreshInstall);
+
+            if (!stillListed)
+                source.Listed = null;
+            Pump(viewModel.ScanCommand.ExecuteAsync(null));
+
+            Assert.Same(row, Assert.Single(viewModel.Updates));
+            Assert.True(row.PendingFreshInstall);
+            Assert.Equal(RowInstallState.Failed, row.InstallState);
         });
     }
 
