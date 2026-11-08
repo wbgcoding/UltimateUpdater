@@ -851,4 +851,30 @@ public partial class MainViewModelTests
         public Task InstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken) =>
             Task.CompletedTask;
     }
+
+    /// <summary>
+    /// One copy of a folded package updates and the other fails: the failed copy leaves the fold and shows
+    /// as its own line, so the failure is seen at once. A copy that merely finished stays folded.
+    /// </summary>
+    [Fact]
+    public void A_failed_copy_of_a_folded_row_shows_as_its_own_line()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create();
+            var winner = new UpdateRowViewModel(Item("graphify", "graphify", "uv-tool"));
+            var partner = new UpdateRowViewModel(Item("graphify", "graphify", "pip"));
+            viewModel.Updates.AddRange([winner, partner]);
+            Assert.Single(viewModel.UpdatesView.Cast<UpdateRowViewModel>());
+
+            partner.InstallState = RowInstallState.Succeeded;
+            Assert.Single(viewModel.UpdatesView.Cast<UpdateRowViewModel>());
+
+            partner.InstallState = RowInstallState.Failed;
+            var visible = viewModel.UpdatesView.Cast<UpdateRowViewModel>().ToList();
+            Assert.Equal(2, visible.Count);
+            Assert.Contains(partner, visible);
+            Assert.False(winner.HasAlternateSources);
+        });
+    }
 }

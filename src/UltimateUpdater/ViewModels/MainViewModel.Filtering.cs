@@ -400,7 +400,8 @@ public partial class MainViewModel
 
             SyncPersistentFailureAttempts(row);
             NotifyPersistentFailureCountChanged();
-            if (ShowOnlyPersistentFailures)
+            if (ShowOnlyPersistentFailures
+                || (LeavesFold(row) && (_mergedAway.Contains(row) || row.HasAlternateSources)))
                 ApplyFilter();
         };
         _persistentFailureWatched[row] = handler;
@@ -439,9 +440,11 @@ public partial class MainViewModel
     /// <summary>The "keeps failing" filter chip's own count, over the live rows rather than the
     /// settings dictionary directly, so it always matches exactly what turning the chip on would show.</summary>
     // Only rows the filter itself would show: an ignored stuck row (its own hint offers Ignore) kept the
-    // chip at "(1)" and turning it on showed an empty table.
+    // chip at "(1)" and turning it on showed an empty table; a snoozed row and a row of the hidden manual
+    // category are held back by PassesFilters the same way.
     public int PersistentFailureCount => Updates.Count(u => u.InstallState == RowInstallState.NeedsManualWork
-        && !IsIgnored(u.Item) && IsSourceEnabled(u.Item.SourceId) && !_mergedAway.Contains(u));
+        && !IsIgnored(u.Item) && (ShowIgnored || !IsSnoozed(u.Item)) && !(HideManual && u.IsManualOnly)
+        && IsSourceEnabled(u.Item.SourceId) && !_mergedAway.Contains(u));
 
     /// <summary>Hidden entirely while there is nothing to collect, never a chip sitting there empty.</summary>
     public bool HasPersistentFailures => PersistentFailureCount > 0;
@@ -530,26 +533,29 @@ public partial class MainViewModel
         var visible = VisibleRows.ToList();
         var installable = visible.Where(u => u.CanInstall).ToList();
         var selected = visible.Where(u => u.IsSelected).ToList();
-        var selectedInstallableCount = installable.Count(u => u.IsSelected);
+        var selectedInstallable = installable.Where(u => u.IsSelected).ToList();
+        var selectedInstallableCount = selectedInstallable.Count;
 
         _hasSelection = selected.Count > 0;
-        _canInstallSelected = _hasSelection;
+        // A ticked row that cannot install (a failed uninstall, a row mid-run) must not keep the button on:
+        // it would queue nothing, or reinstall what the user just removed.
+        _canInstallSelected = selectedInstallableCount > 0;
         _areAllVisibleSelected = installable.Count > 0 && selectedInstallableCount == installable.Count;
         _allVisibleSelected = installable.Count == 0
             ? false
             : selectedInstallableCount == 0 ? false : selectedInstallableCount == installable.Count ? true : null;
-        if (selected.Count == 0)
+        if (selectedInstallableCount == 0)
             _selectionSummary = string.Empty;
         else
         {
-            var criticalCount = selected.Count(u => u.IsCritical);
+            var criticalCount = selectedInstallable.Count(u => u.IsCritical);
             var baseText = criticalCount > 0
-                ? string.Format(Loc["SelectionSummaryWithCritical"], selected.Count, criticalCount)
-                : string.Format(Loc["SelectionSummary"], selected.Count);
+                ? string.Format(Loc["SelectionSummaryWithCritical"], selectedInstallableCount, criticalCount)
+                : string.Format(Loc["SelectionSummary"], selectedInstallableCount);
 
             // Pre-install preview: the combined download size of the selection, as it becomes known
             // (enrichment fills sizes in after the scan). Shown only once there is a real total.
-            var totalBytes = selected.Sum(u => u.DownloadSizeBytes ?? 0L);
+            var totalBytes = selectedInstallable.Sum(u => u.DownloadSizeBytes ?? 0L);
             _selectionSummary = totalBytes > 0
                 ? baseText + string.Format(Loc["SelectionSummarySizeSuffix"], ByteSize.Format(totalBytes))
                 : baseText;
@@ -928,6 +934,10 @@ public partial class MainViewModel
         RecomputeAutoHiddenMainColumns();
         RefreshFilteredState();
 
+        // Snoozing, un-snoozing, "show ignored" and the manual toggle all end here, and each moves the
+        // chip's count.
+        NotifyPersistentFailureCountChanged();
+
         // A filter change touches no row's own properties, so the selection-summary properties need an
         // explicit refresh here.
         RefreshSelectionState();
@@ -935,6 +945,10 @@ public partial class MainViewModel
 
     /// <summary>Folds rows that are the SAME update from a second source into one line; strict key,
     /// filtered rows only, rank breaks ties.</summary>
+    private static bool LeavesFold(UpdateRowViewModel row) => row.InstallState is RowInstallState.Failed
+        or RowInstallState.Stuck or RowInstallState.HandedOff or RowInstallState.NeedsManualWork
+        or RowInstallState.Cancelled;
+
     private void RecomputeDuplicates()
     {
         _mergedAway.Clear();
@@ -945,7 +959,10 @@ public partial class MainViewModel
         {
             // An ignored or snoozed row (visible with "show ignored" on) must not win the fold: it would swallow
             // the installable copy from another source, and it cannot be installed itself.
-            if (!PassesFilters(row) || IsIgnored(row.Item) || IsSnoozed(row.Item)
+            // A row that failed, got stuck, was handed off or stopped shows as its own line: folded away, its
+            // outcome (the second copy of a package failing next to the first one succeeding) would stay
+            // invisible until the next scan.
+            if (!PassesFilters(row) || IsIgnored(row.Item) || IsSnoozed(row.Item) || LeavesFold(row)
                 || SourceRank.DuplicateKey(row.Item) is not { } key)
                 continue;
 
@@ -978,6 +995,17 @@ public partial class MainViewModel
         // notifications again on each keystroke in the search box.
         foreach (var row in Updates)
             row.SetAlternateSources(partners.GetValueOrDefault(row) ?? []);
+    }
+
+    /// <summary>
+    /// Takes a row out of the visible set so the next <see cref="SyncVisible"/> adds it again at its sorted
+    /// place. <c>IsIgnored</c> is a sort key, but the view does not sort live, and the diff otherwise keeps a
+    /// row that stays visible exactly where it is.
+    /// </summary>
+    private void ReseatInVisible(UpdateRowViewModel row)
+    {
+        if (_visibleSet.Remove(row))
+            _visible.Remove(row);
     }
 
     /// <summary>

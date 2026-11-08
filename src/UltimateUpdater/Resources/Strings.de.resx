@@ -2395,4 +2395,7 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
     <value>der Download hat zu lange gedauert</value>
   </data>
+  <data name="SelfUpdateCancelUpdate" xml:space="preserve">
+    <value>Update abbrechen</value>
+  </data>
 </root>

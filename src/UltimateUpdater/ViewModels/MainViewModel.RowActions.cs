@@ -133,6 +133,7 @@ public partial class MainViewModel
             ClearSnooze(row);
         }
 
+        ReseatInVisible(row);
         Persist();
         ApplyFilter();
         RefreshSelectionState();
@@ -152,6 +153,7 @@ public partial class MainViewModel
         row.IsIgnoredAllVersions = true;
         ClearSnooze(row);
 
+        ReseatInVisible(row);
         Persist();
         ApplyFilter();
         RefreshSelectionState();
@@ -491,6 +493,7 @@ public partial class MainViewModel
         IsInstalling = true;
 
         row.BeginInstall();
+        row.IsSelected = false;
         row.LastDowngradeTarget = targetVersion;
         StartInstallProgress([row]);
 
@@ -600,6 +603,7 @@ public partial class MainViewModel
         _interactiveRetryLane = InstallQueue.LaneKey(row.Item);
 
         row.BeginInstall();
+        row.IsSelected = false;
         row.IsRunningInteractively = true;
         StartInstallProgress([row]);
 
@@ -734,6 +738,7 @@ public partial class MainViewModel
             if (!InstallBatch.Contains(row))
                 InstallBatch.Add(row);
             row.BeginInstall();
+            row.IsSelected = false;
             // so the finished row reads "Uninstalled" in red rather than a green "done"
             row.WasUninstalled = uninstall;
             RefreshInstallProgress();
@@ -748,6 +753,7 @@ public partial class MainViewModel
             IsInstalling = true;
 
             row.BeginInstall();
+            row.IsSelected = false;
             row.WasUninstalled = uninstall;
             StartInstallProgress([row]);
         }

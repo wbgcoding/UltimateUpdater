@@ -2395,4 +2395,7 @@ Continuați cu drepturi de administrator?</value>
   <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
     <value>descărcarea a durat prea mult</value>
   </data>
+  <data name="SelfUpdateCancelUpdate" xml:space="preserve">
+    <value>Anulează actualizarea</value>
+  </data>
 </root>

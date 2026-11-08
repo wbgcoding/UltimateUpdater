@@ -2395,4 +2395,7 @@ Esto no se puede deshacer.</value>
   <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
     <value>la descarga tardó demasiado</value>
   </data>
+  <data name="SelfUpdateCancelUpdate" xml:space="preserve">
+    <value>Cancelar la actualización</value>
+  </data>
 </root>

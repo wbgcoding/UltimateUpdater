@@ -2395,4 +2395,7 @@ Continuer avec les droits administrateur ?</value>
   <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
     <value>le téléchargement a pris trop de temps</value>
   </data>
+  <data name="SelfUpdateCancelUpdate" xml:space="preserve">
+    <value>Annuler la mise à jour</value>
+  </data>
 </root>

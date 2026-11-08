@@ -1,4 +1,5 @@
 using System.Reflection;
+using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
 using UltimateUpdater.ViewModels;
 
@@ -275,6 +276,106 @@ public partial class MainViewModelTests
 
             Pump(exited.Task);
             Assert.Equal(["verified.exe"], applied);
+        });
+    }
+
+    /// <summary>Closing the banner while a verified update waits for running work cancels it: the end of
+    /// that work must not apply it and restart the app.</summary>
+    [Fact]
+    public void Closing_the_banner_of_a_waiting_update_cancels_it()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create();
+            var applied = new List<string>();
+            viewModel.OfferSelfUpdateForTest(OfferedUpdate());
+            viewModel.SelfUpdateDownloadForTest = (_, _) =>
+            {
+                viewModel.IsInstalling = true;
+                return Task.FromResult(new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.Downloaded, "verified.exe"));
+            };
+            viewModel.SelfUpdateApplyForTest = path =>
+            {
+                applied.Add(path);
+                return SelfUpdateApplyResult.Started;
+            };
+            Pump(viewModel.InstallSelfUpdateCommand.ExecuteAsync(null));
+            Assert.True(viewModel.SelfUpdateWaitingForWork);
+            Assert.True(viewModel.SelfUpdateDismissCancels);
+            Assert.Equal(LocalizationService.Instance["SelfUpdateCancelUpdate"], viewModel.SelfUpdateDismissLabel);
+
+            viewModel.DismissSelfUpdateCommand.Execute(null);
+
+            Assert.False(viewModel.SelfUpdateWaitingForWork);
+            Assert.False(viewModel.SelfUpdateInProgress);
+            Assert.False(viewModel.SelfUpdateAvailable);
+
+            viewModel.IsInstalling = false;
+            Pump(Task.Delay(300));
+
+            Assert.Empty(applied);
+        });
+    }
+
+    /// <summary>Closing the banner during the download stops the download and never applies the file, even
+    /// when the transfer reports a finished file anyway.</summary>
+    [Fact]
+    public void Closing_the_banner_during_the_download_cancels_it()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create();
+            var applied = new List<string>();
+            CancellationToken seen = default;
+            var started = new TaskCompletionSource();
+            var finish = new TaskCompletionSource();
+            viewModel.OfferSelfUpdateForTest(OfferedUpdate());
+            viewModel.SelfUpdateDownloadForTest = async (_, token) =>
+            {
+                seen = token;
+                started.TrySetResult();
+                await finish.Task;
+                return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.Downloaded, "verified.exe");
+            };
+            viewModel.SelfUpdateApplyForTest = path =>
+            {
+                applied.Add(path);
+                return SelfUpdateApplyResult.Started;
+            };
+
+            var installing = viewModel.InstallSelfUpdateCommand.ExecuteAsync(null);
+            Pump(started.Task);
+            Assert.True(viewModel.SelfUpdateInProgress);
+            Assert.True(viewModel.SelfUpdateDismissCancels);
+
+            viewModel.DismissSelfUpdateCommand.Execute(null);
+
+            Assert.True(seen.IsCancellationRequested);
+            Assert.False(viewModel.SelfUpdateInProgress);
+            Assert.False(viewModel.SelfUpdateAvailable);
+
+            finish.TrySetResult();
+            Pump(installing);
+
+            Assert.Empty(applied);
+            Assert.False(viewModel.SelfUpdateInProgress);
+        });
+    }
+
+    /// <summary>With no update running the close button only hides the banner, as before.</summary>
+    [Fact]
+    public void Closing_an_idle_banner_only_hides_it()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create();
+            viewModel.OfferSelfUpdateForTest(OfferedUpdate());
+            Assert.False(viewModel.SelfUpdateDismissCancels);
+            Assert.Equal(LocalizationService.Instance["SelfUpdateDismiss"], viewModel.SelfUpdateDismissLabel);
+
+            viewModel.DismissSelfUpdateCommand.Execute(null);
+
+            Assert.False(viewModel.SelfUpdateAvailable);
         });
     }
 }

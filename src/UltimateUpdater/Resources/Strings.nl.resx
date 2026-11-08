@@ -2395,4 +2395,7 @@ Doorgaan met beheerdersrechten?</value>
   <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
     <value>de download duurde te lang</value>
   </data>
+  <data name="SelfUpdateCancelUpdate" xml:space="preserve">
+    <value>Update annuleren</value>
+  </data>
 </root>

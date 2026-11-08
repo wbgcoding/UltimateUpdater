@@ -344,7 +344,7 @@ public partial class MainViewModel
 
                 // Only when the table is actually sorted by a column enrichment just filled in does it
                 // need re-ordering; a one-off refresh at the end of the pass, not per row.
-                if (SortColumn is "date" or "size")
+                if (SortColumn is "date" or "size" or "version")
                     await _dispatcher.InvokeAsync(() => RefreshViewSafely(UpdatesView, nameof(UpdatesView)), DispatcherPriority.Background);
             }
         }

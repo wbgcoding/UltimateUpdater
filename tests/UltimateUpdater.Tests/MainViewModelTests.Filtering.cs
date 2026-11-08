@@ -261,4 +261,70 @@ public partial class MainViewModelTests
             Assert.DoesNotContain(row, viewModel.UpdatesView.Cast<UpdateRowViewModel>());
         });
     }
+
+    /// <summary>The chip counts only rows its filter would show: a snoozed row is held back like an ignored
+    /// one unless "show ignored" is on, and a manual row goes with the hidden manual category. The count
+    /// follows each toggle.</summary>
+    [Fact]
+    public void The_keeps_failing_count_skips_snoozed_and_hidden_manual_rows()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create();
+            var snoozed = new UpdateRowViewModel(Item("eslint", "eslint", "npm"));
+            var manual = new UpdateRowViewModel(ManualItem("epic", "Epic Games Launcher"));
+            viewModel.Updates.AddRange([snoozed, manual]);
+            snoozed.InstallState = RowInstallState.NeedsManualWork;
+            manual.InstallState = RowInstallState.NeedsManualWork;
+            Assert.Equal(2, viewModel.PersistentFailureCount);
+
+            var changed = new List<string?>();
+            viewModel.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+            ((IRowActions)viewModel).Snooze(snoozed, "day");
+            Assert.Equal(1, viewModel.PersistentFailureCount);
+            Assert.Contains(nameof(MainViewModel.PersistentFailureCount), changed);
+
+            viewModel.ShowIgnored = true;
+            Assert.Equal(2, viewModel.PersistentFailureCount);
+
+            viewModel.ShowIgnored = false;
+            viewModel.HideManual = true;
+            Assert.Equal(0, viewModel.PersistentFailureCount);
+            Assert.False(viewModel.HasPersistentFailures);
+
+            viewModel.HideManual = false;
+            ((IRowActions)viewModel).Unsnooze(snoozed);
+            Assert.Equal(2, viewModel.PersistentFailureCount);
+        });
+    }
+
+    /// <summary>An ignored row sinks below the rest of its group the moment it is ignored (with "show
+    /// ignored" on it stays in the table), and rises back to its sorted place when un-ignored. Flipping the
+    /// flag alone leaves the view where it was: the sort key is not live.</summary>
+    [Fact]
+    public void An_ignored_row_moves_to_the_bottom_of_its_group_and_back()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create();
+            var first = new UpdateRowViewModel(Item("a-tool", "Alpha", "npm"));
+            var second = new UpdateRowViewModel(Item("b-tool", "Bravo", "npm"));
+            var third = new UpdateRowViewModel(Item("c-tool", "Charlie", "npm"));
+            viewModel.Updates.AddRange([first, second, third]);
+            viewModel.ShowIgnored = true;
+
+            List<UpdateRowViewModel> Order() => viewModel.UpdatesView.Cast<UpdateRowViewModel>().ToList();
+            Assert.Equal([first, second, third], Order());
+
+            ((IRowActions)viewModel).IgnoreAllVersions(first);
+            Assert.Equal([second, third, first], Order());
+
+            viewModel.IgnoreCommand.Execute(first);
+            Assert.Equal([first, second, third], Order());
+
+            viewModel.IgnoreCommand.Execute(second);
+            Assert.Equal([first, third, second], Order());
+        });
+    }
 }

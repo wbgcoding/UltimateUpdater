@@ -660,4 +660,34 @@ public partial class MainViewModelTests
             Assert.Contains(nameof(MainViewModel.SelectionSummary), raised);
         });
     }
+
+    /// <summary>A snoozed row offers no retry and no reset-and-retry, like it offers no install; both come back,
+    /// with their commands, when the snooze ends.</summary>
+    [Fact]
+    public void A_snoozed_failed_row_offers_no_retry_until_the_snooze_ends()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var row = new UpdateRowViewModel(Item("Retry.Tool", "Retry Tool", "npm"));
+            row.InstallState = RowInstallState.Failed;
+            var changed = new List<string?>();
+            row.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+            Assert.True(row.ShowRetryButton);
+            Assert.True(row.RetryCommand.CanExecute(null));
+
+            row.IsSnoozed = true;
+            Assert.False(row.ShowRetryButton);
+            Assert.False(row.RetryCommand.CanExecute(null));
+            Assert.Contains(nameof(UpdateRowViewModel.ShowRetryButton), changed);
+            Assert.Contains(nameof(UpdateRowViewModel.ShowResetAndRetryButton), changed);
+
+            row.InstallState = RowInstallState.NeedsManualWork;
+            Assert.False(row.ShowResetAndRetryButton);
+            Assert.False(row.ResetAndRetryCommand.CanExecute(null));
+
+            row.IsSnoozed = false;
+            Assert.True(row.ShowResetAndRetryButton);
+            Assert.True(row.ResetAndRetryCommand.CanExecute(null));
+        });
+    }
 }

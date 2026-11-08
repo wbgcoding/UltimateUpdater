@@ -30,7 +30,29 @@ public partial class MainViewModel
     [ObservableProperty]
     private bool selfUpdateWaitingForWork;
 
-    partial void OnSelfUpdateInProgressChanged(bool value) => InstallSelfUpdateCommand.NotifyCanExecuteChanged();
+    partial void OnSelfUpdateInProgressChanged(bool value)
+    {
+        InstallSelfUpdateCommand.NotifyCanExecuteChanged();
+        RaiseSelfUpdateDismissChanged();
+    }
+
+    partial void OnSelfUpdateWaitingForWorkChanged(bool value) => RaiseSelfUpdateDismissChanged();
+
+    private void RaiseSelfUpdateDismissChanged()
+    {
+        OnPropertyChanged(nameof(SelfUpdateDismissCancels));
+        OnPropertyChanged(nameof(SelfUpdateDismissLabel));
+    }
+
+    /// <summary>True while the banner's close button stops the update instead of only hiding the banner:
+    /// a download in progress or a verified update waiting for running work. Once applying has begun the
+    /// process is about to end and there is nothing left to take back.</summary>
+    public bool SelfUpdateDismissCancels => (SelfUpdateInProgress || SelfUpdateWaitingForWork) && !_selfUpdateApplying;
+
+    /// <summary>Tooltip and screen-reader name of the banner's close button: "Cancel update" while it stops
+    /// the update, "Dismiss" otherwise.</summary>
+    public string SelfUpdateDismissLabel =>
+        LocalizationService.Instance[SelfUpdateDismissCancels ? "SelfUpdateCancelUpdate" : "SelfUpdateDismiss"];
 
     /// <summary>What the banner says while the update runs: downloading with a percentage, verifying or
     /// installing. Empty when nothing is running.</summary>
@@ -216,6 +238,7 @@ public partial class MainViewModel
             _selfUpdateCts?.Cancel();
             _selfUpdateCts?.Dispose();
             _selfUpdateCts = new CancellationTokenSource();
+            var token = _selfUpdateCts.Token;
 
             // Created here on the dispatcher, so readings from the download thread are posted back to it
             // and the window never waits on the network.
@@ -233,8 +256,12 @@ public partial class MainViewModel
                 : _selfUpdate.VerifiedPathFor(_pendingSelfUpdate.Version);
             var download = held is not null
                 ? new Services.SelfUpdate.SelfUpdateDownloadResult(Services.SelfUpdate.SelfUpdateDownloadOutcome.Downloaded, held)
-                : await (SelfUpdateDownloadForTest?.Invoke(_pendingSelfUpdate, _selfUpdateCts.Token)
-                    ?? _selfUpdate.DownloadVerifiedAsync(_pendingSelfUpdate, _selfUpdateCts.Token, progress));
+                : await (SelfUpdateDownloadForTest?.Invoke(_pendingSelfUpdate, token)
+                    ?? _selfUpdate.DownloadVerifiedAsync(_pendingSelfUpdate, token, progress));
+
+            // The user cancelled while the last bytes arrived: whatever the download reports, nothing is
+            // applied and no failure is shown for a stop they asked for.
+            token.ThrowIfCancellationRequested();
             if (download.Path is not { } verifiedPath)
             {
                 if (download.Outcome == Services.SelfUpdate.SelfUpdateDownloadOutcome.SignatureInvalid)
@@ -328,6 +355,7 @@ public partial class MainViewModel
         // Set on the UI thread in the same step as the caller's own "no work running" check, so no install
         // can start between that check and the process ending.
         _selfUpdateApplying = true;
+        RaiseSelfUpdateDismissChanged();
         var result = Services.SelfUpdate.SelfUpdateApplyResult.Failed;
         ShowSelfUpdateInstalling();
         try
@@ -340,6 +368,7 @@ public partial class MainViewModel
             if (result != Services.SelfUpdate.SelfUpdateApplyResult.Started)
             {
                 _selfUpdateApplying = false;
+                RaiseSelfUpdateDismissChanged();
                 ClearSelfUpdateProgress();
             }
         }
@@ -428,8 +457,23 @@ public partial class MainViewModel
         SelfUpdateAvailable = true;
     }
 
+    /// <summary>The banner's close button. While the update is downloading or waiting for running work it
+    /// also cancels it: hiding the banner alone would leave an update that still applies later and
+    /// restarts the app with no warning.</summary>
     [RelayCommand]
-    private void DismissSelfUpdate() => SelfUpdateAvailable = false;
+    private void DismissSelfUpdate()
+    {
+        if (SelfUpdateDismissCancels)
+        {
+            _selfUpdateCts?.Cancel();
+            _verifiedSelfUpdatePath = null;
+            SelfUpdateWaitingForWork = false;
+            DefragRunState.RunEnded -= OnDefragRunEnded;
+            SelfUpdateInProgress = false;
+        }
+
+        SelfUpdateAvailable = false;
+    }
 
     /// <summary>
     /// The banner's third button: shows the release notes of the offered version through the existing
