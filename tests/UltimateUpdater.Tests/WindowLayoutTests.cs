@@ -373,15 +373,18 @@ public partial class WindowLayoutTests
             foreach (var t in triggers)
             {
                 Assert.Contains(t.Conditions, c =>
-                    ((Binding)c.Binding).Path.Path == nameof(MainViewModel.InstallHasRealProgress) && Equals(c.Value?.ToString(), "False"));
+                    ((Binding)c.Binding).Path?.Path == nameof(MainViewModel.InstallHasRealProgress) && Equals(c.Value?.ToString(), "False"));
                 Assert.Contains(t.Conditions, c =>
-                    ((Binding)c.Binding).Path.Path == nameof(MainViewModel.IsInstalling) && Equals(c.Value?.ToString(), "True"));
+                    ((Binding)c.Binding).Path?.Path == nameof(MainViewModel.IsInstalling) && Equals(c.Value?.ToString(), "True"));
             }
 
             var trigger = triggers.Single(t => t.EnterActions.Count > 0);
-            Assert.Equal(3, trigger.Conditions.Count);
+            // plus the system animation setting: a PC with animations off never runs the shine
+            Assert.Equal(4, trigger.Conditions.Count);
             Assert.Contains(trigger.Conditions, c =>
-                ((Binding)c.Binding).Path.Path == nameof(Window.IsVisible)
+                ((Binding)c.Binding).Source is bool && Equals(c.Value?.ToString(), "True"));
+            Assert.Contains(trigger.Conditions, c =>
+                ((Binding)c.Binding).Path?.Path == nameof(Window.IsVisible)
                 && ((Binding)c.Binding).RelativeSource?.AncestorType == typeof(Window)
                 && Equals(c.Value?.ToString(), "True"));
 
@@ -481,10 +484,13 @@ public partial class WindowLayoutTests
             // The spin runs only while scanning AND while the window is visible: a background interval
             // scan with the window hidden to the tray must not keep a 60 fps animation clock alive.
             var trigger = icon.Style.Triggers.OfType<MultiDataTrigger>().Single();
-            Assert.Equal(2, trigger.Conditions.Count);
+            // IsScanning, IsVisible and the system animation setting
+            Assert.Equal(3, trigger.Conditions.Count);
             Assert.Contains(trigger.Conditions, c =>
-                ((Binding)c.Binding).Path.Path == nameof(MainViewModel.IsScanning) && Equals(c.Value?.ToString(), "True"));
-            var visibleCondition = trigger.Conditions.Single(c => ((Binding)c.Binding).Path.Path == nameof(Window.IsVisible));
+                ((Binding)c.Binding).Source is bool && Equals(c.Value?.ToString(), "True"));
+            Assert.Contains(trigger.Conditions, c =>
+                ((Binding)c.Binding).Path?.Path == nameof(MainViewModel.IsScanning) && Equals(c.Value?.ToString(), "True"));
+            var visibleCondition = trigger.Conditions.Single(c => ((Binding)c.Binding).Path?.Path == nameof(Window.IsVisible));
             Assert.Equal("True", visibleCondition.Value?.ToString());
             Assert.Equal(typeof(Window), ((Binding)visibleCondition.Binding).RelativeSource.AncestorType);
             var beginStoryboard = (BeginStoryboard)trigger.EnterActions.Single();
