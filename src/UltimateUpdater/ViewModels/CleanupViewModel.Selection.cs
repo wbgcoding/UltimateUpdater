@@ -163,6 +163,19 @@ public partial class CleanupViewModel
 
     public string SelectedText => ByteSize.Format(SelectedBytes);
 
+    /// <summary>
+    /// True when a run started now cannot clean this row: it is a folder only an administrator can delete
+    /// from and neither this process nor a running elevated helper has admin rights. The row is then
+    /// skipped and flagged, so the confirmation must not promise its figure.
+    /// </summary>
+    internal bool WillSkipForMissingAdmin(CleanupItemViewModel item) =>
+        CleanupService.SkipsWithoutAdmin(item.Target, ElevationService.IsElevated || _elevated is { IsRunning: true });
+
+    /// <summary>What the ticked rows would really free right now: <see cref="SelectedBytes"/> without the
+    /// rows an unelevated run skips for missing admin rights.</summary>
+    internal long ConfirmedBytes =>
+        Items.Where(i => i.IsSelected && !WillSkipForMissingAdmin(i)).Sum(i => i.SelectedEntryBytes);
+
     // ---- the facts either side of the ring, so the top of the dialog is not empty space ----
 
     /// <summary>"3 of 10 areas": how much of the list is actually going to be touched.</summary>
@@ -319,8 +332,8 @@ public partial class CleanupViewModel
             });
 
         return recycle
-            ? (string.Format(Loc["CleanupConfirmHeadlineRecycle"], SelectedText), Loc["CleanupConfirmWarningRecycle"])
-            : (string.Format(Loc["CleanupConfirmHeadline"], SelectedText), Loc["CleanupConfirmWarning"]);
+            ? (string.Format(Loc["CleanupConfirmHeadlineRecycle"], ByteSize.Format(ConfirmedBytes)), Loc["CleanupConfirmWarningRecycle"])
+            : (string.Format(Loc["CleanupConfirmHeadline"], ByteSize.Format(ConfirmedBytes)), Loc["CleanupConfirmWarning"]);
     }
 
     /// <summary>
@@ -348,15 +361,17 @@ public partial class CleanupViewModel
                 continue;
 
             var groupTitle = Loc[CleanupGroups.TitleKey(key)];
-            var groupBytes = selected.Sum(i => i.SelectedEntryBytes);
+            var groupBytes = selected.Where(i => !WillSkipForMissingAdmin(i)).Sum(i => i.SelectedEntryBytes);
             lines.Add(groupBytes > 0 ? $"{groupTitle}: {ByteSize.Format(groupBytes)}" : groupTitle);
-            lines.AddRange(selected.Select(i => i.SelectedEntryBytes > 0
-                ? $"  • {i.Title}: {ByteSize.Format(i.SelectedEntryBytes)}"
-                : $"  • {i.Title}"));
+            lines.AddRange(selected.Select(i => WillSkipForMissingAdmin(i)
+                ? $"  • {i.Title}: {Loc["CleanupNeedsAdmin"]}"
+                : i.SelectedEntryBytes > 0
+                    ? $"  • {i.Title}: {ByteSize.Format(i.SelectedEntryBytes)}"
+                    : $"  • {i.Title}"));
             lines.Add(string.Empty);
         }
 
-        lines.Add(string.Format(Loc["CleanupConfirmTotal"], ByteSize.Format(SelectedBytes)));
+        lines.Add(string.Format(Loc["CleanupConfirmTotal"], ByteSize.Format(ConfirmedBytes)));
         return string.Join(Environment.NewLine, lines);
     }
 }

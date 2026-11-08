@@ -137,6 +137,14 @@ public class CleanupService(LoggingService logging)
             or CleanupKind.DriverCleanup or CleanupKind.DiskCleanup;
 
     /// <summary>
+    /// The target-level answer: the kinds above plus a folder an ordinary user cannot delete from at all
+    /// (<see cref="CleanupTarget.AdminOnlyDelete"/>), where an unelevated pass would report "done" with
+    /// nothing freed.
+    /// </summary>
+    internal static bool SkipsWithoutAdmin(CleanupTarget target, bool processElevated) =>
+        !processElevated && (SkipsWithoutAdmin(target.Kind, processElevated: false) || target.AdminOnlyDelete);
+
+    /// <summary>
     /// The exact command line <see cref="AnalyzeComponentStoreAsync"/> runs, split out so a test can
     /// assert on it without launching DISM. <c>/English</c> forces DISM's message text to English on any
     /// Windows display language; the German labels <see cref="ComponentStoreAnalysisParser"/> carries are

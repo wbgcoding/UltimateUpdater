@@ -95,4 +95,11 @@ public sealed record CleanupTarget(
     /// <see cref="CleanupKind.AppCacheSweep"/> read it.
     /// </summary>
     public TimeSpan? MinFileAge { get; init; }
+
+    /// <summary>
+    /// The folder is owned by SYSTEM or TrustedInstaller and an ordinary user cannot delete anything in it,
+    /// so an unelevated run would free nothing and still read "done". Such a target is skipped and flagged
+    /// "needs admin" without an elevated helper (see <see cref="CleanupService.SkipsWithoutAdmin(CleanupTarget, bool)"/>).
+    /// </summary>
+    public bool AdminOnlyDelete { get; init; }
 }

@@ -121,6 +121,7 @@ public static class CleanupCatalog
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupUpdateCacheConsequence", NeedsElevation: true)
             {
                 MinFileAge = TempMinFileAge,
+                AdminOnlyDelete = true,
                 Directories = Distinct([Path.Combine(windows, "SoftwareDistribution", "Download")]),
             },
 
@@ -129,6 +130,7 @@ public static class CleanupCatalog
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupDeliveryOptimizationConsequence", NeedsElevation: true)
             {
                 MinFileAge = CacheMinFileAge,
+                AdminOnlyDelete = true,
                 Directories = Distinct([Path.Combine(windows, "SoftwareDistribution", "DeliveryOptimization")]),
             },
 

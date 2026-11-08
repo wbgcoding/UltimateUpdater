@@ -714,7 +714,7 @@ public partial class CleanupViewModel
 
         // A target only an administrator can run is never started here unelevated: it would end at once
         // (DISM exit 740) and read "done, 0 B". It is skipped and the row says why.
-        Task<CleanupOutcome> CleanLocallyAsync() => CleanupService.SkipsWithoutAdmin(item.Target.Kind, ElevationService.IsElevated)
+        Task<CleanupOutcome> CleanLocallyAsync() => CleanupService.SkipsWithoutAdmin(item.Target, ElevationService.IsElevated)
             ? SkipForMissingAdmin()
             : _service.CleanAsync(
             item.Target, progress, cancellationToken, _pause, _settings.Current.RegistryCleanup,
