@@ -288,6 +288,72 @@ public class DriverCleanupDiscoveryTests
         Assert.Equal("oem21.inf", only.PackageName);
     }
 
+    [Theory]
+    [InlineData("NetService")]
+    [InlineData("NetTrans")]
+    [InlineData("NetClient")]
+    [InlineData("LegacyDriver")]
+    [InlineData("netservice")]
+    public void A_service_loaded_class_package_is_never_offered_even_with_no_device_bound(string className)
+    {
+        var packages = new[]
+        {
+            Package("oem30.inf", "Acme", className, "1.0.0.0", Now.AddYears(-2), "acmenet.inf"),
+            Package("oem31.inf", "Acme", "Sound", "1.0.0.0", Now.AddYears(-2), "acmesnd.inf"),
+        };
+
+        var found = DriverCleanupDiscovery.DiscoverOldPackages([], packages);
+
+        Assert.Equal("oem31.inf", Assert.Single(found).PackageName);
+    }
+
+    [Fact]
+    public void A_primitive_inf_without_a_manufacturer_section_is_never_offered()
+    {
+        var packages = new[]
+        {
+            new DriverPackageInfo("oem40.inf", "Acme", "Sound", "1.0.0.0", Now.AddYears(-2), "acmeprim.inf", 1024,
+                null, HasManufacturerSection: false),
+            Package("oem41.inf", "Acme", "Sound", "1.0.0.0", Now.AddYears(-2), "acmesnd.inf"),
+        };
+
+        var found = DriverCleanupDiscovery.DiscoverOldPackages([], packages);
+
+        Assert.Equal("oem41.inf", Assert.Single(found).PackageName);
+    }
+
+    [Fact]
+    public void A_normal_superseded_package_is_still_offered_next_to_the_excluded_ones()
+    {
+        var devices = new[] { Device("A", "Device", "Sound", present: true, @"C:\Windows\INF\oem51.inf") };
+        var packages = new[]
+        {
+            Package("oem50.inf", "Acme", "Sound", "1.0.0.0", Now.AddYears(-2), "acmesnd.inf"),
+            Package("oem51.inf", "Acme", "Sound", "2.0.0.0", Now.AddMonths(-1), "acmesnd.inf"),
+            Package("oem52.inf", "Acme", "NetService", "1.0.0.0", Now.AddYears(-2), "acmesvc.inf"),
+        };
+
+        var found = DriverCleanupDiscovery.DiscoverOldPackages(devices, packages);
+
+        Assert.Equal("oem50.inf", Assert.Single(found).PackageName);
+    }
+
+    [Fact]
+    public void A_disconnected_device_whose_bound_package_is_a_primitive_inf_is_not_offered()
+    {
+        var devices = new[]
+        {
+            Device("A", "Odd", "Sound", present: false, @"C:\Windows\INF\oem60.inf", lastRemoval: Now.AddDays(-400)),
+        };
+        var packages = new[]
+        {
+            new DriverPackageInfo("oem60.inf", "Acme", "Sound", "1.0.0.0", Now.AddYears(-2), "acmeprim.inf", 1024,
+                null, HasManufacturerSection: false),
+        };
+
+        Assert.Empty(DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, packages));
+    }
+
     [Fact]
     public void A_superseded_additive_class_package_is_never_offered_either()
     {

@@ -82,15 +82,26 @@ public static class DriverCleanupDiscovery
         !string.IsNullOrWhiteSpace(infPath) && IsOemPackageName(Path.GetFileName(infPath));
 
     /// <summary>
-    /// Package classes that only ever ADD to another driver: an Extension INF is applied on top of a device's
-    /// base driver, a SoftwareComponent INF installs a helper component. Neither is what a device's
-    /// <c>DriverInfPath</c> reports, so "no device points at it" proves nothing for them; they are never
-    /// offered, bound or not, superseded or not. The elevated executor goes through the same discovery, so it
-    /// refuses them too.
+    /// Package classes that are never a device's own <c>DriverInfPath</c>, so "no device points at it" proves
+    /// nothing for them. An Extension INF is applied on top of a device's base driver and a SoftwareComponent
+    /// INF installs a helper component. NetService, NetTrans and NetClient packages (network protocols and
+    /// clients) and LegacyDriver packages are loaded by services straight from the driver store and never bound
+    /// to a devnode. They are never offered, bound or not, superseded or not. The elevated executor goes through
+    /// the same discovery, so it refuses them too.
     /// </summary>
-    internal static bool IsAdditiveDriverClass(string? className) =>
-        string.Equals(className?.Trim(), "Extension", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(className?.Trim(), "SoftwareComponent", StringComparison.OrdinalIgnoreCase);
+    internal static bool IsUnboundByDesignClass(string? className) =>
+        UnboundByDesignClasses.Any(c => string.Equals(className?.Trim(), c, StringComparison.OrdinalIgnoreCase));
+
+    private static readonly string[] UnboundByDesignClasses =
+        ["Extension", "SoftwareComponent", "NetService", "NetTrans", "NetClient", "LegacyDriver"];
+
+    /// <summary>
+    /// True for a package this category never offers: one of the classes above, or a primitive INF without a
+    /// [Manufacturer] section (it lists no device, so none can ever be bound to it; its service loads it from the
+    /// driver store). Extension INFs are excluded wholesale rather than added to the bound set.
+    /// </summary>
+    internal static bool IsNeverOffered(DriverPackageInfo package) =>
+        IsUnboundByDesignClass(package.ClassName) || !package.HasManufacturerSection;
 
     private static bool IsExcludedClass(string className) =>
         ExcludedClasses.Any(excluded => string.Equals(excluded, className, StringComparison.OrdinalIgnoreCase));
@@ -113,6 +124,7 @@ public static class DriverCleanupDiscovery
 
         return devices
             .Where(d => !d.Present && IsOemPackagePath(d.InfPath) && !IsExcludedClass(d.ClassName))
+            .Where(d => !(packagesByName.TryGetValue(Path.GetFileName(d.InfPath!), out var bound) && IsNeverOffered(bound)))
             .Select(d =>
             {
                 var packageName = Path.GetFileName(d.InfPath!);
@@ -173,7 +185,7 @@ public static class DriverCleanupDiscovery
         var superseded = SupersededPackageNames(packages);
 
         return packages
-            .Where(p => !IsAdditiveDriverClass(p.ClassName))
+            .Where(p => !IsNeverOffered(p))
             .Where(p => !presentBoundPackageNames.Contains(p.PackageName)
                 && (!boundPackageNames.Contains(p.PackageName) || superseded.Contains(p.PackageName)))
             .Select(p =>

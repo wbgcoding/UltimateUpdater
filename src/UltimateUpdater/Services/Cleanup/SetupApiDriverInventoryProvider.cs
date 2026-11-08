@@ -200,7 +200,7 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
 
             packages.Add(new DriverPackageInfo(
                 Path.GetFileName(oemInfPath), info.Provider, info.ClassName, info.DriverVersion, info.DriverDate,
-                originalName, size, storeFolder));
+                originalName, size, storeFolder, info.HasManufacturerSection));
         }
 
         return packages;
