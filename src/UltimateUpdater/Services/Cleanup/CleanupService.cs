@@ -1338,7 +1338,7 @@ public class CleanupService(LoggingService logging)
         var devices = provider.GatherDevices(cancellationToken);
         var packages = provider.GatherPackages(cancellationToken);
 
-        var disconnectedDevices = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, packages);
+        var disconnectedDevices = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, packages, logInfo: logging.Info);
         var oldPackages = DriverCleanupDiscovery.DiscoverOldPackages(devices, packages);
 
         return new CleanupScanResult(0, disconnectedDevices.Count + oldPackages.Count, 0)

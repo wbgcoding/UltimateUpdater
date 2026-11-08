@@ -98,7 +98,7 @@ public class DriverCleanupDiscoveryTests
     }
 
     [Fact]
-    public void Rows_sort_oldest_last_use_first_and_unknown_dates_sort_last()
+    public void Rows_sort_oldest_last_use_first_and_an_undated_device_is_left_out()
     {
         var devices = new[]
         {
@@ -110,7 +110,7 @@ public class DriverCleanupDiscoveryTests
 
         var found = Discover(devices, []);
 
-        Assert.Equal(["B", "D", "A", "C"], found.Select(d => d.InstanceId));
+        Assert.Equal(["B", "D", "A"], found.Select(d => d.InstanceId));
     }
 
     [Fact]
@@ -161,20 +161,6 @@ public class DriverCleanupDiscoveryTests
             : hasFirstInstall ? Now.AddDays(-4)
             : Now.AddDays(-5);
         Assert.Equal(expectedDate, found[0].LastConnected);
-    }
-
-    [Fact]
-    public void A_device_with_no_date_anywhere_reports_kind_Unknown()
-    {
-        var devices = new[]
-        {
-            Device("A", "Device", "Sound", present: false, @"C:\Windows\INF\oem1.inf"),
-        };
-
-        var found = Discover(devices, []);
-
-        Assert.Equal(DriverLastSeenKind.Unknown, found[0].LastConnectedKind);
-        Assert.Null(found[0].LastConnected);
     }
 
     /// <summary>A disconnected device row's tooltip facts come from its own bound package,
@@ -538,12 +524,31 @@ public class DriverCleanupDiscoveryTests
     }
 
     [Fact]
-    public void A_device_with_no_date_at_all_stays_offered()
+    public void A_device_with_no_date_at_all_is_not_offered_and_the_count_is_logged()
     {
-        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices([OldDeviceSeen()], [], Now);
+        var lines = new List<string>();
 
-        Assert.Single(found);
-        Assert.Equal(DriverLastSeenKind.Unknown, found[0].LastConnectedKind);
+        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices([OldDeviceSeen()], [], Now, lines.Add);
+
+        Assert.Empty(found);
+        var line = Assert.Single(lines);
+        Assert.Contains("1 disconnected device", line);
+    }
+
+    [Fact]
+    public void A_device_past_a_year_is_offered_while_a_dateless_one_beside_it_is_not()
+    {
+        var devices = new[]
+        {
+            OldDeviceSeen(removal: Now.AddDays(-366)),
+            Device("B", "Dateless", "Image", present: false, @"C:\Windows\INF\oem13.inf"),
+        };
+        var lines = new List<string>();
+
+        var found = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, [], Now, lines.Add);
+
+        Assert.Equal("A", Assert.Single(found).InstanceId);
+        Assert.Single(lines);
     }
 
     [Fact]
