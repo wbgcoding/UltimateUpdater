@@ -1921,9 +1921,6 @@ Doorgaan met beheerdersrechten?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Over</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Eén plek voor elke update die op deze pc wacht.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Versie {0}</value>
   </data>
@@ -2289,5 +2286,8 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="AboutPortableShort" xml:space="preserve">
     <value>Draagbaar: gegevens naast het programma</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Onafhankelijk project. Merken zijn eigendom van hun eigenaren.</value>
   </data>
 </root>

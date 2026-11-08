@@ -1921,9 +1921,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>このアプリについて</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>この PC の保留中のすべての更新をまとめて確認できます。</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>バージョン {0}</value>
   </data>
@@ -2289,5 +2286,8 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="AboutPortableShort" xml:space="preserve">
     <value>ポータブル: データはプログラムの隣</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>独立したプロジェクトです。商標は各所有者に帰属します。</value>
   </data>
 </root>

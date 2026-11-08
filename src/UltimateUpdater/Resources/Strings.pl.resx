@@ -1921,9 +1921,6 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Informacje</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Wszystkie aktualizacje oczekujące na tym komputerze w jednym miejscu.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Wersja {0}</value>
   </data>
@@ -2289,5 +2286,8 @@ Kontynuować z uprawnieniami administratora?</value>
   </data>
   <data name="AboutPortableShort" xml:space="preserve">
     <value>Przenośny: dane obok programu</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Niezależny projekt. Znaki towarowe należą do ich właścicieli.</value>
   </data>
 </root>

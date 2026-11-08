@@ -1921,9 +1921,6 @@ Continuare con privilegi di amministratore?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Informazioni</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Un unico posto per ogni aggiornamento in attesa su questo PC.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Versione {0}</value>
   </data>
@@ -2289,5 +2286,8 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="AboutPortableShort" xml:space="preserve">
     <value>Portatile: dati accanto al programma</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Progetto indipendente. I marchi appartengono ai rispettivi proprietari.</value>
   </data>
 </root>

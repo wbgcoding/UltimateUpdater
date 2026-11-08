@@ -1921,9 +1921,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>关于</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>此电脑上所有待处理更新的统一入口。</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>版本 {0}</value>
   </data>
@@ -2289,5 +2286,8 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="AboutPortableShort" xml:space="preserve">
     <value>便携版：数据在程序旁边</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>独立项目。商标归其各自所有者所有。</value>
   </data>
 </root>

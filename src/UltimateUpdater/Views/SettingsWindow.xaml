@@ -1283,7 +1283,6 @@
                                        RenderOptions.BitmapScalingMode="HighQuality"/>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[AppTitle]}"/>
-                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[AboutTagline]}"/>
                                     <TextBlock Style="{StaticResource CardDesc}" Text="{Binding AboutVersionText}"/>
                                     <!-- Only for a portable copy; AppPaths.IsPortable never changes after the process
                                          starts, so a one-time x:Static read is enough. -->
@@ -1300,12 +1299,11 @@
                                            Content="{Binding Loc[AboutRepository]}"
                                            Command="{Binding OpenRepositoryCommand}"/>
                             </Grid>
-                            <TextBlock Style="{StaticResource CardDesc}" Margin="0,12,0,0" TextWrapping="Wrap"
-                                       Text="{Binding Loc[AboutThirdParty]}"/>
-                            <TextBlock Style="{StaticResource CardDesc}" Margin="0,4,0,0" TextWrapping="Wrap"
-                                       Text="{Binding Loc[AboutTrademarks]}"/>
-                            <TextBlock Style="{StaticResource CardDesc}" Margin="0,4,0,0" TextWrapping="Wrap"
-                                       Text="{Binding Loc[AboutIcons]}"/>
+                            <WrapPanel Margin="0,12,0,0" ToolTip="{Binding AboutLegalFull}">
+                                <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[AboutLegalShort]}"/>
+                                <ui:SymbolIcon Symbol="Info16" Style="{StaticResource CardInfoIcon}"
+                                               ToolTip="{Binding AboutLegalFull}"/>
+                            </WrapPanel>
                         </StackPanel>
                     </Expander>
                 </Border>

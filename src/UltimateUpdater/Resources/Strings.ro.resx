@@ -1921,9 +1921,6 @@ Continuați cu drepturi de administrator?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Despre</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Un singur loc pentru fiecare actualizare care așteaptă pe acest PC.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Versiunea {0}</value>
   </data>
@@ -2289,5 +2286,8 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="AboutPortableShort" xml:space="preserve">
     <value>Portabil: date lângă program</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Proiect independent. Mărcile aparțin proprietarilor lor.</value>
   </data>
 </root>

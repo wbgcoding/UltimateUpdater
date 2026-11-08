@@ -1921,9 +1921,6 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Hakkında</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Bu bilgisayarda bekleyen her güncelleme için tek bir yer.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Sürüm {0}</value>
   </data>
@@ -2289,5 +2286,8 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="AboutPortableShort" xml:space="preserve">
     <value>Taşınabilir: veriler programın yanında</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Bağımsız bir proje. Ticari markalar sahiplerine aittir.</value>
   </data>
 </root>

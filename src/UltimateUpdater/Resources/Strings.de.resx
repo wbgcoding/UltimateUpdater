@@ -1921,9 +1921,6 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>Über</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Alle Updates dieses PCs an einem Ort.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Version {0}</value>
   </data>
@@ -2289,5 +2286,8 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="AboutPortableShort" xml:space="preserve">
     <value>Portabel: Daten neben dem Programm</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Unabhängiges Projekt. Marken gehören ihren Inhabern.</value>
   </data>
 </root>

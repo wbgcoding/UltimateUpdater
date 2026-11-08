@@ -1921,9 +1921,6 @@ Continuer avec les droits administrateur ?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>À propos</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>Un seul endroit pour toutes les mises à jour en attente sur ce PC.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Version {0}</value>
   </data>
@@ -2289,5 +2286,8 @@ Continuer avec les droits administrateur ?</value>
   </data>
   <data name="AboutPortableShort" xml:space="preserve">
     <value>Portable : données à côté du programme</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Projet indépendant. Les marques appartiennent à leurs propriétaires.</value>
   </data>
 </root>

@@ -1921,9 +1921,6 @@ Continue with admin rights?</value>
   <data name="AboutTitle" xml:space="preserve">
     <value>About</value>
   </data>
-  <data name="AboutTagline" xml:space="preserve">
-    <value>One place for every update waiting on this PC.</value>
-  </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Version {0}</value>
   </data>
@@ -2289,5 +2286,8 @@ Continue with admin rights?</value>
   </data>
   <data name="AboutPortableShort" xml:space="preserve">
     <value>Portable: data next to the program</value>
+  </data>
+  <data name="AboutLegalShort" xml:space="preserve">
+    <value>Independent project. Trademarks belong to their owners.</value>
   </data>
 </root>
