@@ -226,6 +226,14 @@ public sealed partial class SelfUpdateService
         deadline.CancelAfter(DownloadTimeout);
         cancellationToken = deadline.Token;
 
+        // A verified download of an earlier attempt that is still pinned (it was never started) is dropped
+        // now, file and folder with it, instead of being orphaned when the pin is replaced below. One that
+        // already handed over to a running Setup has no digest left and stays untouched.
+        if (_verified is not null && _verifiedDigest is not null)
+            DiscardVerified(_verified.Name);
+
+        // Every way out except a verified file leaves nothing behind: pin released, file and folder removed.
+        var succeeded = false;
         try
         {
             // Refused before a single byte of the installer is fetched: with no usable key or no signature
@@ -303,9 +311,8 @@ public sealed partial class SelfUpdateService
             if (!await _channel.DownloadAsync(
                     _httpClient, ChooseUrl(update.Asset), targetPath, MaxAssetBytes, cancellationToken, downloadProgress))
             {
-                // a refused or truncated download still created the file; nothing unverified stays behind
+                // a refused or truncated download still created the file; the finally removes it
                 _logging.EventFailed(ActivityLog.SelfUpdate, $"download of '{update.Asset.Name}' failed or was refused");
-                TryDeleteStaged(targetPath);
                 return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.NetworkFailed);
             }
 
@@ -326,8 +333,6 @@ public sealed partial class SelfUpdateService
                     Convert.FromHexString(expectedDigest)))
             {
                 _logging.EventFailed(ActivityLog.SelfUpdate, $"checksum mismatch for '{update.Asset.Name}', discarded");
-                ReleaseVerified();
-                TryDeleteStaged(targetPath);
                 return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.VerificationFailed);
             }
 
@@ -337,49 +342,50 @@ public sealed partial class SelfUpdateService
             if (!ReleaseSignature.Verify(_verified, signatureText, _publicKeyPem))
             {
                 _logging.EventFailed(ActivityLog.SelfUpdate, $"signature check failed for '{update.Asset.Name}', discarded");
-                ReleaseVerified();
-                TryDeleteStaged(targetPath);
                 return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.SignatureInvalid);
             }
 
             // Second opinion from the installed antivirus, on the file the checksum just proved is the one
             // the release published (opt-out, and fail-open: no scanner never blocks an update). A
-            // detection here means the published artifact itself is bad; refuse it and keep the handle
-            // released so nothing unverified stays on disk.
+            // detection here means the published artifact itself is bad; refuse it (the finally releases the
+            // handle and removes the file) so nothing unverified stays on disk.
             var scan = await new Security.MalwareScanner(_logging).ScanFileAsync(targetPath, cancellationToken);
             if (scan.IsThreat)
             {
                 _logging.EventFailed(ActivityLog.SelfUpdate, $"antivirus flagged '{update.Asset.Name}' ({scan.Detail}), discarded");
-                ReleaseVerified();
-                TryDeleteStaged(targetPath);
                 return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.VerificationFailed);
             }
 
             _verifiedDigest = actualDigest;
             _verifiedVersion = update.Version;
             _logging.Event(ActivityLog.SelfUpdate, ActivityLog.SelfUpdateVerified(update.Version));
+            succeeded = true;
             return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.Downloaded, targetPath);
         }
         catch (OperationCanceledException) when (!callerToken.IsCancellationRequested)
         {
             // our own deadline, not the caller's: a download that never finishes is a network failure
             _logging.EventFailed(ActivityLog.SelfUpdate, "download timed out");
-            ReleaseVerified();
-            TryDeleteStaged(targetPath);
             return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.NetworkFailed);
         }
         catch (OperationCanceledException)
         {
-            ReleaseVerified();
-            TryDeleteStaged(targetPath);
             throw;
         }
-        catch (Exception ex) when (ex is HttpRequestException or IOException)
+        catch (Exception ex) when (ex is HttpRequestException or IOException or UnauthorizedAccessException or FormatException)
         {
+            // UnauthorizedAccessException: a locked or read-only TEMP; FormatException: a digest that is not hex.
+            // Both end the attempt as a failed download, never as an applied one.
             _logging.EventFailed(ActivityLog.SelfUpdate, $"download failed: {ex.Message}");
-            ReleaseVerified();
-            TryDeleteStaged(targetPath);
             return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.NetworkFailed);
+        }
+        finally
+        {
+            if (!succeeded)
+            {
+                ReleaseVerified();
+                TryDeleteStaged(targetPath);
+            }
         }
     }
 

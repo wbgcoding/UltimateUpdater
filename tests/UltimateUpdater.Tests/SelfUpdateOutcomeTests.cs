@@ -153,6 +153,65 @@ public class SelfUpdateOutcomeTests
         Assert.Equal(SelfUpdateDownloadOutcome.NetworkFailed, result.Outcome);
     }
 
+    [Theory]
+    [InlineData(typeof(UnauthorizedAccessException))]
+    [InlineData(typeof(FormatException))]
+    [InlineData(typeof(IOException))]
+    public async Task A_download_that_throws_leaves_no_staging_folder_and_reads_as_failed(Type exception)
+    {
+        string? staged = null;
+        var channel = new ScriptedChannel
+        {
+            Get = Feed([1, 2, 3]),
+            Download = (target, _) =>
+            {
+                staged = target;
+                File.WriteAllBytes(target, [1]);
+                throw (Exception)Activator.CreateInstance(exception)!;
+            },
+        };
+
+        var result = await Service(channel).DownloadVerifiedAsync(Update(), CancellationToken.None);
+
+        Assert.Equal(SelfUpdateDownloadOutcome.NetworkFailed, result.Outcome);
+        Assert.Null(result.Path);
+        Assert.NotNull(staged);
+        Assert.False(File.Exists(staged));
+        Assert.False(Directory.Exists(Path.GetDirectoryName(staged)));
+    }
+
+    [Fact]
+    public async Task A_second_download_removes_the_first_ones_file_and_folder()
+    {
+        var content = new byte[] { 1, 2, 3, 4 };
+        var channel = new ScriptedChannel
+        {
+            Get = Feed(content),
+            Download = (path, _) =>
+            {
+                File.WriteAllBytes(path, content);
+                return Task.FromResult(true);
+            },
+        };
+        var service = Service(channel);
+
+        var first = await service.DownloadVerifiedAsync(Update(), CancellationToken.None);
+        var second = await service.DownloadVerifiedAsync(Update(), CancellationToken.None);
+
+        try
+        {
+            Assert.Equal(SelfUpdateDownloadOutcome.Downloaded, first.Outcome);
+            Assert.Equal(SelfUpdateDownloadOutcome.Downloaded, second.Outcome);
+            Assert.False(File.Exists(first.Path));
+            Assert.False(Directory.Exists(Path.GetDirectoryName(first.Path)));
+            Assert.True(File.Exists(second.Path));
+        }
+        finally
+        {
+            service.DiscardVerified(second.Path!);
+        }
+    }
+
     [Fact]
     public async Task A_cancelled_download_stays_a_cancellation()
     {
