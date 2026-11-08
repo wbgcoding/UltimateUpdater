@@ -38,7 +38,7 @@ public class CleanupService(LoggingService logging)
                     CleanupKind.LeftoverInstalls => ScanLeftovers(cancellationToken),
                     CleanupKind.DriverCleanup => ScanDrivers(cancellationToken),
                     CleanupKind.PipInstallLeftovers => ScanPipLeftovers(cancellationToken),
-                    CleanupKind.OldPythonVersions => ScanOldPythonVersions(cancellationToken),
+                    CleanupKind.OldPythonVersions => ScanOldPythonVersions(CallerProfilePath, cancellationToken),
                     // Disk Cleanup reports nothing before it runs, and guessing a figure would be a lie.
                     _ => new CleanupScanResult(0, 0, 0),
                 };
@@ -52,6 +52,11 @@ public class CleanupService(LoggingService logging)
 
     /// <summary>How often a file pass reports what it has freed so far: about four times a second.</summary>
     internal TimeSpan ProgressInterval { get; set; } = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>The signed-in user's profile folder when this runs in the elevated worker (which may be another
+    /// account); null in the app itself, where the own profile is the right one. Only used to count virtual
+    /// environments for the old-Python rows.</summary>
+    internal string? CallerProfilePath { get; set; }
 
     /// <summary>Test seam: what the caller asked for, readable from inside an overridden
     /// <see cref="ScanAsync(CleanupTarget, CancellationToken, int)"/> that stands in for the real walk.</summary>
@@ -1460,10 +1465,10 @@ public class CleanupService(LoggingService logging)
     /// <summary>Every interpreter older than the newest of its own architecture, gathered fresh every scan;
     /// no byte total worth trusting across the whole target, the same reasoning as <see cref="ScanDrivers"/>,
     /// the per-row size is what the dialog actually shows.</summary>
-    private static CleanupScanResult ScanOldPythonVersions(CancellationToken cancellationToken)
+    internal static CleanupScanResult ScanOldPythonVersions(string? callerProfilePath, CancellationToken cancellationToken)
     {
         var candidates = PythonCleanupDiscovery.CountVenvUses(
-            PythonCleanupDiscovery.DiscoverOldVersions(WindowsRegistryView.Instance), cancellationToken);
+            PythonCleanupDiscovery.DiscoverOldVersions(WindowsRegistryView.Instance), callerProfilePath, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
         return new CleanupScanResult(candidates.Sum(c => c.SizeBytes), candidates.Count, 0)
@@ -1582,22 +1587,6 @@ public class CleanupService(LoggingService logging)
         }
     }
 
-    /// <summary>Clears the read-only attribute on every file below <paramref name="directory"/>. Links are
-    /// neither followed nor touched (their attributes would be set on the target): they are skipped, as is
-    /// everything below a linked folder, and Directory.Delete removes a link itself without following it.</summary>
-    private static void ClearReadOnlyAttributes(string directory)
-    {
-        var options = new EnumerationOptions
-        {
-            RecurseSubdirectories = true,
-            IgnoreInaccessible = true,
-            AttributesToSkip = FileAttributes.ReparsePoint,
-        };
-
-        foreach (var file in Directory.EnumerateFiles(directory, "*", options))
-            ClearReadOnlyAttribute(file);
-    }
-
     private static void ClearReadOnlyAttribute(string file)
     {
         try
@@ -1671,13 +1660,21 @@ public class CleanupService(LoggingService logging)
     }
 
     /// <summary>
-    /// One recycled item: its content, then the index file describing it. Both paths go through
-    /// <see cref="CleanupSafety.IsInsideOwnRecycleBin"/> immediately before the delete call: a row whose
-    /// path does not sit inside THIS user's own bin is refused outright, however it got here. A row with no
-    /// original path is the aggregate fallback row for a drive that could not be enumerated; deleting its
-    /// path would mean deleting a drive root, so it is never attempted.
+    /// One recycled item: its content, then the index file describing it. The path passes
+    /// <see cref="CleanupSafety.IsInsideOwnRecycleBin"/> first: a row whose path does not sit inside THIS
+    /// user's own bin is refused outright, however it got here. That check is only a snapshot, so the bin
+    /// folder holding the item is then opened and locked (no rename or delete of it while this runs) and
+    /// must still be exactly the checked, link-free folder; every file is deleted through a handle that is
+    /// proven to lie inside it, and a folder item is removed by the same verified walk used for the other
+    /// leftover folders. A row with no original path is the aggregate fallback row for a drive that could not
+    /// be enumerated; deleting its path would mean deleting a drive root, so it is never attempted.
     /// </summary>
-    internal bool DeleteRecycledItem(CleanupEntry entry, string? ownSid)
+    internal bool DeleteRecycledItem(CleanupEntry entry, string? ownSid) =>
+        DeleteRecycledItem(entry, ownSid, CleanupSafety.IsInsideOwnRecycleBin);
+
+    /// <summary><paramref name="isInsideOwnBin"/> is the path gate; tests pass their own, because a real bin
+    /// only exists at a drive root.</summary>
+    internal bool DeleteRecycledItem(CleanupEntry entry, string? ownSid, Func<string, string?, bool> isInsideOwnBin)
     {
         if (entry.OriginalPath is null)
         {
@@ -1686,39 +1683,39 @@ public class CleanupService(LoggingService logging)
             return false;
         }
 
-        if (!CleanupSafety.IsInsideOwnRecycleBin(entry.Path, ownSid))
+        if (!isInsideOwnBin(entry.Path, ownSid))
         {
             logging.Warn("Cleanup: a recycle-bin row was refused because its path is not inside this user's own bin.");
             return false;
         }
 
+        var binFolder = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(entry.Path));
+        using var binLock = string.IsNullOrEmpty(binFolder) ? null : CleanupSafety.TryLockForUse(binFolder, allowEntriesToBeAdded: true);
+        if (binLock is null || VerifiedDelete.FinalPathOf(binLock) is not { } binFinalPath)
+        {
+            logging.Warn("Cleanup: a recycle-bin row was refused because its bin folder could not be locked for use.");
+            return false;
+        }
+
         try
         {
-            if (Directory.Exists(entry.Path))
+            if (IsReparsePoint(entry.Path))
             {
-                // Links first, so nothing the recursive delete meets can lead out of the recycled tree. When
-                // the item itself was a link, unlinking it already finished the job.
+                // A link as the recycled item itself: only the link goes, never what it points at.
+                if (!RemoveRecycledLink(entry.Path))
+                    return false;
+            }
+            else if (Directory.Exists(entry.Path))
+            {
+                // Links inside first, so nothing the walk meets can lead out of the recycled tree.
                 UnlinkReparsePoints(entry.Path);
-                if (Directory.Exists(entry.Path))
-                {
-                    try
-                    {
-                        Directory.Delete(entry.Path, recursive: true);
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        // Directory.Delete honours the read-only attribute: a recycled git working copy (read-only
-                        // pack files) was half deleted and then failed, its $I index left describing an item that
-                        // could no longer be restored in full, and every later run failed the same way.
-                        ClearReadOnlyAttributes(entry.Path);
-                        Directory.Delete(entry.Path, recursive: true);
-                    }
-                }
+                if (Directory.Exists(entry.Path) && !DeletePipLeftoverTree(entry.Path).Removed)
+                    return false;
             }
             else if (File.Exists(entry.Path))
             {
-                ClearReadOnlyAttribute(entry.Path);
-                File.Delete(entry.Path);
+                if (VerifiedDelete.TryDeleteFile(binFinalPath, entry.Path, out _) != VerifiedDelete.Outcome.Deleted)
+                    return false;
             }
             else
             {
@@ -1733,11 +1730,12 @@ public class CleanupService(LoggingService logging)
         // The index file only describes content that is already gone; failing to remove it leaves a
         // harmless orphan the next scan skips, so it never turns a deleted item into a failed one.
         var indexPath = RecycleBinScanner.IndexPathFor(entry.Path);
-        if (indexPath is not null && CleanupSafety.IsInsideOwnRecycleBin(indexPath, ownSid))
+        if (indexPath is not null && isInsideOwnBin(indexPath, ownSid))
         {
             try
             {
-                File.Delete(indexPath);
+                if (VerifiedDelete.TryDeleteFile(binFinalPath, indexPath, out _) == VerifiedDelete.Outcome.Refused)
+                    logging.Info($"Recycle bin index '{indexPath}' is not inside its bin folder; left alone.");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -1746,6 +1744,25 @@ public class CleanupService(LoggingService logging)
         }
 
         return true;
+    }
+
+    /// <summary>Removes a link (junction, symlink) that is itself the recycled item, without following it.</summary>
+    private static bool RemoveRecycledLink(string path)
+    {
+        if (Directory.Exists(path))
+        {
+            Directory.Delete(path, recursive: false);
+            return true;
+        }
+
+        if (File.Exists(path))
+        {
+            ClearReadOnlyAttribute(path);
+            File.Delete(path);
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>

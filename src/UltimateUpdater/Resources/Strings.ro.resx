@@ -2344,4 +2344,16 @@ Continuați cu drepturi de administrator?</value>
   <data name="ReinstallInstallFailed" xml:space="preserve">
     <value>Eliminat, dar noua instalare a eșuat. Folosește Reîncearcă pentru a încerca din nou.</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>Acest număr este un minim. Se numără în profilul de utilizator și în folderele obișnuite ale instrumentelor (pipx, Poetry); mediile virtuale păstrate în altă parte nu sunt găsite.</value>
+  </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>Înlocuit de versiunea {0} ({1})</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>Înlocuit de o versiune mai nouă</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>Niciun dispozitiv nu folosește acest driver</value>
+  </data>
 </root>

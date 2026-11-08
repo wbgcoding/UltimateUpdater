@@ -5,8 +5,9 @@ using System.Text.RegularExpressions;
 
 namespace UltimateUpdater.Services.Cleanup;
 
-/// <summary>One [Version] section's worth of facts read out of an oem*.inf file.</summary>
-public sealed record DriverInfVersionInfo(string Provider, string ClassName, string? DriverVersion, DateTimeOffset? DriverDate);
+/// <summary>One [Version] section's worth of facts read out of an oem*.inf file. <see cref="HasManufacturerSection"/>
+/// is false for a primitive INF (no [Manufacturer] section): it lists no device, so no devnode can ever be bound to it.</summary>
+public sealed record DriverInfVersionInfo(string Provider, string ClassName, string? DriverVersion, DateTimeOffset? DriverDate, bool HasManufacturerSection);
 
 /// <summary>
 /// Reads the plain facts out of a third-party driver package's .inf file: no SetupAPI call needed for this
@@ -101,21 +102,34 @@ public static class DriverPackageInfReader
         var driverVerRaw = values.GetValueOrDefault("DriverVer");
         var (date, version) = ParseDriverVer(driverVerRaw);
 
-        return new DriverInfVersionInfo(provider ?? string.Empty, className ?? string.Empty, version, date);
+        return new DriverInfVersionInfo(
+            provider ?? string.Empty, className ?? string.Empty, version, date, sections.ContainsKey("Manufacturer"));
     }
 
-    /// <summary>An INF may name its class by GUID only. The two additive classes the driver cleanup must
-    /// recognise are mapped here; any other GUID stays unnamed, as before.</summary>
+    /// <summary>An INF may name its class by GUID only. The classes the driver cleanup must recognise are
+    /// mapped here (the additive ones and the service-only ones); any other GUID stays unnamed.</summary>
     private static string? ClassNameForKnownGuid(string? classGuid)
     {
         classGuid = classGuid?.Trim();
-        if (string.Equals(classGuid, "{e2f84ce7-8efa-411c-aa69-97454ca4cb57}", StringComparison.OrdinalIgnoreCase))
-            return "Extension";
+        foreach (var (guid, name) in KnownClassGuids)
+        {
+            if (string.Equals(classGuid, guid, StringComparison.OrdinalIgnoreCase))
+                return name;
+        }
 
-        return string.Equals(classGuid, "{5c4c3332-344d-483c-8739-259e934c9cc8}", StringComparison.OrdinalIgnoreCase)
-            ? "SoftwareComponent"
-            : null;
+        return null;
     }
+
+    private static readonly (string Guid, string Name)[] KnownClassGuids =
+    [
+        ("{e2f84ce7-8efa-411c-aa69-97454ca4cb57}", "Extension"),
+        ("{5c4c3332-344d-483c-8739-259e934c9cc8}", "SoftwareComponent"),
+        ("{4d36e973-e325-11ce-bfc1-08002be10318}", "NetClient"),
+        ("{4d36e974-e325-11ce-bfc1-08002be10318}", "NetService"),
+        ("{4d36e975-e325-11ce-bfc1-08002be10318}", "NetTrans"),
+        ("{8ecc055d-047f-11d1-a537-0000f8753ed1}", "LegacyDriver"),
+        ("{4d36e979-e325-11ce-bfc1-08002be10318}", "Printer"),
+    ];
 
     private static (DateTimeOffset? Date, string? Version) ParseDriverVer(string? driverVer)
     {

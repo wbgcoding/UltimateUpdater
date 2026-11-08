@@ -108,36 +108,60 @@ public static class PythonCleanupDiscovery
     /// inside that interpreter's folder) would break if it were uninstalled. Called from the scan only: the
     /// elevated executor re-discovers without it, because the count never gates a deletion, it only warns.</summary>
     public static IReadOnlyList<PythonVersionCandidate> CountVenvUses(
-        IReadOnlyList<PythonVersionCandidate> candidates, CancellationToken cancellationToken) =>
-        CountVenvUses(candidates, DefaultVenvRoots(), VenvScanTimeCap, cancellationToken);
+        IReadOnlyList<PythonVersionCandidate> candidates, string? callerProfilePath, CancellationToken cancellationToken) =>
+        CountVenvUses(candidates, DefaultVenvRoots(callerProfilePath), VenvScanTimeCap, cancellationToken,
+            TempFoldersToSkip(callerProfilePath));
 
     internal readonly record struct VenvSearchRoot(string Path, int MaxDepth);
 
-    internal static IReadOnlyList<VenvSearchRoot> DefaultVenvRoots()
+    /// <summary>The profile the search starts from: the signed-in user's folder as the unelevated app reported
+    /// it when that is a real absolute folder, else this process's own. The elevated worker may run as another
+    /// account, whose profile would hold none of the signed-in user's environments. The path is only read.</summary>
+    internal static string? ResolveProfile(string? callerProfilePath)
     {
-        var roots = new List<VenvSearchRoot>();
-        void Add(Environment.SpecialFolder folder, string? sub, int depth)
+        // Local and link-free only: the elevated worker walks this folder, and a share would make the admin
+        // account sign in to it.
+        if (CleanupSafety.IsLocalPathWithoutLinks(callerProfilePath))
         {
-            var baseDir = Environment.GetFolderPath(folder);
-            if (!string.IsNullOrEmpty(baseDir))
-                roots.Add(new VenvSearchRoot(sub is null ? baseDir : Path.Combine(baseDir, sub), depth));
+            try
+            {
+                var full = Path.GetFullPath(callerProfilePath);
+                if (Directory.Exists(full))
+                    return full;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+            {
+                // fall back to the process's own profile
+            }
         }
 
-        Add(Environment.SpecialFolder.UserProfile, null, VenvProfileDepth);
-        Add(Environment.SpecialFolder.LocalApplicationData, @"pipx\venvs", 2);
-        Add(Environment.SpecialFolder.ApplicationData, @"pypoetry\virtualenvs", 2);
-        Add(Environment.SpecialFolder.LocalApplicationData, @"pypoetry\Cache\virtualenvs", 2);
-        return roots;
+        var own = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return string.IsNullOrEmpty(own) ? null : own;
+    }
+
+    internal static IReadOnlyList<VenvSearchRoot> DefaultVenvRoots(string? callerProfilePath = null)
+    {
+        var profile = ResolveProfile(callerProfilePath);
+        if (profile is null)
+            return [];
+
+        return
+        [
+            new VenvSearchRoot(profile, VenvProfileDepth),
+            new VenvSearchRoot(Path.Combine(profile, "AppData", "Local", "pipx", "venvs"), 2),
+            new VenvSearchRoot(Path.Combine(profile, "AppData", "Roaming", "pypoetry", "virtualenvs"), 2),
+            new VenvSearchRoot(Path.Combine(profile, "AppData", "Local", "pypoetry", "Cache", "virtualenvs"), 2),
+        ];
     }
 
     internal static IReadOnlyList<PythonVersionCandidate> CountVenvUses(
         IReadOnlyList<PythonVersionCandidate> candidates, IReadOnlyList<VenvSearchRoot> roots,
-        TimeSpan timeCap, CancellationToken cancellationToken)
+        TimeSpan timeCap, CancellationToken cancellationToken, HashSet<string>? skippedTemp = null)
     {
         if (candidates.Count == 0)
             return candidates;
 
-        var homes = FindVenvHomes(roots, timeCap, cancellationToken);
+        var homes = FindVenvHomes(roots, timeCap, cancellationToken, skippedTemp);
         if (homes.Count == 0)
             return candidates;
 
@@ -150,15 +174,21 @@ public static class PythonCleanupDiscovery
     /// Never descends a junction or symlink, a Temp folder, <c>node_modules</c> or <c>.git</c>; a found
     /// environment is not searched further. Unreadable folders and files are skipped, never fatal.</summary>
     internal static IReadOnlyList<string> FindVenvHomes(
-        IReadOnlyList<VenvSearchRoot> roots, TimeSpan timeCap, CancellationToken cancellationToken)
+        IReadOnlyList<VenvSearchRoot> roots, TimeSpan timeCap, CancellationToken cancellationToken,
+        HashSet<string>? skippedTemp = null)
     {
         var homes = new List<string>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var skippedTemp = TempFoldersToSkip();
+        skippedTemp ??= TempFoldersToSkip(null);
         var clock = System.Diagnostics.Stopwatch.StartNew();
 
         foreach (var root in roots)
         {
+            // The listing below skips links, but a search root could be one itself (the profile the
+            // unelevated app reported is user-writable, and the elevated worker walks it).
+            if (CleanupSafety.AncestryLeadsThroughLink(root.Path))
+                continue;
+
             var pending = new Stack<(string Path, int Depth)>();
             pending.Push((root.Path, 0));
 
@@ -201,12 +231,15 @@ public static class PythonCleanupDiscovery
         return homes;
     }
 
-    private static HashSet<string> TempFoldersToSkip()
+    internal static HashSet<string> TempFoldersToSkip(string? callerProfilePath)
     {
         var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         if (!string.IsNullOrEmpty(local))
             set.Add(TrimSeparators(Path.Combine(local, "Temp")));
+
+        if (ResolveProfile(callerProfilePath) is { } profile)
+            set.Add(TrimSeparators(Path.Combine(profile, "AppData", "Local", "Temp")));
 
         set.Add(TrimSeparators(Path.GetTempPath()));
         return set;
@@ -226,6 +259,10 @@ public static class PythonCleanupDiscovery
                 return null;
 
             isVenv = true;
+            // A linked config is never followed (it could point at a share): no evidence either way.
+            if (File.GetAttributes(cfgPath).HasFlag(FileAttributes.ReparsePoint))
+                return null;
+
             // A real config is a handful of lines; the cap keeps a planted huge file harmless.
             foreach (var line in File.ReadLines(cfgPath).Take(64))
             {

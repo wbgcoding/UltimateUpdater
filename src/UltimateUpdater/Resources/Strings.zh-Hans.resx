@@ -2344,4 +2344,16 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="ReinstallInstallFailed" xml:space="preserve">
     <value>已卸载，但新的安装失败。请使用“重试”再试一次。</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>此数字为最小值。仅统计您的用户配置文件和常用工具文件夹 (pipx、Poetry) 中的虚拟环境，存放在其他位置的虚拟环境不会被发现。</value>
+  </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>已被版本 {0} ({1}) 取代</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>已被较新版本取代</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>没有设备使用此驱动程序</value>
+  </data>
 </root>

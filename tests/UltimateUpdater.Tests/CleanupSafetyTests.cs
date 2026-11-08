@@ -432,6 +432,35 @@ public class CleanupSafetyTests
     }
 
     [Fact]
+    public void A_lock_that_allows_new_entries_still_blocks_renaming_the_folder()
+    {
+        var parent = Path.Combine(Path.GetTempPath(), "wu-safety-binlock-" + Guid.NewGuid());
+        var bin = Path.Combine(parent, "bin");
+        Directory.CreateDirectory(bin);
+        var outside = Path.Combine(parent, "recycled.txt");
+        File.WriteAllText(outside, "x");
+        try
+        {
+            using (var strict = CleanupSafety.TryLockForUse(bin))
+            {
+                Assert.NotNull(strict);
+                Assert.Throws<IOException>(() => File.Move(outside, Path.Combine(bin, "recycled.txt")));
+            }
+
+            using var handle = CleanupSafety.TryLockForUse(bin, allowEntriesToBeAdded: true);
+            Assert.NotNull(handle);
+            File.Move(outside, Path.Combine(bin, "recycled.txt"));
+            Assert.True(File.Exists(Path.Combine(bin, "recycled.txt")));
+            Assert.ThrowsAny<Exception>(() => Directory.Move(bin, Path.Combine(parent, "renamed")));
+            Assert.True(Directory.Exists(bin));
+        }
+        finally
+        {
+            try { Directory.Delete(parent, recursive: true); } catch { }
+        }
+    }
+
+    [Fact]
     public void TryLockForUse_accepts_a_root_spelled_in_8_3_form()
     {
         var root = Path.Combine(Path.GetTempPath(), "wu-safety-shortname-" + Guid.NewGuid());

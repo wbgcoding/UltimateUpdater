@@ -23,7 +23,8 @@ public sealed record DriverDeviceInfo(
 /// One third-party driver package under <c>%windir%\INF\oem*.inf</c>. <see cref="PackageName"/> is always
 /// the bare file name (e.g. "oem12.inf"), never a full path: it is what pnputil's own
 /// <c>/delete-driver</c>/<c>/export-driver</c> switches take, and the only shape
-/// <see cref="DriverCleanupExecutor"/> ever validates and passes on.
+/// <see cref="DriverCleanupExecutor"/> ever validates and passes on. <see cref="HasManufacturerSection"/> is false for
+/// a primitive INF that lists no device at all.
 /// </summary>
 public sealed record DriverPackageInfo(
     string PackageName,
@@ -33,4 +34,5 @@ public sealed record DriverPackageInfo(
     DateTimeOffset? DriverDate,
     string OriginalName,
     long StoreFolderSizeBytes,
-    string? StorePath = null);
+    string? StorePath = null,
+    bool HasManufacturerSection = true);

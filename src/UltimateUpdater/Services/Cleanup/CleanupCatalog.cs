@@ -14,7 +14,27 @@ public static class CleanupCatalog
     /// still works with none).
     /// </summary>
     public static IReadOnlyList<CleanupTarget> Build(Action<string>? logWarning = null) =>
-        WithDisjointPaths(BuildCatalog(logWarning));
+        BuildFor(logWarning, null);
+
+    /// <summary>This process's own Temp folders: the redirected <c>%TEMP%</c> and the one under the local
+    /// profile. The unelevated app sends them to the elevated worker (see <see cref="CleanupCommand.CallerTempPaths"/>).</summary>
+    internal static IReadOnlyList<string> OwnTempPaths() =>
+        Distinct([
+            Path.GetTempPath(),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp"),
+        ]);
+
+    /// <summary>
+    /// The catalogue as the elevated worker builds it. <paramref name="callerTempPaths"/> are the
+    /// unelevated caller's own Temp folders as the caller reported them: with over-the-shoulder elevation the
+    /// worker runs as ANOTHER account, so its own Temp is not the signed-in user's, and without them that user's
+    /// Temp would be listed (and cleaned with admin rights) as an "other user's" Temp. The paths are only ever
+    /// used to take folders OUT of the all-users Temp list, never to add or delete anything, so a hostile value
+    /// can only shrink it. <paramref name="usersRoot"/> is a test seam for the profiles folder.
+    /// </summary>
+    internal static IReadOnlyList<CleanupTarget> BuildFor(
+        Action<string>? logWarning, IReadOnlyList<string>? callerTempPaths, string? usersRoot = null) =>
+        WithDisjointPaths(BuildCatalog(logWarning, callerTempPaths, usersRoot));
 
     /// <summary>
     /// Gives every target sole ownership of its own bytes. Some of the catalogue's directories nest inside
@@ -52,7 +72,8 @@ public static class CleanupCatalog
         path.StartsWith(
             Path.TrimEndingDirectorySeparator(root) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
 
-    private static IReadOnlyList<CleanupTarget> BuildCatalog(Action<string>? logWarning)
+    private static IReadOnlyList<CleanupTarget> BuildCatalog(
+        Action<string>? logWarning, IReadOnlyList<string>? callerTempPaths, string? usersRoot)
     {
         var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -74,7 +95,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupAllUsersTempConsequence", NeedsElevation: true)
             {
-                Directories = OtherUsersTempDirectories(),
+                Directories = OtherUsersTempDirectories(callerTempPaths, usersRoot, logWarning),
             },
 
             new CleanupTarget("windows-temp", "CleanupWindowsTemp", "CleanupWindowsTempDesc",
@@ -427,13 +448,23 @@ public static class CleanupCatalog
     /// More than one own Temp can exist: with TEMP redirected, <c>Path.GetTempPath()</c> and
     /// <c>%LOCALAPPDATA%\Temp</c> are two different folders, and both belong to the user.
     /// </summary>
-    internal static IReadOnlyList<string> ExcludeOwnTemp(IEnumerable<string> candidates, params string[] ownTemps)
+    internal static IReadOnlyList<string> ExcludeOwnTemp(IEnumerable<string> candidates, params string[] ownTemps) =>
+        ExcludeOwnTemp(candidates, ownTemps, null);
+
+    /// <summary><paramref name="logWarning"/> hears about an own Temp whose identity cannot be read: that
+    /// empties the whole list on purpose (fail closed), and the line says why.</summary>
+    internal static IReadOnlyList<string> ExcludeOwnTemp(
+        IEnumerable<string> candidates, IReadOnlyList<string> ownTemps, Action<string>? logWarning)
     {
         var own = new List<(uint VolumeSerial, ulong FileIndex)>();
         foreach (var ownTemp in ownTemps)
         {
             if (!CleanupSafety.TryReadDirectoryIdentity(ownTemp, out var identity))
+            {
+                logWarning?.Invoke(
+                    $"Cleanup: the all-users Temp list is empty because an own Temp folder could not be read: {ownTemp}");
                 return [];
+            }
 
             own.Add(identity);
         }
@@ -448,25 +479,48 @@ public static class CleanupCatalog
     /// directory needs no elevation, but deleting inside another user's profile does; a folder that cannot
     /// be touched is simply skipped at run time.
     /// </summary>
-    private static IReadOnlyList<string> OtherUsersTempDirectories()
+    private static IReadOnlyList<string> OtherUsersTempDirectories(
+        IReadOnlyList<string>? callerTempPaths, string? usersRootOverride, Action<string>? logWarning)
     {
         try
         {
-            var usersRoot = Path.Combine(
+            var usersRoot = usersRootOverride ?? Path.Combine(
                 Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) ?? "C:\\", "Users");
             if (!Directory.Exists(usersRoot))
                 return [];
 
+            // This process's own Temp folders plus the caller's: they differ whenever another account elevated.
+            List<string> ownTemps =
+            [
+                Path.GetFullPath(Path.GetTempPath()),
+                Path.GetFullPath(Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp")),
+            ];
+            // A caller path is opened here with admin rights, so it must be a local, link-free folder: a share
+            // would make the admin account sign in to it. One that is not leaves nothing to offer (fail closed).
+            foreach (var callerTemp in callerTempPaths ?? [])
+            {
+                if (string.IsNullOrWhiteSpace(callerTemp))
+                    continue;
+
+                if (!CleanupSafety.IsLocalPathWithoutLinks(callerTemp))
+                {
+                    logWarning?.Invoke(
+                        $"Cleanup: the all-users Temp list is empty because the caller's Temp is not a local folder: {callerTemp}");
+                    return [];
+                }
+
+                ownTemps.Add(Path.GetFullPath(callerTemp));
+            }
+
             return Distinct(ExcludeOwnTemp(Directory.EnumerateDirectories(usersRoot)
                 .Select(profile => Path.Combine(profile, "AppData", "Local", "Temp"))
                 .Where(Directory.Exists),
-                Path.GetFullPath(Path.GetTempPath()),
-                Path.GetFullPath(Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp"))));
+                ownTemps, logWarning));
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
-            // an unreadable users directory simply means this target has nothing to offer
+            // an unreadable users directory (or a malformed caller path) simply means this target has nothing to offer
             return [];
         }
     }

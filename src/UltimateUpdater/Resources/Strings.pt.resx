@@ -2344,4 +2344,16 @@ Continuar com direitos de administrador?</value>
   <data name="ReinstallInstallFailed" xml:space="preserve">
     <value>Removido, mas a nova instalação falhou. Use Tentar novamente para tentar outra vez.</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>Este número é um mínimo. Conta o perfil de utilizador e as pastas habituais de ferramentas (pipx, Poetry); ambientes virtuais guardados noutro local não são encontrados.</value>
+  </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>Substituído pela versão {0} ({1})</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>Substituído por uma versão mais recente</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>Nenhum dispositivo usa este driver</value>
+  </data>
 </root>

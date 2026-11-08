@@ -74,6 +74,18 @@ public sealed class CleanupCommand
     /// target.</summary>
     public List<string> SelectedDriverPackageNames { get; set; } = new();
 
+    /// <summary>
+    /// The unelevated app's own Temp folders (full paths of <c>%TEMP%</c> and <c>%LOCALAPPDATA%\Temp</c>). The
+    /// worker may run as a different account, so it cannot tell whose Temp is the signed-in user's; it uses these
+    /// only to leave them out of the all-users Temp list, never to add or delete anything.
+    /// </summary>
+    public List<string> CallerTempPaths { get; set; } = new();
+
+    /// <summary>The unelevated app's user profile folder. The worker may run as another account, so its own
+    /// profile is not the signed-in user's; the old-Python scan searches this one for virtual environments.
+    /// Only ever read to count, never to delete.</summary>
+    public string? CallerProfilePath { get; set; }
+
     /// <summary>Which "older Python versions" rows to actually uninstall on a "clean" (each identified by
     /// its interpreter's python.exe path); never "everything the last scan found", same none-pre-selected
     /// rule as <see cref="SelectedDriverDeviceInstanceIds"/>. Ignored for every other target.</summary>

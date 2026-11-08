@@ -2344,4 +2344,16 @@ Esto no se puede deshacer.</value>
   <data name="ReinstallInstallFailed" xml:space="preserve">
     <value>Se quitó, pero la nueva instalación falló. Usa Reintentar para volver a probar.</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>Este número es un mínimo. Se cuenta en su perfil de usuario y en las carpetas habituales de herramientas (pipx, Poetry); los entornos virtuales guardados en otro lugar no se encuentran.</value>
+  </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>Sustituido por la versión {0} ({1})</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>Sustituido por una versión más reciente</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>Ningún dispositivo usa este controlador</value>
+  </data>
 </root>

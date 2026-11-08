@@ -427,6 +427,40 @@ public class PythonCleanupDiscoveryTests : IDisposable
     }
 
     [Fact]
+    public void A_search_root_that_is_itself_a_junction_is_not_walked()
+    {
+        var (found, older, _) = OldAndNewCandidates();
+        var outside = Path.Combine(_root, "outside");
+        MakeVenv(outside, ".venv", older);
+        var link = Path.Combine(_root, "linked-root");
+        using (var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{outside}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        })!)
+        {
+            Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
+            Assert.Equal(0, mklink.ExitCode);
+        }
+
+        try
+        {
+            var counted = PythonCleanupDiscovery.CountVenvUses(
+                found, RootsOf(link), TimeSpan.FromSeconds(5), CancellationToken.None);
+
+            Assert.Equal(0, Assert.Single(counted).VenvUseCount);
+        }
+        finally
+        {
+            Directory.Delete(link);
+        }
+    }
+
+    [Fact]
     public void A_junction_in_the_walked_tree_is_not_followed()
     {
         var (found, older, _) = OldAndNewCandidates();
@@ -461,5 +495,45 @@ public class PythonCleanupDiscoveryTests : IDisposable
             // Remove the link itself first so the recursive teardown never walks through it.
             Directory.Delete(Path.Combine(profile, "link"));
         }
+    }
+
+    [Fact]
+    public void The_search_roots_follow_the_profile_the_caller_reported()
+    {
+        var profile = Path.Combine(_root, "signed-in");
+        Directory.CreateDirectory(profile);
+
+        var roots = PythonCleanupDiscovery.DefaultVenvRoots(profile);
+
+        Assert.Equal(profile, roots[0].Path);
+        Assert.Contains(roots, r => r.Path == Path.Combine(profile, "AppData", "Local", "pipx", "venvs"));
+        Assert.Contains(roots, r => r.Path == Path.Combine(profile, "AppData", "Roaming", "pypoetry", "virtualenvs"));
+        Assert.Contains(roots, r => r.Path == Path.Combine(profile, "AppData", "Local", "pypoetry", "Cache", "virtualenvs"));
+        Assert.All(roots, r => Assert.StartsWith(profile, r.Path, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("relative\\folder")]
+    [InlineData("C:\\no-such-folder-for-the-venv-search")]
+    public void An_unusable_caller_profile_falls_back_to_the_process_own_profile(string? reported)
+    {
+        var own = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        Assert.Equal(own, PythonCleanupDiscovery.ResolveProfile(reported));
+    }
+
+    [Fact]
+    public void The_reported_profiles_own_temp_folder_is_not_walked()
+    {
+        var (found, older, _) = OldAndNewCandidates();
+        var profile = Path.Combine(_root, "signed-in");
+        MakeVenv(Path.Combine(profile, "AppData", "Local", "Temp", "scratch"), ".venv", older);
+        MakeVenv(Path.Combine(profile, "projects"), ".venv", older);
+
+        var counted = PythonCleanupDiscovery.CountVenvUses(found, profile, CancellationToken.None);
+
+        Assert.Equal(1, Assert.Single(counted).VenvUseCount);
     }
 }

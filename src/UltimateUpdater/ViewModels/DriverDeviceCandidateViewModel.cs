@@ -6,7 +6,7 @@ using UltimateUpdater.Services.Cleanup;
 namespace UltimateUpdater.ViewModels;
 
 /// <summary>
-/// One "device no longer connected" row (Group A). Deliberately never pre-selected, same rule as
+/// One "device no longer connected" row (Group A). Never pre-selected, even after it passed the one-year filter, same rule as
 /// <see cref="LeftoverCandidateViewModel"/>: removing a device the user might reconnect tomorrow is not a
 /// decision this dialog makes on its own.
 /// </summary>

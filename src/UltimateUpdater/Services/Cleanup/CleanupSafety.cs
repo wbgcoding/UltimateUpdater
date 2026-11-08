@@ -218,6 +218,45 @@ public static class CleanupSafety
     }
 
     /// <summary>
+    /// True for a fully qualified path on a local drive (fixed, removable or RAM disk) that leads through no
+    /// link. A path the unelevated app reports must pass this before the elevated worker opens or walks it:
+    /// a UNC path, a network drive or a link to a share would make the admin account sign in to whatever
+    /// server the path names. Checked by spelling and drive type only, so the check itself never touches
+    /// the network.
+    /// </summary>
+    internal static bool IsLocalPathWithoutLinks([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)
+            || path.StartsWith(@"\\", StringComparison.Ordinal)
+            || path.StartsWith("//", StringComparison.Ordinal)
+            || !Path.IsPathFullyQualified(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            var full = Path.GetFullPath(path);
+            var root = Path.GetPathRoot(full);
+            if (full.StartsWith(@"\\", StringComparison.Ordinal)
+                || root is null || root.Length != 3 || root[1] != ':' || !char.IsAsciiLetter(root[0]))
+            {
+                return false;
+            }
+
+            if (new DriveInfo(root).DriveType is not (DriveType.Fixed or DriveType.Removable or DriveType.Ram))
+                return false;
+
+            return !AncestryLeadsThroughLink(full);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+                                       or ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Opens a directory handle that, while it stays open, blocks any rename or delete of that exact
     /// filesystem object, Windows only allows those with FILE_SHARE_DELETE from every open handle, and this
     /// one does not grant it. Closes the gap between "checked safe" and "used minutes later while deleting
@@ -225,9 +264,12 @@ public static class CleanupSafety
     /// check-then-open happens back to back with no attacker-controlled work between them, and the
     /// handle then guards everything the caller does with that directory until it is disposed. Returns null,
     /// never a bare path to fall back to, when the directory leads through a link or cannot be opened
-    /// this way at all.
+    /// this way at all. <paramref name="allowEntriesToBeAdded"/> also grants FILE_SHARE_WRITE, so other
+    /// programs can still move or create entries inside the folder while it stays locked (the recycle bin:
+    /// the user may recycle something while an item is being removed); a rename or delete of the folder
+    /// itself stays blocked either way.
     /// </summary>
-    public static SafeFileHandle? TryLockForUse(string path)
+    public static SafeFileHandle? TryLockForUse(string path, bool allowEntriesToBeAdded = false)
     {
         if (AncestryLeadsThroughLink(path))
             return null;
@@ -244,11 +286,13 @@ public static class CleanupSafety
         // link at the root open as the link itself instead of being followed.
         const uint genericRead = 0x80000000;
         const uint fileShareRead = 0x00000001;
+        const uint fileShareWrite = 0x00000002;
         const uint openExisting = 3;
         const uint fileFlagBackupSemantics = 0x02000000;
         const uint fileFlagOpenReparsePoint = 0x00200000;
 
-        var handle = CreateFileW(path, genericRead, fileShareRead, IntPtr.Zero, openExisting,
+        var share = allowEntriesToBeAdded ? fileShareRead | fileShareWrite : fileShareRead;
+        var handle = CreateFileW(path, genericRead, share, IntPtr.Zero, openExisting,
             fileFlagBackupSemantics | fileFlagOpenReparsePoint, IntPtr.Zero);
         if (handle.IsInvalid)
         {

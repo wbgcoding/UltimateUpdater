@@ -74,6 +74,7 @@ public static class CleanupWorker
             _ => DrainLog(writer, jobId), null, LogFlushInterval, LogFlushInterval);
 
         var service = serviceOverride ?? new CleanupService(logging);
+        service.CallerProfilePath = command.CallerProfilePath;
         var registrySettings = new Models.Settings.RegistryCleanupSettings
         {
             BackupFolder = ChooseRegistryBackupFolder(
@@ -82,7 +83,7 @@ public static class CleanupWorker
             RetentionCount = command.RegistryBackupRetentionCount,
         };
 
-        var targets = ResolveElevatedTargets(command.TargetIds);
+        var targets = ResolveElevatedTargets(command, logging.Warn);
 
         // A restore point before installs already exists (InstallWorker), and a cleaning run that
         // touches the registry, repairs Windows' own files, or removes a driver gets one too: those are
@@ -171,7 +172,19 @@ public static class CleanupWorker
     /// on its own, without a pipe, a job id or a running worker.
     /// </summary>
     internal static IReadOnlyList<CleanupTarget> ResolveElevatedTargets(IReadOnlyList<string> targetIds) =>
-        CleanupCatalog.Build()
+        ResolveElevatedTargets(targetIds, null, null, null);
+
+    /// <summary>The command form: the catalogue is built with the caller's own Temp folders so the all-users
+    /// Temp list leaves them out (see <see cref="CleanupCatalog.BuildFor"/>). <paramref name="usersRoot"/> is a
+    /// test seam for the profiles folder.</summary>
+    internal static IReadOnlyList<CleanupTarget> ResolveElevatedTargets(
+        CleanupCommand command, Action<string>? logWarning = null, string? usersRoot = null) =>
+        ResolveElevatedTargets(command.TargetIds, command.CallerTempPaths, logWarning, usersRoot);
+
+    private static IReadOnlyList<CleanupTarget> ResolveElevatedTargets(
+        IReadOnlyList<string> targetIds, IReadOnlyList<string>? callerTempPaths, Action<string>? logWarning,
+        string? usersRoot) =>
+        CleanupCatalog.BuildFor(logWarning, callerTempPaths, usersRoot)
             .Where(target => target.NeedsElevation && targetIds.Contains(target.Id, StringComparer.Ordinal))
             .ToList();
 
@@ -261,6 +274,7 @@ public static class CleanupWorker
                     StorePath = c.StorePath,
                     NewerVersion = c.NewerVersion,
                     NewerDate = c.NewerDate,
+                    IsSuperseded = c.IsSuperseded,
                 })
                 .ToList(),
             PythonVersionCandidates = result.PythonVersionCandidates?

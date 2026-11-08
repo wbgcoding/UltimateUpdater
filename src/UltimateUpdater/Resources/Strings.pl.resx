@@ -2344,4 +2344,16 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="ReinstallInstallFailed" xml:space="preserve">
     <value>Usunięto, ale nowa instalacja się nie powiodła. Użyj opcji Ponów próbę, aby spróbować jeszcze raz.</value>
   </data>
+  <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
+    <value>Ta liczba to minimum. Obejmuje profil użytkownika i typowe foldery narzędzi (pipx, Poetry); środowiska wirtualne przechowywane gdzie indziej nie są wykrywane.</value>
+  </data>
+  <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
+    <value>Zastąpiony wersją {0} ({1})</value>
+  </data>
+  <data name="CleanupDriverReasonSupersededPlain" xml:space="preserve">
+    <value>Zastąpiony nowszą wersją</value>
+  </data>
+  <data name="CleanupDriverReasonUnused" xml:space="preserve">
+    <value>Żadne urządzenie nie używa tego sterownika</value>
+  </data>
 </root>
