@@ -770,4 +770,96 @@ public class InstallPreflightTests
 
         Assert.True(cleared);
     }
+
+    private static void FeedScanResult(MainViewModel viewModel, UpdateItem item)
+    {
+        typeof(MainViewModel).GetMethod("OnItemFound", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .Invoke(viewModel, [item]);
+        viewModel.Flush();
+    }
+
+    private static UpdateItem Blocked(string installed, string available) => new()
+    {
+        Id = "Microsoft.VisualStudio.Product.Community",
+        SourceId = "winget",
+        Category = UpdateCategory.Software,
+        Name = "Visual Studio",
+        InstalledVersion = installed,
+        AvailableVersion = available,
+    };
+
+    /// <summary>A scan that finishes while the window is up replaces the row with one offering another
+    /// version: the stale row must not be queued (it would be orphaned), and the live row, which the user
+    /// never accepted, stays untouched.</summary>
+    [Fact]
+    public void A_row_replaced_by_another_version_during_the_window_is_not_queued()
+    {
+        App.ForceAttendedForTest = true;
+        try
+        {
+            WpfHarness.OnUiThread(() =>
+            {
+                var viewModel = Create(installBlockers: new Services.Install.InstallBlockers(runningProcessNames: () => ["devenv"]));
+                FeedScanResult(viewModel, Blocked("1.0", "2.0"));
+                var stale = Assert.Single(viewModel.Updates);
+                stale.IsSelected = true;
+
+                viewModel.InstallPreflightOverride = preflight =>
+                {
+                    FeedScanResult(viewModel, Blocked("1.0", "3.0"));
+                    preflight.StartTryingAnywayCommand.Execute(null);
+                    return preflight.Started;
+                };
+
+                ExecuteInstallAndWait(viewModel);
+
+                var live = Assert.Single(viewModel.Updates);
+                Assert.NotSame(stale, live);
+                Assert.Equal(RowInstallState.Idle, stale.InstallState);
+                Assert.Equal(RowInstallState.Idle, live.InstallState);
+                Assert.Empty(viewModel.InstallBatch);
+            });
+        }
+        finally
+        {
+            App.ForceAttendedForTest = false;
+        }
+    }
+
+    /// <summary>The replacement offers the same version (only the installed side moved): the live row is
+    /// the one that gets queued, the replaced one never is.</summary>
+    [Fact]
+    public void A_row_replaced_by_the_same_version_during_the_window_is_swapped_for_the_live_one()
+    {
+        App.ForceAttendedForTest = true;
+        try
+        {
+            WpfHarness.OnUiThread(() =>
+            {
+                var viewModel = Create(installBlockers: new Services.Install.InstallBlockers(runningProcessNames: () => ["devenv"]));
+                FeedScanResult(viewModel, Blocked("1.0", "2.0"));
+                var stale = Assert.Single(viewModel.Updates);
+                stale.IsSelected = true;
+
+                viewModel.InstallPreflightOverride = preflight =>
+                {
+                    FeedScanResult(viewModel, Blocked("1.5", "2.0"));
+                    preflight.StartTryingAnywayCommand.Execute(null);
+                    return preflight.Started;
+                };
+
+                ExecuteInstallAndWait(viewModel);
+
+                var live = Assert.Single(viewModel.Updates);
+                Assert.NotSame(stale, live);
+                Assert.Equal(RowInstallState.Idle, stale.InstallState);
+                Assert.NotEqual(RowInstallState.Idle, live.InstallState);
+                Assert.Equal([live], viewModel.InstallBatch.ToList());
+            });
+        }
+        finally
+        {
+            App.ForceAttendedForTest = false;
+        }
+    }
 }

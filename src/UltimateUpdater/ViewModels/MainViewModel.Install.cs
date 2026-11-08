@@ -202,7 +202,7 @@ public partial class MainViewModel
         if (RefusedWhileSelfUpdateApplies("Install", tellUser: true))
             return;
 
-        var resolved = resolvedCandidates
+        var resolved = ResolveLiveRows(resolvedCandidates)
             .Where(row => row.CanInstall
                           && row.InstallState is RowInstallState.Idle or RowInstallState.Failed or RowInstallState.Cancelled
                           && !_installPending.Contains(row))
@@ -284,6 +284,34 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(HeadlineText));
 
         _ = Background.Run(RunInstallLoopAsync(), _logging, "install loop");
+    }
+
+    /// <summary>
+    /// A scan that finished while the pre-flight window was up may have replaced or removed a candidate's
+    /// row. A replaced row that offers the same version is swapped for the live one, any other stale row is
+    /// dropped: queuing it would orphan the entry while the live row stays installable a second time.
+    /// A row the lookup does not know at all counts as live only while it is still in the table.
+    /// </summary>
+    private List<UpdateRowViewModel> ResolveLiveRows(IReadOnlyList<UpdateRowViewModel> rows)
+    {
+        var live = new List<UpdateRowViewModel>(rows.Count);
+        foreach (var row in rows)
+        {
+            UpdateRowViewModel? target;
+            if (!_rowsByKey.TryGetValue(PackageKey(row.Item), out var current))
+                target = Updates.Contains(row) ? row : null;
+            else if (ReferenceEquals(current, row))
+                target = row;
+            else if (string.Equals(current.AvailableVersion, row.AvailableVersion, StringComparison.Ordinal))
+                target = current;
+            else
+                target = null;
+
+            if (target is not null && !live.Contains(target))
+                live.Add(target);
+        }
+
+        return live;
     }
 
     /// <summary>
