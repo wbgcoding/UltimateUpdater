@@ -246,4 +246,43 @@ public partial class CleanupViewModelTests
         Assert.Equal(2, riskyTriggers.Count);
         Assert.All(riskyTriggers, m => Assert.Equal("SystemFillColorCriticalBrush", m.Groups["brush"].Value));
     }
+
+    /// <summary>A run that skipped most of a target's files (no access) must not credit its rows with their
+    /// full measured size: the rows share only what the target really freed.</summary>
+    [Fact]
+    public void Entries_no_report_reached_share_only_what_the_target_freed()
+    {
+        var viewModel = Create(CreateSettings());
+        var item = PreparedTarget(
+            viewModel, CleanupKind.Directories, Folder(@"C:\A", 50_000_000), Folder(@"C:\B", 34_700_000));
+
+        item.FreedBytes = 5_800_000;
+        item.SkippedBytes = 78_900_000;
+        item.RunState = CleanupTargetState.Done;
+        item.ResolveEntryStates(completed: true);
+
+        Assert.Equal(5_800_000, item.Entries.Sum(e => e.FreedBytes));
+        Assert.Equal(5_800_000, Entry(item, @"C:\A").FreedBytes);
+        Assert.Equal(0, Entry(item, @"C:\B").FreedBytes);
+        Assert.True(item.HasSkipped);
+        Assert.NotEqual(string.Empty, item.SkippedText);
+    }
+
+    /// <summary>What the progress reports already credited to one row is not handed out a second time.</summary>
+    [Fact]
+    public void Entries_no_report_reached_get_only_the_freed_bytes_not_yet_credited()
+    {
+        var viewModel = Create(CreateSettings());
+        var item = PreparedTarget(
+            viewModel, CleanupKind.Directories, Folder(@"C:\A", 1000), Folder(@"C:\B", 1000), Folder(@"C:\C", 1000));
+
+        Report(viewModel, item, @"C:\A\one.log", freed: 0);
+        Report(viewModel, item, @"C:\B\two.log", freed: 600);
+        item.FreedBytes = 1500;
+        item.RunState = CleanupTargetState.Done;
+        item.ResolveEntryStates(completed: true);
+
+        Assert.Equal(1500, item.Entries.Sum(e => e.FreedBytes));
+        Assert.All(item.Entries, e => Assert.True(e.FreedBytes <= e.Model.Bytes));
+    }
 }

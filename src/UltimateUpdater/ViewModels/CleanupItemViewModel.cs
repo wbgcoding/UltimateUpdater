@@ -749,7 +749,9 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     /// row of a target that was stopped or never got through, are genuinely still on disk and say so. A
     /// target that ran to the end removed what it was handed, so whatever is left over reads as cleaned;
     /// what stayed behind in use is a figure only the target itself can give (<see cref="SkippedText"/>),
-    /// never attributable to one row.
+    /// never attributable to one row. Those rows share only what the target freed beyond the rows the reports
+    /// already credited, in list order and each capped at its own size, so the rows never add up to more than
+    /// the target freed.
     /// </summary>
     public void ResolveEntryStates(bool completed)
     {
@@ -759,10 +761,14 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         {
             if (entry.State is EntryState.Cleaned or EntryState.Skipped)
                 continue;
+        var uncredited = Math.Max(0, FreedBytes - Entries.Sum(e => e.FreedBytes));
+
 
             var cleaned = completed && entry.IsSelected;
             entry.State = cleaned ? EntryState.Cleaned : EntryState.Skipped;
-            entry.FreedBytes = cleaned ? entry.Model.Bytes : 0;
+            var credit = cleaned ? Math.Min(uncredited, entry.Model.Bytes) : 0;
+            entry.FreedBytes = credit;
+            uncredited -= credit;
         }
     }
 
