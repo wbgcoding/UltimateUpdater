@@ -86,7 +86,7 @@ public class TableLayoutTests
     }
 
     [Fact]
-    public void Resetting_main_columns_restores_the_default_hidden_set()
+    public void ResetMainColumns_shows_every_column()
     {
         var viewModel = BuildMainViewModel(CreateSettings());
         viewModel.Updates.Add(FullRow("Vendor.App"));
@@ -99,23 +99,23 @@ public class TableLayoutTests
 
         Assert.False(viewModel.IsMainColumnHidden("date"));
         Assert.False(viewModel.IsMainColumnHidden("size"));
-        // Publisher defaults BACK to hidden on reset, same as a fresh install.
-        Assert.True(viewModel.IsMainColumnHidden("publisher"));
+        Assert.False(viewModel.IsMainColumnHidden("publisher"));
+        Assert.False(viewModel.IsMainColumnHidden("version"));
     }
 
     [Fact]
-    public void There_is_no_more_source_column_and_publisher_starts_hidden_on_a_fresh_install()
+    public void There_is_no_more_source_column_and_publisher_starts_shown_on_a_fresh_install()
     {
         var viewModel = BuildMainViewModel(CreateSettings());
         viewModel.Updates.Add(FullRow("Vendor.App"));
 
         Assert.DoesNotContain(MainViewModel.MainTableColumns, c => c.Id == "source");
-        Assert.True(viewModel.IsMainColumnHidden("publisher"));
+        Assert.False(viewModel.IsMainColumnHidden("publisher"));
         Assert.False(viewModel.IsMainColumnHidden("date"));
     }
 
     [Fact]
-    public void A_publisher_the_user_switched_on_survives_a_restart_and_a_saved_state_without_it_keeps_it_hidden()
+    public void A_publisher_the_user_switched_on_survives_a_restart_and_one_the_user_hid_stays_hidden()
     {
         var settings = CreateSettings();
         var viewModel = BuildMainViewModel(settings);
@@ -126,13 +126,12 @@ public class TableLayoutTests
         reopened.Updates.Add(FullRow("Vendor.App"));
         Assert.False(reopened.IsMainColumnHidden("publisher"));
 
-        // A settings.json written before the default flipped says nothing about the publisher.
-        var legacy = CreateSettings();
-        legacy.Current.Ui.Tables["main"] = new TableLayoutState { HiddenColumns = ["size"] };
-        var fromLegacy = BuildMainViewModel(legacy);
-        fromLegacy.Updates.Add(FullRow("Vendor.App"));
-        Assert.True(fromLegacy.IsMainColumnHidden("publisher"));
-        Assert.True(fromLegacy.IsMainColumnHidden("size"));
+        var hidden = CreateSettings();
+        hidden.Current.Ui.Tables["main"] = new TableLayoutState { HiddenColumns = ["publisher", "size"] };
+        var fromHidden = BuildMainViewModel(hidden);
+        fromHidden.Updates.Add(FullRow("Vendor.App"));
+        Assert.True(fromHidden.IsMainColumnHidden("publisher"));
+        Assert.True(fromHidden.IsMainColumnHidden("size"));
     }
 
     [Fact]
@@ -196,11 +195,12 @@ public class TableLayoutTests
 
         Assert.False(viewModel.IsMainColumnHidden("size"));
         Assert.False(viewModel.IsMainColumnHidden("date"));
-        // The publisher is off by default whatever the rows carry.
-        Assert.True(viewModel.IsMainColumnHidden("publisher"));
+        // the winget row's id names a publisher, so that column shows too
+        Assert.False(viewModel.IsMainColumnHidden("publisher"));
 
         viewModel.Updates.Remove(full);
         Assert.True(viewModel.IsMainColumnHidden("size"));
+        Assert.True(viewModel.IsMainColumnHidden("publisher"));
     }
 
     [Fact]

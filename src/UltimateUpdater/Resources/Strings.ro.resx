@@ -826,9 +826,6 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Ce a raportat instrumentul</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Vezi folderul de jurnale din Setări</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Reîncercați interactiv din meniul de clic dreapta al rândului</value>
   </data>
@@ -2062,12 +2059,6 @@ Continuați cu drepturi de administrator?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Arată cele ignorate</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filtru</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filtru ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Curăță</value>
   </data>
@@ -2268,5 +2259,8 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Deschide raportul</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Deschide folderul de jurnale</value>
   </data>
 </root>

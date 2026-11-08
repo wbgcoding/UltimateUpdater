@@ -826,9 +826,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>ツールが報告した内容</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>設定内のログフォルダーを確認</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>この行の右クリックメニューから対話的に再試行</value>
   </data>
@@ -2062,12 +2059,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>無視した項目を表示</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>フィルター</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>フィルター ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>クリーンアップ</value>
   </data>
@@ -2268,5 +2259,8 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>レポートを開く</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>ログフォルダーを開く</value>
   </data>
 </root>

@@ -55,6 +55,9 @@ public partial class MainWindow : FluentWindow
 
         RestorePlacement(viewModel.WindowPlacement);
 
+        ToolbarWrapPanel.SizeChanged += (_, _) => UpdateFilterChipLabels();
+        LocalizationService.Instance.PropertyChanged += (_, _) => ScheduleFilterChipLabelUpdate();
+
         Activated += OnMainWindowActivated;
 
         // The main window falling behind while the cleanup window is open is the case this line helps tell
@@ -220,16 +223,6 @@ public partial class MainWindow : FluentWindow
             _viewModel.ResetMainColumns);
     }
 
-    /// <summary>The filter menu (Views/FilterMenu.cs): the table's switches, built
-    /// from MainViewModel's own entry list the same way the column chooser is.</summary>
-    private void OnFilterButtonClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement anchor)
-            return;
-
-        FilterMenu.ShowFor(anchor, _viewModel.BuildFilterEntries());
-    }
-
     /// <summary>
     /// Double-clicking a row runs its Open action where it has one: the store and launcher rows exist
     /// only to be opened manually, and they carry no checkbox, so the whole row is the target.
@@ -283,11 +276,74 @@ public partial class MainWindow : FluentWindow
     /// so the bar carries no Binding of its own.</summary>
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(MainViewModel.ShowPersistentFailureFilter)
+            or nameof(MainViewModel.PersistentFailureFilterLabel) or "")
+        {
+            ScheduleFilterChipLabelUpdate();
+        }
+
         if (e.PropertyName is nameof(MainViewModel.InstallOverallPercent) or "")
             UpdateInstallBarFill(animate: true);
 
         if (e.PropertyName is nameof(MainViewModel.IsCleanupRunning) or "")
             UpdateCleanupIconSweep();
+    }
+
+    private bool _chipLabelUpdateQueued;
+
+    /// <summary>The chips' texts change after the property notification that triggers this, so the
+    /// measurement waits until the bindings have settled.</summary>
+    private void ScheduleFilterChipLabelUpdate()
+    {
+        if (_chipLabelUpdateQueued)
+            return;
+
+        _chipLabelUpdateQueued = true;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            _chipLabelUpdateQueued = false;
+            UpdateFilterChipLabels();
+        });
+    }
+
+    /// <summary>
+    /// Whether the chips can keep their text: the width the search box and every shown chip need WITH text,
+    /// worked out from the text itself (never from the chips' current size, which changes when the text is
+    /// off), against the width the toolbar actually has. The toolbar's width does not depend on its
+    /// children, so switching the text off cannot flip the answer back.
+    /// </summary>
+    private void UpdateFilterChipLabels()
+    {
+        var available = ToolbarWrapPanel.ActualWidth;
+        if (available <= 0)
+            return;
+
+        var pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        var labels = new List<System.Windows.Controls.TextBlock>();
+        var needed = SearchBox.Width + SearchBox.Margin.Left + SearchBox.Margin.Right;
+        foreach (var chip in new[] { FilterCriticalChip, FilterIgnoredChip, FilterManualChip, FilterFailuresChip })
+        {
+            if (chip.Visibility == Visibility.Collapsed
+                || chip.Content is not System.Windows.Controls.StackPanel content
+                || content.Children.OfType<System.Windows.Controls.TextBlock>().FirstOrDefault() is not { } label)
+            {
+                continue;
+            }
+
+            labels.Add(label);
+            var text = new FormattedText(
+                label.Text, System.Globalization.CultureInfo.CurrentUICulture, System.Windows.FlowDirection.LeftToRight,
+                new Typeface(label.FontFamily, label.FontStyle, label.FontWeight, label.FontStretch),
+                label.FontSize, System.Windows.Media.Brushes.Black, pixelsPerDip);
+
+            // 2 = the chip's border, 14 = the icon (its font size), 4 = rounding slack
+            needed += chip.Margin.Left + chip.Margin.Right + chip.Padding.Left + chip.Padding.Right + 2 + 14
+                + label.Margin.Left + text.WidthIncludingTrailingWhitespace + 4;
+        }
+
+        var compact = available < needed;
+        foreach (var label in labels)
+            label.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
     }
 
     /// <summary>The travelling light's own clock, kept so <see cref="ApplyToolbarSweepVisibility"/> can

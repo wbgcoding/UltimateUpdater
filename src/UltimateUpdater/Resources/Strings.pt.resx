@@ -826,9 +826,6 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>O que a ferramenta informou</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Veja a pasta de logs em Configurações</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Repetir de forma interativa pelo menu de contexto da linha</value>
   </data>
@@ -2062,12 +2059,6 @@ Continuar com direitos de administrador?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Mostrar ignorados</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filtrar</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filtrar ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Limpar</value>
   </data>
@@ -2268,5 +2259,8 @@ Continuar com direitos de administrador?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Abrir relatório</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Abrir pasta de logs</value>
   </data>
 </root>

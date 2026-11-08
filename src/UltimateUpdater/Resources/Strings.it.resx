@@ -826,9 +826,6 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Cosa ha segnalato lo strumento</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Vedi la cartella dei registri in Impostazioni</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Riprova in modo interattivo dal menu contestuale della riga</value>
   </data>
@@ -2062,12 +2059,6 @@ Continuare con privilegi di amministratore?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Mostra ignorati</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filtra</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filtra ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Pulisci</value>
   </data>
@@ -2268,5 +2259,8 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Apri rapporto</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Apri la cartella dei registri</value>
   </data>
 </root>

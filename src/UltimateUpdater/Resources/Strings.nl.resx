@@ -826,9 +826,6 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Wat de tool heeft gemeld</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Zie de logmap in Instellingen</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Interactief opnieuw proberen via het rechtsklikmenu van de rij</value>
   </data>
@@ -2062,12 +2059,6 @@ Doorgaan met beheerdersrechten?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Genegeerde tonen</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filter</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filter ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Opruimen</value>
   </data>
@@ -2268,5 +2259,8 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Rapport openen</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Logmap openen</value>
   </data>
 </root>

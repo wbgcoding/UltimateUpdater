@@ -44,6 +44,29 @@ public static class UriLauncher
     public static void LaunchDetached(string target, LoggingService logging) =>
         _ = Task.Run(() => Launch(target, logging));
 
+    /// <summary>
+    /// Opens a folder of the app's own in Explorer, creating it first: nothing writes there until something
+    /// happens, and Explorer answers a path that does not exist with an error box rather than a window.
+    /// <paramref name="label"/> names the folder in the warning if it cannot be created.
+    /// </summary>
+    public static void OpenFolderDetached(string folder, string label, LoggingService logging)
+    {
+        EnsureFolder(folder, label, logging);
+        LaunchDetached(folder, logging);
+    }
+
+    internal static void EnsureFolder(string folder, string label, LoggingService logging)
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(folder);
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+        {
+            logging.Warn($"Could not create the {label}: {ex.Message}");
+        }
+    }
+
     public static bool Launch(string target, LoggingService logging)
     {
         // A bare name would be resolved by ShellExecute's own search order, which includes the

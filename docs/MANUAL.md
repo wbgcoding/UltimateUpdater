@@ -10,8 +10,8 @@ version and the available one where both are known; some sources only ever repor
 one. Steam's row expands into the individual game updates it found pending; every other row stands on
 its own.
 
-The Filter button above the table opens a menu that narrows the list, for example to critical updates
-only. Ignored updates are hidden by default; the menu can show them again. Click the new version of a row
+The filter chips above the table narrow the list, for example to critical updates only. Ignored
+updates are hidden by default; the matching chip shows them again. Click the new version of a row
 to read its release notes.
 
 ## First start

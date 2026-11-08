@@ -826,9 +826,6 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Aracın bildirdiği</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Ayarlar'daki günlük klasörüne bakın</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Satırın sağ tık menüsünden etkileşimli olarak yeniden deneyin</value>
   </data>
@@ -2062,12 +2059,6 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Yoksayılanları göster</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filtre</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filtre ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Temizle</value>
   </data>
@@ -2268,5 +2259,8 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Raporu aç</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Günlük klasörünü aç</value>
   </data>
 </root>

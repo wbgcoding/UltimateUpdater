@@ -826,9 +826,6 @@ Ultimate Updater ne peut pas annuler cette action.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Ce qu'a signalé l'outil</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Voir le dossier des journaux dans les Paramètres</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Réessayer en mode interactif depuis le menu contextuel de la ligne</value>
   </data>
@@ -2062,12 +2059,6 @@ Continuer avec les droits administrateur ?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Afficher les ignorés</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filtrer</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filtrer ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Nettoyer</value>
   </data>
@@ -2268,5 +2259,8 @@ Continuer avec les droits administrateur ?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Ouvrir le rapport</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Ouvrir le dossier des journaux</value>
   </data>
 </root>

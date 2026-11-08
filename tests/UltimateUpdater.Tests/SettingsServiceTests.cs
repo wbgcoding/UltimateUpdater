@@ -34,7 +34,7 @@ public class SettingsServiceTests : IDisposable
     {
         var service = new SettingsService(_logging, SettingsPath);
 
-        Assert.Equal(1, service.Current.SchemaVersion);
+        Assert.Equal(AppSettings.CurrentSchemaVersion, service.Current.SchemaVersion);
         Assert.Equal("system", service.Current.Ui.Theme);
         Assert.Equal("system", service.Current.Ui.Language);
         Assert.Equal(1440, service.Current.Scan.IntervalMinutes);
@@ -205,6 +205,64 @@ public class SettingsServiceTests : IDisposable
 
         Assert.False(service.Current.Ui.ShowIgnored);
         Assert.True(service.Current.Ui.HideManual);
+    }
+
+    /// <summary>The publisher column used to start hidden; a profile saved before it started shown keeps its
+    /// choice, whether or not a main layout was ever saved.</summary>
+    [Fact]
+    public void A_profile_saved_before_schema_2_keeps_the_publisher_column_hidden()
+    {
+        File.WriteAllText(
+            SettingsPath,
+            """
+            {
+              "schemaVersion": 1,
+              "ui": { "tables": { "main": { "hiddenColumns": ["size"] } } }
+            }
+            """);
+
+        var main = new SettingsService(_logging, SettingsPath).Current.Ui.Tables["main"];
+
+        Assert.Contains("publisher", main.HiddenColumns);
+        Assert.Contains("size", main.HiddenColumns);
+        Assert.Empty(main.ShownColumns);
+    }
+
+    [Fact]
+    public void A_profile_saved_before_schema_2_without_a_main_layout_gets_the_publisher_hidden()
+    {
+        File.WriteAllText(SettingsPath, """{ "schemaVersion": 1 }""");
+
+        var service = new SettingsService(_logging, SettingsPath);
+
+        Assert.Equal(AppSettings.CurrentSchemaVersion, service.Current.SchemaVersion);
+        Assert.Contains("publisher", service.Current.Ui.Tables["main"].HiddenColumns);
+    }
+
+    [Fact]
+    public void A_profile_saved_before_schema_2_that_had_switched_the_publisher_on_keeps_it_shown()
+    {
+        File.WriteAllText(
+            SettingsPath,
+            """
+            {
+              "schemaVersion": 1,
+              "ui": { "tables": { "main": { "shownColumns": ["publisher"] } } }
+            }
+            """);
+
+        var main = new SettingsService(_logging, SettingsPath).Current.Ui.Tables["main"];
+
+        Assert.DoesNotContain("publisher", main.HiddenColumns);
+        Assert.Empty(main.ShownColumns);
+    }
+
+    [Fact]
+    public void A_fresh_profile_has_no_saved_layout_and_so_no_hidden_column()
+    {
+        var service = new SettingsService(_logging, SettingsPath);
+
+        Assert.False(service.Current.Ui.Tables.ContainsKey("main"));
     }
 
     /// <summary>A file written while the retry switch still existed carries the removed member; it is
@@ -773,7 +831,7 @@ public class SettingsServiceTests : IDisposable
 
         var service = new SettingsService(_logging, SettingsPath);
 
-        Assert.Equal(1, service.Current.SchemaVersion);
+        Assert.Equal(AppSettings.CurrentSchemaVersion, service.Current.SchemaVersion);
         Assert.Equal("system", service.Current.Ui.Theme);
     }
 

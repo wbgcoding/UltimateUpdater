@@ -826,9 +826,6 @@ Esto no se puede deshacer con Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Lo que informó la herramienta</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Consulta la carpeta de registros en Configuración</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Reintentar de forma interactiva desde el menú contextual de la fila</value>
   </data>
@@ -2062,12 +2059,6 @@ Esto no se puede deshacer.</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Mostrar ignorados</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filtrar</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filtrar ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Limpiar</value>
   </data>
@@ -2268,5 +2259,8 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Abrir informe</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Abrir carpeta de registros</value>
   </data>
 </root>

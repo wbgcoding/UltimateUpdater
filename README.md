@@ -31,7 +31,7 @@ it in one go. A separate cleanup window frees disk space and runs Windows' own m
 ## What it does
 
 - Lists updates from more than 50 sources in one table: apps, Windows and driver updates, developer tools,
-  games and Store apps, grouped by category, searchable and sortable. The Filter menu narrows the table,
+  games and Store apps, grouped by category, searchable and sortable. The filter chips above the table narrow it,
   for example to critical updates only. Ignored updates stay hidden until you ask for them.
 - Installs whatever you tick. Admin installs in the same batch share one UAC prompt. Click the new version
   of a row to read its release notes.

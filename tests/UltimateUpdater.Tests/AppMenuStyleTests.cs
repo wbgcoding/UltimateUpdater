@@ -40,11 +40,13 @@ public class AppMenuStyleTests
             window.Content = anchor;
             window.Show();
 
-            var menu = FilterMenu.ShowFor(anchor,
-            [
-                new FilterEntry("a", () => "On", () => true, _ => { }),
-                new FilterEntry("b", () => "Off", () => false, _ => { }),
-            ])!;
+            var menu = ColumnChooser.ShowMenu(anchor, () =>
+            {
+                var built = new ContextMenu();
+                built.Items.Add(new MenuItem { Header = "On", IsCheckable = true, IsChecked = true });
+                built.Items.Add(new MenuItem { Header = "Off", IsCheckable = true, IsChecked = false });
+                return built;
+            })!;
             menu.UpdateLayout();
 
             var card = MenuCard(menu);

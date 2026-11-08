@@ -826,9 +826,6 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Meldung des Werkzeugs</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Siehe Protokollordner in den Einstellungen</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Interaktiv erneut versuchen über das Rechtsklickmenü der Zeile</value>
   </data>
@@ -2062,12 +2059,6 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Ignorierte anzeigen</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filter</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filter ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Bereinigen</value>
   </data>
@@ -2268,5 +2259,8 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Bericht öffnen</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Protokollordner öffnen</value>
   </data>
 </root>

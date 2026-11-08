@@ -4062,6 +4062,53 @@ public partial class WindowLayoutTests
         AssertRendered(result);
     }
 
+    /// <summary>The log-folder button joins the retry hint, Copy and Close in one right-aligned row; the
+    /// longest labels must still fit side by side inside the window, in order, without overlap.</summary>
+    [Theory]
+    [InlineData("de")]
+    [InlineData("fr")]
+    [InlineData("pt")]
+    [InlineData("tr")]
+    public void Error_detail_window_action_row_fits_with_the_log_folder_button(string language)
+    {
+        RenderResult? result = null;
+        Rect logButton = default, closeButton = default, row = default;
+
+        WpfHarness.OnUiThread(() =>
+        {
+            LocalizationService.Instance.Apply(language);
+
+            var viewModel = new ErrorDetailViewModel(
+                "Firefox", "winget", "128.0.3 → 129.0.1", "Install failed.\nExit code 1.", new LoggingService(),
+                explanation: "Explained.", canRetryInteractive: true);
+            var window = new ErrorDetailWindow(viewModel);
+            var content = (FrameworkElement)window.Content;
+            result = WpfHarness.RenderWindow(window, $"error-detail-actions-{language}", (int)window.Width, (int)window.MaxHeight);
+
+            var log = FindByName<FrameworkElement>(content, "OpenLogFolderButton");
+            var close = FindByName<FrameworkElement>(content, "CloseButton");
+            var actionRow = FindByName<FrameworkElement>(content, "ErrorDetailActionRow");
+            Assert.NotNull(log);
+            Assert.NotNull(close);
+            Assert.NotNull(actionRow);
+
+            Rect BoundsIn(FrameworkElement e) =>
+                new(e.TransformToAncestor(content).Transform(new Point(0, 0)), new Size(e.ActualWidth, e.ActualHeight));
+
+            logButton = BoundsIn(log!);
+            closeButton = BoundsIn(close!);
+            row = BoundsIn(actionRow!);
+            window.Close();
+        });
+
+        AssertRendered(result);
+        Assert.True(logButton.Width > 20, "The log-folder button has no size.");
+        Assert.True(logButton.Left >= row.Left - 0.5,
+            $"The log-folder button starts at {logButton.Left:0}px, left of the action row ({row.Left:0}px): the row is clipped.");
+        Assert.True(logButton.Right <= closeButton.Left, "The log-folder button overlaps the Close button.");
+        Assert.True(closeButton.Right <= row.Right + 0.5, "The Close button runs past the action row.");
+    }
+
     /// <summary>The light theme is a separate brush set, a scrollbar-visibility fix could regress
     /// invisibly in the one theme not otherwise rendered here.</summary>
     [Fact]
@@ -4853,6 +4900,61 @@ public partial class WindowLayoutTests
         Assert.Equal(96, columnWidth);
         Assert.True(headerWidth <= columnWidth - 4,
             $"the Size header with its sort arrow is {headerWidth:0.0} px in a {columnWidth:0.0} px column.");
+    }
+
+    /// <summary>With every column shown (date, version, size, publisher) the default window keeps the name
+    /// column roomy and the table needs no horizontal scrolling.</summary>
+    [Fact]
+    public void Main_table_with_every_column_shown_fits_the_default_window_without_a_horizontal_scrollbar()
+    {
+        RenderResult? result = null;
+        double nameWidth = 0, publisherWidth = 0;
+        var horizontalBars = new List<string>();
+
+        WpfHarness.OnUiThread(() =>
+        {
+            var (viewModel, theme, settings) = CreateMainViewModel("de");
+            Populate(viewModel);
+            viewModel.ResetMainColumns();
+            foreach (var id in new[] { "date", "size", "publisher" })
+                viewModel.SetMainColumnHidden(id, hidden: false);
+
+            var window = new MainWindow(viewModel, theme, settings);
+            var content = (FrameworkElement)window.Content;
+            result = WpfHarness.RenderWindow(window, "main-all-columns-default-de", (int)window.Width, (int)window.Height);
+
+            var header = FindByName<StackPanel>(content, "SortHeaderSize");
+            Assert.NotNull(header);
+            var grid = (Grid)header!.Parent;
+            nameWidth = grid.ColumnDefinitions[2].ActualWidth;
+            publisherWidth = grid.ColumnDefinitions[3].ActualWidth;
+
+            foreach (var viewer in AllDescendants<ScrollViewer>(content))
+            {
+                if (viewer.ComputedHorizontalScrollBarVisibility == Visibility.Visible)
+                    horizontalBars.Add(viewer.Name);
+            }
+        });
+
+        AssertRendered(result);
+        Assert.Equal(120, publisherWidth);
+        Assert.True(nameWidth >= 240, $"the name column is only {nameWidth:0.0} px wide with every column shown.");
+        Assert.Empty(horizontalBars);
+    }
+
+    private static IEnumerable<T> AllDescendants<T>(DependencyObject root)
+        where T : DependencyObject
+    {
+        var count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is T match)
+                yield return match;
+
+            foreach (var inner in AllDescendants<T>(child))
+                yield return inner;
+        }
     }
 
     /// <summary>The finished dialog keeps its Rescan button (the way to another run) and still hides Clean.</summary>

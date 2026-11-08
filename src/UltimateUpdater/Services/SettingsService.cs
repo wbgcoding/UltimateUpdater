@@ -515,7 +515,32 @@ public sealed class SettingsService
         foreach (var record in settings.PersistentFailures.Values)
             record.LastErrorText = HistoryService.CapDetail(record.LastErrorText);
 
+        MigrateSchema(settings);
         return settings;
+    }
+
+    /// <summary>
+    /// Version 2 shows the publisher column by default. A profile saved before that had it hidden by default
+    /// (silence in the file meant hidden), so its choice is written out explicitly: hidden unless the file
+    /// recorded an opt-in. A profile that never saved a main layout gets the same hidden entry. Only a fresh
+    /// install (no file, already the current version) shows the column.
+    /// </summary>
+    private static void MigrateSchema(AppSettings settings)
+    {
+        if (settings.SchemaVersion >= 2)
+            return;
+
+        if (!settings.Ui.Tables.TryGetValue("main", out var main))
+        {
+            main = new TableLayoutState();
+            settings.Ui.Tables["main"] = main;
+        }
+
+        if (!main.ShownColumns.Contains("publisher") && !main.HiddenColumns.Contains("publisher"))
+            main.HiddenColumns.Add("publisher");
+
+        main.ShownColumns.Remove("publisher");
+        settings.SchemaVersion = AppSettings.CurrentSchemaVersion;
     }
 
     /// <summary>

@@ -60,7 +60,7 @@ public static class ColumnChooser
     }
 
     /// <summary>The open/toggle-shut/hit-testing dance shared by every anchored checkbox menu (the column
-    /// chooser and the filter menu), see <see cref="ShowFor"/> for what it guards against.</summary>
+    /// chooser), see <see cref="ShowFor"/> for what it guards against.</summary>
     internal static ContextMenu? ShowMenu(FrameworkElement anchor, Func<ContextMenu> build)
     {
         var tracker = Trackers.GetOrCreateValue(anchor);

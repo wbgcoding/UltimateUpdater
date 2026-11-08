@@ -293,7 +293,7 @@ public partial class MainViewModel : ObservableObject, IRowActions
         OnPropertyChanged(nameof(SubheadlineText));
         OnPropertyChanged(nameof(EmptyStateText));
         OnPropertyChanged(nameof(SelectAllTooltip));
-        OnPropertyChanged(nameof(FilterButtonText));
+        OnPropertyChanged(nameof(PersistentFailureFilterLabel));
         OnPropertyChanged(nameof(NameSortTooltip));
         OnPropertyChanged(nameof(DateSortTooltip));
         OnPropertyChanged(nameof(VersionSortTooltip));

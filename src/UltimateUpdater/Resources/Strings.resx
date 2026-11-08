@@ -826,9 +826,6 @@ This cannot be undone by Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>What the tool reported</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>See the log folder in Settings</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Retry interactively from the row's right-click menu</value>
   </data>
@@ -2062,12 +2059,6 @@ Continue with admin rights?</value>
   <data name="FilterShowIgnored" xml:space="preserve">
     <value>Show ignored</value>
   </data>
-  <data name="FilterButton" xml:space="preserve">
-    <value>Filter</value>
-  </data>
-  <data name="FilterButtonActive" xml:space="preserve">
-    <value>Filter ({0})</value>
-  </data>
   <data name="ToolbarCleanupLabel" xml:space="preserve">
     <value>Clean up</value>
   </data>
@@ -2268,5 +2259,8 @@ Continue with admin rights?</value>
   </data>
   <data name="CleanupOpenReport" xml:space="preserve">
     <value>Open report</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Open log folder</value>
   </data>
 </root>
