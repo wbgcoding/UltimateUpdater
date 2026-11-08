@@ -505,6 +505,11 @@ public sealed partial class SelfUpdateService
         // reliably, so it is asked for explicitly. FROMAPP tells Setup the app itself started it, which is the
         // only run that may close a busy app without asking.
         info.Arguments = "/SILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS /RELAUNCH=1 /FROMAPP";
+        // The elevated Setup runs from a staging folder under %TEMP%, which any process of this user can write
+        // to. That is acceptable because the folder is fresh, randomly named and holds only the pinned,
+        // signature-verified file, and because Inno Setup 6 protects its Setup against DLL preloading (6.3
+        // added further measures on top of the earlier ones), so a file planted next to it is not loaded.
+        // Nothing else is trusted to be in that folder.
         if (machineScope)
             info.Verb = "runas";
     }
