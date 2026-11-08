@@ -2000,7 +2000,7 @@ Mit Admin-Rechten fortfahren?</value>
     <value>Ältere Python-Versionen</value>
   </data>
   <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
-    <value>Python-Installationen, die durch eine neuere Version derselben Art (32-Bit oder 64-Bit) abgelöst wurden.</value>
+    <value>Python-Installationen, die durch eine neuere Version abgelöst wurden.</value>
   </data>
   <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
     <value>Programme und Skripte, die noch diese Version nutzen, laufen danach nicht mehr. Die darin installierten Pakete werden mit entfernt.</value>
@@ -2265,5 +2265,8 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="InstallMsixDeferred" xml:space="preserve">
     <value>Windows spielt das Update ein, sobald {0} geschlossen ist.</value>
+  </data>
+  <data name="CleanupOpenReport" xml:space="preserve">
+    <value>Bericht öffnen</value>
   </data>
 </root>

@@ -2000,7 +2000,7 @@ Doorgaan met beheerdersrechten?</value>
     <value>Oudere Python-versies</value>
   </data>
   <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
-    <value>Python-installaties die zijn vervangen door een nieuwere versie van dezelfde soort (32-bit of 64-bit).</value>
+    <value>Python-installaties die zijn vervangen door een nieuwere versie.</value>
   </data>
   <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
     <value>Programma's en scripts die deze versie nog gebruiken, werken daarna niet meer. De geïnstalleerde pakketten worden er samen mee verwijderd.</value>
@@ -2265,5 +2265,8 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="InstallMsixDeferred" xml:space="preserve">
     <value>Windows installeert deze update zodra {0} is gesloten.</value>
+  </data>
+  <data name="CleanupOpenReport" xml:space="preserve">
+    <value>Rapport openen</value>
   </data>
 </root>

@@ -39,7 +39,7 @@ public partial class CleanupWindow
         new PropertyMetadata(0d, OnDisplayPercentChanged));
 
     /// <summary>The ring's radius, and the same number the track and the Path's box are built from.</summary>
-    private const double RingRadius = 90;
+    private const double RingRadius = 105;
 
     private static void OnDisplayPercentChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
     {
@@ -698,4 +698,8 @@ public partial class CleanupWindow
     /// </summary>
     private void OnShowHistory(object sender, RoutedEventArgs e) =>
         new CleanupHistoryWindow(_viewModel) { Owner = this }.Show();
+
+    /// <summary>The report of the run that just ended: the same window, with the newest entry unfolded.</summary>
+    private void OnShowReport(object sender, RoutedEventArgs e) =>
+        new CleanupHistoryWindow(_viewModel, expandNewest: true) { Owner = this }.Show();
 }

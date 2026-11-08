@@ -2000,7 +2000,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
     <value>Eski Python sürümleri</value>
   </data>
   <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
-    <value>Aynı türden (32 bit veya 64 bit) daha yeni bir sürümle değiştirilmiş Python kurulumları.</value>
+    <value>Daha yeni bir sürümle değiştirilmiş Python kurulumları.</value>
   </data>
   <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
     <value>Bu sürümü hâlâ kullanan programlar ve betikler artık çalışmaz. İçindeki yüklü paketler de onunla birlikte kaldırılır.</value>
@@ -2265,5 +2265,8 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="InstallMsixDeferred" xml:space="preserve">
     <value>{0} kapatıldığında Windows bu güncellemeyi yükleyecek.</value>
+  </data>
+  <data name="CleanupOpenReport" xml:space="preserve">
+    <value>Raporu aç</value>
   </data>
 </root>

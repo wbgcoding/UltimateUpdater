@@ -2000,7 +2000,7 @@ Continuare con privilegi di amministratore?</value>
     <value>Versioni precedenti di Python</value>
   </data>
   <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
-    <value>Installazioni di Python sostituite da una versione più recente dello stesso tipo (32 o 64 bit).</value>
+    <value>Installazioni di Python sostituite da una versione più recente.</value>
   </data>
   <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
     <value>I programmi e gli script che usano ancora questa versione smetteranno di funzionare. I suoi pacchetti installati vengono rimossi insieme ad essa.</value>
@@ -2265,5 +2265,8 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="InstallMsixDeferred" xml:space="preserve">
     <value>Windows installerà questo aggiornamento quando {0} sarà chiuso.</value>
+  </data>
+  <data name="CleanupOpenReport" xml:space="preserve">
+    <value>Apri rapporto</value>
   </data>
 </root>

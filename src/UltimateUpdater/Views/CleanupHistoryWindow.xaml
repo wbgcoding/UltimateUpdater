@@ -99,7 +99,7 @@
             <ItemsControl Grid.IsSharedSizeScope="True" ItemsSource="{Binding History}" Margin="16,4,16,16">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Expander Margin="0,4" IsExpanded="False">
+                        <Expander Margin="0,4" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
                             <Expander.Header>
                                 <!-- Date and freed size each keep a shared column width across every row
                                      (SharedSizeGroup, scoped by the ItemsControl above), so the rows line

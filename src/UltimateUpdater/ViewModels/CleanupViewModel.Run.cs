@@ -254,7 +254,7 @@ public partial class CleanupViewModel
 
         // The result reads per section once the run is over, not only as one figure in the ring.
         foreach (var group in Groups)
-            group.ShowsFreed = value == CleanupPhase.Finished;
+            group.RunFinished = value == CleanupPhase.Finished;
 
         NotifyRescanCanExecuteChanged();
     }

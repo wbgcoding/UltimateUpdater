@@ -2000,7 +2000,7 @@ Esto no se puede deshacer.</value>
     <value>Versiones antiguas de Python</value>
   </data>
   <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
-    <value>Instalaciones de Python sustituidas por una versión más reciente del mismo tipo (32 o 64 bits).</value>
+    <value>Instalaciones de Python sustituidas por una versión más reciente.</value>
   </data>
   <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
     <value>Los programas y scripts que aún usan esta versión dejarán de funcionar. Sus paquetes instalados se eliminan con ella.</value>
@@ -2265,5 +2265,8 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="InstallMsixDeferred" xml:space="preserve">
     <value>Windows instalará esta actualización cuando se cierre {0}.</value>
+  </data>
+  <data name="CleanupOpenReport" xml:space="preserve">
+    <value>Abrir informe</value>
   </data>
 </root>

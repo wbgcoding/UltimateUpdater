@@ -103,7 +103,12 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
     /// detached from its Window.
     /// </summary>
     [ObservableProperty]
-    private bool showsFreed;
+    [NotifyPropertyChangedFor(nameof(ShowsFreed))]
+    private bool runFinished;
+
+    /// <summary>A section that freed nothing says nothing: "+0 B" beside an unticked or already empty section
+    /// reads as a result where there was none.</summary>
+    public bool ShowsFreed => RunFinished && FreedBytes > 0;
 
     public long FreedBytes => Items.Sum(i => i.FreedBytes);
 
@@ -203,6 +208,7 @@ public sealed partial class CleanupGroupViewModel : ObservableObject
             case nameof(CleanupItemViewModel.FreedBytes):
                 OnPropertyChanged(nameof(FreedBytes));
                 OnPropertyChanged(nameof(FreedText));
+                OnPropertyChanged(nameof(ShowsFreed));
                 break;
         }
     }

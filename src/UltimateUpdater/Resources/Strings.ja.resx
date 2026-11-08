@@ -2000,7 +2000,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
     <value>古いPythonバージョン</value>
   </data>
   <data name="CleanupOldPythonVersionsDesc" xml:space="preserve">
-    <value>同じ種類（32ビットまたは64ビット）のより新しいバージョンに置き換えられたPythonインストール。</value>
+    <value>より新しいバージョンに置き換えられたPythonインストール。</value>
   </data>
   <data name="CleanupOldPythonVersionsConsequence" xml:space="preserve">
     <value>このバージョンをまだ使用しているプログラムやスクリプトは動作しなくなります。インストール済みのパッケージも一緒に削除されます。</value>
@@ -2265,5 +2265,8 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="InstallMsixDeferred" xml:space="preserve">
     <value>{0} を閉じると、Windows がこの更新プログラムをインストールします。</value>
+  </data>
+  <data name="CleanupOpenReport" xml:space="preserve">
+    <value>レポートを開く</value>
   </data>
 </root>
