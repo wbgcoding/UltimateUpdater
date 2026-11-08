@@ -222,4 +222,50 @@ public class CleanupReportingFixesTests : IDisposable
         Assert.Contains(annaTemp, directories, StringComparer.OrdinalIgnoreCase);
         Assert.DoesNotContain(directories, d => d.StartsWith(system, StringComparison.OrdinalIgnoreCase));
     }
+
+    [Fact]
+    public void A_profile_reached_through_a_link_is_left_out_of_the_other_users_Temp_list()
+    {
+        var real = Path.Combine(_root, "real", "anna");
+        Directory.CreateDirectory(Path.Combine(real, "AppData", "Local", "Temp"));
+        var link = Path.Combine(_root, "linked");
+        CreateJunction(link, Path.Combine(_root, "real"));
+        var viaLink = Path.Combine(link, "anna");
+        CleanupCatalog.ProfileListForTest.Value = () => [new("S-1-5-21-1-2-3-1001", viaLink)];
+        var warnings = new List<string>();
+
+        var catalog = CleanupCatalog.BuildFor(warnings.Add, [], usersRoot: null);
+
+        var directories = catalog.SelectMany(t => t.Directories).ToList();
+        Assert.DoesNotContain(directories, d => d.StartsWith(_root, StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(warnings, w => w.Contains(viaLink, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void A_profile_in_a_system_folder_or_at_a_drive_root_is_not_a_usable_profile()
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+
+        Assert.False(CleanupCatalog.IsUsableProfileFolder(Path.Combine(windows, "anna")));
+        Assert.False(CleanupCatalog.IsUsableProfileFolder(Path.Combine(programData, "anna")));
+        Assert.False(CleanupCatalog.IsUsableProfileFolder(Path.GetPathRoot(windows)!));
+        Assert.False(CleanupCatalog.IsUsableProfileFolder(@"\\server\share\anna"));
+        Assert.True(CleanupCatalog.IsUsableProfileFolder(Path.Combine(_root, "anna")));
+    }
+
+    private static void CreateJunction(string link, string target)
+    {
+        using var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        })!;
+        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
+        Assert.Equal(0, mklink.ExitCode);
+    }
 }

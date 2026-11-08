@@ -538,6 +538,7 @@ public static class CleanupCatalog
             }
 
             return Distinct(ExcludeOwnTemp(profiles
+                .Where(profile => IsUsableProfileFolder(profile, logWarning))
                 .Select(profile => Path.Combine(profile, "AppData", "Local", "Temp"))
                 .Where(Directory.Exists),
                 ownTemps, logWarning));
@@ -548,6 +549,52 @@ public static class CleanupCatalog
             return [];
         }
     }
+
+    private static readonly Environment.SpecialFolder[] SystemFolders =
+    [
+        Environment.SpecialFolder.Windows,
+        Environment.SpecialFolder.ProgramFiles,
+        Environment.SpecialFolder.ProgramFilesX86,
+        Environment.SpecialFolder.CommonApplicationData,
+    ];
+
+    /// <summary>
+    /// A profile path from the profile list is registry data, read and then walked with admin rights: its
+    /// Temp folder is only offered when the profile is a local folder reached through no link (a network
+    /// drive would make the admin account sign in to it), not a drive root and not inside Windows, Program
+    /// Files or ProgramData. Checked before anything on that path is opened.
+    /// </summary>
+    internal static bool IsUsableProfileFolder(string profile, Action<string>? logWarning = null)
+    {
+        string? reason = null;
+        try
+        {
+            var full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(profile));
+            if (!CleanupSafety.IsLocalPathWithoutLinks(full))
+                reason = "not a local folder or reached through a link";
+            else if (string.Equals(Path.TrimEndingDirectorySeparator(Path.GetPathRoot(full) ?? string.Empty), full, StringComparison.OrdinalIgnoreCase))
+                reason = "a drive root";
+            else if (SystemFolders
+                     .Select(folder => Environment.GetFolderPath(folder))
+                     .Where(folder => !string.IsNullOrEmpty(folder))
+                     .Any(folder => IsUnder(full, Path.TrimEndingDirectorySeparator(folder))))
+                reason = "inside a system folder";
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            reason = "an unusable path";
+        }
+
+        if (reason is null)
+            return true;
+
+        logWarning?.Invoke($"Cleanup: the profile folder '{profile}' is left out of the all-users Temp list: {reason}.");
+        return false;
+    }
+
+    private static bool IsUnder(string full, string ancestor) =>
+        string.Equals(full, ancestor, StringComparison.OrdinalIgnoreCase)
+        || full.StartsWith(ancestor + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Test seam for the machine's profile list (the registry read is not mockable otherwise): pairs
     /// of account SID and the raw profile path. Per async flow.</summary>
