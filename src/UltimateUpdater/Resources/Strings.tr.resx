@@ -2267,18 +2267,18 @@ Yönetici haklarıyla devam edilsin mi?</value>
     <value>Yeniden yükle</value>
   </data>
   <data name="ReinstallTooltip" xml:space="preserve">
-    <value>Yüklü sürümü kaldırır ve yenisini sıfırdan yükler</value>
+    <value>Eski sürümü kaldırır ve yenisini winget ile yükler.</value>
   </data>
   <data name="ReinstallConfirmTitle" xml:space="preserve">
-    <value>“{0}” yeniden yüklensin mi?</value>
+    <value>{0} yeniden yüklensin mi?</value>
   </data>
   <data name="ReinstallConfirmBody" xml:space="preserve">
-    <value>Önce “{0}” kaldırılır, ardından en son sürüm sıfırdan yüklenir. Program ayarları kaybolabilir.</value>
+    <value>Yüklü sürüm kaldırılır ve yenisi winget ile yüklenir. Bundan sonra {0} yeniden normal şekilde güncellenir. Programın ayarları genellikle korunur.</value>
   </data>
   <data name="ReinstallUnavailable" xml:space="preserve">
-    <value>Yeni sürüm şu anda alınamıyor, bu yüzden hiçbir şey değiştirilmedi. Bağlantınızı kontrol edip yeniden deneyin.</value>
+    <value>Yeni sürüm şu anda alınamıyor. Hiçbir şey değiştirilmedi.</value>
   </data>
   <data name="ReinstallInstallFailed" xml:space="preserve">
-    <value>Kaldırıldı, ancak yeni sürüm yüklenemedi. Yeniden dene, onu tekrar yükler.</value>
+    <value>Kaldırıldı, ancak yeni kurulum başarısız oldu. Tekrar denemek için Yeniden dene'yi kullanın.</value>
   </data>
 </root>

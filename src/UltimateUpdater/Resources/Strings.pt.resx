@@ -2267,18 +2267,18 @@ Continuar com direitos de administrador?</value>
     <value>Reinstalar</value>
   </data>
   <data name="ReinstallTooltip" xml:space="preserve">
-    <value>Remover a versão instalada e instalar a nova do zero</value>
+    <value>Remove a versão antiga e instala a nova através do winget.</value>
   </data>
   <data name="ReinstallConfirmTitle" xml:space="preserve">
-    <value>Reinstalar “{0}”?</value>
+    <value>Reinstalar {0}?</value>
   </data>
   <data name="ReinstallConfirmBody" xml:space="preserve">
-    <value>Primeiro “{0}” é removido e depois a versão mais recente é instalada do zero. As configurações do programa podem ser perdidas.</value>
+    <value>A versão instalada é removida e a nova é instalada através do winget. Depois disso, {0} volta a atualizar normalmente. As configurações do programa são normalmente mantidas.</value>
   </data>
   <data name="ReinstallUnavailable" xml:space="preserve">
-    <value>Não é possível obter a nova versão agora, por isso nada foi alterado. Verifique a ligação e tente novamente.</value>
+    <value>Não é possível obter a nova versão agora. Nada foi alterado.</value>
   </data>
   <data name="ReinstallInstallFailed" xml:space="preserve">
-    <value>Removido, mas a nova versão não foi instalada. Tentar novamente instala-a de novo.</value>
+    <value>Removido, mas a nova instalação falhou. Use Tentar novamente para tentar outra vez.</value>
   </data>
 </root>

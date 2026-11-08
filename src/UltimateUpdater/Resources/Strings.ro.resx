@@ -2267,18 +2267,18 @@ Continuați cu drepturi de administrator?</value>
     <value>Reinstalează</value>
   </data>
   <data name="ReinstallTooltip" xml:space="preserve">
-    <value>Elimină versiunea instalată și instalează-o pe cea nouă de la zero</value>
+    <value>Elimină versiunea veche și instalează versiunea nouă prin winget.</value>
   </data>
   <data name="ReinstallConfirmTitle" xml:space="preserve">
-    <value>Reinstalezi „{0}”?</value>
+    <value>Reinstalezi {0}?</value>
   </data>
   <data name="ReinstallConfirmBody" xml:space="preserve">
-    <value>Mai întâi se elimină „{0}”, apoi se instalează de la zero cea mai recentă versiune. Setările programului se pot pierde.</value>
+    <value>Versiunea instalată este eliminată, iar cea nouă este instalată prin winget. După aceea, {0} se actualizează din nou normal. Setările programului sunt de obicei păstrate.</value>
   </data>
   <data name="ReinstallUnavailable" xml:space="preserve">
-    <value>Versiunea nouă nu poate fi descărcată acum, așa că nu s-a schimbat nimic. Verifică conexiunea și încearcă din nou.</value>
+    <value>Versiunea nouă nu poate fi descărcată acum. Nu s-a schimbat nimic.</value>
   </data>
   <data name="ReinstallInstallFailed" xml:space="preserve">
-    <value>Eliminat, dar versiunea nouă nu s-a instalat. Reîncercarea o instalează din nou.</value>
+    <value>Eliminat, dar noua instalare a eșuat. Folosește Reîncearcă pentru a încerca din nou.</value>
   </data>
 </root>

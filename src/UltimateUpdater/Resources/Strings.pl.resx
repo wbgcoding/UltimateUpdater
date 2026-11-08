@@ -2267,18 +2267,18 @@ Kontynuować z uprawnieniami administratora?</value>
     <value>Zainstaluj ponownie</value>
   </data>
   <data name="ReinstallTooltip" xml:space="preserve">
-    <value>Usuń zainstalowaną wersję i zainstaluj nową od zera</value>
+    <value>Usuwa starą wersję i instaluje nową przez winget.</value>
   </data>
   <data name="ReinstallConfirmTitle" xml:space="preserve">
-    <value>Zainstalować ponownie „{0}”?</value>
+    <value>Zainstalować ponownie {0}?</value>
   </data>
   <data name="ReinstallConfirmBody" xml:space="preserve">
-    <value>Najpierw zostanie usunięty „{0}”, a potem zainstalowana od zera najnowsza wersja. Ustawienia programu mogą zostać utracone.</value>
+    <value>Zainstalowana wersja zostanie usunięta, a nowa zostanie zainstalowana przez winget. Potem {0} znowu będzie się normalnie aktualizować. Ustawienia programu są zwykle zachowywane.</value>
   </data>
   <data name="ReinstallUnavailable" xml:space="preserve">
-    <value>Nie można teraz pobrać nowej wersji, więc nic nie zostało zmienione. Sprawdź połączenie i spróbuj ponownie.</value>
+    <value>Nie można teraz pobrać nowej wersji. Nic nie zostało zmienione.</value>
   </data>
   <data name="ReinstallInstallFailed" xml:space="preserve">
-    <value>Usunięto, ale nowa wersja nie została zainstalowana. Ponów próbę, aby zainstalować ją jeszcze raz.</value>
+    <value>Usunięto, ale nowa instalacja się nie powiodła. Użyj opcji Ponów próbę, aby spróbować jeszcze raz.</value>
   </data>
 </root>

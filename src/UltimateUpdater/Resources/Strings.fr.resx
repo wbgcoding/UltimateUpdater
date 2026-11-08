@@ -2267,18 +2267,18 @@ Continuer avec les droits administrateur ?</value>
     <value>Réinstaller</value>
   </data>
   <data name="ReinstallTooltip" xml:space="preserve">
-    <value>Supprimer la version installée et installer la nouvelle à neuf</value>
+    <value>Supprime l’ancienne version et installe la nouvelle via winget.</value>
   </data>
   <data name="ReinstallConfirmTitle" xml:space="preserve">
-    <value>Réinstaller « {0} » ?</value>
+    <value>Réinstaller {0} ?</value>
   </data>
   <data name="ReinstallConfirmBody" xml:space="preserve">
-    <value>« {0} » est d’abord supprimé, puis la dernière version est installée à neuf. Les réglages du programme peuvent être perdus.</value>
+    <value>La version installée est supprimée et la nouvelle est installée via winget. Ensuite, {0} se met de nouveau à jour normalement. Les réglages du programme sont généralement conservés.</value>
   </data>
   <data name="ReinstallUnavailable" xml:space="preserve">
-    <value>La nouvelle version est introuvable pour le moment, rien n’a donc été modifié. Vérifiez la connexion et réessayez.</value>
+    <value>La nouvelle version est introuvable pour le moment. Rien n’a été modifié.</value>
   </data>
   <data name="ReinstallInstallFailed" xml:space="preserve">
-    <value>Supprimé, mais la nouvelle version n’a pas été installée. Réessayer lance de nouveau l’installation.</value>
+    <value>Supprimé, mais la nouvelle installation a échoué. Utilisez Réessayer pour recommencer.</value>
   </data>
 </root>

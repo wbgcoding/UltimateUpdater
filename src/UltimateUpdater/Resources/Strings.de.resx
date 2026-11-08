@@ -2267,18 +2267,18 @@ Mit Admin-Rechten fortfahren?</value>
     <value>Neu installieren</value>
   </data>
   <data name="ReinstallTooltip" xml:space="preserve">
-    <value>Installierte Version entfernen und die neue frisch installieren</value>
+    <value>Deinstalliert die alte Version und installiert die neue über winget.</value>
   </data>
   <data name="ReinstallConfirmTitle" xml:space="preserve">
-    <value>„{0}“ neu installieren?</value>
+    <value>{0} neu installieren?</value>
   </data>
   <data name="ReinstallConfirmBody" xml:space="preserve">
-    <value>„{0}“ wird zuerst entfernt, danach wird die neueste Version frisch installiert. Programmeinstellungen können verloren gehen.</value>
+    <value>Die vorhandene Version wird deinstalliert und die neue über winget installiert. Danach lässt sich {0} wieder normal aktualisieren. Einstellungen des Programms bleiben in der Regel erhalten.</value>
   </data>
   <data name="ReinstallUnavailable" xml:space="preserve">
-    <value>Die neue Version lässt sich gerade nicht abrufen, daher wurde nichts geändert. Verbindung prüfen und erneut versuchen.</value>
+    <value>Die neue Version ist gerade nicht abrufbar. Es wurde nichts geändert.</value>
   </data>
   <data name="ReinstallInstallFailed" xml:space="preserve">
-    <value>Entfernt, aber die neue Version wurde nicht installiert. Wiederholen installiert sie erneut.</value>
+    <value>Deinstalliert, aber die Neuinstallation ist fehlgeschlagen. Mit „Wiederholen“ erneut versuchen.</value>
   </data>
 </root>

@@ -2267,18 +2267,18 @@ Continue with admin rights?</value>
     <value>Reinstall</value>
   </data>
   <data name="ReinstallTooltip" xml:space="preserve">
-    <value>Remove the installed version and install the new one from scratch</value>
+    <value>Removes the old version and installs the new one through winget.</value>
   </data>
   <data name="ReinstallConfirmTitle" xml:space="preserve">
-    <value>Reinstall “{0}”?</value>
+    <value>Reinstall {0}?</value>
   </data>
   <data name="ReinstallConfirmBody" xml:space="preserve">
-    <value>“{0}” is removed first, then the latest version is installed from scratch. Program settings may be lost.</value>
+    <value>The installed version is removed and the new one is installed through winget. After that, {0} updates normally again. The program's settings are usually kept.</value>
   </data>
   <data name="ReinstallUnavailable" xml:space="preserve">
-    <value>The new version cannot be fetched right now, so nothing was changed. Check your connection and try again.</value>
+    <value>The new version cannot be fetched right now. Nothing was changed.</value>
   </data>
   <data name="ReinstallInstallFailed" xml:space="preserve">
-    <value>Removed, but the new version did not install. Retry installs it again.</value>
+    <value>Removed, but the new install failed. Use Retry to try again.</value>
   </data>
 </root>

@@ -2267,18 +2267,18 @@ Esto no se puede deshacer.</value>
     <value>Reinstalar</value>
   </data>
   <data name="ReinstallTooltip" xml:space="preserve">
-    <value>Quitar la versión instalada e instalar la nueva desde cero</value>
+    <value>Quita la versión anterior e instala la nueva mediante winget.</value>
   </data>
   <data name="ReinstallConfirmTitle" xml:space="preserve">
-    <value>¿Reinstalar «{0}»?</value>
+    <value>¿Reinstalar {0}?</value>
   </data>
   <data name="ReinstallConfirmBody" xml:space="preserve">
-    <value>Primero se quita «{0}» y después se instala la versión más reciente desde cero. Los ajustes del programa pueden perderse.</value>
+    <value>Se quita la versión instalada y se instala la nueva mediante winget. Después, {0} vuelve a actualizarse con normalidad. Los ajustes del programa normalmente se conservan.</value>
   </data>
   <data name="ReinstallUnavailable" xml:space="preserve">
-    <value>Ahora no se puede obtener la nueva versión, así que no se cambió nada. Comprueba la conexión e inténtalo de nuevo.</value>
+    <value>Ahora no se puede obtener la nueva versión. No se cambió nada.</value>
   </data>
   <data name="ReinstallInstallFailed" xml:space="preserve">
-    <value>Se quitó, pero la nueva versión no se instaló. Reintentar vuelve a instalarla.</value>
+    <value>Se quitó, pero la nueva instalación falló. Usa Reintentar para volver a probar.</value>
   </data>
 </root>

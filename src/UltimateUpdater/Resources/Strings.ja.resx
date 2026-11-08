@@ -2267,18 +2267,18 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
     <value>再インストール</value>
   </data>
   <data name="ReinstallTooltip" xml:space="preserve">
-    <value>インストール済みのバージョンを削除し、新しいバージョンをあらためてインストールします</value>
+    <value>古いバージョンを削除し、新しいバージョンを winget でインストールします。</value>
   </data>
   <data name="ReinstallConfirmTitle" xml:space="preserve">
-    <value>「{0}」を再インストールしますか？</value>
+    <value>{0} を再インストールしますか？</value>
   </data>
   <data name="ReinstallConfirmBody" xml:space="preserve">
-    <value>先に「{0}」を削除し、そのあと最新バージョンをあらためてインストールします。プログラムの設定は失われることがあります。</value>
+    <value>インストール済みのバージョンを削除し、新しいバージョンを winget でインストールします。その後は {0} を通常どおり更新できるようになります。プログラムの設定は通常そのまま残ります。</value>
   </data>
   <data name="ReinstallUnavailable" xml:space="preserve">
-    <value>今は新しいバージョンを取得できないため、何も変更していません。接続を確認して、もう一度お試しください。</value>
+    <value>今は新しいバージョンを取得できません。何も変更していません。</value>
   </data>
   <data name="ReinstallInstallFailed" xml:space="preserve">
-    <value>削除しましたが、新しいバージョンはインストールされませんでした。再試行すると、もう一度インストールします。</value>
+    <value>削除しましたが、新しいインストールに失敗しました。「再試行」でもう一度お試しください。</value>
   </data>
 </root>
