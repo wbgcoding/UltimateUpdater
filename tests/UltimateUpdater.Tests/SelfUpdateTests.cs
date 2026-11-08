@@ -413,14 +413,58 @@ public class SelfUpdateTests
 
         try
         {
-            SelfUpdateService.RollBack(backupPath, currentPath, new LoggingService());
+            ElevationService.ResetElevationRefusalForTests();
+            var logging = new LoggingService();
+            ElevationService.LockSelfImage(logging, backupPath);
+            var lockedImage = ElevationService.ReleaseSelfImageLock();
 
+            SelfUpdateService.RollBack(backupPath, currentPath, logging, lockedImage);
+
+            Assert.False(ElevationService.IsElevationRefused);
             Assert.False(File.Exists(backupPath));
             Assert.Equal<byte>([1], File.ReadAllBytes(currentPath));
             Assert.ThrowsAny<IOException>(() => File.Move(currentPath, currentPath + ".swapped"));
         }
         finally
         {
+            ElevationService.ResetElevationRefusalForTests();
+            ElevationService.ReleaseSelfImageLock();
+            try { Directory.Delete(directory, recursive: true); } catch { }
+        }
+    }
+
+    /// <summary>
+    /// While the lock is off for the swap, the running image can be renamed away and another file parked
+    /// where the rollback takes its backup from. Putting that one back and locking it would vouch for a
+    /// file that never ran, and the elevated worker is started from it by path: elevation is refused and
+    /// the planted file stays unlocked instead.
+    /// </summary>
+    [Fact]
+    public void A_rollback_that_puts_back_a_different_file_refuses_elevation_instead_of_locking_it()
+    {
+        var directory = Directory.CreateTempSubdirectory("wu-selfupdate-planted-").FullName;
+        var currentPath = Path.Combine(directory, "UltimateUpdater.exe");
+        var backupPath = currentPath + ".old";
+        File.WriteAllBytes(currentPath, [1]);
+
+        try
+        {
+            ElevationService.ResetElevationRefusalForTests();
+            var logging = new LoggingService();
+            ElevationService.LockSelfImage(logging, currentPath);
+            var lockedImage = ElevationService.ReleaseSelfImageLock();
+
+            File.Move(currentPath, Path.Combine(directory, "renamed-away.exe"));
+            File.WriteAllBytes(backupPath, [9]);
+
+            SelfUpdateService.RollBack(backupPath, currentPath, logging, lockedImage);
+
+            Assert.True(ElevationService.IsElevationRefused);
+            File.Move(currentPath, currentPath + ".unlocked");
+        }
+        finally
+        {
+            ElevationService.ResetElevationRefusalForTests();
             ElevationService.ReleaseSelfImageLock();
             try { Directory.Delete(directory, recursive: true); } catch { }
         }
@@ -526,8 +570,41 @@ public class SelfUpdateTests
             ElevationService.ResetElevationRefusalForTests();
 
             Assert.ThrowsAny<IOException>(() =>
-                SelfUpdateService.RollBack(currentPath + ".old", currentPath, new LoggingService()));
+                SelfUpdateService.RollBack(currentPath + ".old", currentPath, new LoggingService(), lockedImage: null));
 
+            Assert.True(ElevationService.IsElevationRefused);
+        }
+        finally
+        {
+            ElevationService.ResetElevationRefusalForTests();
+            ElevationService.ReleaseSelfImageLock();
+            try { Directory.Delete(directory, recursive: true); } catch { }
+        }
+    }
+
+    /// <summary>After a successful swap the path holds a copy no lock vouches for, so no elevated worker may
+    /// be started from it for the rest of this process.</summary>
+    [Fact]
+    public void A_successful_portable_swap_refuses_elevation_for_the_rest_of_the_session()
+    {
+        var directory = Directory.CreateTempSubdirectory("wu-selfupdate-handover-").FullName;
+        var currentPath = Path.Combine(directory, "UltimateUpdater.exe");
+        var verifiedPath = Path.Combine(directory, "new.bin");
+        File.WriteAllBytes(currentPath, [1]);
+        // A real, harmless Windows program: the swap starts the new copy and rolls back when it cannot.
+        File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "hostname.exe"), verifiedPath);
+        var digest = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(verifiedPath)));
+
+        try
+        {
+            ElevationService.ResetElevationRefusalForTests();
+            var logging = new LoggingService();
+            ElevationService.LockSelfImage(logging, currentPath);
+            var service = new SelfUpdateService(new HttpClient(), logging, new PublicUpdateChannel(logging));
+
+            var applied = service.ApplyPortable(verifiedPath, currentPath, digest);
+
+            Assert.True(applied);
             Assert.True(ElevationService.IsElevationRefused);
         }
         finally
@@ -543,5 +620,4 @@ public class SelfUpdateTests
 internal static class SelfUpdateServiceTestHook
 {
     public static bool IsAllowedUrl(string url) => SelfUpdateService.IsAllowedUrl(url);
-
 }

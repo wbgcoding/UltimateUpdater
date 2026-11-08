@@ -29,11 +29,13 @@ public static class CleanupWorker
     /// Measures or cleans the elevation-needing targets named in one command. The token and the gate come
     /// from the app's Stop and Pause buttons, over the same pipe as the command itself.
     /// <paramref name="serviceOverride"/> is a test seam: it lets a test observe what the worker hands the
-    /// service without running a real cleanup.
+    /// service without running a real cleanup; <paramref name="isTrustedDirectory"/> is the seam for the
+    /// folder-trust question behind the registry backup folder.
     /// </summary>
     public static async Task RunCommandAsync(
         CleanupCommand? command, StreamWriter writer, string jobId, LoggingService logging,
-        CancellationToken cancellationToken, PauseGate pause, CleanupService? serviceOverride = null)
+        CancellationToken cancellationToken, PauseGate pause, CleanupService? serviceOverride = null,
+        Func<string, bool>? isTrustedDirectory = null)
     {
         if (command is null || command.Command is not ("scan" or "clean" or "analyze"))
         {
@@ -49,6 +51,9 @@ public static class CleanupWorker
         if (command.Command == "analyze")
         {
             var analysis = await new CleanupService(logging).AnalyzeComponentStoreAsync(cancellationToken);
+
+            // This branch returns before the log timer below exists, so the lines the analysis logged go out here.
+            DrainLog(writer, jobId);
             Send(writer, jobId, new CleanupWorkerMessage
             {
                 Type = "componentStore",
@@ -71,7 +76,9 @@ public static class CleanupWorker
         var service = serviceOverride ?? new CleanupService(logging);
         var registrySettings = new Models.Settings.RegistryCleanupSettings
         {
-            BackupFolder = command.RegistryBackupFolder,
+            BackupFolder = ChooseRegistryBackupFolder(
+                command.RegistryBackupFolder, Models.Settings.RegistryCleanupSettings.DefaultBackupFolder, logging,
+                isTrustedDirectory ?? ElevatedPathTrust.IsTrustedDirectory),
             RetentionCount = command.RegistryBackupRetentionCount,
         };
 
@@ -314,6 +321,57 @@ public static class CleanupWorker
             TimedOut = outcome.TimedOut,
             DriverBackupFolderName = outcome.DriverBackupFolderName,
         });
+    }
+
+    /// <summary>
+    /// The folder the elevated registry backup may write to and prune. The payload comes from the unelevated
+    /// side, and an admin write or delete steered into a folder only administrators can change would be a
+    /// write primitive there. A payload folder is therefore used only when it is the worker's own default or
+    /// sits where an ordinary user can write anyway (so an admin write there gains nothing): the nearest
+    /// existing folder at or above it must exist, have a readable ACL and not be an admin-only location.
+    /// Anything else is logged and replaced by <paramref name="workerDefault"/>.
+    /// </summary>
+    internal static string ChooseRegistryBackupFolder(
+        string? requested, string workerDefault, LoggingService logging, Func<string, bool> isTrustedDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(requested))
+            return workerDefault;
+
+        try
+        {
+            // Drive-letter paths only: a UNC or device path is not a local folder to probe as admin.
+            if (!Path.IsPathFullyQualified(requested) || requested.StartsWith(@"\\", StringComparison.Ordinal))
+                return RejectBackupFolder(requested, workerDefault, logging);
+
+            var full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(requested));
+            if (string.Equals(full, Path.TrimEndingDirectorySeparator(Path.GetFullPath(workerDefault)),
+                    StringComparison.OrdinalIgnoreCase))
+                return workerDefault;
+
+            var probe = full;
+            while (probe is not null && !Directory.Exists(probe))
+                probe = Path.GetDirectoryName(probe);
+
+            if (probe is null)
+                return RejectBackupFolder(requested, workerDefault, logging);
+
+            // An unreadable ACL says nothing about who can write there: refused rather than guessed.
+            _ = new DirectoryInfo(probe).GetAccessControl(System.Security.AccessControl.AccessControlSections.Access);
+
+            return isTrustedDirectory(probe) ? RejectBackupFolder(requested, workerDefault, logging) : requested;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException
+                                       or NotSupportedException or System.Security.SecurityException
+                                       or InvalidOperationException)
+        {
+            return RejectBackupFolder(requested, workerDefault, logging);
+        }
+    }
+
+    private static string RejectBackupFolder(string requested, string workerDefault, LoggingService logging)
+    {
+        logging.Error($"Registry cleanup: the backup folder '{requested}' sent to the administrator worker is not accepted; using the default folder.");
+        return workerDefault;
     }
 
     private static void DrainLog(StreamWriter writer, string jobId)

@@ -7,52 +7,116 @@ namespace UltimateUpdater.Services;
 
 /// <summary>
 /// A grip on one job that is already with the elevated helper, so the caller can hold or stop it while it
-/// runs. Handed to <see cref="ElevatedHost.RunAsync"/>, which fills it in before the job is sent; every
-/// method is safe to call before that and after the job has finished, it then simply does nothing.
+/// runs. Handed to <see cref="ElevatedHost.RunAsync"/>, which fills it in once the job is sent; every
+/// method is safe to call before that (a hold or a stop is remembered and applied then) and after the job
+/// has finished (it then simply does nothing).
 /// </summary>
 public sealed class ElevatedJobHandle
 {
+    private readonly object _lock = new();
     private ElevatedHost? _host;
     private string? _id;
     private bool _held;
+    private bool _cancelRequested;
+    private List<(string SourceId, string ItemId)>? _pendingItemCancels;
 
     /// <summary>
-    /// Called by the host once the job has an id. A hold asked for BEFORE that, the user paused while the
-    /// previous target was still finishing, is applied now, because a pause naming an id the worker has
-    /// never seen is simply dropped.
+    /// Called by the host once the job has an id. Whatever was asked BEFORE that (the user paused while the
+    /// previous target was still finishing, or stopped a row while the elevation prompt was still open) is
+    /// applied now, because a control naming an id the worker has never seen is simply dropped.
     /// </summary>
     internal void Attach(ElevatedHost host, string id)
     {
-        _host = host;
-        _id = id;
+        bool pause, cancel;
+        (string SourceId, string ItemId)[] itemCancels;
+        lock (_lock)
+        {
+            _host = host;
+            _id = id;
+            pause = _held;
+            cancel = _cancelRequested;
+            itemCancels = _pendingItemCancels?.ToArray() ?? [];
+            _pendingItemCancels = null;
+        }
 
-        if (_held)
+        if (pause)
             _ = host.SendControlAsync(id, "pause");
+
+        foreach (var (sourceId, itemId) in itemCancels)
+            _ = host.SendControlAsync(id, "cancel-item", sourceId, itemId);
+
+        if (cancel)
+            _ = host.SendControlAsync(id, "cancel");
     }
 
     public Task PauseAsync()
     {
-        _held = true;
+        lock (_lock)
+            _held = true;
+
         return ControlAsync("pause");
     }
 
     public Task ResumeAsync()
     {
-        _held = false;
+        lock (_lock)
+            _held = false;
+
         return ControlAsync("resume");
     }
 
-    public Task CancelAsync() => ControlAsync("cancel");
+    public Task CancelAsync()
+    {
+        lock (_lock)
+        {
+            if (_host is null)
+            {
+                _cancelRequested = true;
+                return Task.CompletedTask;
+            }
+        }
+
+        return ControlAsync("cancel");
+    }
 
     /// <summary>Stops just ONE item inside this job; the worker keeps working through the
     /// rest, and an item that already finished (or was never part of this job) is simply ignored, the
     /// same "unknown key, not an error" rule <see cref="ElevatedWorker.Control"/> already applies to a
-    /// whole-job id it has never seen.</summary>
-    public Task CancelItemAsync(string sourceId, string itemId) =>
-        _host is { } host && _id is { } id ? host.SendControlAsync(id, "cancel-item", sourceId, itemId) : Task.CompletedTask;
+    /// whole-job id it has never seen. Asked before the job is out, it is remembered and sent right after.</summary>
+    public Task CancelItemAsync(string sourceId, string itemId)
+    {
+        ElevatedHost host;
+        string id;
+        lock (_lock)
+        {
+            if (_host is null || _id is null)
+            {
+                (_pendingItemCancels ??= []).Add((sourceId, itemId));
+                return Task.CompletedTask;
+            }
 
-    private Task ControlAsync(string action) =>
-        _host is { } host && _id is { } id ? host.SendControlAsync(id, action) : Task.CompletedTask;
+            host = _host;
+            id = _id;
+        }
+
+        return host.SendControlAsync(id, "cancel-item", sourceId, itemId);
+    }
+
+    private Task ControlAsync(string action)
+    {
+        ElevatedHost host;
+        string id;
+        lock (_lock)
+        {
+            if (_host is null || _id is null)
+                return Task.CompletedTask;
+
+            host = _host;
+            id = _id;
+        }
+
+        return host.SendControlAsync(id, action);
+    }
 }
 
 /// <summary>
@@ -567,6 +631,10 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
         // pipe is gone, a caller waiting in RunAsync must not depend on that race resolving in time.
         _sessionEnded.TrySetResult(false);
 
+        // Taken before the writer goes away: a control line being written right now must finish (or the pipe
+        // must break) rather than meet a disposed writer. Bounded, because a write stuck on a pipe nobody reads
+        // is exactly what disposing the pipe below ends.
+        var gateHeld = await _sendGate.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
         try
         {
             TryDispose(_writer);
@@ -605,6 +673,9 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
             _server = null;
             _worker = null;
             _pump = null;
+
+            if (gateHeld)
+                _sendGate.Release();
         }
     }
 

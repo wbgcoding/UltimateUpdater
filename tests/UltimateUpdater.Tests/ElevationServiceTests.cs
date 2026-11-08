@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.IO;
 using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
@@ -85,5 +87,79 @@ public class ElevationServiceTests
         string[] commandLine = ["--elevated-worker", "--tray"];
 
         Assert.False(ElevationService.IsWorkerInvocation(commandLine.Skip(1)));
+    }
+
+    /// <summary>A junction in the exe's folder chain makes the locked handle a different file than the path
+    /// the worker would be started from, so elevation is refused instead.</summary>
+    [Fact]
+    public void Locking_an_image_reached_through_a_junction_refuses_elevation()
+    {
+        var root = Directory.CreateTempSubdirectory("wu-selfimage-link-").FullName;
+        var real = Path.Combine(root, "real");
+        var link = Path.Combine(root, "link");
+        Directory.CreateDirectory(real);
+        File.WriteAllBytes(Path.Combine(real, "app.exe"), [0]);
+
+        try
+        {
+            using (var mklink = Process.Start(new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c mklink /J \"{link}\" \"{real}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            })!)
+            {
+                mklink.WaitForExit(5000);
+                Assert.Equal(0, mklink.ExitCode);
+            }
+
+            ElevationService.ResetElevationRefusalForTests();
+
+            ElevationService.LockSelfImageAt(new LoggingService(), Path.Combine(link, "app.exe"));
+
+            Assert.True(ElevationService.IsElevationRefused);
+            // The refused lock is not kept: the file can be moved.
+            File.Move(Path.Combine(real, "app.exe"), Path.Combine(real, "moved.exe"));
+        }
+        finally
+        {
+            ElevationService.ResetElevationRefusalForTests();
+            ElevationService.ReleaseSelfImageLock();
+            try { Directory.Delete(link); } catch { }
+            try { Directory.Delete(root, recursive: true); } catch { }
+        }
+    }
+
+    [Fact]
+    public void Locking_a_plain_path_keeps_elevation_allowed_and_replaces_an_earlier_lock()
+    {
+        var root = Directory.CreateTempSubdirectory("wu-selfimage-plain-").FullName;
+        var first = Path.Combine(root, "first.exe");
+        var second = Path.Combine(root, "second.exe");
+        File.WriteAllBytes(first, [0]);
+        File.WriteAllBytes(second, [0]);
+
+        try
+        {
+            ElevationService.ResetElevationRefusalForTests();
+            var logging = new LoggingService();
+
+            ElevationService.LockSelfImageAt(logging, first);
+            ElevationService.LockSelfImageAt(logging, second);
+
+            Assert.False(ElevationService.IsElevationRefused);
+            Assert.ThrowsAny<IOException>(() => File.Move(second, second + ".x"));
+            // The first lock was disposed when the second took over.
+            File.Move(first, first + ".x");
+        }
+        finally
+        {
+            ElevationService.ResetElevationRefusalForTests();
+            ElevationService.ReleaseSelfImageLock();
+            try { Directory.Delete(root, recursive: true); } catch { }
+        }
     }
 }

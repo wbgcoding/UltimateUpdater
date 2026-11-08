@@ -449,12 +449,14 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
     /// back to the installed version when the newest one cannot be resolved (a dependency without a build
     /// for this Python), and it exits 0 as if the upgrade had worked; the pin turns that into the real
     /// error. A version that is missing or not a plain version string keeps the unpinned name.
+    /// The cmd opt-out is for the PEP 440 epoch ('1!2.0'): the interpreter is python.exe, never a batch file,
+    /// and <c>SafeVersion</c> already limits the characters.
     /// </summary>
     internal static string Requirement(UpdateItem item)
     {
         var name = PackageName(item);
         var version = item.AvailableVersion;
-        return version is not null && SafeVersion.IsMatch(version) && ProcessRunner.IsSafePositionalArgument(version)
+        return version is not null && SafeVersion.IsMatch(version) && ProcessRunner.IsSafePositionalArgument(version, allowCmdMetacharacters: true)
             ? $"{name}=={version}"
             : name;
     }

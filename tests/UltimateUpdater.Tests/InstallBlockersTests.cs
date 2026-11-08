@@ -50,7 +50,7 @@ public class InstallBlockersTests
     private const string GitFolder = @"C:\Program Files\Git";
 
     private static InstallBlockers GitBlockers(
-        IReadOnlyList<string> names, Func<string, IReadOnlyList<string>> imagePathsOf, string? gitFolder = GitFolder) =>
+        IReadOnlyList<string> names, Func<string, IReadOnlyList<string?>> imagePathsOf, string? gitFolder = GitFolder) =>
         new(runningProcessNames: () => names, imagePathsOf: imagePathsOf, gitInstallFolder: () => gitFolder);
 
     /// <summary>Git's silent setup asks to close its own running shells and, with message boxes suppressed,
@@ -162,6 +162,50 @@ public class InstallBlockersTests
         Assert.NotNull(blocked);
         Assert.Equal("Some Vendor Thing", blocked!.DisplayProgramName);
         Assert.Contains("thing", blocked.ProcessNames);
+    }
+
+    private static InstallBlockers GenericBlockers(Func<string, IReadOnlyList<string?>> imagePathsOf, out UpdateItem item)
+    {
+        const string folder = @"C:\Python312";
+        var resolver = new InstallLocationResolver(
+            new EmptyRegistry(),
+            directoryExists: dir => dir == folder,
+            fileExists: _ => true,
+            executablesIn: _ => [$@"{folder}\python.exe"]);
+        item = Item("Python.Python.3.12", "Python 3.12", installLocation: folder);
+        return new InstallBlockers(
+            resolver,
+            runningProcessNames: () => ["python"],
+            topLevelExecutableNames: _ => ["python"],
+            imagePathsOf: imagePathsOf);
+    }
+
+    /// <summary>A script running on another Python must not block the update of this one.</summary>
+    [Fact]
+    public void The_generic_path_ignores_a_same_named_program_running_from_another_folder()
+    {
+        var blockers = GenericBlockers(_ => [@"C:\Python311\python.exe", @"C:\Python3120\python.exe"], out var item);
+
+        Assert.Null(blockers.Detect(item));
+    }
+
+    [Fact]
+    public void The_generic_path_blocks_when_one_instance_runs_from_the_install_folder()
+    {
+        var blockers = GenericBlockers(_ => [@"C:\Python311\python.exe", @"C:\Python312\python.exe"], out var item);
+
+        var blocked = blockers.Detect(item);
+
+        Assert.NotNull(blocked);
+        Assert.Equal(["python"], blocked!.ProcessNames);
+    }
+
+    [Fact]
+    public void The_generic_path_blocks_when_an_instances_image_cannot_be_read()
+    {
+        var blockers = GenericBlockers(_ => [@"C:\Python311\python.exe", null], out var item);
+
+        Assert.NotNull(blockers.Detect(item));
     }
 
     /// <summary>

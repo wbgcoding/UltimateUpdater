@@ -611,10 +611,19 @@ public static class ProcessRunner
     internal static ResolvedExecutable ResolveForPrivilege(
         string fileName, bool elevated, Func<string, FileStream, bool>? locationTrust = null)
     {
-        var resolved = Resolve(fileName) ?? fileName;
-
         if (!elevated)
-            return new ResolvedExecutable(resolved, null);
+            return new ResolvedExecutable(Resolve(fileName) ?? fileName, null);
+
+        // A bare name that is not found must not fall back to itself: pinned relative, it would resolve
+        // against the working directory.
+        var resolved = ResolveTrusted(fileName);
+        if (resolved is null)
+        {
+            if (!Path.IsPathFullyQualified(fileName))
+                throw new UntrustedToolException(fileName, "not found in a trusted location");
+
+            resolved = fileName;
+        }
 
         // The ORDER here is the security property: the handle is pinned FIRST, the signature verified
         // against THAT handle.
@@ -827,7 +836,7 @@ public static class ProcessRunner
         if (value.Any(c => char.IsWhiteSpace(c) || c is '"' or '\'' or '`'))
             return false;
 
-        if (!allowCmdMetacharacters && value.Any(c => c is '&' or '|' or '<' or '>' or '^' or '%'))
+        if (!allowCmdMetacharacters && value.Any(c => c is '&' or '|' or '<' or '>' or '^' or '%' or '!' or '(' or ')'))
             return false;
 
         // An npm scope is the one legitimate leading '@'; "@angular/cli" is a real package name,
@@ -842,37 +851,107 @@ public static class ProcessRunner
     }
 
     /// <summary>Full path of the executable including its extension, or null if it is not on PATH.</summary>
-    public static string? Resolve(string fileName)
+    public static string? Resolve(string fileName) =>
+        Resolve(fileName, Environment.GetEnvironmentVariable("PATH"),
+            Environment.GetEnvironmentVariable("PATHEXT"), AliasDirectory);
+
+    internal static string? Resolve(string fileName, string? pathVariable, string? pathExtensions, string? aliasDirectory)
     {
         if (Path.IsPathRooted(fileName))
             return File.Exists(fileName) ? fileName : null;
 
-        var pathVariable = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
-        var extensions = (Environment.GetEnvironmentVariable("PATHEXT") ?? ".EXE;.CMD;.BAT")
+        var extensions = (pathExtensions ?? ".EXE;.CMD;.BAT")
             .Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-        var directories = pathVariable.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
-        if (AliasDirectory is { Length: > 0 } aliases)
-            directories = [.. directories, aliases];
-
-        foreach (var directory in directories)
+        foreach (var directory in SearchDirectories(pathVariable, aliasDirectory, requireFullyQualified: false))
         {
             foreach (var extension in extensions)
             {
-                try
-                {
-                    var candidate = Path.Combine(directory, fileName + extension);
-                    if (File.Exists(candidate))
-                        return candidate;
-                }
-                catch (ArgumentException)
-                {
-                    // malformed PATH entry; ignore and keep probing
-                }
+                if (ProbeCandidate(directory, fileName, extension) is { } found)
+                    return found;
             }
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// The lookup an elevated launch uses. PATHEXT is never read: in the elevated worker it comes from the
+    /// user's own registry hive, and an entry such as <c>\..\cmd.exe</c> turns any tool name into a
+    /// different binary in a trusted folder, which would then pass the location and signature checks and run
+    /// as admin with the tool's arguments. Relative PATH entries are skipped as well, since they would
+    /// resolve against the working directory.
+    /// </summary>
+    internal static string? ResolveTrusted(string fileName) =>
+        ResolveTrusted(fileName, Environment.GetEnvironmentVariable("PATH"), AliasDirectory);
+
+    internal static string? ResolveTrusted(string fileName, string? pathVariable, string? aliasDirectory)
+    {
+        if (Path.IsPathRooted(fileName))
+            return Path.IsPathFullyQualified(fileName) && File.Exists(fileName) ? fileName : null;
+
+        // A name that already carries one of the launch extensions is probed as written ("tool.exe" must
+        // not turn into "tool.exe.EXE"); anything else gets the fixed set appended.
+        var extension = Path.GetExtension(fileName);
+        var literal = TrustedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var directory in SearchDirectories(pathVariable, aliasDirectory, requireFullyQualified: true))
+        {
+            if (literal)
+            {
+                if (ProbeCandidate(directory, fileName, string.Empty) is { } direct)
+                    return direct;
+
+                continue;
+            }
+
+            foreach (var suffix in TrustedExtensions)
+            {
+                if (ProbeCandidate(directory, fileName, suffix) is { } found)
+                    return found;
+            }
+        }
+
+        return null;
+    }
+
+    private static readonly string[] TrustedExtensions = [".exe", ".cmd", ".bat"];
+
+    private static List<string> SearchDirectories(string? pathVariable, string? aliasDirectory, bool requireFullyQualified)
+    {
+        var directories = (pathVariable ?? string.Empty)
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .ToList();
+        if (aliasDirectory is { Length: > 0 })
+            directories.Add(aliasDirectory);
+
+        if (requireFullyQualified)
+            directories.RemoveAll(directory => !Path.IsPathFullyQualified(directory));
+
+        return directories;
+    }
+
+    /// <summary>
+    /// The candidate path when it exists and is exactly <paramref name="directory"/> plus one file name. A
+    /// name or extension carrying a separator or <c>..</c> would let the probe leave the directory it
+    /// claims to search, so it is skipped.
+    /// </summary>
+    private static string? ProbeCandidate(string directory, string fileName, string extension)
+    {
+        try
+        {
+            var name = fileName + extension;
+            var candidate = Path.Combine(directory, name);
+            if (!string.Equals(Path.GetFileName(candidate), name, StringComparison.Ordinal))
+                return null;
+
+            return File.Exists(candidate) ? candidate : null;
+        }
+        catch (ArgumentException)
+        {
+            // malformed PATH entry; ignore and keep probing
+            return null;
+        }
     }
 
     /// <summary>

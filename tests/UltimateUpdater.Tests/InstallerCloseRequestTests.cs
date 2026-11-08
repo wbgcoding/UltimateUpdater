@@ -151,6 +151,25 @@ public class InstallerCloseRequestTests
         Assert.False(Exists(BusySignal.NamePrefix + sid));
     }
 
+    /// <summary>Another object of a different kind already uses the name: raising the signal must not throw
+    /// (it runs on the UI timer), and it works again once the name is free.</summary>
+    [Fact]
+    public void A_squatted_busy_signal_name_does_not_crash_and_recovers_when_freed()
+    {
+        var sid = "test-" + Guid.NewGuid().ToString("N");
+        using var signal = new BusySignal(sid);
+        var squatter = new EventWaitHandle(false, EventResetMode.ManualReset, BusySignal.NamePrefix + sid);
+
+        signal.Set(true);
+        signal.Set(true);
+
+        squatter.Dispose();
+        signal.Set(false);
+        signal.Set(true);
+        Assert.True(Exists(BusySignal.NamePrefix + sid));
+        signal.Set(false);
+    }
+
     [Fact]
     public void The_busy_signal_defaults_to_the_current_users_sid()
     {

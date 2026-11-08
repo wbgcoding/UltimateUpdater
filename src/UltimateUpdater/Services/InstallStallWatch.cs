@@ -77,7 +77,10 @@ public sealed class StallDetector(StallWatchOptions options)
 /// <summary>Reads CPU time and I/O of a process and everything below it.</summary>
 internal static class ProcessTreeSampler
 {
-    private const uint ProcessQueryInformation = 0x0400;
+    /// <summary>PROCESS_QUERY_LIMITED_INFORMATION: enough for the times and I/O counters, and the one right
+    /// that is also granted on processes the full query right is refused for.</summary>
+    internal const uint ProcessQueryLimitedInformation = 0x1000;
+
     private const uint Th32csSnapProcess = 0x00000002;
 
     public static TreeActivity Sample(int rootId)
@@ -130,7 +133,7 @@ internal static class ProcessTreeSampler
 
     private static bool Exists(int id)
     {
-        var handle = OpenProcess(0x1000, false, (uint)id);
+        var handle = OpenProcess(ProcessQueryLimitedInformation, false, (uint)id);
         if (handle == IntPtr.Zero)
             return Marshal.GetLastWin32Error() == 5;
 
@@ -144,7 +147,7 @@ internal static class ProcessTreeSampler
         cpu = TimeSpan.Zero;
         io = 0;
 
-        var handle = OpenProcess(ProcessQueryInformation, false, (uint)id);
+        var handle = OpenProcess(ProcessQueryLimitedInformation, false, (uint)id);
         if (handle == IntPtr.Zero)
             return false;
 

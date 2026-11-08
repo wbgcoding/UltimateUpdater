@@ -372,14 +372,35 @@ public static class ElevatedWorker
 
     /// <summary>
     /// Log lines waiting to go back to the app. This process must not write files, every directory it
-    /// could write to belongs to the unelevated user, so the lines are held here and drained by whichever
-    /// handler is running, in that handler's own message shape.
+    /// could write to belongs to the unelevated user, so the lines are held here and drained by the job
+    /// that logged them, in that handler's own message shape. Lines logged outside any job (the read loop)
+    /// wait in <see cref="PendingLog"/> for whichever job drains next.
     /// </summary>
     private static readonly ConcurrentQueue<string> PendingLog = new();
 
-    public static void CollectLog(string line) => PendingLog.Enqueue(line);
+    /// <summary>The running job's own queue; flows to every task and timer the job starts, so two jobs
+    /// running at once never send each other's lines under their own id.</summary>
+    private static readonly AsyncLocal<ConcurrentQueue<string>?> JobLog = new();
 
-    internal static bool TryDequeueLog(out string line) => PendingLog.TryDequeue(out line!);
+    public static void CollectLog(string line) => (JobLog.Value ?? PendingLog).Enqueue(line);
+
+    /// <summary>Runs <paramref name="body"/> with a log queue of its own, so lines it (or anything it starts)
+    /// logs are drained only by the same job.</summary>
+    internal static async Task RunWithJobLogAsync(Func<Task> body)
+    {
+        // An async method: the value set here is visible to what body starts and never leaks to the caller.
+        JobLog.Value = new ConcurrentQueue<string>();
+        await body();
+    }
+
+    internal static bool TryDequeueLog(out string line)
+    {
+        var own = JobLog.Value;
+        if (own is not null && own.TryDequeue(out line!))
+            return true;
+
+        return PendingLog.TryDequeue(out line!);
+    }
 
     /// <summary>
     /// Writes one reply for <paramref name="jobId"/>. Returns false once the app has stopped listening.
@@ -741,6 +762,7 @@ public static class ElevatedWorker
         var lane = isExclusive ? LaneFor(job.Kind) : null;
         var held = false;
         IAsyncDisposable? slots = null;
+        JobLog.Value = new ConcurrentQueue<string>();
 
         try
         {
@@ -766,12 +788,14 @@ public static class ElevatedWorker
         catch (OperationCanceledException)
         {
             logging.Info($"Elevated job '{job.Kind}' was stopped.");
+            SendJobLog(job, writer);
             Send(writer, job.Id, new InstallProgressMessage { Type = "done" });
         }
         catch (Exception ex)
         {
             // The app is waiting for this job's "done" and would otherwise wait for ever.
             logging.Error($"Elevated job '{job.Kind}' failed", ex);
+            SendJobLog(job, writer);
             Send(writer, job.Id, new InstallProgressMessage { Type = "done" });
         }
         finally
@@ -783,11 +807,31 @@ public static class ElevatedWorker
             control.Pause.Resume();
             control.Cancellation.Dispose();
 
+            // What a stop registered for an item that never started (and nothing else removed) is released
+            // with the job.
+            foreach (var itemCancellation in control.ItemCancellations.Values)
+                itemCancellation.Dispose();
+            control.ItemCancellations.Clear();
+
             if (held && lane is not null)
                 lane.Release();
 
             if (slots is not null)
                 await slots.DisposeAsync();
+        }
+    }
+
+    /// <summary>Sends the job's own log lines that no worker handler drained (the job ended on a stop or an
+    /// error), in the shape the job's kind uses, before its closing line.</summary>
+    private static void SendJobLog(ElevatedJob job, StreamWriter writer)
+    {
+        while (TryDequeueLog(out var line))
+        {
+            object message = job.Kind == "install"
+                ? new InstallProgressMessage { Type = "log", Status = line }
+                : new CleanupWorkerMessage { Type = "log", Text = line };
+            if (!Send(writer, job.Id, message))
+                return;
         }
     }
 

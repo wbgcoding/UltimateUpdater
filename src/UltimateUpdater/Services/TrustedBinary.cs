@@ -96,7 +96,7 @@ internal static class TrustedBinary
 
     [DllImport("wintrust.dll", SetLastError = true)]
     private static extern IntPtr CryptCATAdminEnumCatalogFromHash(
-        IntPtr catAdmin, byte[] hash, uint hashSize, uint flags, IntPtr previousCatInfo);
+        IntPtr catAdmin, byte[] hash, uint hashSize, uint flags, ref IntPtr previousCatInfo);
 
     [DllImport("wintrust.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -133,12 +133,13 @@ internal static class TrustedBinary
         }
     }
 
-    private static bool IsCatalogSigned(string path, FileStream? pinned)
+    /// <param name="verifyOverride">Test seam: judges each catalog context instead of WinVerifyTrust, so a test
+    /// can walk the real enumeration of a system file past its first catalog.</param>
+    internal static bool IsCatalogSigned(string path, FileStream? pinned, Func<IntPtr, bool>? verifyOverride = null)
     {
         if (!CryptCATAdminAcquireContext2(out var catAdmin, IntPtr.Zero, "SHA256", IntPtr.Zero, 0))
             return false;
 
-        var catInfoHandle = IntPtr.Zero;
         SafeFileHandle? opened = null;
         try
         {
@@ -155,44 +156,84 @@ internal static class TrustedBinary
             if (!CryptCATAdminCalcHashFromFileHandle2(catAdmin, file, ref hashSize, hash, 0))
                 return false;
 
-            catInfoHandle = CryptCATAdminEnumCatalogFromHash(catAdmin, hash, hashSize, 0, IntPtr.Zero);
-            if (catInfoHandle == IntPtr.Zero)
-                return false;   // not in any catalog: the caller falls back to the embedded signature
-
-            var catalog = new CatalogInfo { cbStruct = (uint)Marshal.SizeOf<CatalogInfo>(), wszCatalogFile = string.Empty };
-            if (!CryptCATCatalogInfoFromContext(catInfoHandle, ref catalog, 0))
-                return false;
-
-            var hashHandle = GCHandle.Alloc(hash, GCHandleType.Pinned);
-            try
-            {
-                var catalogInfo = new WinTrustCatalogInfo
+            // A hash can sit in several catalogs (an older, superseded one first), so every one is tried
+            // until one verifies. Not in any catalog: the caller falls back to the embedded signature.
+            return AnyCatalogVerifies(
+                previous =>
                 {
-                    cbStruct = (uint)Marshal.SizeOf<WinTrustCatalogInfo>(),
-                    pcwszCatalogFilePath = catalog.wszCatalogFile,
-                    // the member tag is the file hash as an uppercase hex string
-                    pcwszMemberTag = Convert.ToHexString(hash),
-                    pcwszMemberFilePath = path,
-                    hMemberFile = file.DangerousGetHandle(),
-                    pbCalculatedFileHash = hashHandle.AddrOfPinnedObject(),
-                    cbCalculatedFileHash = hashSize,
-                    hCatAdmin = catAdmin,
-                };
-
-                return Verify(ChoiceCatalog, catalogInfo);
-            }
-            finally
-            {
-                hashHandle.Free();
-            }
+                    // The API takes a POINTER to the previous handle; passing the handle itself would make it
+                    // read the context's own memory as a handle.
+                    var previousCatInfo = previous;
+                    return CryptCATAdminEnumCatalogFromHash(catAdmin, hash, hashSize, 0, ref previousCatInfo);
+                },
+                verifyOverride ?? (catInfo => VerifyCatalog(catInfo, catAdmin, hash, hashSize, path, file)),
+                catInfo => CryptCATAdminReleaseCatalogContext(catAdmin, catInfo, 0));
         }
         finally
         {
-            if (catInfoHandle != IntPtr.Zero)
-                CryptCATAdminReleaseCatalogContext(catAdmin, catInfoHandle, 0);
-
             CryptCATAdminReleaseContext(catAdmin, 0);
             opened?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Walks the catalogs that list a file hash: <paramref name="enumerate"/> returns the one after the given
+    /// handle (zero first, zero again at the end), <paramref name="verify"/> judges one. Enumerating hands the
+    /// previous context back to the system itself, so only the context that verified is released here.
+    /// </summary>
+    internal static bool AnyCatalogVerifies(Func<IntPtr, IntPtr> enumerate, Func<IntPtr, bool> verify, Action<IntPtr> release)
+    {
+        for (var catInfo = enumerate(IntPtr.Zero); catInfo != IntPtr.Zero; catInfo = enumerate(catInfo))
+        {
+            bool verified;
+            try
+            {
+                verified = verify(catInfo);
+            }
+            catch
+            {
+                release(catInfo);
+                throw;
+            }
+
+            if (verified)
+            {
+                release(catInfo);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool VerifyCatalog(
+        IntPtr catInfoHandle, IntPtr catAdmin, byte[] hash, uint hashSize, string path, SafeFileHandle file)
+    {
+        var catalog = new CatalogInfo { cbStruct = (uint)Marshal.SizeOf<CatalogInfo>(), wszCatalogFile = string.Empty };
+        if (!CryptCATCatalogInfoFromContext(catInfoHandle, ref catalog, 0))
+            return false;
+
+        var hashHandle = GCHandle.Alloc(hash, GCHandleType.Pinned);
+        try
+        {
+            var catalogInfo = new WinTrustCatalogInfo
+            {
+                cbStruct = (uint)Marshal.SizeOf<WinTrustCatalogInfo>(),
+                pcwszCatalogFilePath = catalog.wszCatalogFile,
+                // the member tag is the file hash as an uppercase hex string
+                pcwszMemberTag = Convert.ToHexString(hash),
+                pcwszMemberFilePath = path,
+                hMemberFile = file.DangerousGetHandle(),
+                pbCalculatedFileHash = hashHandle.AddrOfPinnedObject(),
+                cbCalculatedFileHash = hashSize,
+                hCatAdmin = catAdmin,
+            };
+
+            return Verify(ChoiceCatalog, catalogInfo);
+        }
+        finally
+        {
+            hashHandle.Free();
         }
     }
 
