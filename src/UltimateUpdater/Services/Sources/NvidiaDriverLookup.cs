@@ -70,7 +70,11 @@ public static class NvidiaDriverLookup
         if (target.Length == 0)
             return null;
 
-        var candidates = ReadLookupValues(xml);
+        // "Laptop GPU" is dropped by Normalize, so the desktop and the notebook part of the same name
+        // match the same text: only a candidate of the same kind may answer, otherwise the wrong driver
+        // package (desktop vs notebook) would be offered. No same-kind candidate means no answer.
+        var notebook = IsNotebookName(gpuName);
+        var candidates = ReadLookupValues(xml).Where(c => IsNotebookName(c.Name) == notebook).ToList();
         if (candidates.Count == 0)
             return null;
 
@@ -94,6 +98,21 @@ public static class NvidiaDriverLookup
         }
 
         return best?.Value;
+    }
+
+    /// <summary>Whether a raw adapter name (or NVIDIA list entry) is the notebook variant of a product.</summary>
+    internal static bool IsNotebookName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
+
+        foreach (var marker in (string[])["laptop", "notebook", "max-q", "maxq", "mobile"])
+        {
+            if (name.Contains(marker, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>Compares two "560.94"-style versions; true when <paramref name="latest"/> is newer.</summary>
