@@ -14,6 +14,18 @@ namespace UltimateUpdater.Tests;
 /// </summary>
 public class SetupApiDriverInventoryProviderTests
 {
+    /// <summary>A failing lookup is no proof of absence: only "no such devnode" (0x0D) makes a device
+    /// non-present and thus a removal candidate; success and every other error keep it connected.</summary>
+    [Theory]
+    [InlineData(0x00, true)]    // CR_SUCCESS
+    [InlineData(0x0D, false)]   // CR_NO_SUCH_DEVNODE
+    [InlineData(0x03, true)]    // CR_OUT_OF_MEMORY
+    [InlineData(0x16, true)]    // CR_NO_SUCH_VALUE
+    [InlineData(0x1A, true)]    // CR_ACCESS_DENIED
+    [InlineData(0x39, true)]    // CR_FAILURE
+    public void Only_no_such_devnode_means_the_device_is_not_present(int result, bool expectedPresent) =>
+        Assert.Equal(expectedPresent, SetupApiDriverInventoryProvider.PresenceFromLocateResult(result));
+
     [Fact]
     public void GatherDevices_resolves_every_device_property_without_throwing()
     {

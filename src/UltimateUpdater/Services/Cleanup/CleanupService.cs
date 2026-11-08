@@ -1270,9 +1270,9 @@ public class CleanupService(LoggingService logging)
     /// <summary>Disconnected devices plus old driver packages, gathered fresh every scan the same
     /// way <see cref="ScanRegistry"/> re-reads the registry every time. No byte total, same as a registry
     /// finding: the count travels in Files.</summary>
-    private static CleanupScanResult ScanDrivers(CancellationToken cancellationToken)
+    private CleanupScanResult ScanDrivers(CancellationToken cancellationToken)
     {
-        IDriverInventoryProvider provider = new SetupApiDriverInventoryProvider();
+        IDriverInventoryProvider provider = new SetupApiDriverInventoryProvider(logging.Warn);
         var devices = provider.GatherDevices(cancellationToken);
         var packages = provider.GatherPackages(cancellationToken);
 
@@ -1307,7 +1307,7 @@ public class CleanupService(LoggingService logging)
         }
 
         return await DriverCleanupExecutor.CleanAsync(
-            new SetupApiDriverInventoryProvider(), selectedDeviceInstanceIds ?? [], selectedPackageNames ?? [],
+            new SetupApiDriverInventoryProvider(logging.Warn), selectedDeviceInstanceIds ?? [], selectedPackageNames ?? [],
             logging, cancellationToken);
     }
 

@@ -18,6 +18,12 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
     private const int SPDRP_FRIENDLYNAME = 0x0000000C;
     private const int SPDRP_CLASS = 0x00000007;
     private const int CR_SUCCESS = 0;
+    private const int CR_NO_SUCH_DEVNODE = 0x0D;
+
+    private readonly Action<string>? _logWarning;
+    private bool _loggedLookupError;
+
+    public SetupApiDriverInventoryProvider(Action<string>? logWarning = null) => _logWarning = logWarning;
 
     private static readonly Guid GUID_NULL = Guid.Empty;
 
@@ -77,7 +83,7 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
                 var registryWriteDate = lastArrival is null && lastRemoval is null && installDate is null && firstInstallDate is null
                     ? GetRegistryKeyLastWriteDate(deviceInfoSet, ref data)
                     : null;
-                var present = IsPresent(instanceId);
+                var present = IsPresent(instanceId, CM_Locate_DevNode(out _, instanceId, 0));
 
                 devices.Add(new DriverDeviceInfo(
                     instanceId, friendlyName, className, present, infPath, driverVersion, driverDate,
@@ -171,10 +177,24 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
         return new string(buffer, 0, Math.Min(required - 1, buffer.Length));
     }
 
-    private static bool IsPresent(string instanceId)
+    /// <summary>
+    /// What a <c>CM_Locate_DevNode</c> result says about the device. Only "no such devnode" means the device
+    /// is not connected; any other failure (out of memory, a busy configuration manager, ...) tells nothing
+    /// about the device, so it counts as present and is never offered as a disconnected one.
+    /// </summary>
+    internal static bool PresenceFromLocateResult(int result) => result != CR_NO_SUCH_DEVNODE;
+
+    private bool IsPresent(string instanceId, int result)
     {
-        var result = CM_Locate_DevNode(out var devInst, instanceId, 0);
-        return result == CR_SUCCESS;
+        if (result != CR_SUCCESS && result != CR_NO_SUCH_DEVNODE && !_loggedLookupError)
+        {
+            _loggedLookupError = true;
+            _logWarning?.Invoke(
+                $"Driver cleanup: a device lookup failed with 0x{result:X} (first seen for '{instanceId}'); " +
+                "devices whose lookup fails are treated as connected.");
+        }
+
+        return PresenceFromLocateResult(result);
     }
 
     /// <summary>
