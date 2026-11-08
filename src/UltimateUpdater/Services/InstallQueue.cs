@@ -116,7 +116,7 @@ public sealed class InstallQueue
         AvailableVersion = item.AvailableVersion,
         PinnedVersion = item.PinnedVersion,
         Scope = action == InstallAction.FreshInstall ? item.InstallScope : null,
-        PackageSource = Sources.WingetSource.SafeSource(item),
+        PackageSource = item.SourceId == "winget" ? Sources.WingetSource.SafeSource(item) : null,
     };
 
     /// <summary>

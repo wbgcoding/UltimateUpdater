@@ -94,4 +94,26 @@ public class WingetSourceJobTests
         Assert.Null(WingetSource.SafeSource(item));
         Assert.False(item.Meta.ContainsKey(WingetSource.SourceMetaKey));
     }
+
+    [Fact]
+    public void A_row_of_another_source_sends_no_winget_source()
+    {
+        var pip = new UpdateItem
+        {
+            Id = "six",
+            SourceId = "pip",
+            Category = UpdateCategory.DeveloperTools,
+            Name = "six",
+            Meta = new Dictionary<string, string> { [WingetSource.SourceMetaKey] = "winget" },
+        };
+
+        Assert.Null(InstallQueue.ToJobItem(pip, InstallAction.Install).PackageSource);
+    }
+
+    [Fact]
+    public void A_name_with_a_trailing_line_break_is_not_plain()
+    {
+        Assert.False(WingetSource.IsSafeSourceName("winget\n"));
+        Assert.True(WingetSource.IsSafeSourceName("winget"));
+    }
 }

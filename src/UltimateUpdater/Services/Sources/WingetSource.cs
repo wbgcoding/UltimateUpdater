@@ -34,7 +34,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
     public const string SourceMetaKey = "wingetSource";
 
     private static readonly System.Text.RegularExpressions.Regex SourceNamePattern =
-        new("^[A-Za-z0-9._-]{1,64}$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+        new(@"\A[A-Za-z0-9._-]{1,64}\z", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
     /// <summary>
     /// The source to pin an install to, or null for none. The name comes from scan output and a cache, and
