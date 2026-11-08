@@ -302,7 +302,6 @@ public class CleanupService(LoggingService logging)
         var tooNew = 0;
         long bytes = 0;
         var files = 0;
-        var skipped = 0;
         var isAppCacheSweep = target.Kind == CleanupKind.AppCacheSweep;
         var buckets = new Dictionary<string, EntryAccumulator>(StringComparer.OrdinalIgnoreCase);
         var identities = new HashSet<(uint VolumeSerial, ulong FileIndex)>();
@@ -356,7 +355,7 @@ public class CleanupService(LoggingService logging)
             .OrderByDescending(e => e.Bytes)
             .ToList());
 
-        return new CleanupScanResult(bytes, files, skipped)
+        return new CleanupScanResult(bytes, files, 0)
         {
             Entries = entries, OmittedEntryCount = omittedCount, OmittedEntryBytes = omittedBytes,
         };
@@ -2409,7 +2408,7 @@ public class CleanupService(LoggingService logging)
         }
 
         if (written == 0)
-            logging.Info("Cleanup: could not prepare an unattended Disk Cleanup profile; starting it with its own UI.");
+            logging.Info("Cleanup: Disk Cleanup skipped: no handler could be selected for an unattended profile.");
 
         return written > 0;
     }

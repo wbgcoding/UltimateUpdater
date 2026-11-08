@@ -20,8 +20,9 @@ public static class DismissOnDeactivate
     /// Wires the window so a click in its owner closes it. Safe to call once per window.
     /// </summary>
     /// <param name="canDismiss">
-    /// Optional veto, asked at click time: the cleanup dialog says no while it is deleting, because a
-    /// stray click must not abort a deletion half way through.
+    /// Optional veto, asked at click time, for a dialog that must stay open while a stray click could do
+    /// harm. No window passes one today: the cleanup dialog closes without one, because closing it puts a
+    /// running cleanup in the background rather than aborting it.
     /// </param>
     public static void Attach(Window window, Func<bool>? canDismiss = null)
     {
