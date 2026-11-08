@@ -264,6 +264,20 @@ public class CleanupService(LoggingService logging)
         return Path.Combine(root, separatorIndex < 0 ? relative : relative[..separatorIndex]);
     }
 
+    /// <summary>The safety gate for one directory of a target. A catalogue folder that exists on disk but is
+    /// refused is logged with the rule that refused it, so the support log explains a row that reads "nothing
+    /// found". The discovered folders of the cache sweep are not logged: nearly all of them fail the name test.</summary>
+    private bool IsTargetDirectorySafe(CleanupTarget target, string directory)
+    {
+        if (CleanupSafety.IsSafeToEmpty(directory, out var reason))
+            return true;
+
+        if (target.Kind == CleanupKind.Directories && Directory.Exists(directory))
+            logging.Info($"cleanup target {target.Id} refused: {reason} ('{directory}')");
+
+        return false;
+    }
+
     /// <summary>The moment before which a file must have been created AND last written to be taken, or null
     /// when the target has no age rule.</summary>
     internal static DateTime? AgeCutoffUtc(CleanupTarget target, DateTime nowUtc) =>
@@ -287,7 +301,7 @@ public class CleanupService(LoggingService logging)
 
         foreach (var directory in ResolveDirectories(target, cancellationToken))
         {
-            if (!CleanupSafety.IsSafeToEmpty(directory))
+            if (!IsTargetDirectorySafe(target, directory))
                 continue;
 
             // Two spellings of one folder (an 8.3 %TEMP%, other casing) are measured once, under the first
@@ -411,7 +425,7 @@ public class CleanupService(LoggingService logging)
             : null;
 
         var directories = ResolveDirectories(target, cancellationToken)
-            .Where(CleanupSafety.IsSafeToEmpty)
+            .Where(d => IsTargetDirectorySafe(target, d))
             // An AppCacheSweep row IS one whole directory (see BucketFor); deselecting it skips the
             // directory outright rather than needing a per-file check below.
             .Where(d => excludedEntries is null || !(isAppCacheSweep && excludedEntries.Contains(d)))
