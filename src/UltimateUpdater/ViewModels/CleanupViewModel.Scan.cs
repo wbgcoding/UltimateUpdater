@@ -308,6 +308,11 @@ public partial class CleanupViewModel
         var cts = new CancellationTokenSource();
         _scanCts = cts;
 
+        // A scan that measures the bin starts from the age as it stands now; only a change after this point
+        // needs a rescan of its own.
+        if (scope.Any(item => item.IsRecycleBin))
+            _recycleBinRescanPending = false;
+
         // A newer scan replaces _scanCts; from then on this one is stale and must not write a number or reset
         // any state the newer scan owns (its cancelled loop can still be mid-await and deliver a late result).
         bool IsCurrentScan() => ReferenceEquals(_scanCts, cts);
@@ -330,6 +335,30 @@ public partial class CleanupViewModel
             // Admin rows a quiet pass handed to the helper but never got a figure for (it was gone by the
             // time the job went out, or dropped mid-scan): they must not be stamped as measured.
             var helperMissed = new List<CleanupItemViewModel>();
+
+            // An open scan has no later pass to catch these up, and their previous figures are not a
+            // measurement of now: cleared like a row whose scan failed, with the admin capsule saying why.
+            void MarkUnmeasured(IEnumerable<CleanupItemViewModel> rows)
+            {
+                if (!IsCurrentScan())
+                    return;
+
+                foreach (var row in rows)
+                {
+                    row.Bytes = 0;
+                    row.Files = 0;
+                    row.SetEntries(null);
+                    row.SetRegistryFindings(null);
+                    row.SetLeftoverCandidates(null);
+                    row.SetDriverCandidates(null, null);
+                    row.SetOldPythonVersionCandidates(null);
+                    row.ShowsElevationHint = true;
+                    row.IsScanning = false;
+                }
+
+                RefreshTotals();
+            }
+
             try
             {
                 // Asked before anything is measured: without admin the elevated targets report a floor
@@ -377,8 +406,11 @@ public partial class CleanupViewModel
                         allowStart: !quietMode,
                         backgroundPriority: quietMode && !_windowAttached);
 
+                    var unmeasured = elevated.Where(item => !measuredByHelper.Contains(item)).ToList();
                     if (quietMode && !reached)
-                        helperMissed.AddRange(elevated.Where(item => !measuredByHelper.Contains(item)));
+                        helperMissed.AddRange(unmeasured);
+                    else if (!quietMode)
+                        MarkUnmeasured(unmeasured);
 
                     // A helper that died mid-scan must not leave rows spinning for ever.
                     if (IsCurrentScan())
@@ -397,6 +429,8 @@ public partial class CleanupViewModel
                 _logging.Warn($"Cleanup elevation scan failed: {ex.Message}");
                 if (quietMode)
                     helperMissed.AddRange(elevated);
+                else
+                    MarkUnmeasured(elevated.Where(item => item.IsScanning));
 
                 if (IsCurrentScan())
                 {
@@ -538,6 +572,10 @@ public partial class CleanupViewModel
                 // out are measured now rather than waiting for the window.
                 if (mode == ScanMode.Prescan && !cts.IsCancellationRequested)
                     StartLateMeasuring();
+
+                // An age change the scan swallowed (the row was being measured with the old one).
+                if (!cts.IsCancellationRequested)
+                    RunPendingRecycleBinRescan();
             }
         }
     }

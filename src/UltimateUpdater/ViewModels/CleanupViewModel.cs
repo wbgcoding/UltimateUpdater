@@ -366,6 +366,14 @@ public partial class CleanupViewModel : ObservableObject
         OnPropertyChanged(nameof(HistoryEmptyOverviewText));
         OnPropertyChanged(nameof(RestorePointText));
         OnPropertyChanged(nameof(MeasuredAtText));
+        OnPropertyChanged(nameof(ShowAllCategoriesText));
+        OnPropertyChanged(nameof(DriveCaptionText));
+        OnPropertyChanged(nameof(ComponentStoreSizeText));
+        OnPropertyChanged(nameof(ComponentStoreRecommendedText));
+        OnPropertyChanged(nameof(LastDoneText));
+        OnPropertyChanged(nameof(AreaOfTotalText));
+        OnPropertyChanged(nameof(FreedText));
+        OnPropertyChanged(nameof(LiveFreedText));
 
         foreach (var item in Items)
             item.RefreshLocalizedText();

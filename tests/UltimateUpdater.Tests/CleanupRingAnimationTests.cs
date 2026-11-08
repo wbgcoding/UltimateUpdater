@@ -700,6 +700,42 @@ public class CleanupRingAnimationTests : IDisposable
         });
     }
 
+    /// <summary>
+    /// A band crossing rebuilds the sweep; a rebuild while the run is held must come back paused, or the
+    /// light would travel again for a run that deletes nothing.
+    /// </summary>
+    [Fact]
+    public void A_band_crossing_while_the_run_is_held_leaves_the_rebuilt_sweep_paused()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var (window, viewModel) = CreateCleaningWindow();
+
+            viewModel.CleanPercent = 5;
+            Call(window, "StartSweep");
+            var first = Field<Storyboard>(window, "_sweep")!;
+            Tick();
+
+            viewModel.IsPaused = true;
+            Assert.True(TickUntil(() => first.GetCurrentGlobalSpeed(window) == 0), "the run's own pause never took hold");
+
+            viewModel.CleanPercent = 45;
+            var rebuilt = Field<Storyboard>(window, "_sweep")!;
+            Assert.NotSame(first, rebuilt);
+
+            Thread.Sleep(60);
+            Tick();
+            Assert.Equal(0, rebuilt.GetCurrentGlobalSpeed(window));
+
+            viewModel.IsPaused = false;
+            Assert.True(
+                TickUntil(() => (rebuilt.GetCurrentGlobalSpeed(window) ?? 0) > 0), "the run's own resume never started the rebuilt sweep");
+
+            Call(window, "StopSweep");
+            Tick();
+        });
+    }
+
     private static void CallWithArg<T>(CleanupWindow window, string method, T arg) =>
         typeof(CleanupWindow)
             .GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!

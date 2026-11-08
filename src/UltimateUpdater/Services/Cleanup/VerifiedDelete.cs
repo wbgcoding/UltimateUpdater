@@ -114,13 +114,28 @@ internal static class VerifiedDelete
     }
 
     /// <summary>Only the check, for the recycle-bin route that deletes through the shell afterwards:
-    /// Cleared, Vanished or Refused.</summary>
-    internal static Outcome CheckFile(string rootFinalPath, string file, DateTime? youngerThanUtc = null)
+    /// Cleared, Vanished or Refused. <paramref name="size"/> is what the removal frees, by the same rule
+    /// as <see cref="TryDeleteFile"/>, so both routes report one figure for one file.</summary>
+    internal static Outcome CheckFile(
+        string rootFinalPath, string file, out long size, DateTime? youngerThanUtc = null)
     {
+        size = 0;
         using var handle = OpenChecked(
             rootFinalPath, file, expectDirectory: false, writeAttributes: false, youngerThanUtc, out var outcome);
-        return handle is null ? outcome : Outcome.Cleared;
+        if (handle is null)
+            return outcome;
+
+        size = FreedBytes(handle);
+        return Outcome.Cleared;
     }
+
+    /// <summary>What deleting the file behind the handle gives back: the space it occupies on disk (a
+    /// compressed or sparse file occupies less than its length), and nothing while another name still
+    /// keeps the data reachable.</summary>
+    private static long FreedBytes(SafeFileHandle handle) =>
+        GetFileInformationByHandleEx(handle, FileStandardInfoClass, out FileStandardInfo standard, (uint)Marshal.SizeOf<FileStandardInfo>())
+            ? standard.NumberOfLinks > 1 ? 0 : standard.AllocationSize
+            : 0;
 
     /// <summary>Deletes one file. Throws IOException or UnauthorizedAccessException when the file is in use
     /// or not ours to delete, exactly where the path-based delete did.</summary>
@@ -146,9 +161,8 @@ internal static class VerifiedDelete
         if (handle is null)
             return outcome;
 
-        if (!expectDirectory && GetFileInformationByHandleEx(handle, FileStandardInfoClass, out FileStandardInfo standard, (uint)Marshal.SizeOf<FileStandardInfo>()))
-            // Removing one of several names of a file frees nothing: the data stays reachable by the others.
-            size = standard.NumberOfLinks > 1 ? 0 : standard.EndOfFile;
+        if (!expectDirectory)
+            size = FreedBytes(handle);
 
         if (!writeAttributes)
         {

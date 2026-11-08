@@ -50,10 +50,11 @@ public class CleanupMinFileAgeTests : IDisposable
         Assert.Equal(1, scan.Files);
         Assert.Equal(100, scan.Bytes);
 
+        var oldOnDisk = OnDiskSize.Of(old);
         var outcome = await service.CleanAsync(target, progress: null, CancellationToken.None);
 
         Assert.Equal(1, outcome.DeletedFiles);
-        Assert.Equal(100, outcome.FreedBytes);
+        Assert.Equal(oldOnDisk, outcome.FreedBytes);
         Assert.True(File.Exists(fresh));
         Assert.False(File.Exists(old));
     }

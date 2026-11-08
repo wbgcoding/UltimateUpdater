@@ -69,7 +69,7 @@ public static class GlassCardHighlight
     private static void Attach(Border border)
     {
         if (border.Child is Grid existing && ReferenceEquals(existing.Tag, AlreadyAttached))
-            return; // Loaded should fire once per instance, but this is cheap insurance against twice.
+            return; // the layout hook fires once per card, but this is cheap insurance against twice.
 
         var content = border.Child;
         border.Child = null;

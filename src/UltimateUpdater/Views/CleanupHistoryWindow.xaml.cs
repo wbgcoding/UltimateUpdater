@@ -34,6 +34,14 @@ public partial class CleanupHistoryWindow : FluentWindow
         DismissOnDeactivate.Attach(this);
     }
 
+    /// <summary>For a window that is already open when the report is asked for: unfolds the newest run and
+    /// scrolls to it, as a freshly opened report window would.</summary>
+    internal void ShowNewestRun()
+    {
+        _viewModel.ExpandNewestHistoryRow();
+        CleanupHistoryList.ScrollToTop();
+    }
+
     /// <summary>The one destructive action in this window, so it is the one that asks; same
     /// split as the cleanup dialog's own OnClean (a Window owns the dialog, the view model owns the action).</summary>
     private void OnClearAll(object sender, RoutedEventArgs e)

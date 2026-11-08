@@ -47,9 +47,10 @@ public class CleanupLiveFreedTests : IDisposable
         var progress = new ListProgress();
         var service = new CleanupService(new LoggingService()) { ProgressInterval = TimeSpan.Zero };
 
+        var onDisk = OnDiskSize.Of(Directory.EnumerateFiles(target.Directories[0]));
         var outcome = await service.CleanAsync(target, progress, CancellationToken.None);
 
-        Assert.Equal(20_000, outcome.FreedBytes);
+        Assert.Equal(onDisk, outcome.FreedBytes);
         Assert.NotEmpty(progress.Reports);
         var figures = progress.Reports.Select(r => r.FreedBytes).ToList();
         Assert.Equal(figures.OrderBy(x => x), figures);
@@ -63,9 +64,10 @@ public class CleanupLiveFreedTests : IDisposable
         var progress = new ListProgress();
         var service = new CleanupService(new LoggingService()) { ProgressInterval = TimeSpan.FromHours(1) };
 
+        var onDisk = OnDiskSize.Of(Directory.EnumerateFiles(target.Directories[0]));
         var outcome = await service.CleanAsync(target, progress, CancellationToken.None);
 
-        Assert.Equal(2_000, outcome.FreedBytes);
+        Assert.Equal(onDisk, outcome.FreedBytes);
         Assert.Empty(progress.Reports);
     }
 

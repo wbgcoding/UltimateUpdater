@@ -302,7 +302,6 @@ public class CleanupService(LoggingService logging)
         var tooNew = 0;
         long bytes = 0;
         var files = 0;
-        var skipped = 0;
         var isAppCacheSweep = target.Kind == CleanupKind.AppCacheSweep;
         var buckets = new Dictionary<string, EntryAccumulator>(StringComparer.OrdinalIgnoreCase);
         var identities = new HashSet<(uint VolumeSerial, ulong FileIndex)>();
@@ -335,6 +334,9 @@ public class CleanupService(LoggingService logging)
                     continue;
                 }
 
+                // Logical length on purpose: the clean routes know the space a file occupies from the handle
+                // they hold anyway, but opening every file here would make the scan far slower. Hardlinked,
+                // compressed and sparse files can therefore free less than this figure promises.
                 bytes += found.Length;
                 files++;
 
@@ -353,7 +355,7 @@ public class CleanupService(LoggingService logging)
             .OrderByDescending(e => e.Bytes)
             .ToList());
 
-        return new CleanupScanResult(bytes, files, skipped)
+        return new CleanupScanResult(bytes, files, 0)
         {
             Entries = entries, OmittedEntryCount = omittedCount, OmittedEntryBytes = omittedBytes,
         };
@@ -518,10 +520,9 @@ public class CleanupService(LoggingService logging)
                     VerifiedDelete.Outcome outcome;
                     if (useRecycleBin)
                     {
-                        outcome = VerifiedDelete.CheckFile(rootFinalPath!, file, cutoff);
+                        outcome = VerifiedDelete.CheckFile(rootFinalPath!, file, out size, cutoff);
                         if (outcome == VerifiedDelete.Outcome.Cleared)
                         {
-                            size = new FileInfo(file).Length;
                             outcome = RecycleBinDeleter.DeleteToRecycleBin(file, logging, cancellationToken)
                                 ? VerifiedDelete.Outcome.Deleted
                                 : VerifiedDelete.Outcome.Refused;
@@ -2407,7 +2408,7 @@ public class CleanupService(LoggingService logging)
         }
 
         if (written == 0)
-            logging.Info("Cleanup: could not prepare an unattended Disk Cleanup profile; starting it with its own UI.");
+            logging.Info("Cleanup: Disk Cleanup skipped: no handler could be selected for an unattended profile.");
 
         return written > 0;
     }

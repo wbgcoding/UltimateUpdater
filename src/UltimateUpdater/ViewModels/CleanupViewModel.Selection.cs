@@ -95,10 +95,32 @@ public partial class CleanupViewModel
         _settings.Current.CleanupRecycleBinMinAgeDays = value;
         _settings.SaveDeferred();
 
+        StartRecycleBinRescan(value);
+    }
+
+    /// <summary>Set when an age change arrived while a scan or a run owned the row: the new value is already
+    /// saved, but the list on screen still answers the old one. Settled once the scan ends (see
+    /// <see cref="RunPendingRecycleBinRescan"/>).</summary>
+    private bool _recycleBinRescanPending;
+
+    private void StartRecycleBinRescan(int minAgeDays)
+    {
         _recycleBinRescanCts?.Cancel();
         var cts = new CancellationTokenSource();
         _recycleBinRescanCts = cts;
-        _ = RescanRecycleBinAsync(value, cts);
+        _ = RescanRecycleBinAsync(minAgeDays, cts);
+    }
+
+    /// <summary>Re-measures the bin row for an age change that was swallowed by a running scan. Called
+    /// when a scan has ended; waits further while a run holds the rows.</summary>
+    private void RunPendingRecycleBinRescan()
+    {
+        if (!_recycleBinRescanPending || IsScanning || IsCleaning || _runClaimed || Phase != CleanupPhase.Choosing)
+            return;
+
+        _recycleBinRescanPending = false;
+        if (Items.FirstOrDefault(i => i.Target.Kind == CleanupKind.RecycleBin) is { } bin)
+            StartRecycleBinRescan(bin.RecycleBinMinAgeDays);
     }
 
     /// <summary>Re-measures only the recycle bin row, unelevated (it never needs admin), so the sub-row's
@@ -112,7 +134,10 @@ public partial class CleanupViewModel
         // Not IsBusy: the component store analysis (DISM, up to minutes) touches no row, and blocking on it
         // left the row showing the old filter's list and size while the next run used the new value.
         if (IsScanning || IsCleaning || _runClaimed)
+        {
+            _recycleBinRescanPending = true;
             return;
+        }
 
         var item = Items.FirstOrDefault(i => i.Target.Kind == CleanupKind.RecycleBin);
         if (item is null)
