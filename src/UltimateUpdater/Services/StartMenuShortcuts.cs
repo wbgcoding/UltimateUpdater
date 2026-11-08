@@ -77,7 +77,14 @@ internal sealed class StartMenuShortcuts
                 if (!Directory.Exists(folder))
                     continue;
 
-                files = Directory.EnumerateFiles(folder, "*.lnk", SearchOption.AllDirectories).ToList();
+                // One folder this user may not list, or a link into somewhere else, must not cost the shortcuts
+                // of every other folder under the same root.
+                files = Directory.EnumerateFiles(folder, "*.lnk", new EnumerationOptions
+                {
+                    RecurseSubdirectories = true,
+                    IgnoreInaccessible = true,
+                    AttributesToSkip = FileAttributes.ReparsePoint,
+                }).ToList();
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
