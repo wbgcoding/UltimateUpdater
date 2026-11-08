@@ -2347,4 +2347,13 @@ Continuare con privilegi di amministratore?</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>Alcuni aggiornamenti di winget non sono stati elencati.</value>
   </data>
+  <data name="WingetBootstrapDone" xml:space="preserve">
+    <value>winget è installato.</value>
+  </data>
+  <data name="WingetBootstrapFailed" xml:space="preserve">
+    <value>Impossibile installare winget: {0}</value>
+  </data>
+  <data name="WingetBootstrapDownloading" xml:space="preserve">
+    <value>Download di winget in corso… {0} %</value>
+  </data>
 </root>

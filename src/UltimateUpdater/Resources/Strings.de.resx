@@ -2347,4 +2347,13 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>Einige winget-Updates konnten nicht aufgelistet werden.</value>
   </data>
+  <data name="WingetBootstrapDone" xml:space="preserve">
+    <value>winget ist installiert.</value>
+  </data>
+  <data name="WingetBootstrapFailed" xml:space="preserve">
+    <value>winget konnte nicht installiert werden: {0}</value>
+  </data>
+  <data name="WingetBootstrapDownloading" xml:space="preserve">
+    <value>winget wird geladen… {0} %</value>
+  </data>
 </root>

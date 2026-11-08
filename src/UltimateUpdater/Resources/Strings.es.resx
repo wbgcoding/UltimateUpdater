@@ -2347,4 +2347,13 @@ Esto no se puede deshacer.</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>No se pudieron mostrar algunas actualizaciones de winget.</value>
   </data>
+  <data name="WingetBootstrapDone" xml:space="preserve">
+    <value>winget está instalado.</value>
+  </data>
+  <data name="WingetBootstrapFailed" xml:space="preserve">
+    <value>No se pudo instalar winget: {0}</value>
+  </data>
+  <data name="WingetBootstrapDownloading" xml:space="preserve">
+    <value>Descargando winget… {0} %</value>
+  </data>
 </root>

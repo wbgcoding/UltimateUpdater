@@ -2347,4 +2347,13 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>一部のwingetアップデートを一覧表示できませんでした。</value>
   </data>
+  <data name="WingetBootstrapDone" xml:space="preserve">
+    <value>wingetをインストールしました。</value>
+  </data>
+  <data name="WingetBootstrapFailed" xml:space="preserve">
+    <value>wingetをインストールできませんでした: {0}</value>
+  </data>
+  <data name="WingetBootstrapDownloading" xml:space="preserve">
+    <value>wingetをダウンロード中… {0} %</value>
+  </data>
 </root>

@@ -2347,4 +2347,13 @@ Continuați cu drepturi de administrator?</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>Unele actualizări winget nu au putut fi listate.</value>
   </data>
+  <data name="WingetBootstrapDone" xml:space="preserve">
+    <value>winget este instalat.</value>
+  </data>
+  <data name="WingetBootstrapFailed" xml:space="preserve">
+    <value>winget nu a putut fi instalat: {0}</value>
+  </data>
+  <data name="WingetBootstrapDownloading" xml:space="preserve">
+    <value>Se descarcă winget… {0} %</value>
+  </data>
 </root>

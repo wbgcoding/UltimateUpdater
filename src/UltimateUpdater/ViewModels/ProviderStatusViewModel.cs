@@ -26,6 +26,18 @@ public partial class ProviderStatusViewModel : ObservableObject
     [ObservableProperty]
     private string? note;
 
+    /// <summary>Percent of a setup download running for this source (winget being installed), null when
+    /// there is none. While set, the pill says so in its state text and stays visible.</summary>
+    [ObservableProperty]
+    private int? setupPercent;
+
+    partial void OnSetupPercentChanged(int? value)
+    {
+        OnPropertyChanged(nameof(StateText));
+        OnPropertyChanged(nameof(HasStateText));
+        OnPropertyChanged(nameof(IsNoteworthy));
+    }
+
     /// <summary>
     /// Whether the user has this source switched on. Clicking its pill flips it: a switched-off source
     /// is filtered out of the table at once and skipped on the next scan. The pill stays (dimmed) so it
@@ -104,7 +116,7 @@ public partial class ProviderStatusViewModel : ObservableObject
     /// is doing the rest of the showing, in the PillView filter itself.</summary>
     public bool IsNoteworthy =>
         HasFindings || HasError || State is ProviderScanState.Scanning or ProviderScanState.Cancelled || !IsEnabled
-        || Note is { Length: > 0 };
+        || Note is { Length: > 0 } || SetupPercent is not null;
 
     public bool IsCancellable => State == ProviderScanState.Scanning;
 
@@ -116,14 +128,23 @@ public partial class ProviderStatusViewModel : ObservableObject
     /// <summary>The short state word next to a pill's name while it has no result yet (waiting for its
     /// turn, actively scanning), after a deliberate single-source cancel, or once it failed. A finished
     /// pill already says so with its badge and needs no extra word.</summary>
-    public string? StateText => State switch
+    public string? StateText
     {
-        ProviderScanState.Waiting => LocalizationService.Instance["ScanStateWaiting"],
-        ProviderScanState.Scanning => LocalizationService.Instance[IsSlow ? "ScanStateSlow" : "ScanStateRunning"],
-        ProviderScanState.Cancelled => LocalizationService.Instance["ScanStateCancelled"],
-        ProviderScanState.Error => LocalizationService.Instance["ScanStateError"],
-        _ => null,
-    };
+        get
+        {
+            if (SetupPercent is { } percent)
+                return string.Format(LocalizationService.Instance["WingetBootstrapDownloading"], percent);
+
+            return State switch
+            {
+                ProviderScanState.Waiting => LocalizationService.Instance["ScanStateWaiting"],
+                ProviderScanState.Scanning => LocalizationService.Instance[IsSlow ? "ScanStateSlow" : "ScanStateRunning"],
+                ProviderScanState.Cancelled => LocalizationService.Instance["ScanStateCancelled"],
+                ProviderScanState.Error => LocalizationService.Instance["ScanStateError"],
+                _ => null,
+            };
+        }
+    }
 
     public bool HasStateText => StateText is not null;
 

@@ -103,7 +103,8 @@ public class WingetBootstrapServiceTests
         var service = new WingetBootstrapService(new HttpClient(), new LoggingService());
 
         Assert.False(service.NeedsOffer);
-        await service.OfferAsync(CancellationToken.None);
+        var outcome = await service.OfferAsync(null, CancellationToken.None);
+        Assert.Equal(WingetBootstrapStatus.NotOffered, outcome.Status);
     }
 
     [Fact]
