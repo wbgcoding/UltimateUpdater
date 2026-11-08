@@ -67,7 +67,21 @@
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <!-- Keyboard focus only: a ring after a mouse click would make an unlit chip look half lit. -->
+            <Setter Property="FocusVisualStyle">
+                <Setter.Value>
+                    <Style>
+                        <Setter Property="Control.Template">
+                            <Setter.Value>
+                                <ControlTemplate>
+                                    <Border Margin="-3" CornerRadius="20" BorderThickness="2"
+                                            BorderBrush="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
@@ -117,20 +131,6 @@
                                         Value="{DynamicResource AccentFillColorTertiaryBrush}"/>
                                 <Setter TargetName="Bd" Property="BorderBrush"
                                         Value="{DynamicResource AccentFillColorTertiaryBrush}"/>
-                            </MultiTrigger>
-                            <!-- Same cue as the other focusable surfaces: the border turns accent text colour. On a lit chip
-                                 the fill is the accent already, so the border takes the on-accent text colour instead. -->
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Bd" Property="BorderBrush"
-                                        Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
-                            </Trigger>
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="IsChecked" Value="True"/>
-                                    <Condition Property="IsKeyboardFocused" Value="True"/>
-                                </MultiTrigger.Conditions>
-                                <Setter TargetName="Bd" Property="BorderBrush"
-                                        Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
                             </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
