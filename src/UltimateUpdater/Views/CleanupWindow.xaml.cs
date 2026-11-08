@@ -464,10 +464,10 @@ public partial class CleanupWindow
         _sweep.Begin(this, isControllable: true);
         ApplySweepSpeed();
 
-        // Rebuilt (RestartSweepForCurrentBand) while the window is minimised or hidden: the fresh
-        // storyboard begins running like any other, so it needs the same pause applied to the one it
-        // replaced, or it would keep animating unseen until the next band crossing.
-        if (_pausedForVisibility)
+        // Rebuilt (RestartSweepForCurrentBand) while the window is minimised or hidden, or while the run
+        // is held: the fresh storyboard begins running like any other, so it needs the same pause applied
+        // to the one it replaced, or it would keep animating until the next band crossing.
+        if (_pausedForVisibility || _viewModel.IsPaused)
             _sweep.Pause(this);
     }
 
