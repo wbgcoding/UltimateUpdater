@@ -28,6 +28,10 @@ internal static class VerifiedDelete
 
         /// <summary>Only from <see cref="CheckFile"/>: the file is inside the root and may be handed on.</summary>
         Cleared,
+
+        /// <summary>Found and inside the root, but younger than the age limit the caller asked for (or its
+        /// time stamps could not be trusted); left alone, neither deleted nor a failure.</summary>
+        TooNew,
     }
 
     private const uint Delete = 0x00010000;
@@ -111,29 +115,34 @@ internal static class VerifiedDelete
 
     /// <summary>Only the check, for the recycle-bin route that deletes through the shell afterwards:
     /// Cleared, Vanished or Refused.</summary>
-    internal static Outcome CheckFile(string rootFinalPath, string file)
+    internal static Outcome CheckFile(string rootFinalPath, string file, DateTime? youngerThanUtc = null)
     {
-        using var handle = OpenChecked(rootFinalPath, file, expectDirectory: false, writeAttributes: false, out var outcome);
+        using var handle = OpenChecked(
+            rootFinalPath, file, expectDirectory: false, writeAttributes: false, youngerThanUtc, out var outcome);
         return handle is null ? outcome : Outcome.Cleared;
     }
 
     /// <summary>Deletes one file. Throws IOException or UnauthorizedAccessException when the file is in use
     /// or not ours to delete, exactly where the path-based delete did.</summary>
-    internal static Outcome TryDeleteFile(string rootFinalPath, string file, out long size)
+    internal static Outcome TryDeleteFile(
+        string rootFinalPath, string file, out long size, DateTime? youngerThanUtc = null)
     {
-        return DeleteCore(rootFinalPath, file, expectDirectory: false, out size, writeAttributes: false);
+        return DeleteCore(rootFinalPath, file, expectDirectory: false, out size, writeAttributes: false, youngerThanUtc);
     }
 
     /// <summary>Deletes one directory that must be empty; a directory with content fails like a
     /// non-recursive <see cref="Directory.Delete(string, bool)"/>.</summary>
-    internal static Outcome TryDeleteEmptyDirectory(string rootFinalPath, string directory) =>
-        DeleteCore(rootFinalPath, directory, expectDirectory: true, out _, writeAttributes: false);
+    internal static Outcome TryDeleteEmptyDirectory(
+        string rootFinalPath, string directory, DateTime? youngerThanUtc = null) =>
+        DeleteCore(rootFinalPath, directory, expectDirectory: true, out _, writeAttributes: false, youngerThanUtc);
 
     private static Outcome DeleteCore(
-        string rootFinalPath, string path, bool expectDirectory, out long size, bool writeAttributes)
+        string rootFinalPath, string path, bool expectDirectory, out long size, bool writeAttributes,
+        DateTime? youngerThanUtc)
     {
         size = 0;
-        using var handle = OpenChecked(rootFinalPath, path, expectDirectory, writeAttributes, out var outcome);
+        using var handle = OpenChecked(
+            rootFinalPath, path, expectDirectory, writeAttributes, youngerThanUtc, out var outcome);
         if (handle is null)
             return outcome;
 
@@ -158,7 +167,7 @@ internal static class VerifiedDelete
             // Reopen with write access: the old call needs it to clear the read-only attribute first. The
             // reopen runs the same checks again, so nothing verified earlier is trusted.
             handle.Dispose();
-            return DeleteCore(rootFinalPath, path, expectDirectory, out size, writeAttributes: true);
+            return DeleteCore(rootFinalPath, path, expectDirectory, out size, writeAttributes: true, youngerThanUtc);
         }
 
         if (GetFileInformationByHandle(handle, out var info) && (info.FileAttributes & AttributeReadOnly) != 0)
@@ -178,7 +187,8 @@ internal static class VerifiedDelete
     /// <summary>Opens the object without following a final link and checks it. Null means
     /// <paramref name="outcome"/> says why (vanished or refused); a handle means it is cleared to delete.</summary>
     private static SafeFileHandle? OpenChecked(
-        string rootFinalPath, string path, bool expectDirectory, bool writeAttributes, out Outcome outcome)
+        string rootFinalPath, string path, bool expectDirectory, bool writeAttributes, DateTime? youngerThanUtc,
+        out Outcome outcome)
     {
         string extended;
         try
@@ -219,8 +229,51 @@ internal static class VerifiedDelete
             return null;
         }
 
+        // Judged on the opened object itself, so a file rewritten between the listing and now is seen as
+        // the new file it is. An unreadable or impossible time stamp counts as young: when unsure, keep.
+        if (youngerThanUtc is { } cutoff && IsTooNew(info, expectDirectory, cutoff))
+        {
+            handle.Dispose();
+            outcome = Outcome.TooNew;
+            return null;
+        }
+
         outcome = Outcome.Deleted;
         return handle; // outcome is only read when the handle is null
+    }
+
+    /// <summary>True when the object was created or written after <paramref name="cutoffUtc"/>. A file counts
+    /// by the newer of both stamps (an extracted archive keeps its old write time but has a new creation
+    /// time); a folder only by its creation, because its write time moves whenever an entry in it is removed,
+    /// including by the very run that is emptying it. A stamp that is zero, negative or in the future is not
+    /// trusted and reads as young.</summary>
+    internal static bool IsTooNew(ByHandleFileInformation info, bool isDirectory, DateTime cutoffUtc)
+    {
+        var creation = ToUtc(info.CreationTimeHigh, info.CreationTimeLow);
+        if (creation is null || creation.Value > cutoffUtc)
+            return true;
+
+        if (isDirectory)
+            return false;
+
+        var write = ToUtc(info.LastWriteTimeHigh, info.LastWriteTimeLow);
+        return write is null || write.Value > cutoffUtc;
+    }
+
+    private static DateTime? ToUtc(uint high, uint low)
+    {
+        var ticks = ((long)high << 32) | low;
+        if (ticks <= 0)
+            return null;
+
+        try
+        {
+            return DateTime.FromFileTimeUtc(ticks);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
+        }
     }
 
     private static string ToExtendedPath(string path)

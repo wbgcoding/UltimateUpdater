@@ -264,8 +264,20 @@ public class CleanupService(LoggingService logging)
         return Path.Combine(root, separatorIndex < 0 ? relative : relative[..separatorIndex]);
     }
 
+    /// <summary>The moment before which a file must have been created AND last written to be taken, or null
+    /// when the target has no age rule.</summary>
+    internal static DateTime? AgeCutoffUtc(CleanupTarget target, DateTime nowUtc) =>
+        target.MinFileAge is { } age ? nowUtc - age : null;
+
+    /// <summary>True when a listed file lies inside the age window. A stamp that is unset (the FILETIME epoch
+    /// of 1601) or lies in the future cannot be trusted and reads as young: keep it.</summary>
+    internal static bool IsTooNew(DateTime creationUtc, DateTime lastWriteUtc, DateTime cutoffUtc) =>
+        creationUtc.Year <= 1601 || lastWriteUtc.Year <= 1601 || creationUtc > cutoffUtc || lastWriteUtc > cutoffUtc;
+
     private CleanupScanResult ScanDirectories(CleanupTarget target, CancellationToken cancellationToken)
     {
+        var cutoff = AgeCutoffUtc(target, DateTime.UtcNow);
+        var tooNew = 0;
         long bytes = 0;
         var files = 0;
         var skipped = 0;
@@ -294,6 +306,13 @@ public class CleanupService(LoggingService logging)
                 if (!CleanupSafety.IsDeletableFile(directory, file))
                     continue;
 
+                // Measured by the same rule the clean applies, so the figure is what a run would free.
+                if (cutoff is { } limit && IsTooNew(found.CreationUtc, found.LastWriteUtc, limit))
+                {
+                    tooNew++;
+                    continue;
+                }
+
                 bytes += found.Length;
                 files++;
 
@@ -303,6 +322,9 @@ public class CleanupService(LoggingService logging)
                 accumulator.Add(found.Length, found.LastWriteUtc, Path.GetExtension(file));
             }
         }
+
+        if (tooNew > 0)
+            logging.Info($"Cleanup: {tooNew} recent file(s) of '{target.Id}' are left out of the figure (younger than {target.MinFileAge}).");
 
         var (entries, omittedCount, omittedBytes) = CapEntries(buckets
             .Select(kv => kv.Value.ToEntry(kv.Key, isAppCacheSweep))
@@ -382,6 +404,8 @@ public class CleanupService(LoggingService logging)
         string? firstFolderKept = null;
         var isAppCacheSweep = target.Kind == CleanupKind.AppCacheSweep;
         var useRecycleBin = ShouldUseRecycleBin(recycleInsteadOfDelete, target.NeedsElevation);
+        var cutoff = AgeCutoffUtc(target, DateTime.UtcNow);
+        var tooNew = 0;
         var excludedEntries = excludedEntryPaths is { Count: > 0 }
             ? new HashSet<string>(excludedEntryPaths, StringComparer.OrdinalIgnoreCase)
             : null;
@@ -472,7 +496,7 @@ public class CleanupService(LoggingService logging)
                     VerifiedDelete.Outcome outcome;
                     if (useRecycleBin)
                     {
-                        outcome = VerifiedDelete.CheckFile(rootFinalPath!, file);
+                        outcome = VerifiedDelete.CheckFile(rootFinalPath!, file, cutoff);
                         if (outcome == VerifiedDelete.Outcome.Cleared)
                         {
                             size = new FileInfo(file).Length;
@@ -488,7 +512,7 @@ public class CleanupService(LoggingService logging)
                     }
                     else
                     {
-                        outcome = VerifiedDelete.TryDeleteFile(rootFinalPath!, file, out size);
+                        outcome = VerifiedDelete.TryDeleteFile(rootFinalPath!, file, out size, cutoff);
                     }
 
                     if (outcome == VerifiedDelete.Outcome.Deleted)
@@ -503,6 +527,12 @@ public class CleanupService(LoggingService logging)
                         skippedBytes += size;
                         protectedFiles++;
                         protectedBytes += size;
+                    }
+
+                    else if (outcome == VerifiedDelete.Outcome.TooNew)
+                    {
+                        // Judged on the opened file, so a file rewritten since the listing is kept too.
+                        tooNew++;
                     }
 
                     // A file that vanished meanwhile is neither deleted nor skipped: this run did nothing to it.
@@ -574,7 +604,7 @@ public class CleanupService(LoggingService logging)
                     // Through a handle that is checked to lie inside the root, so a folder swapped for a
                     // junction since the listing cannot redirect this delete. A non-empty directory fails
                     // exactly like the non-recursive path delete did.
-                    if (VerifiedDelete.TryDeleteEmptyDirectory(rootFinalPath!, subdirectory) == VerifiedDelete.Outcome.Refused)
+                    if (VerifiedDelete.TryDeleteEmptyDirectory(rootFinalPath!, subdirectory, cutoff) == VerifiedDelete.Outcome.Refused)
                         logging.Warn($"Cleanup: '{subdirectory}' no longer lies inside '{directory}'; left alone.");
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -588,6 +618,9 @@ public class CleanupService(LoggingService logging)
                 }
             }
         }
+
+        if (tooNew > 0)
+            logging.Info($"Cleanup: {tooNew} recent file(s) of '{target.Id}' were kept (younger than {target.MinFileAge}).");
 
         if (foldersKept > 0)
             logging.Info($"Cleanup: {foldersKept} folder(s) of '{target.Id}' were not removed (not empty or no access), first {firstFolderKept}");
@@ -688,7 +721,7 @@ public class CleanupService(LoggingService logging)
     }
 
     /// <summary>One listed file with the facts the directory listing already carries.</summary>
-    private readonly record struct ListedFile(string Path, long Length, DateTime LastWriteUtc);
+    private readonly record struct ListedFile(string Path, long Length, DateTime LastWriteUtc, DateTime CreationUtc);
 
     /// <summary>
     /// The same walk as <see cref="EnumerateFiles"/> (same options, same exclusion, same tolerance for an
@@ -713,7 +746,9 @@ public class CleanupService(LoggingService logging)
             enumerator = new FileSystemEnumerable<ListedFile>(
                 directory,
                 static (ref FileSystemEntry entry) =>
-                    new ListedFile(entry.ToFullPath(), entry.Length, entry.LastWriteTimeUtc.UtcDateTime),
+                    new ListedFile(
+                        entry.ToFullPath(), entry.Length, entry.LastWriteTimeUtc.UtcDateTime,
+                        entry.CreationTimeUtc.UtcDateTime),
                 options)
             {
                 ShouldIncludePredicate = static (ref FileSystemEntry entry) => !entry.IsDirectory,

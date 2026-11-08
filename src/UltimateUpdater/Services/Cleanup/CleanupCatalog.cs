@@ -72,6 +72,14 @@ public static class CleanupCatalog
         path.StartsWith(
             Path.TrimEndingDirectorySeparator(root) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>How old a file in a temp location must be before cleanup takes it: a day, so an installer
+    /// that is between two steps, a download in progress or another signed-in user's live files stay.</summary>
+    internal static readonly TimeSpan TempMinFileAge = TimeSpan.FromHours(24);
+
+    /// <summary>The same for a cache folder, which programs rewrite constantly and rebuild on demand: an hour
+    /// is enough to leave what is being written right now.</summary>
+    internal static readonly TimeSpan CacheMinFileAge = TimeSpan.FromHours(1);
+
     private static IReadOnlyList<CleanupTarget> BuildCatalog(
         Action<string>? logWarning, IReadOnlyList<string>? callerTempPaths, string? usersRoot)
     {
@@ -88,6 +96,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupUserTempConsequence")
             {
+                MinFileAge = TempMinFileAge,
                 Directories = Distinct([Path.GetTempPath(), Path.Combine(local, "Temp")]),
             },
 
@@ -95,6 +104,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupAllUsersTempConsequence", NeedsElevation: true)
             {
+                MinFileAge = TempMinFileAge,
                 Directories = OtherUsersTempDirectories(callerTempPaths, usersRoot, logWarning),
             },
 
@@ -102,6 +112,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupWindowsTempConsequence", NeedsElevation: true)
             {
+                MinFileAge = TempMinFileAge,
                 Directories = Distinct([Path.Combine(windows, "Temp")]),
             },
 
@@ -109,6 +120,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupUpdateCacheConsequence", NeedsElevation: true)
             {
+                MinFileAge = TempMinFileAge,
                 Directories = Distinct([Path.Combine(windows, "SoftwareDistribution", "Download")]),
             },
 
@@ -116,6 +128,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupDeliveryOptimizationConsequence", NeedsElevation: true)
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Distinct([Path.Combine(windows, "SoftwareDistribution", "DeliveryOptimization")]),
             },
 
@@ -123,6 +136,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupThumbnailsConsequence")
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Distinct([Path.Combine(local, "Microsoft", "Windows", "Explorer")]),
             },
 
@@ -130,6 +144,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupCrashDumpsConsequence")
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Distinct([Path.Combine(local, "CrashDumps")]),
             },
 
@@ -140,6 +155,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupShaderCacheConsequence")
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Existing(
                 [
                     Path.Combine(local, "D3DSCache"),
@@ -159,6 +175,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupPackageCacheConsequence")
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Existing(
                 [
                     Path.Combine(local, "pip", "Cache"),
@@ -176,6 +193,7 @@ public static class CleanupCatalog
                 CleanupKind.Directories, DefaultEnabled: true,
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupBuildCacheConsequence")
             {
+                MinFileAge = CacheMinFileAge,
                 Directories = Existing(
                 [
                     Path.Combine(profile, ".gradle", "caches", "build-cache-1"),
@@ -189,7 +207,10 @@ public static class CleanupCatalog
             // of this table, even though the same safety gate applies.
             new CleanupTarget("app-cache-sweep", "CleanupAppCacheSweep", "CleanupAppCacheSweepDesc",
                 CleanupKind.AppCacheSweep, DefaultEnabled: false,
-                RiskLevel: CleanupRiskLevel.Considered, ConsequenceKey: "CleanupAppCacheSweepConsequence"),
+                RiskLevel: CleanupRiskLevel.Considered, ConsequenceKey: "CleanupAppCacheSweepConsequence")
+            {
+                MinFileAge = CacheMinFileAge,
+            },
 
             // The LeftoverInstalls catalogue entry is intentionally absent. LeftoverInstallDiscovery and
             // LeftoverInstallSafety stay in the codebase, built and tested, for when a stronger detection
