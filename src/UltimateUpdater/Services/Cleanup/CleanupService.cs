@@ -1828,16 +1828,6 @@ public class CleanupService(LoggingService logging)
         return false;
     }
 
-    /// <summary>
-    /// Windows' own Disk Cleanup, run WITHOUT its dialogs. It can only run unattended from a saved
-    /// profile, so the profile is written first: each handler under VolumeCaches gets a StateFlags value
-    /// for our own sageset number, and `/sagerun` then processes exactly those. Only handlers as safe as
-    /// the rest of this feature are enabled (temporary files, caches, thumbnails, error reports, delivery
-    /// optimisation), NEVER anything that removes user data or a rollback path (no Downloads handler, no
-    /// previous-Windows installation, no recycle bin: that is its own opt-in target).
-    /// Writing the profile needs admin. Without it the target is skipped with a log line: starting
-    /// cleanmgr with its own UI would leave the dialog waiting on a window it cannot cancel.
-    /// </summary>
     /// <summary>Test seams: another cleanmgr path and another way to write the selection profile, so the
     /// "tool missing" and "profile refused" outcomes can be proven without touching the machine.</summary>
     internal string? CleanmgrExecutable { get; init; }
@@ -1854,6 +1844,16 @@ public class CleanupService(LoggingService logging)
     /// <summary>How long drive optimisation may run before it is ended.</summary>
     internal static readonly TimeSpan DefragLimit = TimeSpan.FromHours(6);
 
+    /// <summary>
+    /// Windows' own Disk Cleanup, run WITHOUT its dialogs. It can only run unattended from a saved
+    /// profile, so the profile is written first: each handler under VolumeCaches gets a StateFlags value
+    /// for our own sageset number, and `/sagerun` then processes exactly those. Only handlers as safe as
+    /// the rest of this feature are enabled (temporary files, caches, thumbnails, error reports, delivery
+    /// optimisation), NEVER anything that removes user data or a rollback path (no Downloads handler, no
+    /// previous-Windows installation, no recycle bin: that is its own opt-in target).
+    /// Writing the profile needs admin. Without it the target is skipped with a log line: starting
+    /// cleanmgr with its own UI would leave the dialog waiting on a window it cannot cancel.
+    /// </summary>
     private async Task<CleanupOutcome> RunDiskCleanupAsync(CancellationToken cancellationToken)
     {
         var cleanmgr = CleanmgrExecutable ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cleanmgr.exe");
