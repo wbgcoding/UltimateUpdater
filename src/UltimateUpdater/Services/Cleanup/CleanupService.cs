@@ -1486,6 +1486,11 @@ public class CleanupService(LoggingService logging)
         // is all it needs; anything left inside makes the call fail and the folder stays.
         try
         {
+            // A folder with a desktop.ini carries the read-only attribute and Windows refuses to remove it
+            // then. Cleared only on an emptied folder that is not a link, right before its own delete.
+            if (!Directory.EnumerateFileSystemEntries(path).Any())
+                ClearReadOnlyAttribute(path);
+
             Directory.Delete(path, recursive: false);
             return (true, freed);
         }

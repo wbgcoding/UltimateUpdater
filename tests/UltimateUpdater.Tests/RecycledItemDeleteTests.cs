@@ -171,4 +171,56 @@ public class RecycledItemDeleteTests : IDisposable
         Assert.False(_service.DeleteRecycledItem(EntryFor(content), Sid, (_, _) => false));
         Assert.True(File.Exists(content));
     }
+
+    [Fact]
+    public void A_recycled_folder_with_a_read_only_root_and_a_desktop_ini_is_deleted()
+    {
+        var content = Path.Combine(BinFolder, "$R4");
+        Directory.CreateDirectory(content);
+        var ini = Path.Combine(content, "desktop.ini");
+        File.WriteAllText(ini, "[.ShellClassInfo]");
+        File.SetAttributes(ini, FileAttributes.ReadOnly | FileAttributes.Hidden | FileAttributes.System);
+        File.SetAttributes(content, FileAttributes.Directory | FileAttributes.ReadOnly);
+        File.WriteAllText(Path.Combine(BinFolder, "$I4"), "x");
+
+        Assert.True(Delete(content));
+
+        Assert.False(Directory.Exists(content));
+        Assert.False(File.Exists(Path.Combine(BinFolder, "$I4")));
+    }
+
+    [Fact]
+    public void A_read_only_recycled_folder_that_still_holds_something_is_kept()
+    {
+        var content = Path.Combine(BinFolder, "$R5");
+        Directory.CreateDirectory(content);
+        var held = Path.Combine(content, "held.txt");
+        File.WriteAllText(held, "x");
+        File.SetAttributes(content, FileAttributes.Directory | FileAttributes.ReadOnly);
+
+        bool deleted;
+        using (new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            deleted = Delete(content);
+        }
+
+        Assert.False(deleted);
+        Assert.True(File.Exists(held));
+        File.SetAttributes(content, FileAttributes.Directory);
+    }
+
+    [Fact]
+    public void A_junction_as_the_recycled_item_is_only_unlinked_and_its_target_survives()
+    {
+        var outside = MakeOutside();
+        var content = Path.Combine(BinFolder, "$R6");
+        Directory.CreateDirectory(BinFolder);
+        CreateJunction(content, outside);
+
+        Delete(content);
+
+        Assert.False(Directory.Exists(content));
+        Assert.True(File.Exists(Path.Combine(outside, "$R1")));
+        Assert.True(File.Exists(Path.Combine(outside, "$R2", "inner.txt")));
+    }
 }
