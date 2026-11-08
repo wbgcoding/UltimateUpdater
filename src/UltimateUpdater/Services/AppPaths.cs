@@ -377,6 +377,10 @@ public static class AppPaths
     /// not be written.</summary>
     private static bool MirrorDirectory(string from, string to)
     {
+        // A link in the new folder would carry the copies and the deletions below to wherever it points.
+        if (ClassifyEntry(to) == EntryKind.Link)
+            return false;
+
         if (File.Exists(to))
             File.Delete(to);
 
@@ -394,6 +398,9 @@ public static class AppPaths
 
             var name = Path.GetFileName(file);
             var target = Path.Combine(to, name);
+            if (ClassifyEntry(target) == EntryKind.Link)
+                return false;
+
             try
             {
                 if (Directory.Exists(target))

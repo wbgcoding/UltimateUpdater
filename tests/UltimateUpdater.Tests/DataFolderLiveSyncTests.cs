@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using UltimateUpdater.Services;
 
@@ -145,5 +146,44 @@ public class DataFolderLiveSyncTests : IDisposable
         using var held = new FileStream(target, FileMode.Open, FileAccess.Read, FileShare.None);
 
         Assert.False(AppPaths.SyncLiveData(_source, _destination, includeSettings: false));
+    }
+
+    [Fact]
+    public void A_link_in_the_new_folder_is_not_followed_by_the_mirror()
+    {
+        var outside = Path.Combine(_root, "outside");
+        Directory.CreateDirectory(outside);
+        File.WriteAllText(Path.Combine(outside, "keep.txt"), "mine");
+        var link = Path.Combine(_destination, "reports");
+        CreateJunction(link, outside);
+        Directory.CreateDirectory(Path.Combine(_source, "reports"));
+        File.WriteAllText(Path.Combine(_source, "reports", "new.txt"), "y");
+
+        try
+        {
+            Assert.False(AppPaths.SyncLiveData(_source, _destination, includeSettings: false));
+
+            Assert.True(File.Exists(Path.Combine(outside, "keep.txt")));
+            Assert.False(File.Exists(Path.Combine(outside, "new.txt")));
+        }
+        finally
+        {
+            Directory.Delete(link);
+        }
+    }
+
+    private static void CreateJunction(string link, string target)
+    {
+        using var mklink = Process.Start(new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        })!;
+        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
+        Assert.Equal(0, mklink.ExitCode);
     }
 }
