@@ -6,6 +6,12 @@
 ; portable copy - one self-contained file dropped into a folder the user picks, with nothing else
 ; written to this PC. Everything downstream reads IsPortableMode in [Code].
 
+; The elevated Setup runs from a temp folder; that is safe only with the DLL preloading
+; protection of Inno Setup 6.3 and later.
+#if Ver < EncodeVer(6,3,0)
+  #error Inno Setup 6.3 or later is required
+#endif
+
 #ifndef AppVersion
   #define AppVersion "1.1.2"
 #endif
