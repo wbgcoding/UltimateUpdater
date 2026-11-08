@@ -116,11 +116,35 @@ public class InstallerElevatedCopyTests
     }
 
     [Fact]
-    public void The_elevated_copy_message_exists_in_english_and_german()
+    public void The_still_running_message_exists_in_english_and_german_and_only_suspects_admin_rights()
     {
         var script = Script();
 
-        Assert.Matches(@"(?m)^en\.ElevatedCopyOpen=\{#AppName\} .*administrator", script);
-        Assert.Matches(@"(?m)^de\.ElevatedCopyOpen=\{#AppName\} .*Administrator", script);
+        // any write lock (antivirus, backup) can trip the exe check, so the text must not claim to know the cause
+        Assert.Contains(
+            "en.ElevatedCopyOpen={#AppName} is still running and did not close. It may be running with administrator rights. Close it, then try again.",
+            script);
+        Assert.Contains(
+            "de.ElevatedCopyOpen={#AppName} l\u00e4uft noch und hat sich nicht beendet, m\u00f6glicherweise mit Administratorrechten. Bitte schlie\u00dfe es und versuche es dann erneut.",
+            script);
+    }
+
+    /// <summary>
+    /// A lock on the exe from an antivirus scan or a backup is not a running copy. The lock is therefore asked
+    /// again, a second apart, after the ten seconds of waiting before it counts, in the script and in the
+    /// PowerShell-less fallback alike.
+    /// </summary>
+    [Fact]
+    public void The_exe_lock_must_hold_across_several_checks_before_it_counts_as_a_running_copy()
+    {
+        var stop = Block("function StopRunningCopies");
+
+        var confirm = stop.IndexOf("for ($i = 0; $i -lt 3 -and (Running); $i++) { Start-Sleep -Seconds 1 }", StringComparison.Ordinal);
+        var verdict = stop.IndexOf("if (Running) { exit ' + IntToStr(StillRunningExitCode) + ' }", StringComparison.Ordinal);
+        Assert.True(confirm >= 0 && confirm < verdict, "the lock must be re-checked a few times before the verdict");
+
+        var fallback = stop[stop.IndexOf("checking the exe lock instead", StringComparison.Ordinal)..];
+        Assert.Contains("Sleep(1000)", fallback);
+        Assert.Contains("InstallFolderExeInUse", fallback);
     }
 }

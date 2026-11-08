@@ -167,7 +167,7 @@ en.PortableDirDescription=Choose a folder for the portable copy of {#AppName}. S
 en.UpdateDirDescription={#AppName} is already installed on this PC and will be updated in the folder shown below. Click Next to continue, or Browse to choose a different folder.
 en.BusyPrompt={#AppName} is installing updates right now. Close it anyway and continue?
 en.BusyDeclined=Setup stopped because {#AppName} is installing updates right now.
-en.ElevatedCopyOpen={#AppName} is still running and could not be closed from here, for example because it was started as administrator. Close it and try again.
+en.ElevatedCopyOpen={#AppName} is still running and did not close. It may be running with administrator rights. Close it, then try again.
 de.AutostartTask={#AppName} automatisch bei der Windows-Anmeldung starten
 de.LaunchAfter={#AppName} jetzt starten
 de.ModeCaption=Art der Installation
@@ -180,7 +180,7 @@ de.PortableDirDescription=Wählen Sie einen Ordner für die portable Version von
 de.UpdateDirDescription={#AppName} ist auf diesem PC bereits installiert und wird im unten angezeigten Ordner aktualisiert. Klicken Sie auf Weiter, oder auf Durchsuchen, um einen anderen Ordner zu wählen.
 de.BusyPrompt={#AppName} installiert gerade Updates. Trotzdem beenden und fortfahren?
 de.BusyDeclined=Die Installation wurde angehalten, weil {#AppName} gerade Updates installiert.
-de.ElevatedCopyOpen={#AppName} läuft noch und konnte von hier aus nicht beendet werden, zum Beispiel weil es als Administrator gestartet wurde. Beenden Sie es und versuchen Sie es erneut.
+de.ElevatedCopyOpen={#AppName} läuft noch und hat sich nicht beendet, möglicherweise mit Administratorrechten. Bitte schließe es und versuche es dann erneut.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -806,9 +806,10 @@ end;
   A copy whose path cannot be read (started as administrator) is asked to end through its exit event, named
   after the user and a hash of the install folder (ExitRequestListener builds the same name), so a copy in
   another folder or of another user is not reached; the event is opened for modify access only. After at most
-  10 seconds, any exe of the folder still in use means Setup cannot go on: False. }
+  10 seconds and three more checks a second apart, any exe of the folder still in use means Setup cannot go on: False. }
 function StopRunningCopies: Boolean;
 var
+  I: Integer;
   Started: Boolean;
   ResultCode: Integer;
   Script: String;
@@ -835,6 +836,9 @@ begin
     '$copies | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue; ' +
     '$w = [System.Diagnostics.Stopwatch]::StartNew(); ' +
     'while ((Running) -and $w.Elapsed.TotalSeconds -lt 10) { Start-Sleep -Milliseconds 250 }; ' +
+    { A write lock from an antivirus scan or a backup looks like a running copy; it has to hold a few
+      more checks, a second apart, to count. }
+    'for ($i = 0; $i -lt 3 -and (Running); $i++) { Start-Sleep -Seconds 1 }; ' +
     'if (Running) { exit ' + IntToStr(StillRunningExitCode) + ' } else { exit 0 }';
   Started := Exec(PowerShellPath,
        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
@@ -848,7 +852,15 @@ begin
   begin
     Log('The close script gave no verdict (started: ' + IntToStr(Ord(Started)) + ', exit code: ' +
       IntToStr(ResultCode) + '); checking the exe lock instead.');
-    Result := not InstallFolderExeInUse;
+    Result := True;
+    for I := 1 to 3 do
+    begin
+      if I > 1 then
+        Sleep(1000);
+      Result := not InstallFolderExeInUse;
+      if Result then
+        Break;
+    end;
   end;
 end;
 
