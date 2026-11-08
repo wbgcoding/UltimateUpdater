@@ -11,6 +11,8 @@ public class WindowsSourceSmallFixesTests
     [InlineData("Intel Corporation - Display - 31.0.101.5333 Version 31.0.101.5333", "31.0.101.5333")]
     [InlineData("NVIDIA - Display - Driver 32.0.15.6094", "32.0.15.6094")]
     [InlineData("Intel - Net - version 22.250.0.1", "22.250.0.1")]
+    [InlineData("NVIDIA - Display - 31.0.15.5222", "31.0.15.5222")]
+    [InlineData("Realtek Semiconductor Corp. - Extension - 10.0.22621.31275", "10.0.22621.31275")]
     public void The_version_is_the_number_right_after_Version_or_Driver(string title, string expected) =>
         Assert.Equal(expected, WindowsUpdateSource.VersionFromTitle(title));
 

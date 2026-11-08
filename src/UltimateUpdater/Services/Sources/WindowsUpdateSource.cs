@@ -225,12 +225,21 @@ public sealed class WindowsUpdateSource : IUpdateSource
         @"\b(?:Version|Driver)\s+v?(\d{1,9}(?:\.\d{1,9}){1,3})\b",
         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
 
-    /// <summary>The dotted version a Windows Update title names right after "Version" or "Driver"; a
-    /// date or a build number elsewhere in the title ("2024.05 Cumulative Update", "(KB5039212)") is no
-    /// version, which is why the shared first-number scan is not used here.</summary>
+    /// <summary>A driver title's own shape, "Vendor - Class - 31.0.15.5222": the version is its last part.</summary>
+    private static readonly Regex DriverTitleVersionPattern = new(
+        @"\s-\s+v?(\d{1,9}(?:\.\d{1,9}){1,3})\s*$",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
+
+    /// <summary>The dotted version a Windows Update title names right after "Version" or "Driver", or as
+    /// the last part of a driver title ("NVIDIA - Display - 31.0.15.5222"); a date or a build number
+    /// elsewhere in the title ("2024.05 Cumulative Update", "(KB5039212)") is no version, which is why the
+    /// shared first-number scan is not used here.</summary>
     internal static string? VersionFromTitle(string title)
     {
         var match = TitleVersionPattern.Match(title);
+        if (!match.Success)
+            match = DriverTitleVersionPattern.Match(title);
+
         return match.Success ? match.Groups[1].Value : null;
     }
 
