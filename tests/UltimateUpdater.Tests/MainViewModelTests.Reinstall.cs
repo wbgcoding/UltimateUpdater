@@ -1,0 +1,240 @@
+using System.Net.Http;
+using UltimateUpdater.Services.SelfUpdate;
+using UltimateUpdater.Models;
+using UltimateUpdater.Services;
+using UltimateUpdater.Services.Sources;
+using UltimateUpdater.ViewModels;
+
+namespace UltimateUpdater.Tests;
+
+/// <summary>
+/// The reinstall flow for winget's different-install-technology refusal: look up, confirm once, remove,
+/// install fresh, and a retry that repeats only the install.
+/// </summary>
+public partial class MainViewModelTests
+{
+    private const string DifferentTechnologyDetail =
+        "Installing Example.Widget failed (exit 0x8A15008E). The installed package uses a different install technology.";
+
+    /// <summary>A stand-in for winget that records what the flow asked of it, in order.</summary>
+    private sealed class ReinstallSource : IFreshInstallSource
+    {
+        public List<string> Calls { get; } = [];
+
+        public bool Fetchable { get; set; } = true;
+
+        public bool FailUninstall { get; set; }
+
+        public bool FailFresh { get; set; }
+
+        public string Id => "winget";
+
+        public UpdateCategory Category => UpdateCategory.Software;
+
+        public SourceTier Tier => SourceTier.A;
+
+        public Task<bool> IsAvailableAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+
+        public IAsyncEnumerable<UpdateItem> ScanAsync(CancellationToken cancellationToken) => AsyncEnumerable.Empty<UpdateItem>();
+
+        public bool CanUninstall(UpdateItem item) => true;
+
+        public Task InstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken)
+        {
+            Calls.Add("install");
+            return Task.CompletedTask;
+        }
+
+        public Task UninstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken)
+        {
+            Calls.Add("uninstall");
+            return FailUninstall ? Task.FromException(new InvalidOperationException("remove failed (exit 1)")) : Task.CompletedTask;
+        }
+
+        public Task<bool> CanFetchAsync(UpdateItem item, CancellationToken cancellationToken)
+        {
+            Calls.Add("fetch");
+            return Task.FromResult(Fetchable);
+        }
+
+        public Task FreshInstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken)
+        {
+            Calls.Add("fresh");
+            return FailFresh ? Task.FromException(new InvalidOperationException("install failed (exit 1)")) : Task.CompletedTask;
+        }
+    }
+
+    private static (MainViewModel ViewModel, ReinstallSource Source, UpdateRowViewModel Row, Func<int> Confirms) CreateReinstall()
+    {
+        var logging = new LoggingService();
+        var settings = new SettingsService(logging, Path.Combine(
+            Directory.CreateTempSubdirectory("wu-vm-test-").FullName, "settings.json"));
+        settings.Current.Ui.Language = "en";
+        var source = new ReinstallSource();
+        IReadOnlyList<IUpdateSource> sources = [source];
+        var history = new HistoryService(logging);
+
+        // A mock session never elevates, so the "winget" id runs in-process instead of starting the worker.
+        var viewModel = new MainViewModel(
+            settings, logging, new ThemeService(), new ScanOrchestrator(sources, logging),
+            new IconCacheService(logging), new InstallQueue(sources, settings, history, logging, isMockSession: true), history,
+            new AutostartService(logging), new NotificationService(settings, logging),
+            new Services.SelfUpdate.SelfUpdateService(new HttpClient(), logging, new PublicUpdateChannel(logging)), sources);
+
+        var confirms = 0;
+        viewModel.ReinstallConfirmOverride = () =>
+        {
+            confirms++;
+            return true;
+        };
+
+        var row = new UpdateRowViewModel(Item("Example.Widget", "Example Widget", "winget"), actions: viewModel);
+        viewModel.Updates.Add(row);
+        row.ApplyInstallStatus(new InstallItemStatus("winget", "Example.Widget", 0, null, false, "failed") { Detail = DifferentTechnologyDetail });
+        return (viewModel, source, row, () => confirms);
+    }
+
+    private static void WithAttendedUi(Action body)
+    {
+        App.ForceAttendedForTest = true;
+        try
+        {
+            WpfHarness.OnUiThread(body);
+        }
+        finally
+        {
+            App.ForceAttendedForTest = false;
+        }
+    }
+
+    [Fact]
+    public void The_reinstall_is_offered_for_the_different_technology_refusal_and_for_nothing_else()
+    {
+        WithAttendedUi(() =>
+        {
+            var (_, _, row, _) = CreateReinstall();
+            Assert.True(row.ShowReinstallButton);
+            Assert.True(row.ReinstallCommand.CanExecute(null));
+
+            foreach (var other in new[]
+            {
+                "install failed (exit 0x8A15002F)",
+                "install failed (exit 0x8A150011)",
+                "install failed (exit 1618)",
+            })
+            {
+                row.ApplyInstallStatus(new InstallItemStatus("winget", "Example.Widget", 0, null, false, "failed") { Detail = other });
+                Assert.False(row.ShowReinstallButton, other);
+            }
+        });
+    }
+
+    [Fact]
+    public void A_reinstall_looks_up_confirms_once_removes_then_installs_fresh_without_the_upgrade_path()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, confirms) = CreateReinstall();
+
+            RunPumped(viewModel.ReinstallRowAsync(row));
+
+            Assert.Equal(["fetch", "uninstall", "fresh"], source.Calls);
+            Assert.Equal(1, confirms());
+            Assert.Equal(RowInstallState.Succeeded, row.InstallState);
+            Assert.False(row.PendingFreshInstall);
+            Assert.False(row.WasUninstalled);
+        });
+    }
+
+    [Fact]
+    public void A_lookup_that_fails_stops_the_reinstall_before_anything_is_confirmed_or_removed()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, confirms) = CreateReinstall();
+            source.Fetchable = false;
+
+            RunPumped(viewModel.ReinstallRowAsync(row));
+
+            Assert.Equal(["fetch"], source.Calls);
+            Assert.Equal(0, confirms());
+            Assert.Equal(RowInstallState.Failed, row.InstallState);
+            Assert.False(row.PendingFreshInstall);
+        });
+    }
+
+    [Fact]
+    public void A_declined_confirmation_removes_nothing()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, _) = CreateReinstall();
+            viewModel.ReinstallConfirmOverride = () => false;
+
+            RunPumped(viewModel.ReinstallRowAsync(row));
+
+            Assert.Equal(["fetch"], source.Calls);
+            Assert.Equal(RowInstallState.Failed, row.InstallState);
+        });
+    }
+
+    [Fact]
+    public void A_failed_removal_never_reaches_the_fresh_install()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, _) = CreateReinstall();
+            source.FailUninstall = true;
+
+            RunPumped(viewModel.ReinstallRowAsync(row));
+
+            Assert.Equal(["fetch", "uninstall"], source.Calls);
+            Assert.False(row.PendingFreshInstall);
+            Assert.Equal(RowInstallState.Failed, row.InstallState);
+        });
+    }
+
+    [Fact]
+    public void A_failed_fresh_install_keeps_a_retry_that_repeats_only_the_install()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, confirms) = CreateReinstall();
+            source.FailFresh = true;
+
+            RunPumped(viewModel.ReinstallRowAsync(row));
+
+            Assert.Equal(["fetch", "uninstall", "fresh"], source.Calls);
+            Assert.Equal(RowInstallState.Failed, row.InstallState);
+            Assert.True(row.PendingFreshInstall);
+            Assert.Equal(LocalizationService.Instance["ReinstallInstallFailed"], row.FailureLine);
+            // The button no longer offers a second removal: the old version is already gone.
+            Assert.False(row.ShowReinstallButton);
+
+            source.FailFresh = false;
+            source.Calls.Clear();
+            row.RetryCommand.Execute(null);
+            Pump(WaitUntilAsync(() => row.InstallState == RowInstallState.Succeeded, TimeSpan.FromSeconds(5)));
+
+            Assert.Equal(["fresh"], source.Calls);
+            Assert.False(row.PendingFreshInstall);
+            Assert.Equal(1, confirms());
+        });
+    }
+
+    [Fact]
+    public void A_row_that_is_not_a_different_technology_failure_cannot_be_reinstalled_by_calling_the_flow_directly()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, confirms) = CreateReinstall();
+            row.ApplyInstallStatus(new InstallItemStatus("winget", "Example.Widget", 0, null, false, "failed") { Detail = "install failed (exit 1618)" });
+
+            RunPumped(viewModel.ReinstallRowAsync(row));
+            RunPumped(viewModel.RetryFreshInstallAsync(row));
+
+            Assert.Empty(source.Calls);
+            Assert.Equal(0, confirms());
+        });
+    }
+}

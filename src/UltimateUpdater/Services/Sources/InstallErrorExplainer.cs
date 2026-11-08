@@ -32,7 +32,8 @@ public sealed record InstallErrorExplanation(
     InstallErrorClassification Classification,
     bool AllowsAutomaticRetry = false,
     bool UseAsRowText = false,
-    bool CountsAsFailure = true)
+    bool CountsAsFailure = true,
+    bool OffersReinstall = false)
 {
     /// <summary>
     /// The cause is plain enough to be the row's own line instead of the generic "install failed": the single
@@ -43,6 +44,10 @@ public sealed record InstallErrorExplanation(
     /// False for a failure that says nothing about this package or this PC (the package source being behind):
     /// it never counts toward the repeated-failure flag, however often it comes back.
     /// </summary>
+
+    // OffersReinstall: only winget's different-install-technology refusal (0x8A15008E), where removing the old
+    // version and installing the new one is the fix. Not the no-uninstall-info case (nothing to run) nor a
+    // stale hash (clears by itself).
 
     /// <summary>The interactive-retry eligibility test, deliberately narrow, see InstallErrorExplainer's own table.</summary>
     public bool AllowsInteractiveRetry => Classification == InstallErrorClassification.Recoverable;
@@ -412,7 +417,8 @@ public static class InstallErrorExplainer
         "InstallErrorWingetUserScopeWhat", [], "InstallErrorWingetUserScopeNow", [], InstallErrorClassification.ManualWork);
 
     private static readonly InstallErrorExplanation DifferentInstallTechnologyExplanation = new(
-        "InstallErrorWingetDifferentTechWhat", [], "InstallErrorWingetDifferentTechNow", [], InstallErrorClassification.ManualWork);
+        "InstallErrorWingetDifferentTechWhat", [], "InstallErrorWingetDifferentTechNow", [], InstallErrorClassification.ManualWork,
+        OffersReinstall: true);
 
     private static readonly InstallErrorExplanation NoUninstallInfoExplanation = new(
         "InstallErrorWingetNoUninstallWhat", [], "InstallErrorWingetNoUninstallNow", [], InstallErrorClassification.ManualWork);

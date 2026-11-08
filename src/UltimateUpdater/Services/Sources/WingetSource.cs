@@ -15,7 +15,7 @@ namespace UltimateUpdater.Services.Sources;
 /// missed results, versus 5 s (module) / 16 s (CLI) against the system winget.
 /// Installs always run through winget itself, so its manifest hash verification is untouched.
 /// </summary>
-public sealed class WingetSource : IUpdateSource
+public sealed class WingetSource : IUpdateSource, IFreshInstallSource
 {
     private static readonly TimeSpan ScanTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan InstallTimeout = TimeSpan.FromMinutes(30);
@@ -417,6 +417,73 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
 
         return new UpdateEnrichment(date, null, ChangelogBody: changelogBody, ChangelogUrl: changelogUrl);
     }
+
+    /// <summary>`winget show` for exactly this id. Read-only; the answer decides whether the reinstall flow
+    /// may remove anything at all, so every failure (a bad id, a timeout, no winget) reads as "no".</summary>
+    public async Task<bool> CanFetchAsync(UpdateItem item, CancellationToken cancellationToken)
+    {
+        if (!ProcessRunner.IsSafePositionalArgument(item.Id, allowCmdMetacharacters: true))
+            return false;
+
+        try
+        {
+            var result = await ProcessRunner.RunAsync("winget", ShowArguments(item.Id), ShowTimeout, cancellationToken);
+            return !result.TimedOut && result.ExitCode == 0;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or InvalidOperationException)
+        {
+            _logging.Warn($"winget: could not look up '{item.Id}': {ex.Message}");
+            return false;
+        }
+    }
+
+    internal static IReadOnlyList<string> ShowArguments(string packageId) =>
+        ["show", "--id", packageId, "--exact", "--disable-interactivity", "--accept-source-agreements"];
+
+    /// <summary>
+    /// One plain `winget install` after the old version was removed. Not the ladder: there is nothing
+    /// installed to upgrade, and no later rung may fall back to anything else. The id is checked the way
+    /// every other winget call here checks it, because this also runs in the elevated worker.
+    /// </summary>
+    public async Task FreshInstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken)
+    {
+        if (!ProcessRunner.IsSafePositionalArgument(item.Id, allowCmdMetacharacters: true))
+            throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; that is not a plain package id.");
+
+        progress.Report(new InstallProgress { PercentComplete = 0, StatusText = item.Name });
+
+        var result = await ProcessRunner.RunStreamingAsync(
+            "winget",
+            FreshInstallArguments(item.Id),
+            InstallTimeout,
+            segment => Report(progress, item.Name, segment),
+            cancellationToken,
+            stallWatch: StallWatchOptions.ForInstall);
+
+        if (result.TimedOut)
+            throw new InvalidOperationException($"winget install timed out for '{item.Id}'.");
+
+        if (!IsInstallSuccess(result.ExitCode))
+            throw new InvalidOperationException(FailureDetail("install", item.Id, result));
+
+        progress.Report(new InstallProgress
+        {
+            PercentComplete = 100,
+            StatusText = item.Name,
+            RebootRequired = IsRebootRequired(result.ExitCode),
+        });
+    }
+
+    internal static IReadOnlyList<string> FreshInstallArguments(string packageId) =>
+    [
+        "install", "--id", packageId, "--exact",
+        "--silent", "--disable-interactivity",
+        "--accept-package-agreements", "--accept-source-agreements",
+    ];
 
     public bool CanUninstall(UpdateItem item) => ProcessRunner.IsSafePositionalArgument(item.Id, allowCmdMetacharacters: true);
 

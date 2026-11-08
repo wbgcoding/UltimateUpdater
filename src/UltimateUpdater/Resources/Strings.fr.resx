@@ -2263,4 +2263,22 @@ Continuer avec les droits administrateur ?</value>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Ouvrir le dossier des journaux</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>Réinstaller</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>Supprimer la version installée et installer la nouvelle à neuf</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>Réinstaller « {0} » ?</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>« {0} » est d’abord supprimé, puis la dernière version est installée à neuf. Les réglages du programme peuvent être perdus.</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>La nouvelle version est introuvable pour le moment, rien n’a donc été modifié. Vérifiez la connexion et réessayez.</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>Supprimé, mais la nouvelle version n’a pas été installée. Réessayer lance de nouveau l’installation.</value>
+  </data>
 </root>

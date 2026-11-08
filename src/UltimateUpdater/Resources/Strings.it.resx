@@ -2263,4 +2263,22 @@ Continuare con privilegi di amministratore?</value>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Apri la cartella dei registri</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>Reinstalla</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>Rimuove la versione installata e installa la nuova da zero</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>Reinstallare «{0}»?</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>Prima «{0}» viene rimosso, poi la versione più recente viene installata da zero. Le impostazioni del programma potrebbero andare perse.</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>Al momento non è possibile recuperare la nuova versione, quindi non è cambiato nulla. Controlla la connessione e riprova.</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>Rimosso, ma la nuova versione non è stata installata. Con Riprova viene installata di nuovo.</value>
+  </data>
 </root>

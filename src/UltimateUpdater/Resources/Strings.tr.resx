@@ -2263,4 +2263,22 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Günlük klasörünü aç</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>Yeniden yükle</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>Yüklü sürümü kaldırır ve yenisini sıfırdan yükler</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>“{0}” yeniden yüklensin mi?</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>Önce “{0}” kaldırılır, ardından en son sürüm sıfırdan yüklenir. Program ayarları kaybolabilir.</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>Yeni sürüm şu anda alınamıyor, bu yüzden hiçbir şey değiştirilmedi. Bağlantınızı kontrol edip yeniden deneyin.</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>Kaldırıldı, ancak yeni sürüm yüklenemedi. Yeniden dene, onu tekrar yükler.</value>
+  </data>
 </root>

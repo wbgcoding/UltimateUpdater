@@ -2263,4 +2263,22 @@ Doorgaan met beheerdersrechten?</value>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Logmap openen</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>Opnieuw installeren</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>De geïnstalleerde versie verwijderen en de nieuwe helemaal opnieuw installeren</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>“{0}” opnieuw installeren?</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>“{0}” wordt eerst verwijderd, daarna wordt de nieuwste versie helemaal opnieuw geïnstalleerd. Programma-instellingen kunnen verloren gaan.</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>De nieuwe versie kan nu niet worden opgehaald, dus er is niets gewijzigd. Controleer je verbinding en probeer het opnieuw.</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>Verwijderd, maar de nieuwe versie is niet geïnstalleerd. Opnieuw proberen installeert hem nogmaals.</value>
+  </data>
 </root>

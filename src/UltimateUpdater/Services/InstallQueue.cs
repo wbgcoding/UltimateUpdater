@@ -849,6 +849,14 @@ public sealed class InstallQueue
 
             if (action == InstallAction.Uninstall)
                 await source.UninstallAsync(item, progress, cancellationToken);
+            else if (action == InstallAction.FreshInstall)
+            {
+                // Only a source that says it can do a plain install without the upgrade ladder; anything
+                // else fails closed instead of quietly running a normal install.
+                if (source is not Sources.IFreshInstallSource fresh)
+                    throw new InvalidOperationException($"Source '{item.SourceId}' does not support a fresh install.");
+                await fresh.FreshInstallAsync(item, progress, cancellationToken);
+            }
             else
                 await source.InstallAsync(item, progress, cancellationToken);
 

@@ -101,4 +101,9 @@ public partial class ErrorDetailWindow : FluentWindow
     }
 
     private void OnCloseClicked(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>The click starts the row's confirmed reinstall flow (the bound command); this window has
+    /// nothing left to show once it does, the progress is in the main window.</summary>
+    private void OnReinstallClicked(object sender, RoutedEventArgs e) =>
+        Dispatcher.BeginInvoke(new Action(Close), System.Windows.Threading.DispatcherPriority.Background);
 }

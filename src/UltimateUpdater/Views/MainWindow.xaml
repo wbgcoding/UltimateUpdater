@@ -256,6 +256,11 @@
             <MenuItem Style="{StaticResource RowMenuItem}"
                       Header="{Binding RetryInteractiveHeader}" Command="{Binding RetryInteractiveCommand}"
                       Visibility="{Binding ShowRetryInteractiveButton, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- Only for winget's different-install-technology refusal. -->
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding ReinstallHeader}" Command="{Binding ReinstallCommand}"
+                      ToolTip="{Binding ReinstallTooltip}"
+                      Visibility="{Binding ShowReinstallButton, Converter={StaticResource BoolToVisibility}}"/>
             <!-- The only way out of NeedsManualWork, Install/Retry stay hidden until this is used. -->
             <MenuItem Style="{StaticResource RowMenuItem}"
                       Header="{Binding ResetPersistentFailureHeader}" Command="{Binding ResetPersistentFailureCommand}"

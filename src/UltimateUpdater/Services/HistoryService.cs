@@ -21,8 +21,8 @@ public sealed class HistoryEntry
         ItemId = item.Id,
         Name = item.Name,
         FromVersion = item.InstalledVersion,
-        // An uninstall is not a move to a new version; only an install has a target.
-        ToVersion = action == Models.InstallAction.Install ? item.AvailableVersion : null,
+        // An uninstall is not a move to a new version; only an install (fresh or not) has a target.
+        ToVersion = action != Models.InstallAction.Uninstall ? item.AvailableVersion : null,
         SizeBytes = item.DownloadSize,
         Success = success,
         Error = error,

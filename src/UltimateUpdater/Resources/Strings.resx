@@ -2263,4 +2263,22 @@ Continue with admin rights?</value>
   <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
     <value>Open log folder</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>Reinstall</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>Remove the installed version and install the new one from scratch</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>Reinstall “{0}”?</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>“{0}” is removed first, then the latest version is installed from scratch. Program settings may be lost.</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>The new version cannot be fetched right now, so nothing was changed. Check your connection and try again.</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>Removed, but the new version did not install. Retry installs it again.</value>
+  </data>
 </root>

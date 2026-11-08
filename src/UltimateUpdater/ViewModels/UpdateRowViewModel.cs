@@ -608,6 +608,42 @@ public partial class UpdateRowViewModel : ObservableObject
     private void RetryInteractive() => _actions?.RetryInteractive(this);
 
     /// <summary>
+    /// The "reinstall" entry: a winget update refused because the new version installs differently from the
+    /// old one (0x8A15008E), where removing the old version and installing the new one is the fix. Not while a
+    /// reinstall already removed the old version and only its install is left (that is <see cref="Retry"/>'s
+    /// job), and not in an unattended run.
+    /// </summary>
+    public bool ShowReinstallButton =>
+        InstallState is RowInstallState.Failed or RowInstallState.NeedsManualWork
+        && !App.IsUnattended
+        && !PendingFreshInstall
+        && SourceId == "winget"
+        && Services.Sources.InstallErrorExplainer.Explain(SourceId, InstallErrorDetail)?.OffersReinstall == true;
+
+    public string ReinstallHeader => LocalizationService.Instance["ReinstallButton"];
+
+    public string ReinstallTooltip => LocalizationService.Instance["ReinstallTooltip"];
+
+    [RelayCommand(CanExecute = nameof(ShowReinstallButton))]
+    private void Reinstall() => _actions?.Reinstall(this);
+
+    /// <summary>
+    /// Set by the reinstall flow once the old version is gone and only the fresh install is left. A retry
+    /// then repeats just that install (an upgrade of a package that no longer exists would fail), and the
+    /// failure line says what state the PC is in.
+    /// </summary>
+    [ObservableProperty]
+    private bool pendingFreshInstall;
+
+    partial void OnPendingFreshInstallChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowReinstallButton));
+        OnPropertyChanged(nameof(FailureLine));
+        OnPropertyChanged(nameof(InstallFailedTooltip));
+        ReinstallCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
     /// Set by the main view model while the interactive retry is actually running this row, winget's own
     /// UI is driving, so the percentage is meaningless; the row shows "läuft interaktiv…" instead of
     /// the normal percent/bar pair rather than a number that cannot mean anything.
@@ -913,6 +949,7 @@ public partial class UpdateRowViewModel : ObservableObject
     /// when nothing was recognized.
     /// </summary>
     public string InstallFailedTooltip =>
+        PendingFreshInstall ? LocalizationService.Instance["ReinstallInstallFailed"] :
         Services.Sources.InstallErrorExplainer.Describe(SourceId, InstallErrorDetail, key => LocalizationService.Instance[key])
         ?? InstallStatusText
         ?? LocalizationService.Instance["RowFailed"];
@@ -924,6 +961,7 @@ public partial class UpdateRowViewModel : ObservableObject
     /// whose last fallback is the raw status line.
     /// </summary>
     public string FailureLine =>
+        PendingFreshInstall ? LocalizationService.Instance["ReinstallInstallFailed"] :
         Services.Sources.InstallErrorExplainer.Describe(SourceId, InstallErrorDetail, key => LocalizationService.Instance[key])
         ?? LocalizationService.Instance["RowFailed"];
 
@@ -1034,7 +1072,9 @@ public partial class UpdateRowViewModel : ObservableObject
 
     private void RunRetry()
     {
-        if (WasUninstalled)
+        if (PendingFreshInstall)
+            _actions?.RetryFreshInstall(this); // the old version is already gone: only the install is left
+        else if (WasUninstalled)
             _actions?.Uninstall(this);
         else if (LastDowngradeTarget is { Length: > 0 } target)
             _actions?.RetryDowngrade(this, target); // a plain install would upgrade: the opposite of the ask
@@ -1135,6 +1175,8 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(InstallHeader));
         OnPropertyChanged(nameof(RetryHeader));
         OnPropertyChanged(nameof(RetryInteractiveHeader));
+        OnPropertyChanged(nameof(ReinstallHeader));
+        OnPropertyChanged(nameof(ReinstallTooltip));
         OnPropertyChanged(nameof(InteractiveRunningText));
         OnPropertyChanged(nameof(OpenHeader));
         OnPropertyChanged(nameof(OpenTargetHeader));
@@ -1583,6 +1625,8 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(HasInstallError));
         ShowErrorDetailCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ShowRetryInteractiveButton));
+        OnPropertyChanged(nameof(ShowReinstallButton));
+        ReinstallCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(ShowInteractiveRunningLabel));
         OnPropertyChanged(nameof(ShowRunningProgress));
         RetryInteractiveCommand.NotifyCanExecuteChanged();
@@ -1620,6 +1664,8 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(FailureLine));
         OnPropertyChanged(nameof(ShowRetryInteractiveButton));
         RetryInteractiveCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ShowReinstallButton));
+        ReinstallCommand.NotifyCanExecuteChanged();
     }
 
     private static Brush Brush(string resourceKey) =>

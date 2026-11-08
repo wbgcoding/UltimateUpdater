@@ -88,6 +88,17 @@ public static class InstallWorker
             return true;
         }
 
+        // A fresh install removes nothing itself but is only ever the second half of a reinstall the user
+        // confirmed for ONE package: a job of several, or one naming another source than winget, is not
+        // something the app ever sends, so it is refused whole before anything runs with admin rights.
+        if (job.Action == InstallAction.FreshInstall
+            && (job.Items.Count != 1 || !string.Equals(job.Items[0]?.SourceId, "winget", StringComparison.Ordinal)))
+        {
+            logging.Error($"Elevated worker: rejecting a fresh install of {job.Items.Count} item(s); exactly one winget package is allowed.");
+            Send(writer, jobId, new InstallProgressMessage { Type = "done" });
+            return true;
+        }
+
         if (job.Items.Count > MaxItems)
         {
             logging.Error($"Elevated worker: rejecting job with {job.Items.Count} items (limit {MaxItems}).");
@@ -422,6 +433,13 @@ public static class InstallWorker
         {
             if (job.Action == InstallAction.Uninstall)
                 await source.UninstallAsync(item, progress, cancellationToken);
+            else if (job.Action == InstallAction.FreshInstall)
+            {
+                // Fails closed: a source without the capability never falls back to a normal install.
+                if (source is not IFreshInstallSource fresh)
+                    throw new InvalidOperationException($"Source '{item.SourceId}' does not support a fresh install.");
+                await fresh.FreshInstallAsync(item, progress, cancellationToken);
+            }
             else
                 await source.InstallAsync(item, progress, cancellationToken);
 
