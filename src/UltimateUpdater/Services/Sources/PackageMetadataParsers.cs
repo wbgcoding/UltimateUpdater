@@ -557,7 +557,7 @@ public static class PackageMetadataParsers
         }
     }
 
-    /// <summary>Repository/getting-started link from a Marketplace "properties" bag ([{key, value},...]).</summary>
+    /// <summary>True when a Marketplace version's "properties" bag marks it as a pre-release.</summary>
     private static bool IsVsMarketplacePreRelease(JsonElement version) =>
         version.TryGetProperty("properties", out var properties) && properties.ValueKind == JsonValueKind.Array
         && properties.EnumerateArray().Any(property =>
@@ -607,6 +607,7 @@ public static class PackageMetadataParsers
         return installed >= required;
     }
 
+    /// <summary>Repository/getting-started link from a Marketplace "properties" bag ([{key, value},...]).</summary>
     private static string? VsMarketplaceProjectUrl(JsonElement element)
     {
         if (element.ValueKind != JsonValueKind.Object ||

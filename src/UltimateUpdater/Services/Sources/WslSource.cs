@@ -39,5 +39,7 @@ public sealed class WslSource(LoggingService logging) : CliUpdateSource(logging)
     protected override Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<UpdateItem>>([]);
 
-    protected override IReadOnlyList<string> InstallArguments(UpdateItem item) => ["--update"];
+    // The scan reports no rows, so nothing can reach an install; the base class still requires the member.
+    protected override IReadOnlyList<string> InstallArguments(UpdateItem item) =>
+        throw new NotSupportedException("wsl: this source reports no updates, so there is nothing to install.");
 }
