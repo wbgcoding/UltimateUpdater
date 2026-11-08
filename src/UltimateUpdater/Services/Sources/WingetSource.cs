@@ -458,7 +458,7 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
 
         var result = await ProcessRunner.RunStreamingAsync(
             "winget",
-            FreshInstallArguments(item.Id),
+            FreshInstallArguments(item.Id, item.InstallScope),
             InstallTimeout,
             segment => Report(progress, item.Name, segment),
             cancellationToken,
@@ -478,12 +478,55 @@ throw new InvalidOperationException($"winget: refusing to install '{item.Id}'; t
         });
     }
 
-    internal static IReadOnlyList<string> FreshInstallArguments(string packageId) =>
-    [
-        "install", "--id", packageId, "--exact",
-        "--silent", "--disable-interactivity",
-        "--accept-package-agreements", "--accept-source-agreements",
-    ];
+    /// <summary>The install command of a fresh install. With a known scope it names it, so winget does not pick
+    /// the installer by its own preference (per-user first); a value that is not exactly one of the two scopes
+    /// names none.</summary>
+    internal static IReadOnlyList<string> FreshInstallArguments(string packageId, string? scope = null)
+    {
+        List<string> args =
+        [
+            "install", "--id", packageId, "--exact",
+            "--silent", "--disable-interactivity",
+            "--accept-package-agreements", "--accept-source-agreements",
+        ];
+        if (InstallScopes.Normalize(scope) is { } known)
+            args.AddRange(["--scope", known]);
+        return args;
+    }
+
+    /// <summary>`winget list --id &lt;id&gt; --exact --scope user|machine`, once per scope. Exactly one of them
+    /// listing the package is a known scope; neither, both or any failure is "not known".</summary>
+    public async Task<string?> GetInstalledScopeAsync(UpdateItem item, CancellationToken cancellationToken)
+    {
+        if (!ProcessRunner.IsSafePositionalArgument(item.Id, allowCmdMetacharacters: true))
+            return null;
+
+        try
+        {
+            var inUser = await IsListedInScopeAsync(item.Id, InstallScopes.User, cancellationToken);
+            var inMachine = await IsListedInScopeAsync(item.Id, InstallScopes.Machine, cancellationToken);
+            return inUser == inMachine ? null : inUser ? InstallScopes.User : InstallScopes.Machine;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException or InvalidOperationException)
+        {
+            _logging.Warn($"winget: could not read the install scope of '{item.Id}': {ex.Message}");
+            return null;
+        }
+    }
+
+    private static async Task<bool> IsListedInScopeAsync(string id, string scope, CancellationToken cancellationToken)
+    {
+        var result = await ProcessRunner.RunAsync("winget", ListScopeArguments(id, scope), ShowTimeout, cancellationToken);
+        return !result.TimedOut && result.ExitCode == 0
+            && WingetUpgradeParser.ParseListVersion(result.StandardOutput, id) is not null;
+    }
+
+    internal static IReadOnlyList<string> ListScopeArguments(string packageId, string scope) =>
+        ["list", "--id", packageId, "--exact", "--scope", scope, "--disable-interactivity", "--accept-source-agreements"];
 
     public bool CanUninstall(UpdateItem item) => ProcessRunner.IsSafePositionalArgument(item.Id, allowCmdMetacharacters: true);
 

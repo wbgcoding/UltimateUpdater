@@ -15,6 +15,14 @@ public interface IFreshInstallSource : IUpdateSource
     /// </summary>
     Task<bool> CanFetchAsync(UpdateItem item, CancellationToken cancellationToken);
 
-    /// <summary>Installs the package fresh, one attempt, no upgrade ladder. Throws on failure.</summary>
+    /// <summary>
+    /// The scope the package is installed in right now, <see cref="InstallScopes.User"/> or
+    /// <see cref="InstallScopes.Machine"/>; null when that cannot be told (not found, both, any failure).
+    /// Asked BEFORE the removal, because afterwards there is nothing left to ask. Read-only.
+    /// </summary>
+    Task<string?> GetInstalledScopeAsync(UpdateItem item, CancellationToken cancellationToken);
+
+    /// <summary>Installs the package fresh, one attempt, no upgrade ladder, in <see cref="UpdateItem.InstallScope"/>
+    /// when that is set. Throws on failure.</summary>
     Task FreshInstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken);
 }

@@ -385,6 +385,18 @@ public static class InstallWorker
             return;
         }
 
+        // The scope lands on a winget command line: only the machine scope (or none) is ever sent here. The
+        // user scope runs in the app's own process, an elevated copy of it would be the wrong account.
+        if (jobItem.Scope is not null
+            && (job.Action != InstallAction.FreshInstall || jobItem.Scope != InstallScopes.Machine))
+        {
+            logging.Error($"Elevated worker: rejecting item '{jobItem.ItemId}', the scope '{jobItem.Scope}' is not allowed for this job.");
+            if (!Send(writer, jobId, Result(jobItem.SourceId, jobItem.ItemId, false, "Rejected: the install scope is not allowed.")))
+                MarkLostApp(state);
+
+            return;
+        }
+
         var source = state.Sources.FirstOrDefault(s => s.Id == jobItem.SourceId);
         if (source is null)
         {
@@ -405,6 +417,7 @@ public static class InstallWorker
             // A rollback's exact target version, so the source can honour it the same way it
             // would in-process (WingetSource.InstallAsync).
             PinnedVersion = jobItem.PinnedVersion,
+            InstallScope = InstallScopes.Normalize(jobItem.Scope),
         };
 
         // NOT System.Progress<T>: it posts its callback to the captured

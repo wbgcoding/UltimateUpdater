@@ -28,6 +28,9 @@ public class FreshInstallTests
     {
         public List<string> Calls { get; } = [];
 
+        /// <summary>The scope each fresh install was asked for (null entry = none).</summary>
+        public List<string?> FreshScopes { get; } = [];
+
         public string Id => id;
 
         public UpdateCategory Category => UpdateCategory.Software;
@@ -44,6 +47,8 @@ public class FreshInstallTests
             return Task.CompletedTask;
         }
 
+        public Task<string?> GetInstalledScopeAsync(UpdateItem item, CancellationToken cancellationToken) => Task.FromResult<string?>(null);
+
         public Task UninstallAsync(UpdateItem item, IProgress<Models.InstallProgress> progress, CancellationToken cancellationToken)
         {
             Calls.Add("uninstall");
@@ -55,6 +60,7 @@ public class FreshInstallTests
         public Task FreshInstallAsync(UpdateItem item, IProgress<Models.InstallProgress> progress, CancellationToken cancellationToken)
         {
             Calls.Add("fresh");
+            FreshScopes.Add(item.InstallScope);
             return Task.CompletedTask;
         }
     }
@@ -97,6 +103,70 @@ public class FreshInstallTests
 
         Assert.Equal(["fresh"], source.Calls);
         Assert.Contains("\"success\":true", ReadAll(buffer));
+    }
+
+    [Fact]
+    public async Task The_worker_hands_the_machine_scope_on_to_the_fresh_install()
+    {
+        var (writer, buffer) = NewWriter();
+        var source = new RecordingSource("winget");
+        var item = Widget();
+        item.Scope = "machine";
+
+        await InstallWorker.RunJobAsync(FreshJob(item), writer, "job1", new LoggingService(), CancellationToken.None, [source]);
+
+        Assert.Equal(["fresh"], source.Calls);
+        Assert.Equal(["machine"], source.FreshScopes);
+        Assert.Contains("\"success\":true", ReadAll(buffer));
+    }
+
+    [Theory]
+    [InlineData("user")]
+    [InlineData("Machine")]
+    [InlineData("--force")]
+    [InlineData("")]
+    public async Task The_worker_refuses_any_scope_but_machine_for_a_fresh_install(string scope)
+    {
+        var (writer, buffer) = NewWriter();
+        var source = new RecordingSource("winget");
+        var item = Widget();
+        item.Scope = scope;
+
+        await InstallWorker.RunJobAsync(FreshJob(item), writer, "job1", new LoggingService(), CancellationToken.None, [source]);
+
+        Assert.Empty(source.Calls);
+        Assert.DoesNotContain("\"success\":true", ReadAll(buffer));
+    }
+
+    [Fact]
+    public async Task The_worker_refuses_a_scope_on_a_job_that_is_not_a_fresh_install()
+    {
+        var (writer, buffer) = NewWriter();
+        var source = new RecordingSource("winget");
+        var item = Widget();
+        item.Scope = "machine";
+
+        await InstallWorker.RunJobAsync(
+            new InstallJobFile { Action = InstallAction.Install, Items = [item] }, writer, "job1", new LoggingService(), CancellationToken.None, [source]);
+
+        Assert.Empty(source.Calls);
+        Assert.DoesNotContain("\"success\":true", ReadAll(buffer));
+    }
+
+    [Theory]
+    [InlineData("user", InstallAction.FreshInstall, false)]
+    [InlineData("machine", InstallAction.FreshInstall, true)]
+    [InlineData(null, InstallAction.FreshInstall, true)]
+    [InlineData("user", InstallAction.Install, true)]
+    public void A_user_scope_fresh_install_stays_in_process_and_everything_else_keeps_its_routing(string? scope, InstallAction action, bool elevated)
+    {
+        var logging = new LoggingService();
+        var settings = new SettingsService(logging, Path.Combine(Directory.CreateTempSubdirectory("wu-fresh-test-").FullName, "settings.json"));
+        var queue = new InstallQueue([new RecordingSource("winget")], settings, new HistoryService(logging), logging);
+        var item = new UpdateItem { Id = "Example.Widget", SourceId = "winget", Category = UpdateCategory.Software, Name = "Example Widget" }
+            .WithInstallScope(scope);
+
+        Assert.Equal(elevated, queue.RequiresElevation(item, action));
     }
 
     [Fact]
@@ -162,14 +232,31 @@ public class FreshInstallTests
     }
 
     [Theory]
-    [InlineData("Example.Widget")]
-    [InlineData("Vendor.App-2")]
-    public void The_fresh_install_arguments_name_exactly_this_package_and_nothing_extra(string id)
+    [InlineData("Example.Widget", null)]
+    [InlineData("Vendor.App-2", null)]
+    [InlineData("Example.Widget", "machine")]
+    [InlineData("Vendor.App-2", "user")]
+    [InlineData("Example.Widget", "Machine")]
+    [InlineData("Example.Widget", "all --force")]
+    [InlineData("Example.Widget", "")]
+    public void The_fresh_install_arguments_name_exactly_this_package_and_its_known_scope_and_nothing_extra(string id, string? scope)
     {
-        var args = WingetSource.FreshInstallArguments(id);
+        var args = WingetSource.FreshInstallArguments(id, scope);
 
         Assert.Equal(["install", "--id", id, "--exact"], args.Take(4));
-        Assert.DoesNotContain("--scope", args);
+        if (scope is "user" or "machine")
+        {
+            var at = args.ToList().IndexOf("--scope");
+            Assert.True(at >= 0);
+            Assert.Equal(scope, args[at + 1]);
+            Assert.Single(args, a => a == "--scope");
+        }
+        else
+        {
+            // An unknown or malformed scope names none at all: today's behaviour, nothing guessed.
+            Assert.DoesNotContain("--scope", args);
+        }
+
         Assert.DoesNotContain("--force", args);
         Assert.DoesNotContain("--override", args);
 
@@ -191,6 +278,16 @@ public class FreshInstallTests
         Assert.False(await source.CanFetchAsync(item, CancellationToken.None));
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => source.FreshInstallAsync(item, new Progress<Models.InstallProgress>(), CancellationToken.None));
+    }
+
+    [Theory]
+    [InlineData("user")]
+    [InlineData("machine")]
+    public void The_scope_lookup_asks_winget_for_exactly_this_package_in_one_scope(string scope)
+    {
+        var args = WingetSource.ListScopeArguments("Example.Widget", scope);
+
+        Assert.Equal(["list", "--id", "Example.Widget", "--exact", "--scope", scope], args.Take(6));
     }
 
     [Fact]

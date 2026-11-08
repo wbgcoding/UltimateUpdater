@@ -635,6 +635,10 @@ public partial class UpdateRowViewModel : ObservableObject
     [ObservableProperty]
     private bool pendingFreshInstall;
 
+    /// <summary>The scope ("user" or "machine") the program had before its reinstall removed it, which the
+    /// fresh install and its retry are made in; null = not known.</summary>
+    internal string? PendingFreshInstallScope { get; set; }
+
     partial void OnPendingFreshInstallChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowReinstallButton));

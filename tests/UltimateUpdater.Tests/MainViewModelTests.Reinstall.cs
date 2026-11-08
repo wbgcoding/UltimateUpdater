@@ -27,6 +27,12 @@ public partial class MainViewModelTests
 
         public bool FailFresh { get; set; }
 
+        /// <summary>What the scope lookup answers (null = not known).</summary>
+        public string? InstalledScope { get; set; }
+
+        /// <summary>The scope each fresh install was asked for (null entry = none).</summary>
+        public List<string?> FreshScopes { get; } = [];
+
         public string Id => "winget";
 
         public UpdateCategory Category => UpdateCategory.Software;
@@ -61,9 +67,16 @@ public partial class MainViewModelTests
             return Task.FromResult(Fetchable);
         }
 
+        public Task<string?> GetInstalledScopeAsync(UpdateItem item, CancellationToken cancellationToken)
+        {
+            Calls.Add("scope");
+            return Task.FromResult(InstalledScope);
+        }
+
         public Task FreshInstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken)
         {
             Calls.Add("fresh");
+            FreshScopes.Add(item.InstallScope);
             return FailFresh ? Task.FromException(new InvalidOperationException("install failed (exit 1)")) : Task.CompletedTask;
         }
     }
@@ -142,7 +155,7 @@ public partial class MainViewModelTests
 
             RunPumped(viewModel.ReinstallRowAsync(row));
 
-            Assert.Equal(["fetch", "uninstall", "fresh"], source.Calls);
+            Assert.Equal(["fetch", "scope", "uninstall", "fresh"], source.Calls);
             Assert.Equal(1, confirms());
             Assert.Equal(RowInstallState.Succeeded, row.InstallState);
             Assert.False(row.PendingFreshInstall);
@@ -192,7 +205,7 @@ public partial class MainViewModelTests
 
             RunPumped(viewModel.ReinstallRowAsync(row));
 
-            Assert.Equal(["fetch", "uninstall"], source.Calls);
+            Assert.Equal(["fetch", "scope", "uninstall"], source.Calls);
             Assert.False(row.PendingFreshInstall);
             Assert.Equal(RowInstallState.Failed, row.InstallState);
         });
@@ -208,7 +221,7 @@ public partial class MainViewModelTests
 
             RunPumped(viewModel.ReinstallRowAsync(row));
 
-            Assert.Equal(["fetch", "uninstall", "fresh"], source.Calls);
+            Assert.Equal(["fetch", "scope", "uninstall", "fresh"], source.Calls);
             Assert.Equal(RowInstallState.Failed, row.InstallState);
             Assert.True(row.PendingFreshInstall);
             Assert.Equal(LocalizationService.Instance["ReinstallInstallFailed"], row.FailureLine);
@@ -223,6 +236,43 @@ public partial class MainViewModelTests
             Assert.Equal(["fresh"], source.Calls);
             Assert.False(row.PendingFreshInstall);
             Assert.Equal(1, confirms());
+        });
+    }
+
+    [Theory]
+    [InlineData("machine")]
+    [InlineData("user")]
+    [InlineData(null)]
+    public void The_fresh_install_lands_in_the_scope_the_program_had_and_names_none_when_unknown(string? scope)
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, _) = CreateReinstall();
+            source.InstalledScope = scope;
+
+            RunPumped(viewModel.ReinstallRowAsync(row));
+
+            Assert.Equal([scope], source.FreshScopes);
+            Assert.Equal(RowInstallState.Succeeded, row.InstallState);
+        });
+    }
+
+    [Fact]
+    public void The_retry_of_a_failed_fresh_install_keeps_the_scope_read_before_the_removal()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, _) = CreateReinstall();
+            source.InstalledScope = "user";
+            source.FailFresh = true;
+
+            RunPumped(viewModel.ReinstallRowAsync(row));
+            source.FailFresh = false;
+            source.InstalledScope = null; // the program is gone: a second lookup would find nothing
+            row.RetryCommand.Execute(null);
+            Pump(WaitUntilAsync(() => row.InstallState == RowInstallState.Succeeded, TimeSpan.FromSeconds(5)));
+
+            Assert.Equal(["user", "user"], source.FreshScopes);
         });
     }
 

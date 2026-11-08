@@ -715,7 +715,7 @@ public partial class MainViewModel
     /// The row's own state carries the outcome. Shared so the reinstall flow can confirm ONCE and still run
     /// its removal and its install through exactly the paths the single actions use.
     /// </summary>
-    private async Task RunSingleRowActionAsync(UpdateRowViewModel row, InstallAction action)
+    private async Task RunSingleRowActionAsync(UpdateRowViewModel row, InstallAction action, UpdateItem? runItem = null)
     {
         var uninstall = action == InstallAction.Uninstall;
         var side = _installActivityRunning;
@@ -755,7 +755,7 @@ public partial class MainViewModel
 
         try
         {
-            await _installQueue.RunAsync([row.Item], token, action);
+            await _installQueue.RunAsync([runItem ?? row.Item], token, action);
         }
         catch (OperationCanceledException)
         {
@@ -810,8 +810,9 @@ public partial class MainViewModel
     ///    else nothing is touched;
     /// 2. the user confirms, once, with the package named;
     /// 3. the removal runs through the same path as the row's own uninstall;
-    /// 4. the fresh install (<see cref="InstallAction.FreshInstall"/>), through the same queue and with the
-    ///    same elevation routing, so a package that lives in the user scope is reinstalled there.
+    /// 4. the fresh install (<see cref="InstallAction.FreshInstall"/>), through the same queue, into the scope
+    ///    the program had (read before the removal; unknown = no scope named), so a package that lives in the
+    ///    user scope is reinstalled there, in this process, and a machine-wide one machine-wide.
     /// A failure of step 4 leaves the row flagged <see cref="UpdateRowViewModel.PendingFreshInstall"/>, so its
     /// retry repeats step 4 only (<see cref="RetryFreshInstallAsync"/>).
     /// </summary>
@@ -871,6 +872,8 @@ public partial class MainViewModel
         _reinstallingKeys.Add(key);
         try
         {
+            // Before the removal: afterwards there is nothing left to read the scope from.
+            row.PendingFreshInstallScope = await ReadInstalledScopeAsync(row, source);
             _logging.Info($"Reinstall of '{row.Item.Id}': removing the old version.");
             await RunSingleRowActionAsync(row, InstallAction.Uninstall);
             if (row.InstallState != RowInstallState.Succeeded)
@@ -887,6 +890,23 @@ public partial class MainViewModel
         {
             _reinstallingKeys.Remove(key);
         }
+    }
+
+    private async Task<string?> ReadInstalledScopeAsync(UpdateRowViewModel row, IFreshInstallSource source)
+    {
+        string? scope;
+        try
+        {
+            scope = InstallScopes.Normalize(await source.GetInstalledScopeAsync(row.Item, CancellationToken.None));
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            _logging.Warn($"Reinstall of '{row.Item.Id}': the install scope could not be read: {ex.Message}");
+            scope = null;
+        }
+
+        _logging.Info($"Reinstall of '{row.Item.Id}': installed scope {scope ?? "unknown (none will be named)"}.");
+        return scope;
     }
 
     /// <summary>The row's retry after a reinstall already removed the old version: the install alone.</summary>
@@ -910,7 +930,7 @@ public partial class MainViewModel
     private async Task RunFreshInstallAsync(UpdateRowViewModel row)
     {
         _logging.Info($"Reinstall of '{row.Item.Id}': installing the new version.");
-        await RunSingleRowActionAsync(row, InstallAction.FreshInstall);
+        await RunSingleRowActionAsync(row, InstallAction.FreshInstall, row.Item.WithInstallScope(row.PendingFreshInstallScope));
 
         if (row.InstallState == RowInstallState.Succeeded)
         {

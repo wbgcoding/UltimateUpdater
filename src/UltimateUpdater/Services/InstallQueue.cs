@@ -460,13 +460,20 @@ public sealed class InstallQueue
     /// </summary>
     private bool RequiresElevation(string sourceId) => !_isMockSession && NeedsElevation(sourceId);
 
+    /// <summary>The same for one item of a run of <paramref name="action"/>. A fresh install into the USER
+    /// scope stays in this process: the elevated copy would put it in the administrator's own profile (and
+    /// winget refuses a user-scope package to an administrator anyway).</summary>
+    internal bool RequiresElevation(UpdateItem item, InstallAction action) =>
+        RequiresElevation(item.SourceId)
+        && !(action == InstallAction.FreshInstall && item.InstallScope == InstallScopes.User);
+
     public async Task RunAsync(
         IReadOnlyList<UpdateItem> items,
         CancellationToken cancellationToken,
         InstallAction action = InstallAction.Install)
     {
-        var userScope = items.Where(i => !RequiresElevation(i.SourceId)).ToList();
-        var adminScope = items.Where(i => RequiresElevation(i.SourceId)).ToList();
+        var userScope = items.Where(i => !RequiresElevation(i, action)).ToList();
+        var adminScope = items.Where(i => RequiresElevation(i, action)).ToList();
 
         // What has been accounted for, either way. Anything still missing at the end never ran, and
         // must be reported as such; a cancelled row must never be left showing "installing" forever.
@@ -595,10 +602,10 @@ public sealed class InstallQueue
         if (action == InstallAction.Install)
             SecondAttemptStarted?.Invoke();
 
-        var retryAdminScope = retryItems.Where(i => RequiresElevation(i.SourceId)).ToList();
+        var retryAdminScope = retryItems.Where(i => RequiresElevation(i, action)).ToList();
 
         var retryUserScopeTask = Task.WhenAll(retryItems
-            .Where(i => !RequiresElevation(i.SourceId))
+            .Where(i => !RequiresElevation(i, action))
             .Select(LaneKey)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(laneKey => InstallLaneSequentiallyAsync(laneKey, action, reported, throttle, run, cancellationToken, isRetryRound: true)));
@@ -1029,6 +1036,7 @@ public sealed class InstallQueue
                 InstalledVersion = i.InstalledVersion,
                 AvailableVersion = i.AvailableVersion,
                 PinnedVersion = i.PinnedVersion,
+                Scope = action == InstallAction.FreshInstall ? i.InstallScope : null,
             }).ToList(),
         };
 
