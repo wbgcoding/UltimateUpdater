@@ -813,13 +813,15 @@ public partial class MainViewModel
     /// 4. the fresh install (<see cref="InstallAction.FreshInstall"/>), through the same queue, into the scope
     ///    the program had (read before the removal; unknown = no scope named), so a package that lives in the
     ///    user scope is reinstalled there, in this process, and a machine-wide one machine-wide.
+    /// A failure of step 3 leaves the row flagged <see cref="UpdateRowViewModel.ReinstallRemovalFailed"/>, so its
+    /// retry runs this whole flow again.
     /// A failure of step 4 leaves the row flagged <see cref="UpdateRowViewModel.PendingFreshInstall"/>, so its
     /// retry repeats step 4 only (<see cref="RetryFreshInstallAsync"/>).
     /// </summary>
     internal async Task ReinstallRowAsync(UpdateRowViewModel row)
     {
         // Every gate is enforced here, not only by the menu entry being hidden.
-        if (!row.ShowReinstallButton || SourceFor(row.Item) is not IFreshInstallSource source)
+        if (!(row.ShowReinstallButton || row.ReinstallRemovalFailed) || SourceFor(row.Item) is not IFreshInstallSource source)
             return;
 
         if (UninstallBlockedForRow(row))
@@ -859,7 +861,7 @@ public partial class MainViewModel
         }
 
         // The confirm dialog pumps messages: the row can have been queued or changed meanwhile.
-        if (!row.ShowReinstallButton || UninstallBlockedForRow(row))
+        if (!(row.ShowReinstallButton || row.ReinstallRemovalFailed) || UninstallBlockedForRow(row))
         {
             Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
             return;
@@ -878,7 +880,9 @@ public partial class MainViewModel
             await RunSingleRowActionAsync(row, InstallAction.Uninstall);
             if (row.InstallState != RowInstallState.Succeeded)
             {
-                // The row carries the failed removal and its own retry (a removal again); nothing was installed.
+                // The row carries the failed removal; its Retry reruns the whole reinstall, because a bare
+                // removal that succeeded would leave the program gone with nothing installed.
+                row.ReinstallRemovalFailed = true;
                 _logging.Warn($"Reinstall of '{row.Item.Id}': the removal did not finish; the new version was not installed.");
                 return;
             }

@@ -212,6 +212,50 @@ public partial class MainViewModelTests
     }
 
     [Fact]
+    public void The_retry_of_a_failed_removal_reruns_the_whole_reinstall_not_a_bare_removal()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, confirms) = CreateReinstall();
+            source.FailUninstall = true;
+
+            RunPumped(viewModel.ReinstallRowAsync(row));
+
+            Assert.Equal(["fetch", "scope", "uninstall"], source.Calls);
+            Assert.Equal(RowInstallState.Failed, row.InstallState);
+            Assert.True(row.ReinstallRemovalFailed);
+
+            source.FailUninstall = false;
+            source.Calls.Clear();
+            row.RetryCommand.Execute(null);
+            Pump(WaitUntilAsync(() => row.InstallState == RowInstallState.Succeeded, TimeSpan.FromSeconds(5)));
+
+            // Lookup, a second confirmation, the removal, then the fresh install: never the removal alone.
+            Assert.Equal(["fetch", "scope", "uninstall", "fresh"], source.Calls);
+            Assert.Equal(2, confirms());
+            Assert.False(row.ReinstallRemovalFailed);
+            Assert.False(row.PendingFreshInstall);
+            Assert.False(row.WasUninstalled);
+        });
+    }
+
+    [Fact]
+    public void A_later_plain_run_on_the_row_drops_the_reinstall_retry()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, _) = CreateReinstall();
+            source.FailUninstall = true;
+            RunPumped(viewModel.ReinstallRowAsync(row));
+            Assert.True(row.ReinstallRemovalFailed);
+
+            row.BeginInstall();
+
+            Assert.False(row.ReinstallRemovalFailed);
+        });
+    }
+
+    [Fact]
     public void A_failed_fresh_install_keeps_a_retry_that_repeats_only_the_install()
     {
         WithAttendedUi(() =>

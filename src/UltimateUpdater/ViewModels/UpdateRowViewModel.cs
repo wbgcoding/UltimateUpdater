@@ -635,6 +635,13 @@ public partial class UpdateRowViewModel : ObservableObject
     [ObservableProperty]
     private bool pendingFreshInstall;
 
+    /// <summary>
+    /// Set when the removal step of a reinstall failed. The row then carries the removal's error, but the
+    /// user's goal is still the reinstall, so Retry reruns the whole flow (lookup, confirmation, removal,
+    /// install) rather than a plain removal that would leave the program gone. Cleared by every new run.
+    /// </summary>
+    internal bool ReinstallRemovalFailed { get; set; }
+
     /// <summary>The scope ("user" or "machine") the program had before its reinstall removed it, which the
     /// fresh install and its retry are made in; null = not known.</summary>
     internal string? PendingFreshInstallScope { get; set; }
@@ -1076,7 +1083,9 @@ public partial class UpdateRowViewModel : ObservableObject
 
     private void RunRetry()
     {
-        if (PendingFreshInstall)
+        if (ReinstallRemovalFailed)
+            _actions?.Reinstall(this); // the reinstall's removal failed: redo the whole reinstall, not a bare removal
+        else if (PendingFreshInstall)
             _actions?.RetryFreshInstall(this); // the old version is already gone: only the install is left
         else if (WasUninstalled)
             _actions?.Uninstall(this);
@@ -1238,6 +1247,7 @@ public partial class UpdateRowViewModel : ObservableObject
         // An install claims the row: a failed removal that is now being installed must not still report
         // itself as "Uninstalled" when it succeeds. The uninstall path sets the flag again right after.
         WasUninstalled = false;
+        ReinstallRemovalFailed = false;
     }
 
     /// <summary>
