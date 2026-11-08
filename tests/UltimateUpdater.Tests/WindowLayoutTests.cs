@@ -2883,8 +2883,7 @@ public partial class WindowLayoutTests
         {
             var (window, scroll, nav) = LayOutSettingsWindow(800);
 
-            // Install, not a later section: from Appearance on the page already sits on its last screen,
-            // where the reading line glides down so the last sections can be reached at all.
+            // Install: a header in the middle of the page, well before the sections that never reach the top.
             var install = (FrameworkElement)window.FindName("InstallHeader")!;
             var offset = install.TransformToAncestor((UIElement)scroll.Content).Transform(new Point(0, 0)).Y;
             scroll.ScrollToVerticalOffset(offset);
@@ -2896,6 +2895,46 @@ public partial class WindowLayoutTests
             scroll.ScrollToVerticalOffset(0);
             scroll.UpdateLayout();
             Assert.Equal("ScanHeader", (string)((ListBoxItem)nav.SelectedItem).Tag);
+
+            window.Close();
+        });
+    }
+
+    /// <summary>A header scrolled to the top of the page is the highlighted one, also for the sections near the
+    /// end of the page; the last sections, too short to reach the top, are reached by the end of the page.</summary>
+    [Fact]
+    public void Settings_window_navigation_highlights_every_header_that_can_reach_the_top()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var (window, scroll, nav) = LayOutSettingsWindow(800);
+            Assert.True(scroll.ScrollableHeight > 0);
+
+            var reached = 0;
+            foreach (var entry in nav.Items.OfType<ListBoxItem>())
+            {
+                var target = (FrameworkElement)window.FindName((string)entry.Tag)!;
+                FrameworkElement anchor = target is System.Windows.Controls.Expander && target.Parent is Border card ? card : target;
+                var top = anchor.TransformToAncestor((UIElement)scroll.Content).Transform(new Point(0, 0)).Y;
+                if (top > scroll.ScrollableHeight)
+                    continue;
+
+                scroll.ScrollToVerticalOffset(top);
+                scroll.UpdateLayout();
+
+                Assert.True(
+                    ReferenceEquals(entry, nav.SelectedItem),
+                    $"header {entry.Tag} at the top (offset {top:0} of {scroll.ScrollableHeight:0}) highlights "
+                    + $"{((ListBoxItem)nav.SelectedItem).Tag}");
+                reached++;
+            }
+
+            // Notifications and Appearance sit on the last screen of the page, the part the old reading line got wrong.
+            Assert.True(reached >= 6, $"only {reached} headers can reach the top");
+
+            scroll.ScrollToEnd();
+            scroll.UpdateLayout();
+            Assert.Equal("AboutExpander", (string)((ListBoxItem)nav.SelectedItem).Tag);
 
             window.Close();
         });

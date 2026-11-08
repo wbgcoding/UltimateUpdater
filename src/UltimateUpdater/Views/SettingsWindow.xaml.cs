@@ -193,17 +193,28 @@ public partial class SettingsWindow : FluentWindow
     }
 
     /// <summary>Index of the section to highlight: the last one whose header crossed a reading line near the
-    /// top of the page. The last sections are too short to ever reach the top, so over the last screen of
-    /// scrolling the line glides down to the bottom edge: at the very bottom the last visible section wins,
-    /// and the sections in between are passed one by one instead of the highlight jumping to the end.</summary>
+    /// top of the page. The last sections are too short to ever reach the top, so only once the page has
+    /// scrolled to the header of the last section that CAN reach the top does the line glide down to the
+    /// bottom edge: at the very bottom the last visible section wins, and the sections in between are passed
+    /// one by one instead of the highlight jumping to the end. Before that point a header at the top is the
+    /// highlighted one, however near the end of the page it sits.</summary>
     internal static int HighlightedSectionIndex(IReadOnlyList<double> sectionTops, double offset, double viewportHeight, double scrollableHeight)
     {
         if (sectionTops.Count == 0)
             return -1;
 
         const double TopLine = 24;
-        var lastScreen = Math.Min(scrollableHeight, viewportHeight);
-        var progress = lastScreen > 0 ? Math.Clamp((offset - (scrollableHeight - lastScreen)) / lastScreen, 0, 1) : 0;
+        var glideStart = 0.0;
+        foreach (var top in sectionTops)
+        {
+            if (top <= scrollableHeight + TopLine && top > glideStart)
+                glideStart = top;
+        }
+
+        glideStart = Math.Min(glideStart, scrollableHeight);
+        var progress = scrollableHeight > glideStart
+            ? Math.Clamp((offset - glideStart) / (scrollableHeight - glideStart), 0, 1)
+            : scrollableHeight > 0 && offset >= scrollableHeight ? 1 : 0;
         var line = offset + TopLine + progress * Math.Max(0, viewportHeight - 1 - TopLine);
         var index = 0;
         for (var i = 0; i < sectionTops.Count; i++)

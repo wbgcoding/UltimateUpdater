@@ -115,6 +115,17 @@ public class SettingsNavigationTests
     public void The_highlight_follows_the_top_line_and_the_bottom_of_the_page(double offset, int expected) =>
         Assert.Equal(expected, SettingsWindow.HighlightedSectionIndex([0, 500, 1300], offset, viewportHeight: 400, scrollableHeight: 1000.5));
 
+    /// <summary>The real page: the last four sections cannot reach the top, so the line glides only once the
+    /// last header that can (Appearance) has been scrolled to the top.</summary>
+    [Theory]
+    [InlineData(1360, 4)]    // Notifications at the top
+    [InlineData(1500, 4)]    // still Notifications: Appearance has not reached the top yet
+    [InlineData(1579, 5)]    // Appearance at the top
+    [InlineData(1624, 9)]    // the very bottom: the last section
+    public void The_line_does_not_glide_before_the_last_reachable_header(double offset, int expected) =>
+        Assert.Equal(expected, SettingsWindow.HighlightedSectionIndex(
+            [4, 379, 675, 1001, 1360, 1579, 1809, 1978, 2082, 2187], offset, viewportHeight: 672, scrollableHeight: 1624));
+
     [Fact]
     public void No_sections_means_nothing_to_highlight() =>
         Assert.Equal(-1, SettingsWindow.HighlightedSectionIndex([], 0, 400, 0));
