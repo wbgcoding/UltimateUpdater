@@ -73,6 +73,17 @@ public class WingetLadderRunTests
     }
 
     [Fact]
+    public async Task An_install_rung_that_genuinely_failed_is_not_rerun_pinned()
+    {
+        var (source, calls) = Scripted(NothingToDo, NoInstalledPackage, 1603, 0);
+
+        await Assert.ThrowsAnyAsync<Exception>(() => Install(source));
+
+        Assert.Equal(3, calls.Count);
+        Assert.DoesNotContain(calls, c => c.Contains("--version"));
+    }
+
+    [Fact]
     public async Task A_failing_first_rung_that_is_no_refusal_stops_at_once()
     {
         var (source, calls) = Scripted(1603, 0, 0, 0);

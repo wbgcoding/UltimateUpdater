@@ -187,9 +187,10 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         // type, scope, or an installed version it cannot compare). One more try: read the exact version
         // list winget itself offers and pin the install to the newest one, still through winget's normal
         // hash-verified path, never a `--force` fallback, which would reach the same class of package only
-        // by disabling the installer hash check.
+        // by disabling the installer hash check. Only while the ladder ended on such a refusal as well:
+        // a later rung that genuinely ran and failed an installer is a real failure, not a rerun cue.
         string? offeredVersion = null;
-        if (last is not null && sawDidNothing)
+        if (last is not null && sawDidNothing && IsInapplicableOutcome(last.ExitCode))
         {
             var versions = await ListVersionsAsync(item.Id, cancellationToken);
             offeredVersion = versions.FirstOrDefault();
