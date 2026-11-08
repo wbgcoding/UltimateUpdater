@@ -74,6 +74,39 @@ public class PackagedAppsTests : IDisposable
         Assert.Null(apps.Find("Zq Pad Pro"));
     }
 
+    /// <summary>The root folder is user-writable registry text: a bare drive or share root would make every
+    /// process on it look like the package's, and a relative one follows the working directory.</summary>
+    [Theory]
+    [InlineData(@"C:\")]
+    [InlineData(@"C:")]
+    [InlineData(@"C:pkg")]
+    [InlineData(@"\\server\share")]
+    [InlineData(@"\\server\share\")]
+    [InlineData(@"relative\pkg")]
+    [InlineData(@"\pkg")]
+    public void A_package_whose_folder_is_a_bare_root_or_relative_is_never_found(string root)
+    {
+        Assert.False(PackagedApps.IsPackageFolder(root));
+        Assert.Null(Apps(root).Find("Zq Pad"));
+    }
+
+    [Fact]
+    public void A_package_folder_below_a_root_is_found() =>
+        Assert.True(PackagedApps.IsPackageFolder(@"C:\Program Files\WindowsApps\Zq.Pad_26.1.0.0_x64__2p2nqsd0c76g0"));
+
+    [Fact]
+    public void The_newest_version_wins_compared_as_a_version_not_as_text()
+    {
+        var apps = new PackagedApps(new Table(new()
+        {
+            ["Zq.Pad_9.0.0.0_x64__2p2nqsd0c76g0"] = ("Zq Pad", @"C:\Pkg\Old"),
+            ["Zq.Pad_10.0.0.0_x64__2p2nqsd0c76g0"] = ("Zq Pad", @"C:\Pkg\New"),
+        }));
+
+        Assert.Equal(@"C:\Pkg\New", apps.Find("Zq Pad")?.Root);
+        Assert.Equal([@"C:\Pkg\New", @"C:\Pkg\Old"], apps.FindAll("Zq Pad").Select(p => p.Root));
+    }
+
     [Fact]
     public void The_first_application_with_an_executable_inside_the_package_is_taken()
     {

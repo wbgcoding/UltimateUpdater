@@ -103,18 +103,50 @@ public sealed class PackagedApps
     {
         var found = new List<Package>();
 
-        // Newest first, so an old version left behind never wins over the current one.
-        foreach (var key in _registry.SubKeyNames(PackagesKey).OrderByDescending(k => k, StringComparer.OrdinalIgnoreCase))
+        // Newest first, so an old version left behind never wins over the current one. The version is
+        // compared as a version: as text, 9.0 would sort above 10.0.
+        var keys = _registry.SubKeyNames(PackagesKey)
+            .OrderByDescending(VersionOf)
+            .ThenByDescending(k => k, StringComparer.OrdinalIgnoreCase);
+        foreach (var key in keys)
         {
             var entry = $@"{PackagesKey}\{key}";
             if (_registry.Value(entry, "DisplayName") is { Length: > 0 } name &&
-                _registry.Value(entry, "PackageRootFolder") is { Length: > 0 } root)
+                _registry.Value(entry, "PackageRootFolder") is { Length: > 0 } root &&
+                IsPackageFolder(root))
             {
                 found.Add(new Package(name.Trim(), root, FamilyNameOf(key)));
             }
         }
 
         return found;
+    }
+
+    private static Version VersionOf(string packageFullName) =>
+        packageFullName.Split('_') is { Length: >= 2 } parts && Version.TryParse(parts[1], out var version)
+            ? version
+            : new Version(0, 0);
+
+    /// <summary>
+    /// The registry value is user-writable text: only a full path below a drive or share root counts as a
+    /// package folder. A relative path would follow the working directory, and a bare root would make every
+    /// file and process on that drive look like part of the package (its processes offered for closing).
+    /// </summary>
+    internal static bool IsPackageFolder(string root)
+    {
+        try
+        {
+            if (!Path.IsPathFullyQualified(root))
+                return false;
+
+            var full = Path.GetFullPath(root).TrimEnd('\\', '/');
+            var volume = Path.GetPathRoot(full)?.TrimEnd('\\', '/');
+            return full.Length > 0 && !string.Equals(full, volume, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
     }
 
     /// <summary>
