@@ -623,6 +623,7 @@
                                             <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
                                                       Margin="0,0,8,0"
                                                       IsChecked="{Binding IsSelected}"
+                                                      IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
                                                       AutomationProperties.Name="{Binding DisplayName}"/>
 
                                             <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
@@ -673,6 +674,7 @@
 
                                             <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
                                                       Margin="0,0,8,0" IsChecked="{Binding IsSelected}"
+                                                      IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
                                                       AutomationProperties.Name="{Binding DisplayName}"/>
 
                                             <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
@@ -718,6 +720,7 @@
 
                                             <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
                                                       Margin="0,0,8,0" IsChecked="{Binding IsSelected}"
+                                                      IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
                                                       AutomationProperties.Name="{Binding DisplayName}"/>
 
                                             <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
@@ -774,6 +777,7 @@
 
                                             <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
                                                       Margin="0,0,8,0" IsChecked="{Binding IsSelected}"
+                                                      IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
                                                       AutomationProperties.Name="{Binding DisplayLabel}"/>
 
                                             <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
@@ -892,6 +896,7 @@
                                 <CheckBox VerticalAlignment="Center" Margin="0,0,8,0" IsThreeState="True"
                                           IsChecked="{Binding AllEntriesSelected, Mode=OneWay}"
                                           Command="{Binding ToggleAllEntriesCommand}"
+                                          IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
                                           AutomationProperties.Name="{Binding SelectAllEntriesText}"/>
                                 <TextBlock Text="{Binding SelectAllEntriesText}"
                                            FontSize="11" VerticalAlignment="Center"
@@ -1019,6 +1024,7 @@
                                                       Margin="0,0,8,0"
                                                       Visibility="{Binding IsCheckboxVisible, Converter={StaticResource BoolToHiddenVisibility}}"
                                                       IsChecked="{Binding IsSelected}"
+                                                      IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
                                                       AutomationProperties.Name="{Binding DisplayName}"/>
 
                                             <Border Grid.Row="0" Grid.Column="0" Width="6" Height="6" CornerRadius="3"

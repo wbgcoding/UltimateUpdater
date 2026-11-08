@@ -78,6 +78,10 @@ public partial class CleanupViewModel
 
     public bool IsChoosing => Phase == CleanupPhase.Choosing;
     public bool IsCleaning => Phase == CleanupPhase.Cleaning;
+
+    /// <summary>The detail lists can be ticked only before a run is confirmed: a tick made once it started
+    /// would be neither confirmed nor part of the restore-point decision.</summary>
+    public bool CanEditDetails => !IsCleaning && !_runClaimed;
     public bool IsFinished => Phase == CleanupPhase.Finished;
 
     /// <summary>Rescan stays on offer after a run: the dialog would otherwise end with no button at all.</summary>
@@ -230,6 +234,7 @@ public partial class CleanupViewModel
     {
         OnPropertyChanged(nameof(IsChoosing));
         OnPropertyChanged(nameof(IsCleaning));
+        OnPropertyChanged(nameof(CanEditDetails));
         OnPropertyChanged(nameof(IsFinished));
         OnPropertyChanged(nameof(ShowRescanButton));
         OnPropertyChanged(nameof(RingPercent));
@@ -301,6 +306,10 @@ public partial class CleanupViewModel
         _runClaimed = true;
         OnRunClaimChanged();
 
+        // Taken before the first await: the user confirmed exactly this selection, and the detail lists
+        // may still be ticked while the scan unwinds, the restore point is made or a UAC prompt is open.
+        _runSnapshot = TakeRunSnapshot();
+
         // A run changes what the prescan measured; its result is no longer one to reuse or to stamp.
         SetPrescanFinishedAt(null);
         try
@@ -309,10 +318,36 @@ public partial class CleanupViewModel
         }
         finally
         {
+            _runSnapshot = null;
             _runClaimed = false;
             OnRunClaimChanged();
         }
     }
+
+    /// <summary>What one ticked row hands to its clean, frozen when the run was confirmed.</summary>
+    internal sealed record RunItemSelection(
+        IReadOnlyList<string> LeftoverPaths,
+        IReadOnlyList<RegistryFinding> RegistryFindings,
+        IReadOnlyCollection<string> ExcludedPaths,
+        IReadOnlyCollection<string>? ConfirmedEntryPaths,
+        IReadOnlyList<string> DriverDeviceInstanceIds,
+        IReadOnlyList<string> DriverPackageNames,
+        IReadOnlyList<string> PythonVersionPaths);
+
+    /// <summary>The ticked rows and their per-row selections as of the confirmed run; null outside a run.</summary>
+    private Dictionary<CleanupItemViewModel, RunItemSelection>? _runSnapshot;
+
+    private Dictionary<CleanupItemViewModel, RunItemSelection> TakeRunSnapshot() =>
+        Items.Where(i => i.IsSelected).ToDictionary(i => i, SnapshotOf);
+
+    private RunItemSelection SnapshotOf(CleanupItemViewModel item) => new(
+        item.SelectedLeftoverPaths, item.RegistryFindings, ExcludedPathsForRun(item).ToList(),
+        item.ConfirmedEntryPathsForRun?.ToList(), item.SelectedDriverDeviceInstanceIds,
+        item.SelectedDriverPackageNames, item.SelectedOldPythonVersionPaths);
+
+    /// <summary>The run's frozen selection for a row; a live read only when no run is active.</summary>
+    private RunItemSelection SelectionFor(CleanupItemViewModel item) =>
+        _runSnapshot is { } snapshot && snapshot.TryGetValue(item, out var frozen) ? frozen : SnapshotOf(item);
 
     /// <summary>Set from the first line of <see cref="RunCleanupAsync"/> to its last, on the UI thread.</summary>
     private bool _runClaimed;
@@ -323,6 +358,7 @@ public partial class CleanupViewModel
     private void OnRunClaimChanged()
     {
         OnPropertyChanged(nameof(IsBusy));
+        OnPropertyChanged(nameof(CanEditDetails));
         NotifyRescanCanExecuteChanged();
     }
 
@@ -353,8 +389,8 @@ public partial class CleanupViewModel
         if (Phase != CleanupPhase.Choosing)
             return;
 
-        // Exactly what is ticked in the list runs, every card is on screen.
-        var selected = Items.Where(i => i.IsSelected).ToList();
+        // Exactly what was ticked when the run was confirmed runs, every card is on screen.
+        var selected = Items.Where(i => _runSnapshot?.ContainsKey(i) ?? i.IsSelected).ToList();
         if (selected.Count == 0)
             return;
 
@@ -714,13 +750,14 @@ public partial class CleanupViewModel
 
         // A target only an administrator can run is never started here unelevated: it would end at once
         // (DISM exit 740) and read "done, 0 B". It is skipped and the row says why.
+        var frozen = SelectionFor(item);
         Task<CleanupOutcome> CleanLocallyAsync() => CleanupService.SkipsWithoutAdmin(item.Target, ElevationService.IsElevated)
             ? SkipForMissingAdmin()
             : _service.CleanAsync(
             item.Target, progress, cancellationToken, _pause, _settings.Current.RegistryCleanup,
-            item.SelectedLeftoverPaths, item.RegistryFindings, ExcludedPathsForRun(item), _recycleInsteadOfDeleteForRun,
-            item.RecycleBinMinAgeDays, item.SelectedDriverDeviceInstanceIds, item.SelectedDriverPackageNames,
-            item.SelectedOldPythonVersionPaths, item.ConfirmedEntryPathsForRun);
+            frozen.LeftoverPaths, frozen.RegistryFindings, frozen.ExcludedPaths, _recycleInsteadOfDeleteForRun,
+            item.RecycleBinMinAgeDays, frozen.DriverDeviceInstanceIds, frozen.DriverPackageNames,
+            frozen.PythonVersionPaths, frozen.ConfirmedEntryPaths);
 
         Task<CleanupOutcome> SkipForMissingAdmin()
         {
@@ -1136,10 +1173,10 @@ public partial class CleanupViewModel
             // no selection at all, and never mixing several items' selections into one list keeps this safe
             // even if that single-item assumption ever changes.
             SelectedLeftoverPaths = command == "clean" && targets is [{ Target.Kind: CleanupKind.LeftoverInstalls } only]
-                ? only.SelectedLeftoverPaths
+                ? SelectionFor(only).LeftoverPaths.ToList()
                 : [],
             RegistryFindings = command == "clean" && targets is [{ Target.Kind: CleanupKind.RegistryCleanup } onlyRegistry]
-                ? onlyRegistry.RegistryFindings.Select(f => new RegistryFindingDto
+                ? SelectionFor(onlyRegistry).RegistryFindings.Select(f => new RegistryFindingDto
                 {
                     Category = f.Category,
                     KeyPath = f.KeyPath,
@@ -1152,19 +1189,19 @@ public partial class CleanupViewModel
             // Directories/AppCacheSweep OR a RegistryCleanup row alike, so any single-item "clean" command
             // carries whatever that one row's own deselections are; empty for a row with no list at all.
             ExcludedEntryPaths = command == "clean" && targets is [{ } onlyItem]
-                ? ExcludedPathsForRun(onlyItem).ToList()
+                ? SelectionFor(onlyItem).ExcludedPaths.ToList()
                 : [],
             ConfirmedEntryPaths = command == "clean" && targets is [{ Target.Kind: CleanupKind.RecycleBin } onlyBin]
-                ? onlyBin.ConfirmedEntryPathsForRun?.ToList()
+                ? SelectionFor(onlyBin).ConfirmedEntryPaths?.ToList()
                 : null,
             SelectedDriverDeviceInstanceIds = command == "clean" && targets is [{ Target.Kind: CleanupKind.DriverCleanup } onlyDriver]
-                ? onlyDriver.SelectedDriverDeviceInstanceIds
+                ? SelectionFor(onlyDriver).DriverDeviceInstanceIds.ToList()
                 : [],
             SelectedDriverPackageNames = command == "clean" && targets is [{ Target.Kind: CleanupKind.DriverCleanup } onlyDriverPkg]
-                ? onlyDriverPkg.SelectedDriverPackageNames
+                ? SelectionFor(onlyDriverPkg).DriverPackageNames.ToList()
                 : [],
             SelectedPythonVersionPaths = command == "clean" && targets is [{ Target.Kind: CleanupKind.OldPythonVersions } onlyPython]
-                ? onlyPython.SelectedOldPythonVersionPaths
+                ? SelectionFor(onlyPython).PythonVersionPaths.ToList()
                 : [],
             CallerTempPaths = CleanupCatalog.OwnTempPaths().ToList(),
             CallerProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
@@ -1247,9 +1284,10 @@ public partial class CleanupViewModel
             && selected.Any(i => i.Target.Kind switch
             {
                 CleanupKind.SystemRepair => true,
-                CleanupKind.RegistryCleanup => i.RegistryFindings.Count > 0,
-                CleanupKind.DriverCleanup => i.SelectedDriverDeviceInstanceIds.Count > 0 || i.SelectedDriverPackageNames.Count > 0,
-                CleanupKind.OldPythonVersions => i.SelectedOldPythonVersionPaths.Count > 0,
+                CleanupKind.RegistryCleanup => SelectionFor(i).RegistryFindings.Count > 0,
+                CleanupKind.DriverCleanup => SelectionFor(i).DriverDeviceInstanceIds.Count > 0
+                    || SelectionFor(i).DriverPackageNames.Count > 0,
+                CleanupKind.OldPythonVersions => SelectionFor(i).PythonVersionPaths.Count > 0,
                 _ => false,
             });
         // A restore point needs administrator rights; the user just declined them for this run, and
