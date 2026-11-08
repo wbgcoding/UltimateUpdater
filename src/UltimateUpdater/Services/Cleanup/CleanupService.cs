@@ -1690,7 +1690,7 @@ public class CleanupService(LoggingService logging)
         }
 
         var binFolder = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(entry.Path));
-        using var binLock = string.IsNullOrEmpty(binFolder) ? null : CleanupSafety.TryLockForUse(binFolder);
+        using var binLock = string.IsNullOrEmpty(binFolder) ? null : CleanupSafety.TryLockForUse(binFolder, allowEntriesToBeAdded: true);
         if (binLock is null || VerifiedDelete.FinalPathOf(binLock) is not { } binFinalPath)
         {
             logging.Warn("Cleanup: a recycle-bin row was refused because its bin folder could not be locked for use.");

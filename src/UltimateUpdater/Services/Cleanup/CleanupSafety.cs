@@ -264,9 +264,12 @@ public static class CleanupSafety
     /// check-then-open happens back to back with no attacker-controlled work between them, and the
     /// handle then guards everything the caller does with that directory until it is disposed. Returns null,
     /// never a bare path to fall back to, when the directory leads through a link or cannot be opened
-    /// this way at all.
+    /// this way at all. <paramref name="allowEntriesToBeAdded"/> also grants FILE_SHARE_WRITE, so other
+    /// programs can still move or create entries inside the folder while it stays locked (the recycle bin:
+    /// the user may recycle something while an item is being removed); a rename or delete of the folder
+    /// itself stays blocked either way.
     /// </summary>
-    public static SafeFileHandle? TryLockForUse(string path)
+    public static SafeFileHandle? TryLockForUse(string path, bool allowEntriesToBeAdded = false)
     {
         if (AncestryLeadsThroughLink(path))
             return null;
@@ -283,11 +286,13 @@ public static class CleanupSafety
         // link at the root open as the link itself instead of being followed.
         const uint genericRead = 0x80000000;
         const uint fileShareRead = 0x00000001;
+        const uint fileShareWrite = 0x00000002;
         const uint openExisting = 3;
         const uint fileFlagBackupSemantics = 0x02000000;
         const uint fileFlagOpenReparsePoint = 0x00200000;
 
-        var handle = CreateFileW(path, genericRead, fileShareRead, IntPtr.Zero, openExisting,
+        var share = allowEntriesToBeAdded ? fileShareRead | fileShareWrite : fileShareRead;
+        var handle = CreateFileW(path, genericRead, share, IntPtr.Zero, openExisting,
             fileFlagBackupSemantics | fileFlagOpenReparsePoint, IntPtr.Zero);
         if (handle.IsInvalid)
         {
