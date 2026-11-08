@@ -64,7 +64,13 @@ public static class CleanupCatalog
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
 
-            return excluded.Count == 0 ? target : target with { ExcludedDirectories = excluded };
+            return excluded.Count == 0
+                ? target
+                : target with
+                {
+                    ExcludedDirectories = target.ExcludedDirectories.Concat(excluded)
+                        .Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                };
         }).ToList();
     }
 
@@ -163,6 +169,7 @@ public static class CleanupCatalog
                 MinFileAge = CacheMinFileAge,
                 Directories = PackageCacheDirectories(local, profile, Path.GetTempPath()),
                 CleanCommands = PackageCacheCleanCommands(local, profile),
+                ExcludedDirectories = PackageCacheKeptFolders(local),
             },
 
             // Build-tool caches. Gradle's build cache and the Android SDK's download cache are both
@@ -471,6 +478,15 @@ public static class CleanupCatalog
         Path.Combine(profile, ".cargo", "registry", "cache"),
         Path.Combine(temp, "chocolatey"),
         Path.Combine(temp, "NuGetScratch"),
+    ]);
+
+    /// <summary>Folders inside the package caches that are not cache and stay: pnpm's dlx installs (linked
+    /// into place and reused as a whole for a day, so a half-emptied one breaks the next run) and Go's fuzzing
+    /// corpus, which <c>go clean -cache</c> keeps as well.</summary>
+    internal static IReadOnlyList<string> PackageCacheKeptFolders(string local) => Distinct(
+    [
+        Path.Combine(local, "pnpm-cache", "dlx"),
+        Path.Combine(local, "go-build", "fuzz"),
     ]);
 
     /// <summary>How long uv may take to clear its cache; a run that waits on a lock held by a running uv ends here.</summary>

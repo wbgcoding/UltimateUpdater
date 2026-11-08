@@ -438,6 +438,68 @@ public class CleanupDeveloperCacheTests : IDisposable
         Assert.Equal(1, outcome.SkippedFiles);
     }
 
+    // ---- folders inside a cache that are not cache ----
+
+    [Fact]
+    public async Task Pnpm_dlx_installs_and_the_go_fuzz_corpus_stay_while_the_rest_of_both_caches_goes()
+    {
+        var goBuild = Folder(_local, "go-build");
+        var goEntry = AgedFile(Path.Combine(goBuild, "0a"), "0a1b-d", TimeSpan.FromDays(3));
+        var fuzz = AgedFile(Path.Combine(goBuild, "fuzz", "example.com", "FuzzParse"), "seed", TimeSpan.FromDays(3));
+        var pnpm = Folder(_local, "pnpm-cache");
+        var metadata = AgedFile(Path.Combine(pnpm, "metadata-v1.3", "registry.npmjs.org"), "left-pad.json", TimeSpan.FromDays(3));
+        var dlx = AgedFile(Path.Combine(pnpm, "dlx", "abc123", "1700000000-42", "node_modules", "cowsay"), "index.js", TimeSpan.FromDays(3));
+
+        var target = new CleanupTarget("test-pkg", "x", "y", CleanupKind.Directories, DefaultEnabled: true,
+            RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "x")
+        {
+            Directories = CleanupCatalog.PackageCacheDirectories(_local, _profile, Path.Combine(_root, "tmp")),
+            ExcludedDirectories = CleanupCatalog.PackageCacheKeptFolders(_local),
+            MinFileAge = CleanupCatalog.CacheMinFileAge,
+        };
+
+        await new CleanupService(new LoggingService()).CleanAsync(target, progress: null, CancellationToken.None);
+
+        Assert.False(File.Exists(goEntry));
+        Assert.False(File.Exists(metadata));
+        Assert.True(File.Exists(fuzz));
+        Assert.True(File.Exists(dlx));
+    }
+
+    [Fact]
+    public void The_catalogue_row_keeps_the_dlx_installs_and_the_fuzz_corpus_out()
+    {
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var row = CleanupCatalog.Build().First(t => t.Id == "package-manager-cache");
+
+        foreach (var kept in CleanupCatalog.PackageCacheKeptFolders(local))
+            Assert.Contains(kept, row.ExcludedDirectories, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void A_target_keeps_its_own_excluded_folders_when_an_inner_target_is_carved_out()
+    {
+        var outer = Folder(_root, "outer");
+        var inner = Folder(outer, "inner");
+        var own = Path.Combine(outer, "kept");
+        var outerTarget = new CleanupTarget("outer", "x", "y", CleanupKind.Directories, DefaultEnabled: true,
+            RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "x")
+        {
+            Directories = [outer],
+            ExcludedDirectories = [own],
+        };
+        var innerTarget = new CleanupTarget("inner", "x", "y", CleanupKind.Directories, DefaultEnabled: true,
+            RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "x")
+        {
+            Directories = [inner],
+        };
+
+        var result = CleanupCatalog.WithDisjointPaths([outerTarget, innerTarget]).First(t => t.Id == "outer");
+
+        Assert.Contains(own, result.ExcludedDirectories, StringComparer.OrdinalIgnoreCase);
+        Assert.Contains(inner, result.ExcludedDirectories, StringComparer.OrdinalIgnoreCase);
+    }
+
     private static void RunCmd(string arguments)
     {
         using var process = Process.Start(new ProcessStartInfo
