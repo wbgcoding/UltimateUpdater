@@ -28,13 +28,14 @@ public class PipLeftoverCleanupTests : IDisposable
     public void A_plain_leftover_is_removed_and_its_bytes_counted()
     {
         var leftover = Path.Combine(_root, "~ip");
-        WriteFile(Path.Combine(leftover, "a.py"), 100);
-        WriteFile(Path.Combine(leftover, "sub", "deep", "b.py"), 200);
+        var first = WriteFile(Path.Combine(leftover, "a.py"), 100);
+        var second = WriteFile(Path.Combine(leftover, "sub", "deep", "b.py"), 200);
+        var onDisk = OnDiskSize.Of([first, second]);
 
         var (removed, freed) = new CleanupService(new LoggingService()).DeletePipLeftoverTree(leftover);
 
         Assert.True(removed);
-        Assert.Equal(300, freed);
+        Assert.Equal(onDisk, freed);
         Assert.False(Directory.Exists(leftover));
     }
 
@@ -43,14 +44,15 @@ public class PipLeftoverCleanupTests : IDisposable
     public void A_locked_file_keeps_the_folder_but_the_rest_is_counted_as_freed()
     {
         var leftover = Path.Combine(_root, "~ip");
-        WriteFile(Path.Combine(leftover, "gone.py"), 100);
+        var gone = WriteFile(Path.Combine(leftover, "gone.py"), 100);
+        var onDisk = OnDiskSize.Of(gone);
         var locked = WriteFile(Path.Combine(leftover, "sub", "locked.pyd"), 50);
         using var handle = new FileStream(locked, FileMode.Open, FileAccess.Read, FileShare.Read);
 
         var (removed, freed) = new CleanupService(new LoggingService()).DeletePipLeftoverTree(leftover);
 
         Assert.False(removed);
-        Assert.Equal(100, freed);
+        Assert.Equal(onDisk, freed);
         Assert.True(File.Exists(locked));
         Assert.False(File.Exists(Path.Combine(leftover, "gone.py")));
     }

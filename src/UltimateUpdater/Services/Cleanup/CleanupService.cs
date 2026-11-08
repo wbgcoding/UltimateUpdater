@@ -335,6 +335,9 @@ public class CleanupService(LoggingService logging)
                     continue;
                 }
 
+                // Logical length on purpose: the clean routes know the space a file occupies from the handle
+                // they hold anyway, but opening every file here would make the scan far slower. Hardlinked,
+                // compressed and sparse files can therefore free less than this figure promises.
                 bytes += found.Length;
                 files++;
 
@@ -518,10 +521,9 @@ public class CleanupService(LoggingService logging)
                     VerifiedDelete.Outcome outcome;
                     if (useRecycleBin)
                     {
-                        outcome = VerifiedDelete.CheckFile(rootFinalPath!, file, cutoff);
+                        outcome = VerifiedDelete.CheckFile(rootFinalPath!, file, out size, cutoff);
                         if (outcome == VerifiedDelete.Outcome.Cleared)
                         {
-                            size = new FileInfo(file).Length;
                             outcome = RecycleBinDeleter.DeleteToRecycleBin(file, logging, cancellationToken)
                                 ? VerifiedDelete.Outcome.Deleted
                                 : VerifiedDelete.Outcome.Refused;
