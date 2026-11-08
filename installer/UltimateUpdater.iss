@@ -660,9 +660,15 @@ end;
 function PsQuote(const Value: String): String;
 begin
   { A single quote inside a PowerShell single-quoted string is written twice. A folder name may
-    legitimately contain one, and without this the rest of the command would be read as code. }
+    legitimately contain one, and without this the rest of the command would be read as code.
+    PowerShell also takes the typographic single quotes for one (an apostrophe in a user name is
+    often U+2019), so those are written twice as well. }
   Result := Value;
   StringChangeEx(Result, '''', '''''', True);
+  StringChangeEx(Result, #$2018, #$2018#$2018, True);
+  StringChangeEx(Result, #$2019, #$2019#$2019, True);
+  StringChangeEx(Result, #$201A, #$201A#$201A, True);
+  StringChangeEx(Result, #$201B, #$201B#$201B, True);
 end;
 
 { The app holds a named mutex exactly while it installs updates or cleans up (BusySignal in the app). The

@@ -102,6 +102,20 @@ public class InstallerElevatedCopyTests
     }
 
     [Fact]
+    public void PsQuote_doubles_every_character_powershell_ends_a_single_quoted_string_with()
+    {
+        var quote = Block("function PsQuote");
+
+        // PowerShell also reads the typographic single quotes as a quote: a folder named with one (an apostrophe in
+        // a user name) ended the string, broke every script and let the rest of the name run as code
+        var doubled = Regex.Matches(quote, @"StringChangeEx\(Result, (''''|#\$([0-9A-Fa-f]{4})), (''''''|#\$\2#\$\2), True\)")
+            .Select(m => m.Groups[2].Success ? Convert.ToInt32(m.Groups[2].Value, 16) : '\'')
+            .ToHashSet();
+
+        Assert.Equal(new HashSet<int> { '\'', 0x2018, 0x2019, 0x201A, 0x201B }, doubled);
+    }
+
+    [Fact]
     public void The_elevated_copy_message_exists_in_english_and_german()
     {
         var script = Script();
