@@ -156,6 +156,10 @@ public partial class MainViewModel
 
     private CancellationTokenSource? _enrichCts;
 
+    /// <summary>The installed Store (MSIX) packages: names the app to start and the folder whose running
+    /// processes block an update. Shared with the pre-install check.</summary>
+    private readonly PackagedApps _packagedApps = new(Services.Sources.WindowsRegistryView.Instance);
+
     /// <summary>Sources already handed to <see cref="EnrichAllAsync"/> this scan, so a source lingering in
     /// its Done state across several timer ticks is not re-enriched every tick.</summary>
     private readonly HashSet<string> _enrichedSourcesThisScan = [];
@@ -201,6 +205,7 @@ public partial class MainViewModel
 
             string? folder;
             string? launchExe;
+            var packagedApp = false;
 
             try
             {
@@ -210,6 +215,14 @@ public partial class MainViewModel
                 // back to searching it, and repeating the registry and existence checks per row was pure
                 // duplicate work.
                 launchExe = _installLocations.ResolveLaunchExe(row.Item, folder);
+
+                // A Store app installed through winget has no Uninstall entry to find an exe by; its package
+                // names the application to start.
+                if (row.Item.SourceId == "winget" && _packagedApps.Find(row.Item.Name) is { } package)
+                {
+                    packagedApp = true;
+                    launchExe ??= _packagedApps.StartTargetOf(package);
+                }
             }
             catch (Exception ex)
             {
@@ -219,7 +232,7 @@ public partial class MainViewModel
                 continue;
             }
 
-            if (folder is null && launchExe is null)
+            if (folder is null && launchExe is null && !packagedApp)
                 continue;
 
             await _dispatcher.InvokeAsync(
@@ -229,6 +242,8 @@ public partial class MainViewModel
                         row.InstallLocationPath = folder;
                     if (launchExe is not null)
                         row.LaunchTargetPath = launchExe;
+                    if (packagedApp)
+                        row.IsPackagedApp = true;
                 },
                 DispatcherPriority.Background);
         }

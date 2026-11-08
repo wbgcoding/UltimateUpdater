@@ -2263,4 +2263,7 @@ Continuați cu drepturi de administrator?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Selectează tot</value>
   </data>
+  <data name="InstallMsixDeferred" xml:space="preserve">
+    <value>Windows va instala această actualizare după ce {0} este închis.</value>
+  </data>
 </root>

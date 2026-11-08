@@ -484,6 +484,32 @@ public partial class MainViewModelTests
         });
     }
 
+    /// <summary>A Store app's unchanged version is Windows waiting for the app to close, not a stuck update,
+    /// so it is never tallied and never flagged "needs manual work" however often it repeats.</summary>
+    [Fact]
+    public void A_store_apps_unchanged_result_is_never_tallied()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var source = new FailingSource();
+            var viewModel = CreateWithSettings([source], out var settings);
+            var row = new UpdateRowViewModel(Item("Persist.Tool", "Persistent Tool", source.Id)) { IsPackagedApp = true };
+            viewModel.Updates.Add(row);
+            var track = typeof(MainViewModel)
+                .GetMethod("TrackPersistentFailure", BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+            for (var i = 0; i < 4; i++)
+            {
+                row.InstallState = RowInstallState.Succeeded;
+                row.VersionUnchanged = true;
+                track.Invoke(viewModel, [row]);
+            }
+
+            Assert.Equal(RowInstallState.Succeeded, row.InstallState);
+            Assert.Empty(settings.Current.PersistentFailures);
+        });
+    }
+
     /// <summary>The flag is not just an in-memory row property, it is derived from the settings
     /// record on load, so it survives a restart the same way Ignore and Snooze do.</summary>
     [Fact]

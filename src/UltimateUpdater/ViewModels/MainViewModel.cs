@@ -118,7 +118,7 @@ public partial class MainViewModel : ObservableObject, IRowActions
         _wingetBootstrap = wingetBootstrap;
         _canShowWingetOffer = canShowWingetOffer
             ?? (() => !App.IsUnattended && Application.Current?.MainWindow?.IsVisible == true);
-        _installBlockers = installBlockers ?? new Services.Install.InstallBlockers(_installLocations);
+        _installBlockers = installBlockers ?? new Services.Install.InstallBlockers(_installLocations, packagedApps: _packagedApps);
         // Swappable seam for tests: the default is the real network fetch, so nothing about the
         // real app changes; a test can hand in a fake to prove the dialog-vs-window choice without ever
         // touching the network.

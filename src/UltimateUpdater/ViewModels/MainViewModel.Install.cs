@@ -400,7 +400,8 @@ public partial class MainViewModel
                 case ThreeWayChoice.Primary: // "Programm schließen und fortfahren"
                     // Rows are only queued once the blocking program is really gone; a declined force-kill
                     // or a process that survived leaves them out, exactly like "Blockierte überspringen".
-                    if (await (CloseBlockingProcessesOverride ?? (names => CloseBlockingProcessesAsync(names)))(line.BlockedProcessNames!))
+                    if (await (CloseBlockingProcessesOverride
+                                 ?? (names => CloseBlockingProcessesAsync(names, onlyInsideFolder: line.BlockedOnlyInsideFolder)))(line.BlockedProcessNames!))
                         accepted.AddRange(line.BlockedRows!);
                     else
                     {
@@ -544,13 +545,15 @@ public partial class MainViewModel
     internal static async Task<bool> CloseBlockingProcessesAsync(
         IReadOnlyList<string> processNames,
         Func<string, IReadOnlyList<System.Diagnostics.Process>>? processLookup = null,
-        TimeSpan? gracePeriod = null)
+        TimeSpan? gracePeriod = null,
+        string? onlyInsideFolder = null)
     {
         var stillRunning = new List<System.Diagnostics.Process>();
         try
         {
             return await CloseBlockingProcessesCoreAsync(
-                processNames, stillRunning, processLookup ?? SafeProcessesByName, gracePeriod ?? TimeSpan.FromSeconds(10));
+                processNames, stillRunning, processLookup ?? SafeProcessesByName, gracePeriod ?? TimeSpan.FromSeconds(10),
+                onlyInsideFolder);
         }
         finally
         {
@@ -573,6 +576,20 @@ public partial class MainViewModel
         }
     }
 
+    /// <summary>True when the process image lies inside <paramref name="folder"/>; an unreadable path is false.</summary>
+    internal static bool RunsFromFolder(System.Diagnostics.Process process, string folder)
+    {
+        try
+        {
+            return Services.ProcessImage.TryGetPath(process.Id) is { Length: > 0 } path
+                   && Services.Install.InstallBlockers.IsInside(path, folder);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            return false;
+        }
+    }
+
     internal static bool IsUnderWindowsFolder(string? path, string? windowsFolder) =>
         !string.IsNullOrEmpty(path) && !string.IsNullOrEmpty(windowsFolder)
         && path.StartsWith(windowsFolder.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase);
@@ -581,7 +598,8 @@ public partial class MainViewModel
         IReadOnlyList<string> processNames,
         List<System.Diagnostics.Process> stillRunning,
         Func<string, IReadOnlyList<System.Diagnostics.Process>> processLookup,
-        TimeSpan gracePeriod)
+        TimeSpan gracePeriod,
+        string? onlyInsideFolder)
     {
         var exempt = new List<System.Diagnostics.Process>();
         foreach (var name in processNames)
@@ -603,6 +621,14 @@ public partial class MainViewModel
                 // A short, common name ("ssh", "bash") also belongs to Windows' own OpenSSH and WSL: those run
                 // from the Windows folder, which no update writes to, so they are never in the way and never closed.
                 if (RunsFromWindowsFolder(process))
+                {
+                    exempt.Add(process);
+                    continue;
+                }
+
+                // A Store app is only its own package's processes: a same-named program from anywhere else
+                // (or one whose image cannot be read) is not the program in the way and is left alone.
+                if (onlyInsideFolder is not null && !RunsFromFolder(process, onlyInsideFolder))
                 {
                     exempt.Add(process);
                     continue;

@@ -36,6 +36,9 @@ public sealed partial class InstallPreflightLineViewModel : ObservableObject
 
     internal IReadOnlyList<string>? BlockedProcessNames { get; private init; }
 
+    /// <summary>Set for a Store app: only processes running from this folder are closed.</summary>
+    internal string? BlockedOnlyInsideFolder { get; private init; }
+
     /// <summary>Only set on a blocker line: the blocking program's display name, for the status text of
     /// a row that was left out because that program is still open.</summary>
     internal string? BlockedProgramName { get; private init; }
@@ -84,6 +87,7 @@ public sealed partial class InstallPreflightLineViewModel : ObservableObject
                 {
                     BlockedRows = group.Rows,
                     BlockedProcessNames = group.Blocker.ProcessNames,
+                    BlockedOnlyInsideFolder = group.Blocker.OnlyInsideFolder,
                     BlockedProgramName = group.Blocker.DisplayProgramName,
                 };
             })

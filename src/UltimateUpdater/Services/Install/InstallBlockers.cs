@@ -6,9 +6,12 @@ namespace UltimateUpdater.Services.Install;
 
 /// <summary>What blocked one update from installing cleanly, and what to do about it. <paramref name="SkipOnly"/>:
 /// the program is never offered for closing; the row is skipped for this run and tried again on the next one.
-/// <paramref name="ProcessNames"/> then holds one entry per running process, so the count can be shown.</summary>
+/// <paramref name="ProcessNames"/> then holds one entry per running process, so the count can be shown.
+/// <paramref name="OnlyInsideFolder"/>: set for a Store app; only processes whose image lies in that folder are
+/// the program, so closing never reaches a same-named process from anywhere else.</summary>
 public sealed record BlockedInstall(
-    UpdateItem Item, string DisplayProgramName, IReadOnlyList<string> ProcessNames, bool SkipOnly = false)
+    UpdateItem Item, string DisplayProgramName, IReadOnlyList<string> ProcessNames, bool SkipOnly = false,
+    string? OnlyInsideFolder = null)
 {
     /// <summary>The running processes as short text, e.g. "bash ×3, ssh".</summary>
     public string DescribeProcesses() =>
@@ -79,22 +82,107 @@ public sealed class InstallBlockers
     private readonly Func<string, IReadOnlyList<string>> _topLevelExecutableNames;
     private readonly Func<string, IReadOnlyList<string?>> _imagePathsOf;
     private readonly Func<string?> _gitInstallFolder;
+    private readonly PackagedApps? _packagedApps;
+    private readonly Func<IReadOnlyList<(string Name, string Path)>> _processImages;
 
     /// <param name="imagePathsOf">Process name (no ".exe") to the full image path of every running instance;
     /// null for an instance whose image cannot be read.</param>
     /// <param name="gitInstallFolder">Git's install folder, or null when it cannot be found.</param>
+    /// <param name="packagedApps">The installed Store packages; without it no Store app is looked for.</param>
+    /// <param name="processImages">Name (no ".exe") and full image path of every running process.</param>
     public InstallBlockers(
         InstallLocationResolver? locationResolver = null,
         Func<IReadOnlyList<string>>? runningProcessNames = null,
         Func<string, IReadOnlyList<string>>? topLevelExecutableNames = null,
         Func<string, IReadOnlyList<string?>>? imagePathsOf = null,
-        Func<string?>? gitInstallFolder = null)
+        Func<string?>? gitInstallFolder = null,
+        PackagedApps? packagedApps = null,
+        Func<IReadOnlyList<(string Name, string Path)>>? processImages = null)
     {
         _locationResolver = locationResolver;
         _runningProcessNames = runningProcessNames ?? DefaultRunningProcessNames;
         _topLevelExecutableNames = topLevelExecutableNames ?? TopLevelExecutableNames;
         _imagePathsOf = imagePathsOf ?? DefaultImagePathsOf;
         _gitInstallFolder = gitInstallFolder ?? FindGitInstallFolder;
+        _packagedApps = packagedApps;
+        _processImages = processImages ?? DefaultProcessImages;
+    }
+
+    /// <summary>Every running process with its image path, read the same way the Git own-folder check reads one
+    /// (a kernel query with limited rights, so protected and elevated processes still answer or are skipped).
+    /// This app's own process is left out: it is never the program in the way.</summary>
+    private static IReadOnlyList<(string Name, string Path)> DefaultProcessImages()
+    {
+        var processes = Array.Empty<System.Diagnostics.Process>();
+        try
+        {
+            processes = System.Diagnostics.Process.GetProcesses();
+            var images = new List<(string, string)>(processes.Length);
+            foreach (var process in processes)
+            {
+                try
+                {
+                    if (process.Id != Environment.ProcessId && ProcessImage.TryGetPath(process.Id) is { Length: > 0 } path)
+                        images.Add((process.ProcessName, path));
+                }
+                catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+                {
+                    // gone while being read
+                }
+            }
+
+            return images;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            return [];
+        }
+        finally
+        {
+            foreach (var process in processes)
+                process.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// A running Store app holds its package files: winget registers the update and Windows applies it only
+    /// after the app has closed. Every running process whose image lies inside the package's own folder
+    /// counts (the app's executables live in a subfolder, which the top-level check never sees). The package
+    /// is matched by the row's exact name, and only a winget row can be one.
+    /// </summary>
+    private BlockedInstall? DetectPackagedApp(UpdateItem item, HashSet<string> runningSet)
+    {
+        if (_packagedApps is null || item.SourceId != "winget")
+            return null;
+
+        // Every registration with this name, not only the newest: while an update waits for the app to
+        // close, the running copy is the older folder.
+        var packages = _packagedApps.FindAll(item.Name).ToList();
+        if (packages.Count == 0)
+            return null;
+
+        var images = _processImages();
+        foreach (var package in packages)
+        {
+            var names = new List<string>();
+            foreach (var (name, path) in images)
+            {
+                try
+                {
+                    if (runningSet.Contains(name) && !NeverClose.Contains(name) && IsInside(path, package.Root))
+                        names.Add(name);
+                }
+                catch (ArgumentException)
+                {
+                    // a malformed path cannot be inside anything
+                }
+            }
+
+            if (names.Count > 0)
+                return new BlockedInstall(item, item.Name, names, OnlyInsideFolder: package.Root);
+        }
+
+        return null;
     }
 
     private static IReadOnlyList<string?> DefaultImagePathsOf(string processName)
@@ -310,6 +398,9 @@ public sealed class InstallBlockers
                 return new BlockedInstall(item, known.DisplayProgramName, matches);
         }
 
+        if (DetectPackagedApp(item, runningSet) is { } packaged)
+            return packaged;
+
         if (_locationResolver?.Resolve(item) is { } directory)
         {
             var exeNames = _topLevelExecutableNames(directory);
@@ -352,7 +443,7 @@ public sealed class InstallBlockers
 
     private static string GroupKey(BlockedInstall blocker) =>
         string.Join('|', blocker.ProcessNames.Select(n => n.ToLowerInvariant()).OrderBy(n => n, StringComparer.Ordinal))
-        + "::" + blocker.DisplayProgramName;
+        + "::" + blocker.DisplayProgramName + "::" + blocker.OnlyInsideFolder;
 
     private static IReadOnlyList<string> MatchByPrefix(HashSet<string> runningSet, IReadOnlyList<string> prefixes) =>
         runningSet

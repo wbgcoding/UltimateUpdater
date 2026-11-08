@@ -2263,4 +2263,7 @@ Continuare con privilegi di amministratore?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Seleziona tutto</value>
   </data>
+  <data name="InstallMsixDeferred" xml:space="preserve">
+    <value>Windows installerà questo aggiornamento quando {0} sarà chiuso.</value>
+  </data>
 </root>
