@@ -180,7 +180,8 @@ public class InstallerCloseRequestTests
 
     private static bool Exists(string name)
     {
-        if (!Mutex.TryOpenExisting(name, out var found))
+        // The installer's probe opens with the same single right; the DACL grants the user nothing more.
+        if (!System.Threading.MutexAcl.TryOpenExisting(name, System.Security.AccessControl.MutexRights.Synchronize, out var found))
             return false;
 
         found.Dispose();

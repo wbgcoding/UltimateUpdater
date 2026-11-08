@@ -162,12 +162,65 @@ public class InstallerScriptTests
         // only the app's own /FROMAPP run skips the busy check; every other run checks it
         Assert.Contains("(not HasSwitch('/FROMAPP')) and InstallingCopyRuns", prepare.Value);
 
-        var stop = Regex.Match(script, @"procedure StopRunningCopies.*?\r?\nend;", RegexOptions.Singleline);
+        var stop = Regex.Match(script, @"function StopRunningCopies.*?\r?\nend;", RegexOptions.Singleline);
         Assert.Contains("Stop-Process", stop.Value);
         Assert.Contains("Wait-Process -Timeout 5", stop.Value);
         // by path, never by image name: a portable copy elsewhere must survive
         Assert.DoesNotContain("taskkill", stop.Value, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("$_.Path", script);
+    }
+
+    /// <summary>
+    /// A PowerShell that does not start or dies with another code says nothing about the running copies, and
+    /// treating that as "closed" let a silent uninstall hang on an elevated copy again. Only the script's own
+    /// verdict (0 or the still-running code) is trusted; everything else falls back to the exe write lock,
+    /// read without PowerShell, and an exe still in use stops Setup and the uninstall.
+    /// </summary>
+    [Fact]
+    public void A_stop_that_gave_no_verdict_falls_back_to_the_exe_lock_and_fails_closed()
+    {
+        var script = Script();
+        var stop = Regex.Match(script, @"function StopRunningCopies.*??
+end;", RegexOptions.Singleline);
+        Assert.True(stop.Success, "StopRunningCopies is gone");
+
+        Assert.Contains("Started := Exec(", stop.Value);
+        Assert.Contains("Started and ((ResultCode = 0) or (ResultCode = StillRunningExitCode))", stop.Value);
+        Assert.Contains("Result := not InstallFolderExeInUse", stop.Value);
+        Assert.DoesNotContain("Result := ResultCode <> StillRunningExitCode;" + Environment.NewLine + "end;", stop.Value);
+
+        var lockCheck = Regex.Match(script, @"function InstallFolderExeInUse.*??
+end;", RegexOptions.Singleline);
+        Assert.True(lockCheck.Success, "InstallFolderExeInUse is gone");
+        Assert.True(
+            lockCheck.Index < stop.Index, "InstallFolderExeInUse must be declared before StopRunningCopies");
+        // opened for writing without truncating, sharing read and write like the script's own probe
+        Assert.Contains("CreateFileW(", lockCheck.Value);
+        Assert.Contains("GENERIC_WRITE", lockCheck.Value);
+        Assert.Contains("OPEN_EXISTING", lockCheck.Value);
+        Assert.Contains("{#AppExeName}", lockCheck.Value);
+        Assert.Contains("{#PortableExeName}", lockCheck.Value);
+    }
+
+    [Fact]
+    public void Both_callers_of_the_stop_end_the_run_with_a_log_line_when_a_copy_stays_open()
+    {
+        var script = Script();
+        var uninstall = Regex.Match(script, @"function InitializeUninstall.*??
+end;", RegexOptions.Singleline);
+        var prepare = Regex.Match(script, @"function PrepareToInstall.*??
+end;", RegexOptions.Singleline);
+
+        // the uninstall: log, box only when not silent, then False (so a silent run ends non-zero)
+        var failed = uninstall.Value[uninstall.Value.IndexOf("if not StopRunningCopies then", StringComparison.Ordinal)..];
+        Assert.Contains("Log(", failed);
+        Assert.Contains("if not UninstallSilent then", failed);
+        Assert.Contains("Result := False;", failed);
+
+        // Setup: the failure message makes Setup abort, silent or not
+        var failedSetup = prepare.Value[prepare.Value.IndexOf("if not StopRunningCopies then", StringComparison.Ordinal)..];
+        Assert.Contains("Log(", failedSetup);
+        Assert.Contains("Result := CustomMessage('ElevatedCopyOpen')", failedSetup);
     }
 
     [Fact]
@@ -193,7 +246,7 @@ public class InstallerScriptTests
         Assert.True(probe.Success, "InstallingCopyRuns is gone");
 
         // no owner SID, mutex open error, PowerShell not started, any exit code but 0: all busy
-        Assert.Contains("if (-not $o -or -not $o.Sid) { $busy = $true; continue }", probe.Value);
+        Assert.Contains("if (-not $sid) { $busy = $true; continue }", probe.Value);
         Assert.Contains("catch { $busy = $true }", probe.Value);
         Assert.Contains("Result := (not Started) or (ResultCode <> 0);", probe.Value);
     }
@@ -210,7 +263,7 @@ public class InstallerScriptTests
         var probe = Regex.Match(script, @"function InstallingCopyRuns.*?\r?\nend;", RegexOptions.Singleline);
         Assert.True(probe.Success, "InstallingCopyRuns is gone");
         Assert.Contains("$c.SessionId -eq $s", probe.Value);
-        Assert.Contains("''Session\\'' + $c.SessionId + ''\\UltimateUpdater-Busy-'' + $o.Sid", probe.Value);
+        Assert.Contains("''Session\\'' + $c.SessionId + ''\\UltimateUpdater-Busy-'' + $sid", probe.Value);
         Assert.Contains("GetCurrentProcess().SessionId", probe.Value);
     }
 
@@ -247,7 +300,7 @@ public class InstallerScriptTests
             "StopRunningCopies must be declared before InitializeUninstall");
         Assert.True(
             uninstall.Value.IndexOf("Result := False;", StringComparison.Ordinal)
-                < uninstall.Value.IndexOf("StopRunningCopies;", StringComparison.Ordinal));
+                < uninstall.Value.IndexOf("if not StopRunningCopies then", StringComparison.Ordinal));
         Assert.DoesNotContain("taskkill", uninstall.Value, StringComparison.OrdinalIgnoreCase);
     }
 

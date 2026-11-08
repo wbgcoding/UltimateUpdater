@@ -167,6 +167,7 @@ en.PortableDirDescription=Choose a folder for the portable copy of {#AppName}. S
 en.UpdateDirDescription={#AppName} is already installed on this PC and will be updated in the folder shown below. Click Next to continue, or Browse to choose a different folder.
 en.BusyPrompt={#AppName} is installing updates right now. Close it anyway and continue?
 en.BusyDeclined=Setup stopped because {#AppName} is installing updates right now.
+en.ElevatedCopyOpen={#AppName} is still running and did not close. It may be running with administrator rights. Close it, then try again.
 de.AutostartTask={#AppName} automatisch bei der Windows-Anmeldung starten
 de.LaunchAfter={#AppName} jetzt starten
 de.ModeCaption=Art der Installation
@@ -179,6 +180,7 @@ de.PortableDirDescription=Wählen Sie einen Ordner für die portable Version von
 de.UpdateDirDescription={#AppName} ist auf diesem PC bereits installiert und wird im unten angezeigten Ordner aktualisiert. Klicken Sie auf Weiter, oder auf Durchsuchen, um einen anderen Ordner zu wählen.
 de.BusyPrompt={#AppName} installiert gerade Updates. Trotzdem beenden und fortfahren?
 de.BusyDeclined=Die Installation wurde angehalten, weil {#AppName} gerade Updates installiert.
+de.ElevatedCopyOpen={#AppName} läuft noch und hat sich nicht beendet, möglicherweise mit Administratorrechten. Bitte schließen Sie es und versuchen Sie es dann erneut.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -658,9 +660,15 @@ end;
 function PsQuote(const Value: String): String;
 begin
   { A single quote inside a PowerShell single-quoted string is written twice. A folder name may
-    legitimately contain one, and without this the rest of the command would be read as code. }
+    legitimately contain one, and without this the rest of the command would be read as code.
+    PowerShell also takes the typographic single quotes for one (an apostrophe in a user name is
+    often U+2019), so those are written twice as well. }
   Result := Value;
   StringChangeEx(Result, '''', '''''', True);
+  StringChangeEx(Result, #$2018, #$2018#$2018, True);
+  StringChangeEx(Result, #$2019, #$2019#$2019, True);
+  StringChangeEx(Result, #$201A, #$201A#$201A, True);
+  StringChangeEx(Result, #$201B, #$201B#$201B, True);
 end;
 
 { The app holds a named mutex exactly while it installs updates or cleans up (BusySignal in the app). The
@@ -672,9 +680,17 @@ end;
   for idle. Exit code 10 means: a copy in this folder is busy. Only a clean exit 0
   means idle: a mutex that exists but cannot be opened, an owner that cannot be looked up, a PowerShell
   that does not start or any other exit code all count as busy, because the probe is what stands between
-  a silent Setup and an install that is cut off. }
+  a silent Setup and an install that is cut off.
+
+  A copy started as administrator is invisible to this unelevated process: Windows hides its path, and it
+  can neither be signalled by window message nor stopped. Whether one runs from the install folder is
+  therefore read from the exe itself: a running exe cannot be opened for writing (sharing violation), which
+  needs no rights on the process. Such a hidden copy is probed for busy like any other, and is asked to end
+  through a named event the app creates for exactly this (ExitRequestListener), which refuses while work is
+  running. }
 const
   BusyExitCode = 10;
+  StillRunningExitCode = 20;
 
 function PowerShellPath: String;
 begin
@@ -682,14 +698,23 @@ begin
 end;
 
 { The copies that would hold Setup's files: by PATH, so a portable copy running from somewhere else
-  is never touched (same reasoning as InitializeUninstall). }
+  is never touched (same reasoning as InitializeUninstall). $hidden are the processes named like the app
+  whose path this process may not read (an elevated copy); Running is true while an exe of the install
+  folder is in use, which is what makes a hidden one count as ours. $watch is what the busy probe checks. }
 function RunningCopiesScript: String;
 begin
   Result :=
     '$p = @(''' + PsQuote(ExpandConstant('{app}\{#AppExeName}')) + ''', ''' +
     PsQuote(ExpandConstant('{app}\{#PortableExeName}')) + '''); ' +
     '$copies = @(Get-Process -ErrorAction SilentlyContinue | ' +
-    'Where-Object { $_.Path -and ($p -contains $_.Path) }); ';
+    'Where-Object { $_.Path -and ($p -contains $_.Path) }); ' +
+    '$hidden = @(Get-Process -Name ''' + PsQuote(ChangeFileExt('{#AppExeName}', '')) + ''' -ErrorAction SilentlyContinue | ' +
+    'Where-Object { -not $_.Path }); ' +
+    'function Running { foreach ($f in $p) { if (Test-Path -LiteralPath $f) { ' +
+    'try { $fs = [System.IO.File]::Open($f, ''Open'', ''Write'', ''ReadWrite''); $fs.Dispose() } ' +
+    'catch [System.IO.IOException] { if (($_.Exception.HResult -band 0xFFFF) -eq 32) { return $true } } ' +
+    'catch { } } }; return $false }; ' +
+    '$watch = @($copies); if ($hidden.Count -gt 0 -and (Running)) { $watch += $hidden }; ';
 end;
 
 function InstallingCopyRuns: Boolean;
@@ -702,14 +727,19 @@ begin
     RunningCopiesScript +
     '$busy = $false; ' +
     '$s = [System.Diagnostics.Process]::GetCurrentProcess().SessionId; ' +
-    'foreach ($c in $copies) { ' +
+    '$me = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value; ' +
+    'foreach ($c in $watch) { ' +
     '$o = Get-CimInstance Win32_Process -Filter (''ProcessId='' + $c.Id) -ErrorAction SilentlyContinue | ' +
     'Invoke-CimMethod -MethodName GetOwnerSid -ErrorAction SilentlyContinue; ' +
-    'if (-not $o -or -not $o.Sid) { $busy = $true; continue }; ' +
+    { A hidden copy's owner is often unreadable too; it is then taken to be the person running Setup. The
+      app guards itself anyway by refusing the exit request while it works. }
+    '$sid = if ($o -and $o.Sid) { $o.Sid } elseif (-not $c.Path) { $me } else { $null }; ' +
+    'if (-not $sid) { $busy = $true; continue }; ' +
     '$m = $null; ' +
-    '$n = if ($c.SessionId -eq $s) { ''Local\UltimateUpdater-Busy-'' + $o.Sid } ' +
-    'else { ''Session\'' + $c.SessionId + ''\UltimateUpdater-Busy-'' + $o.Sid }; ' +
-    'try { if ([System.Threading.Mutex]::TryOpenExisting($n, [ref]$m)) ' +
+    '$n = if ($c.SessionId -eq $s) { ''Local\UltimateUpdater-Busy-'' + $sid } ' +
+    'else { ''Session\'' + $c.SessionId + ''\UltimateUpdater-Busy-'' + $sid }; ' +
+    { The mutex grants the user Synchronize only, which is all this open asks for. }
+    'try { if ([System.Threading.Mutex]::TryOpenExisting($n, [System.Security.AccessControl.MutexRights]::Synchronize, [ref]$m)) ' +
     '{ $m.Dispose(); $busy = $true } } catch { $busy = $true } }; ' +
     'if ($busy) { exit ' + IntToStr(BusyExitCode) + ' } else { exit 0 }';
   Started := Exec(PowerShellPath,
@@ -733,21 +763,105 @@ begin
     end;
 end;
 
+{ Needed for the exe write lock without PowerShell (see StopRunningCopies). }
+const
+  GENERIC_WRITE = $40000000;
+  FILE_SHARE_READ_WRITE = 3;
+  OPEN_EXISTING = 3;
+
+function CreateFileW(FileName: String; DesiredAccess, ShareMode: Cardinal; Security: Integer;
+  Disposition, Flags: Cardinal; Template: Integer): Integer;
+  external 'CreateFileW@kernel32.dll stdcall';
+
+function CloseHandle(Handle: Integer): Integer;
+  external 'CloseHandle@kernel32.dll stdcall';
+
+{ True while an exe of the install folder cannot be opened for writing: a running exe is locked, and that
+  needs no rights on the process, so it also sees an elevated copy. Opened with OPEN_EXISTING, so nothing is
+  created or cut off, and shared for reading and writing like the script's own probe. Any open failure of an
+  exe that exists counts as in use, because the question is only whether Setup may go on. }
+function InstallFolderExeInUse: Boolean;
+var
+  Names: array[0..1] of String;
+  I, Handle: Integer;
+begin
+  Result := False;
+  Names[0] := ExpandConstant('{app}\{#AppExeName}');
+  Names[1] := ExpandConstant('{app}\{#PortableExeName}');
+  for I := 0 to 1 do
+    if FileExists(Names[I]) then
+    begin
+      Handle := CreateFileW(Names[I], GENERIC_WRITE, FILE_SHARE_READ_WRITE, 0, OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL, 0);
+      if Handle = -1 then
+        Result := True
+      else
+        CloseHandle(Handle);
+    end;
+end;
+
 { Ends the copies in the install folder and waits for them to be gone. A tray-resident copy used to answer
   the Restart Manager's close request with "ok" and stay alive, which left Setup on the "applications in
-  use" page; doing it here, before the Restart Manager looks, keeps that page from appearing at all. }
-procedure StopRunningCopies;
+  use" page; doing it here, before the Restart Manager looks, keeps that page from appearing at all.
+  A copy whose path cannot be read (started as administrator) is asked to end through its exit event, named
+  after the user and a hash of the install folder (ExitRequestListener builds the same name), so a copy in
+  another folder or of another user is not reached; the event is opened for modify access only. After at most
+  10 seconds and three more checks a second apart, any exe of the folder still in use means Setup cannot go on: False. }
+function StopRunningCopies: Boolean;
 var
+  I: Integer;
+  Started: Boolean;
   ResultCode: Integer;
   Script: String;
 begin
   Script :=
     RunningCopiesScript +
+    '$s = [System.Diagnostics.Process]::GetCurrentProcess().SessionId; ' +
+    '$me = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value; ' +
+    '$x = [System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes(' +
+    '(''' + PsQuote(ExpandConstant('{app}')) + ''').TrimEnd([char[]]''\/'').ToLowerInvariant())); ' +
+    '$hash = [System.BitConverter]::ToString($x, 0, 8).Replace(''-'', '''').ToLowerInvariant(); ' +
+    'if ($hidden.Count -gt 0 -and (Running)) { foreach ($h in $hidden) { ' +
+    '$sids = @($me); ' +
+    '$o = Get-CimInstance Win32_Process -Filter (''ProcessId='' + $h.Id) -ErrorAction SilentlyContinue | ' +
+    'Invoke-CimMethod -MethodName GetOwnerSid -ErrorAction SilentlyContinue; ' +
+    'if ($o -and $o.Sid) { $sids += $o.Sid }; ' +
+    'foreach ($sid in ($sids | Select-Object -Unique)) { ' +
+    '$n = if ($h.SessionId -eq $s) { ''Local\UltimateUpdater-Exit-'' + $sid + ''-'' + $hash } ' +
+    'else { ''Session\'' + $h.SessionId + ''\UltimateUpdater-Exit-'' + $sid + ''-'' + $hash }; ' +
+    '$e = $null; ' +
+    'try { if ([System.Threading.EventWaitHandle]::TryOpenExisting($n, [System.Security.AccessControl.EventWaitHandleRights]::Modify, [ref]$e)) ' +
+    '{ [void]$e.Set(); $e.Dispose() } } catch { } } } }; ' +
     '$copies | Stop-Process -Force -ErrorAction SilentlyContinue; ' +
-    '$copies | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue';
-  Exec(PowerShellPath,
+    '$copies | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue; ' +
+    '$w = [System.Diagnostics.Stopwatch]::StartNew(); ' +
+    'while ((Running) -and $w.Elapsed.TotalSeconds -lt 10) { Start-Sleep -Milliseconds 250 }; ' +
+    { A write lock from an antivirus scan or a backup looks like a running copy; it has to hold a few
+      more checks, a second apart, to count. }
+    'for ($i = 0; $i -lt 3 -and (Running); $i++) { Start-Sleep -Seconds 1 }; ' +
+    'if (Running) { exit ' + IntToStr(StillRunningExitCode) + ' } else { exit 0 }';
+  Started := Exec(PowerShellPath,
        '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
        SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  { Only the script's own verdict (closed, or still running) is taken at its word. A PowerShell that did not
+    start or failed some other way proves nothing about the copies, and calling that "closed" let a silent
+    uninstall hang on an elevated copy: fail closed, with the same still-running question asked directly. }
+  if Started and ((ResultCode = 0) or (ResultCode = StillRunningExitCode)) then
+    Result := ResultCode <> StillRunningExitCode
+  else
+  begin
+    Log('The close script gave no verdict (started: ' + IntToStr(Ord(Started)) + ', exit code: ' +
+      IntToStr(ResultCode) + '); checking the exe lock instead.');
+    Result := True;
+    for I := 1 to 3 do
+    begin
+      if I > 1 then
+        Sleep(1000);
+      Result := not InstallFolderExeInUse;
+      if Result then
+        Break;
+    end;
+  end;
 end;
 
 { Uninstalling while the app runs blocks on files that cannot be deleted, and a silent uninstall has
@@ -776,7 +890,13 @@ begin
       Exit;
     end;
 
-  StopRunningCopies;
+  if not StopRunningCopies then
+  begin
+    Log('Uninstall stopped: a running copy could not be closed (started as administrator, or by another user).');
+    if not UninstallSilent then
+      SuppressibleMsgBox(CustomMessage('ElevatedCopyOpen'), mbError, MB_OK, IDOK);
+    Result := False;
+  end;
 end;
 
 { Runs before the Restart Manager looks for running applications. Only the app's own self-update, which
@@ -800,7 +920,11 @@ begin
       Exit;
     end;
   end;
-  StopRunningCopies;
+  if not StopRunningCopies then
+  begin
+    Log('Setup stopped: a running copy could not be closed (started as administrator, or by another user).');
+    Result := CustomMessage('ElevatedCopyOpen');
+  end;
 end;
 
 { Set by the self-updater so the app it just closed is started again. }

@@ -31,6 +31,7 @@ public partial class App : Application
     private ScanScheduler? _scheduler;
     private ElevatedHost? _elevated;
     private BusySignal? _busySignal;
+    private ExitRequestListener? _exitRequests;
     private DispatcherTimer? _busyTimer;
     private System.Windows.Interop.HwndSource? _installerListener;
     private bool _isExiting;
@@ -637,6 +638,11 @@ public partial class App : Application
         _busyTimer.Tick += (_, _) => _busySignal.Set(mainViewModel.WorkIsRunning);
         _busyTimer.Start();
 
+        // An elevated copy cannot be closed by the unelevated Setup, so it is asked through an event instead. The
+        // request arrives on a pool thread and is judged on the UI thread, where the running state is read.
+        _exitRequests = ExitRequestListener.Start(
+            () => _ = Dispatcher.InvokeAsync(() => HandleInstallerExitRequest(mainViewModel)), _logging);
+
         Func<bool> isBusy = () => mainViewModel.WorkIsRunning;
         _installerListener = InstallerCloseRequest.CreateListener(Dispatcher, ExitWithoutPrompt, isBusy, LogRefusedCloseRequest);
         mainWindow.SourceInitialized += (_, _) =>
@@ -650,6 +656,23 @@ public partial class App : Application
     /// installer (or the person behind it) decides what to do next.</summary>
     private void LogRefusedCloseRequest() =>
         _logging?.Info("The installer asked the app to close, but work is running: refusing");
+
+    /// <summary>Same rule as the close request above: a busy app refuses. Nothing that works with the system
+    /// (an install batch, a cleanup, a drive optimisation) is ever cut off by a signal any process of this user
+    /// may send, and no question is put to a person who may not be there.</summary>
+    private void HandleInstallerExitRequest(MainViewModel mainViewModel)
+    {
+        if (_isExiting)
+            return;
+
+        if (mainViewModel.WorkIsRunning || DefragRunState.IsRunning)
+        {
+            LogRefusedCloseRequest();
+            return;
+        }
+
+        ExitWithoutPrompt();
+    }
 
     /// <summary>The installer asked an idle app to close because it needs the files: no question is put to a
     /// person who may not be there at all. A busy app never gets here, it refuses the request.</summary>
@@ -720,6 +743,7 @@ public partial class App : Application
         _busyTimer?.Stop();
         _busySignal?.Dispose();
         _installerListener?.Dispose();
+        _exitRequests?.Dispose();
 
         // Closing the pipe is the shutdown protocol for the elevated helper; bounded wait since this
         // runs on the UI thread with the window gone.
