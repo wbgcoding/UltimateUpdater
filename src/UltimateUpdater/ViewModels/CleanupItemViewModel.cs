@@ -31,10 +31,30 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     private int _unselectedEntryFiles;
 
     /// <summary>What a run would actually clean from this target: <see cref="Bytes"/> without the detail
-    /// entries the user unticked.</summary>
-    public long SelectedEntryBytes => Math.Max(0, Bytes - _unselectedEntryBytes);
+    /// entries the user unticked. The leftover and old-Python rows start with every candidate unticked
+    /// and clean only the ticked ones, so there it is the sum of the ticked candidates.</summary>
+    public long SelectedEntryBytes => IsLeftoverInstalls
+        ? LeftoverCandidates.Where(c => c.IsSelected).Sum(c => c.SizeBytes)
+        : IsOldPythonVersions
+            ? OldPythonVersionCandidates.Where(c => c.IsSelected).Sum(c => c.SizeBytes)
+            : Math.Max(0, Bytes - _unselectedEntryBytes);
 
-    public int SelectedEntryFiles => Math.Max(0, Files - _unselectedEntryFiles);
+    public int SelectedEntryFiles => IsLeftoverInstalls
+        ? LeftoverCandidates.Count(c => c.IsSelected)
+        : IsOldPythonVersions
+            ? OldPythonVersionCandidates.Count(c => c.IsSelected)
+            : Math.Max(0, Files - _unselectedEntryFiles);
+
+    /// <summary>A candidate tick changes what the run would free, so the figures that follow the
+    /// selection (row, group header, ring, confirmation) are refreshed like for an entry tick.</summary>
+    private void OnCandidateSelectionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(LeftoverCandidateViewModel.IsSelected))
+            return;
+
+        RaiseSelectedEntryFigures();
+        _onSelectionChanged();
+    }
 
     private void RaiseSelectedEntryFigures()
     {
@@ -502,9 +522,14 @@ public sealed partial class CleanupItemViewModel : ObservableObject
 
         if (candidates is not null)
             foreach (var candidate in candidates)
-                OldPythonVersionCandidates.Add(new PythonVersionCandidateViewModel(candidate));
+            {
+                var row = new PythonVersionCandidateViewModel(candidate);
+                row.PropertyChanged += OnCandidateSelectionChanged;
+                OldPythonVersionCandidates.Add(row);
+            }
 
         OnPropertyChanged(nameof(ShowsNoOldPythonVersionsFound));
+        RaiseSelectedEntryFigures();
     }
 
     public string SelectAllEntriesText => LocalizationService.Instance["CleanupEntriesSelectAll"];
@@ -885,12 +910,16 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     public void SetLeftoverCandidates(IEnumerable<LeftoverCandidateDto>? candidates)
     {
         LeftoverCandidates.Clear();
-        if (candidates is null)
-            return;
 
-        foreach (var candidate in candidates)
-            LeftoverCandidates.Add(new LeftoverCandidateViewModel(candidate));
+        if (candidates is not null)
+            foreach (var candidate in candidates)
+            {
+                var row = new LeftoverCandidateViewModel(candidate);
+                row.PropertyChanged += OnCandidateSelectionChanged;
+                LeftoverCandidates.Add(row);
+            }
 
+        RaiseSelectedEntryFigures();
         OnPropertyChanged(nameof(ShowsSize));
         OnPropertyChanged(nameof(ShowsNothingFound));
         OnPropertyChanged(nameof(HasSizeCell));
