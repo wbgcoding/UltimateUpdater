@@ -826,9 +826,6 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Aracın bildirdiği</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Ayarlar'daki günlük klasörüne bakın</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Satırın sağ tık menüsünden etkileşimli olarak yeniden deneyin</value>
   </data>
@@ -2256,5 +2253,8 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Tümünü seç</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Günlük klasörünü aç</value>
   </data>
 </root>

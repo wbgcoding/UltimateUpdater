@@ -724,24 +724,8 @@ public partial class SettingsViewModel : ObservableObject
         Apply(s => s.Autostart = value);
     }
 
-    /// <summary>
-    /// The folder is created first: nothing writes a log until something happens, and Explorer answers a
-    /// path that does not exist with an error box rather than a window.
-    /// </summary>
     [RelayCommand]
-    private void OpenLogFolder()
-    {
-        try
-        {
-            Directory.CreateDirectory(AppPaths.LogsDirectory);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            _logging.Warn($"Could not create the log folder: {ex.Message}");
-        }
-
-        UriLauncher.LaunchDetached(AppPaths.LogsDirectory, _logging);
-    }
+    private void OpenLogFolder() => UriLauncher.OpenFolderDetached(AppPaths.LogsDirectory, "log folder", _logging);
 
     /// <summary>Same "create it first" reasoning as <see cref="OpenLogFolder"/>: a report is only written
     /// once a Copy click actually saved one, so the folder itself may not exist yet.</summary>

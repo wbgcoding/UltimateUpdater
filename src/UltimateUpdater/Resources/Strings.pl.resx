@@ -826,9 +826,6 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Dane zgłoszone przez narzędzie</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Zobacz folder dzienników w Ustawieniach</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Ponów interaktywnie z menu kontekstowego wiersza</value>
   </data>
@@ -2256,5 +2253,8 @@ Kontynuować z uprawnieniami administratora?</value>
   </data>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Zaznacz wszystko</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Otwórz folder dzienników</value>
   </data>
 </root>

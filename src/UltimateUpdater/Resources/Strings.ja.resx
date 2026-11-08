@@ -826,9 +826,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>ツールが報告した内容</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>設定内のログフォルダーを確認</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>この行の右クリックメニューから対話的に再試行</value>
   </data>
@@ -2256,5 +2253,8 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>すべて選択</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>ログフォルダーを開く</value>
   </data>
 </root>

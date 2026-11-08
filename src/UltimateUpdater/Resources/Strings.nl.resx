@@ -826,9 +826,6 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Wat de tool heeft gemeld</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Zie de logmap in Instellingen</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Interactief opnieuw proberen via het rechtsklikmenu van de rij</value>
   </data>
@@ -2256,5 +2253,8 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Alles selecteren</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Logmap openen</value>
   </data>
 </root>

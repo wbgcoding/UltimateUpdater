@@ -826,9 +826,6 @@ This cannot be undone by Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>What the tool reported</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>See the log folder in Settings</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Retry interactively from the row's right-click menu</value>
   </data>
@@ -2256,5 +2253,8 @@ Continue with admin rights?</value>
   </data>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Select all</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Open log folder</value>
   </data>
 </root>

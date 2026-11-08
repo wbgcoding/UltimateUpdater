@@ -826,9 +826,6 @@ Esto no se puede deshacer con Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Lo que informó la herramienta</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Consulta la carpeta de registros en Configuración</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Reintentar de forma interactiva desde el menú contextual de la fila</value>
   </data>
@@ -2256,5 +2253,8 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Seleccionar todo</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Abrir carpeta de registros</value>
   </data>
 </root>

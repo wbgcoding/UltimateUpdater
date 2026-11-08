@@ -4062,6 +4062,53 @@ public partial class WindowLayoutTests
         AssertRendered(result);
     }
 
+    /// <summary>The log-folder button joins the retry hint, Copy and Close in one right-aligned row; the
+    /// longest labels must still fit side by side inside the window, in order, without overlap.</summary>
+    [Theory]
+    [InlineData("de")]
+    [InlineData("fr")]
+    [InlineData("pt")]
+    [InlineData("tr")]
+    public void Error_detail_window_action_row_fits_with_the_log_folder_button(string language)
+    {
+        RenderResult? result = null;
+        Rect logButton = default, closeButton = default, row = default;
+
+        WpfHarness.OnUiThread(() =>
+        {
+            LocalizationService.Instance.Apply(language);
+
+            var viewModel = new ErrorDetailViewModel(
+                "Firefox", "winget", "128.0.3 → 129.0.1", "Install failed.\nExit code 1.", new LoggingService(),
+                explanation: "Explained.", canRetryInteractive: true);
+            var window = new ErrorDetailWindow(viewModel);
+            var content = (FrameworkElement)window.Content;
+            result = WpfHarness.RenderWindow(window, $"error-detail-actions-{language}", (int)window.Width, (int)window.MaxHeight);
+
+            var log = FindByName<FrameworkElement>(content, "OpenLogFolderButton");
+            var close = FindByName<FrameworkElement>(content, "CloseButton");
+            var actionRow = FindByName<FrameworkElement>(content, "ErrorDetailActionRow");
+            Assert.NotNull(log);
+            Assert.NotNull(close);
+            Assert.NotNull(actionRow);
+
+            Rect BoundsIn(FrameworkElement e) =>
+                new(e.TransformToAncestor(content).Transform(new Point(0, 0)), new Size(e.ActualWidth, e.ActualHeight));
+
+            logButton = BoundsIn(log!);
+            closeButton = BoundsIn(close!);
+            row = BoundsIn(actionRow!);
+            window.Close();
+        });
+
+        AssertRendered(result);
+        Assert.True(logButton.Width > 20, "The log-folder button has no size.");
+        Assert.True(logButton.Left >= row.Left - 0.5,
+            $"The log-folder button starts at {logButton.Left:0}px, left of the action row ({row.Left:0}px): the row is clipped.");
+        Assert.True(logButton.Right <= closeButton.Left, "The log-folder button overlaps the Close button.");
+        Assert.True(closeButton.Right <= row.Right + 0.5, "The Close button runs past the action row.");
+    }
+
     /// <summary>The light theme is a separate brush set, a scrollbar-visibility fix could regress
     /// invisibly in the one theme not otherwise rendered here.</summary>
     [Fact]

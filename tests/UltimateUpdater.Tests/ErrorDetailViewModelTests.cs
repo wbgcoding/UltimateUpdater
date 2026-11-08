@@ -108,6 +108,36 @@ public class ErrorDetailViewModelTests
         });
     }
 
+    [Fact]
+    public void The_log_folder_button_opens_the_log_folder()
+    {
+        var viewModel = Build("Installer failed with exit code: 1");
+        string? opened = null;
+        viewModel.FolderOpener = folder => opened = folder;
+
+        viewModel.OpenLogFolderCommand.Execute(null);
+
+        Assert.Equal(AppPaths.LogsDirectory, opened);
+        Assert.Equal(viewModel.LogFolder, opened);
+    }
+
+    [Fact]
+    public void Opening_a_folder_creates_it_first()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "uu-folder-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            UriLauncher.EnsureFolder(folder, "test folder", new LoggingService());
+
+            Assert.True(Directory.Exists(folder));
+        }
+        finally
+        {
+            if (Directory.Exists(folder))
+                Directory.Delete(folder);
+        }
+    }
+
     private static void WaitForFeedbackToClear(ErrorDetailViewModel viewModel)
     {
         var deadline = DateTime.UtcNow.AddSeconds(5);

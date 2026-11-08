@@ -65,6 +65,14 @@ public partial class ErrorDetailViewModel : ObservableObject
     /// name and wording as the settings window's own log-folder card.</summary>
     public string LogFolder => AppPaths.LogsDirectory;
 
+    /// <summary>Test seam for opening the log folder in Explorer.</summary>
+    internal Action<string> FolderOpener { get; set; }
+
+    /// <summary>Opens the folder the failing tool's log lives in, so the details window is a dead end no
+    /// longer: the settings window's own button does the same.</summary>
+    [RelayCommand]
+    private void OpenLogFolder() => FolderOpener(LogFolder);
+
     /// <summary>Turns the Copy button into a brief "Copied" acknowledgement.</summary>
     [ObservableProperty]
     private bool copied;
@@ -119,6 +127,7 @@ public partial class ErrorDetailViewModel : ObservableObject
         Explanation = explanation;
         CanRetryInteractive = canRetryInteractive;
         _logging = logging;
+        FolderOpener = folder => UriLauncher.OpenFolderDetached(folder, "log folder", _logging);
         DetailSourceKey = detailSourceKey;
         _unknownCode = explanation is null ? InstallErrorExplainer.TryFindUnknownCode(detail) : null;
     }

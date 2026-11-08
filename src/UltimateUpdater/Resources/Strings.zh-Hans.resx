@@ -826,9 +826,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>工具报告的内容</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>查看设置中的日志文件夹</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>从该行的右键菜单交互式重试</value>
   </data>
@@ -2256,5 +2253,8 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>全选</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>打开日志文件夹</value>
   </data>
 </root>

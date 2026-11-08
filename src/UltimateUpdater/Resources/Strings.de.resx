@@ -826,9 +826,6 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Meldung des Werkzeugs</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Siehe Protokollordner in den Einstellungen</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Interaktiv erneut versuchen über das Rechtsklickmenü der Zeile</value>
   </data>
@@ -2256,5 +2253,8 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Alles auswählen</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Protokollordner öffnen</value>
   </data>
 </root>

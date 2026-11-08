@@ -153,12 +153,10 @@
                        Visibility="{Binding Copied, Converter={StaticResource BoolToVisibility}}"/>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <!-- A plain pointer to the settings window's log-folder card action instead of a second copy of
-                     it (one action, one place); the path itself is one hover away via the tooltip. -->
-                <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" FontSize="11"
-                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                <ui:Button x:Name="OpenLogFolderButton" Command="{Binding OpenLogFolderCommand}" Margin="0,0,8,0"
+                           Icon="{ui:SymbolIcon FolderOpen24}"
                            ToolTip="{Binding LogFolder}"
-                           Text="{Binding Loc[ErrorDetailLogInSettings]}"/>
+                           Content="{Binding Loc[ErrorDetailOpenLogFolder]}"/>
                 <!-- Retrying interactively is offered only from the row's own context menu now (one
                      visible place per action); shown only for a failure this app's own explainer
                      classified as interactively maybe fixable, see InstallErrorExplainer.AllowsInteractiveRetry. -->

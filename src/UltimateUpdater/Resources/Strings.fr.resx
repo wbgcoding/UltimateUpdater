@@ -826,9 +826,6 @@ Ultimate Updater ne peut pas annuler cette action.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>Ce qu'a signalé l'outil</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Voir le dossier des journaux dans les Paramètres</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Réessayer en mode interactif depuis le menu contextuel de la ligne</value>
   </data>
@@ -2256,5 +2253,8 @@ Continuer avec les droits administrateur ?</value>
   </data>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Tout sélectionner</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Ouvrir le dossier des journaux</value>
   </data>
 </root>

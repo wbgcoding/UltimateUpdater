@@ -826,9 +826,6 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
   <data name="ErrorDetailOutput" xml:space="preserve">
     <value>O que a ferramenta informou</value>
   </data>
-  <data name="ErrorDetailLogInSettings" xml:space="preserve">
-    <value>Veja a pasta de logs em Configurações</value>
-  </data>
   <data name="ErrorDetailRetryInMenu" xml:space="preserve">
     <value>Repetir de forma interativa pelo menu de contexto da linha</value>
   </data>
@@ -2256,5 +2253,8 @@ Continuar com direitos de administrador?</value>
   </data>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Selecionar tudo</value>
+  </data>
+  <data name="ErrorDetailOpenLogFolder" xml:space="preserve">
+    <value>Abrir pasta de logs</value>
   </data>
 </root>
