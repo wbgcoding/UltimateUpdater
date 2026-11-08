@@ -1656,7 +1656,9 @@ public class CleanupService(LoggingService logging)
         }
     }
 
-    private static bool IsReparsePoint(string path)
+    /// <summary>Unreadable attributes count as a link: the caller then only tries a non-recursive delete,
+    /// which fails on a folder with content, so an unknown folder is kept rather than walked.</summary>
+    internal static bool IsReparsePoint(string path)
     {
         try
         {
@@ -1664,7 +1666,7 @@ public class CleanupService(LoggingService logging)
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return false;
+            return true;
         }
     }
 

@@ -24,7 +24,7 @@ public class RecycledLinkUnlinkTests : IDisposable
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         })!;
-        mklink.WaitForExit(5000);
+        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
         Assert.Equal(0, mklink.ExitCode);
     }
 
@@ -34,6 +34,15 @@ public class RecycledLinkUnlinkTests : IDisposable
         Directory.CreateDirectory(target);
         File.WriteAllText(Path.Combine(target, "keep.txt"), "must survive");
         return target;
+    }
+
+    /// <summary>Attributes that cannot be read never let the walk descend: the folder is treated as a link,
+    /// so only a non-recursive delete is tried on it.</summary>
+    [Fact]
+    public void Unreadable_attributes_count_as_a_link()
+    {
+        Assert.True(CleanupService.IsReparsePoint(Path.Combine(_root, "gone")));
+        Assert.False(CleanupService.IsReparsePoint(MakeTarget()));
     }
 
     [Fact]
