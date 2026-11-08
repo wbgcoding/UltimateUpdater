@@ -133,6 +133,7 @@ public partial class MainViewModel
             ClearSnooze(row);
         }
 
+        ReseatInVisible(row);
         Persist();
         ApplyFilter();
         RefreshSelectionState();
@@ -152,6 +153,7 @@ public partial class MainViewModel
         row.IsIgnoredAllVersions = true;
         ClearSnooze(row);
 
+        ReseatInVisible(row);
         Persist();
         ApplyFilter();
         RefreshSelectionState();

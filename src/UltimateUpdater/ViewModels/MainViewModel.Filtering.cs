@@ -990,6 +990,17 @@ public partial class MainViewModel
     }
 
     /// <summary>
+    /// Takes a row out of the visible set so the next <see cref="SyncVisible"/> adds it again at its sorted
+    /// place. <c>IsIgnored</c> is a sort key, but the view does not sort live, and the diff otherwise keeps a
+    /// row that stays visible exactly where it is.
+    /// </summary>
+    private void ReseatInVisible(UpdateRowViewModel row)
+    {
+        if (_visibleSet.Remove(row))
+            _visible.Remove(row);
+    }
+
+    /// <summary>
     /// Brings the visible set in line with the filters, touching ONLY the rows whose visibility actually
     /// changed. Removals go first so a row that moved out never briefly shares the table with its
     /// replacement, and each Add lands at its sorted position because the view owns the ordering.

@@ -298,4 +298,33 @@ public partial class MainViewModelTests
             Assert.Equal(2, viewModel.PersistentFailureCount);
         });
     }
+
+    /// <summary>An ignored row sinks below the rest of its group the moment it is ignored (with "show
+    /// ignored" on it stays in the table), and rises back to its sorted place when un-ignored. Flipping the
+    /// flag alone leaves the view where it was: the sort key is not live.</summary>
+    [Fact]
+    public void An_ignored_row_moves_to_the_bottom_of_its_group_and_back()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create();
+            var first = new UpdateRowViewModel(Item("a-tool", "Alpha", "npm"));
+            var second = new UpdateRowViewModel(Item("b-tool", "Bravo", "npm"));
+            var third = new UpdateRowViewModel(Item("c-tool", "Charlie", "npm"));
+            viewModel.Updates.AddRange([first, second, third]);
+            viewModel.ShowIgnored = true;
+
+            List<UpdateRowViewModel> Order() => viewModel.UpdatesView.Cast<UpdateRowViewModel>().ToList();
+            Assert.Equal([first, second, third], Order());
+
+            ((IRowActions)viewModel).IgnoreAllVersions(first);
+            Assert.Equal([second, third, first], Order());
+
+            viewModel.IgnoreCommand.Execute(first);
+            Assert.Equal([first, second, third], Order());
+
+            viewModel.IgnoreCommand.Execute(second);
+            Assert.Equal([first, third, second], Order());
+        });
+    }
 }
