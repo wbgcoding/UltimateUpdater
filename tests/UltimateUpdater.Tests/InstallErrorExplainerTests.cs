@@ -355,6 +355,17 @@ public class InstallErrorExplainerTests
         Assert.Equal("InstallErrorWuAbortedWhat", explanation!.WhatHappenedKey);
     }
 
+    /// <summary>VerifySucceeded also throws the download-stage form of the same sentence.</summary>
+    [Fact]
+    public void A_download_stage_result_code_is_explained_like_the_install_stage()
+    {
+        var text = "Windows Update download returned result code 4 (failed), HRESULT 0xDEADBEEF.";
+        var explanation = InstallErrorExplainer.Explain("windowsupdate", text);
+
+        Assert.NotNull(explanation);
+        Assert.Equal("InstallErrorWuFailedWhat", explanation!.WhatHappenedKey);
+    }
+
     [Theory]
     [InlineData(0, "InstallErrorWuNotStartedWhat")]
     [InlineData(1, "InstallErrorWuInProgressWhat")]
