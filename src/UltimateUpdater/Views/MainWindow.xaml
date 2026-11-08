@@ -283,7 +283,7 @@
         <ui:TitleBar Grid.Row="0" Title="{Binding Loc[AppTitle]}" FontSize="16" FontWeight="SemiBold">
             <ui:TitleBar.Icon>
                 <!-- assembly-qualified so it resolves no matter which assembly is the entry point -->
-                <ui:ImageIcon Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+                <ui:ImageIcon Style="{StaticResource TitleBarAppIcon}" Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
             </ui:TitleBar.Icon>
             <ui:TitleBar.Header>
                 <!-- WPF-UI's TitleBar draws its own Title text only when Header is null; setting ANY

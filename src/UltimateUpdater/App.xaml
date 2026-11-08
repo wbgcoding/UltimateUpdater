@@ -21,6 +21,13 @@
             <views:GroupSelectionConverter x:Key="GroupSelection" />
             <views:WideEnoughToVisibilityConverter x:Key="WideEnough" />
 
+            <!-- App icon in every window's title bar: a little larger than WPF-UI's 16 px default, smoothly scaled. -->
+            <Style x:Key="TitleBarAppIcon" TargetType="ui:ImageIcon">
+                <Setter Property="Width" Value="20"/>
+                <Setter Property="Height" Value="20"/>
+                <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+            </Style>
+
             <!-- Themed row context menu (updates only): rounded card surface, flat items with a rounded
                  hover highlight, matching the rest of the app rather than the classic Win32 menu. -->
             <Style x:Key="RowMenuItem" TargetType="MenuItem">
