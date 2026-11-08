@@ -675,6 +675,86 @@ public class RegistryCleanupExistenceTests : IDisposable
 }
 
 /// <summary>
+/// A non-MSI uninstall entry whose icon/uninstaller moved is still a program on the machine while its
+/// install folder exists: it stays in Apps and Features.
+/// </summary>
+public class RegistryCleanupInstallLocationTests
+{
+    private const string UninstallRoot = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+
+    private static string MakeEntry(string name, string? installLocation)
+    {
+        using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey($@"{UninstallRoot}\{name}");
+        key!.SetValue("DisplayName", "Test App");
+        key.SetValue("DisplayIcon", @"C:\this-folder-does-not-exist-617\app.exe,0");
+        key.SetValue("UninstallString", @"""C:\this-folder-does-not-exist-617\unins000.exe""");
+        if (installLocation is not null)
+            key.SetValue("InstallLocation", installLocation);
+
+        return $@"HKCU\{UninstallRoot}\{name}";
+    }
+
+    private static void Remove(string name) =>
+        Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree($@"{UninstallRoot}\{name}", throwOnMissingSubKey: false);
+
+    [Fact]
+    public void A_moved_uninstaller_with_an_existing_install_folder_is_kept()
+    {
+        var name = "wu-test-installloc-present-" + Guid.NewGuid().ToString("N");
+        var folder = Directory.CreateTempSubdirectory("wu-installloc-").FullName;
+        try
+        {
+            var keyPath = MakeEntry(name, folder);
+
+            Assert.False(RegistryCleanupScanner.TryJudgeUninstallEntryBroken(keyPath, out _));
+        }
+        finally
+        {
+            Remove(name);
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_quoted_install_location_that_exists_also_keeps_the_entry()
+    {
+        var name = "wu-test-installloc-quoted-" + Guid.NewGuid().ToString("N");
+        var folder = Directory.CreateTempSubdirectory("wu-installloc-").FullName;
+        try
+        {
+            var keyPath = MakeEntry(name, "\"" + folder + "\"");
+
+            Assert.False(RegistryCleanupScanner.TryJudgeUninstallEntryBroken(keyPath, out _));
+        }
+        finally
+        {
+            Remove(name);
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_missing_install_folder_or_none_at_all_leaves_the_entry_reported()
+    {
+        var gone = "wu-test-installloc-gone-" + Guid.NewGuid().ToString("N");
+        var none = "wu-test-installloc-none-" + Guid.NewGuid().ToString("N");
+        try
+        {
+            var goneKey = MakeEntry(gone, @"C:\this-folder-does-not-exist-617\install");
+            var noneKey = MakeEntry(none, null);
+
+            Assert.True(RegistryCleanupScanner.TryJudgeUninstallEntryBroken(goneKey, out _));
+            Assert.True(RegistryCleanupScanner.TryJudgeUninstallEntryBroken(noneKey, out _));
+        }
+        finally
+        {
+            Remove(gone);
+            Remove(none);
+        }
+    }
+}
+
+/// <summary>
 /// <see cref="RegistryCleanupScanner.IsUnderRoots"/> is the one check standing between a finding
 /// and CleanupService actually deleting it. A finding whose KeyPath equals the bare root, with no
 /// ValueName, means "delete this whole root key" - legitimate ONLY for the two categories whose real

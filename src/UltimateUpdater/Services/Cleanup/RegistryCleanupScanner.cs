@@ -646,6 +646,15 @@ public static class RegistryCleanupScanner
         if (RegistryCleanupSafety.TryGetAllBrokenPaths(
                 [ReadValue(keyPath, "DisplayIcon"), uninstallString], ExistsInAnyView, out var brokenPaths))
         {
+            // A moved uninstaller or icon does not make the program gone: while its install folder is still
+            // there (in either registry view), the entry stays in Apps and Features.
+            if (ReadValue(keyPath, "InstallLocation")?.Trim().Trim('"') is { Length: > 0 } location
+                && ExistsInAnyView(location))
+            {
+                claimedPath = string.Empty;
+                return false;
+            }
+
             claimedPath = brokenPaths[0];
             return true;
         }
