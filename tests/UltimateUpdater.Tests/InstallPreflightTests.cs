@@ -720,6 +720,41 @@ public class InstallPreflightTests
         }
     }
 
+    /// <summary>A Store update names its package folder; a same-named process from anywhere else is left
+    /// alone (not asked to close, not killed), while one from inside the folder is still handled.</summary>
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public async Task Closing_a_store_apps_blockers_only_reaches_processes_from_its_package_folder(bool insidePackage, bool expectedCleared)
+    {
+        Dialogs.SuppressInteractiveDialogs = true;
+
+        var package = Directory.CreateTempSubdirectory("uu-package-test-").FullName;
+        var elsewhere = Directory.CreateTempSubdirectory("uu-elsewhere-test-").FullName;
+        var ping = Path.Combine(insidePackage ? package : elsewhere, "ping.exe");
+        File.Copy(Path.Combine(Environment.SystemDirectory, "ping.exe"), ping);
+        using var child = StartPing(ping);
+        var pid = child.Id;
+        try
+        {
+            var cleared = await MainViewModel.CloseBlockingProcessesAsync(
+                ["ping-test"],
+                _ => [System.Diagnostics.Process.GetProcessById(pid)],
+                TimeSpan.FromMilliseconds(300),
+                onlyInsideFolder: package);
+
+            Assert.Equal(expectedCleared, cleared);
+            if (!insidePackage)
+                Assert.False(child.HasExited);
+        }
+        finally
+        {
+            try { child.Kill(); child.WaitForExit(5000); } catch (InvalidOperationException) { }
+            try { Directory.Delete(package, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            try { Directory.Delete(elsewhere, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+    }
+
     private static System.Diagnostics.Process StartPing(string path) =>
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path, "-n 30 127.0.0.1")
         {

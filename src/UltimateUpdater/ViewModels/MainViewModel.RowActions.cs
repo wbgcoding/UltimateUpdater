@@ -254,7 +254,9 @@ public partial class MainViewModel
             // from/to pair repeating means more retries will not change it. Never ignored on its own.
             if (row.VersionUnchanged)
             {
-                TrackRepeatedUnchanged(row, key);
+                // A Store app waiting for its window to close is not a vendor quirk to ignore the package for.
+                if (!row.IsPackagedApp)
+                    TrackRepeatedUnchanged(row, key);
                 return;
             }
 

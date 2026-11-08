@@ -2263,4 +2263,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>すべて選択</value>
   </data>
+  <data name="InstallMsixDeferred" xml:space="preserve">
+    <value>{0} を閉じると、Windows がこの更新プログラムをインストールします。</value>
+  </data>
 </root>

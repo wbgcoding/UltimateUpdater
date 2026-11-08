@@ -1,4 +1,5 @@
 using UltimateUpdater.Models;
+using UltimateUpdater.Services;
 using UltimateUpdater.Services.Install;
 using UltimateUpdater.Services.Sources;
 
@@ -342,5 +343,85 @@ public class InstallBlockersTests
         {
             Directory.Delete(directory, recursive: true);
         }
+    }
+
+    private sealed class PackageTable(string name, string root) : IRegistryView
+    {
+        private const string Full = "Zq.Chat_1.0.0.0_x64__0123456789abc";
+
+        public IReadOnlyList<string> SubKeyNames(string keyPath) => keyPath == PackagedApps.PackagesKey ? [Full] : [];
+
+        public string? Value(string keyPath, string valueName) => valueName switch
+        {
+            "DisplayName" => name,
+            "PackageRootFolder" => root,
+            _ => null,
+        };
+    }
+
+    private const string StoreRoot = @"C:\Program Files\WindowsApps\Zq.Chat_1.0.0.0_x64__0123456789abc";
+
+    private static InstallBlockers StoreBlockers(params (string Name, string Path)[] processes) => new(
+        runningProcessNames: () => [.. processes.Select(p => p.Name)],
+        packagedApps: new PackagedApps(new PackageTable("Zq Chat", StoreRoot)),
+        processImages: () => processes);
+
+    /// <summary>A Store app keeps its files in a folder of its own, its executables a few levels down, so the
+    /// top-level scan of a normal install folder never sees them; the process path decides.</summary>
+    [Fact]
+    public void A_running_process_from_the_store_package_folder_blocks_the_update()
+    {
+        var blockers = StoreBlockers(
+            ("Chat", StoreRoot + @"\app\Chat.exe"), ("Chat", @"D:\Other\Chat.exe"), ("explorer", @"C:\Windows\explorer.exe"));
+
+        var blocked = blockers.Detect(Item("Zq.Chat", "Zq Chat"));
+
+        Assert.NotNull(blocked);
+        Assert.Equal("Zq Chat", blocked!.DisplayProgramName);
+        Assert.Equal(["Chat"], blocked.ProcessNames);
+        Assert.Equal(StoreRoot, blocked.OnlyInsideFolder);
+        Assert.False(blocked.SkipOnly);
+    }
+
+    [Fact]
+    public void A_same_named_process_from_another_folder_does_not_block_a_store_update()
+    {
+        var blockers = StoreBlockers(("Chat", @"D:\Other\Chat.exe"), ("Chat", StoreRoot + "-sibling" + @"\Chat.exe"));
+
+        Assert.Null(blockers.Detect(Item("Zq.Chat", "Zq Chat")));
+    }
+
+    [Fact]
+    public void Only_a_winget_row_with_the_exact_package_name_is_looked_up_as_a_store_app()
+    {
+        var blockers = StoreBlockers(("Chat", StoreRoot + @"\Chat.exe"));
+
+        Assert.Null(blockers.Detect(Item("Zq.Chat", "Zq Chat Pro")));
+        Assert.Null(blockers.Detect(new UpdateItem
+        {
+            Id = "Zq.Chat", SourceId = "pip", Category = UpdateCategory.Software, Name = "Zq Chat",
+        }));
+    }
+
+    [Fact]
+    public void Without_a_package_table_no_store_app_is_looked_for()
+    {
+        var blockers = new InstallBlockers(
+            runningProcessNames: () => ["Chat"], processImages: () => [("Chat", StoreRoot + @"\Chat.exe")]);
+
+        Assert.Null(blockers.Detect(Item("Zq.Chat", "Zq Chat")));
+    }
+
+    [Fact]
+    public void Rows_with_the_same_process_name_but_different_package_folders_are_not_one_group()
+    {
+        var item = Item("Zq.Chat", "Zq Chat");
+        var inPackage = new BlockedInstall(item, "Zq Chat", ["Chat"], OnlyInsideFolder: StoreRoot);
+        var elsewhere = new BlockedInstall(item, "Zq Chat", ["Chat"], OnlyInsideFolder: @"C:\Other");
+
+        var groups = InstallBlockers.GroupBlockedRows([(1, inPackage), (2, elsewhere), (3, inPackage)]);
+
+        Assert.Equal(2, groups.Count);
+        Assert.Equal([1, 3], groups[0].Rows);
     }
 }

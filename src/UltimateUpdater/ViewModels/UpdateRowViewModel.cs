@@ -1432,11 +1432,29 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(InstallStateTooltip));
     }
 
-    public string VersionUnchangedText => LocalizationService.Instance["InstallVersionUnchanged"];
+    /// <summary>
+    /// The row is a Store (MSIX) app. winget registers such an update and Windows applies it only once the
+    /// app is closed, so "installed, version unchanged" is a wait for the user there, not a mystery.
+    /// </summary>
+    [ObservableProperty]
+    private bool isPackagedApp;
+
+    partial void OnIsPackagedAppChanged(bool value)
+    {
+        OnPropertyChanged(nameof(VersionUnchangedText));
+        OnPropertyChanged(nameof(VersionUnchangedTooltip));
+        OnPropertyChanged(nameof(InstallStateTooltip));
+    }
+
+    private string MsixDeferredText => string.Format(LocalizationService.Instance["InstallMsixDeferred"], Name);
+
+    public string VersionUnchangedText => IsPackagedApp
+        ? MsixDeferredText
+        : LocalizationService.Instance["InstallVersionUnchanged"];
 
     /// <summary>Why the version can stay the same and what to do; from the second identical result on, also
     /// how often it already happened, which points at a vendor that numbers its versions differently.</summary>
-    public string VersionUnchangedTooltip => VersionUnchangedCount >= 2
+    public string VersionUnchangedTooltip => IsPackagedApp ? MsixDeferredText : VersionUnchangedCount >= 2
         ? LocalizationService.Instance["InstallVersionUnchangedDetail"] + "\n"
             + string.Format(LocalizationService.Instance["InstallVersionUnchangedRepeat"], VersionUnchangedCount)
         : LocalizationService.Instance["InstallVersionUnchangedDetail"];

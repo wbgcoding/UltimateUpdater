@@ -2263,4 +2263,7 @@ Esto no se puede deshacer.</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Seleccionar todo</value>
   </data>
+  <data name="InstallMsixDeferred" xml:space="preserve">
+    <value>Windows instalará esta actualización cuando se cierre {0}.</value>
+  </data>
 </root>

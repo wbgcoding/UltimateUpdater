@@ -205,6 +205,7 @@ public partial class MainViewModel
 
             string? folder;
             string? launchExe;
+            var packagedApp = false;
 
             try
             {
@@ -217,8 +218,11 @@ public partial class MainViewModel
 
                 // A Store app installed through winget has no Uninstall entry to find an exe by; its package
                 // names the application to start.
-                if (launchExe is null && row.Item.SourceId == "winget" && _packagedApps.Find(row.Item.Name) is { } package)
-                    launchExe = _packagedApps.StartTargetOf(package);
+                if (row.Item.SourceId == "winget" && _packagedApps.Find(row.Item.Name) is { } package)
+                {
+                    packagedApp = true;
+                    launchExe ??= _packagedApps.StartTargetOf(package);
+                }
             }
             catch (Exception ex)
             {
@@ -228,7 +232,7 @@ public partial class MainViewModel
                 continue;
             }
 
-            if (folder is null && launchExe is null)
+            if (folder is null && launchExe is null && !packagedApp)
                 continue;
 
             await _dispatcher.InvokeAsync(
@@ -238,6 +242,8 @@ public partial class MainViewModel
                         row.InstallLocationPath = folder;
                     if (launchExe is not null)
                         row.LaunchTargetPath = launchExe;
+                    if (packagedApp)
+                        row.IsPackagedApp = true;
                 },
                 DispatcherPriority.Background);
         }

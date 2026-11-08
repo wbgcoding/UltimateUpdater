@@ -2263,4 +2263,7 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>Zaznacz wszystko</value>
   </data>
+  <data name="InstallMsixDeferred" xml:space="preserve">
+    <value>Windows zainstaluje tę aktualizację po zamknięciu aplikacji {0}.</value>
+  </data>
 </root>

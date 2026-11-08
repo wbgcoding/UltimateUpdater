@@ -2263,4 +2263,7 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="TextMenuSelectAll" xml:space="preserve">
     <value>全选</value>
   </data>
+  <data name="InstallMsixDeferred" xml:space="preserve">
+    <value>关闭 {0} 后，Windows 将安装此更新。</value>
+  </data>
 </root>
