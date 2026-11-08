@@ -504,20 +504,26 @@ public static class CleanupSafety
         if (segments.Any(segment => NotACacheSegments.Contains(segment, StringComparer.OrdinalIgnoreCase)))
             return false;
 
-        return segments.Any(segment =>
+        return segments.Select((segment, index) => (segment, index)).Any(entry =>
+            IsTempOrCacheSegment(entry.segment, entry.index > 0 ? segments[entry.index - 1] : null));
+    }
+
+    private static bool IsTempOrCacheSegment(string segment, string? parent) =>
             segment.Equals("Temp", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("tmp", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("CrashDumps", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("Minidump", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("Logs", StringComparison.OrdinalIgnoreCase)
-            || segment.Equals("Download", StringComparison.OrdinalIgnoreCase)          // SoftwareDistribution\Download
+            // Only Windows Update's own cache: any other "Download" folder (a messenger's or download
+            // manager's per-app folder) holds files the user fetched and wants.
+            || (segment.Equals("Download", StringComparison.OrdinalIgnoreCase)
+                && parent is not null && parent.Equals("SoftwareDistribution", StringComparison.OrdinalIgnoreCase))
             || segment.Equals("DeliveryOptimization", StringComparison.OrdinalIgnoreCase)
             || segment.Equals("Explorer", StringComparison.OrdinalIgnoreCase)          // thumbnail cache
             // Anything NAMED as a cache: "Cache", "D3DSCache", "NV_Cache", "npm-cache", ".gradle\caches",
             // matched by SUFFIX, not whole segment, so names like these are still caught.
             || segment.EndsWith("cache", StringComparison.OrdinalIgnoreCase)
-            || segment.EndsWith("caches", StringComparison.OrdinalIgnoreCase));
-    }
+            || segment.EndsWith("caches", StringComparison.OrdinalIgnoreCase);
 
     private static string? SafeFolderPath(Environment.SpecialFolder folder)
     {
