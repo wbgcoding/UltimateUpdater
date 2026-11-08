@@ -7,6 +7,19 @@ namespace UltimateUpdater.Services.Cleanup;
 public sealed record RepairStep(string Executable, string[] Arguments, string Label);
 
 /// <summary>
+/// A tool that empties one folder of a target instead of the file deleter, for a cache that must go as a
+/// whole (a half-emptied entry would be linked into new work later). <paramref name="ToolName"/> is resolved
+/// only through <see cref="ProcessRunner.ResolveTrusted(string)"/>; <paramref name="FallbackPath"/> is used
+/// only when that finds nothing, and only if it is a plain file reached through no link.
+/// </summary>
+public sealed record DirectoryCleanCommand(
+    string ToolName, string? FallbackPath, string[] Arguments, string Label, TimeSpan Timeout)
+{
+    /// <summary>The argument that stands for the folder the command is run for.</summary>
+    public const string FolderToken = "{folder}";
+}
+
+/// <summary>
 /// One thing the cleanup dialog can remove. Mostly a fixed, hard-coded table: most
 /// paths here are never composed from anything the user or a tool supplied. The one exception is
 /// <see cref="CleanupKind.AppCacheSweep"/>, whose folders ARE discovered at runtime,
@@ -28,6 +41,21 @@ public sealed record CleanupTarget(
 {
     /// <summary>The directories whose CONTENTS are removed. Empty for the non-file targets.</summary>
     public IReadOnlyList<string> Directories { get; init; } = [];
+
+    /// <summary>
+    /// Fixed absolute paths of single files, measured and deleted like directory content: the same path gate,
+    /// no link anywhere on the path, the same age rule and the same verified delete. A file that is itself a
+    /// link is never followed. Only <see cref="CleanupKind.Directories"/> reads it.
+    /// </summary>
+    public IReadOnlyList<string> Files { get; init; } = [];
+
+    /// <summary>
+    /// Folders of <see cref="Directories"/> that are measured like any other but emptied by running a
+    /// command instead of deleting file by file, keyed by the folder path (case-insensitive). Never run
+    /// for a <see cref="NeedsElevation"/> row or inside the elevated worker.
+    /// </summary>
+    public IReadOnlyDictionary<string, DirectoryCleanCommand> CleanCommands { get; init; } =
+        new Dictionary<string, DirectoryCleanCommand>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The commands a <see cref="CleanupKind.SystemRepair"/> target runs, in order.</summary>
     public IReadOnlyList<RepairStep> RepairSteps { get; init; } = [];

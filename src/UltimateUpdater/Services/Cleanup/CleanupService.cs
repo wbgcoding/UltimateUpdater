@@ -110,7 +110,7 @@ public class CleanupService(LoggingService logging)
         Task.Run(async () => target.Kind switch
         {
             CleanupKind.Directories or CleanupKind.AppCacheSweep =>
-                CleanDirectories(target, progress, cancellationToken, pause, excludedEntryPaths, recycleInsteadOfDelete),
+                await CleanDirectoriesAsync(target, progress, cancellationToken, pause, excludedEntryPaths, recycleInsteadOfDelete),
             CleanupKind.RecycleBin => EmptyRecycleBin(
                 excludedEntryPaths, confirmedEntryPaths, recycleBinMinAgeDays, progress, cancellationToken, pause),
             CleanupKind.DiskCleanup => await RunDiskCleanupAsync(cancellationToken),
@@ -347,6 +347,42 @@ public class CleanupService(LoggingService logging)
             }
         }
 
+        // The single files a target names: measured by the rule the clean applies, each one its own row.
+        foreach (var file in target.Files.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!CleanupSafety.IsSafeToDeleteFile(file, out var refusal))
+            {
+                if (File.Exists(file))
+                    logging.Info($"cleanup target {target.Id} refused file: {refusal} ('{file}')");
+                continue;
+            }
+
+            try
+            {
+                var info = new FileInfo(file);
+                if (info.Directory is null || !CleanupSafety.IsDeletableFile(info.Directory.FullName, file))
+                    continue;
+
+                if (cutoff is { } limit && IsTooNew(info.CreationTimeUtc, info.LastWriteTimeUtc, limit))
+                {
+                    tooNew++;
+                    continue;
+                }
+
+                bytes += info.Length;
+                files++;
+                if (!buckets.TryGetValue(file, out var accumulator))
+                    accumulator = buckets[file] = new EntryAccumulator();
+                accumulator.Add(info.Length, info.LastWriteTimeUtc, Path.GetExtension(file));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logging.Info($"cleanup target {target.Id} could not read file '{file}': {ex.Message}");
+            }
+        }
+
         if (tooNew > 0)
             logging.Info($"Cleanup: {tooNew} recent file(s) of '{target.Id}' are left out of the figure (younger than {target.MinFileAge}).");
 
@@ -436,6 +472,9 @@ public class CleanupService(LoggingService logging)
 
         var directories = ResolveDirectories(target, cancellationToken)
             .Where(d => IsTargetDirectorySafe(target, d))
+            // A folder with its own clean command is emptied by that command only (see
+            // RunDirectoryCleanCommandsAsync); the file deleter must never touch it, whatever the age rule says.
+            .Where(d => !target.CleanCommands.ContainsKey(d))
             // An AppCacheSweep row IS one whole directory (see BucketFor); deselecting it skips the
             // directory outright rather than needing a per-file check below.
             .Where(d => excludedEntries is null || !(isAppCacheSweep && excludedEntries.Contains(d)))
@@ -513,30 +552,7 @@ public class CleanupService(LoggingService logging)
                 try
                 {
                     BeforeFileDeleteForTest.Value?.Invoke(file);
-                    // The recycle bin path signals failure by return value, never an exception, so it needs
-                    // its own success check rather than sharing the catch below. Both routes first prove the
-                    // file still lies inside the locked root; a folder swapped for a junction since the
-                    // listing would otherwise send the delete elsewhere.
-                    VerifiedDelete.Outcome outcome;
-                    if (useRecycleBin)
-                    {
-                        outcome = VerifiedDelete.CheckFile(rootFinalPath!, file, out size, cutoff);
-                        if (outcome == VerifiedDelete.Outcome.Cleared)
-                        {
-                            outcome = RecycleBinDeleter.DeleteToRecycleBin(file, logging, cancellationToken)
-                                ? VerifiedDelete.Outcome.Deleted
-                                : VerifiedDelete.Outcome.Refused;
-
-                            // A cancelled wait reads as a refusal; the user asked to stop, not to be told
-                            // the file is protected.
-                            if (outcome == VerifiedDelete.Outcome.Refused)
-                                cancellationToken.ThrowIfCancellationRequested();
-                        }
-                    }
-                    else
-                    {
-                        outcome = VerifiedDelete.TryDeleteFile(rootFinalPath!, file, out size, cutoff);
-                    }
+                    var outcome = DeleteVerified(rootFinalPath!, file, useRecycleBin, cutoff, cancellationToken, out size);
 
                     if (outcome == VerifiedDelete.Outcome.Deleted)
                     {
@@ -642,6 +658,15 @@ public class CleanupService(LoggingService logging)
             }
         }
 
+        var fileTally = CleanNamedFiles(target, excludedEntries, useRecycleBin, cutoff, pause, cancellationToken);
+        freed += fileTally.Freed;
+        deleted += fileTally.Deleted;
+        skipped += fileTally.Skipped;
+        skippedBytes += fileTally.SkippedBytes;
+        protectedFiles += fileTally.Protected;
+        protectedBytes += fileTally.ProtectedBytes;
+        tooNew += fileTally.TooNew;
+
         if (tooNew > 0)
             logging.Info($"Cleanup: {tooNew} recent file(s) of '{target.Id}' were kept (younger than {target.MinFileAge}).");
 
@@ -650,6 +675,288 @@ public class CleanupService(LoggingService logging)
 
         return new CleanupOutcome(
             freed, deleted, skipped, skippedBytes, ProtectedFiles: protectedFiles, ProtectedBytes: protectedBytes);
+    }
+
+    /// <summary>
+    /// Deletes one file through the verified handle, or hands it to the recycle bin after the same check.
+    /// The recycle bin path signals failure by return value, never an exception, so it needs its own success
+    /// check rather than sharing the callers' catch. Both routes first prove the file still lies inside the
+    /// locked root; a folder swapped for a junction since the listing would otherwise send the delete elsewhere.
+    /// </summary>
+    private VerifiedDelete.Outcome DeleteVerified(
+        string rootFinalPath, string file, bool useRecycleBin, DateTime? cutoff, CancellationToken cancellationToken,
+        out long size)
+    {
+        if (!useRecycleBin)
+            return VerifiedDelete.TryDeleteFile(rootFinalPath, file, out size, cutoff);
+
+        var outcome = VerifiedDelete.CheckFile(rootFinalPath, file, out size, cutoff);
+        if (outcome == VerifiedDelete.Outcome.Cleared)
+        {
+            outcome = RecycleBinDeleter.DeleteToRecycleBin(file, logging, cancellationToken)
+                ? VerifiedDelete.Outcome.Deleted
+                : VerifiedDelete.Outcome.Refused;
+
+            // A cancelled wait reads as a refusal; the user asked to stop, not to be told
+            // the file is protected.
+            if (outcome == VerifiedDelete.Outcome.Refused)
+                cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        return outcome;
+    }
+
+    private readonly record struct FileTally(
+        long Freed, int Deleted, int Skipped, long SkippedBytes, int Protected, long ProtectedBytes, int TooNew);
+
+    /// <summary>
+    /// Deletes the single files a target names. Each one passes <see cref="CleanupSafety.IsSafeToDeleteFile"/>,
+    /// then its parent folder is locked so the delete can be proven to lie inside it, and the delete goes
+    /// through the same verified handle as every other file: a link, a swapped parent and a file younger than
+    /// the age rule are all left alone.
+    /// </summary>
+    private FileTally CleanNamedFiles(
+        CleanupTarget target, HashSet<string>? excludedEntries, bool useRecycleBin, DateTime? cutoff, PauseGate? pause,
+        CancellationToken cancellationToken)
+    {
+        long freed = 0, skippedBytes = 0, protectedBytes = 0;
+        int deleted = 0, skipped = 0, protectedFiles = 0, tooNew = 0;
+
+        foreach (var file in target.Files.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            pause?.Wait(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!CleanupSafety.IsSafeToDeleteFile(file, out var reason))
+            {
+                if (File.Exists(file))
+                    logging.Info($"cleanup target {target.Id} refused file: {reason} ('{file}')");
+                continue;
+            }
+
+            var parent = Path.GetDirectoryName(Path.GetFullPath(file));
+            if (parent is null || !CleanupSafety.IsDeletableFile(parent, file))
+                continue;
+
+            // The row of a single file is the file itself, so unticking it in the detail list leaves it be.
+            if (excludedEntries is not null && excludedEntries.Contains(file))
+                continue;
+
+            using var parentLock = CleanupSafety.TryLockForUse(parent);
+            string? rootFinalPath = null;
+            if (parentLock is null || (rootFinalPath = VerifiedDelete.FinalPathOf(parentLock)) is null)
+            {
+                logging.Warn($"Cleanup: '{parent}' could not be locked for use; '{file}' left alone.");
+                continue;
+            }
+
+            long size = 0;
+            try
+            {
+                BeforeFileDeleteForTest.Value?.Invoke(file);
+                var outcome = DeleteVerified(rootFinalPath, file, useRecycleBin, cutoff, cancellationToken, out size);
+                if (outcome == VerifiedDelete.Outcome.Deleted)
+                {
+                    freed += size;
+                    deleted++;
+                }
+                else if (outcome == VerifiedDelete.Outcome.Refused)
+                {
+                    logging.Warn($"Cleanup: '{file}' was not deleted (outside '{parent}' now, or refused); left alone.");
+                    skipped++;
+                    skippedBytes += size;
+                    protectedFiles++;
+                    protectedBytes += size;
+                }
+                else if (outcome == VerifiedDelete.Outcome.TooNew)
+                {
+                    tooNew++;
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                skipped++;
+                skippedBytes += size;
+                protectedFiles++;
+                protectedBytes += size;
+            }
+            catch (IOException)
+            {
+                skipped++;
+                skippedBytes += size;
+            }
+        }
+
+        return new FileTally(freed, deleted, skipped, skippedBytes, protectedFiles, protectedBytes, tooNew);
+    }
+
+    /// <summary>
+    /// Cleans a Directories target: the file deleter first (it leaves folders that have their own clean command
+    /// alone), then those commands. Only a Directories target can carry commands.
+    /// </summary>
+    private async Task<CleanupOutcome> CleanDirectoriesAsync(
+        CleanupTarget target, IProgress<CleanupProgress>? progress, CancellationToken cancellationToken,
+        PauseGate? pause, IReadOnlyCollection<string>? excludedEntryPaths, bool recycleInsteadOfDelete)
+    {
+        var outcome = CleanDirectories(target, progress, cancellationToken, pause, excludedEntryPaths, recycleInsteadOfDelete);
+        if (target.Kind != CleanupKind.Directories || target.CleanCommands.Count == 0)
+            return outcome;
+
+        var commands = await RunDirectoryCleanCommandsAsync(target, excludedEntryPaths, pause, cancellationToken);
+        return outcome with
+        {
+            FreedBytes = outcome.FreedBytes + commands.FreedBytes,
+            DeletedFiles = outcome.DeletedFiles + commands.DeletedFiles,
+            SkippedFiles = outcome.SkippedFiles + commands.SkippedFiles,
+            SkippedBytes = outcome.SkippedBytes + commands.SkippedBytes,
+        };
+    }
+
+    /// <summary>How the command-managed folders get their tool resolved; tests replace it.</summary>
+    internal Func<string, string?> TrustedToolResolver { get; set; } = ProcessRunner.ResolveTrusted;
+
+    /// <summary>How a folder's clean command is started; tests replace it so no real tool runs.</summary>
+    internal Func<string, IReadOnlyList<string>, TimeSpan, CancellationToken, Task<ProcessResult>> ToolRunner { get; set; } =
+        (exe, arguments, timeout, token) => ProcessRunner.RunAsync(exe, arguments, timeout, token);
+
+    /// <summary>The tool for a folder's clean command: the trusted lookup first, then the one fixed fallback
+    /// location, accepted only as a plain file reached through no link. Null when neither is usable.</summary>
+    private string? ResolveCleanTool(DirectoryCleanCommand command)
+    {
+        if (TrustedToolResolver(command.ToolName) is { } resolved)
+            return resolved;
+
+        if (command.FallbackPath is not { } fallback || !Path.IsPathFullyQualified(fallback))
+            return null;
+
+        try
+        {
+            var info = new FileInfo(fallback);
+            if (!info.Exists || info.LinkTarget is not null || (info.Attributes & FileAttributes.ReparsePoint) != 0
+                || info.Directory is null || CleanupSafety.AncestryLeadsThroughLink(info.Directory.FullName))
+            {
+                return null;
+            }
+
+            return info.FullName;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException
+                                       or NotSupportedException or PathTooLongException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Empties the folders that must go as a whole by running their tool. A folder is only handed to the tool
+    /// when every rule that protects the file deleter also holds: the folder passes the safety gate and is
+    /// reached through no link, no file in it is younger than the age rule (a tool using the cache right now),
+    /// the user left no detail row of it unticked (a whole-folder clean cannot honour that, so it does
+    /// nothing), the row is not an elevated one and this is not the elevated worker. Every folder that is not
+    /// cleaned counts as not freed. The tool is told the folder explicitly, so neither its own default nor an
+    /// environment variable can point it somewhere else.
+    /// </summary>
+    private async Task<CleanupOutcome> RunDirectoryCleanCommandsAsync(
+        CleanupTarget target, IReadOnlyCollection<string>? excludedEntryPaths, PauseGate? pause,
+        CancellationToken cancellationToken)
+    {
+        long freed = 0, skippedBytes = 0;
+        int deleted = 0, skipped = 0;
+        var cutoff = AgeCutoffUtc(target, DateTime.UtcNow);
+
+        foreach (var directory in target.Directories.Where(d => target.CleanCommands.ContainsKey(d)))
+        {
+            pause?.Wait(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!IsTargetDirectorySafe(target, directory))
+                continue;
+
+            var command = target.CleanCommands[directory];
+            var (beforeBytes, beforeFiles, youngFiles) = MeasureFolder(directory, cutoff, cancellationToken);
+            var notRun = await TryRunCleanCommandAsync(
+                target, directory, command, excludedEntryPaths, youngFiles, cancellationToken);
+
+            if (notRun is not null)
+            {
+                logging.Warn($"Cleanup: '{directory}' of '{target.Id}' was left as it is; {notRun}.");
+                skipped += beforeFiles;
+                skippedBytes += beforeBytes;
+                continue;
+            }
+
+            // What the folder holds now decides what was freed; a tool that said yes but left files behind
+            // does not get credit for them.
+            var (afterBytes, afterFiles, _) = MeasureFolder(directory, null, cancellationToken);
+            freed += Math.Max(0, beforeBytes - afterBytes);
+            deleted += Math.Max(0, beforeFiles - afterFiles);
+            skipped += afterFiles;
+            skippedBytes += afterBytes;
+        }
+
+        return new CleanupOutcome(freed, deleted, skipped, skippedBytes);
+    }
+
+    /// <summary>Runs one folder's clean command. Null when the tool ran and succeeded, otherwise the reason it
+    /// did not (for the log).</summary>
+    private async Task<string?> TryRunCleanCommandAsync(
+        CleanupTarget target, string directory, DirectoryCleanCommand command,
+        IReadOnlyCollection<string>? excludedEntryPaths, int youngFiles, CancellationToken cancellationToken)
+    {
+        if (target.NeedsElevation || ElevationService.IsElevatedWorkerProcess)
+            return "an elevated run never starts it";
+
+        if (excludedEntryPaths is not null && excludedEntryPaths.Any(e => IsExcluded(e, [directory])))
+            return "a row inside it is unticked and a whole-folder clean cannot keep it";
+
+        if (youngFiles > 0)
+            return $"{youngFiles} file(s) in it are younger than {target.MinFileAge}";
+
+        // Released at once: the tool may remove the folder itself, which a held lock would forbid.
+        using (var probe = CleanupSafety.TryLockForUse(directory))
+        {
+            if (probe is null)
+                return "it could not be locked for use";
+        }
+
+        if (ResolveCleanTool(command) is not { } tool)
+            return $"{command.ToolName} was not found";
+
+        var arguments = command.Arguments
+            .Select(argument => argument == DirectoryCleanCommand.FolderToken ? directory : argument)
+            .ToList();
+        try
+        {
+            var result = await ToolRunner(tool, arguments, command.Timeout, cancellationToken);
+            if (result.TimedOut)
+                return $"{command.Label} ran past {command.Timeout.TotalSeconds:0} s and was stopped";
+
+            return result.ExitCode != 0 ? $"{command.Label} ended with exit code {result.ExitCode}" : null;
+        }
+        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception
+                                       or InvalidOperationException or UnauthorizedAccessException)
+        {
+            return $"{command.Label} could not be started: {ex.Message}";
+        }
+    }
+
+    /// <summary>Size and count of every file below a folder, links not followed, plus how many of them lie
+    /// inside the age window (<paramref name="cutoffUtc"/> null counts none).</summary>
+    private (long Bytes, int Files, int Young) MeasureFolder(
+        string directory, DateTime? cutoffUtc, CancellationToken cancellationToken)
+    {
+        long bytes = 0;
+        var files = 0;
+        var young = 0;
+        foreach (var found in EnumerateFileDetails(directory, [], cancellationToken))
+        {
+            bytes += found.Length;
+            files++;
+            if (cutoffUtc is { } limit && IsTooNew(found.CreationUtc, found.LastWriteUtc, limit))
+                young++;
+        }
+
+        return (bytes, files, young);
     }
 
     /// <summary>
