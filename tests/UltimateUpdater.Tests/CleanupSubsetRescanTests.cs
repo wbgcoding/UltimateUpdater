@@ -166,7 +166,7 @@ public class CleanupSubsetRescanTests
         Assert.NotEqual(totalBefore, vm.TotalBytes);
         Assert.Equal(othersTotal + StepService.BytesFor(1), vm.TotalBytes);
         Assert.Equal(
-            vm.Items.Where(i => i.IsSelected).Sum(i => i.SelectedEntryBytes),
+            vm.Items.Where(i => i.IsSelected && !vm.WillSkipForMissingAdmin(i)).Sum(i => i.SelectedEntryBytes),
             vm.SelectedBytes);
         Assert.True(vm.SelectedBytes >= StepService.BytesFor(1));
         Assert.All(vm.Items, i => Assert.Equal(ticks[i], i.IsSelected));

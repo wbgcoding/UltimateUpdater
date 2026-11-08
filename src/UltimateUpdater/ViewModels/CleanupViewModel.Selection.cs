@@ -179,8 +179,10 @@ public partial class CleanupViewModel
         }
     }
 
-    /// <summary>What the ticked targets would free.</summary>
-    public long SelectedBytes => Items.Where(i => i.IsSelected).Sum(i => i.SelectedEntryBytes);
+    /// <summary>What the ticked targets would really free right now. A row an unelevated run skips for
+    /// missing admin rights frees nothing, so it adds nothing here, the same as in the group headers and
+    /// the confirmation.</summary>
+    public long SelectedBytes => Items.Where(CountsAsSelected).Sum(i => i.SelectedEntryBytes);
 
     /// <summary>What the scan found in every target together: the ring's 100 %. Independent of the detail
     /// ticks.</summary>
@@ -196,16 +198,15 @@ public partial class CleanupViewModel
     internal bool WillSkipForMissingAdmin(CleanupItemViewModel item) =>
         CleanupService.SkipsWithoutAdmin(item.Target, ElevationService.IsElevated || _elevated is { IsRunning: true });
 
-    /// <summary>What the ticked rows would really free right now: <see cref="SelectedBytes"/> without the
-    /// rows an unelevated run skips for missing admin rights.</summary>
-    internal long ConfirmedBytes =>
-        Items.Where(i => i.IsSelected && !WillSkipForMissingAdmin(i)).Sum(i => i.SelectedEntryBytes);
+    /// <summary>Ticked, and a run started now would really clean it: what every selection figure of the
+    /// window counts (size, area count, files, ring, top areas).</summary>
+    private bool CountsAsSelected(CleanupItemViewModel item) => item.IsSelected && !WillSkipForMissingAdmin(item);
 
     // ---- the facts either side of the ring, so the top of the dialog is not empty space ----
 
     /// <summary>"3 of 10 areas": how much of the list is actually going to be touched.</summary>
     public string SelectedCountText =>
-        string.Format(Loc[Items.Count == 1 ? "CleanupSelectedCountOne" : "CleanupSelectedCount"], Items.Count(i => i.IsSelected), Items.Count);
+        string.Format(Loc[Items.Count == 1 ? "CleanupSelectedCountOne" : "CleanupSelectedCount"], Items.Count(CountsAsSelected), Items.Count);
 
     /// <summary>"1,2 GB / 3,4 GB selected": what the ticks would free against everything the scan found.</summary>
     public string SelectedOfFoundText =>
@@ -216,7 +217,7 @@ public partial class CleanupViewModel
     {
         get
         {
-            var files = Items.Where(i => i.IsSelected).Sum(i => i.SelectedEntryFiles);
+            var files = Items.Where(CountsAsSelected).Sum(i => i.SelectedEntryFiles);
             return string.Format(Loc[files == 1 ? "CleanupFileCountOne" : "CleanupFileCount"], files);
         }
     }
@@ -232,7 +233,7 @@ public partial class CleanupViewModel
     {
         get
         {
-            var top = Items.Where(i => i.IsSelected && i.Bytes > 0)
+            var top = Items.Where(i => CountsAsSelected(i) && i.Bytes > 0)
                 .OrderByDescending(i => i.Bytes)
                 .Take(3)
                 .ToList();
@@ -357,8 +358,8 @@ public partial class CleanupViewModel
             });
 
         return recycle
-            ? (string.Format(Loc["CleanupConfirmHeadlineRecycle"], ByteSize.Format(ConfirmedBytes)), Loc["CleanupConfirmWarningRecycle"])
-            : (string.Format(Loc["CleanupConfirmHeadline"], ByteSize.Format(ConfirmedBytes)), Loc["CleanupConfirmWarning"]);
+            ? (string.Format(Loc["CleanupConfirmHeadlineRecycle"], ByteSize.Format(SelectedBytes)), Loc["CleanupConfirmWarningRecycle"])
+            : (string.Format(Loc["CleanupConfirmHeadline"], ByteSize.Format(SelectedBytes)), Loc["CleanupConfirmWarning"]);
     }
 
     /// <summary>
@@ -396,7 +397,7 @@ public partial class CleanupViewModel
             lines.Add(string.Empty);
         }
 
-        lines.Add(string.Format(Loc["CleanupConfirmTotal"], ByteSize.Format(ConfirmedBytes)));
+        lines.Add(string.Format(Loc["CleanupConfirmTotal"], ByteSize.Format(SelectedBytes)));
         return string.Join(Environment.NewLine, lines);
     }
 }

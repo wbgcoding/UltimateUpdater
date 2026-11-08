@@ -163,7 +163,35 @@ public partial class CleanupViewModelTests
         Assert.DoesNotContain(ByteSize.Format(updates.Bytes), detail);
         Assert.DoesNotContain(ByteSize.Format(updates.Bytes), headline);
         Assert.Contains(ByteSize.Format(temp.Bytes), headline);
-        Assert.Equal(temp.Bytes, viewModel.ConfirmedBytes);
+        Assert.Equal(temp.Bytes, viewModel.SelectedBytes);
+    }
+
+    [Fact]
+    public void The_window_figures_leave_out_an_admin_only_area_without_admin()
+    {
+        ElevationService.IsElevatedForTest.Value = false;
+        LocalizationService.Instance.Apply("en");
+        var viewModel = Create(CreateSettings());
+        var updates = viewModel.Items.First(i => i.Target.Id == "windows-update-cache");
+        var temp = RecyclableFileTarget(viewModel);
+        updates.Bytes = 6L * 1024 * 1024 * 1024;
+        updates.Files = 40;
+        temp.Bytes = 2L * 1024 * 1024 * 1024;
+        temp.Files = 3;
+        SelectOnly(viewModel, updates, temp);
+
+        Assert.Equal(temp.Bytes, viewModel.SelectedBytes);
+        Assert.Equal(
+            string.Format(LocalizationService.Instance["CleanupSelectedCount"], 1, viewModel.Items.Count),
+            viewModel.SelectedCountText);
+        Assert.Equal(string.Format(LocalizationService.Instance["CleanupFileCount"], 3), viewModel.FileCountText);
+        Assert.Equal(Math.Clamp(temp.Bytes * 100.0 / viewModel.TotalBytes, 2, 100), viewModel.RingPercent);
+        Assert.DoesNotContain(viewModel.TopAreas, a => a.Title == updates.Title);
+
+        SelectOnly(viewModel, updates);
+
+        Assert.Equal(0, viewModel.SelectedBytes);
+        Assert.Equal(0, viewModel.RingPercent);
     }
 
     [Fact]
@@ -180,7 +208,10 @@ public partial class CleanupViewModelTests
         updates.Bytes = 5L * 1024 * 1024 * 1024;
         SelectOnly(viewModel, updates);
 
-        Assert.Equal(updates.Bytes, viewModel.ConfirmedBytes);
+        Assert.Equal(updates.Bytes, viewModel.SelectedBytes);
+        Assert.Equal(
+            string.Format(LocalizationService.Instance["CleanupSelectedCount"], 1, viewModel.Items.Count),
+            viewModel.SelectedCountText);
         Assert.Contains($"{updates.Title}: {ByteSize.Format(updates.Bytes)}", viewModel.BuildConfirmationDetail());
     }
 }

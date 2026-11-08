@@ -78,6 +78,8 @@ public partial class CleanupViewModel
 
         foreach (var group in Groups)
             group.RefreshAdminDependentTotals();
+
+        RefreshTotals();
     }
 
     /// <summary>Which targets this run hands to the elevated helper, none when there is no helper. Reads
