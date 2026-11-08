@@ -530,26 +530,29 @@ public partial class MainViewModel
         var visible = VisibleRows.ToList();
         var installable = visible.Where(u => u.CanInstall).ToList();
         var selected = visible.Where(u => u.IsSelected).ToList();
-        var selectedInstallableCount = installable.Count(u => u.IsSelected);
+        var selectedInstallable = installable.Where(u => u.IsSelected).ToList();
+        var selectedInstallableCount = selectedInstallable.Count;
 
         _hasSelection = selected.Count > 0;
-        _canInstallSelected = _hasSelection;
+        // A ticked row that cannot install (a failed uninstall, a row mid-run) must not keep the button on:
+        // it would queue nothing, or reinstall what the user just removed.
+        _canInstallSelected = selectedInstallableCount > 0;
         _areAllVisibleSelected = installable.Count > 0 && selectedInstallableCount == installable.Count;
         _allVisibleSelected = installable.Count == 0
             ? false
             : selectedInstallableCount == 0 ? false : selectedInstallableCount == installable.Count ? true : null;
-        if (selected.Count == 0)
+        if (selectedInstallableCount == 0)
             _selectionSummary = string.Empty;
         else
         {
-            var criticalCount = selected.Count(u => u.IsCritical);
+            var criticalCount = selectedInstallable.Count(u => u.IsCritical);
             var baseText = criticalCount > 0
-                ? string.Format(Loc["SelectionSummaryWithCritical"], selected.Count, criticalCount)
-                : string.Format(Loc["SelectionSummary"], selected.Count);
+                ? string.Format(Loc["SelectionSummaryWithCritical"], selectedInstallableCount, criticalCount)
+                : string.Format(Loc["SelectionSummary"], selectedInstallableCount);
 
             // Pre-install preview: the combined download size of the selection, as it becomes known
             // (enrichment fills sizes in after the scan). Shown only once there is a real total.
-            var totalBytes = selected.Sum(u => u.DownloadSizeBytes ?? 0L);
+            var totalBytes = selectedInstallable.Sum(u => u.DownloadSizeBytes ?? 0L);
             _selectionSummary = totalBytes > 0
                 ? baseText + string.Format(Loc["SelectionSummarySizeSuffix"], ByteSize.Format(totalBytes))
                 : baseText;
