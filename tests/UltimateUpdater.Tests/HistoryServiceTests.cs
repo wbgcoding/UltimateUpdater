@@ -359,6 +359,31 @@ public class HistoryServiceTests : IDisposable
         Assert.DoesNotContain(index.Values, e => e.ItemId == "other");
     }
 
+    /// <summary>After rolling 2.0 back to 1.0 the rollback entry must not become the newest candidate (it
+    /// would offer "back to 2.0"), and an install that left the version unchanged moved nothing.</summary>
+    [Fact]
+    public void Rollback_and_version_unchanged_entries_are_never_rollback_candidates()
+    {
+        var path = Path.Combine(_tempDir, "history.jsonl");
+        var service = new HistoryService(new LoggingService(), path);
+        var now = DateTimeOffset.UtcNow;
+
+        service.Append(InstallEntry(now.AddMinutes(-30), "pkg", "1.0", "2.0"));
+        var rollback = InstallEntry(now.AddMinutes(-20), "pkg", "2.0", "1.0");
+        rollback.IsRollback = true;
+        service.Append(rollback);
+        var unchanged = InstallEntry(now.AddMinutes(-10), "pkg", "1.0", "2.0");
+        unchanged.VersionUnchanged = true;
+        service.Append(unchanged);
+
+        var entry = Assert.Single(service.LastSuccessfulInstallByItem().Values);
+
+        Assert.Equal("1.0", entry.FromVersion);
+        Assert.Equal("2.0", entry.ToVersion);
+        Assert.False(entry.IsRollback);
+        Assert.False(entry.VersionUnchanged);
+    }
+
     /// <summary>The whole point: a caller asking twice with nothing in between must not re-read and
     /// re-deserialise the file a second time.</summary>
     [Fact]

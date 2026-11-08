@@ -358,9 +358,12 @@ public partial class MainViewModel
     /// </summary>
     private void ApplyDowngradeState(UpdateRowViewModel row, IReadOnlyDictionary<string, HistoryEntry> lastSuccessfulInstalls)
     {
+        // A target equal to what is installed now (the package was already rolled back, or reinstalled at
+        // that version) would offer a no-op.
         row.DowngradeTargetVersion =
             SourceFor(row.Item)?.SupportsVersionPinning == true
             && lastSuccessfulInstalls.TryGetValue(PackageKey(row.Item), out var entry)
+            && !string.Equals(entry.FromVersion, row.Item.InstalledVersion, StringComparison.OrdinalIgnoreCase)
                 ? entry.FromVersion
                 : null;
 

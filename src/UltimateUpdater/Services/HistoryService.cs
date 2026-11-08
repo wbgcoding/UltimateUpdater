@@ -265,9 +265,13 @@ public sealed class HistoryService
 
     private static string RollbackKey(HistoryEntry entry) => $"{entry.SourceId}:{entry.ItemId}";
 
+    /// <summary>A rollback entry is not an install to go back from (it would offer the version just left),
+    /// and an install that left the version unchanged moved nothing, so its from-version is the one already
+    /// installed.</summary>
     private static bool QualifiesForRollback(HistoryEntry entry) =>
         entry.Action == "install" && entry.Success && !entry.IsManualHandoff
-        && !entry.IsNotApplicable && !entry.IsCancelled && !string.IsNullOrEmpty(entry.FromVersion);
+        && !entry.IsNotApplicable && !entry.IsCancelled && !entry.IsRollback && !entry.VersionUnchanged
+        && !string.IsNullOrEmpty(entry.FromVersion);
 
     /// <summary>The history file rotates at 5 MB, so one unbounded detail could push real history out;
     /// same cap the main table's own error output is held to. Redacted the same way the log itself is.</summary>
