@@ -495,9 +495,12 @@ public static class PackageMetadataParsers
     /// the newest published version, its last-update time, and (when the response happens to carry one,
     /// the Marketplace does not reliably expose a package size per asset) a download size. The project
     /// link is read from the extension's own "properties" bag (Marketplace convention for repository /
-    /// getting-started links), where one links out.
+    /// getting-started links), where one links out. With <paramref name="installedEngine"/> (the installed
+    /// VS Code version) a version whose `Microsoft.VisualStudio.Code.Engine` range that VS Code does not
+    /// satisfy is skipped, because `code --install-extension` installs the newest COMPATIBLE one instead and
+    /// the row would come back after every scan; null keeps every version in play.
     /// </summary>
-    public static UpdateEnrichment ParseVsMarketplaceExtension(string json)
+    public static UpdateEnrichment ParseVsMarketplaceExtension(string json, Version? installedEngine = null)
     {
         if (!JsonElementHelpers.TryParseJson(json, out var document) || document is null)
             return default;
@@ -514,12 +517,15 @@ public static class PackageMetadataParsers
             // The list carries pre-releases too (newest first), but `code --install-extension --force`
             // installs the newest STABLE version, so a pre-release here would be offered on every scan and
             // never go away. Only when every listed version is a pre-release is the first one used.
-            var latest = versions.EnumerateArray()
-                .FirstOrDefault(v => v.ValueKind == JsonValueKind.Object && !IsVsMarketplacePreRelease(v));
-            if (latest.ValueKind != JsonValueKind.Object)
-                latest = versions[0];
-            if (latest.ValueKind != JsonValueKind.Object)
+            var candidates = versions.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.Object).ToList();
+            var stable = candidates.Where(v => !IsVsMarketplacePreRelease(v)).ToList();
+            var pool = stable.Count > 0 ? stable : candidates;
+            if (installedEngine is not null)
+                pool = pool.Where(v => VsMarketplaceEngineAccepts(v, installedEngine)).ToList();
+            if (pool.Count == 0)
                 return default;
+
+            var latest = pool[0];
 
             var version = latest.TryGetProperty("version", out var versionProperty) &&
                           versionProperty.ValueKind == JsonValueKind.String
@@ -560,6 +566,46 @@ public static class PackageMetadataParsers
             && key.GetString() == "Microsoft.VisualStudio.Code.PreRelease"
             && property.TryGetProperty("value", out var value) && value.ValueKind == JsonValueKind.String
             && string.Equals(value.GetString(), "true", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>True when the version publishes no engine range, an unreadable one, or one the installed VS Code
+    /// meets. Fails open: an odd range must not hide an extension update.</summary>
+    private static bool VsMarketplaceEngineAccepts(JsonElement version, Version installedEngine)
+    {
+        if (!version.TryGetProperty("properties", out var properties) || properties.ValueKind != JsonValueKind.Array)
+            return true;
+
+        foreach (var property in properties.EnumerateArray())
+        {
+            if (property.ValueKind == JsonValueKind.Object
+                && property.TryGetProperty("key", out var key) && key.ValueKind == JsonValueKind.String
+                && key.GetString() == "Microsoft.VisualStudio.Code.Engine"
+                && property.TryGetProperty("value", out var value) && value.ValueKind == JsonValueKind.String)
+            {
+                return EngineRangeAccepts(value.GetString(), installedEngine);
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>The `^1.95.0` and `&gt;=1.95.0` forms (also `~`, `&gt;`, a bare version, and `1.95.x`): the installed
+    /// version must be at least the stated one. Anything else, `*` included, accepts.</summary>
+    internal static bool EngineRangeAccepts(string? range, Version installedEngine)
+    {
+        var text = (range ?? string.Empty).Trim().TrimStart('^', '~', '>', '=', 'v', ' ');
+        var dash = text.IndexOfAny(['-', '+', ' ']);
+        if (dash >= 0)
+            text = text[..dash];
+
+        var parts = text.Split('.').Select(part => part is "x" or "X" or "*" ? "0" : part).ToArray();
+        if (parts.Length is < 1 or > 3 || parts.Any(part => !int.TryParse(part, out _)))
+            return true;
+
+        var required = new Version(
+            int.Parse(parts[0]), parts.Length > 1 ? int.Parse(parts[1]) : 0, parts.Length > 2 ? int.Parse(parts[2]) : 0);
+        var installed = new Version(installedEngine.Major, Math.Max(installedEngine.Minor, 0), Math.Max(installedEngine.Build, 0));
+        return installed >= required;
+    }
 
     private static string? VsMarketplaceProjectUrl(JsonElement element)
     {
