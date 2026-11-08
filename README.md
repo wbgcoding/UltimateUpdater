@@ -241,4 +241,4 @@ under CC0 (see [`NOTICE-brand-icons.md`](NOTICE-brand-icons.md)); bundled librar
 
 [MIT](LICENSE) © 2026 BGCoding
 
-Made with Claude.
+<p align="right">© 2026 BGCoding · Made with Claude</p>
