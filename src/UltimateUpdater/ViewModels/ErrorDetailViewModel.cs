@@ -59,6 +59,18 @@ public partial class ErrorDetailViewModel : ObservableObject
     /// </summary>
     public bool CanRetryInteractive { get; }
 
+    /// <summary>
+    /// The reinstall the row offers for winget's different-install-technology refusal; null for every
+    /// other failure, which hides the button. The window only forwards the click: the row's own command
+    /// runs the whole confirmed flow, so the window and the row's context menu share one path.
+    /// </summary>
+    private readonly Action? _reinstall;
+
+    public bool ShowReinstallButton => _reinstall is not null;
+
+    [RelayCommand]
+    private void Reinstall() => _reinstall?.Invoke();
+
     public string WindowTitle => $"{Name}: {Loc["ErrorDetailTitle"]}";
 
     /// <summary>Where the log files are, shown so the button below is not a leap of faith: same property
@@ -118,7 +130,7 @@ public partial class ErrorDetailViewModel : ObservableObject
     public ErrorDetailViewModel(
         string name, string sourceDisplay, string? versionChange, string detail, LoggingService logging,
         string? explanation = null, bool canRetryInteractive = false,
-        string? detailSourceKey = null)
+        string? detailSourceKey = null, Action? reinstall = null)
     {
         Name = name;
         SourceDisplay = sourceDisplay;
@@ -126,6 +138,7 @@ public partial class ErrorDetailViewModel : ObservableObject
         Detail = detail;
         Explanation = explanation;
         CanRetryInteractive = canRetryInteractive;
+        _reinstall = reinstall;
         _logging = logging;
         FolderOpener = folder => UriLauncher.OpenFolderDetached(folder, "log folder", _logging);
         DetailSourceKey = detailSourceKey;

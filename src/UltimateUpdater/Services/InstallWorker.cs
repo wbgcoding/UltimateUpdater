@@ -88,6 +88,17 @@ public static class InstallWorker
             return true;
         }
 
+        // A fresh install removes nothing itself but is only ever the second half of a reinstall the user
+        // confirmed for ONE package: a job of several, or one naming another source than winget, is not
+        // something the app ever sends, so it is refused whole before anything runs with admin rights.
+        if (job.Action == InstallAction.FreshInstall
+            && (job.Items.Count != 1 || !string.Equals(job.Items[0]?.SourceId, "winget", StringComparison.Ordinal)))
+        {
+            logging.Error($"Elevated worker: rejecting a fresh install of {job.Items.Count} item(s); exactly one winget package is allowed.");
+            Send(writer, jobId, new InstallProgressMessage { Type = "done" });
+            return true;
+        }
+
         if (job.Items.Count > MaxItems)
         {
             logging.Error($"Elevated worker: rejecting job with {job.Items.Count} items (limit {MaxItems}).");
@@ -374,6 +385,18 @@ public static class InstallWorker
             return;
         }
 
+        // The scope lands on a winget command line: only the machine scope (or none) is ever sent here. The
+        // user scope runs in the app's own process, an elevated copy of it would be the wrong account.
+        if (jobItem.Scope is not null
+            && (job.Action != InstallAction.FreshInstall || jobItem.Scope != InstallScopes.Machine))
+        {
+            logging.Error($"Elevated worker: rejecting item '{jobItem.ItemId}', the scope '{jobItem.Scope}' is not allowed for this job.");
+            if (!Send(writer, jobId, Result(jobItem.SourceId, jobItem.ItemId, false, "Rejected: the install scope is not allowed.")))
+                MarkLostApp(state);
+
+            return;
+        }
+
         var source = state.Sources.FirstOrDefault(s => s.Id == jobItem.SourceId);
         if (source is null)
         {
@@ -394,6 +417,7 @@ public static class InstallWorker
             // A rollback's exact target version, so the source can honour it the same way it
             // would in-process (WingetSource.InstallAsync).
             PinnedVersion = jobItem.PinnedVersion,
+            InstallScope = InstallScopes.Normalize(jobItem.Scope),
         };
 
         // NOT System.Progress<T>: it posts its callback to the captured
@@ -422,6 +446,13 @@ public static class InstallWorker
         {
             if (job.Action == InstallAction.Uninstall)
                 await source.UninstallAsync(item, progress, cancellationToken);
+            else if (job.Action == InstallAction.FreshInstall)
+            {
+                // Fails closed: a source without the capability never falls back to a normal install.
+                if (source is not IFreshInstallSource fresh)
+                    throw new InvalidOperationException($"Source '{item.SourceId}' does not support a fresh install.");
+                await fresh.FreshInstallAsync(item, progress, cancellationToken);
+            }
             else
                 await source.InstallAsync(item, progress, cancellationToken);
 

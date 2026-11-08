@@ -2326,4 +2326,22 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>仍被虚拟环境使用 ({0})</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>重新安装</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>卸载旧版本，并通过 winget 安装新版本。</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>要重新安装 {0} 吗？</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>已安装的版本会被卸载，并通过 winget 安装新版本。之后 {0} 就能再次正常更新。程序的设置通常会保留。</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>目前无法获取新版本。未做任何更改。</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>已卸载，但新的安装失败。请使用“重试”再试一次。</value>
+  </data>
 </root>

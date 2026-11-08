@@ -47,6 +47,35 @@ public sealed class UpdateItem
     /// </summary>
     public string? PinnedVersion { get; init; }
 
+    /// <summary>
+    /// Only for a reinstall's fresh install: the scope the program had before it was removed, "user" or
+    /// "machine" (<see cref="InstallScopes"/>), so the new copy lands where the old one was. Null = not
+    /// known, and the install then names no scope at all.
+    /// </summary>
+    public string? InstallScope { get; init; }
+
+    /// <summary>A copy of this item carrying <paramref name="scope"/> (see <see cref="InstallScope"/>); an
+    /// unrecognised value becomes null.</summary>
+    public UpdateItem WithInstallScope(string? scope) => new()
+    {
+        Id = Id,
+        SourceId = SourceId,
+        Category = Category,
+        Name = Name,
+        InstalledVersion = InstalledVersion,
+        AvailableVersion = AvailableVersion,
+        IsCritical = IsCritical,
+        Tier = Tier,
+        OpenTarget = OpenTarget,
+        Children = Children,
+        Meta = Meta,
+        DownloadSize = DownloadSize,
+        PublishDate = PublishDate,
+        PinnedVersion = PinnedVersion,
+        IsRollback = IsRollback,
+        InstallScope = InstallScopes.Normalize(scope),
+    };
+
     /// <summary>This run is a deliberate downgrade, so the history entry it produces records
     /// itself as a rollback rather than an ordinary update.</summary>
     public bool IsRollback { get; init; }

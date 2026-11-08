@@ -706,6 +706,18 @@ public partial class MainViewModel
         if (RefusedWhileSelfUpdateApplies("Uninstall"))
             return;
 
+        await RunSingleRowActionAsync(row, InstallAction.Uninstall);
+    }
+
+    /// <summary>
+    /// The run itself, after the caller confirmed and checked its gates: one row through the install queue as
+    /// <paramref name="action"/> (Uninstall or FreshInstall), as a side run when another activity is going.
+    /// The row's own state carries the outcome. Shared so the reinstall flow can confirm ONCE and still run
+    /// its removal and its install through exactly the paths the single actions use.
+    /// </summary>
+    private async Task RunSingleRowActionAsync(UpdateRowViewModel row, InstallAction action, UpdateItem? runItem = null)
+    {
+        var uninstall = action == InstallAction.Uninstall;
         var side = _installActivityRunning;
         CancellationTokenSource? sideCts = null;
         CancellationToken token;
@@ -720,7 +732,7 @@ public partial class MainViewModel
                 InstallBatch.Add(row);
             row.BeginInstall();
             // so the finished row reads "Uninstalled" in red rather than a green "done"
-            row.WasUninstalled = true;
+            row.WasUninstalled = uninstall;
             RefreshInstallProgress();
         }
         else
@@ -733,16 +745,17 @@ public partial class MainViewModel
             IsInstalling = true;
 
             row.BeginInstall();
-            row.WasUninstalled = true;
+            row.WasUninstalled = uninstall;
             StartInstallProgress([row]);
         }
 
         var key = PackageKey(row.Item);
-        _uninstallingKeys.Add(key);
+        if (uninstall)
+            _uninstallingKeys.Add(key);
 
         try
         {
-            await _installQueue.RunAsync([row.Item], token, InstallAction.Uninstall);
+            await _installQueue.RunAsync([runItem ?? row.Item], token, action);
         }
         catch (OperationCanceledException)
         {
@@ -755,20 +768,182 @@ public partial class MainViewModel
             // normally reports failure through ReportInstallStatus, but an exception that escapes it
             // entirely (rather than a reported failed status) never reaches the row at all unless this
             // catch tells it too.
-            _logging.Error("Uninstall failed", ex);
+            _logging.Error($"{action} failed", ex);
             // InstallQueue.RunAsync's own finally/FailRemaining usually already gave the row a real
             // terminal status (Failed/Succeeded/NeedsManualWork) before this exception ever reached us.
             // Only fall back to Idle if nothing did, else this would overwrite a correct result.
             if (row.InstallState is RowInstallState.Queued or RowInstallState.Running)
-                row.MarkNotInstalled(Loc["UninstallFailed"]);
+                row.MarkNotInstalled(Loc[uninstall ? "UninstallFailed" : "InstallFailed"]);
         }
         finally
         {
-            _uninstallingKeys.Remove(key);
+            if (uninstall)
+                _uninstallingKeys.Remove(key);
             if (sideCts is not null)
                 EndSideUninstall(sideCts);
             else if (EndInstallActivity())
                 HandOffPendingInstalls();
+        }
+    }
+
+    /// <summary>Test seam (null in production): answers the reinstall confirmation.</summary>
+    internal Func<bool>? ReinstallConfirmOverride { get; set; }
+
+    /// <summary>Packages whose reinstall is between its confirmation and its end. Their row is the only
+    /// way back to the program once the old version is gone, so a scan neither drops nor replaces it
+    /// (<see cref="HeldByReinstall"/>).</summary>
+    private readonly HashSet<string> _reinstallingKeys = new(StringComparer.Ordinal);
+
+    /// <summary>A row a scan must leave alone: a reinstall is running on it, or its old version is removed
+    /// and only the install is left (the row carries that install's retry).</summary>
+    private bool HeldByReinstall(UpdateRowViewModel row) =>
+        row.PendingFreshInstall || _reinstallingKeys.Contains(PackageKey(row.Item));
+
+    void IRowActions.Reinstall(UpdateRowViewModel row) => _ = Background.Run(ReinstallRowAsync(row), _logging, "reinstall");
+
+    void IRowActions.RetryFreshInstall(UpdateRowViewModel row) => _ = Background.Run(RetryFreshInstallAsync(row), _logging, "retry fresh install");
+
+    /// <summary>
+    /// Remove the old version and install the new one, for winget's different-install-technology refusal.
+    /// In order, each step only after the one before succeeded:
+    /// 1. the source must be able to fetch the new version (<see cref="IFreshInstallSource.CanFetchAsync"/>),
+    ///    else nothing is touched;
+    /// 2. the user confirms, once, with the package named;
+    /// 3. the removal runs through the same path as the row's own uninstall;
+    /// 4. the fresh install (<see cref="InstallAction.FreshInstall"/>), through the same queue, into the scope
+    ///    the program had (read before the removal; unknown = no scope named), so a package that lives in the
+    ///    user scope is reinstalled there, in this process, and a machine-wide one machine-wide.
+    /// A failure of step 3 leaves the row flagged <see cref="UpdateRowViewModel.ReinstallRemovalFailed"/>, so its
+    /// retry runs this whole flow again.
+    /// A failure of step 4 leaves the row flagged <see cref="UpdateRowViewModel.PendingFreshInstall"/>, so its
+    /// retry repeats step 4 only (<see cref="RetryFreshInstallAsync"/>).
+    /// </summary>
+    internal async Task ReinstallRowAsync(UpdateRowViewModel row)
+    {
+        // Every gate is enforced here, not only by the menu entry being hidden.
+        if (!(row.ShowReinstallButton || row.ReinstallRemovalFailed) || SourceFor(row.Item) is not IFreshInstallSource source)
+            return;
+
+        if (UninstallBlockedForRow(row))
+        {
+            Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
+            return;
+        }
+
+        _logging.Info($"Reinstall of '{row.Item.Id}': checking that the new version can be fetched.");
+        bool fetchable;
+        try
+        {
+            fetchable = await source.CanFetchAsync(row.Item, CancellationToken.None);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            _logging.Warn($"Reinstall of '{row.Item.Id}': the lookup failed: {ex.Message}");
+            fetchable = false;
+        }
+
+        if (!fetchable)
+        {
+            _logging.Warn($"Reinstall of '{row.Item.Id}': the new version cannot be fetched; nothing was changed.");
+            Dialogs.Warn(Loc["ReinstallUnavailable"]);
+            return;
+        }
+
+        var confirmed = ReinstallConfirmOverride?.Invoke() ?? Dialogs.Confirm(
+            string.Format(Loc["ReinstallConfirmTitle"], row.Name),
+            string.Format(Loc["ReinstallConfirmBody"], row.Name),
+            confirmText: Loc["ReinstallButton"],
+            destructive: true);
+        if (!confirmed)
+        {
+            _logging.Info($"Reinstall of '{row.Item.Id}': declined; nothing was changed.");
+            return;
+        }
+
+        // The confirm dialog pumps messages: the row can have been queued or changed meanwhile.
+        if (!(row.ShowReinstallButton || row.ReinstallRemovalFailed) || UninstallBlockedForRow(row))
+        {
+            Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
+            return;
+        }
+
+        if (RefusedWhileSelfUpdateApplies("Reinstall"))
+            return;
+
+        var key = PackageKey(row.Item);
+        _reinstallingKeys.Add(key);
+        try
+        {
+            // Before the removal: afterwards there is nothing left to read the scope from.
+            row.PendingFreshInstallScope = await ReadInstalledScopeAsync(row, source);
+            _logging.Info($"Reinstall of '{row.Item.Id}': removing the old version.");
+            await RunSingleRowActionAsync(row, InstallAction.Uninstall);
+            if (row.InstallState != RowInstallState.Succeeded)
+            {
+                // The row carries the failed removal; its Retry reruns the whole reinstall, because a bare
+                // removal that succeeded would leave the program gone with nothing installed.
+                row.ReinstallRemovalFailed = true;
+                _logging.Warn($"Reinstall of '{row.Item.Id}': the removal did not finish; the new version was not installed.");
+                return;
+            }
+
+            row.PendingFreshInstall = true;
+            await RunFreshInstallAsync(row);
+        }
+        finally
+        {
+            _reinstallingKeys.Remove(key);
+        }
+    }
+
+    private async Task<string?> ReadInstalledScopeAsync(UpdateRowViewModel row, IFreshInstallSource source)
+    {
+        string? scope;
+        try
+        {
+            scope = InstallScopes.Normalize(await source.GetInstalledScopeAsync(row.Item, CancellationToken.None));
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            _logging.Warn($"Reinstall of '{row.Item.Id}': the install scope could not be read: {ex.Message}");
+            scope = null;
+        }
+
+        _logging.Info($"Reinstall of '{row.Item.Id}': installed scope {scope ?? "unknown (none will be named)"}.");
+        return scope;
+    }
+
+    /// <summary>The row's retry after a reinstall already removed the old version: the install alone.</summary>
+    internal async Task RetryFreshInstallAsync(UpdateRowViewModel row)
+    {
+        if (!row.PendingFreshInstall || SourceFor(row.Item) is not IFreshInstallSource)
+            return;
+
+        if (UninstallBlockedForRow(row))
+        {
+            Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
+            return;
+        }
+
+        if (RefusedWhileSelfUpdateApplies("Reinstall"))
+            return;
+
+        await RunFreshInstallAsync(row);
+    }
+
+    private async Task RunFreshInstallAsync(UpdateRowViewModel row)
+    {
+        _logging.Info($"Reinstall of '{row.Item.Id}': installing the new version.");
+        await RunSingleRowActionAsync(row, InstallAction.FreshInstall, row.Item.WithInstallScope(row.PendingFreshInstallScope));
+
+        if (row.InstallState == RowInstallState.Succeeded)
+        {
+            row.PendingFreshInstall = false;
+            _logging.Info($"Reinstall of '{row.Item.Id}': done.");
+        }
+        else
+        {
+            _logging.Warn($"Reinstall of '{row.Item.Id}': the new version did not install; a retry repeats the install only.");
         }
     }
 

@@ -246,7 +246,8 @@ public partial class MainViewModel
         ShowOwned(new Views.ErrorDetailWindow(
             new ErrorDetailViewModel(
                 row.Name, row.SourceDisplay, versionChange, row.InstallErrorDetail!, _logging,
-                explanation, row.ShowRetryInteractiveButton)));
+                explanation, row.ShowRetryInteractiveButton,
+                reinstall: row.ShowReinstallButton ? () => row.ReinstallCommand.Execute(null) : null)));
     }
 
     /// <summary>

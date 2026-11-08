@@ -2326,4 +2326,22 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Hâlâ sanal ortamlar tarafından kullanılıyor ({0})</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>Yeniden yükle</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>Eski sürümü kaldırır ve yenisini winget ile yükler.</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>{0} yeniden yüklensin mi?</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>Yüklü sürüm kaldırılır ve yenisi winget ile yüklenir. Bundan sonra {0} yeniden normal şekilde güncellenir. Programın ayarları genellikle korunur.</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>Yeni sürüm şu anda alınamıyor. Hiçbir şey değiştirilmedi.</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>Kaldırıldı, ancak yeni kurulum başarısız oldu. Tekrar denemek için Yeniden dene'yi kullanın.</value>
+  </data>
 </root>

@@ -2326,4 +2326,22 @@ Continue with admin rights?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Still used by virtual environments ({0})</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>Reinstall</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>Removes the old version and installs the new one through winget.</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>Reinstall {0}?</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>The installed version is removed and the new one is installed through winget. After that, {0} updates normally again. The program's settings are usually kept.</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>The new version cannot be fetched right now. Nothing was changed.</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>Removed, but the new install failed. Use Retry to try again.</value>
+  </data>
 </root>

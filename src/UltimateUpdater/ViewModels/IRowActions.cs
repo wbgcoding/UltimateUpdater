@@ -34,6 +34,19 @@ public interface IRowActions
     {
     }
 
+    /// <summary>"Reinstall" for winget's different-install-technology refusal: checks the new version can be
+    /// fetched, confirms, removes the old version and installs the new one. Reachable only when
+    /// <see cref="UpdateRowViewModel.ShowReinstallButton"/> is true, which the handler re-checks.</summary>
+    void Reinstall(UpdateRowViewModel row)
+    {
+    }
+
+    /// <summary>The retry after a reinstall removed the old version but the install failed: repeats only the
+    /// install, never the removal.</summary>
+    void RetryFreshInstall(UpdateRowViewModel row)
+    {
+    }
+
     /// <summary>Ignores every version of this one package (not just the current one).</summary>
     void IgnoreAllVersions(UpdateRowViewModel row)
     {

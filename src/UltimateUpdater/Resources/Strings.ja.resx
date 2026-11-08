@@ -2326,4 +2326,22 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>仮想環境がまだ使用中です ({0})</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>再インストール</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>古いバージョンを削除し、新しいバージョンを winget でインストールします。</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>{0} を再インストールしますか？</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>インストール済みのバージョンを削除し、新しいバージョンを winget でインストールします。その後は {0} を通常どおり更新できるようになります。プログラムの設定は通常そのまま残ります。</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>今は新しいバージョンを取得できません。何も変更していません。</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>削除しましたが、新しいインストールに失敗しました。「再試行」でもう一度お試しください。</value>
+  </data>
 </root>

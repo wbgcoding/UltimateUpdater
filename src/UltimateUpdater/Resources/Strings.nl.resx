@@ -2326,4 +2326,22 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Nog in gebruik door virtuele omgevingen ({0})</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>Opnieuw installeren</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>Verwijdert de oude versie en installeert de nieuwe via winget.</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>{0} opnieuw installeren?</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>De geïnstalleerde versie wordt verwijderd en de nieuwe wordt via winget geïnstalleerd. Daarna wordt {0} weer normaal bijgewerkt. De instellingen van het programma blijven meestal behouden.</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>De nieuwe versie kan nu niet worden opgehaald. Er is niets gewijzigd.</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>Verwijderd, maar de nieuwe installatie is mislukt. Gebruik Opnieuw proberen om het nogmaals te proberen.</value>
+  </data>
 </root>

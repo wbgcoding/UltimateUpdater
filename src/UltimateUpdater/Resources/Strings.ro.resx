@@ -2326,4 +2326,22 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Încă folosit de medii virtuale ({0})</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>Reinstalează</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>Elimină versiunea veche și instalează versiunea nouă prin winget.</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>Reinstalezi {0}?</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>Versiunea instalată este eliminată, iar cea nouă este instalată prin winget. După aceea, {0} se actualizează din nou normal. Setările programului sunt de obicei păstrate.</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>Versiunea nouă nu poate fi descărcată acum. Nu s-a schimbat nimic.</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>Eliminat, dar noua instalare a eșuat. Folosește Reîncearcă pentru a încerca din nou.</value>
+  </data>
 </root>

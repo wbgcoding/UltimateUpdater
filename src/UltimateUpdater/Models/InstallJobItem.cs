@@ -11,4 +11,8 @@ public sealed class InstallJobItem
     /// <summary>A rollback's exact target version, carried across the pipe so the elevated
     /// worker's own reconstructed <see cref="Models.UpdateItem"/> can honour it too.</summary>
     public string? PinnedVersion { get; set; }
+
+    /// <summary>A fresh install's scope, "user" or "machine" (<see cref="InstallScopes"/>); null = none named.
+    /// The worker checks it again and refuses anything else.</summary>
+    public string? Scope { get; set; }
 }

@@ -103,7 +103,12 @@ public static class ActivityLog
             ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{duration.TotalSeconds:0.0}s")
             : string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{(int)duration.TotalMinutes}m{duration.Seconds:00}s");
 
-    private static string Verb(InstallAction action) => action == InstallAction.Uninstall ? "remove" : "update";
+    private static string Verb(InstallAction action) => action switch
+    {
+        InstallAction.Uninstall => "remove",
+        InstallAction.FreshInstall => "reinstall",
+        _ => "update",
+    };
 
     private static string Versions(UpdateItem item, InstallAction action) =>
         action == InstallAction.Uninstall

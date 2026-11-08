@@ -2326,4 +2326,22 @@ Continuar com direitos de administrador?</value>
   <data name="CleanupOldPythonVenvUses" xml:space="preserve">
     <value>Ainda usado por ambientes virtuais ({0})</value>
   </data>
+  <data name="ReinstallButton" xml:space="preserve">
+    <value>Reinstalar</value>
+  </data>
+  <data name="ReinstallTooltip" xml:space="preserve">
+    <value>Remove a versão antiga e instala a nova através do winget.</value>
+  </data>
+  <data name="ReinstallConfirmTitle" xml:space="preserve">
+    <value>Reinstalar {0}?</value>
+  </data>
+  <data name="ReinstallConfirmBody" xml:space="preserve">
+    <value>A versão instalada é removida e a nova é instalada através do winget. Depois disso, {0} volta a atualizar normalmente. As configurações do programa são normalmente mantidas.</value>
+  </data>
+  <data name="ReinstallUnavailable" xml:space="preserve">
+    <value>Não é possível obter a nova versão agora. Nada foi alterado.</value>
+  </data>
+  <data name="ReinstallInstallFailed" xml:space="preserve">
+    <value>Removido, mas a nova instalação falhou. Use Tentar novamente para tentar outra vez.</value>
+  </data>
 </root>

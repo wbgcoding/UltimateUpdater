@@ -649,6 +649,12 @@ public partial class MainViewModel
                 if (existing.InstallState is RowInstallState.Queued or RowInstallState.Running)
                     continue;
 
+                // A reinstall's row is the same story across its removal and install, and afterwards it
+                // holds the install-only retry: a listing from before the removal must not swap it for a
+                // plain update row.
+                if (HeldByReinstall(existing))
+                    continue;
+
                 if (existing.InstallState == RowInstallState.Idle
                     && string.Equals(existing.AvailableVersion, item.AvailableVersion, StringComparison.Ordinal)
                     && string.Equals(existing.InstalledVersion, item.InstalledVersion, StringComparison.Ordinal)
@@ -760,7 +766,7 @@ public partial class MainViewModel
     private void DropFinishedRows()
     {
         var finished = _rowsByKey
-            .Where(pair => pair.Value.InstallState == RowInstallState.Succeeded)
+            .Where(pair => pair.Value.InstallState == RowInstallState.Succeeded && !HeldByReinstall(pair.Value))
             .Select(pair => pair.Key)
             .ToList();
 
@@ -785,6 +791,7 @@ public partial class MainViewModel
         var stale = _rowsByKey.Keys
             .Where(k => !_scanSeenKeys.Contains(k))
             .Where(k => _rowsByKey[k].InstallState is not (RowInstallState.Queued or RowInstallState.Running))
+            .Where(k => !HeldByReinstall(_rowsByKey[k]))
             .Where(k => !IsRowFromIncompleteSource(k))
             .ToList();
 
@@ -1000,7 +1007,8 @@ public partial class MainViewModel
                         continue;
 
                     if (_rowsByKey.TryGetValue(key, out var row)
-                        && row.InstallState is not (RowInstallState.Queued or RowInstallState.Running))
+                        && row.InstallState is not (RowInstallState.Queued or RowInstallState.Running)
+                        && !HeldByReinstall(row))
                     {
                         Updates.Remove(row);
                         _rowsByKey.Remove(key);
