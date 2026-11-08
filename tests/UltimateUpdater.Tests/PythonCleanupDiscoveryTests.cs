@@ -16,8 +16,7 @@ public class PythonCleanupDiscoveryTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_root))
-            Directory.Delete(_root, recursive: true);
+        TempTreeCleanup.Delete(_root);
     }
 
     /// <summary>A registry made of nothing but the keys a test puts in it, the same fake
@@ -556,5 +555,99 @@ public class PythonCleanupDiscoveryTests : IDisposable
         var counted = PythonCleanupDiscovery.CountVenvUses(found, profile, CancellationToken.None);
 
         Assert.Equal(1, Assert.Single(counted).VenvUseCount);
+    }
+
+    private string FabricatedRoaming()
+    {
+        var roaming = Path.Combine(_root, "Roaming");
+        Directory.CreateDirectory(Path.Combine(roaming, "Python", "Python313", "site-packages"));
+        return roaming;
+    }
+
+    [Fact]
+    public void An_old_tilde_folder_in_the_roaming_user_site_packages_is_found_but_a_fresh_one_and_a_real_package_are_not()
+    {
+        var roaming = FabricatedRoaming();
+        var sitePackages = Path.Combine(roaming, "Python", "Python313", "site-packages");
+        var old = Path.Combine(sitePackages, "~ip");
+        var fresh = Path.Combine(sitePackages, "~ewer");
+        var real = Path.Combine(sitePackages, "requests");
+        foreach (var folder in new[] { old, fresh, real })
+        {
+            Directory.CreateDirectory(folder);
+            File.WriteAllText(Path.Combine(folder, "x.py"), "x");
+        }
+
+        MakeStale(old);
+        MakeStale(real);
+        // MakeStale also ages the shared site-packages folder; the fresh folder is stamped after it.
+        File.SetLastWriteTimeUtc(Path.Combine(fresh, "x.py"), DateTime.UtcNow);
+        Directory.SetLastWriteTimeUtc(fresh, DateTime.UtcNow);
+
+        var found = PythonCleanupDiscovery.DiscoverPipLeftovers(new FakeRegistry(), roamingAppData: roaming);
+
+        Assert.Equal(old, Assert.Single(found).Path);
+    }
+
+    [Fact]
+    public void A_tilde_folder_outside_a_Python3_version_folder_of_the_roaming_profile_is_not_looked_at()
+    {
+        var roaming = FabricatedRoaming();
+        var elsewhere = Path.Combine(roaming, "Python", "Python27", "site-packages", "~ip");
+        var directChild = Path.Combine(roaming, "Python", "Python313", "~ip");
+        var nested = Path.Combine(roaming, "Python", "Python313", "site-packages", "pkg", "~ip");
+        foreach (var folder in new[] { elsewhere, directChild, nested })
+        {
+            Directory.CreateDirectory(folder);
+            MakeStale(folder);
+        }
+
+        Assert.Empty(PythonCleanupDiscovery.DiscoverPipLeftovers(new FakeRegistry(), roamingAppData: roaming));
+    }
+
+    [Fact]
+    public void A_roaming_tilde_folder_that_is_a_junction_is_not_offered()
+    {
+        var roaming = FabricatedRoaming();
+        var sitePackages = Path.Combine(roaming, "Python", "Python313", "site-packages");
+        var target = Path.Combine(_root, "elsewhere");
+        Directory.CreateDirectory(target);
+        File.WriteAllText(Path.Combine(target, "keep.txt"), "x");
+        MakeStale(target);
+        var link = Path.Combine(sitePackages, "~ip");
+        CreateJunction(link, target);
+
+        // A clock three days ahead makes the junction itself old enough, so only the link rule can keep it.
+        var later = DateTime.UtcNow.AddDays(3);
+        Assert.Empty(PythonCleanupDiscovery.DiscoverPipLeftovers(new FakeRegistry(), roamingAppData: roaming, utcNow: later));
+        Assert.True(File.Exists(Path.Combine(target, "keep.txt")));
+    }
+
+    [Fact]
+    public void A_version_folder_that_is_a_junction_is_not_searched()
+    {
+        var roaming = Path.Combine(_root, "Roaming");
+        var real = Path.Combine(_root, "realpython", "site-packages", "~ip");
+        Directory.CreateDirectory(real);
+        MakeStale(real);
+        Directory.CreateDirectory(Path.Combine(roaming, "Python"));
+        CreateJunction(Path.Combine(roaming, "Python", "Python313"), Path.Combine(_root, "realpython"));
+
+        Assert.Empty(PythonCleanupDiscovery.DiscoverPipLeftovers(new FakeRegistry(), roamingAppData: roaming));
+    }
+
+    private static void CreateJunction(string link, string target)
+    {
+        using var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        })!;
+        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
+        Assert.Equal(0, mklink.ExitCode);
     }
 }
