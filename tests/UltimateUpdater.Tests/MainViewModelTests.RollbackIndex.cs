@@ -10,6 +10,49 @@ namespace UltimateUpdater.Tests;
 
 public partial class MainViewModelTests
 {
+    /// <summary>A row whose package already sits on the version the history would roll back to offers
+    /// nothing: going "back" there changes nothing.</summary>
+    [Fact]
+    public void A_row_offers_no_downgrade_to_the_version_it_already_has()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var logging = new LoggingService();
+            var settings = new SettingsService(logging, Path.Combine(
+                Directory.CreateTempSubdirectory("wu-vm-test-").FullName, "settings.json"));
+            settings.Current.Ui.Language = "en";
+
+            var historyPath = Path.Combine(
+                Directory.CreateTempSubdirectory("wu-history-test-").FullName, "history.jsonl");
+            var sources = new List<IUpdateSource> { new PinningCapableSource() };
+            var history = new HistoryService(logging, historyPath);
+            history.Append(new HistoryEntry
+            {
+                Timestamp = DateTimeOffset.UtcNow.AddDays(-1),
+                SourceId = "winget", ItemId = "pkg-a", Name = "Package A",
+                FromVersion = "1.0", ToVersion = "2.0", Success = true,
+            });
+            history.EnsureRollbackIndexAsync().GetAwaiter().GetResult();
+
+            var viewModel = new MainViewModel(
+                settings, logging, new ThemeService(), new ScanOrchestrator(sources, logging),
+                new IconCacheService(logging), new InstallQueue(sources, settings, history, logging), history,
+                new AutostartService(logging), new NotificationService(settings, logging),
+                new SelfUpdateService(new HttpClient(), logging, new PublicUpdateChannel(logging)), sources);
+
+            var onItemFound = typeof(MainViewModel).GetMethod("OnItemFound", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var drainPendingItems = typeof(MainViewModel).GetMethod("DrainPendingItems", BindingFlags.NonPublic | BindingFlags.Instance)!;
+            onItemFound.Invoke(viewModel, [new UpdateItem
+            {
+                Id = "pkg-a", SourceId = "winget", Category = UpdateCategory.Software, Name = "Package A",
+                InstalledVersion = "1.0", AvailableVersion = "2.0",
+            }]);
+            var added = (List<UpdateRowViewModel>)drainPendingItems.Invoke(viewModel, [])!;
+
+            Assert.Null(Assert.Single(added).DowngradeTargetVersion);
+        });
+    }
+
     /// <summary>
     /// The drain runs on the dispatcher once per flush tick and must never parse the history file itself.
     /// With no index built it offers no rollback (and reads nothing); the scan builds the index off the UI

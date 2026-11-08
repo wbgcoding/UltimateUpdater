@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using UltimateUpdater.Services;
 
@@ -64,12 +65,62 @@ public class DataFolderLiveSyncTests : IDisposable
     [Fact]
     public void Other_files_in_the_new_folder_are_left_alone()
     {
-        File.WriteAllText(Path.Combine(_destination, "enrichment-cache.json"), "cache");
+        File.WriteAllText(Path.Combine(_destination, "update-check.json"), "cache");
         File.WriteAllText(Path.Combine(_source, "history.jsonl"), "h");
 
         Assert.True(AppPaths.SyncLiveData(_source, _destination, includeSettings: false));
 
-        Assert.Equal("cache", File.ReadAllText(Path.Combine(_destination, "enrichment-cache.json")));
+        Assert.Equal("cache", File.ReadAllText(Path.Combine(_destination, "update-check.json")));
+    }
+
+    [Fact]
+    public void Files_written_between_the_copy_and_the_restart_reach_the_new_folder()
+    {
+        // The copy found none of these; the running app writes them afterwards, into the old folder.
+        File.WriteAllText(Path.Combine(_source, "restore-point.json"), "rp");
+        Directory.CreateDirectory(Path.Combine(_source, "driver-backups", "x"));
+        File.WriteAllText(Path.Combine(_source, "driver-backups", "x", "a.inf"), "inf");
+        File.WriteAllText(Path.Combine(_source, "pip-blocked.json"), "pip");
+        File.WriteAllText(Path.Combine(_source, "last-scan.json"), "scan");
+        File.WriteAllText(Path.Combine(_source, "enrichment-cache.json"), "enrich");
+
+        Assert.True(AppPaths.SyncLiveData(_source, _destination, includeSettings: false));
+
+        Assert.Equal("rp", File.ReadAllText(Path.Combine(_destination, "restore-point.json")));
+        Assert.Equal("inf", File.ReadAllText(Path.Combine(_destination, "driver-backups", "x", "a.inf")));
+        Assert.Equal("pip", File.ReadAllText(Path.Combine(_destination, "pip-blocked.json")));
+        Assert.Equal("scan", File.ReadAllText(Path.Combine(_destination, "last-scan.json")));
+        Assert.Equal("enrich", File.ReadAllText(Path.Combine(_destination, "enrichment-cache.json")));
+    }
+
+    [Fact]
+    public void A_changed_backup_file_is_replaced_and_a_removed_one_is_removed()
+    {
+        Directory.CreateDirectory(Path.Combine(_source, "driver-backups", "x"));
+        Directory.CreateDirectory(Path.Combine(_destination, "driver-backups", "x"));
+        Directory.CreateDirectory(Path.Combine(_destination, "driver-backups", "gone"));
+        File.WriteAllText(Path.Combine(_destination, "driver-backups", "x", "a.inf"), "old");
+        File.WriteAllText(Path.Combine(_destination, "driver-backups", "gone", "b.inf"), "b");
+        File.WriteAllText(Path.Combine(_source, "driver-backups", "x", "a.inf"), "new content");
+
+        Assert.True(AppPaths.SyncLiveData(_source, _destination, includeSettings: false));
+
+        Assert.Equal("new content", File.ReadAllText(Path.Combine(_destination, "driver-backups", "x", "a.inf")));
+        Assert.False(Directory.Exists(Path.Combine(_destination, "driver-backups", "gone")));
+    }
+
+    [Fact]
+    public void An_unchanged_backup_file_is_not_copied_again()
+    {
+        Directory.CreateDirectory(Path.Combine(_source, "driver-backups"));
+        File.WriteAllText(Path.Combine(_source, "driver-backups", "a.inf"), "same");
+        Assert.True(AppPaths.SyncLiveData(_source, _destination, includeSettings: false));
+
+        var copy = Path.Combine(_destination, "driver-backups", "a.inf");
+        using var held = new FileStream(copy, FileMode.Open, FileAccess.Read, FileShare.None);
+
+        // A copy attempt would fail on the locked file; nothing to copy means the sync still succeeds.
+        Assert.True(AppPaths.SyncLiveData(_source, _destination, includeSettings: false));
     }
 
     [Fact]
@@ -95,5 +146,44 @@ public class DataFolderLiveSyncTests : IDisposable
         using var held = new FileStream(target, FileMode.Open, FileAccess.Read, FileShare.None);
 
         Assert.False(AppPaths.SyncLiveData(_source, _destination, includeSettings: false));
+    }
+
+    [Fact]
+    public void A_link_in_the_new_folder_is_not_followed_by_the_mirror()
+    {
+        var outside = Path.Combine(_root, "outside");
+        Directory.CreateDirectory(outside);
+        File.WriteAllText(Path.Combine(outside, "keep.txt"), "mine");
+        var link = Path.Combine(_destination, "reports");
+        CreateJunction(link, outside);
+        Directory.CreateDirectory(Path.Combine(_source, "reports"));
+        File.WriteAllText(Path.Combine(_source, "reports", "new.txt"), "y");
+
+        try
+        {
+            Assert.False(AppPaths.SyncLiveData(_source, _destination, includeSettings: false));
+
+            Assert.True(File.Exists(Path.Combine(outside, "keep.txt")));
+            Assert.False(File.Exists(Path.Combine(outside, "new.txt")));
+        }
+        finally
+        {
+            Directory.Delete(link);
+        }
+    }
+
+    private static void CreateJunction(string link, string target)
+    {
+        using var mklink = Process.Start(new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        })!;
+        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
+        Assert.Equal(0, mklink.ExitCode);
     }
 }

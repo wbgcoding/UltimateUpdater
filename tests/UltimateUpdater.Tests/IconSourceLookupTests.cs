@@ -106,6 +106,37 @@ public class IconSourceLookupTests : IDisposable
         Assert.Equal(ExeWithIcon, shortcut!.TargetPath, ignoreCase: true);
     }
 
+    /// <summary>One subfolder the user may not list used to throw out of the whole enumeration, and the
+    /// catch then dropped every shortcut of that root.</summary>
+    [Fact]
+    public void A_start_menu_folder_that_cannot_be_listed_does_not_hide_the_other_shortcuts()
+    {
+        var menu = Folder("menu");
+        WriteShortcut(Path.Combine(menu, "Vendor", "Zq Fixture App.lnk"), ExeWithIcon);
+        var locked = new DirectoryInfo(Folder(Path.Combine("menu", "Locked")));
+        var sid = System.Security.Principal.WindowsIdentity.GetCurrent().User!;
+        var deny = new System.Security.AccessControl.FileSystemAccessRule(
+            sid, System.Security.AccessControl.FileSystemRights.ListDirectory,
+            System.Security.AccessControl.InheritanceFlags.None, System.Security.AccessControl.PropagationFlags.None,
+            System.Security.AccessControl.AccessControlType.Deny);
+
+        // Listing this one folder is refused for the current user, like a Start menu folder another account made.
+        var security = locked.GetAccessControl();
+        security.AddAccessRule(deny);
+        locked.SetAccessControl(security);
+        try
+        {
+            var shortcut = new StartMenuShortcuts([menu]).Find("Zq Fixture App");
+
+            Assert.NotNull(shortcut);
+        }
+        finally
+        {
+            security.RemoveAccessRule(deny);
+            locked.SetAccessControl(security);
+        }
+    }
+
     [Fact]
     public void A_shortcut_that_only_opens_the_uninstaller_is_not_the_app()
     {

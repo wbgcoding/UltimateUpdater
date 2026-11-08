@@ -142,12 +142,13 @@ public sealed class EnrichmentCache
             EvictOldest();
     }
 
-    /// <summary>Drops the oldest-fetched entries back down to <see cref="MaxEntries"/>. Best-effort: a
-    /// key removed here between the snapshot and the actual removal (a concurrent Set/TryGet) just means
-    /// one fewer eviction happens this round, not a torn cache.</summary>
+    /// <summary>Drops the oldest-fetched entries down to 90 % of <see cref="MaxEntries"/>, so a full cache
+    /// does not sort all its entries again on every following Set. Best-effort: a key removed here between
+    /// the snapshot and the actual removal (a concurrent Set/TryGet) just means one fewer eviction happens
+    /// this round, not a torn cache.</summary>
     private void EvictOldest()
     {
-        var excess = _entries.Count - MaxEntries;
+        var excess = _entries.Count - MaxEntries / 10 * 9;
         if (excess <= 0)
             return;
 

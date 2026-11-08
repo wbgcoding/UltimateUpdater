@@ -772,7 +772,7 @@ public partial class MainViewModelTests
             {
                 Timestamp = DateTimeOffset.UtcNow.AddDays(-1),
                 SourceId = "winget", ItemId = "eslint", Name = "eslint",
-                FromVersion = "1.0", ToVersion = "2.0", Success = true,
+                FromVersion = "0.9", ToVersion = "1.0", Success = true,
             });
 
             var viewModel = new MainViewModel(
@@ -784,9 +784,9 @@ public partial class MainViewModelTests
             Pump(viewModel.ScanCommand.ExecuteAsync(null));
             var row = Assert.Single(viewModel.Updates);
 
-            Assert.Equal("1.0", row.DowngradeTargetVersion);
+            Assert.Equal("0.9", row.DowngradeTargetVersion);
             Assert.True(row.ShowDowngradeButton);
-            Assert.Contains("1.0", row.DowngradeHeader);
+            Assert.Contains("0.9", row.DowngradeHeader);
         });
     }
 

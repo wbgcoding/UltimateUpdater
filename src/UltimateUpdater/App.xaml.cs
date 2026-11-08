@@ -713,6 +713,8 @@ public partial class App : Application
         // wrote since the copy has to follow, or the new folder would start without it.
         AppPaths.SyncPendingDataFolder();
 
+        _mainViewModel?.DiscardUnstartedSelfUpdate();
+
         _scheduler?.Dispose();
         _tray?.Dispose();
         _busyTimer?.Stop();

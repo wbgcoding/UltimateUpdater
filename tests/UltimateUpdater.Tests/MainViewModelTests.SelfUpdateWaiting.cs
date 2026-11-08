@@ -32,7 +32,7 @@ public partial class MainViewModelTests
             viewModel.SelfUpdateApplyForTest = path =>
             {
                 applied.Add(path);
-                return true;
+                return SelfUpdateApplyResult.Started;
             };
             viewModel.SelfUpdateExitForTest = () => exited.TrySetResult();
 
@@ -75,7 +75,7 @@ public partial class MainViewModelTests
             viewModel.SelfUpdateApplyForTest = path =>
             {
                 applied.Add(path);
-                return true;
+                return SelfUpdateApplyResult.Started;
             };
             viewModel.SelfUpdateExitForTest = () => exited.TrySetResult();
 
@@ -119,7 +119,7 @@ public partial class MainViewModelTests
             viewModel.SelfUpdateApplyForTest = _ =>
             {
                 releaseApply.Wait(TimeSpan.FromSeconds(10));
-                return true;
+                return SelfUpdateApplyResult.Started;
             };
             viewModel.SelfUpdateExitForTest = () => exited.TrySetResult();
 
@@ -157,7 +157,7 @@ public partial class MainViewModelTests
                 viewModel.SelfUpdateApplyForTest = _ =>
                 {
                     releaseApply.Wait(TimeSpan.FromSeconds(10));
-                    return true;
+                    return SelfUpdateApplyResult.Started;
                 };
                 viewModel.SelfUpdateExitForTest = () => exited.TrySetResult();
 
@@ -228,7 +228,7 @@ public partial class MainViewModelTests
             viewModel.SelfUpdateApplyForTest = path =>
             {
                 applied.Add(path);
-                return true;
+                return SelfUpdateApplyResult.Started;
             };
             viewModel.SelfUpdateExitForTest = () => exited.TrySetResult();
 
@@ -259,7 +259,7 @@ public partial class MainViewModelTests
                 viewModel.SelfUpdateApplyForTest = path =>
                 {
                     applied.Add(path);
-                    return true;
+                    return SelfUpdateApplyResult.Started;
                 };
                 viewModel.SelfUpdateExitForTest = () => exited.TrySetResult();
 
