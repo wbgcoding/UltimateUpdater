@@ -798,8 +798,8 @@ public partial class CleanupViewModelTests
         var viewModel = Create(settings, history);
 
         Assert.Contains("150", viewModel.HistoryTotalFreedText);
-        Assert.Contains("2", viewModel.HistoryRunCountText);
-        Assert.Contains(viewModel.History[0].WhenText, viewModel.HistoryRunCountText);
+        Assert.Equal("2", viewModel.HistoryStats.Single(s => s.Label == LocalizationService.Instance["CleanupHistoryStatRuns"]).Value);
+        Assert.Contains("75", viewModel.HistoryStats.Single(s => s.Label == LocalizationService.Instance["CleanupHistoryStatAverage"]).Value);
         Assert.True(viewModel.HasFreedAnything);
 
         var slices = viewModel.HistorySlices;

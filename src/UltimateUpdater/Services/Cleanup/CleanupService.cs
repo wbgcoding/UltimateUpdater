@@ -1922,6 +1922,16 @@ public class CleanupService(LoggingService logging)
 
         var done = 0;
         var share = 100.0 / steps.Count;
+
+        // What the tools leave behind that tells how the check ended; see SystemRepairResults. Only the two
+        // check targets feed it: the component-store cleanup steps say nothing about the system's health.
+        var judgesSfc = target.Id == "system-repair-sfc";
+        var judgesDism = target.Id == "system-repair-dism";
+        var cbsPath = SystemRepairResults.DefaultCbsLogPath;
+        var cbsStart = judgesSfc ? SystemRepairResults.CbsLength(cbsPath) : null;
+        var exitCodes = new int?[steps.Count];
+        var sfcFinished = false;
+
         foreach (var (exe, args, label) in steps)
         {
             // Held and stopped BETWEEN steps only; see the note on the run itself below.
@@ -1954,6 +1964,12 @@ public class CleanupService(LoggingService logging)
                     logging.Info($"Cleanup: {label} finished with exit code {result.ExitCode}.");
                 else
                     logging.Info($"Cleanup: {label} completed.");
+
+                if (!result.TimedOut)
+                {
+                    exitCodes[done] = result.ExitCode;
+                    sfcFinished = true;
+                }
             }
             catch (OperationCanceledException)
             {
@@ -1969,7 +1985,21 @@ public class CleanupService(LoggingService logging)
         }
 
         progress?.Report(new CleanupProgress(string.Empty, 100, 0));
-        return new CleanupOutcome(0, 0, 0);
+
+        RepairResult? repairResult = null;
+        if (judgesDism && exitCodes.Length == 3)
+        {
+            repairResult = SystemRepairResults.ClassifyDism(exitCodes[0], exitCodes[1], exitCodes[2]);
+        }
+        else if (judgesSfc && sfcFinished && cbsStart is { } startOffset
+            && SystemRepairResults.ReadCbsLinesSince(cbsPath, startOffset) is { } lines)
+        {
+            var verdict = SystemRepairResults.ClassifyCbsLines(lines);
+            // A failed run (non-zero exit) that left no trace in the log is unknown, not "OK".
+            repairResult = verdict == RepairResult.Ok && exitCodes[0] != 0 ? null : verdict;
+        }
+
+        return new CleanupOutcome(0, 0, 0, RepairResult: repairResult);
     }
 
     /// <summary>

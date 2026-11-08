@@ -149,6 +149,9 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     [ObservableProperty]
     private long protectedBytes;
 
+    /// <summary>How a system file or image check ended; null for every other row.</summary>
+    public RepairResult? RepairResult { get; set; }
+
     /// <summary>"12,4 MB / 310 MB": what has gone of what was measured.</summary>
     public string ProgressText =>
         SelectedEntryBytes > 0 ? $"{ByteSize.Format(FreedBytes)} / {ByteSize.Format(SelectedEntryBytes)}" : ByteSize.Format(FreedBytes);

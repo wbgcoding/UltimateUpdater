@@ -6571,6 +6571,10 @@ public partial class WindowLayoutTests
                 {
                     Id = a[0], TitleKey = a[1], FreedBytes = long.Parse(a[2]) * 1024 * 1024,
                 }).ToList();
+                if (run == 0)
+                    runAreas.Add(new CleanupHistoryArea { Id = "system-repair-sfc", TitleKey = "CleanupSystemRepairSfc", RepairResult = RepairResult.Repaired });
+                if (run == 1)
+                    runAreas.Add(new CleanupHistoryArea { Id = "system-repair-dism", TitleKey = "CleanupSystemRepairDism", RepairResult = RepairResult.ProblemsFound });
                 viewModel.History.Add(new CleanupHistoryRowViewModel(new CleanupHistoryEntry
                 {
                     Timestamp = new DateTimeOffset(2026, 8, 7 - run * 2, 21, 40, 0, TimeSpan.Zero),

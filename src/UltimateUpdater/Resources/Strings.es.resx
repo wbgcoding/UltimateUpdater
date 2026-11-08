@@ -2272,4 +2272,34 @@ Esto no se puede deshacer.</value>
   <data name="CleanupHistorySliceShare" xml:space="preserve">
     <value>{0} % de todo lo liberado · {1}</value>
   </data>
+  <data name="CleanupHistoryStatSfc" xml:space="preserve">
+    <value>Última comprobación de archivos del sistema (SFC)</value>
+  </data>
+  <data name="CleanupHistoryStatDism" xml:space="preserve">
+    <value>Última comprobación de la imagen (DISM)</value>
+  </data>
+  <data name="CleanupHistoryRepairOk" xml:space="preserve">
+    <value>{0} · correcto</value>
+  </data>
+  <data name="CleanupHistoryRepairRepaired" xml:space="preserve">
+    <value>{0} · reparado</value>
+  </data>
+  <data name="CleanupHistoryRepairProblems" xml:space="preserve">
+    <value>{0} · problemas encontrados</value>
+  </data>
+  <data name="CleanupHistoryRepairNever" xml:space="preserve">
+    <value>nunca</value>
+  </data>
+  <data name="CleanupHistoryStatRuns" xml:space="preserve">
+    <value>Ejecuciones</value>
+  </data>
+  <data name="CleanupHistoryStatAverage" xml:space="preserve">
+    <value>Media por ejecución</value>
+  </data>
+  <data name="CleanupHistoryStatLast30" xml:space="preserve">
+    <value>Últimos 30 días</value>
+  </data>
+  <data name="CleanupHistoryStatFree" xml:space="preserve">
+    <value>Libre en {0}</value>
+  </data>
 </root>

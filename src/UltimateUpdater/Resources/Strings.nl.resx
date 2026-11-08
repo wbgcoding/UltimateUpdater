@@ -2272,4 +2272,34 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupHistorySliceShare" xml:space="preserve">
     <value>{0}% van alles wat is vrijgemaakt · {1}</value>
   </data>
+  <data name="CleanupHistoryStatSfc" xml:space="preserve">
+    <value>Laatste controle van systeembestanden (SFC)</value>
+  </data>
+  <data name="CleanupHistoryStatDism" xml:space="preserve">
+    <value>Laatste controle van de installatiekopie (DISM)</value>
+  </data>
+  <data name="CleanupHistoryRepairOk" xml:space="preserve">
+    <value>{0} · in orde</value>
+  </data>
+  <data name="CleanupHistoryRepairRepaired" xml:space="preserve">
+    <value>{0} · hersteld</value>
+  </data>
+  <data name="CleanupHistoryRepairProblems" xml:space="preserve">
+    <value>{0} · problemen gevonden</value>
+  </data>
+  <data name="CleanupHistoryRepairNever" xml:space="preserve">
+    <value>nog nooit</value>
+  </data>
+  <data name="CleanupHistoryStatRuns" xml:space="preserve">
+    <value>Uitvoeringen</value>
+  </data>
+  <data name="CleanupHistoryStatAverage" xml:space="preserve">
+    <value>Gemiddeld per uitvoering</value>
+  </data>
+  <data name="CleanupHistoryStatLast30" xml:space="preserve">
+    <value>Laatste 30 dagen</value>
+  </data>
+  <data name="CleanupHistoryStatFree" xml:space="preserve">
+    <value>Vrij op {0}</value>
+  </data>
 </root>

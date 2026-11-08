@@ -44,6 +44,7 @@ public partial class CleanupViewModel
                     FreedBytes = i.FreedBytes,
                     SkippedBytes = i.SkippedBytes,
                     ProtectedBytes = i.ProtectedBytes,
+                    RepairResult = i.RepairResult,
                 }).ToList(),
             };
 
@@ -88,13 +89,10 @@ public partial class CleanupViewModel
     public string HistoryTotalFreedText => string.Format(
         LocalizationService.Instance["CleanupHistoryTotalFreed"], ByteSize.Format(History.Sum(h => h.FreedBytes)));
 
-    /// <summary>How many runs are on record and when the newest one ran; <see cref="History"/> is
-    /// already newest first, so its own head row has that date.</summary>
-    public string HistoryRunCountText => History.Count == 0
-        ? string.Empty
-        : string.Format(
-            LocalizationService.Instance[History.Count == 1 ? "CleanupHistoryRunCountOne" : "CleanupHistoryRunCount"],
-            History.Count, History[0].WhenText);
+    /// <summary>The label and value lines under the total: the last system file and image check, run count,
+    /// average per run, the last 30 days and the system drive's free space (read live each time).</summary>
+    public IReadOnlyList<CleanupHistoryStatViewModel> HistoryStats => CleanupHistoryStatViewModel.Build(
+        History.Select(h => h.Entry).ToList(), DateTimeOffset.Now, CleanupHistoryStatViewModel.ReadSystemDrive());
 
     /// <summary>Whether any run actually freed anything; a history of runs that all found nothing has
     /// no categories to rank, so the card says that plainly instead of showing an empty list.</summary>
@@ -121,7 +119,7 @@ public partial class CleanupViewModel
     private void RaiseHistoryOverviewChanged()
     {
         OnPropertyChanged(nameof(HistoryTotalFreedText));
-        OnPropertyChanged(nameof(HistoryRunCountText));
+        OnPropertyChanged(nameof(HistoryStats));
         OnPropertyChanged(nameof(HasFreedAnything));
         OnPropertyChanged(nameof(HasNotFreedAnything));
         OnPropertyChanged(nameof(HistorySlices));

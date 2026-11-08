@@ -51,8 +51,26 @@
                 <StackPanel Grid.Column="0" VerticalAlignment="Top">
                     <TextBlock Text="{Binding HistoryTotalFreedText}" FontSize="16" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                    <TextBlock Text="{Binding HistoryRunCountText}" FontSize="12" Margin="0,2,0,0"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                    <!-- Label and value lines; the labels share one column width so the values line up. -->
+                    <ItemsControl ItemsSource="{Binding HistoryStats}" Margin="0,8,0,0"
+                                  Grid.IsSharedSizeScope="True">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="StatLabel"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="12" Margin="0,0,16,0"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
                     <!-- A history of runs that all found nothing has no areas to draw, so the calm
                          sentence takes the chart's place instead. -->

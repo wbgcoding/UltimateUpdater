@@ -24,6 +24,10 @@ public sealed class CleanupHistoryArea
 
     /// <summary>The refused share of <see cref="SkippedBytes"/>; zero in entries written before it existed.</summary>
     public long ProtectedBytes { get; set; }
+
+    /// <summary>How a system file or image check ended; null for every other area and for runs where the
+    /// tool gave no verdict (and for files written before this existed).</summary>
+    public RepairResult? RepairResult { get; set; }
 }
 
 /// <summary>One cleanup run.</summary>

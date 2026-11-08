@@ -415,6 +415,7 @@ public partial class CleanupViewModel
             item.FreedBytes = 0;
             item.SkippedBytes = 0;
             item.ProtectedBytes = 0;
+            item.RepairResult = null;
             item.DetailText = string.Empty;
             item.RunState = CleanupTargetState.Waiting;
             item.ResetEntryStates();
@@ -779,6 +780,7 @@ public partial class CleanupViewModel
             item.FreedBytes = outcome.FreedBytes;
             item.ProtectedBytes = outcome.ProtectedBytes;
             item.SkippedBytes = outcome.SkippedBytes;
+            item.RepairResult = outcome.RepairResult;
 
             // Driver cleanup exported its packages into the elevated worker's own ProgramData staging
             // folder (it must never resolve AppPaths itself); the copy into the data folder happens here,
@@ -1059,7 +1061,8 @@ public partial class CleanupViewModel
             var outcome = new CleanupOutcome(
                 message.Freed, message.Files, message.Skipped, message.SkippedBytes,
                 WasStopped: message.Stopped, DriverBackupFolderName: message.DriverBackupFolderName,
-                TimedOut: message.TimedOut, ProtectedFiles: message.ProtectedFiles, ProtectedBytes: message.ProtectedBytes);
+                TimedOut: message.TimedOut, ProtectedFiles: message.ProtectedFiles, ProtectedBytes: message.ProtectedBytes,
+                RepairResult: message.RepairResult);
             return (state with { Finished = true, Outcome = outcome }, null);
         }
 

@@ -2272,4 +2272,34 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupHistorySliceShare" xml:space="preserve">
     <value>{0}% din tot ce s-a eliberat · {1}</value>
   </data>
+  <data name="CleanupHistoryStatSfc" xml:space="preserve">
+    <value>Ultima verificare a fișierelor de sistem (SFC)</value>
+  </data>
+  <data name="CleanupHistoryStatDism" xml:space="preserve">
+    <value>Ultima verificare a imaginii (DISM)</value>
+  </data>
+  <data name="CleanupHistoryRepairOk" xml:space="preserve">
+    <value>{0} · fără probleme</value>
+  </data>
+  <data name="CleanupHistoryRepairRepaired" xml:space="preserve">
+    <value>{0} · reparat</value>
+  </data>
+  <data name="CleanupHistoryRepairProblems" xml:space="preserve">
+    <value>{0} · probleme găsite</value>
+  </data>
+  <data name="CleanupHistoryRepairNever" xml:space="preserve">
+    <value>niciodată</value>
+  </data>
+  <data name="CleanupHistoryStatRuns" xml:space="preserve">
+    <value>Rulări</value>
+  </data>
+  <data name="CleanupHistoryStatAverage" xml:space="preserve">
+    <value>Medie pe rulare</value>
+  </data>
+  <data name="CleanupHistoryStatLast30" xml:space="preserve">
+    <value>Ultimele 30 de zile</value>
+  </data>
+  <data name="CleanupHistoryStatFree" xml:space="preserve">
+    <value>Liber pe {0}</value>
+  </data>
 </root>

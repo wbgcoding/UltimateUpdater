@@ -2272,4 +2272,34 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupHistorySliceShare" xml:space="preserve">
     <value>解放した全体の {0}% · {1}</value>
   </data>
+  <data name="CleanupHistoryStatSfc" xml:space="preserve">
+    <value>前回のシステムファイル チェック (SFC)</value>
+  </data>
+  <data name="CleanupHistoryStatDism" xml:space="preserve">
+    <value>前回のイメージ チェック (DISM)</value>
+  </data>
+  <data name="CleanupHistoryRepairOk" xml:space="preserve">
+    <value>{0} · 問題なし</value>
+  </data>
+  <data name="CleanupHistoryRepairRepaired" xml:space="preserve">
+    <value>{0} · 修復済み</value>
+  </data>
+  <data name="CleanupHistoryRepairProblems" xml:space="preserve">
+    <value>{0} · 問題あり</value>
+  </data>
+  <data name="CleanupHistoryRepairNever" xml:space="preserve">
+    <value>未実行</value>
+  </data>
+  <data name="CleanupHistoryStatRuns" xml:space="preserve">
+    <value>実行回数</value>
+  </data>
+  <data name="CleanupHistoryStatAverage" xml:space="preserve">
+    <value>1 回あたりの平均</value>
+  </data>
+  <data name="CleanupHistoryStatLast30" xml:space="preserve">
+    <value>過去 30 日間</value>
+  </data>
+  <data name="CleanupHistoryStatFree" xml:space="preserve">
+    <value>{0} の空き容量</value>
+  </data>
 </root>

@@ -77,6 +77,7 @@ public class SettingsLocalizationAndNamesTests
     [InlineData(typeof(CleanupHistoryRowViewModel))]
     [InlineData(typeof(CleanupHistoryAreaViewModel))]
     [InlineData(typeof(CleanupHistorySliceViewModel))]
+    [InlineData(typeof(CleanupHistoryStatViewModel))]
     [InlineData(typeof(LeftoverCandidateViewModel))]
     [InlineData(typeof(DriverDeviceCandidateViewModel))]
     [InlineData(typeof(DriverPackageCandidateViewModel))]
