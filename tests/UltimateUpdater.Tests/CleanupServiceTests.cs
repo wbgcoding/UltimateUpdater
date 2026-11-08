@@ -804,11 +804,11 @@ public class CleanupServiceTests : IDisposable
         Assert.Empty(plans);
     }
 
-    /// <summary>The same drive with nothing excluded is still emptied, a bin that cannot be listed is
-    /// exactly the case the shell's own call exists for, and refusing it there would leave the user unable
-    /// to empty their recycle bin at all.</summary>
+    /// <summary>A bin that cannot be listed is never emptied through the shell's whole-bin call, even with
+    /// nothing excluded: that call would also take files recycled after the confirm. The aggregate row falls
+    /// to the per-row path, which refuses it, so the drive counts as skipped and stays as it is.</summary>
     [Fact]
-    public void PlanRecycleBinEmpty_still_empties_a_listing_less_drive_when_nothing_was_excluded()
+    public void PlanRecycleBinEmpty_never_uses_the_whole_bin_call_for_a_listing_less_drive()
     {
         CleanupEntry[] entries =
         [
@@ -816,11 +816,22 @@ public class CleanupServiceTests : IDisposable
         ];
         RecycleBinDriveSummary[] drives = [new(@"C:\", @"C:\", 1, 1, 900, 900, DetailsAvailable: false)];
 
-        Assert.True(Assert.Single(CleanupService.PlanRecycleBinEmpty(entries, drives, null)).UseShellEmpty);
+        Assert.False(Assert.Single(CleanupService.PlanRecycleBinEmpty(entries, drives, null)).UseShellEmpty);
+        Assert.False(Assert.Single(CleanupService.PlanRecycleBinEmpty(
+            entries, drives, null, [@"C:\"])).UseShellEmpty);
 
-        // An exclusion on a DIFFERENT drive says nothing about this one.
-        Assert.True(Assert.Single(CleanupService.PlanRecycleBinEmpty(
+        // An exclusion on a DIFFERENT drive says nothing about this one: still no whole-bin call.
+        Assert.False(Assert.Single(CleanupService.PlanRecycleBinEmpty(
             entries, drives, [@"D:\$Recycle.Bin\S-1-5-21-1-2-3-1001\$RKEEP.txt"])).UseShellEmpty);
+    }
+
+    [Fact]
+    public void DeleteRecycledItem_refuses_the_aggregate_row_of_a_listing_less_drive()
+    {
+        var aggregate = new CleanupEntry(
+            @"C:\", @"C:\", 900, 9, DateTimeOffset.MinValue, DateTimeOffset.MinValue, CleanupEntryType.Other);
+
+        Assert.False(new CleanupService(_logging).DeleteRecycledItem(aggregate, "S-1-5-21-1-2-3-1001"));
     }
 
     /// <summary>The row budget: an equal share per drive with content, never under the floor, and what a

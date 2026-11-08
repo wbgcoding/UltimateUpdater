@@ -1052,7 +1052,11 @@ public class CleanupService(LoggingService logging)
             // An index file that could not be read may stand for an item that is not on the list either.
             // The whole-bin call also takes anything that arrived after the scan, so it needs the bin to hold
             // exactly what was confirmed.
-            var complete = !drive.AgeFilterHidItems && drive.SkippedIndexCount == 0
+            // A drive without a listing is never "complete": its one aggregate row stands for the whole bin, so
+            // "every listed row is selected" says nothing, and the whole-bin call would take items recycled
+            // after the confirm. It falls to the per-row path, which refuses the aggregate row and counts it
+            // as skipped.
+            var complete = drive.DetailsAvailable && !drive.AgeFilterHidItems && drive.SkippedIndexCount == 0
                 && drive.FoundCount == drive.ListedCount && selected.Count == drive.ListedCount
                 && (confirmedOnDrive is null || confirmedOnDrive == drive.FoundCount);
             plans.Add(new RecycleBinDrivePlan(drive.Root, drive.Label, complete, complete ? [] : selected));
@@ -1671,10 +1675,14 @@ public class CleanupService(LoggingService logging)
     /// original path is the aggregate fallback row for a drive that could not be enumerated; deleting its
     /// path would mean deleting a drive root, so it is never attempted.
     /// </summary>
-    private bool DeleteRecycledItem(CleanupEntry entry, string? ownSid)
+    internal bool DeleteRecycledItem(CleanupEntry entry, string? ownSid)
     {
         if (entry.OriginalPath is null)
+        {
+            logging.Warn(
+                $"Cleanup: the recycle bin on '{entry.Path}' could not be listed, so it was left as it is.");
             return false;
+        }
 
         if (!CleanupSafety.IsInsideOwnRecycleBin(entry.Path, ownSid))
         {
