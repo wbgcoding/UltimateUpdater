@@ -2395,4 +2395,7 @@ Continuar com direitos de administrador?</value>
   <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
     <value>o download demorou demais</value>
   </data>
+  <data name="SelfUpdateCancelUpdate" xml:space="preserve">
+    <value>Cancelar atualização</value>
+  </data>
 </root>

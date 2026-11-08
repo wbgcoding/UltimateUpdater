@@ -2395,4 +2395,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
     <value>ダウンロードに時間がかかりすぎました</value>
   </data>
+  <data name="SelfUpdateCancelUpdate" xml:space="preserve">
+    <value>更新をキャンセル</value>
+  </data>
 </root>

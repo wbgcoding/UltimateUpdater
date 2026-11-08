@@ -2395,4 +2395,7 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
     <value>下载耗时过长</value>
   </data>
+  <data name="SelfUpdateCancelUpdate" xml:space="preserve">
+    <value>取消更新</value>
+  </data>
 </root>

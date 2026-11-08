@@ -2395,4 +2395,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="WingetBootstrapReasonTimeout" xml:space="preserve">
     <value>indirme çok uzun sürdü</value>
   </data>
+  <data name="SelfUpdateCancelUpdate" xml:space="preserve">
+    <value>Güncellemeyi iptal et</value>
+  </data>
 </root>
