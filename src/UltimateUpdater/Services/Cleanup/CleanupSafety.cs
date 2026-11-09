@@ -614,8 +614,10 @@ public static class CleanupSafety
         }
         catch (Exception)
         {
-            // Fail closed, same as the rest of this file: a folder this safety gate could not resolve
-            // cleanly must count as unusable, never crash the caller and never be guessed at.
+            // Not fail closed: the folder simply drops out of the protected set (the callers skip a null),
+            // because refusing every cleanup whenever one known folder cannot be resolved would disable the
+            // whole tool on such a machine. It is never guessed at and never crashes the caller; the remaining
+            // protected folders, the link checks and the temp-or-cache name gate still apply.
             return null;
         }
     }
