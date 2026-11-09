@@ -88,7 +88,7 @@ public sealed class PsGallerySource(LoggingService logging, HttpClient httpClien
     /// <summary>
     /// PSGallery's `/api/v2/Packages(Id='..',Version='..')` is the same NuGet OData v2 feed shape as
     /// Chocolatey's community feed (verified against a live response: same Published/PackageSize
-    /// element names). reusing that parser rather than duplicating it.
+    /// element names), so that parser is reused rather than duplicated.
     /// </summary>
     public override async Task<UpdateEnrichment?> EnrichAsync(UpdateItem item, CancellationToken cancellationToken)
     {
