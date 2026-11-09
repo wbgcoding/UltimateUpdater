@@ -5,9 +5,9 @@ namespace UltimateUpdater.Services.Sources;
 /// <summary>
 /// Components of the Google Cloud CLI. Its own listing reports the installed and the newest version of every
 /// component AND the download size in bytes, so these rows carry a real size without any extra lookup.
-/// There is no per-component update command, `gcloud components update` moves every installed component (and
-/// the CLI itself) forward at once, so the row's id is deliberately not an argument, the same shape as rustup
-/// and the Android SDK. Verified against real output on a clean VM.
+/// There is no per-component update command: `gcloud components update` moves every installed component (and
+/// the CLI itself) forward at once, so the row's id is deliberately not an argument, the same shape as
+/// rustup. Verified against real output on a clean VM.
 /// </summary>
 public sealed class GcloudComponentSource(LoggingService logging) : CliUpdateSource(logging)
 {
