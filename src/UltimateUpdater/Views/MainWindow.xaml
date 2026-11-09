@@ -41,7 +41,6 @@
         <Thickness x:Key="PagePadding">24,0,24,0</Thickness>
 
         <!-- The "hide sources without a tool" toggle above the pill strip. -->
-        <views:CountToVisibilityConverter x:Key="CountToVisibility"/>
         <views:ShortcutTooltipConverter x:Key="ShortcutTooltip"/>
         <views:UpperCaseConverter x:Key="UpperCase"/>
 
