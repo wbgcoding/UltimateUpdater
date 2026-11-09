@@ -39,7 +39,7 @@ public static class CleanupCatalog
 
     /// <summary>
     /// Gives every target sole ownership of its own bytes. Some of the catalogue's directories nest inside
-    /// each other. %TEMP%\chocolatey belongs to the package-manager cache but sits inside "user-temp" .
+    /// each other. %TEMP%\chocolatey belongs to the package-manager cache but sits inside "user-temp",
     /// and without this the outer target both counted and deleted the inner one's content, so deselecting
     /// the inner target protected nothing and selecting both counted the same megabytes twice.
     /// The inner path wins: whoever named it exactly is the target that owns it.
@@ -160,7 +160,7 @@ public static class CleanupCatalog
             },
 
             // What package managers keep so a reinstall need not download again. Safe to drop: every one of
-            // them re-fetches on demand. The package STORES (.nuget\packages, node_modules) are not here .
+            // them re-fetches on demand. The package STORES (.nuget\packages, node_modules) are not here:
             // those are the installed packages themselves, not a cache.
             new CleanupTarget("package-manager-cache", "CleanupPackageCache", "CleanupPackageCacheDesc",
                 CleanupKind.Directories, DefaultEnabled: true,
@@ -187,7 +187,7 @@ public static class CleanupCatalog
             },
 
             // Every OTHER program's cache/log folder this catalogue does not already name individually,
-            // found by walking %LOCALAPPDATA%/%APPDATA%/%PROGRAMDATA% rather than by listing programs .
+            // found by walking %LOCALAPPDATA%/%APPDATA%/%PROGRAMDATA% rather than by listing programs;
             // see AppCacheDiscovery. OFF by default: broader and less individually reviewed than the rest
             // of this table, even though the same safety gate applies.
             new CleanupTarget("app-cache-sweep", "CleanupAppCacheSweep", "CleanupAppCacheSweepDesc",
