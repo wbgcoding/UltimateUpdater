@@ -47,9 +47,13 @@ public static class DriveMediaTypeReader
     /// called far more often than that (once per dialog open, and once per test that touches the
     /// catalogue): without this, every one of those calls repeated the same two-namespace WMI walk for the
     /// same drives, which measured as most of a 1500-test suite's OWN run time on a machine with real fixed
-    /// drives. Never invalidated: nothing here can hot-swap a drive's own storage medium.
+    /// drives. Keyed by the volume (letter plus its size), not the bare letter, so a disk mounted later under a
+    /// letter another disk held is read afresh. Only a determined answer is kept: an Unknown (a failed or
+    /// empty WMI read) is asked again next time instead of hiding the drive's row until restart.
     /// </summary>
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, DriveMediaType> Cache = new(StringComparer.OrdinalIgnoreCase);
+
+    private static string CacheKey(string driveLetter, long volumeSize) => driveLetter + "|" + volumeSize;
 
     /// <summary>A logging seam, same shape as <see cref="ScanResultCache.PathOverride"/>. Does
     /// nothing by default; <c>App.xaml.cs</c> points it at the real <see cref="LoggingService"/>'s
@@ -62,9 +66,20 @@ public static class DriveMediaTypeReader
     /// disk could be resolved for the drive letter at all. Default is the real query.</summary>
     internal static Func<string, int?> QueryRawMediaType { get; set; } = RealQueryForTests;
 
-    /// <summary>Best effort, drive letter WITHOUT a trailing separator (e.g. "C:"). Never throws.</summary>
-    public static DriveMediaType TryGetMediaType(string driveLetter) =>
-        Cache.GetOrAdd(driveLetter, TryGetMediaTypeUncached);
+    /// <summary>Best effort, drive letter WITHOUT a trailing separator (e.g. "C:"); <paramref name="volumeSize"/>
+    /// (the drive's total size) tells two disks that took the same letter apart. Never throws.</summary>
+    public static DriveMediaType TryGetMediaType(string driveLetter, long volumeSize = 0)
+    {
+        var key = CacheKey(driveLetter, volumeSize);
+        if (Cache.TryGetValue(key, out var cached))
+            return cached;
+
+        var result = TryGetMediaTypeUncached(driveLetter);
+        if (result != DriveMediaType.Unknown)
+            Cache[key] = result;
+
+        return result;
+    }
 
     private static DriveMediaType TryGetMediaTypeUncached(string driveLetter)
     {
@@ -131,14 +146,28 @@ public static class DriveMediaTypeReader
 
     internal static Func<string, int?> QueryRawBusType { get; set; } = RealBusTypeQueryForTests;
 
-    public static bool TryGetIsUsb(string driveLetter) => UsbCache.GetOrAdd(driveLetter, TryGetIsUsbUncached);
+    /// <summary>Keyed like <see cref="TryGetMediaType"/>; a read that failed or found no physical disk is not
+    /// kept, so the next call asks again.</summary>
+    public static bool TryGetIsUsb(string driveLetter, long volumeSize = 0)
+    {
+        var key = CacheKey(driveLetter, volumeSize);
+        if (UsbCache.TryGetValue(key, out var cached))
+            return cached;
 
-    private static bool TryGetIsUsbUncached(string driveLetter)
+        var busType = TryReadBusType(driveLetter);
+        if (busType is null)
+            return false;
+
+        var isUsb = busType == 7;
+        UsbCache[key] = isUsb;
+        return isUsb;
+    }
+
+    private static int? TryReadBusType(string driveLetter)
     {
         try
         {
-            var busType = QueryRawBusType(driveLetter);
-            return busType == 7;
+            return QueryRawBusType(driveLetter);
         }
         catch (Exception ex) when (ex is ManagementException or System.Runtime.InteropServices.COMException
                                        or UnauthorizedAccessException or FormatException or InvalidCastException
@@ -146,7 +175,7 @@ public static class DriveMediaTypeReader
                                        or PlatformNotSupportedException)
         {
             Log($"drive {driveLetter}: bus type unreadable, {ex.GetType().Name}: {ex.Message}");
-            return false;
+            return null;
         }
     }
 

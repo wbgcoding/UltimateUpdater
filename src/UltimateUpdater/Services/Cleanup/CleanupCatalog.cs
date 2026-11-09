@@ -349,8 +349,8 @@ public static class CleanupCatalog
                     CleanupService.TryGetVolumeLabel(drive) ?? string.Empty,
                     drive.DriveType,
                     drive.TotalSize,
-                    DriveMediaTypeReader.TryGetMediaType(letter),
-                    DriveMediaTypeReader.TryGetIsUsb(letter));
+                    DriveMediaTypeReader.TryGetMediaType(letter, drive.TotalSize),
+                    DriveMediaTypeReader.TryGetIsUsb(letter, drive.TotalSize));
             },
             logWarning));
 
