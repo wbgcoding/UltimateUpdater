@@ -136,7 +136,7 @@ public sealed class MockUpdateSource : IUpdateSource
                 : []),
         ], delay: TimeSpan.FromMilliseconds(120)),
 
-        // The one deterministic source for the restart prompt - every other mock row
+        // The one deterministic source for the restart prompt. Every other mock row
         // finishes clean, so without this the reboot path could never be judged offline via --mock-sources.
         new MockUpdateSource("windowsupdate", UpdateCategory.SystemAndDrivers, SourceTier.A,
         [
@@ -181,7 +181,7 @@ public sealed class MockUpdateSource : IUpdateSource
         new MockUpdateSource("scoop", UpdateCategory.Software, SourceTier.A, [], fails: !showcase,
             delay: TimeSpan.FromMilliseconds(90)),
 
-        // Tier C: information only, no checkbox - matches the real SteamSource. ONE launcher row with
+        // Tier C: information only, no checkbox, matching the real SteamSource. ONE launcher row with
         // its pending game updates as a collapsible sub-list.
         new MockUpdateSource("steam", UpdateCategory.Games, SourceTier.C,
         [
