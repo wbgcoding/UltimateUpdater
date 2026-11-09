@@ -48,7 +48,7 @@ public sealed class FlutterSource(LoggingService logging, HttpClient httpClient)
 
         // Fail closed both ways: no answer from the feed, or a feed version that is not strictly newer than
         // the installed one (equal, or older because the checkout is ahead of the feed), both mean
-        // "nothing to report". never a guessed row.
+        // "nothing to report", never a guessed row.
         if (latest is null || !ShouldOffer(installed.Value.Version, latest.Value.Version))
             yield break;
 
@@ -74,7 +74,7 @@ public sealed class FlutterSource(LoggingService logging, HttpClient httpClient)
         latest is not null && PackageManagerParsers.IsNewer(installed, latest);
 
     /// <summary>
-    /// The release feed carries no size of its own (see <see cref="FlutterParsers.ParseLatestRelease"/>) .
+    /// The release feed carries no size of its own (see <see cref="FlutterParsers.ParseLatestRelease"/>), so
     /// the archive path it DOES carry is HEAD'd here for the real download size. The release-notes page is
     /// fixed, so it is attached regardless of whether the HEAD request itself succeeds.
     /// </summary>

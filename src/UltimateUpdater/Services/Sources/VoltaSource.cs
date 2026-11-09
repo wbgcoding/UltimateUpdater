@@ -17,10 +17,10 @@ namespace UltimateUpdater.Services.Sources;
 /// "an update available" in the sense every other row here means, and is left alone (the reasoning
 /// that rules out nvm-windows/juliaup/pyenv-win outright; Volta's "(default)" marker is what makes
 /// THIS tool different from those).
-/// Every comparison here is a REAL fetched version against a REAL read installed version: the standing
-/// rule: never show an update that would repeat forever
-/// because the installed version could not actually be read. If the installed side
-/// cannot be parsed from `volta list`, that tool is silently skipped rather than guessed.
+/// Every comparison here is a REAL fetched version against a REAL read installed version, following the
+/// standing rule never to show an update that would repeat forever because the installed version could
+/// not actually be read. If the installed side cannot be parsed from `volta list`, that tool is silently
+/// skipped rather than guessed.
 /// </summary>
 public sealed class VoltaSource(LoggingService logging, HttpClient httpClient) : IUpdateSource
 {
@@ -47,7 +47,7 @@ public sealed class VoltaSource(LoggingService logging, HttpClient httpClient) :
     /// <summary>
     /// The feed half of the scan, split out so a test can hand in the installed tools and a fake client.
     /// Fail closed both ways: no answer from the feed, or an installed version that could not be
-    /// read/compared, both mean "say nothing". never a repeated guess. But when EVERY feed lookup could not
+    /// read/compared, both mean "say nothing", never a repeated guess. But when EVERY feed lookup could not
     /// be answered at all, that is a failed source (see <see cref="RegistryFetch.ThrowIfAllFailed"/>).
     /// </summary>
     internal async Task<IReadOnlyList<UpdateItem>> CheckToolsAsync(
