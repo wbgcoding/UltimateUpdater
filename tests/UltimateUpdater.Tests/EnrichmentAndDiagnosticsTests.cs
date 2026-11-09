@@ -209,7 +209,7 @@ public class EnrichmentAndDiagnosticsTests
             }
             """;
 
-        Assert.Equal("https://github.com/x/y", PackageMetadataParsers.ParseNpmPackument(json, "1.0.0").ProjectUrl);
+        Assert.Equal("https://github.com/x/y", NpmPackumentTestParser.Parse(json, "1.0.0").Enrichment.ProjectUrl);
     }
 
     /// <summary>A registry response is hostile input: a field documented as a string can arrive as a
@@ -225,7 +225,7 @@ public class EnrichmentAndDiagnosticsTests
               "versions": { "1.0.0": { "dist": {} } }
             }
             """;
-        var npmEnrichment = PackageMetadataParsers.ParseNpmPackument(npmJson, "1.0.0");
+        var npmEnrichment = NpmPackumentTestParser.Parse(npmJson, "1.0.0").Enrichment;
         Assert.Null(npmEnrichment.PublishDate);
         Assert.Null(npmEnrichment.ProjectUrl);
 
@@ -262,7 +262,7 @@ public class EnrichmentAndDiagnosticsTests
             }
             """;
 
-        var enrichment = PackageMetadataParsers.ParseNpmPackument(json, "5.4.5");
+        var enrichment = NpmPackumentTestParser.Parse(json, "5.4.5").Enrichment;
 
         Assert.Equal(22000000, enrichment.DownloadSize);
         Assert.NotNull(enrichment.PublishDate);
@@ -274,9 +274,9 @@ public class EnrichmentAndDiagnosticsTests
     {
         const string json = "{ \"time\": { \"1.0.0\": \"2024-01-01T00:00:00Z\" } }";
 
-        Assert.Equal(default, PackageMetadataParsers.ParseNpmPackument(json, "2.0.0"));
-        Assert.Equal(default, PackageMetadataParsers.ParseNpmPackument("garbage", "1.0.0"));
-        Assert.Equal(default, PackageMetadataParsers.ParseNpmPackument(json, ""));
+        Assert.Equal(default, NpmPackumentTestParser.Parse(json, "2.0.0").Enrichment);
+        Assert.Equal(default, NpmPackumentTestParser.Parse("garbage", "1.0.0").Enrichment);
+        Assert.Equal(default, NpmPackumentTestParser.Parse(json, "").Enrichment);
     }
 
     [Fact]
@@ -293,12 +293,12 @@ public class EnrichmentAndDiagnosticsTests
 
         Assert.Equal(
             "https://registry.npmjs.org/typescript/-/typescript-5.4.5.tgz",
-            PackageMetadataParsers.ParseNpmTarballUrl(json, "5.4.5"));
-        Assert.Null(PackageMetadataParsers.ParseNpmTarballUrl(json, "9.9.9"));
-        Assert.Null(PackageMetadataParsers.ParseNpmTarballUrl("garbage", "5.4.5"));
+            NpmPackumentTestParser.Parse(json, "5.4.5").TarballUrl);
+        Assert.Null(NpmPackumentTestParser.Parse(json, "9.9.9").TarballUrl);
+        Assert.Null(NpmPackumentTestParser.Parse("garbage", "5.4.5").TarballUrl);
 
         const string unsafeJson = """{ "versions": { "1.0.0": { "dist": { "tarball": "file:///etc/passwd" } } } }""";
-        Assert.Null(PackageMetadataParsers.ParseNpmTarballUrl(unsafeJson, "1.0.0"));
+        Assert.Null(NpmPackumentTestParser.Parse(unsafeJson, "1.0.0").TarballUrl);
     }
 
     [Fact]

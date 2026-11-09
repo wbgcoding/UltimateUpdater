@@ -128,35 +128,6 @@ public static class PackageMetadataParsers
     }
 
     /// <summary>
-    /// npm `GET /{name}` (full packument) → the publish date for a specific version from the "time"
-    /// map, and its unpacked size from "versions[version].dist.unpackedSize" when present.
-    /// </summary>
-    public static UpdateEnrichment ParseNpmPackument(string json, string version) =>
-        ParseNpmPackumentAndTarball(json, version).Enrichment;
-
-    /// <summary>
-    /// npm `GET /{name}` (full packument) → the exact version's `dist.tarball` URL, from the SAME response
-    /// <see cref="ParseNpmPackument"/> already reads. Used when that call's `unpackedSize` came back empty
-    /// (npm does not always report it), the tarball is what actually comes down on an install, HEAD'd
-    /// separately by the caller for its real size.
-    /// </summary>
-    public static string? ParseNpmTarballUrl(string json, string version) =>
-        ParseNpmPackumentAndTarball(json, version).TarballUrl;
-
-    /// <summary>
-    /// Both facts above out of ONE parse: a packument for a popular package runs to tens of megabytes, too
-    /// much to parse twice per row.
-    /// </summary>
-    public static (UpdateEnrichment Enrichment, string? TarballUrl) ParseNpmPackumentAndTarball(string json, string version)
-    {
-        if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(json))
-            return default;
-
-        var facts = NpmPackumentReader.Scan(System.Text.Encoding.UTF8.GetBytes(json), version);
-        return facts is null ? default : FromNpmPackument(facts);
-    }
-
-    /// <summary>
     /// The enrichment and tarball URL out of the raw facts the streaming reader collected: the date is
     /// parsed leniently, every URL passes the http(s) gate, an unusable field simply stays unknown.
     /// </summary>
