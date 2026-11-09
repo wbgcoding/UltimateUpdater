@@ -30,16 +30,15 @@ public static class DialogKeyboard
     }
 
     /// <summary>
-    /// A drop-in replacement for <see cref="Window.ShowDialog"/> on this app's three real modal windows
-    /// (<see cref="UltimateUpdater.Services.Dialogs"/>, the install preflight window, the first-run source
-    /// picker), same signature and the same return value, so any of their call sites can switch to it with
+    /// A drop-in replacement for <see cref="Window.ShowDialog"/> on this app's real modal windows
+    /// (<see cref="UltimateUpdater.Services.Dialogs"/> and the install preflight window), same signature and the same return value, so any of their call sites can switch to it with
     /// a one-line change. WPF's own ShowDialog already disables the owner for as long as the dialog is up,
     /// which is what keeps Tab from ever reaching a control behind it, but a disabled element cannot hold
     /// keyboard focus, so whatever had it in the owner loses it the moment the dialog opens and is never
     /// handed it back on its own once the owner is re-enabled. This remembers that element and restores it
     /// after the dialog closes, so the opener is exactly as usable as it was before the dialog interrupted
-    /// it. Wired into all three call sites (Services/Dialogs.cs, ViewModels/MainViewModel.Install.cs,
-    /// App.xaml.cs).
+    /// it. Wired into every call site (Services/Dialogs.cs and
+    /// ViewModels/MainViewModel.Install.cs).
     /// </summary>
     public static bool? ShowModal(Window dialog)
     {
