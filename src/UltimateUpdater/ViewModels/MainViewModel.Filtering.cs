@@ -37,7 +37,8 @@ public partial class MainViewModel
         ApplyFilter();
     }
 
-    /// <summary>Hides the whole "Manual update" category (stores/launchers) and drops its bottom pill.</summary>
+    /// <summary>Hides the whole "Manual update" category (stores/launchers). Those sources have no pill, so
+    /// only the table, the counts and the headline change.</summary>
     [ObservableProperty]
     private bool hideManual;
 
@@ -55,8 +56,6 @@ public partial class MainViewModel
         _settings.Current.Ui.HideManual = value;
         Persist();
         ApplyFilter();
-        // rebuild the pills so the "Manual update" one appears/disappears with the toggle, then recount
-        FlushProviderStatuses();
         RefreshHeader();
     }
 
