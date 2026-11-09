@@ -2333,7 +2333,7 @@ Mit Admin-Rechten fortfahren?</value>
     <value>Deinstalliert, aber die Neuinstallation ist fehlgeschlagen. Mit „Wiederholen“ erneut versuchen.</value>
   </data>
   <data name="CleanupOldPythonVenvUsesTip" xml:space="preserve">
-    <value>Diese Zahl ist ein Mindestwert. Gezählt wird in Ihrem Benutzerprofil und in den üblichen Werkzeugordnern (pipx, Poetry); virtuelle Umgebungen an anderen Orten werden nicht gefunden.</value>
+    <value>Diese Zahl ist ein Mindestwert. Gezählt wird in deinem Benutzerprofil und in den üblichen Werkzeugordnern (pipx, Poetry); virtuelle Umgebungen an anderen Orten werden nicht gefunden.</value>
   </data>
   <data name="CleanupDriverReasonSuperseded" xml:space="preserve">
     <value>Ersetzt durch Version {0} ({1})</value>
