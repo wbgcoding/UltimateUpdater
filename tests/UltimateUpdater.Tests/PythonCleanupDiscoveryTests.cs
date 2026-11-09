@@ -248,6 +248,43 @@ public class PythonCleanupDiscoveryTests : IDisposable
     }
 
     [Fact]
+    public void Only_the_interpreters_the_measure_filter_accepts_get_their_site_packages_walked()
+    {
+        var oldest = CreateInterpreter("Python311");
+        var middle = CreateInterpreter("Python312");
+        var newer = CreateInterpreter("Python313");
+        var oldestExe = Path.Combine(oldest, "python.exe");
+        var middleExe = Path.Combine(middle, "python.exe");
+        foreach (var folder in new[] { oldest, middle })
+        {
+            var package = Path.Combine(folder, "Lib", "site-packages", "requests");
+            Directory.CreateDirectory(package);
+            File.WriteAllText(Path.Combine(package, "__init__.py"), new string('x', 1000));
+            Directory.CreateDirectory(Path.Combine(folder, "Lib", "site-packages", "requests-2.0.dist-info"));
+        }
+
+        var registry = new FakeRegistry()
+            .AddTag(HkcuRoot, "3.11", oldestExe)
+            .AddTag(HkcuRoot, "3.12", middleExe)
+            .AddTag(HkcuRoot, "3.13", Path.Combine(newer, "python.exe"))
+            .AddUninstallEntry(HkcuUninstallRoot, "{python-3.11}", "Python 3.11.9 (64-bit)",
+                uninstallString: oldestExe, quietUninstallString: oldestExe + " /quiet")
+            .AddUninstallEntry(HkcuUninstallRoot, "{python-3.12}", "Python 3.12.5 (64-bit)",
+                uninstallString: middleExe, quietUninstallString: middleExe + " /quiet");
+
+        var found = PythonCleanupDiscovery.DiscoverOldVersions(
+            registry, _ => null, exe => string.Equals(exe, middleExe, StringComparison.OrdinalIgnoreCase));
+
+        Assert.Equal(2, found.Count);
+        var skippedRow = Assert.Single(found, c => string.Equals(c.PythonExe, oldestExe, StringComparison.OrdinalIgnoreCase));
+        var measuredRow = Assert.Single(found, c => string.Equals(c.PythonExe, middleExe, StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(0, skippedRow.SizeBytes);
+        Assert.Equal(0, skippedRow.PackageCount);
+        Assert.True(measuredRow.SizeBytes >= 1000);
+        Assert.Equal(1, measuredRow.PackageCount);
+    }
+
+    [Fact]
     public void An_unquoted_uninstall_path_with_spaces_splits_at_the_exe_extension_not_at_the_first_space()
     {
         var split = PythonVersionCleanupExecutor.SplitCommand(@"C:\Program Files\Python312\uninstall.exe /quiet");
