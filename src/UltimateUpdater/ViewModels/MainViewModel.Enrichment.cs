@@ -118,7 +118,7 @@ public partial class MainViewModel
             return string.Empty; // not a release page this app can read: a definitive "no text"
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
-            or OperationCanceledException or IOException)
+            or OperationCanceledException or IOException or ArgumentException)
         {
             _logging.Warn($"Changelog fetch failed for '{releaseUrl}': {ex.Message}");
             return null;
