@@ -231,7 +231,11 @@ public class CleanupService(LoggingService logging)
     /// re-discovered rather than cached, so a clean run sees exactly what is on disk right now.</summary>
     private static IReadOnlyList<string> ResolveDirectories(CleanupTarget target, CancellationToken cancellationToken) =>
         target.Kind == CleanupKind.AppCacheSweep
+            // A discovered root that is itself excluded (Temp and the pip cache are catalogue folders with
+            // their own rows) would be walked in full only to drop every file again.
             ? AppCacheDiscovery.DiscoverCacheDirectories(cancellationToken)
+                .Where(d => !IsExcluded(d, target.ExcludedDirectories))
+                .ToList()
             : target.Directories;
 
     /// <summary>Detail-list rows above this are folded into one "…and N more" summary;
@@ -1123,6 +1127,7 @@ public class CleanupService(LoggingService logging)
                 options)
             {
                 ShouldIncludePredicate = static (ref FileSystemEntry entry) => !entry.IsDirectory,
+                ShouldRecursePredicate = RecursePredicate<ListedFile>(excluded),
             }.GetEnumerator();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -1159,6 +1164,13 @@ public class CleanupService(LoggingService logging)
         }
     }
 
+    /// <summary>Stops a walk from entering an excluded folder: every file below it would be dropped one by one
+    /// after being listed. Null (the default, recurse everywhere) when nothing is excluded.</summary>
+    private static FileSystemEnumerable<T>.FindPredicate? RecursePredicate<T>(IReadOnlyList<string> excluded) =>
+        excluded.Count == 0
+            ? null
+            : (ref FileSystemEntry entry) => !IsExcluded(entry.ToFullPath(), excluded);
+
     /// <summary>Every nested subdirectory, any depth: the caller sorts by depth to walk bottom-up.</summary>
     private IEnumerable<string> EnumerateAllDirectories(string directory, IReadOnlyList<string> excluded)
     {
@@ -1171,9 +1183,14 @@ public class CleanupService(LoggingService logging)
 
         try
         {
-            return Directory.EnumerateDirectories(directory, "*", options)
-                .Where(d => !IsExcluded(d, excluded))
-                .ToList();
+            return new FileSystemEnumerable<string>(
+                directory, static (ref FileSystemEntry entry) => entry.ToFullPath(), options)
+            {
+                ShouldIncludePredicate = excluded.Count == 0
+                    ? static (ref FileSystemEntry entry) => entry.IsDirectory
+                    : (ref FileSystemEntry entry) => entry.IsDirectory && !IsExcluded(entry.ToFullPath(), excluded),
+                ShouldRecursePredicate = RecursePredicate<string>(excluded),
+            }.ToList();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
