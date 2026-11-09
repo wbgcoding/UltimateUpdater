@@ -161,15 +161,6 @@ public sealed class SettingsService
     }
 
     /// <summary>
-    /// <see cref="Current"/>'s collections (Sources, Excludes, Snoozed, ...) are mutated straight from the
-    /// UI thread by every view model that touches settings, with no lock of their own. Serialising them
-    /// from <see cref="OnSaveTimer"/>'s thread-pool thread would race a live mutation and throw
-    /// InvalidOperationException ("Collection was modified"), so the read and serialise step runs on the
-    /// dispatcher that owns those mutations, where nothing else can run meanwhile. A caller already on that
-    /// thread (<see cref="Flush"/> at app exit) or with no dispatcher at all (tests) runs inline;
-    /// <see cref="OnSaveTimer"/>'s catch-all keeps a failure on that inline path from ending the process.
-    /// </summary>
-    /// <summary>
     /// Writes the settings as they are in memory right now to <paramref name="path"/>, for a data folder copy
     /// that ran in the background while the user could still change something. Does nothing while saves are
     /// suppressed: the file on disk is the truth then, and the copy already holds it. Throws like
@@ -184,6 +175,15 @@ public sealed class SettingsService
         AtomicFile.WriteAllText(path, json);
     }
 
+    /// <summary>
+    /// <see cref="Current"/>'s collections (Sources, Excludes, Snoozed, ...) are mutated straight from the
+    /// UI thread by every view model that touches settings, with no lock of their own. Serialising them
+    /// from <see cref="OnSaveTimer"/>'s thread-pool thread would race a live mutation and throw
+    /// InvalidOperationException ("Collection was modified"), so the read and serialise step runs on the
+    /// dispatcher that owns those mutations, where nothing else can run meanwhile. A caller already on that
+    /// thread (<see cref="Flush"/> at app exit) or with no dispatcher at all (tests) runs inline;
+    /// <see cref="OnSaveTimer"/>'s catch-all keeps a failure on that inline path from ending the process.
+    /// </summary>
     private (string Json, long Sequence) SerializeCurrentOnOwningThread()
     {
         // The sequence number is taken in the same step as the snapshot, so it orders snapshots exactly.
