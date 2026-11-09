@@ -359,6 +359,31 @@ public class IconSourceLookupTests : IDisposable
     }
 
     [Fact]
+    public void A_DisplayIcon_naming_a_file_without_an_icon_resource_is_not_used()
+    {
+        var bare = ExeWithoutIcon(Folder("display"), "zqbare.exe");
+
+        Assert.Null(IconCacheService.ParseIconValue(bare));
+        Assert.Null(IconCacheService.ParseIconValue($"\"{bare}\",0"));
+    }
+
+    [Fact]
+    public void A_DisplayIcon_index_past_the_last_icon_is_not_used()
+    {
+        Assert.NotNull(IconCacheService.ParseIconValue($"{ExeWithIcon},0"));
+        Assert.Null(IconCacheService.ParseIconValue($"{ExeWithIcon},9999"));
+    }
+
+    [Fact]
+    public void A_launcher_executable_hint_without_an_icon_resource_gives_no_icon()
+    {
+        var bare = ExeWithoutIcon(Folder("hint"), "zqhint.exe");
+
+        Assert.Null(IconCacheService.IconSourceFromExecutable(bare));
+        Assert.NotNull(IconCacheService.IconSourceFromExecutable(ExeWithIcon));
+    }
+
+    [Fact]
     public void A_driver_row_without_an_installed_vendor_tool_gets_no_icon()
     {
         var drivers = new DriverVendorTools(_ => false, text => text, [Vendor("zqvendor", ["zqvendor"], @"C:\none.exe")]);

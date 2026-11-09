@@ -71,7 +71,7 @@ public sealed class IconCacheService
     private sealed record InstalledApp(string Name, string? IconValue, string? InstallLocation);
 
     /// <summary>A file to take an icon from: either an icon resource at an index, or a plain image.</summary>
-    private sealed record IconSource(string Path, int Index, bool IsImageFile, System.Windows.Media.Color? Plate = null);
+    internal sealed record IconSource(string Path, int Index, bool IsImageFile, System.Windows.Media.Color? Plate = null);
 
     public IconCacheService(LoggingService logging)
         : this(logging, null, null, null)
@@ -333,17 +333,24 @@ public sealed class IconCacheService
     }
 
     /// <summary>An icon straight from an executable (or image) path, when the path is real and rooted.</summary>
-    private static IconSource? IconSourceFromExecutable(string? path)
+    internal static IconSource? IconSourceFromExecutable(string? path)
     {
-        if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path) || IsScriptsLauncher(path) || !File.Exists(path))
+        if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path) || IsScriptsLauncher(path) || !File.Exists(path)
+            || !HasIconResource(path, 0))
+        {
             return null;
+        }
 
         var isImage = Path.GetExtension(path) is ".png" or ".jpg" or ".jpeg" or ".bmp";
         return new IconSource(path, 0, isImage);
     }
 
-    /// <summary>Handles the "C:\path\app.exe,3" form that DisplayIcon commonly takes.</summary>
-    private static IconSource? ParseIconValue(string? value)
+    /// <summary>
+    /// Handles the "C:\path\app.exe,3" form that DisplayIcon commonly takes. A file with no icon at that
+    /// index gives null like every other branch, so the caller moves on instead of caching Windows'
+    /// generic program icon.
+    /// </summary>
+    internal static IconSource? ParseIconValue(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
             return null;
@@ -358,7 +365,7 @@ public sealed class IconCacheService
             text = text[..comma].Trim().Trim('"');
         }
 
-        if (IsScriptsLauncher(text) || !File.Exists(text))
+        if (IsScriptsLauncher(text) || !File.Exists(text) || !HasIconResource(text, index))
             return null;
 
         var isImage = Path.GetExtension(text) is ".png" or ".jpg" or ".jpeg" or ".bmp";
