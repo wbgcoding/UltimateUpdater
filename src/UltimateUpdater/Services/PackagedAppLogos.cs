@@ -102,7 +102,7 @@ internal sealed class PackagedAppLogos
     internal static string? Pick(IEnumerable<string> fileNames, string stem)
     {
         var pattern = new Regex(
-            $@"^{Regex.Escape(stem)}(?:\.scale-(?<scale>\d+))?(?:\.targetsize-(?<size>\d+))?(?:_altform-(?<form>unplated))?\.png$",
+            $@"^{Regex.Escape(stem)}(?:\.scale-(?<scale>\d{{1,4}}))?(?:\.targetsize-(?<size>\d{{1,4}}))?(?:_altform-(?<form>unplated))?\.png$",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         return fileNames

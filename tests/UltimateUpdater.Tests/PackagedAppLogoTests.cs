@@ -149,6 +149,17 @@ public class PackagedAppLogoTests : IDisposable
         Assert.Equal("Square44x44Logo.scale-200.png", picked);
     }
 
+    [Theory]
+    [InlineData("Square44x44Logo.targetsize-99999999999.png")]
+    [InlineData("Square44x44Logo.scale-99999999999.png")]
+    public void A_logo_file_with_an_oversized_number_is_skipped_not_thrown_on(string oversized)
+    {
+        var picked = PackagedAppLogos.Pick([oversized, "Square44x44Logo.scale-200.png"], "Square44x44Logo");
+
+        Assert.Equal("Square44x44Logo.scale-200.png", picked);
+        Assert.Null(PackagedAppLogos.Pick([oversized], "Square44x44Logo"));
+    }
+
     [Fact]
     public void Without_a_plated_variant_the_unplated_one_is_taken()
     {
