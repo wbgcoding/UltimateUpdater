@@ -954,7 +954,7 @@ public partial class SettingsViewModel : ObservableObject
     /// Factory state in ONE action: every
     /// option, every source switch and the ignore list go back to their defaults AND every file this app
     /// wrote (history, logs, caches) is deleted. Destructive and irreversible, so the confirmation is a red
-    /// warning. The first-run source picker comes back on the next start.
+    /// warning.
     /// </summary>
     [RelayCommand]
     private async Task ResetEverythingAsync()

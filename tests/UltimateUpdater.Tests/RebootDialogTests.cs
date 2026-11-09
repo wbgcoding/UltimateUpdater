@@ -1,3 +1,4 @@
+using UltimateUpdater.Models;
 using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
 using UltimateUpdater.ViewModels;
@@ -282,6 +283,117 @@ public class RebootDialogTests
             Assert.Equal(2, dialogCalls.Count);
         });
     }
+
+    /// <summary>A takeover run keeps the finished batch's rows in the strip, so the next batch's end sees
+    /// the same restart request again: it must not raise a second dialog or balloon for it.</summary>
+    [Fact]
+    public void A_restart_request_already_announced_is_not_announced_again()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create();
+            viewModel.MainWindowVisibleOverride = () => true;
+            var dialogCalls = new List<IReadOnlyList<string>>();
+            viewModel.RebootDialogOverride = names => { dialogCalls.Add(names); return false; };
+
+            var row = new UpdateRowViewModel(new UpdateItem
+            {
+                Id = "kb1", SourceId = "windowsupdate", Category = UpdateCategory.Software, Name = "KB1",
+                InstalledVersion = "1", AvailableVersion = "2",
+            });
+            row.ApplyInstallStatus(new InstallItemStatus("windowsupdate", "kb1", 100, null, true, null) { RebootRequired = true });
+            Assert.True(row.NeedsReboot);
+
+            viewModel.InstallBatch.Add(row);
+            Invoke(viewModel, "ReportRebootsFor", viewModel.InstallBatch);
+            Invoke(viewModel, "ReportRebootsFor", viewModel.InstallBatch);
+
+            Assert.Single(dialogCalls);
+            Assert.True(viewModel.RebootRequiredNotice);
+        });
+    }
+
+    /// <summary>A solo activity (uninstall, reinstall's install, downgrade, interactive retry) ends outside
+    /// the batch loop; its restart request used to stay a small badge on the row.</summary>
+    [Fact]
+    public void A_solo_activity_that_needs_a_restart_raises_the_dialog()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var logging = new LoggingService();
+            var settings = new SettingsService(logging, Path.Combine(
+                Directory.CreateTempSubdirectory("wu-reboot-solo-test-").FullName, "settings.json"));
+            settings.Current.Ui.Language = "en";
+            var sources = new List<IUpdateSource> { new RebootingUninstallSource() };
+            var history = new HistoryService(logging);
+            var installQueue = new InstallQueue(sources, settings, history, logging);
+            var viewModel = new MainViewModel(
+                settings, logging, new ThemeService(), new ScanOrchestrator(sources, logging),
+                new IconCacheService(logging), installQueue, history,
+                new AutostartService(logging), new NotificationService(settings, logging),
+                new Services.SelfUpdate.SelfUpdateService(
+                    new System.Net.Http.HttpClient(), logging, new Services.SelfUpdate.PublicUpdateChannel(logging)),
+                sources)
+            {
+                MainWindowVisibleOverride = () => true,
+            };
+            var dialogCalls = new List<IReadOnlyList<string>>();
+            viewModel.RebootDialogOverride = names => { dialogCalls.Add(names); return false; };
+
+            Pump(viewModel.ScanCommand.ExecuteAsync(null));
+            var row = viewModel.Updates[0];
+
+            var run = (Task)typeof(MainViewModel).GetMethod("RunSingleRowActionAsync",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+                .Invoke(viewModel, [row, InstallAction.Uninstall, null])!;
+            Pump(run);
+
+            Assert.True(row.NeedsReboot);
+            Assert.Single(dialogCalls);
+            Assert.True(viewModel.RebootRequiredNotice);
+        });
+    }
+
+    /// <summary>One row whose uninstall ends asking for a restart.</summary>
+    private sealed class RebootingUninstallSource : IUpdateSource
+    {
+        public string Id => "rebootsrc";
+
+        public UpdateCategory Category => UpdateCategory.Software;
+
+        public SourceTier Tier => SourceTier.A;
+
+        public Task<bool> IsAvailableAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+
+        public async IAsyncEnumerable<UpdateItem> ScanAsync(
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield return new UpdateItem
+            {
+                Id = "pkg", SourceId = Id, Category = Category, Name = "Pkg",
+                InstalledVersion = "1", AvailableVersion = "2",
+            };
+            await Task.CompletedTask;
+        }
+
+        public Task InstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken) =>
+            Task.CompletedTask;
+
+        public bool CanUninstall(UpdateItem item) => true;
+
+        public async Task UninstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken)
+        {
+            progress.Report(new InstallProgress { PercentComplete = 100, StatusText = item.Name, RebootRequired = true });
+
+            // A real tool takes time after its last line; the progress callback is posted to the UI thread
+            // and only a source that actually yields lets it run before the activity ends.
+            await Task.Delay(50, cancellationToken);
+        }
+    }
+
+    private static void Invoke(MainViewModel viewModel, string method, params object[] args) =>
+        typeof(MainViewModel).GetMethod(method, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .Invoke(viewModel, args);
 
     private static void Pump(Task task)
     {

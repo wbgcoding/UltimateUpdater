@@ -1029,6 +1029,30 @@ public partial class CleanupViewModel
             Activity = next;
     }
 
+    /// <summary>The silence after which the run's own timer starts pulling <see cref="Activity"/> down;
+    /// shorter gaps are ordinary pauses between two progress reports.</summary>
+    private const double StalledGapSeconds = 1.0;
+
+    /// <summary>
+    /// Called by the run's own timer, because <see cref="TrackActivity"/> only runs when a progress report
+    /// arrives and a step that reports nothing (a long DISM or sfc pass) would otherwise keep the last fast
+    /// reading for as long as it stays quiet. The gap is measured from the last report, which is left
+    /// untouched here, so the figure settles on what the silence itself implies.
+    /// </summary>
+    internal void DecayStalledActivity(long nowTimestamp)
+    {
+        if (Phase != CleanupPhase.Cleaning || _lastProgressTick == 0)
+            return;
+
+        var gap = (nowTimestamp - _lastProgressTick) / (double)System.Diagnostics.Stopwatch.Frequency;
+        if (gap < StalledGapSeconds)
+            return;
+
+        var next = SmoothActivity(Activity, gap);
+        if (Math.Abs(next - Activity) > 0.02)
+            Activity = next;
+    }
+
     /// <summary>
     /// Exponential smoothing with the gap itself as the weight: closely spaced ticks pull the value up
     /// slowly, and a long silence weighs almost nothing against the low reading that silence produced, so

@@ -83,8 +83,9 @@ public partial class MainViewModel
     }
 
     /// <summary>
-    /// The actual network call. Every failure; network error, timeout, non-2xx (403/429 from GitHub's
-    /// unauthenticated rate limit included), an oversized response; degrades to null, which is not cached.
+    /// The actual network call. Every failure (a network error, a timeout, a non-2xx answer such as the
+    /// 403/429 from GitHub's unauthenticated rate limit, an oversized response) degrades to null, which is
+    /// not cached.
     /// A release that was read but has no text is "", which is. Never throws into the caller.
     /// </summary>
     private async Task<string?> FetchReleaseBodyAsync(string releaseUrl, CancellationToken cancellationToken)

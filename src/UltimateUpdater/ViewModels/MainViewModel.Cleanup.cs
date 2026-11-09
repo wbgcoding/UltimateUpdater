@@ -44,8 +44,8 @@ public partial class MainViewModel
     private bool cleanupReminderAsking;
 
     /// <summary>The banner's normal content (text, cleanup button, x): the exact complement of
-    /// <see cref="CleanupReminderAsking"/>, its own property because there is no inverse-boolean visibility
-    /// converter in the app and adding one just for this single spot was not worth it.</summary>
+    /// <see cref="CleanupReminderAsking"/>, kept as its own property so the banner binds to it directly
+    /// instead of going through an inverse-boolean converter.</summary>
     public bool CleanupReminderOfferVisible => !CleanupReminderAsking;
 
     partial void OnCleanupReminderAskingChanged(bool value) => OnPropertyChanged(nameof(CleanupReminderOfferVisible));

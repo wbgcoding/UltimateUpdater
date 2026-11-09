@@ -49,6 +49,28 @@ public class BrandIconTests
         Assert.Null(BrandIcons.Resolve("Microsoft Edge", "winget", "Microsoft.Edge"));
     }
 
+    /// <summary>
+    /// A library package is not the application that shares its name: npm "riot" is Riot.js, pip "java" is
+    /// not OpenJDK. The application alias table must not apply to those rows, they keep their ecosystem's
+    /// mark instead.
+    /// </summary>
+    [Theory]
+    [InlineData("riot", "npm")]
+    [InlineData("origin", "npm")]
+    [InlineData("epic", "npm")]
+    [InlineData("chrome", "npm")]
+    [InlineData("obs", "pip")]
+    [InlineData("java", "pip")]
+    public void A_library_row_never_borrows_an_applications_mark(string name, string sourceId)
+    {
+        var resolved = BrandIcons.Resolve(name, sourceId, name);
+        var ecosystem = BrandIcons.Resolve(null, sourceId, null);
+
+        Assert.NotNull(resolved);
+        Assert.NotNull(ecosystem);
+        Assert.Same(ecosystem!.Geometry, resolved!.Geometry);
+    }
+
     /// <summary>A brand mark replaces the letter tile, and the real icon still wins over both.</summary>
     [Fact]
     public void A_brand_mark_takes_the_place_of_the_letter()

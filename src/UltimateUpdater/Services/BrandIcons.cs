@@ -160,9 +160,12 @@ internal static class BrandIcons
     /// <summary>The mark and the brand's own colour for a row, found together so they can never disagree.</summary>
     public static BrandMark? Resolve(string? name, string? sourceId, string? itemId)
     {
+        // The alias table maps application names to their maker's mark; a library package that merely
+        // shares such a name (npm "riot", pip "java") is not that application and gets an exact slug only.
+        var useAliases = !IsLibrarySource(sourceId);
         foreach (var candidate in Candidates(name, sourceId, itemId))
         {
-            if (Lookup(candidate) is { } mark)
+            if (Lookup(candidate, useAliases) is { } mark)
                 return mark;
         }
 
@@ -196,16 +199,16 @@ internal static class BrandIcons
         }
     }
 
-    private static BrandMark? Lookup(string key)
+    private static BrandMark? Lookup(string key, bool useAliases)
     {
         if (string.IsNullOrEmpty(key))
             return null;
 
-        return Cache.GetOrAdd(key, static candidate =>
+        var slug = useAliases ? Aliases.GetValueOrDefault(key, key) : key;
+        return Cache.GetOrAdd(slug, static markSlug =>
         {
-            var slug = Aliases.GetValueOrDefault(candidate, candidate);
-            if (!BrandIconData.Paths.TryGetValue(slug, out var data) ||
-                !BrandIconData.Colors.TryGetValue(slug, out var hex))
+            if (!BrandIconData.Paths.TryGetValue(markSlug, out var data) ||
+                !BrandIconData.Colors.TryGetValue(markSlug, out var hex))
             {
                 return null;
             }
