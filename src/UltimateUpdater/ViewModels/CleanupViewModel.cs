@@ -153,6 +153,7 @@ public partial class CleanupViewModel : ObservableObject
         {
             FlushEntryProgress();
             RefreshElapsed();
+            DecayStalledActivity(System.Diagnostics.Stopwatch.GetTimestamp());
         };
 
         // The remembered column chooser state for the cleanup detail list.

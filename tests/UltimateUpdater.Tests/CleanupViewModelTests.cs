@@ -949,6 +949,33 @@ public partial class CleanupViewModelTests
         Assert.True(CleanupViewModel.SmoothActivity(1, 1.5) < CleanupViewModel.SmoothActivity(1, 0.3));
     }
 
+    /// <summary>The figure only moves when a progress report arrives, so a step that goes quiet used to keep
+    /// its last fast reading; the run's own timer now pulls it down once the silence is long enough.</summary>
+    [Fact]
+    public void A_silent_step_lets_the_activity_figure_decay_without_any_progress_report()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create(CreateSettings());
+            viewModel.Phase = CleanupPhase.Cleaning;
+            viewModel.Activity = 1;
+
+            var lastReport = typeof(CleanupViewModel).GetField("_lastProgressTick",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+            var reported = System.Diagnostics.Stopwatch.GetTimestamp();
+            lastReport.SetValue(viewModel, reported);
+
+            // Half a second after the last report is still an ordinary pause.
+            viewModel.DecayStalledActivity(reported + (System.Diagnostics.Stopwatch.Frequency / 2));
+            Assert.Equal(1, viewModel.Activity);
+
+            // Six quiet seconds are a stalled step.
+            viewModel.DecayStalledActivity(reported + (6 * System.Diagnostics.Stopwatch.Frequency));
+            Assert.True(viewModel.Activity < 0.5, $"a silent step left the figure at {viewModel.Activity:0.000}");
+            Assert.Equal(reported, (long)lastReport.GetValue(viewModel)!);
+        });
+    }
+
     /// <summary>It feeds a speed ratio, so it may never leave 0…1, not on a clock that jumped backwards,
     /// and not on a gap that is not a number at all.</summary>
     [Theory]
