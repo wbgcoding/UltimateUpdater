@@ -17,9 +17,11 @@ public class ElevatedProcessEnvironmentTests
 
     private static ProcessStartInfo Build(
         ResolvedExecutable executable, bool elevated, string? machinePath = null,
-        Func<string, bool>? trusted = null, IReadOnlyDictionary<string, string>? environment = null) =>
+        Func<string, bool>? trusted = null, IReadOnlyDictionary<string, string>? environment = null,
+        string? machineChocolatey = null) =>
         ProcessRunner.BuildStartInfo(
-            executable, ["/c", "echo"], environment, Encoding.UTF8, elevated, () => machinePath, trusted ?? (_ => true));
+            executable, ["/c", "echo"], environment, Encoding.UTF8, elevated, () => machinePath, trusted ?? (_ => true),
+            machineVariable: name => name == "ChocolateyInstall" ? machineChocolatey : null);
 
     private static ResolvedExecutable Pinned(string path) =>
         new(path, new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -124,5 +126,74 @@ public class ElevatedProcessEnvironmentTests
 
         Assert.Equal(string.Empty, info.WorkingDirectory);
         Assert.Equal(Environment.GetEnvironmentVariable("PATH"), info.Environment["PATH"]);
+    }
+
+    [Fact]
+    public void An_elevated_child_never_inherits_the_users_chocolatey_install_root()
+    {
+        Environment.SetEnvironmentVariable("ChocolateyInstall", @"C:\Users\planted\choco");
+        Environment.SetEnvironmentVariable("ChocolateyToolsLocation", @"C:\Users\planted\tools");
+        try
+        {
+            using var tool = Pinned(Path.Combine(System32, "cmd.exe"));
+
+            var elevated = Build(tool, elevated: true);
+            var unelevated = Build(tool, elevated: false);
+
+            Assert.False(elevated.Environment.ContainsKey("ChocolateyInstall"));
+            Assert.False(elevated.Environment.ContainsKey("ChocolateyToolsLocation"));
+            Assert.Equal(@"C:\Users\planted\choco", unelevated.Environment["ChocolateyInstall"]);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ChocolateyInstall", null);
+            Environment.SetEnvironmentVariable("ChocolateyToolsLocation", null);
+        }
+    }
+
+    [Fact]
+    public void A_caller_cannot_hand_an_elevated_child_a_chocolatey_install_root()
+    {
+        using var tool = Pinned(Path.Combine(System32, "cmd.exe"));
+
+        var info = Build(tool, elevated: true, environment: new Dictionary<string, string>
+        {
+            ["ChocolateyInstall"] = @"C:\Users\planted\choco",
+            ["chocolateytoolslocation"] = @"C:\Users\planted\tools",
+        });
+
+        Assert.False(info.Environment.ContainsKey("ChocolateyInstall"));
+        Assert.False(info.Environment.ContainsKey("ChocolateyToolsLocation"));
+    }
+
+    [Fact]
+    public void An_elevated_child_gets_the_machine_chocolatey_root_when_every_directory_on_it_is_trusted()
+    {
+        using var tool = Pinned(Path.Combine(System32, "cmd.exe"));
+        Environment.SetEnvironmentVariable("ChocolateyInstall", @"C:\Users\planted\choco");
+        try
+        {
+            var info = Build(tool, elevated: true, machineChocolatey: @"C:\ProgramData\chocolatey\");
+
+            Assert.Equal(@"C:\ProgramData\chocolatey", info.Environment["ChocolateyInstall"]);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ChocolateyInstall", null);
+        }
+    }
+
+    [Theory]
+    [InlineData(@"C:\ProgramData\chocolatey", false)]
+    [InlineData(@"%USERPROFILE%\choco", true)]
+    [InlineData(@"choco", true)]
+    [InlineData(null, true)]
+    public void An_elevated_child_gets_no_chocolatey_root_the_machine_cannot_vouch_for(string? machineValue, bool trusted)
+    {
+        using var tool = Pinned(Path.Combine(System32, "cmd.exe"));
+
+        var info = Build(tool, elevated: true, trusted: _ => trusted, machineChocolatey: machineValue);
+
+        Assert.False(info.Environment.ContainsKey("ChocolateyInstall"));
     }
 }

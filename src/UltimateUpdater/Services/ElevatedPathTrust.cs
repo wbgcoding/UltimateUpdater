@@ -148,6 +148,21 @@ internal static class ElevatedPathTrust
         }
     }
 
+    /// <summary>One system-wide environment variable from HKLM, unexpanded; null when absent or unreadable.
+    /// Never the process environment, which the unelevated user controls.</summary>
+    internal static string? ReadMachineVariable(string name)
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(MachineEnvironmentKey);
+            return key?.GetValue(name, null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames) as string;
+        }
+        catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>
     /// A PATH for an elevated child: the machine PATH, with %SystemRoot%/%windir% expanded from the known
     /// folder (not from the process environment) and every entry that is relative, still carries another

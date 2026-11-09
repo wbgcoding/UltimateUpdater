@@ -366,7 +366,8 @@ public static class ProcessRunner
         bool elevated,
         Func<string?>? machinePath = null,
         Func<string, bool>? trustedDirectory = null,
-        bool? scrubEnvironment = null)
+        bool? scrubEnvironment = null,
+        Func<string, string?>? machineVariable = null)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -393,6 +394,11 @@ public static class ProcessRunner
             foreach (var (key, value) in environment)
                 startInfo.Environment[key] = value;
         }
+
+        // Applied after the caller's variables: nothing may name the install root of a package manager
+        // that runs scripts from it, whoever supplies it.
+        if (scrubEnvironment ?? elevated)
+            ApplyChocolateyInstallRoot(startInfo.Environment, machineVariable ?? ElevatedPathTrust.ReadMachineVariable, trustedDirectory ?? ElevatedPathTrust.IsTrustedDirectory);
 
         if (elevated)
         {
@@ -430,6 +436,33 @@ public static class ProcessRunner
         foreach (var key in doomed)
             environment.Remove(key);
     }
+
+    /// <summary>
+    /// Chocolatey takes its install root (lib, helpers, extensions: PowerShell it runs as the caller) from
+    /// ChocolateyInstall before its own folder, and its tools folder from ChocolateyToolsLocation, and both
+    /// normally come from HKCU\Environment, which any unelevated program of the user can write. So the
+    /// inherited values are dropped. ChocolateyInstall is then set again only to the MACHINE value, and only
+    /// when every directory on its chain passes <paramref name="isTrustedDirectory"/>; otherwise it stays
+    /// unset and Chocolatey uses the folder its own, pinned executable sits in.
+    /// </summary>
+    internal static void ApplyChocolateyInstallRoot(
+        IDictionary<string, string?> environment, Func<string, string?> machineVariable, Func<string, bool> isTrustedDirectory)
+    {
+        foreach (var key in environment.Keys.Where(IsChocolateyRootVariable).ToList())
+            environment.Remove(key);
+
+        var root = machineVariable("ChocolateyInstall")?.Trim().Trim('"');
+        if (string.IsNullOrEmpty(root) || root.Contains('%') || !Path.IsPathFullyQualified(root))
+            return;
+
+        root = Path.TrimEndingDirectorySeparator(root);
+        if (isTrustedDirectory(root))
+            environment["ChocolateyInstall"] = root;
+    }
+
+    private static bool IsChocolateyRootVariable(string key) =>
+        key.Equals("ChocolateyInstall", StringComparison.OrdinalIgnoreCase)
+        || key.Equals("ChocolateyToolsLocation", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>How long the pumps are given to drain after the process itself has already exited, before
     /// this gives up waiting for EOF and cancels the token instead.</summary>
