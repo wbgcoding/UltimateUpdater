@@ -14,23 +14,32 @@ internal static class SafeEnumerate
     /// <summary>The files directly inside <paramref name="directory"/>. A file cannot redirect a walk, so
     /// no reparse-point filter applies (cloud placeholders are reparse-point files and are ordinary here).</summary>
     internal static IEnumerable<string> Files(string directory) =>
-        Listing(() => Directory.EnumerateFiles(directory), skipReparsePoints: false, onError: null);
+        Listing(() => Directory.EnumerateFiles(directory), onError: null);
 
     /// <summary>Same listing, but <paramref name="onError"/> runs when the folder cannot be opened or the
     /// walk breaks part-way, for a caller that must not trust a partial result.</summary>
     internal static IEnumerable<string> Files(string directory, Action onError) =>
-        Listing(() => Directory.EnumerateFiles(directory), skipReparsePoints: false, onError);
+        Listing(() => Directory.EnumerateFiles(directory), onError);
 
     /// <summary>The sub-folders directly inside <paramref name="directory"/>, never a junction or symlink
     /// (any reparse point): descending into one could leave the tree the caller was asked about.</summary>
     internal static IEnumerable<string> Directories(string directory) =>
-        Listing(() => Directory.EnumerateDirectories(directory), skipReparsePoints: true, onError: null);
+        Listing(() => Directory.EnumerateDirectories(directory, "*", NoReparsePoints), onError: null);
 
     /// <summary>The sub-folder listing with the same failure callback as <see cref="Files(string, Action)"/>.</summary>
     internal static IEnumerable<string> Directories(string directory, Action onError) =>
-        Listing(() => Directory.EnumerateDirectories(directory), skipReparsePoints: true, onError);
+        Listing(() => Directory.EnumerateDirectories(directory, "*", NoReparsePoints), onError);
 
-    private static IEnumerable<string> Listing(Func<IEnumerable<string>> open, bool skipReparsePoints, Action? onError)
+    /// <summary>The listing itself leaves out every reparse point, so no per-entry attribute call is needed.
+    /// Everything else matches the plain listing: hidden and system folders are included, and an inaccessible
+    /// folder raises instead of being skipped, which the callers' failure callback depends on.</summary>
+    private static readonly EnumerationOptions NoReparsePoints = new()
+    {
+        AttributesToSkip = FileAttributes.ReparsePoint,
+        IgnoreInaccessible = false,
+    };
+
+    private static IEnumerable<string> Listing(Func<IEnumerable<string>> open, Action? onError)
     {
         IEnumerator<string>? enumerator = null;
         try
@@ -64,24 +73,8 @@ internal static class SafeEnumerate
                 if (!hasNext)
                     yield break;
 
-                var path = enumerator.Current;
-                if (skipReparsePoints && !IsPlainDirectory(path))
-                    continue;
-
-                yield return path;
+                yield return enumerator.Current;
             }
-        }
-    }
-
-    private static bool IsPlainDirectory(string path)
-    {
-        try
-        {
-            return (File.GetAttributes(path) & FileAttributes.ReparsePoint) == 0;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return false;
         }
     }
 }
