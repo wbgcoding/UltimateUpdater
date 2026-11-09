@@ -167,6 +167,7 @@ en.PortableDirDescription=Choose a folder for the portable copy of {#AppName}. S
 en.UpdateDirDescription={#AppName} is already installed on this PC and will be updated in the folder shown below. Click Next to continue, or Browse to choose a different folder.
 en.BusyPrompt={#AppName} is installing updates right now. Close it anyway and continue?
 en.BusyDeclined=Setup stopped because {#AppName} is installing updates right now.
+en.UninstallBusyDeclined=Uninstall stopped because {#AppName} is installing updates or cleaning up right now.
 en.ElevatedCopyOpen={#AppName} is still running and did not close. It may be running with administrator rights. Close it, then try again.
 de.AutostartTask={#AppName} automatisch bei der Windows-Anmeldung starten
 de.LaunchAfter={#AppName} jetzt starten
@@ -180,6 +181,7 @@ de.PortableDirDescription=Wählen Sie einen Ordner für die portable Version von
 de.UpdateDirDescription={#AppName} ist auf diesem PC bereits installiert und wird im unten angezeigten Ordner aktualisiert. Klicken Sie auf Weiter, oder auf Durchsuchen, um einen anderen Ordner zu wählen.
 de.BusyPrompt={#AppName} installiert gerade Updates. Trotzdem beenden und fortfahren?
 de.BusyDeclined=Die Installation wurde angehalten, weil {#AppName} gerade Updates installiert.
+de.UninstallBusyDeclined=Die Deinstallation wurde angehalten, weil {#AppName} gerade Updates installiert oder aufräumt.
 de.ElevatedCopyOpen={#AppName} läuft noch und hat sich nicht beendet, möglicherweise mit Administratorrechten. Bitte schließen Sie es und versuchen Sie es dann erneut.
 
 [Tasks]
@@ -854,6 +856,8 @@ begin
     '$x = [System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes(' +
     '(''' + PsQuote(ExpandConstant('{app}')) + ''').TrimEnd([char[]]''\/'').ToLowerInvariant())); ' +
     '$hash = [System.BitConverter]::ToString($x, 0, 8).Replace(''-'', '''').ToLowerInvariant(); ' +
+    { Before the exit event goes to any hidden copy: a busy verdict leaves every copy running. }
+    StopBusyRecheckScript +
     'if ($hidden.Count -gt 0 -and (Running)) { foreach ($h in $hidden) { ' +
     '$sids = @($me); ' +
     '$o = Get-CimInstance Win32_Process -Filter (''ProcessId='' + $h.Id) -ErrorAction SilentlyContinue | ' +
@@ -865,7 +869,6 @@ begin
     '$e = $null; ' +
     'try { if ([System.Threading.EventWaitHandle]::TryOpenExisting($n, [System.Security.AccessControl.EventWaitHandleRights]::Modify, [ref]$e)) ' +
     '{ [void]$e.Set(); $e.Dispose() } } catch { } } } }; ' +
-    StopBusyRecheckScript +
     '$copies | Stop-Process -Force -ErrorAction SilentlyContinue; ' +
     '$copies | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue; ' +
     '$w = [System.Diagnostics.Stopwatch]::StartNew(); ' +
@@ -941,7 +944,7 @@ begin
     begin
       Log('Uninstall stopped: the app started working after the first check.');
       if not UninstallSilent then
-        SuppressibleMsgBox(CustomMessage('BusyDeclined'), mbError, MB_OK, IDOK);
+        SuppressibleMsgBox(CustomMessage('UninstallBusyDeclined'), mbError, MB_OK, IDOK);
     end
     else
     begin

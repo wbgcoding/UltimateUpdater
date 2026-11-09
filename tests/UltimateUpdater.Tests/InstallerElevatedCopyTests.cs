@@ -126,11 +126,17 @@ public class InstallerElevatedCopyTests
         Assert.True(
             stop.IndexOf("StopBusyRecheckScript", StringComparison.Ordinal) < stop.IndexOf("Stop-Process", StringComparison.Ordinal),
             "the busy look has to come before the copies are stopped");
+        // and before any hidden copy was asked to end, so a busy verdict leaves every copy running
+        Assert.True(
+            stop.IndexOf("StopBusyRecheckScript", StringComparison.Ordinal) < stop.IndexOf("$hidden.Count -gt 0 -and (Running)) { foreach", StringComparison.Ordinal),
+            "the busy look has to come before the exit event is signalled");
 
         // a busy verdict is not "could not be closed": it is its own result
         Assert.Contains("ResultCode = BusyExitCode", stop);
         Assert.Contains("StopFoundBusy := True;", stop);
         Assert.Contains("StopFoundBusy := False;", stop);
+        Assert.Contains("en.UninstallBusyDeclined=", script);
+        Assert.Contains("de.UninstallBusyDeclined=", script);
         Assert.Contains("if not StopRecheckBusy then", recheck);
         Assert.Contains("StopRecheckBusy: Boolean;", script);
     }
@@ -151,7 +157,7 @@ public class InstallerElevatedCopyTests
         Assert.Contains("StopRecheckBusy := not UninstallSilent;", uninstall);
         Assert.Matches(@"InstallingCopyRuns then\s+begin\s+StopRecheckBusy := False;", uninstall);
         var afterUninstallStop = uninstall[uninstall.IndexOf("if not StopRunningCopies then", StringComparison.Ordinal)..];
-        Assert.Matches(@"if StopFoundBusy then\s+begin\s+Log\(.*?SuppressibleMsgBox\(CustomMessage\('BusyDeclined'\), mbError, MB_OK, IDOK\)", afterUninstallStop.Replace("\n", " "));
+        Assert.Matches(@"if StopFoundBusy then\s+begin\s+Log\(.*?SuppressibleMsgBox\(CustomMessage\('UninstallBusyDeclined'\), mbError, MB_OK, IDOK\)", afterUninstallStop.Replace("\n", " "));
     }
 
     [Fact]
