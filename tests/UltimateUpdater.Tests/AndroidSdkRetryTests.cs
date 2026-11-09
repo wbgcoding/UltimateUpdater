@@ -30,8 +30,8 @@ public class AndroidSdkRetryTests
         var handler = new SequenceHandler(HttpStatusCode.ServiceUnavailable, HttpStatusCode.OK);
         var source = SourceWith(handler);
 
-        Assert.Null(await source.GetRepositoryManifestAsync(CancellationToken.None));
-        Assert.Equal("<manifest/>", await source.GetRepositoryManifestAsync(CancellationToken.None));
+        Assert.Null(await source.GetRepositoryIndexAsync(CancellationToken.None));
+        Assert.NotNull(await source.GetRepositoryIndexAsync(CancellationToken.None));
         Assert.Equal(2, handler.Calls);
     }
 
@@ -41,8 +41,8 @@ public class AndroidSdkRetryTests
         var handler = new SequenceHandler(HttpStatusCode.TooManyRequests, HttpStatusCode.OK);
         var source = SourceWith(handler);
 
-        Assert.Null(await source.GetRepositoryManifestAsync(CancellationToken.None));
-        Assert.NotNull(await source.GetRepositoryManifestAsync(CancellationToken.None));
+        Assert.Null(await source.GetRepositoryIndexAsync(CancellationToken.None));
+        Assert.NotNull(await source.GetRepositoryIndexAsync(CancellationToken.None));
     }
 
     [Fact]
@@ -51,8 +51,8 @@ public class AndroidSdkRetryTests
         var handler = new SequenceHandler(HttpStatusCode.NotFound, HttpStatusCode.OK);
         var source = SourceWith(handler);
 
-        Assert.Null(await source.GetRepositoryManifestAsync(CancellationToken.None));
-        Assert.Null(await source.GetRepositoryManifestAsync(CancellationToken.None));
+        Assert.Null(await source.GetRepositoryIndexAsync(CancellationToken.None));
+        Assert.Null(await source.GetRepositoryIndexAsync(CancellationToken.None));
         Assert.Equal(1, handler.Calls);
     }
 
@@ -62,9 +62,36 @@ public class AndroidSdkRetryTests
         var handler = new SequenceHandler(HttpStatusCode.OK);
         var source = SourceWith(handler);
 
-        await source.GetRepositoryManifestAsync(CancellationToken.None);
-        await source.GetRepositoryManifestAsync(CancellationToken.None);
+        var first = await source.GetRepositoryIndexAsync(CancellationToken.None);
+        var second = await source.GetRepositoryIndexAsync(CancellationToken.None);
 
         Assert.Equal(1, handler.Calls);
+        Assert.Same(first, second);
+    }
+
+    private sealed class ManualClock(DateTimeOffset start) : TimeProvider
+    {
+        public DateTimeOffset Now { get; set; } = start;
+
+        public override DateTimeOffset GetUtcNow() => Now;
+    }
+
+    /// <summary>A tray session outlives Google releases: the manifest describes only the newest ones, so a
+    /// copy older than the maximum age is fetched again.</summary>
+    [Fact]
+    public async Task A_manifest_older_than_six_hours_is_fetched_again()
+    {
+        var handler = new SequenceHandler(HttpStatusCode.OK);
+        var clock = new ManualClock(new DateTimeOffset(2026, 11, 9, 8, 0, 0, TimeSpan.Zero));
+        var source = new AndroidSdkSource(new LoggingService(), new HttpClient(handler), clock);
+
+        await source.GetRepositoryIndexAsync(CancellationToken.None);
+        clock.Now += TimeSpan.FromHours(5);
+        await source.GetRepositoryIndexAsync(CancellationToken.None);
+        Assert.Equal(1, handler.Calls);
+
+        clock.Now += TimeSpan.FromHours(2);
+        await source.GetRepositoryIndexAsync(CancellationToken.None);
+        Assert.Equal(2, handler.Calls);
     }
 }

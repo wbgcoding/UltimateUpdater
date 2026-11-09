@@ -562,6 +562,7 @@ public class EnrichmentAndDiagnosticsTests
             </archives>
           </remotePackage>
           <remotePackage path="platform-tools">
+            <revision><major>35</major><minor>0</minor><micro>2</micro></revision>
             <archives>
               <archive>
                 <complete><size>12345678</size></complete>
@@ -571,24 +572,41 @@ public class EnrichmentAndDiagnosticsTests
         </sdk:sdk-repository>
         """;
 
+    private static long? AndroidSize(string xml, string path, string? offered = null) =>
+        PackageMetadataParsers.AndroidSdkPackageSize(PackageMetadataParsers.ParseAndroidSdkPackageIndex(xml), path, offered);
+
     [Fact]
     public void Android_sdk_size_picks_the_windows_archive()
     {
-        Assert.Equal(59876477, PackageMetadataParsers.ParseAndroidSdkPackageSize(AndroidSdkManifest, "build-tools;35.0.1"));
+        Assert.Equal(59876477, AndroidSize(AndroidSdkManifest, "build-tools;35.0.1"));
     }
 
     [Fact]
     public void Android_sdk_size_accepts_an_os_agnostic_archive()
     {
-        Assert.Equal(12345678, PackageMetadataParsers.ParseAndroidSdkPackageSize(AndroidSdkManifest, "platform-tools"));
+        Assert.Equal(12345678, AndroidSize(AndroidSdkManifest, "platform-tools"));
     }
 
     [Fact]
     public void Android_sdk_size_unknown_package_or_garbage_yields_nothing()
     {
-        Assert.Null(PackageMetadataParsers.ParseAndroidSdkPackageSize(AndroidSdkManifest, "build-tools;99.0.0"));
-        Assert.Null(PackageMetadataParsers.ParseAndroidSdkPackageSize("not xml", "platform-tools"));
-        Assert.Null(PackageMetadataParsers.ParseAndroidSdkPackageSize(AndroidSdkManifest, ""));
+        Assert.Null(AndroidSize(AndroidSdkManifest, "build-tools;99.0.0"));
+        Assert.Null(AndroidSize("not xml", "platform-tools"));
+        Assert.Null(AndroidSize(AndroidSdkManifest, ""));
+    }
+
+    /// <summary>The manifest always describes the newest release: a row offering another revision must not
+    /// borrow that archive's size.</summary>
+    [Theory]
+    [InlineData("35.0.2", true)]
+    [InlineData("35.0.2.0", true)]
+    [InlineData("35.0.1", false)]
+    [InlineData("34.0.5", false)]
+    [InlineData(null, true)]
+    [InlineData("35.0.2 rc1", true)]
+    public void Android_sdk_size_needs_the_offered_revision_to_match(string? offered, bool sizeKnown)
+    {
+        Assert.Equal(sizeKnown ? 12345678 : null, AndroidSize(AndroidSdkManifest, "platform-tools", offered));
     }
 
     [Fact]
