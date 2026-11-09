@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text.RegularExpressions;
 
 namespace UltimateUpdater.Services.Sources.PackageManagers;
 
@@ -11,7 +10,7 @@ namespace UltimateUpdater.Services.Sources.PackageManagers;
 /// a fallback (see <see cref="PipSource.EnrichAsync"/>), so a package that IS on PyPI keeps reading the
 /// SAME fetch its date/size already came from rather than doing this extra disk work for every pip row.
 /// </summary>
-internal static partial class PipDistInfoMetadata
+internal static class PipDistInfoMetadata
 {
     /// <summary>A METADATA file's headers end at the first blank line, the long description (often the
     /// whole README) follows; this is comfortably more than every real package's header block needs.</summary>
@@ -138,7 +137,7 @@ internal static partial class PipDistInfoMetadata
         if (!Directory.Exists(sitePackages))
             return null;
 
-        var target = Normalize(packageName);
+        var target = Pep440.NormalizeName(packageName);
 
         try
         {
@@ -171,7 +170,7 @@ internal static partial class PipDistInfoMetadata
         for (var dash = folderWithoutSuffix.IndexOf('-'); dash > 0; dash = folderWithoutSuffix.IndexOf('-', dash + 1))
         {
             if (dash + 1 < folderWithoutSuffix.Length && char.IsAsciiDigit(folderWithoutSuffix[dash + 1])
-                && Normalize(folderWithoutSuffix[..dash]) == target)
+                && Pep440.NormalizeName(folderWithoutSuffix[..dash]) == target)
             {
                 return true;
             }
@@ -179,12 +178,4 @@ internal static partial class PipDistInfoMetadata
 
         return false;
     }
-
-    /// <summary>PEP 503 distribution-name normalisation: runs of "-", "_" and "." all compare equal,
-    /// case-insensitively, so "typing_extensions" and "typing-extensions" name the same dist-info
-    /// folder.</summary>
-    private static string Normalize(string name) => NormalizePattern().Replace(name, "_").ToLowerInvariant();
-
-    [GeneratedRegex("[-_.]+")]
-    private static partial Regex NormalizePattern();
 }

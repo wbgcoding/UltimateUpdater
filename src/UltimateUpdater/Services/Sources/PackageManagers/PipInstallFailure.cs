@@ -51,7 +51,7 @@ internal readonly record struct PipInstallFailure(PipFailureKind Kind, string? D
         if (NoMatchingDistribution.Match(output) is { Success: true } missing)
         {
             var dependency = missing.Groups[1].Value;
-            return PipBlockedStore.NormalizeName(dependency) == PipBlockedStore.NormalizeName(package)
+            return Pep440.NormalizeName(dependency) == Pep440.NormalizeName(package)
                 ? None
                 : new PipInstallFailure(PipFailureKind.MissingDependency, dependency);
         }
