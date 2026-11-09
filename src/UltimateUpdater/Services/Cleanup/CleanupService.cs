@@ -2550,6 +2550,10 @@ public class CleanupService(LoggingService logging)
         return new CleanupOutcome(0, 0, 0);
     }
 
+    /// <summary>A RestoreHealth on a slow disk or a slow Windows Update source can pass 45 minutes and is
+    /// still healthy; a kill at that point is the mid-write corruption the no-cancel rule exists to avoid.</summary>
+    internal static readonly TimeSpan RepairStepTimeout = TimeSpan.FromHours(4);
+
     /// <summary>
     /// One externally-progressed tool, shared by every repair step and by the defrag command: reports
     /// its percentage scaled into [<paramref name="stepBase"/>, <paramref name="stepBase"/> +
@@ -2557,10 +2561,6 @@ public class CleanupService(LoggingService logging)
     /// "no progress" hint once <see cref="ShouldShowNoProgressHint"/> says the tool never reports one.
     /// Argument arrays, no shell: the same rule every other external tool here follows.
     /// </summary>
-    /// <summary>A RestoreHealth on a slow disk or a slow Windows Update source can pass 45 minutes and is
-    /// still healthy; a kill at that point is the mid-write corruption the no-cancel rule exists to avoid.</summary>
-    internal static readonly TimeSpan RepairStepTimeout = TimeSpan.FromHours(4);
-
     private static Task<ProcessResult> RunStreamedStepAsync(
         string exe, IReadOnlyList<string> args, string label, double stepBase, double share,
         IProgress<CleanupProgress>? progress, TimeSpan timeout, CancellationToken cancellationToken)
