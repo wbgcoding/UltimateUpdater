@@ -307,4 +307,248 @@ public sealed class DriverBackupStagingTests : IDisposable
             try { Directory.Delete(realTarget, recursive: true); } catch { }
         }
     }
+
+    private string BackupsRoot => Path.Combine(_root, "UltimateUpdater", "driver-backups");
+
+    private string MakeBackup(string name, DateTime? created = null, bool withContent = true)
+    {
+        var path = Path.Combine(BackupsRoot, name);
+        Directory.CreateDirectory(path);
+        if (withContent)
+            File.WriteAllText(Path.Combine(path, "driver.inf"), "inf");
+        if (created is { } when)
+            Directory.SetCreationTimeUtc(path, when);
+        return path;
+    }
+
+    private static readonly DateTime Epoch = new(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    private List<string?> Left() =>
+        Directory.GetDirectories(BackupsRoot).Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal).ToList();
+
+    [Fact]
+    public void PrepareStagingRoot_never_prunes_on_its_own()
+    {
+        for (var day = 1; day <= 7; day++)
+            MakeBackup($"2020-01-0{day}_000000", Epoch.AddDays(day));
+        DriverBackupStaging.StagingNameOverride = "2020-01-08_000000";
+
+        using var result = DriverBackupStaging.PrepareStagingRoot(new LoggingService());
+
+        Assert.NotNull(result);
+        Assert.Equal(8, Directory.GetDirectories(BackupsRoot).Length);
+    }
+
+    [Fact]
+    public void PruneOldStagings_keeps_only_the_newest_backups_and_never_the_running_ones_victim()
+    {
+        for (var day = 1; day <= 7; day++)
+            MakeBackup($"2020-01-0{day}_000000", Epoch.AddDays(day));
+        MakeBackup("2020-01-04_120000", Epoch.AddDays(3).AddHours(12));
+        Directory.CreateDirectory(Path.Combine(BackupsRoot, "notes"));
+
+        DriverBackupStaging.PruneOldStagings(BackupsRoot, "2020-01-04_120000", DriverBackupStaging.KeepNewest, new LoggingService());
+
+        // Five stay: the running job's own folder (even though it is not the newest) and the four newest
+        // others. The odd-named folder is not a backup and is never a candidate.
+        Assert.Equal(
+            new List<string?> { "2020-01-04_000000", "2020-01-04_120000", "2020-01-05_000000", "2020-01-06_000000", "2020-01-07_000000", "notes" },
+            Left());
+    }
+
+    [Fact]
+    public void PruneOldStagings_does_nothing_when_the_running_folder_holds_nothing()
+    {
+        for (var day = 1; day <= 7; day++)
+            MakeBackup($"2020-01-0{day}_000000", Epoch.AddDays(day));
+        MakeBackup("2020-01-08_000000", Epoch.AddDays(8), withContent: false);
+
+        DriverBackupStaging.PruneOldStagings(BackupsRoot, "2020-01-08_000000", DriverBackupStaging.KeepNewest, new LoggingService());
+
+        Assert.Equal(8, Directory.GetDirectories(BackupsRoot).Length);
+    }
+
+    [Fact]
+    public void PruneOldStagings_counts_and_ranks_only_folders_that_hold_something()
+    {
+        for (var day = 1; day <= 6; day++)
+            MakeBackup($"2020-01-0{day}_000000", Epoch.AddDays(day));
+        // Newer than every real backup but empty: no backup, so it neither takes a slot nor goes.
+        MakeBackup("2020-01-07_000000", Epoch.AddDays(7), withContent: false);
+        MakeBackup("2020-01-08_000000", Epoch.AddDays(8), withContent: false);
+        MakeBackup("2020-01-09_000000", Epoch.AddDays(9));
+
+        DriverBackupStaging.PruneOldStagings(BackupsRoot, "2020-01-09_000000", DriverBackupStaging.KeepNewest, new LoggingService());
+
+        Assert.Equal(
+            new List<string?>
+            {
+                "2020-01-03_000000", "2020-01-04_000000", "2020-01-05_000000", "2020-01-06_000000",
+                "2020-01-07_000000", "2020-01-08_000000", "2020-01-09_000000",
+            },
+            Left());
+    }
+
+    [Fact]
+    public void PruneOldStagings_ranks_by_creation_time_not_by_the_name()
+    {
+        // A clock that ran ahead once left the oldest backup with the highest name.
+        MakeBackup("2099-01-01_000000", Epoch);
+        for (var day = 1; day <= 5; day++)
+            MakeBackup($"2020-01-0{day}_000000", Epoch.AddDays(day));
+        MakeBackup("2020-01-09_000000", Epoch.AddDays(9));
+
+        DriverBackupStaging.PruneOldStagings(BackupsRoot, "2020-01-09_000000", DriverBackupStaging.KeepNewest, new LoggingService());
+
+        Assert.DoesNotContain("2099-01-01_000000", Left());
+        Assert.Equal(5, Directory.GetDirectories(BackupsRoot).Length);
+        Assert.Contains("2020-01-02_000000", Left());
+    }
+
+    [Fact]
+    public void PruneOldStagings_with_the_acl_check_leaves_folders_this_tool_did_not_create()
+    {
+        for (var day = 1; day <= 7; day++)
+            MakeBackup($"2020-01-0{day}_000000", Epoch.AddDays(day));
+        MakeBackup("2020-01-09_000000", Epoch.AddDays(9));
+
+        // Plain folders inherit their ACL: not the protected three-entry one, so none is deleted.
+        DriverBackupStaging.PruneOldStagings(
+            BackupsRoot, "2020-01-09_000000", DriverBackupStaging.KeepNewest, new LoggingService(), requireProtectedAcl: true);
+
+        Assert.Equal(8, Directory.GetDirectories(BackupsRoot).Length);
+    }
+
+    [Fact]
+    public void Finish_without_an_export_removes_the_own_empty_folder_and_keeps_every_older_backup()
+    {
+        for (var day = 1; day <= 6; day++)
+            MakeBackup($"2020-01-0{day}_000000", Epoch.AddDays(day));
+        DriverBackupStaging.StagingNameOverride = "2020-01-08_000000";
+
+        using var result = DriverBackupStaging.PrepareStagingRoot(new LoggingService());
+        Assert.NotNull(result);
+        result!.Finish(exportedAnything: false, new LoggingService());
+
+        Assert.False(Directory.Exists(result.BackupRoot));
+        Assert.Equal(6, Directory.GetDirectories(BackupsRoot).Length);
+    }
+
+    [Fact]
+    public void Finish_without_an_export_keeps_a_folder_that_is_not_empty()
+    {
+        DriverBackupStaging.StagingNameOverride = "2020-01-08_000000";
+        using var result = DriverBackupStaging.PrepareStagingRoot(new LoggingService());
+        Assert.NotNull(result);
+        FillProtected(result!.BackupRoot, Epoch);
+        var inner = Path.Combine(result.BackupRoot, "driver.inf");
+
+        result.Finish(exportedAnything: false, new LoggingService());
+
+        Assert.True(File.Exists(inner));
+    }
+
+    [Fact]
+    public void Finish_after_an_export_deletes_only_old_protected_backups_beyond_the_newest_five()
+    {
+        // Folders made by the real code, so they carry the real protected ACL and token owner.
+        for (var day = 1; day <= 7; day++)
+        {
+            DriverBackupStaging.StagingNameOverride = $"2020-01-0{day}_000000";
+            using var made = DriverBackupStaging.PrepareStagingRoot(new LoggingService());
+            Assert.NotNull(made);
+            FillProtected(made!.BackupRoot, Epoch.AddDays(day));
+        }
+
+        DriverBackupStaging.StagingNameOverride = "2020-01-09_000000";
+        using var run = DriverBackupStaging.PrepareStagingRoot(new LoggingService());
+        Assert.NotNull(run);
+        FillProtected(run!.BackupRoot, Epoch.AddDays(9));
+
+        var log = new List<string>();
+        run.Finish(exportedAnything: true, new LoggingService(log.Add));
+
+        // The three oldest are the ones the retention picks, and every one passed the owner and protected-ACL
+        // check (none is reported as "not the folder this tool created"). Whether the delete itself then
+        // succeeds depends on the test user's rights: an administrator removes them, others are refused.
+        Assert.DoesNotContain(log, l => l.Contains("not the protected folder"));
+        foreach (var day in new[] { "01", "02", "03" })
+            Assert.Contains(log, l => l.Contains($"2020-01-{day}_000000") && (l.Contains("removed the old") || l.Contains("could not remove")));
+        Assert.DoesNotContain(log, l => l.Contains("2020-01-04_000000") || l.Contains("2020-01-09_000000"));
+        Assert.True(Directory.Exists(run.BackupRoot));
+    }
+
+    /// <summary>Puts one file into a protected folder the way an admin could, then restores the exact ACL.</summary>
+    private static void FillProtected(string folder, DateTime created)
+    {
+        var me = WindowsIdentity.GetCurrent().User!;
+        var info = new DirectoryInfo(folder);
+        var security = info.GetAccessControl();
+        var rule = new FileSystemAccessRule(
+            me, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+            PropagationFlags.None, AccessControlType.Allow);
+        security.AddAccessRule(rule);
+        info.SetAccessControl(security);
+
+        File.WriteAllText(Path.Combine(folder, "driver.inf"), "inf");
+        Directory.SetCreationTimeUtc(folder, created);
+
+        security = info.GetAccessControl();
+        security.RemoveAccessRule(rule);
+        info.SetAccessControl(security);
+    }
+
+    [Fact]
+    public void PruneDataCopies_never_prunes_from_an_elevated_process()
+    {
+        for (var day = 1; day <= 6; day++)
+            MakeBackup($"2020-01-0{day}_000000", Epoch.AddDays(day));
+        MakeBackup("2020-01-09_000000", Epoch.AddDays(9));
+
+        ElevationService.IsElevatedForTest.Value = true;
+        try
+        {
+            DriverBackupStaging.PruneDataCopies(BackupsRoot, "2020-01-09_000000", new LoggingService());
+            Assert.Equal(7, Directory.GetDirectories(BackupsRoot).Length);
+
+            ElevationService.IsElevatedForTest.Value = false;
+            DriverBackupStaging.PruneDataCopies(BackupsRoot, "2020-01-09_000000", new LoggingService());
+            Assert.Equal(5, Directory.GetDirectories(BackupsRoot).Length);
+        }
+        finally
+        {
+            ElevationService.IsElevatedForTest.Value = null;
+        }
+    }
+
+    [Fact]
+    public void PruneOldStagings_never_follows_a_junction_named_like_a_backup()
+    {
+        var outside = Path.Combine(_root, "outside");
+        Directory.CreateDirectory(outside);
+        File.WriteAllText(Path.Combine(outside, "keep.txt"), "keep");
+        Directory.CreateDirectory(BackupsRoot);
+        for (var day = 1; day <= 6; day++)
+            MakeBackup($"2020-01-0{day}_000000", Epoch.AddDays(day));
+
+        var link = Path.Combine(BackupsRoot, "2019-12-31_000000");
+        using (var mklink = Process.Start(new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{outside}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+        })!)
+        {
+            Assert.True(mklink.WaitForExit(60_000));
+            Assert.Equal(0, mklink.ExitCode);
+        }
+
+        DriverBackupStaging.PruneOldStagings(BackupsRoot, "2020-01-06_000000", DriverBackupStaging.KeepNewest, new LoggingService());
+
+        Assert.True(File.Exists(Path.Combine(outside, "keep.txt")));
+        Assert.True(Directory.Exists(link), "a link is not a backup folder and stays");
+        Assert.False(Directory.Exists(Path.Combine(BackupsRoot, "2020-01-01_000000")));
+    }
 }

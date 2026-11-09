@@ -247,6 +247,68 @@ public class DriveDefragTests
         }
     }
 
+    [Fact]
+    public void TryGetMediaType_does_not_keep_an_Unknown_answer()
+    {
+        var calls = 0;
+        DriveMediaTypeReader.QueryRawMediaType = _ => ++calls == 1 ? throw new System.Runtime.InteropServices.COMException() : 4;
+
+        try
+        {
+            Assert.Equal(DriveMediaType.Unknown, DriveMediaTypeReader.TryGetMediaType("Z-retry:", 1000));
+            Assert.Equal(DriveMediaType.Ssd, DriveMediaTypeReader.TryGetMediaType("Z-retry:", 1000));
+            Assert.Equal(DriveMediaType.Ssd, DriveMediaTypeReader.TryGetMediaType("Z-retry:", 1000));
+            Assert.Equal(2, calls);
+        }
+        finally
+        {
+            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealQueryForTests;
+        }
+    }
+
+    [Fact]
+    public void A_different_disk_under_the_same_letter_is_read_afresh()
+    {
+        var raw = 4;
+        DriveMediaTypeReader.QueryRawMediaType = _ => raw;
+        DriveMediaTypeReader.QueryRawBusType = _ => raw == 4 ? 7 : 11;
+
+        try
+        {
+            Assert.Equal(DriveMediaType.Ssd, DriveMediaTypeReader.TryGetMediaType("Z-swap:", 2000));
+            Assert.True(DriveMediaTypeReader.TryGetIsUsb("Z-swap:", 2000));
+
+            raw = 3;
+            Assert.Equal(DriveMediaType.Ssd, DriveMediaTypeReader.TryGetMediaType("Z-swap:", 2000));
+            Assert.Equal(DriveMediaType.Hdd, DriveMediaTypeReader.TryGetMediaType("Z-swap:", 3000));
+            Assert.False(DriveMediaTypeReader.TryGetIsUsb("Z-swap:", 3000));
+        }
+        finally
+        {
+            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealQueryForTests;
+            DriveMediaTypeReader.QueryRawBusType = DriveMediaTypeReader.RealBusTypeQueryForTests;
+        }
+    }
+
+    [Fact]
+    public void TryGetIsUsb_does_not_keep_a_failed_bus_read()
+    {
+        var calls = 0;
+        DriveMediaTypeReader.QueryRawBusType = _ => ++calls == 1 ? throw new System.Management.ManagementException() : 7;
+
+        try
+        {
+            Assert.False(DriveMediaTypeReader.TryGetIsUsb("Z-usbretry:", 4000));
+            Assert.True(DriveMediaTypeReader.TryGetIsUsb("Z-usbretry:", 4000));
+            Assert.True(DriveMediaTypeReader.TryGetIsUsb("Z-usbretry:", 4000));
+            Assert.Equal(2, calls);
+        }
+        finally
+        {
+            DriveMediaTypeReader.QueryRawBusType = DriveMediaTypeReader.RealBusTypeQueryForTests;
+        }
+    }
+
     /// <summary><see cref="TypeInitializationException"/> has no parameterless constructor, so it gets its
     /// own test rather than the theory above.</summary>
     [Fact]

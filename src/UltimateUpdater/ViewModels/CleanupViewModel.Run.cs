@@ -829,7 +829,16 @@ public partial class CleanupViewModel
                 var copySource = DriverBackupStaging.ResolveExistingPath(folderName);
                 var copyDestination = Path.Combine(AppPaths.DataDirectory, "driver-backups", folderName);
                 if (!AppPaths.TryCopyDirectory(copySource, copyDestination, out _))
+                {
                     _logging.Warn($"Driver cleanup: could not copy the backup folder '{folderName}' into the data folder.");
+                }
+                else
+                {
+                    // The data folder's copies are ours to trim; the ProgramData originals are trimmed by the
+                    // elevated worker, the only side allowed to delete there.
+                    DriverBackupStaging.PruneDataCopies(
+                        Path.Combine(AppPaths.DataDirectory, "driver-backups"), folderName, _logging);
+                }
             }
 
             // WasStopped (Disk Cleanup only, see CleanupOutcome) means this target swallowed its own

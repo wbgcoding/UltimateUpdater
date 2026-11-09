@@ -1407,7 +1407,7 @@ Dit kan niet ongedaan worden gemaakt.</value>
     <value>Apparaten die niet meer zijn aangesloten, en oude stuurprogrammapakketten die zijn achtergebleven in het stuurprogrammaarchief. Standaard uit, vereist beheerdersrechten; er wordt automatisch een back-up gemaakt voordat er iets wordt verwijderd.</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>Het apparaat installeert het stuurprogramma opnieuw zodra het weer wordt aangesloten, als Windows er een kan vinden. Van elk pakket wordt een back-up bewaard in de gegevensmap.</value>
+    <value>Het apparaat installeert het stuurprogramma opnieuw zodra het weer wordt aangesloten, als Windows er een kan vinden. De back-ups van de laatste vijf uitvoeringen blijven bewaard.</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>Stuurprogramma's</value>

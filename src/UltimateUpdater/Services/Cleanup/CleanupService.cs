@@ -231,7 +231,11 @@ public class CleanupService(LoggingService logging)
     /// re-discovered rather than cached, so a clean run sees exactly what is on disk right now.</summary>
     private static IReadOnlyList<string> ResolveDirectories(CleanupTarget target, CancellationToken cancellationToken) =>
         target.Kind == CleanupKind.AppCacheSweep
+            // A discovered root that is itself excluded (Temp and the pip cache are catalogue folders with
+            // their own rows) would be walked in full only to drop every file again.
             ? AppCacheDiscovery.DiscoverCacheDirectories(cancellationToken)
+                .Where(d => !IsExcluded(d, target.ExcludedDirectories))
+                .ToList()
             : target.Directories;
 
     /// <summary>Detail-list rows above this are folded into one "…and N more" summary;
@@ -528,12 +532,14 @@ public class CleanupService(LoggingService logging)
 
             var thisDirectory = directoryIndex++;
             var directory = candidate;
-            var files = EnumerateFiles(candidate, target.ExcludedDirectories, cancellationToken).ToList();
+            var files = EnumerateFileDetails(candidate, target.ExcludedDirectories, cancellationToken).ToList();
             var filesDone = 0;
             var lastReport = System.Diagnostics.Stopwatch.GetTimestamp();
 
-            foreach (var file in files)
+            foreach (var listed in files)
             {
+                var file = listed.Path;
+
                 // Between files, so Pause takes hold within one file's worth of work and Stop leaves at once.
                 pause?.Wait(cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
@@ -580,17 +586,19 @@ public class CleanupService(LoggingService logging)
                 {
                     // Not ours to delete, typically a system file without admin rights: kept apart from
                     // "in use" so the summary does not point at a program that holds nothing.
+                    // The open failed before the size was read: the listed length stands in for it.
+                    var leftBytes = size > 0 ? size : listed.Length;
                     skipped++;
-                    skippedBytes += size;
+                    skippedBytes += leftBytes;
                     protectedFiles++;
-                    protectedBytes += size;
+                    protectedBytes += leftBytes;
                 }
                 catch (IOException)
                 {
                     // In use by another process. Expected; keep going, but its size must not be counted as
                     // freed, and the user is told how much stayed behind.
                     skipped++;
-                    skippedBytes += size;
+                    skippedBytes += size > 0 ? size : listed.Length;
                 }
 
                 // On a clock, not a file count: about four reports a second whether the folder holds a million
@@ -706,6 +714,20 @@ public class CleanupService(LoggingService logging)
         return outcome;
     }
 
+    /// <summary>The logical length of a file that could not be opened for the verified delete, 0 when it
+    /// cannot be read either. Only the skipped figure uses it.</summary>
+    private static long LengthOrZero(string file)
+    {
+        try
+        {
+            return new FileInfo(file).Length;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return 0;
+        }
+    }
+
     private readonly record struct FileTally(
         long Freed, int Deleted, int Skipped, long SkippedBytes, int Protected, long ProtectedBytes, int TooNew);
 
@@ -775,15 +797,16 @@ public class CleanupService(LoggingService logging)
             }
             catch (UnauthorizedAccessException)
             {
+                var leftBytes = size > 0 ? size : LengthOrZero(file);
                 skipped++;
-                skippedBytes += size;
+                skippedBytes += leftBytes;
                 protectedFiles++;
-                protectedBytes += size;
+                protectedBytes += leftBytes;
             }
             catch (IOException)
             {
                 skipped++;
-                skippedBytes += size;
+                skippedBytes += size > 0 ? size : LengthOrZero(file);
             }
         }
 
@@ -1104,6 +1127,7 @@ public class CleanupService(LoggingService logging)
                 options)
             {
                 ShouldIncludePredicate = static (ref FileSystemEntry entry) => !entry.IsDirectory,
+                ShouldRecursePredicate = RecursePredicate<ListedFile>(excluded),
             }.GetEnumerator();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -1140,6 +1164,13 @@ public class CleanupService(LoggingService logging)
         }
     }
 
+    /// <summary>Stops a walk from entering an excluded folder: every file below it would be dropped one by one
+    /// after being listed. Null (the default, recurse everywhere) when nothing is excluded.</summary>
+    private static FileSystemEnumerable<T>.FindPredicate? RecursePredicate<T>(IReadOnlyList<string> excluded) =>
+        excluded.Count == 0
+            ? null
+            : (ref FileSystemEntry entry) => !IsExcluded(entry.ToFullPath(), excluded);
+
     /// <summary>Every nested subdirectory, any depth: the caller sorts by depth to walk bottom-up.</summary>
     private IEnumerable<string> EnumerateAllDirectories(string directory, IReadOnlyList<string> excluded)
     {
@@ -1152,9 +1183,14 @@ public class CleanupService(LoggingService logging)
 
         try
         {
-            return Directory.EnumerateDirectories(directory, "*", options)
-                .Where(d => !IsExcluded(d, excluded))
-                .ToList();
+            return new FileSystemEnumerable<string>(
+                directory, static (ref FileSystemEntry entry) => entry.ToFullPath(), options)
+            {
+                ShouldIncludePredicate = excluded.Count == 0
+                    ? static (ref FileSystemEntry entry) => entry.IsDirectory
+                    : (ref FileSystemEntry entry) => entry.IsDirectory && !IsExcluded(entry.ToFullPath(), excluded),
+                ShouldRecursePredicate = RecursePredicate<string>(excluded),
+            }.ToList();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -2514,6 +2550,10 @@ public class CleanupService(LoggingService logging)
         return new CleanupOutcome(0, 0, 0);
     }
 
+    /// <summary>A RestoreHealth on a slow disk or a slow Windows Update source can pass 45 minutes and is
+    /// still healthy; a kill at that point is the mid-write corruption the no-cancel rule exists to avoid.</summary>
+    internal static readonly TimeSpan RepairStepTimeout = TimeSpan.FromHours(4);
+
     /// <summary>
     /// One externally-progressed tool, shared by every repair step and by the defrag command: reports
     /// its percentage scaled into [<paramref name="stepBase"/>, <paramref name="stepBase"/> +
@@ -2521,10 +2561,6 @@ public class CleanupService(LoggingService logging)
     /// "no progress" hint once <see cref="ShouldShowNoProgressHint"/> says the tool never reports one.
     /// Argument arrays, no shell: the same rule every other external tool here follows.
     /// </summary>
-    /// <summary>A RestoreHealth on a slow disk or a slow Windows Update source can pass 45 minutes and is
-    /// still healthy; a kill at that point is the mid-write corruption the no-cancel rule exists to avoid.</summary>
-    internal static readonly TimeSpan RepairStepTimeout = TimeSpan.FromHours(4);
-
     private static Task<ProcessResult> RunStreamedStepAsync(
         string exe, IReadOnlyList<string> args, string label, double stepBase, double share,
         IProgress<CleanupProgress>? progress, TimeSpan timeout, CancellationToken cancellationToken)

@@ -59,7 +59,7 @@ and nothing runs until you press the button and confirm.
 | Recycle bin | The recycle bin's contents, filtered by age (only files deleted more than 30 days ago by default; adjustable). A switch in Settings sends cleaned files to the recycle bin instead of deleting them for good | No |
 | System repair | `sfc /scannow` and a DISM health scan, run as separate selectable steps, both off by default | Yes |
 | Registry | Orphaned uninstall entries and other safe-to-remove registry leftovers, only ever after a registry backup is written | Yes |
-| Drivers | Devices that are no longer connected but still carry a third-party driver, and third-party driver packages no device uses; never inbox drivers, every package exported to the data folder first (a copy also stays in `%ProgramData%\UltimateUpdater\driver-backups`), all rows off by default; in the same section, older Python versions (off by default) | Yes |
+| Drivers | Devices that are no longer connected but still carry a third-party driver, and third-party driver packages no device uses; never inbox drivers, every package exported to the data folder first (a copy also stays in `%ProgramData%\UltimateUpdater\driver-backups`), the backups of the last five runs are kept, all rows off by default; in the same section, older Python versions (off by default) | Yes |
 
 ## Appearance
 

@@ -78,4 +78,24 @@ public class RegistryBackupCeilingTests : IDisposable
             () => RegistryBackupService.ExportKeyTreeTextOrNull(RootPath, maxExportBytes: 1000));
         Assert.Contains(_relativeRoot, ex.Message);
     }
+
+    /// <summary>The backup file is UTF-16, two bytes per character, so the ceiling is counted in bytes on
+    /// disk: an export whose text is under the limit in characters but over it in bytes is refused.</summary>
+    [Fact]
+    public void The_export_ceiling_counts_two_bytes_per_character()
+    {
+        using (var key = Registry.CurrentUser.CreateSubKey(_relativeRoot))
+        {
+            for (var i = 0; i < 20; i++)
+                key.SetValue("value" + i, new string('x', 100));
+        }
+
+        var length = RegistryBackupService.ExportKeyTreeTextOrNull(RootPath)!.Length;
+
+        var ex = Assert.Throws<IOException>(
+            () => RegistryBackupService.ExportKeyTreeTextOrNull(RootPath, maxExportBytes: length * 3L / 2));
+        Assert.Contains(_relativeRoot, ex.Message);
+
+        Assert.NotNull(RegistryBackupService.ExportKeyTreeTextOrNull(RootPath, maxExportBytes: length * 2L));
+    }
 }

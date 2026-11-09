@@ -1407,7 +1407,7 @@ Ultimate Updater 无法撤销此操作。</value>
     <value>不再连接的设备，以及驱动程序存储中遗留的旧驱动程序包。默认关闭，需要管理员权限；删除任何内容前会自动创建备份。</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>下次连接该设备时，如果 Windows 能找到驱动程序，会重新安装。每个驱动程序包的备份都保存在数据文件夹中。</value>
+    <value>下次连接该设备时，如果 Windows 能找到驱动程序，会重新安装。最近五次运行的备份会被保留。</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>驱动程序</value>

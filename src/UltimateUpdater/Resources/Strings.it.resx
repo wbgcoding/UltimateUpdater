@@ -1407,7 +1407,7 @@ Questa operazione non può essere annullata.</value>
     <value>Dispositivi non più collegati e vecchi pacchetti driver rimasti nell'archivio driver. Disattivato per impostazione predefinita, richiede privilegi di amministratore; viene creata automaticamente una copia di backup prima di eliminare qualsiasi elemento.</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>Il dispositivo installerà di nuovo il driver al prossimo collegamento, se Windows ne trova uno. Una copia di backup di ogni pacchetto viene conservata nella cartella dati.</value>
+    <value>Il dispositivo installerà di nuovo il driver al prossimo collegamento, se Windows ne trova uno. I backup delle ultime cinque esecuzioni vengono conservati.</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>Driver</value>

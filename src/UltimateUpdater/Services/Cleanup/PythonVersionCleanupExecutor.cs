@@ -32,7 +32,8 @@ public static class PythonVersionCleanupExecutor
         if (selectedPythonExePaths.Count == 0)
             return new CleanupOutcome(0, 0, 0);
 
-        var matched = PythonCleanupDiscovery.DiscoverOldVersions(registry)
+        var matched = PythonCleanupDiscovery.DiscoverOldVersions(
+                registry, measure: exe => selectedPythonExePaths.Contains(exe, StringComparer.OrdinalIgnoreCase))
             .Where(c => selectedPythonExePaths.Contains(c.PythonExe, StringComparer.OrdinalIgnoreCase))
             .ToList();
 

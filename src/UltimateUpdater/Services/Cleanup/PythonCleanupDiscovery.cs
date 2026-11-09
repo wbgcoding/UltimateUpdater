@@ -133,10 +133,13 @@ public static class PythonCleanupDiscovery
     /// Older interpreters this machine could remove, one row each, newest-architecture-newest-version rule
     /// already applied by <see cref="PythonInterpreters.FindOlderVersions"/>. <paramref name="resolveOnPath"/>
     /// is <see cref="ProcessRunner.Resolve"/> by default; a test supplies a fake so the PATH exclusion can
-    /// be proven without touching the real machine's PATH.
+    /// be proven without touching the real machine's PATH. <paramref name="measure"/> decides per interpreter
+    /// exe whether its site-packages folder is walked for size and package count (default: all); a candidate
+    /// it declines keeps size 0 and count 0, which the executor accepts because it only needs the uninstall
+    /// command of the rows it was asked to remove.
     /// </summary>
     public static IReadOnlyList<PythonVersionCandidate> DiscoverOldVersions(
-        IRegistryView registry, Func<string, string?>? resolveOnPath = null)
+        IRegistryView registry, Func<string, string?>? resolveOnPath = null, Func<string, bool>? measure = null)
     {
         var resolve = resolveOnPath ?? ProcessRunner.Resolve;
         var interpreters = PythonInterpreters.Discover(registry);
@@ -154,8 +157,9 @@ public static class PythonCleanupDiscovery
                 continue;
 
             var sitePackages = PythonInterpreters.SitePackagesFor(interpreter);
-            var size = sitePackages is null ? 0 : DirectorySizeWalker.Measure(sitePackages, DirectorySizeWalker.DefaultMaxDepth, MaxFilesScannedPerCandidate);
-            var packageCount = sitePackages is null ? 0 : CountPackages(sitePackages);
+            var walk = sitePackages is not null && (measure is null || measure(interpreter.PythonExe));
+            var size = walk ? DirectorySizeWalker.Measure(sitePackages!, DirectorySizeWalker.DefaultMaxDepth, MaxFilesScannedPerCandidate) : 0;
+            var packageCount = walk ? CountPackages(sitePackages!) : 0;
 
             candidates.Add(new PythonVersionCandidate(
                 interpreter.PythonExe, interpreter.DisplayLabel, sitePackages, size, packageCount, command,

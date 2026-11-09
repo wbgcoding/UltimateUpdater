@@ -1407,7 +1407,7 @@ Nie można tego cofnąć.</value>
     <value>Urządzenia, które nie są już podłączone, oraz stare pakiety sterowników pozostawione w magazynie sterowników. Domyślnie wyłączone, wymaga uprawnień administratora; kopia zapasowa jest tworzona automatycznie przed usunięciem czegokolwiek.</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>Po ponownym podłączeniu urządzenia Windows zainstaluje sterownik ponownie, jeśli go znajdzie. Kopia zapasowa każdego pakietu jest przechowywana w folderze danych.</value>
+    <value>Po ponownym podłączeniu urządzenia Windows zainstaluje sterownik ponownie, jeśli go znajdzie. Kopie zapasowe z ostatnich pięciu uruchomień są przechowywane.</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>Sterowniki</value>

@@ -62,7 +62,13 @@ public class CleanupReportingFixesTests : IDisposable
     {
         public IReadOnlyList<DriverDeviceInfo> GatherDevices(CancellationToken cancellationToken) => devices;
 
-        public IReadOnlyList<DriverPackageInfo> GatherPackages(CancellationToken cancellationToken) => packages;
+        public Func<string, bool>? LastMeasure { get; private set; }
+
+        public IReadOnlyList<DriverPackageInfo> GatherPackages(CancellationToken cancellationToken, Func<string, bool>? measure = null)
+        {
+            LastMeasure = measure;
+            return packages;
+        }
     }
 
     private static DriverDeviceInfo OldDevice(string id, string inf) => new(
@@ -88,6 +94,35 @@ public class CleanupReportingFixesTests : IDisposable
 
         Assert.Equal(1, outcome.DeletedFiles);
         Assert.Equal(5000, outcome.FreedBytes);
+    }
+
+    [Fact]
+    public async Task A_run_whose_every_export_fails_reports_no_backup_and_leaves_no_empty_folder()
+    {
+        var backups = Path.Combine(DriverBackupStaging.ProgramDataRootOverride!, "UltimateUpdater", "driver-backups");
+        var older = Path.Combine(backups, "2020-01-01_000000");
+        Directory.CreateDirectory(older);
+        File.WriteAllText(Path.Combine(older, "driver.inf"), "inf");
+        DriverBackupStaging.StagingNameOverride = "2020-01-02_000000";
+        var inventory = new FakeInventory([], [Package("oem20.inf", 5000)]);
+
+        var outcome = await RunDrivers(inventory, [], ["oem20.inf"], args => args[0] == "/export-driver" ? 5 : 0);
+
+        Assert.Equal(1, outcome.SkippedFiles);
+        Assert.Null(outcome.DriverBackupFolderName);
+        Assert.False(Directory.Exists(Path.Combine(backups, "2020-01-02_000000")));
+        Assert.True(File.Exists(Path.Combine(older, "driver.inf")));
+    }
+
+    [Fact]
+    public async Task A_run_that_exported_a_package_reports_its_backup_folder()
+    {
+        DriverBackupStaging.StagingNameOverride = "2020-01-02_000000";
+        var inventory = new FakeInventory([], [Package("oem20.inf", 5000)]);
+
+        var outcome = await RunDrivers(inventory, [], ["oem20.inf"], _ => 0);
+
+        Assert.Equal("2020-01-02_000000", outcome.DriverBackupFolderName);
     }
 
     [Fact]
@@ -128,6 +163,23 @@ public class CleanupReportingFixesTests : IDisposable
 
         Assert.Equal(1, outcome.DeletedFiles);
         Assert.Equal(0, outcome.FreedBytes);
+    }
+
+    [Fact]
+    public async Task The_clean_pass_measures_only_the_selected_packages_and_those_of_selected_devices()
+    {
+        var inventory = new FakeInventory(
+            [OldDevice("ROOT\\GADGET\\0001", "oem20.inf"), OldDevice("ROOT\\GADGET\\0002", "oem21.inf")],
+            [Package("oem20.inf", 1), Package("oem21.inf", 1), Package("oem22.inf", 1), Package("oem23.inf", 1)]);
+
+        await RunDrivers(inventory, ["ROOT\\GADGET\\0001"], ["oem22.inf"], _ => 0);
+
+        var measure = inventory.LastMeasure;
+        Assert.NotNull(measure);
+        Assert.True(measure!("oem20.inf"));
+        Assert.True(measure("OEM22.INF"));
+        Assert.False(measure("oem21.inf"));
+        Assert.False(measure("oem23.inf"));
     }
 
     // c: backups are pruned by the moment in their name

@@ -1407,7 +1407,7 @@ Cette action est irréversible.</value>
     <value>Appareils qui ne sont plus connectés et anciens packages de pilotes laissés dans le magasin de pilotes. Désactivé par défaut, nécessite des droits administrateur ; une sauvegarde est créée automatiquement avant toute suppression.</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>L'appareil réinstalle son pilote à sa prochaine connexion, si Windows en trouve un. Une sauvegarde de chaque package est conservée dans le dossier de données.</value>
+    <value>L'appareil réinstalle son pilote à sa prochaine connexion, si Windows en trouve un. Les sauvegardes des cinq dernières exécutions sont conservées.</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>Pilotes</value>

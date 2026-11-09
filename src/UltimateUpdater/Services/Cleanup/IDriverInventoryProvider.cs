@@ -10,5 +10,8 @@ public interface IDriverInventoryProvider
 {
     IReadOnlyList<DriverDeviceInfo> GatherDevices(CancellationToken cancellationToken);
 
-    IReadOnlyList<DriverPackageInfo> GatherPackages(CancellationToken cancellationToken);
+    /// <summary>Every published third-party package. <paramref name="measure"/> is asked with the published
+    /// <c>oem*.inf</c> name whether that package's store folder is size-walked (default: all); a declined
+    /// package is still listed, with size 0. Lets the clean pass measure only the packages it acts on.</summary>
+    IReadOnlyList<DriverPackageInfo> GatherPackages(CancellationToken cancellationToken, Func<string, bool>? measure = null);
 }
