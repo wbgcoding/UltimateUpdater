@@ -18,10 +18,15 @@ public class ElevatedProcessEnvironmentTests
     private static ProcessStartInfo Build(
         ResolvedExecutable executable, bool elevated, string? machinePath = null,
         Func<string, bool>? trusted = null, IReadOnlyDictionary<string, string>? environment = null,
-        string? machineChocolatey = null) =>
+        string? machineChocolatey = null, string? machineTools = null) =>
         ProcessRunner.BuildStartInfo(
             executable, ["/c", "echo"], environment, Encoding.UTF8, elevated, () => machinePath, trusted ?? (_ => true),
-            machineVariable: name => name == "ChocolateyInstall" ? machineChocolatey : null);
+            machineVariable: name => name switch
+            {
+                "ChocolateyInstall" => machineChocolatey,
+                "ChocolateyToolsLocation" => machineTools,
+                _ => null,
+            });
 
     private static ResolvedExecutable Pinned(string path) =>
         new(path, new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -195,5 +200,48 @@ public class ElevatedProcessEnvironmentTests
         var info = Build(tool, elevated: true, trusted: _ => trusted, machineChocolatey: machineValue);
 
         Assert.False(info.Environment.ContainsKey("ChocolateyInstall"));
+    }
+
+    [Fact]
+    public void An_elevated_child_never_inherits_any_chocolatey_variable()
+    {
+        Environment.SetEnvironmentVariable("ChocolateyBinRoot", @"C:\Planted\bin");
+        Environment.SetEnvironmentVariable("chocolateylastpathupdate", "1");
+        try
+        {
+            using var tool = Pinned(Path.Combine(System32, "cmd.exe"));
+
+            var elevated = Build(tool, elevated: true, machineChocolatey: @"C:\ProgramData\chocolatey");
+
+            Assert.DoesNotContain(elevated.Environment.Keys, key => key.Equals("ChocolateyBinRoot", StringComparison.OrdinalIgnoreCase));
+            Assert.DoesNotContain(elevated.Environment.Keys, key => key.Equals("ChocolateyLastPathUpdate", StringComparison.OrdinalIgnoreCase));
+            Assert.Equal(@"C:\ProgramData\chocolatey", elevated.Environment["ChocolateyInstall"]);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ChocolateyBinRoot", null);
+            Environment.SetEnvironmentVariable("chocolateylastpathupdate", null);
+        }
+    }
+
+    [Fact]
+    public void An_elevated_child_keeps_the_machine_chocolatey_tools_folder_under_the_same_trust_rule()
+    {
+        using var tool = Pinned(Path.Combine(System32, "cmd.exe"));
+        Environment.SetEnvironmentVariable("ChocolateyToolsLocation", @"C:\Planted\tools");
+        try
+        {
+            var trusted = Build(tool, elevated: true, machineTools: @"D:\Tools\");
+            var untrusted = Build(tool, elevated: true, trusted: _ => false, machineTools: @"D:\Tools");
+            var withVariable = Build(tool, elevated: true, machineTools: @"%SystemDrive%\tools");
+
+            Assert.Equal(@"D:\Tools", trusted.Environment["ChocolateyToolsLocation"]);
+            Assert.False(untrusted.Environment.ContainsKey("ChocolateyToolsLocation"));
+            Assert.False(withVariable.Environment.ContainsKey("ChocolateyToolsLocation"));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ChocolateyToolsLocation", null);
+        }
     }
 }
