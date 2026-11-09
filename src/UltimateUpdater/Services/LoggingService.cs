@@ -558,8 +558,8 @@ public sealed class LoggingService
                     }
                     catch (Exception)
                     {
-                        // One bad line must not end the consumer: with nobody draining, the bounded
-                        // queue fills and every later log call blocks forever under _lock.
+                        // One bad line must not end the consumer: with nobody draining the queue,
+                        // every later line would be dropped.
                     }
                 }
 
