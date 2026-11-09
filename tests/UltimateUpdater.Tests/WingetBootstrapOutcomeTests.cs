@@ -141,6 +141,28 @@ public sealed class WingetBootstrapOutcomeTests : IDisposable
     }
 
     [Fact]
+    public async Task A_cancel_while_the_dependencies_are_checked_releases_them_and_removes_the_staging_folder()
+    {
+        var installed = new List<string>();
+        using var cancel = new CancellationTokenSource();
+        var service = Service(
+            Release(withDependencies: true), DependencyZip(), installed,
+            trusted: path =>
+            {
+                // The bundle check passes; the first pinned dependency is where the user cancels.
+                if (path.EndsWith(".appx", StringComparison.Ordinal))
+                    cancel.Cancel();
+                return true;
+            });
+
+        var outcome = await service.InstallAsync(null, cancel.Token);
+
+        Assert.Equal(WingetBootstrapStatus.Failed, outcome.Status);
+        Assert.Empty(installed);
+        Assert.Empty(Directory.EnumerateFileSystemEntries(_staging));
+    }
+
+    [Fact]
     public async Task An_unsigned_bundle_fails_with_that_reason_and_installs_nothing()
     {
         var installed = new List<string>();

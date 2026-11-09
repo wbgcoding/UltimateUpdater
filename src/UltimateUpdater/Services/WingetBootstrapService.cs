@@ -230,6 +230,7 @@ public sealed class WingetBootstrapService(
         string releaseJson, string staging, CancellationToken cancellationToken)
     {
         var pinned = new List<FileStream>();
+        var succeeded = false;
         try
         {
             var url = SelectAssetUrl(releaseJson, DependenciesAssetName);
@@ -269,6 +270,7 @@ public sealed class WingetBootstrapService(
                     throw new InvalidOperationException("a dependency package is not signed by Microsoft");
             }
 
+            succeeded = true;
             return pinned;
         }
         catch (Exception ex) when (!cancellationToken.IsCancellationRequested
@@ -276,9 +278,17 @@ public sealed class WingetBootstrapService(
                 or InvalidDataException or OperationCanceledException)
         {
             _logging.Warn($"winget bootstrap: continuing without the dependency packages ({ex.Message}).");
-            foreach (var stream in pinned)
-                stream.Dispose();
             return [];
+        }
+        finally
+        {
+            // Every way out except a clean return releases the pinned files, a cancel included: the
+            // caller only disposes what it is handed, and open handles keep the staging folder undeletable.
+            if (!succeeded)
+            {
+                foreach (var stream in pinned)
+                    stream.Dispose();
+            }
         }
     }
 
