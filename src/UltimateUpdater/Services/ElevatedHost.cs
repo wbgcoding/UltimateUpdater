@@ -14,10 +14,18 @@ namespace UltimateUpdater.Services;
 public sealed class ElevatedJobHandle
 {
     private readonly object _lock = new();
-    private ElevatedHost? _host;
+
+    /// <summary>Held across "decide the hold state, then send it" for pause, resume and the replay in
+    /// <see cref="Attach(ElevatedHost, string)"/>, so the order the worker receives them in is the order the
+    /// state was decided in. Without it a resume could overtake the pause replayed after the attach and
+    /// leave the worker paused while the UI shows the run as going.</summary>
+    private readonly SemaphoreSlim _controlOrder = new(1, 1);
+
+    private Func<string, string, string?, string?, Task>? _send;
     private string? _id;
     private bool _held;
     private bool _cancelRequested;
+    private bool _cancelAsked;
     private List<(string SourceId, string ItemId)>? _pendingItemCancels;
 
     /// <summary>
@@ -25,58 +33,117 @@ public sealed class ElevatedJobHandle
     /// previous target was still finishing, or stopped a row while the elevation prompt was still open) is
     /// applied now, because a control naming an id the worker has never seen is simply dropped.
     /// </summary>
-    internal void Attach(ElevatedHost host, string id)
+    internal void Attach(ElevatedHost host, string id) =>
+        Attach((jobId, action, sourceId, itemId) => host.SendControlAsync(jobId, action, sourceId, itemId), id);
+
+    /// <summary>The same, with the send given as a function so the ordering can be tested without a pipe.</summary>
+    internal void Attach(Func<string, string, string?, string?, Task> send, string id)
     {
-        bool pause, cancel;
+        bool cancel;
         (string SourceId, string ItemId)[] itemCancels;
+
+        // Taken before the id is published and released only after the pause went out: a resume asked in
+        // between waits here, so it is sent after the pause, not before it. When another control holds the
+        // gate right now, the replay queues behind it instead and re-reads the state when its turn comes.
+        var ordered = _controlOrder.Wait(0);
         lock (_lock)
         {
-            _host = host;
+            _send = send;
             _id = id;
-            pause = _held;
             cancel = _cancelRequested;
             itemCancels = _pendingItemCancels?.ToArray() ?? [];
             _pendingItemCancels = null;
         }
 
-        if (pause)
-            _ = host.SendControlAsync(id, "pause");
-
-        foreach (var (sourceId, itemId) in itemCancels)
-            _ = host.SendControlAsync(id, "cancel-item", sourceId, itemId);
-
-        if (cancel)
-            _ = host.SendControlAsync(id, "cancel");
+        _ = ReplayAsync(send, id, ordered, cancel, itemCancels);
     }
 
-    public Task PauseAsync()
+    /// <summary>The pause first (so a stop never arrives before the hold it belongs after), then the item
+    /// stops, then the whole-job stop, all inside the gate.</summary>
+    private async Task ReplayAsync(
+        Func<string, string, string?, string?, Task> send, string id, bool alreadyOrdered, bool cancel,
+        (string SourceId, string ItemId)[] itemCancels)
     {
-        lock (_lock)
-            _held = true;
+        if (!alreadyOrdered)
+            await _controlOrder.WaitAsync();
 
-        return ControlAsync("pause");
+        try
+        {
+            // Read again inside the gate: the last state asked for wins.
+            bool pause;
+            lock (_lock)
+                pause = _held && !_cancelAsked;
+
+            if (pause)
+                await send(id, "pause", null, null);
+
+            foreach (var (sourceId, itemId) in itemCancels)
+                await send(id, "cancel-item", sourceId, itemId);
+
+            if (cancel)
+                await send(id, "cancel", null, null);
+        }
+        finally
+        {
+            _controlOrder.Release();
+        }
     }
 
-    public Task ResumeAsync()
+    public async Task PauseAsync()
     {
-        lock (_lock)
-            _held = false;
+        await _controlOrder.WaitAsync();
+        try
+        {
+            lock (_lock)
+                _held = true;
 
-        return ControlAsync("resume");
+            await ControlAsync("pause");
+        }
+        finally
+        {
+            _controlOrder.Release();
+        }
     }
 
-    public Task CancelAsync()
+    public async Task ResumeAsync()
+    {
+        await _controlOrder.WaitAsync();
+        try
+        {
+            lock (_lock)
+                _held = false;
+
+            await ControlAsync("resume");
+        }
+        finally
+        {
+            _controlOrder.Release();
+        }
+    }
+
+    public async Task CancelAsync()
     {
         lock (_lock)
         {
-            if (_host is null)
+            if (_send is null)
             {
                 _cancelRequested = true;
-                return Task.CompletedTask;
+                return;
             }
+
+            _cancelAsked = true;
         }
 
-        return ControlAsync("cancel");
+        // Behind the gate, so it can never overtake a pause that is still being replayed.
+        await _controlOrder.WaitAsync();
+        try
+        {
+            await ControlAsync("cancel");
+        }
+        finally
+        {
+            _controlOrder.Release();
+        }
     }
 
     /// <summary>Stops just ONE item inside this job; the worker keeps working through the
@@ -85,37 +152,37 @@ public sealed class ElevatedJobHandle
     /// whole-job id it has never seen. Asked before the job is out, it is remembered and sent right after.</summary>
     public Task CancelItemAsync(string sourceId, string itemId)
     {
-        ElevatedHost host;
+        Func<string, string, string?, string?, Task> send;
         string id;
         lock (_lock)
         {
-            if (_host is null || _id is null)
+            if (_send is null || _id is null)
             {
                 (_pendingItemCancels ??= []).Add((sourceId, itemId));
                 return Task.CompletedTask;
             }
 
-            host = _host;
+            send = _send;
             id = _id;
         }
 
-        return host.SendControlAsync(id, "cancel-item", sourceId, itemId);
+        return send(id, "cancel-item", sourceId, itemId);
     }
 
     private Task ControlAsync(string action)
     {
-        ElevatedHost host;
+        Func<string, string, string?, string?, Task> send;
         string id;
         lock (_lock)
         {
-            if (_host is null || _id is null)
+            if (_send is null || _id is null)
                 return Task.CompletedTask;
 
-            host = _host;
+            send = _send;
             id = _id;
         }
 
-        return host.SendControlAsync(id, action);
+        return send(id, action, null, null);
     }
 }
 

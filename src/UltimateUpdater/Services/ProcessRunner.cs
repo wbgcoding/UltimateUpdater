@@ -366,7 +366,8 @@ public static class ProcessRunner
         bool elevated,
         Func<string?>? machinePath = null,
         Func<string, bool>? trustedDirectory = null,
-        bool? scrubEnvironment = null)
+        bool? scrubEnvironment = null,
+        Func<string, string?>? machineVariable = null)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -393,6 +394,11 @@ public static class ProcessRunner
             foreach (var (key, value) in environment)
                 startInfo.Environment[key] = value;
         }
+
+        // Applied after the caller's variables: nothing may name the install root of a package manager
+        // that runs scripts from it, whoever supplies it.
+        if (scrubEnvironment ?? elevated)
+            ApplyChocolateyInstallRoot(startInfo.Environment, machineVariable ?? ElevatedPathTrust.ReadMachineVariable, trustedDirectory ?? ElevatedPathTrust.IsTrustedDirectory);
 
         if (elevated)
         {
@@ -429,6 +435,33 @@ public static class ProcessRunner
 
         foreach (var key in doomed)
             environment.Remove(key);
+    }
+
+    /// <summary>
+    /// Chocolatey takes its install root (lib, helpers, extensions: PowerShell it runs as the caller) from
+    /// ChocolateyInstall before its own folder, its tools folder from ChocolateyToolsLocation, and falls back
+    /// to ChocolateyBinRoot for that one, and all of them normally come from HKCU\Environment, which any
+    /// unelevated program of the user can write. So EVERY inherited Chocolatey variable is dropped. The two
+    /// folder variables are then set again, each only to its MACHINE value and only when that is a fully
+    /// qualified path without variables and every directory on its chain passes
+    /// <paramref name="isTrustedDirectory"/>; otherwise it stays unset and Chocolatey uses its own default.
+    /// </summary>
+    internal static void ApplyChocolateyInstallRoot(
+        IDictionary<string, string?> environment, Func<string, string?> machineVariable, Func<string, bool> isTrustedDirectory)
+    {
+        foreach (var key in environment.Keys.Where(key => key.StartsWith("Chocolatey", StringComparison.OrdinalIgnoreCase)).ToList())
+            environment.Remove(key);
+
+        foreach (var name in new[] { "ChocolateyInstall", "ChocolateyToolsLocation" })
+        {
+            var folder = machineVariable(name)?.Trim().Trim('"');
+            if (string.IsNullOrEmpty(folder) || folder.Contains('%') || !Path.IsPathFullyQualified(folder))
+                continue;
+
+            folder = Path.TrimEndingDirectorySeparator(folder);
+            if (isTrustedDirectory(folder))
+                environment[name] = folder;
+        }
     }
 
     /// <summary>How long the pumps are given to drain after the process itself has already exited, before

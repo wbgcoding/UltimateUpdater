@@ -196,13 +196,16 @@ public sealed class InstallBlockers
             {
                 try
                 {
-                    paths.Add(process.MainModule?.FileName is { Length: > 0 } path ? path : null);
+                    // A kernel query with limited rights, not Process.MainModule: that one throws access denied
+                    // for an elevated process of the same user (Git Bash or ssh from an admin terminal), which
+                    // would turn its path into "unknown" and hide it from the Git rule.
+                    paths.Add(ProcessImage.TryGetPath(process.Id) is { Length: > 0 } path ? path : null);
                 }
                 catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception
                                                or NotSupportedException)
                 {
-                    // An elevated or protected process cannot be read: kept as an unknown image, which the
-                    // generic rule treats as possibly in the way and the Git rule as not Git's.
+                    // A process that cannot be read: kept as an unknown image, which the generic rule treats as
+                    // possibly in the way and the Git rule as not Git's.
                     paths.Add(null);
                 }
             }
