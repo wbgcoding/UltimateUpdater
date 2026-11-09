@@ -210,7 +210,15 @@ public static class AppPaths
 
         if (TryReadPointer(Path.Combine(legacy, PointerFileName)) is { } pointedTo)
         {
-            if (Directory.Exists(pointedTo))
+            // The whole target gets copied, so only a dedicated app folder qualifies: a pointer at a
+            // user's own folder (or a relative one, resolved against the working directory) must not make
+            // the first start copy arbitrary data.
+            if (!IsDedicatedLegacyDataFolder(pointedTo))
+            {
+                fallbackReason =
+                    $"The data folder recorded in the old installation ('{pointedTo}') is not a dedicated app folder; migrating the old default folder '{legacy}' instead.";
+            }
+            else if (Directory.Exists(pointedTo))
             {
                 source = pointedTo;
             }
@@ -227,6 +235,28 @@ public static class AppPaths
         LegacyDataFolderMigrationMessage =
             (fallbackReason is null ? string.Empty : fallbackReason + " ")
             + $"Copied data from the old '{legacy}' folder to '{roaming}' after the app was renamed; the old folder was left in place.";
+    }
+
+    /// <summary>
+    /// A fully qualified path whose last segment is the current or the pre-rename dedicated folder name.
+    /// </summary>
+    private static bool IsDedicatedLegacyDataFolder(string path)
+    {
+        if (IsDedicatedDataFolder(path))
+            return true;
+
+        try
+        {
+            return Path.IsPathFullyQualified(path)
+                && string.Equals(
+                    Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)),
+                    LegacyProductFolderName,
+                    StringComparison.OrdinalIgnoreCase);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 
     /// <summary>

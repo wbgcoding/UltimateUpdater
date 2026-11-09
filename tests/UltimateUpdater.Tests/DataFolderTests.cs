@@ -710,7 +710,8 @@ public class DataFolderTests
     public void A_legacy_pointer_redirects_the_migration_to_the_folder_it_names()
     {
         var legacy = NewTempDir("legacy-pointer");
-        var realData = NewTempDir("legacy-pointer-target");
+        var realData = Path.Combine(NewTempDir("legacy-pointer-target"), "UltimateUpdater");
+        Directory.CreateDirectory(realData);
         var roaming = Path.Combine(TestRoot, "wu-datafolder-roaming-" + Guid.NewGuid());
         File.WriteAllText(Path.Combine(legacy, "datapath.txt"), realData);
         File.WriteAllText(Path.Combine(realData, "settings.json"), "{}");
@@ -728,7 +729,61 @@ public class DataFolderTests
         finally
         {
             Directory.Delete(legacy, recursive: true);
-            Directory.Delete(realData, recursive: true);
+            Directory.Delete(Path.GetDirectoryName(realData)!, recursive: true);
+            if (Directory.Exists(roaming))
+                Directory.Delete(roaming, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_legacy_pointer_to_a_users_own_folder_is_not_copied()
+    {
+        var legacy = NewTempDir("legacy-foreign-pointer");
+        var foreign = NewTempDir("legacy-foreign-target");
+        var roaming = Path.Combine(TestRoot, "wu-datafolder-roaming-" + Guid.NewGuid());
+        File.WriteAllText(Path.Combine(legacy, "datapath.txt"), foreign);
+        File.WriteAllText(Path.Combine(foreign, "holiday-photo.jpg"), "x");
+        File.WriteAllText(Path.Combine(legacy, "settings.json"), "{}");
+
+        AppPaths.ConsumeLegacyDataFolderMigrationMessage();
+        try
+        {
+            AppPaths.TryMigrateLegacyDataFolder(roaming, legacy);
+
+            Assert.False(File.Exists(Path.Combine(roaming, "holiday-photo.jpg")));
+            Assert.True(File.Exists(Path.Combine(roaming, "settings.json")));
+        }
+        finally
+        {
+            Directory.Delete(legacy, recursive: true);
+            Directory.Delete(foreign, recursive: true);
+            if (Directory.Exists(roaming))
+                Directory.Delete(roaming, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_legacy_pointer_to_a_WindowsUpdater_folder_is_still_followed()
+    {
+        var legacy = NewTempDir("legacy-wu-pointer");
+        var parent = NewTempDir("legacy-wu-target");
+        var realData = Path.Combine(parent, "WindowsUpdater");
+        Directory.CreateDirectory(realData);
+        var roaming = Path.Combine(TestRoot, "wu-datafolder-roaming-" + Guid.NewGuid());
+        File.WriteAllText(Path.Combine(legacy, "datapath.txt"), realData);
+        File.WriteAllText(Path.Combine(realData, "settings.json"), "{}");
+
+        AppPaths.ConsumeLegacyDataFolderMigrationMessage();
+        try
+        {
+            AppPaths.TryMigrateLegacyDataFolder(roaming, legacy);
+
+            Assert.True(File.Exists(Path.Combine(roaming, "settings.json")));
+        }
+        finally
+        {
+            Directory.Delete(legacy, recursive: true);
+            Directory.Delete(parent, recursive: true);
             if (Directory.Exists(roaming))
                 Directory.Delete(roaming, recursive: true);
         }
