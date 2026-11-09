@@ -269,6 +269,27 @@ public class RegistryLookupFailureTests
         Assert.Equal("https://registry.npmjs.org/npm/latest", Assert.Single(requested));
     }
 
+    /// <summary>npm 12 declares Node ^22.22.2 || ^24.15.0 || >=26.0.0: pinned on a default Node 20 it would not
+    /// start, so the row must not be offered; on a Node that satisfies it, or with no Node row, it is.</summary>
+    [Theory]
+    [InlineData("20.11.0", false)]
+    [InlineData("22.22.1", false)]
+    [InlineData("22.22.2", true)]
+    [InlineData("26.0.0", true)]
+    [InlineData(null, true)]
+    public async Task Volta_package_manager_is_not_offered_when_its_engines_exclude_the_default_node(string? node, bool offered)
+    {
+        var client = Client(_ => Json("""{"name":"npm","version":"12.2.2","engines":{"node":"^22.22.2 || ^24.15.0 || >=26.0.0"}}"""));
+        var source = new VoltaSource(Log(), client);
+        var tools = new List<VoltaDefaultTool> { new("package-manager", "npm", "10.0.0") };
+        if (node is not null)
+            tools.Add(new("runtime", "node", node));
+
+        var rows = await source.CheckToolsAsync(tools, CancellationToken.None);
+
+        Assert.Equal(offered, rows.Any(row => row.Id == "volta-npm"));
+    }
+
     private sealed class StallingStream : Stream
     {
         public override bool CanRead => true;

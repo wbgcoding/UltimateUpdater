@@ -128,35 +128,6 @@ public static class PackageMetadataParsers
     }
 
     /// <summary>
-    /// npm `GET /{name}` (full packument) → the publish date for a specific version from the "time"
-    /// map, and its unpacked size from "versions[version].dist.unpackedSize" when present.
-    /// </summary>
-    public static UpdateEnrichment ParseNpmPackument(string json, string version) =>
-        ParseNpmPackumentAndTarball(json, version).Enrichment;
-
-    /// <summary>
-    /// npm `GET /{name}` (full packument) → the exact version's `dist.tarball` URL, from the SAME response
-    /// <see cref="ParseNpmPackument"/> already reads. Used when that call's `unpackedSize` came back empty
-    /// (npm does not always report it), the tarball is what actually comes down on an install, HEAD'd
-    /// separately by the caller for its real size.
-    /// </summary>
-    public static string? ParseNpmTarballUrl(string json, string version) =>
-        ParseNpmPackumentAndTarball(json, version).TarballUrl;
-
-    /// <summary>
-    /// Both facts above out of ONE parse: a packument for a popular package runs to tens of megabytes, too
-    /// much to parse twice per row.
-    /// </summary>
-    public static (UpdateEnrichment Enrichment, string? TarballUrl) ParseNpmPackumentAndTarball(string json, string version)
-    {
-        if (string.IsNullOrWhiteSpace(version) || string.IsNullOrWhiteSpace(json))
-            return default;
-
-        var facts = NpmPackumentReader.Scan(System.Text.Encoding.UTF8.GetBytes(json), version);
-        return facts is null ? default : FromNpmPackument(facts);
-    }
-
-    /// <summary>
     /// The enrichment and tarball URL out of the raw facts the streaming reader collected: the date is
     /// parsed leniently, every URL passes the http(s) gate, an unusable field simply stays unknown.
     /// </summary>
@@ -333,52 +304,126 @@ public static class PackageMetadataParsers
     }
 
     /// <summary>
-    /// Google's Android SDK repository manifest (`dl.google.com/android/repository/repository2-3.xml`)
-    /// → the Windows archive size for one package, matched by its exact `path` attribute (the same
-    /// string `sdkmanager --list` uses as the package id, e.g. "build-tools;35.0.1", verified live).
-    /// No date: the manifest carries a revision number, not a publish date, matching what
-    /// `sdkmanager` itself already shows. A package with no Windows archive (rare) yields nothing rather
-    /// than a foreign platform's size.
+    /// One package of Google's Android SDK repository manifest: the revision it currently ships (null when
+    /// it has none or is a preview, whose text `sdkmanager` writes differently) and its Windows archive size.
     /// </summary>
-    public static long? ParseAndroidSdkPackageSize(string xml, string packagePath)
+    public sealed record AndroidSdkPackageEntry(string? Revision, long Size);
+
+    /// <summary>
+    /// Google's Android SDK repository manifest (`dl.google.com/android/repository/repository2-3.xml`)
+    /// parsed ONCE into one entry per package, keyed by its exact `path` attribute (the same string
+    /// `sdkmanager --list` uses as the package id, e.g. "build-tools;35.0.1", verified live). A manifest
+    /// runs to several MB, so the caller keeps this index instead of parsing it again per row.
+    /// No date: the manifest carries a revision number, not a publish date, matching what `sdkmanager`
+    /// itself already shows. A package with no Windows archive (rare) gets no entry rather than a foreign
+    /// platform's size. Not a manifest at all yields an empty index.
+    /// </summary>
+    public static IReadOnlyDictionary<string, AndroidSdkPackageEntry> ParseAndroidSdkPackageIndex(string xml)
     {
-        if (string.IsNullOrWhiteSpace(xml) || string.IsNullOrWhiteSpace(packagePath))
-            return null;
+        var index = new Dictionary<string, AndroidSdkPackageEntry>(StringComparer.Ordinal);
+        if (string.IsNullOrWhiteSpace(xml))
+            return index;
 
         try
         {
             var root = System.Xml.Linq.XDocument.Parse(xml).Root;
             if (root is null)
-                return null;
+                return index;
 
-            var package = root.Elements()
-                .FirstOrDefault(e => e.Name.LocalName == "remotePackage" &&
-                    (string?)e.Attribute("path") == packagePath);
-            if (package is null)
-                return null;
-
-            var archives = package.Elements().FirstOrDefault(e => e.Name.LocalName == "archives");
-            if (archives is null)
-                return null;
-
-            foreach (var archive in archives.Elements().Where(e => e.Name.LocalName == "archive"))
+            foreach (var package in root.Elements().Where(e => e.Name.LocalName == "remotePackage"))
             {
-                var hostOs = archive.Elements().FirstOrDefault(e => e.Name.LocalName == "host-os")?.Value;
-                if (hostOs is not null && !string.Equals(hostOs, "windows", StringComparison.OrdinalIgnoreCase))
+                var path = (string?)package.Attribute("path");
+                if (string.IsNullOrWhiteSpace(path) || index.ContainsKey(path))
                     continue;
 
-                var complete = archive.Elements().FirstOrDefault(e => e.Name.LocalName == "complete");
-                var sizeText = complete?.Elements().FirstOrDefault(e => e.Name.LocalName == "size")?.Value;
-                if (long.TryParse(sizeText, out var bytes) && bytes > 0)
-                    return bytes;
+                var archives = package.Elements().FirstOrDefault(e => e.Name.LocalName == "archives");
+                if (archives is null)
+                    continue;
+
+                foreach (var archive in archives.Elements().Where(e => e.Name.LocalName == "archive"))
+                {
+                    var hostOs = archive.Elements().FirstOrDefault(e => e.Name.LocalName == "host-os")?.Value;
+                    if (hostOs is not null && !string.Equals(hostOs, "windows", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var complete = archive.Elements().FirstOrDefault(e => e.Name.LocalName == "complete");
+                    var sizeText = complete?.Elements().FirstOrDefault(e => e.Name.LocalName == "size")?.Value;
+                    if (long.TryParse(sizeText, out var bytes) && bytes > 0)
+                    {
+                        index[path] = new AndroidSdkPackageEntry(ReadAndroidRevision(package), bytes);
+                        break;
+                    }
+                }
             }
 
-            return null;
+            return index;
         }
         catch (System.Xml.XmlException)
         {
+            return new Dictionary<string, AndroidSdkPackageEntry>(StringComparer.Ordinal);
+        }
+    }
+
+    /// <summary>
+    /// The archive size for one package, but only when it is the revision the row offers: the manifest
+    /// always describes the NEWEST release, so a row whose offered version differs (the manifest moved on
+    /// since the scan, or the scan's listing is the older one) must show no size rather than another
+    /// release's. A revision or offered version that cannot be compared as plain numbers is not held against
+    /// the entry.
+    /// </summary>
+    public static long? AndroidSdkPackageSize(
+        IReadOnlyDictionary<string, AndroidSdkPackageEntry> index, string packagePath, string? offeredVersion)
+    {
+        if (string.IsNullOrWhiteSpace(packagePath) || !index.TryGetValue(packagePath, out var entry))
+            return null;
+
+        if (entry.Revision is not null
+            && TrimmedNumericVersion(entry.Revision) is { } manifestVersion
+            && TrimmedNumericVersion(offeredVersion) is { } offered
+            && manifestVersion != offered)
+        {
             return null;
         }
+
+        return entry.Size;
+    }
+
+    /// <summary>"major.minor.micro" from a package's <c>revision</c> element; null for a preview or no revision.</summary>
+    private static string? ReadAndroidRevision(System.Xml.Linq.XElement package)
+    {
+        var revision = package.Elements().FirstOrDefault(e => e.Name.LocalName == "revision");
+        if (revision is null || revision.Elements().Any(e => e.Name.LocalName == "preview"))
+            return null;
+
+        var parts = new List<string>();
+        foreach (var name in new[] { "major", "minor", "micro" })
+        {
+            var value = revision.Elements().FirstOrDefault(e => e.Name.LocalName == name)?.Value;
+            if (value is null)
+                break;
+
+            parts.Add(value.Trim());
+        }
+
+        return parts.Count == 0 ? null : string.Join('.', parts);
+    }
+
+    /// <summary>Dotted numbers with trailing ".0" parts dropped ("13.0" and "13.0.0" compare equal), or null
+    /// when the text is anything else.</summary>
+    private static string? TrimmedNumericVersion(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return null;
+
+        var parts = text.Trim().Split('.');
+        if (parts.Any(part => part.Length == 0 || !part.All(char.IsAsciiDigit)))
+            return null;
+
+        var numbers = parts.Select(part => part.TrimStart('0').Length == 0 ? "0" : part.TrimStart('0')).ToList();
+        while (numbers.Count > 1 && numbers[^1] == "0")
+            numbers.RemoveAt(numbers.Count - 1);
+
+        return string.Join('.', numbers);
     }
 
     /// <summary>

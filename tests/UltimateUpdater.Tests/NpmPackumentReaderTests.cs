@@ -362,7 +362,7 @@ public class NpmPackumentReaderTests
             }
             """;
 
-        var (enrichment, tarball) = PackageMetadataParsers.ParseNpmPackumentAndTarball(json, "2.0.0");
+        var (enrichment, tarball) = NpmPackumentTestParser.Parse(json, "2.0.0");
 
         Assert.Equal("https://github.com/x/y", enrichment.ProjectUrl);
         Assert.Equal(10, enrichment.DownloadSize);

@@ -11,8 +11,8 @@ namespace UltimateUpdater.Services.Sources;
 /// entry and is therefore offered by `winget upgrade`; a second row would be the same update twice. Git is
 /// not implemented for that reason; the tools below can also arrive through a package manager, so each one
 /// checks where its executable actually resolved from (<see cref="PackageManagerOwnership"/>) and stays quiet
-/// when winget, scoop or chocolatey owns it. Installed by its own script into the user's profile; which is
-/// how these tools usually arrive; nothing else can update it, and the row is the only way.
+/// when winget, scoop or chocolatey owns it. A tool installed by its own script into the user's profile, the
+/// usual way these tools arrive, has nothing else to update it, so the row is the only way.
 /// Nothing here is downloaded or run by this app: the tool updates itself with its own signed mechanism, so
 /// there is no installer for us to verify (SECURITY.md's supply-chain rule stays with the vendor's tool).
 /// No uninstall: the row IS the tool itself, not a package it manages; there is no

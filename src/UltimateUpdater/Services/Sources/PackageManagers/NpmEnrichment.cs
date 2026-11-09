@@ -8,7 +8,7 @@ namespace UltimateUpdater.Services.Sources.PackageManagers;
 /// tools ARE npm registry packages, same lookup either way. `dist.unpackedSize` is optional; when the
 /// registry omits it, the real download size comes from a HEAD on `dist.tarball` instead, one GET for
 /// both facts, never two. No <c>ChangelogUrl</c> here: the npm registry exposes no
-/// changelog-specific field distinct from <see cref="PackageMetadataParsers.ParseNpmPackument"/>'s own
+/// changelog-specific field distinct from <see cref="PackageMetadataParsers.FromNpmPackument"/>'s own
 /// <c>ProjectUrl</c> (homepage/repo), which already drives the row's separate info-link button, a
 /// changelog button pointing at that exact same URL would just be a second button for one destination.
 /// </summary>

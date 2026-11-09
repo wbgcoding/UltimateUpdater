@@ -15,7 +15,8 @@ namespace UltimateUpdater.Services.Sources;
 /// (verified live against Google's own manifest: a revision number, not a date), but the
 /// manifest does carry a real Windows archive size per package, so that one field is enriched.
 /// </remarks>
-public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClient) : CliUpdateSource(logging)
+public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClient, TimeProvider? timeProvider = null)
+    : CliUpdateSource(logging)
 {
     private const string RepositoryManifestUrl = "https://dl.google.com/android/repository/repository2-3.xml";
 
@@ -42,11 +43,16 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
     // child process removes the dependency on whatever "java" happens to be first on PATH.
     private static readonly FoundOnceCache<string?> ResolvedJavaHome = new(FindJavaHome, home => home is not null);
 
-    // Fetched once per process lifetime and shared across every package row this scan enriches, the
-    // manifest is the same few-MB file regardless of which package is being looked up, so fetching it
-    // again per row would multiply a several-second download by however many packages are outdated.
+    // The manifest is the same few-MB file regardless of which package is being looked up, so it is fetched
+    // once and parsed once into an index shared across every package row this scan enriches; doing either
+    // per row would multiply a several-second download by however many packages are outdated. It describes
+    // only the newest releases, so a tray session that outlives a Google release asks again after
+    // ManifestMaxAge instead of showing the old archive's size beside the new revision.
+    private static readonly TimeSpan ManifestMaxAge = TimeSpan.FromHours(6);
+    private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
     private readonly SemaphoreSlim _manifestGate = new(1, 1);
-    private string? _manifestXml;
+    private IReadOnlyDictionary<string, PackageMetadataParsers.AndroidSdkPackageEntry>? _manifestIndex;
+    private DateTimeOffset _manifestFetchedAt;
     private volatile bool _manifestFetched;
 
     public override string Id => "android-sdk";
@@ -350,28 +356,38 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
     internal static bool ToolMissing => Resolved.Value.Executable is null && !ProcessRunner.Exists("sdkmanager");
 
     /// <summary>No per-package release notes exist (the manifest carries only a revision number, see the
-    /// remark on <see cref="PackageMetadataParsers.ParseAndroidSdkPackageSize"/>), the SDK tools' combined
+    /// remark on <see cref="PackageMetadataParsers.ParseAndroidSdkPackageIndex"/>), the SDK tools' combined
     /// release notes page is attached instead, real and free of any lookup, so it shows even when the
     /// manifest fetch below fails.</summary>
     private const string ChangelogUrl = "https://developer.android.com/studio/releases/sdk-tools";
 
     public override async Task<UpdateEnrichment?> EnrichAsync(UpdateItem item, CancellationToken cancellationToken)
     {
-        var manifest = await GetRepositoryManifestAsync(cancellationToken);
-        var size = manifest is null ? null : PackageMetadataParsers.ParseAndroidSdkPackageSize(manifest, item.Id);
+        var index = await GetRepositoryIndexAsync(cancellationToken);
+        var size = index is null ? null : PackageMetadataParsers.AndroidSdkPackageSize(index, item.Id, item.AvailableVersion);
         return new UpdateEnrichment(null, size, ChangelogUrl: ChangelogUrl);
     }
 
-    internal async Task<string?> GetRepositoryManifestAsync(CancellationToken cancellationToken)
+    private bool ManifestIsFresh => _manifestFetched && _time.GetUtcNow() - _manifestFetchedAt < ManifestMaxAge;
+
+    internal async Task<IReadOnlyDictionary<string, PackageMetadataParsers.AndroidSdkPackageEntry>?> GetRepositoryIndexAsync(
+        CancellationToken cancellationToken)
     {
-        if (_manifestFetched)
-            return _manifestXml;
+        if (ManifestIsFresh)
+            return _manifestIndex;
 
         await _manifestGate.WaitAsync(cancellationToken);
         try
         {
-            if (_manifestFetched)
-                return _manifestXml;
+            if (ManifestIsFresh)
+                return _manifestIndex;
+
+            // Past its age the old index is dropped before the refetch, so a failed refetch shows no size
+            // rather than the previous release's.
+            _manifestFetched = false;
+            _manifestIndex = null;
+
+            string? manifestXml = null;
 
             using var request = new HttpRequestMessage(HttpMethod.Get, RepositoryManifestUrl);
             using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -380,14 +396,24 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
             // at all, and ReadAsStringAsync would then buffer the whole thing regardless of size. The
             // ceiling is enforced on the stream itself, the same pattern RegistryEnrichment uses.
             if (response.IsSuccessStatusCode && response.Content.Headers.ContentLength is not > MaxManifestBytes)
-                _manifestXml = await ReadLimitedAsync(response, cancellationToken);
+                manifestXml = await ReadLimitedAsync(response, cancellationToken);
 
             // Only a manifest in hand or a definite 404 is final. A 5xx, a 429 or an oversized body is a
             // transient answer, so the next scan asks again instead of losing the size column until restart.
-            if (_manifestXml is not null || response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            if (manifestXml is not null)
+            {
+                _manifestIndex = PackageMetadataParsers.ParseAndroidSdkPackageIndex(manifestXml);
+                _manifestFetchedAt = _time.GetUtcNow();
                 _manifestFetched = true;
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _manifestIndex = null;
+                _manifestFetchedAt = _time.GetUtcNow();
+                _manifestFetched = true;
+            }
 
-            return _manifestXml;
+            return _manifestIndex;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

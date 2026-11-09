@@ -26,7 +26,7 @@ public sealed class RustupSource(LoggingService logging, HttpClient httpClient) 
     /// (e.g. "stable-x86_64-pc-windows-msvc"); only the three real channels have a public manifest at
     /// this URL; a pinned exact-version toolchain ("1.75.0-x86_64-…") has none and is left alone rather
     /// than guessed at. Size is deliberately NOT read here: the per-target archive URL needs the
-    /// installed host triple to pick the right file, and getting that wrong is worse than no size at all
+    /// installed host triple to pick the right file, and getting that wrong is worse than no size at all.
     /// See <see cref="PackageMetadataParsers.ParseRustupChannelDate"/>.
     /// </summary>
     public override async Task<UpdateEnrichment?> EnrichAsync(UpdateItem item, CancellationToken cancellationToken)

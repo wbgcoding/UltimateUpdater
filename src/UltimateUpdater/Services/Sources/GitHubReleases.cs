@@ -2,7 +2,7 @@ namespace UltimateUpdater.Services.Sources;
 
 /// <summary>
 /// The one place the GitHub releases API is described. Several sources need "what is the newest release of
-/// this repository": the tools that update themselves have no other way to know a newer version exists .
+/// this repository": the tools that update themselves have no other way to know a newer version exists,
 /// and they all need the same header to be answered at all.
 /// </summary>
 public static class GitHubReleases

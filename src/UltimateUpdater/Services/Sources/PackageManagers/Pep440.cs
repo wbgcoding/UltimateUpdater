@@ -15,7 +15,7 @@ public static class Pep440
     /// distribution names that differ only by case or by which of these three characters they used are
     /// the SAME package on PyPI.</summary>
     public static string NormalizeName(string name) =>
-        Regex.Replace(name.ToLowerInvariant(), "[-_.]+", "-");
+        Regex.Replace(name.Trim().ToLowerInvariant(), "[-_.]+", "-");
 
     /// <summary>
     /// One parsed release: an epoch, numeric release segments, an optional pre-release (a/b/rc), an

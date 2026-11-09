@@ -1,6 +1,5 @@
 using System.IO;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace UltimateUpdater.Services.Sources.PackageManagers;
 
@@ -61,13 +60,9 @@ internal sealed class PipBlockedStore(
         public DateTimeOffset? BlockedAt { get; set; }
     }
 
-    /// <summary>PEP 503 normalisation, so "PyMuPDF", "pymupdf" and "py_mu.pdf" are one package.</summary>
-    internal static string NormalizeName(string name) =>
-        Regex.Replace(name.Trim(), @"[-_.]+", "-").ToLowerInvariant();
-
     private static bool Same(Entry entry, string interpreter, string package) =>
         string.Equals(entry.Interpreter, interpreter, StringComparison.OrdinalIgnoreCase)
-        && NormalizeName(entry.Package) == NormalizeName(package);
+        && Pep440.NormalizeName(entry.Package) == Pep440.NormalizeName(package);
 
     internal IReadOnlyList<Entry> Load()
     {

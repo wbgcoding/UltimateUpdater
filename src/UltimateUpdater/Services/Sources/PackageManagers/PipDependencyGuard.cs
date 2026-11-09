@@ -8,7 +8,7 @@ namespace UltimateUpdater.Services.Sources.PackageManagers;
 /// on PyPI; it has no idea a DIFFERENT installed package pins the very version it is about to offer.
 /// This reads <c>pip inspect</c>'s own JSON (every installed distribution's <c>requires_dist</c>,
 /// straight from its metadata) and drops an outdated candidate whose offered version would break some
-/// other installed package's own requirement on it - exactly the case pip's own resolver would refuse.
+/// other installed package's own requirement on it, which is exactly the case pip's own resolver would refuse.
 /// Real, measured pairs: pydantic pins
 /// pydantic-core==2.46.5, semgrep pins opentelemetry-api~=1.37.0, datasets pins
 /// huggingface-hub&lt;2.0,&gt;=0.25.0.
@@ -23,7 +23,7 @@ public static class PipDependencyGuard
     /// <summary>What a parsed <c>pip inspect</c> report carries forward: the environment's Python
     /// version (for marker evaluation) and every constraint found among installed distributions with a
     /// non-empty specifier. A distribution with no version constraint on its dependency (a bare
-    /// "requests", no operator at all) contributes nothing - there is nothing to violate.</summary>
+    /// "requests", no operator at all) contributes nothing, because there is nothing to violate.</summary>
     public sealed record Report(string? PythonVersion, IReadOnlyList<Constraint> Constraints);
 
     /// <summary>

@@ -26,6 +26,18 @@ public class ChangelogUrlParsersTests
         Assert.Equal("v1.2.3+build", page!.Value.Tag);
     }
 
+    /// <summary>A registry-supplied link can percent-encode a slash into the owner; decoded, it would
+    /// make "owner/repo" three parts and the API URL builder would throw into the click handler.</summary>
+    [Theory]
+    [InlineData("https://github.com/a%2Fb/c/releases/latest")]
+    [InlineData("https://github.com/a/b%2Fc/releases/tag/v1")]
+    [InlineData("https://github.com/a%20b/c/releases/latest")]
+    [InlineData("https://github.com/a/b%3Fx/releases/latest")]
+    public void GitHub_owner_or_repo_that_is_not_a_plain_token_is_rejected(string url)
+    {
+        Assert.Null(ChangelogUrlParsers.TryParseGitHubReleaseUrl(url));
+    }
+
     [Fact]
     public void GitHub_latest_form_has_no_tag()
     {
