@@ -156,7 +156,7 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
     /// stays the published <c>oem*.inf</c> name throughout: that is the only name pnputil's
     /// <c>/export-driver</c>/<c>/delete-driver</c> accept.
     /// </summary>
-    public IReadOnlyList<DriverPackageInfo> GatherPackages(CancellationToken cancellationToken)
+    public IReadOnlyList<DriverPackageInfo> GatherPackages(CancellationToken cancellationToken, Func<string, bool>? measure = null)
     {
         var packages = new List<DriverPackageInfo>();
         if (!_devicesComplete)
@@ -190,7 +190,7 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
             var storeFolder = storeInfPath is null ? null : Path.GetDirectoryName(storeInfPath);
             // Recursive: a package's files live in sub-folders (language packs, catalogs), a top-level sum
             // would understate what removing it frees. No file cap, the folder is a driver package.
-            var size = storeFolder is null
+            var size = storeFolder is null || (measure is not null && !measure(Path.GetFileName(oemInfPath)))
                 ? 0
                 : DirectorySizeWalker.Measure(storeFolder, DirectorySizeWalker.DefaultMaxDepth, int.MaxValue, cancellationToken);
             // Falls back to the published name itself when the store mapping fails (an orphaned oem*.inf

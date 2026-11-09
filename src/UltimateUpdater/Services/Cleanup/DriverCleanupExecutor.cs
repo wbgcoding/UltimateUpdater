@@ -33,7 +33,19 @@ public static class DriverCleanupExecutor
         }
 
         var devices = inventoryProvider.GatherDevices(cancellationToken);
-        var packages = inventoryProvider.GatherPackages(cancellationToken);
+        // Only what this run acts on is size-walked: the selected packages and the packages the selected
+        // devices are bound to (their size is what a removal frees). The listing itself stays complete.
+        var packageNamesToMeasure = new HashSet<string>(selectedPackageNames, StringComparer.OrdinalIgnoreCase);
+        foreach (var device in devices)
+        {
+            if (selectedDeviceInstanceIds.Contains(device.InstanceId, StringComparer.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(device.InfPath))
+            {
+                packageNamesToMeasure.Add(Path.GetFileName(device.InfPath));
+            }
+        }
+
+        var packages = inventoryProvider.GatherPackages(cancellationToken, packageNamesToMeasure.Contains);
 
         var devicesToRemove = DriverCleanupDiscovery.DiscoverDisconnectedDevices(devices, packages)
             .Where(c => selectedDeviceInstanceIds.Contains(c.InstanceId, StringComparer.OrdinalIgnoreCase))
