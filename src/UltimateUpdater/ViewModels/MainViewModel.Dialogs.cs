@@ -251,8 +251,8 @@ public partial class MainViewModel
     }
 
     /// <summary>
-    /// Opens the real changelog text a source found for this row, or; where only a release LINK is known
-    /// and that link is a GitHub/GitLab release page; tries a click-triggered fetch of the release body
+    /// Opens the real changelog text a source found for this row. Where only a release LINK is known and
+    /// that link is a GitHub/GitLab release page, a click-triggered fetch of the release body is tried
     /// first. Text still missing after that (wrong host, not a release URL, or the fetch itself
     /// found nothing) falls back to a small "open the vendor's page" confirmation instead of the big window.
     /// </summary>

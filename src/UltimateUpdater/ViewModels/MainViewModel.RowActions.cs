@@ -77,7 +77,7 @@ public partial class MainViewModel
         return false;
     }
 
-    /// <summary>Applies the persisted snooze state to a row and its children (Steam's own game rows) .
+    /// <summary>Applies the persisted snooze state to a row and its children (Steam's own game rows), at
     /// the same level <c>IsIgnored</c> is already applied at in <see cref="DrainPendingItems"/>. Also
     /// what makes an expired snooze reappear on the very next scan even when nothing else about the row
     /// changed (the common case, where the "unchanged, keep the existing row" fast path would otherwise
@@ -123,7 +123,7 @@ public partial class MainViewModel
         }
         else
         {
-            // A manual-open row (a launcher/store, even Steam with build ids) has no per-version ignore .
+            // A manual-open row (a launcher/store, even Steam with build ids) has no per-version ignore, so
             // it is ignored as a whole package. Real update rows ignore just the current version.
             var wholePackage = string.IsNullOrEmpty(row.Item.AvailableVersion) || row.IsManualOnly;
             var key = wholePackage ? PackageKey(row.Item) : VersionKey(row.Item);
@@ -195,7 +195,7 @@ public partial class MainViewModel
         RefreshHeader();
     }
 
-    /// <summary>"Show again now". clears a snooze early, without waiting for it to expire.</summary>
+    /// <summary>"Show again now" clears a snooze early, without waiting for it to expire.</summary>
     void IRowActions.Unsnooze(UpdateRowViewModel row)
     {
         ClearSnooze(row);
