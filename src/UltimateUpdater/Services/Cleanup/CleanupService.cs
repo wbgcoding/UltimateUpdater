@@ -528,12 +528,14 @@ public class CleanupService(LoggingService logging)
 
             var thisDirectory = directoryIndex++;
             var directory = candidate;
-            var files = EnumerateFiles(candidate, target.ExcludedDirectories, cancellationToken).ToList();
+            var files = EnumerateFileDetails(candidate, target.ExcludedDirectories, cancellationToken).ToList();
             var filesDone = 0;
             var lastReport = System.Diagnostics.Stopwatch.GetTimestamp();
 
-            foreach (var file in files)
+            foreach (var listed in files)
             {
+                var file = listed.Path;
+
                 // Between files, so Pause takes hold within one file's worth of work and Stop leaves at once.
                 pause?.Wait(cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
@@ -580,17 +582,19 @@ public class CleanupService(LoggingService logging)
                 {
                     // Not ours to delete, typically a system file without admin rights: kept apart from
                     // "in use" so the summary does not point at a program that holds nothing.
+                    // The open failed before the size was read: the listed length stands in for it.
+                    var leftBytes = size > 0 ? size : listed.Length;
                     skipped++;
-                    skippedBytes += size;
+                    skippedBytes += leftBytes;
                     protectedFiles++;
-                    protectedBytes += size;
+                    protectedBytes += leftBytes;
                 }
                 catch (IOException)
                 {
                     // In use by another process. Expected; keep going, but its size must not be counted as
                     // freed, and the user is told how much stayed behind.
                     skipped++;
-                    skippedBytes += size;
+                    skippedBytes += size > 0 ? size : listed.Length;
                 }
 
                 // On a clock, not a file count: about four reports a second whether the folder holds a million
@@ -706,6 +710,20 @@ public class CleanupService(LoggingService logging)
         return outcome;
     }
 
+    /// <summary>The logical length of a file that could not be opened for the verified delete, 0 when it
+    /// cannot be read either. Only the skipped figure uses it.</summary>
+    private static long LengthOrZero(string file)
+    {
+        try
+        {
+            return new FileInfo(file).Length;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return 0;
+        }
+    }
+
     private readonly record struct FileTally(
         long Freed, int Deleted, int Skipped, long SkippedBytes, int Protected, long ProtectedBytes, int TooNew);
 
@@ -775,15 +793,16 @@ public class CleanupService(LoggingService logging)
             }
             catch (UnauthorizedAccessException)
             {
+                var leftBytes = size > 0 ? size : LengthOrZero(file);
                 skipped++;
-                skippedBytes += size;
+                skippedBytes += leftBytes;
                 protectedFiles++;
-                protectedBytes += size;
+                protectedBytes += leftBytes;
             }
             catch (IOException)
             {
                 skipped++;
-                skippedBytes += size;
+                skippedBytes += size > 0 ? size : LengthOrZero(file);
             }
         }
 
