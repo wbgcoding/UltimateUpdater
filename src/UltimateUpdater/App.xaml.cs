@@ -638,6 +638,15 @@ public partial class App : Application
         _busyTimer.Tick += (_, _) => _busySignal.Set(mainViewModel.WorkIsRunning);
         _busyTimer.Start();
 
+        // The timer alone lets the signal appear up to half a second after a run starts, a gap in which Setup's
+        // last check (right before it ends the app) can still read "idle". The two flags every install and
+        // cleanup run raises first are therefore followed at once, not on the next tick.
+        mainViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(MainViewModel.IsInstalling) or nameof(MainViewModel.IsCleanupRunning))
+                _busySignal?.Set(mainViewModel.WorkIsRunning);
+        };
+
         // An elevated copy cannot be closed by the unelevated Setup, so it is asked through an event instead. The
         // request arrives on a pool thread and is judged on the UI thread, where the running state is read.
         _exitRequests = ExitRequestListener.Start(

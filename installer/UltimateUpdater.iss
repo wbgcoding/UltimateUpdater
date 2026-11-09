@@ -800,6 +800,38 @@ begin
     end;
 end;
 
+var
+  { Set by the caller before StopRunningCopies: look at the busy mutex once more right before the copies are
+    ended. Left False when the caller already asked about a busy app and was told to go on (the user said yes,
+    or a silent uninstall, which closes it by design) or when the app's own updater started this Setup. }
+  StopRecheckBusy: Boolean;
+  { Set by StopRunningCopies: a copy turned out to be busy at that last look, so it was left running. }
+  StopFoundBusy: Boolean;
+
+{ The part of the close script that looks at the busy mutex of every copy it is about to end (the same name and
+  the same Synchronize-only open as InstallingCopyRuns). The first check of Setup runs in a PowerShell of its
+  own, one to two seconds before this one, and a run can start in that gap; ending the app then would cut it off
+  without a word, although the app itself refuses a graceful close while it works. Exit code 10: busy. A copy
+  whose owner cannot be read counts as busy. }
+function StopBusyRecheckScript: String;
+begin
+  Result := '';
+  if not StopRecheckBusy then
+    Exit;
+  Result :=
+    '$busy = $false; ' +
+    'foreach ($c in $copies) { ' +
+    '$o = Get-CimInstance Win32_Process -Filter (''ProcessId='' + $c.Id) -ErrorAction SilentlyContinue | ' +
+    'Invoke-CimMethod -MethodName GetOwnerSid -ErrorAction SilentlyContinue; ' +
+    'if (-not ($o -and $o.Sid)) { $busy = $true; continue }; ' +
+    '$m = $null; ' +
+    '$n = if ($c.SessionId -eq $s) { ''Local\UltimateUpdater-Busy-'' + $o.Sid } ' +
+    'else { ''Session\'' + $c.SessionId + ''\UltimateUpdater-Busy-'' + $o.Sid }; ' +
+    'try { if ([System.Threading.Mutex]::TryOpenExisting($n, [System.Security.AccessControl.MutexRights]::Synchronize, [ref]$m)) ' +
+    '{ $m.Dispose(); $busy = $true } } catch { $busy = $true } }; ' +
+    'if ($busy) { exit ' + IntToStr(BusyExitCode) + ' }; ';
+end;
+
 { Ends the copies in the install folder and waits for them to be gone. A tray-resident copy used to answer
   the Restart Manager's close request with "ok" and stay alive, which left Setup on the "applications in
   use" page; doing it here, before the Restart Manager looks, keeps that page from appearing at all.
@@ -814,6 +846,7 @@ var
   ResultCode: Integer;
   Script: String;
 begin
+  StopFoundBusy := False;
   Script :=
     RunningCopiesScript +
     '$s = [System.Diagnostics.Process]::GetCurrentProcess().SessionId; ' +
@@ -832,6 +865,7 @@ begin
     '$e = $null; ' +
     'try { if ([System.Threading.EventWaitHandle]::TryOpenExisting($n, [System.Security.AccessControl.EventWaitHandleRights]::Modify, [ref]$e)) ' +
     '{ [void]$e.Set(); $e.Dispose() } } catch { } } } }; ' +
+    StopBusyRecheckScript +
     '$copies | Stop-Process -Force -ErrorAction SilentlyContinue; ' +
     '$copies | Wait-Process -Timeout 5 -ErrorAction SilentlyContinue; ' +
     '$w = [System.Diagnostics.Stopwatch]::StartNew(); ' +
@@ -846,7 +880,12 @@ begin
   { Only the script's own verdict (closed, or still running) is taken at its word. A PowerShell that did not
     start or failed some other way proves nothing about the copies, and calling that "closed" let a silent
     uninstall hang on an elevated copy: fail closed, with the same still-running question asked directly. }
-  if Started and ((ResultCode = 0) or (ResultCode = StillRunningExitCode)) then
+  if Started and (ResultCode = BusyExitCode) then
+  begin
+    StopFoundBusy := True;
+    Result := False;
+  end
+  else if Started and ((ResultCode = 0) or (ResultCode = StillRunningExitCode)) then
     Result := ResultCode <> StillRunningExitCode
   else
   begin
@@ -883,18 +922,33 @@ end;
 function InitializeUninstall: Boolean;
 begin
   Result := True;
+  { A silent uninstall closes the app by design; an interactive one is only re-checked while nobody was asked,
+    because a yes to the question below already accepted a busy app. }
+  StopRecheckBusy := not UninstallSilent;
   if (not UninstallSilent) and InstallingCopyRuns then
+  begin
+    StopRecheckBusy := False;
     if SuppressibleMsgBox(CustomMessage('BusyPrompt'), mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDYES) <> IDYES then
     begin
       Result := False;
       Exit;
     end;
+  end;
 
   if not StopRunningCopies then
   begin
-    Log('Uninstall stopped: a running copy could not be closed (started as administrator, or by another user).');
-    if not UninstallSilent then
-      SuppressibleMsgBox(CustomMessage('ElevatedCopyOpen'), mbError, MB_OK, IDOK);
+    if StopFoundBusy then
+    begin
+      Log('Uninstall stopped: the app started working after the first check.');
+      if not UninstallSilent then
+        SuppressibleMsgBox(CustomMessage('BusyDeclined'), mbError, MB_OK, IDOK);
+    end
+    else
+    begin
+      Log('Uninstall stopped: a running copy could not be closed (started as administrator, or by another user).');
+      if not UninstallSilent then
+        SuppressibleMsgBox(CustomMessage('ElevatedCopyOpen'), mbError, MB_OK, IDOK);
+    end;
     Result := False;
   end;
 end;
@@ -906,8 +960,13 @@ end;
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   Result := '';
+  { The app's own updater passes /FROMAPP after it made sure nothing runs, so it is never re-checked. For any
+    other Setup the busy mutex is looked at once more right before the copies are ended, unless the question
+    below already got a yes. }
+  StopRecheckBusy := not HasSwitch('/FROMAPP');
   if (not HasSwitch('/FROMAPP')) and InstallingCopyRuns then
   begin
+    StopRecheckBusy := False;
     if WizardSilent then
     begin
       Log('Silent Setup stopped: the app is busy (or could not be checked) and Setup was not started by the app.');
@@ -922,8 +981,16 @@ begin
   end;
   if not StopRunningCopies then
   begin
-    Log('Setup stopped: a running copy could not be closed (started as administrator, or by another user).');
-    Result := CustomMessage('ElevatedCopyOpen');
+    if StopFoundBusy then
+    begin
+      Log('Setup stopped: the app started working after the first check.');
+      Result := CustomMessage('BusyDeclined');
+    end
+    else
+    begin
+      Log('Setup stopped: a running copy could not be closed (started as administrator, or by another user).');
+      Result := CustomMessage('ElevatedCopyOpen');
+    end;
   end;
 end;
 

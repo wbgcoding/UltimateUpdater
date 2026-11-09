@@ -108,6 +108,67 @@ public class InstallerElevatedCopyTests
     }
 
     [Fact]
+    public void Copies_are_ended_only_after_the_busy_mutex_was_looked_at_once_more()
+    {
+        var script = Script();
+        var recheck = Block("function StopBusyRecheckScript");
+        var stop = Block("function StopRunningCopies");
+
+        // the same name and the same Synchronize-only open as the first check, for every copy about to be ended
+        Assert.Contains("foreach ($c in $copies)", recheck);
+        Assert.Contains("''Local\\UltimateUpdater-Busy-'' + $o.Sid", recheck);
+        Assert.Contains("''Session\\'' + $c.SessionId + ''\\UltimateUpdater-Busy-'' + $o.Sid", recheck);
+        Assert.Contains("TryOpenExisting($n, [System.Security.AccessControl.MutexRights]::Synchronize, [ref]$m)", recheck);
+        // an unreadable owner or a failed open counts as busy, and busy ends the script before anything is stopped
+        Assert.Contains("if (-not ($o -and $o.Sid)) { $busy = $true; continue }", recheck);
+        Assert.Contains("catch { $busy = $true }", recheck);
+        Assert.Contains("if ($busy) { exit ' + IntToStr(BusyExitCode) + ' }", recheck);
+        Assert.True(
+            stop.IndexOf("StopBusyRecheckScript", StringComparison.Ordinal) < stop.IndexOf("Stop-Process", StringComparison.Ordinal),
+            "the busy look has to come before the copies are stopped");
+
+        // a busy verdict is not "could not be closed": it is its own result
+        Assert.Contains("ResultCode = BusyExitCode", stop);
+        Assert.Contains("StopFoundBusy := True;", stop);
+        Assert.Contains("StopFoundBusy := False;", stop);
+        Assert.Contains("if not StopRecheckBusy then", recheck);
+        Assert.Contains("StopRecheckBusy: Boolean;", script);
+    }
+
+    [Fact]
+    public void A_busy_verdict_at_the_last_look_declines_setup_and_the_uninstall_but_not_the_apps_own_update()
+    {
+        var prepare = Block("function PrepareToInstall");
+        var uninstall = Block("function InitializeUninstall");
+
+        // never for the app's own updater, which made sure nothing runs; never after a yes to the busy question
+        Assert.Contains("StopRecheckBusy := not HasSwitch('/FROMAPP');", prepare);
+        Assert.Matches(@"InstallingCopyRuns then\s+begin\s+StopRecheckBusy := False;", prepare);
+        var afterStop = prepare[prepare.IndexOf("if not StopRunningCopies then", StringComparison.Ordinal)..];
+        Assert.Matches(@"if StopFoundBusy then\s+begin\s+Log\([^\n]*\);\s+Result := CustomMessage\('BusyDeclined'\);", afterStop);
+
+        // a silent uninstall closes the app by design; an interactive one that was told "busy" and said yes too
+        Assert.Contains("StopRecheckBusy := not UninstallSilent;", uninstall);
+        Assert.Matches(@"InstallingCopyRuns then\s+begin\s+StopRecheckBusy := False;", uninstall);
+        var afterUninstallStop = uninstall[uninstall.IndexOf("if not StopRunningCopies then", StringComparison.Ordinal)..];
+        Assert.Matches(@"if StopFoundBusy then\s+begin\s+Log\(.*?SuppressibleMsgBox\(CustomMessage\('BusyDeclined'\), mbError, MB_OK, IDOK\)", afterUninstallStop.Replace("\n", " "));
+    }
+
+    [Fact]
+    public void The_app_raises_the_busy_signal_the_moment_an_install_or_cleanup_starts()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "UltimateUpdater.slnx")))
+            directory = directory.Parent;
+
+        var app = File.ReadAllText(Path.Combine(directory!.FullName, "src", "UltimateUpdater", "App.xaml.cs"));
+
+        Assert.Matches(
+            @"PropertyChanged \+= .*?nameof\(MainViewModel\.IsInstalling\) or nameof\(MainViewModel\.IsCleanupRunning\).*?_busySignal\?\.Set\(mainViewModel\.WorkIsRunning\)",
+            app.Replace("\r\n", " ").Replace("\n", " "));
+    }
+
+    [Fact]
     public void PsQuote_doubles_every_character_powershell_ends_a_single_quoted_string_with()
     {
         var quote = Block("function PsQuote");
