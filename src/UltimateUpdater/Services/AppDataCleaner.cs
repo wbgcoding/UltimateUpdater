@@ -41,7 +41,7 @@ public static class AppDataCleaner
         var failed = DeleteOwnedContent(
             AppPaths.DataDirectory, logging, Path.GetTempPath(), new AutostartService(logging));
 
-        // AppPaths resolved these once, in a static initializer, and nothing else ever recreates them .
+        // AppPaths resolved these once, in a static initializer, and nothing else ever recreates them,
         // so without this the app silently stopped logging and caching icons for the rest of the session,
         // right after the action a user is most likely to want a log for.
         Recreate(AppPaths.LogsDirectory, logging);
