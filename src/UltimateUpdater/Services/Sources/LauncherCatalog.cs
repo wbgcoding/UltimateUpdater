@@ -181,9 +181,8 @@ public static class LauncherCatalog
             },
 
             // Dev-tool clients: same "detect the client, open it, it patches itself" shape as the game
-            // launchers above, just a different Category. None of these three are installed on this dev
-            // box, so the default paths/uninstall names below are the vendors' documented defaults rather
-            // than something read off a real install (see README's "A note on newer sources").
+            // launchers above, just a different Category. Default paths and uninstall names below are the
+            // vendors' documented defaults, not read off a real install.
             new LauncherDefinition
             {
                 Id = "jetbrains-toolbox",
