@@ -21,6 +21,8 @@ public class AiModelNamesTests
     [InlineData("qwq:32b", "QwQ 32B")]
     [InlineData("gemma2:9b", "Gemma 2 9B")]
     [InlineData("gemma3:27b-it-q4_K_M", "Gemma 3 27B It")]
+    [InlineData("gemma3n:e4b", "Gemma3n E4b")]
+    [InlineData("qwen2.5vl:7b", "Qwen2.5vl 7B")]
     [InlineData("codegemma:7b", "CodeGemma 7B")]
     [InlineData("mistral:7b-instruct-v0.2-fp16", "Mistral 7B Instruct V0.2")]
     [InlineData("mixtral:8x7b", "Mixtral 8x7B")]

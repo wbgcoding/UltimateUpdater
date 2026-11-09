@@ -152,6 +152,12 @@ public static class AiModelNames
     private static string FormatFamilyToken(string token)
     {
         var match = WordThenDigits.Match(token);
+
+        // Letters after the digits ("gemma3n", "qwen2.5vl") fit no word-then-digits shape: keep the whole
+        // token rather than dropping it.
+        if (!match.Success)
+            return FamilyWords.TryGetValue(token, out var whole) ? whole : TitleCase(token);
+
         var word = match.Groups["word"].Value;
         var digits = match.Groups["digits"].Success ? match.Groups["digits"].Value : null;
 
