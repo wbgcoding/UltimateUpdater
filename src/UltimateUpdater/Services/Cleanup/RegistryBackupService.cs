@@ -111,7 +111,9 @@ public static partial class RegistryBackupService
             return null;
         }
 
-        var sections = new List<string>();
+        // Each root's text goes straight into the one merged file text and is dropped, so a big backup is
+        // never held as the list of sections AND the merged copy at once.
+        var merged = NewMergedText();
         var exportedRoots = new List<string>();
         long exportedChars = 0;
 
@@ -145,9 +147,9 @@ public static partial class RegistryBackupService
 
                 // The ceiling is for the whole backup file, not per root: many roots together can add up too.
                 exportedChars += section.Length;
-                EnsureExportFits(exportedChars, rootKey, MaxExportBytes);
+                EnsureExportFits(BytesOnDisk(exportedChars), rootKey, MaxExportBytes);
 
-                sections.Add(section);
+                AppendSection(merged, section);
                 exportedRoots.Add(rootKey);
             }
             // Any exception fails this run closed like every other export error (an OutOfMemoryException or
@@ -161,7 +163,7 @@ public static partial class RegistryBackupService
             }
         }
 
-        if (sections.Count == 0)
+        if (exportedRoots.Count == 0)
             return null;
 
         // Re-checked one last time right before the write that actually lands on disk, closing the window
@@ -172,7 +174,6 @@ public static partial class RegistryBackupService
             return null;
         }
 
-        var content = MergeSections(sections);
         var encoding = new UnicodeEncoding(false, true);
 
         // Two categories backed up in the same minute would otherwise build the same date+time name.
@@ -216,7 +217,9 @@ public static partial class RegistryBackupService
 
                 await using var file = new FileStream(handle, FileAccess.Write);
                 await using var writer = new StreamWriter(file, encoding);
-                await writer.WriteAsync(content);
+                foreach (var chunk in merged.GetChunks())
+                    await writer.WriteAsync(chunk, cancellationToken);
+
                 await writer.FlushAsync(cancellationToken);
 
                 if (!SetDeleteOnClose(handle, false))
@@ -245,22 +248,25 @@ public static partial class RegistryBackupService
     /// </summary>
     internal static string MergeSections(IReadOnlyList<string> sections)
     {
-        const string header = "Windows Registry Editor Version 5.00";
-        var merged = new StringBuilder(header).AppendLine().AppendLine();
-
+        var merged = NewMergedText();
         foreach (var section in sections)
-        {
-            // Only the section's own LEADING copy of the header is stripped, a value's DATA could
-            // legitimately contain this exact text, and a blanket Replace over the whole section would
-            // silently destroy that too, corrupting the one artifact a registry cleanup can be undone from.
-            var trimmed = section.TrimStart();
-            if (trimmed.StartsWith(header, StringComparison.Ordinal))
-                trimmed = trimmed[header.Length..].TrimStart();
-
-            merged.AppendLine(trimmed);
-        }
+            AppendSection(merged, section);
 
         return merged.ToString();
+    }
+
+    private static StringBuilder NewMergedText() => new StringBuilder(RegHeader).AppendLine().AppendLine();
+
+    private static void AppendSection(StringBuilder merged, string section)
+    {
+        // Only the section's own LEADING copy of the header is stripped, a value's DATA could
+        // legitimately contain this exact text, and a blanket Replace over the whole section would
+        // silently destroy that too, corrupting the one artifact a registry cleanup can be undone from.
+        var trimmed = section.AsSpan().TrimStart();
+        if (trimmed.StartsWith(RegHeader, StringComparison.Ordinal))
+            trimmed = trimmed[RegHeader.Length..].TrimStart();
+
+        merged.Append(trimmed).AppendLine();
     }
 
     /// <summary>
@@ -330,9 +336,13 @@ public static partial class RegistryBackupService
     /// unbounded read lets that user exhaust the worker's memory.</summary>
     internal const int MaxValueBytes = 16 * 1024 * 1024;
 
-    /// <summary>The largest export text. Past it the backup fails and, because the caller deletes only
-    /// after a backup exists, nothing under the root is touched.</summary>
+    /// <summary>The largest export, counted in bytes of the file written (UTF-16, so two per character). Past
+    /// it the backup fails and, because the caller deletes only after a backup exists, nothing under the root
+    /// is touched.</summary>
     internal const long MaxExportBytes = 256L * 1024 * 1024;
+
+    /// <summary>The size on disk of <paramref name="chars"/> characters: the backup is written as UTF-16.</summary>
+    private static long BytesOnDisk(long chars) => 2L * chars;
 
     internal static void EnsureValueFits(long size, string valueName, string? keyPath)
     {
@@ -368,7 +378,7 @@ public static partial class RegistryBackupService
         foreach (var valueName in key.GetValueNames())
         {
             AppendValueLine(sb, key, valueName, keyPath);
-            EnsureExportFits(sb.Length, keyPath, maxExportBytes);
+            EnsureExportFits(BytesOnDisk(sb.Length), keyPath, maxExportBytes);
         }
 
         sb.Append("\r\n");
