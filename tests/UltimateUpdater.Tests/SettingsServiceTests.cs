@@ -1004,6 +1004,22 @@ public class SettingsServiceTests : IDisposable
         Assert.Equal(chosen, service.Current.RegistryCleanup.BackupFolder);
     }
 
+    /// <summary>A null or blank backup folder (hand-edited file) would make every registry backup refuse
+    /// with a misleading error, so it falls back to the default on load.</summary>
+    [Theory]
+    [InlineData("null")]
+    [InlineData("\"\"")]
+    [InlineData("\"   \"")]
+    public void A_missing_or_blank_registry_backup_folder_falls_back_to_the_default(string jsonValue)
+    {
+        File.WriteAllText(
+            SettingsPath, "{\"registryCleanup\":{\"backupFolder\":" + jsonValue + ",\"retentionCount\":5}}");
+
+        var service = new SettingsService(_logging, SettingsPath);
+
+        Assert.Equal(RegistryCleanupSettings.DefaultBackupFolder, service.Current.RegistryCleanup.BackupFolder);
+    }
+
     /// <summary>A brand-new settings file (no migration involved at all) must already carry the new default,
     /// not the old profile-root one.</summary>
     [Fact]

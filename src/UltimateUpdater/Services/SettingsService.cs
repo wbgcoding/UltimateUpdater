@@ -464,6 +464,10 @@ public sealed class SettingsService
         if (string.Equals(settings.Ui.Theme, "aipurple", StringComparison.OrdinalIgnoreCase))
             settings.Ui.Theme = "neon";
 
+        // A null or blank folder would make every registry backup refuse as "outside the user profile".
+        if (string.IsNullOrWhiteSpace(settings.RegistryCleanup.BackupFolder))
+            settings.RegistryCleanup.BackupFolder = RegistryCleanupSettings.DefaultBackupFolder;
+
         // An earlier registry-backup default was the profile root itself, which put exported .reg
         // files directly in the user's home directory. Only a value
         // that matches that default EXACTLY is rewritten; a folder the user picked themselves (even one
