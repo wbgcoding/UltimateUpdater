@@ -55,10 +55,12 @@ public sealed class VoltaSource(LoggingService logging, HttpClient httpClient) :
     {
         var rows = new List<UpdateItem>();
         var fetches = new List<RegistryFetch>();
+        var nodeVersion = tools.Where(tool => tool.Kind == "runtime" && tool.Name == "node")
+            .Select(tool => tool.Version).FirstOrDefault();
 
         foreach (var tool in tools)
         {
-            var (latest, fetch) = await FetchLatestAsync(tool, cancellationToken);
+            var (latest, fetch) = await FetchLatestAsync(tool, nodeVersion, cancellationToken);
             fetches.Add(fetch);
 
             if (latest is null || !PackageManagerParsers.IsNewer(tool.Version, latest))
@@ -131,7 +133,8 @@ public sealed class VoltaSource(LoggingService logging, HttpClient httpClient) :
         return date is null && size is null ? null : new UpdateEnrichment(date, size);
     }
 
-    private async Task<(string? Latest, RegistryFetch Fetch)> FetchLatestAsync(VoltaDefaultTool tool, CancellationToken cancellationToken)
+    private async Task<(string? Latest, RegistryFetch Fetch)> FetchLatestAsync(
+        VoltaDefaultTool tool, string? defaultNodeVersion, CancellationToken cancellationToken)
     {
         if (tool.Kind == "runtime")
         {
@@ -147,7 +150,19 @@ public sealed class VoltaSource(LoggingService logging, HttpClient httpClient) :
         var manifest = await RegistryEnrichment.FetchRawOutcomeAsync(
             httpClient, registryUrl, logging, Id, tool.Name, cancellationToken, timeout: FetchTimeout);
 
-        return (manifest.Body is null ? null : PackageMetadataParsers.ParseNpmManifestVersion(manifest.Body), manifest);
+        var latest = manifest.Body is null ? null : PackageMetadataParsers.ParseNpmManifestVersion(manifest.Body);
+
+        // A package manager runs on the default Node, so a release whose own engines range excludes that
+        // Node would be pinned by one click and then refuse to start (npm 12 on Node 20). Not offered;
+        // an unreadable range or an unknown Node version proves nothing and leaves the row as it was.
+        if (latest is not null
+            && NodeEngineRange.Satisfies(NodeEngineRange.ParseNodeEngine(manifest.Body), defaultNodeVersion) == false)
+        {
+            logging.Info($"{Id}: {tool.Name} {latest} needs a newer Node than the default {defaultNodeVersion}, not offered.");
+            return (null, manifest);
+        }
+
+        return (latest, manifest);
     }
 
     /// <summary>Re-pins the default to the exact version this scan verified, never a floating `@latest`
