@@ -165,7 +165,62 @@ internal static class DriverBackupStaging
             return null;
         }
 
+        // Best effort and after the new folder is safely pinned: an old backup that cannot be removed must
+        // never cost this run its own backup.
+        PruneOldStagings(backupsRoot, folderName, KeepNewest, logging);
+
         return new StagingFolder(target, folderName, pin);
+    }
+
+    /// <summary>How many driver backup folders stay, the one of the running job included. Each holds a full
+    /// package export, so they cannot pile up for ever; five is the default of the registry backups.</summary>
+    internal const int KeepNewest = 5;
+
+    private static readonly System.Text.RegularExpressions.Regex StagingNamePattern = new(
+        @"^\d{4}-\d{2}-\d{2}_\d{6}$",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// Deletes the oldest timestamp-named folders directly inside <paramref name="backupsRoot"/> so that no
+    /// more than <paramref name="keepNewest"/> remain. <paramref name="keepName"/> (the running job's own
+    /// folder) is never touched and counts as one of the kept ones. Only a plain folder whose name is exactly
+    /// the timestamp shape is a candidate: a link, a file or anything with another name is left alone, and
+    /// a path that leads through a link is not entered. Failures are logged, never thrown.
+    /// </summary>
+    internal static void PruneOldStagings(string backupsRoot, string keepName, int keepNewest, LoggingService logging)
+    {
+        if (keepNewest <= 0 || CleanupSafety.AncestryLeadsThroughLink(backupsRoot))
+            return;
+
+        try
+        {
+            // SafeEnumerate.Directories leaves out every reparse point, so a planted junction is never a candidate.
+            var older = SafeEnumerate.Directories(backupsRoot)
+                .Where(d => StagingNamePattern.IsMatch(Path.GetFileName(d))
+                    && !string.Equals(Path.GetFileName(d), keepName, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(d => Path.GetFileName(d), StringComparer.Ordinal)
+                .ToList();
+
+            foreach (var stale in older.Skip(Math.Max(0, keepNewest - 1)))
+            {
+                try
+                {
+                    if (CleanupSafety.AncestryLeadsThroughLink(stale))
+                        continue;
+
+                    Directory.Delete(stale, recursive: true);
+                    logging.Info($"Driver cleanup: removed the old backup folder '{Path.GetFileName(stale)}'.");
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    logging.Warn($"Driver cleanup: could not remove the old backup folder '{stale}': {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logging.Warn($"Driver cleanup: could not prune old backups in '{backupsRoot}': {ex.Message}");
+        }
     }
 
     private static SecurityIdentifier? TokenOwner() => TokenOwnerOverride ?? WindowsIdentity.GetCurrent().Owner;

@@ -307,4 +307,66 @@ public sealed class DriverBackupStagingTests : IDisposable
             try { Directory.Delete(realTarget, recursive: true); } catch { }
         }
     }
+
+    private string BackupsRoot => Path.Combine(_root, "UltimateUpdater", "driver-backups");
+
+    [Fact]
+    public void PrepareStagingRoot_keeps_only_the_newest_backups_and_never_the_running_ones_victim()
+    {
+        for (var day = 1; day <= 7; day++)
+        {
+            var old = Path.Combine(BackupsRoot, $"2020-01-0{day}_000000");
+            Directory.CreateDirectory(old);
+            File.WriteAllText(Path.Combine(old, "driver.inf"), "inf");
+        }
+
+        var notes = Path.Combine(BackupsRoot, "notes");
+        Directory.CreateDirectory(notes);
+        DriverBackupStaging.StagingNameOverride = "2020-01-04_120000";
+
+        using var result = DriverBackupStaging.PrepareStagingRoot(new LoggingService());
+
+        Assert.NotNull(result);
+        var left = Directory.GetDirectories(BackupsRoot).Select(Path.GetFileName).OrderBy(n => n).ToList();
+
+        // Five stay: the running job's own folder (even though it is not the newest by name) and the
+        // four newest others. The odd-named folder is not a backup and is never a candidate.
+        string?[] expected =
+        [
+            "2020-01-04_000000", "2020-01-04_120000", "2020-01-05_000000", "2020-01-06_000000", "2020-01-07_000000", "notes",
+        ];
+        Assert.Equal(expected, left);
+        Assert.True(Directory.Exists(result!.BackupRoot));
+    }
+
+    [Fact]
+    public void PruneOldStagings_never_follows_a_junction_named_like_a_backup()
+    {
+        var outside = Path.Combine(_root, "outside");
+        Directory.CreateDirectory(outside);
+        File.WriteAllText(Path.Combine(outside, "keep.txt"), "keep");
+        Directory.CreateDirectory(BackupsRoot);
+        for (var day = 1; day <= 6; day++)
+            Directory.CreateDirectory(Path.Combine(BackupsRoot, $"2020-01-0{day}_000000"));
+
+        var link = Path.Combine(BackupsRoot, "2019-12-31_000000");
+        using (var mklink = Process.Start(new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{outside}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+        })!)
+        {
+            Assert.True(mklink.WaitForExit(60_000));
+            Assert.Equal(0, mklink.ExitCode);
+        }
+
+        DriverBackupStaging.PruneOldStagings(BackupsRoot, "2020-01-06_000000", DriverBackupStaging.KeepNewest, new LoggingService());
+
+        Assert.True(File.Exists(Path.Combine(outside, "keep.txt")));
+        Assert.True(Directory.Exists(link), "a link is not a backup folder and stays");
+        Assert.False(Directory.Exists(Path.Combine(BackupsRoot, "2020-01-01_000000")));
+    }
 }
