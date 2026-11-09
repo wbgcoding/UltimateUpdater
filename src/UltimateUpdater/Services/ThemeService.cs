@@ -557,8 +557,14 @@ public sealed class ThemeService
     private ApplicationTheme ResolveSystemTheme()
     {
         _lastSystemAppearance = ReadSystemAppearance();
-        return _lastSystemAppearance.Theme == SystemTheme.Dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+        return IsDarkSystemTheme(_lastSystemAppearance.Theme) ? ApplicationTheme.Dark : ApplicationTheme.Light;
     }
+
+    /// <summary>The dark Windows 11 built-in themes ("Glow", "Captured Motion") are reported as their own
+    /// <see cref="SystemTheme"/> values, not as Dark; they are dark all the same, the set WPF-UI's own
+    /// system-theme apply treats as dark.</summary>
+    internal static bool IsDarkSystemTheme(SystemTheme theme) =>
+        theme is SystemTheme.Dark or SystemTheme.Glow or SystemTheme.CapturedMotion;
 
     /// <summary>Re-reads the OS theme rather than WPF-UI's cached copy, which only refreshes when WPF-UI
     /// itself applies a theme.</summary>
