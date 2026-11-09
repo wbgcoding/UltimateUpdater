@@ -971,18 +971,39 @@ public partial class MainViewModel
             var released = EndInstallActivity();
 
             // Surface any "installed, reboot pending" results once the batch is done.
-            var rebootingRows = InstallBatch.Where(r => r.NeedsReboot).ToList();
-            if (rebootingRows.Count > 0)
-            {
-                ShowRebootNotice(rebootingRows.Count);
-
-                ShowRebootDialogIfNeeded(rebootingRows.Select(r => r.Name).ToList());
-            }
+            ReportRebootsFor(InstallBatch);
 
             // Held open by a running uninstall: that one hands the pending rows on when it ends.
             if (stopped && released)
                 HandOffPendingInstalls();
         }
+    }
+
+    /// <summary>Rows whose restart request was already announced (dialog or balloon). A takeover run keeps
+    /// the previous batch's rows in <see cref="InstallBatch"/> until its side uninstall ends, so without
+    /// this the next batch's end would announce the same package a second time.</summary>
+    private readonly HashSet<UpdateRowViewModel> _rebootReported = [];
+
+    /// <summary>
+    /// Raises the restart banner for every row that still waits for a restart, and the dialog (or the
+    /// balloon when the window is hidden) once for the rows not announced before. Called when a batch ends
+    /// and when a solo activity (downgrade, uninstall, reinstall, interactive retry) ends, so a restart
+    /// request is never only a small badge on the row.
+    /// </summary>
+    private void ReportRebootsFor(IEnumerable<UpdateRowViewModel> rows)
+    {
+        // A row that started over no longer asks for a restart; if it asks again it is news again.
+        _rebootReported.RemoveWhere(r => !r.NeedsReboot);
+
+        var rebooting = rows.Where(r => r.NeedsReboot).ToList();
+        if (rebooting.Count == 0)
+            return;
+
+        var fresh = rebooting.Where(_rebootReported.Add).ToList();
+        ShowRebootNotice(_rebootReported.Count);
+
+        if (fresh.Count > 0)
+            ShowRebootDialogIfNeeded(fresh.Select(r => r.Name).ToList());
     }
 
     [ObservableProperty]
@@ -1023,7 +1044,7 @@ public partial class MainViewModel
     internal Func<bool>? MainWindowVisibleOverride { get; set; }
 
     /// <summary>
-    /// Once per batch (called only from <see cref="RunInstallLoopAsync"/>'s <c>finally</c>, never
+    /// Once per batch or solo activity (called only from <see cref="ReportRebootsFor"/>, never
     /// mid-batch), and never onto a window nobody can see: hidden to tray gets the banner plus one balloon
     /// instead, no reminder option and never an automatic restart, so a hidden run is never left to
     /// restart itself unattended. Internal, not private: like <see cref="ScanScheduler.TickAsync"/>, a test

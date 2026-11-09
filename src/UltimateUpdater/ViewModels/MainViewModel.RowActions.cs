@@ -523,7 +523,9 @@ public partial class MainViewModel
         }
         finally
         {
-            if (EndInstallActivity())
+            var released = EndInstallActivity();
+            ReportRebootsFor([row]);
+            if (released)
                 HandOffPendingInstalls();
         }
     }
@@ -658,7 +660,9 @@ public partial class MainViewModel
         {
             row.IsRunningInteractively = false;
             _interactiveRetryLane = null;
-            if (EndInstallActivity())
+            var released = EndInstallActivity();
+            ReportRebootsFor([row]);
+            if (released)
                 HandOffPendingInstalls();
         }
     }
@@ -796,9 +800,17 @@ public partial class MainViewModel
             if (uninstall)
                 _uninstallingKeys.Remove(key);
             if (sideCts is not null)
+            {
                 EndSideUninstall(sideCts);
-            else if (EndInstallActivity())
-                HandOffPendingInstalls();
+                ReportRebootsFor([row]);
+            }
+            else
+            {
+                var released = EndInstallActivity();
+                ReportRebootsFor([row]);
+                if (released)
+                    HandOffPendingInstalls();
+            }
         }
     }
 
