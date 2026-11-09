@@ -907,6 +907,11 @@ public partial class MainViewModel
             if (row.InstallState == RowInstallState.Succeeded)
                 continue;
 
+            // Ignored and snoozed rows are hidden by the filter unless "show ignored" is on, so the chip
+            // leaves them out the same way the table and the failure chip do.
+            if (!ShowIgnored && (IsIgnored(row.Item) || IsSnoozed(row.Item)))
+                continue;
+
             open[row.Item.SourceId] = open.GetValueOrDefault(row.Item.SourceId) + 1;
         }
 
