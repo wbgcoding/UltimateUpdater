@@ -1407,7 +1407,7 @@ Bu işlem geri alınamaz.</value>
     <value>Artık bağlı olmayan aygıtlar ve sürücü deposunda kalan eski sürücü paketleri. Varsayılan olarak kapalıdır, yönetici hakları gerektirir; herhangi bir şey silinmeden önce otomatik olarak bir yedek alınır.</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>Aygıt bir dahaki sefere bağlandığında, Windows bulabilirse sürücüsünü yeniden yükler. Her paketin bir yedeği veri klasöründe saklanır.</value>
+    <value>Aygıt bir dahaki sefere bağlandığında, Windows bulabilirse sürücüsünü yeniden yükler. Son beş çalıştırmanın yedekleri saklanır.</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>Sürücüler</value>

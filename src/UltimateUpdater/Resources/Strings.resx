@@ -1407,7 +1407,7 @@ This cannot be undone.</value>
     <value>Devices no longer connected, and old driver packages left behind in the driver store. Off by default, needs admin rights; a backup is made automatically before anything is deleted.</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>The device installs its driver again when it is connected next time, if Windows can find one. A backup of each package is kept in the data folder.</value>
+    <value>The device installs its driver again when it is connected next time, if Windows can find one. Backups of the last five runs are kept.</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>Drivers</value>

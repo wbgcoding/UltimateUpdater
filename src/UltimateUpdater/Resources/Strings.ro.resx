@@ -1407,7 +1407,7 @@ Această acțiune nu poate fi anulată.</value>
     <value>Dispozitive care nu mai sunt conectate și pachete de drivere vechi rămase în magazinul de drivere. Dezactivat implicit, necesită drepturi de administrator; se face automat un backup înainte de a șterge ceva.</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>Dispozitivul își va instala din nou driverul data viitoare când este conectat, dacă Windows găsește unul. O copie de rezervă a fiecărui pachet este păstrată în folderul de date.</value>
+    <value>Dispozitivul își va instala din nou driverul data viitoare când este conectat, dacă Windows găsește unul. Copiile de rezervă ale ultimelor cinci rulări sunt păstrate.</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>Drivere</value>

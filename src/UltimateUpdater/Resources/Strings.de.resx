@@ -1407,7 +1407,7 @@ Das kann nicht rückgängig gemacht werden.</value>
     <value>Geräte, die nicht mehr angeschlossen sind, und alte Treiberpakete, die im Treiberspeicher zurückgeblieben sind. Standardmäßig aus, braucht Admin-Rechte; vor jeder Löschung wird automatisch eine Sicherung angelegt.</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>Wird das Gerät wieder angeschlossen, installiert Windows den Treiber neu, sofern es einen findet. Jedes Paket wird vorher im Datenordner gesichert.</value>
+    <value>Wird das Gerät wieder angeschlossen, installiert Windows den Treiber neu, sofern es einen findet. Die Sicherungen der letzten fünf Läufe bleiben erhalten.</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>Treiber</value>

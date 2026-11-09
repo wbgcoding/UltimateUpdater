@@ -1407,7 +1407,7 @@ Isso não pode ser desfeito.</value>
     <value>Dispositivos que não estão mais conectados e pacotes de drivers antigos deixados no repositório de drivers. Desativado por padrão, requer direitos de administrador; um backup é criado automaticamente antes de qualquer exclusão.</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>O Windows instalará novamente o driver do dispositivo na próxima vez que ele for conectado, se encontrar um. Um backup de cada pacote é mantido na pasta de dados.</value>
+    <value>O Windows instalará novamente o driver do dispositivo na próxima vez que ele for conectado, se encontrar um. Os backups das últimas cinco execuções são mantidos.</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>Drivers</value>

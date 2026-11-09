@@ -1407,7 +1407,7 @@ Esto no se puede deshacer.</value>
     <value>Dispositivos que ya no están conectados y paquetes de controladores antiguos que quedaron en el almacén de controladores. Desactivado de forma predeterminada, requiere permisos de administrador; se crea automáticamente una copia de seguridad antes de eliminar nada.</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>El dispositivo instalará su controlador de nuevo la próxima vez que se conecte, si Windows encuentra uno. Se guarda una copia de seguridad de cada paquete en la carpeta de datos.</value>
+    <value>El dispositivo instalará su controlador de nuevo la próxima vez que se conecte, si Windows encuentra uno. Se conservan las copias de seguridad de las últimas cinco ejecuciones.</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>Controladores</value>

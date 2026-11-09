@@ -1407,7 +1407,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
     <value>接続されなくなったデバイスと、ドライバーストアに残った古いドライバーパッケージです。既定ではオフで、管理者権限が必要です。削除前に自動的にバックアップが作成されます。</value>
   </data>
   <data name="CleanupDriversConsequence" xml:space="preserve">
-    <value>次に接続したとき、Windows が見つけられればドライバーが再インストールされます。各パッケージのバックアップはデータフォルダーに保存されます。</value>
+    <value>次に接続したとき、Windows が見つけられればドライバーが再インストールされます。直近 5 回の実行分のバックアップが保持されます。</value>
   </data>
   <data name="CleanupGroupDrivers" xml:space="preserve">
     <value>ドライバー</value>
