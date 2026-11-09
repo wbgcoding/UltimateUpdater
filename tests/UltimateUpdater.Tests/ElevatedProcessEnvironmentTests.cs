@@ -131,8 +131,8 @@ public class ElevatedProcessEnvironmentTests
     [Fact]
     public void An_elevated_child_never_inherits_the_users_chocolatey_install_root()
     {
-        Environment.SetEnvironmentVariable("ChocolateyInstall", @"C:\Users\planted\choco");
-        Environment.SetEnvironmentVariable("ChocolateyToolsLocation", @"C:\Users\planted\tools");
+        Environment.SetEnvironmentVariable("ChocolateyInstall", @"C:\Planted\choco");
+        Environment.SetEnvironmentVariable("ChocolateyToolsLocation", @"C:\Planted\tools");
         try
         {
             using var tool = Pinned(Path.Combine(System32, "cmd.exe"));
@@ -142,7 +142,7 @@ public class ElevatedProcessEnvironmentTests
 
             Assert.False(elevated.Environment.ContainsKey("ChocolateyInstall"));
             Assert.False(elevated.Environment.ContainsKey("ChocolateyToolsLocation"));
-            Assert.Equal(@"C:\Users\planted\choco", unelevated.Environment["ChocolateyInstall"]);
+            Assert.Equal(@"C:\Planted\choco", unelevated.Environment["ChocolateyInstall"]);
         }
         finally
         {
@@ -158,8 +158,8 @@ public class ElevatedProcessEnvironmentTests
 
         var info = Build(tool, elevated: true, environment: new Dictionary<string, string>
         {
-            ["ChocolateyInstall"] = @"C:\Users\planted\choco",
-            ["chocolateytoolslocation"] = @"C:\Users\planted\tools",
+            ["ChocolateyInstall"] = @"C:\Planted\choco",
+            ["chocolateytoolslocation"] = @"C:\Planted\tools",
         });
 
         Assert.False(info.Environment.ContainsKey("ChocolateyInstall"));
@@ -170,7 +170,7 @@ public class ElevatedProcessEnvironmentTests
     public void An_elevated_child_gets_the_machine_chocolatey_root_when_every_directory_on_it_is_trusted()
     {
         using var tool = Pinned(Path.Combine(System32, "cmd.exe"));
-        Environment.SetEnvironmentVariable("ChocolateyInstall", @"C:\Users\planted\choco");
+        Environment.SetEnvironmentVariable("ChocolateyInstall", @"C:\Planted\choco");
         try
         {
             var info = Build(tool, elevated: true, machineChocolatey: @"C:\ProgramData\chocolatey\");
