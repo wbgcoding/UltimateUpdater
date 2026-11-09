@@ -69,111 +69,122 @@ public static class DriverCleanupExecutor
         }
 
         var folderName = staging.FolderName;
-        var boundDevices = devices.ToList();
-        // Several disconnected devices often share one oemNN.inf: it is backed up once, not once per device
-        // (a GPU package can be a gigabyte), and a package the device loop already removed is not exported
-        // again, and miscounted as "could not back up", when it is also selected as superseded.
         var exported = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var deletedPackages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var deleted = 0;
-        var skipped = 0;
-        // Only a package that really left the driver store frees space, and a package several devices shared
-        // counts once, when it goes.
-        long freed = 0;
-
-        foreach (var device in devicesToRemove)
+        string? BackupFolderOrNull() => exported.Count > 0 ? folderName : null;
+        try
         {
-            // Returned, not thrown: the worker discards a cancelled call's outcome, and devices already
-            // removed plus the backup made for them are real work the user must be told about.
-            if (cancellationToken.IsCancellationRequested)
-                return new CleanupOutcome(freed, deleted, skipped, WasStopped: true, DriverBackupFolderName: folderName);
+            var boundDevices = devices.ToList();
+            // Several disconnected devices often share one oemNN.inf: it is backed up once, not once per device
+            // (a GPU package can be a gigabyte), and a package the device loop already removed is not exported
+            // again, and miscounted as "could not back up", when it is also selected as superseded.
+            var deletedPackages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var deleted = 0;
+            var skipped = 0;
+            // Only a package that really left the driver store frees space, and a package several devices shared
+            // counts once, when it goes.
+            long freed = 0;
 
-            if (!DriverCleanupDiscovery.IsOemPackageName(device.PackageName))
+            foreach (var device in devicesToRemove)
             {
-                logging.Warn($"Driver cleanup: '{device.PackageName}' does not look like a driver package name; skipping '{device.InstanceId}'.");
-                skipped++;
-                continue;
+                // Returned, not thrown: the worker discards a cancelled call's outcome, and devices already
+                // removed plus the backup made for them are real work the user must be told about.
+                if (cancellationToken.IsCancellationRequested)
+                    return new CleanupOutcome(freed, deleted, skipped, WasStopped: true, DriverBackupFolderName: BackupFolderOrNull());
+
+                if (!DriverCleanupDiscovery.IsOemPackageName(device.PackageName))
+                {
+                    logging.Warn($"Driver cleanup: '{device.PackageName}' does not look like a driver package name; skipping '{device.InstanceId}'.");
+                    skipped++;
+                    continue;
+                }
+
+                if (!exported.Contains(device.PackageName)
+                    && !await ExportPackageAsync(pnputil, device.PackageName, staging, logging, CancellationToken.None))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                exported.Add(device.PackageName);
+
+                var removed = await RunPnputilAsync(pnputil, ["/remove-device", device.InstanceId], logging, CancellationToken.None);
+                if (!removed)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                deleted++;
+                boundDevices.RemoveAll(d => string.Equals(d.InstanceId, device.InstanceId, StringComparison.OrdinalIgnoreCase));
+
+                // The device's own package may now be unused (no other device still bound to it); a package
+                // that still is stays exactly where it is, pnputil's own in-use check refuses it below and
+                // that refusal is counted as skipped, never as a failure of this step. The bindings come from
+                // the inventory taken once above, minus the devices removed since: a device that bound to the
+                // package meanwhile is still caught by that same in-use check, so enumerating every device
+                // again after each removal would buy nothing.
+                var stillBound = boundDevices
+                    .Any(d => !string.IsNullOrEmpty(d.InfPath)
+                        && string.Equals(Path.GetFileName(d.InfPath), device.PackageName, StringComparison.OrdinalIgnoreCase));
+
+                if (!stillBound && await RunPnputilAsync(pnputil, ["/delete-driver", device.PackageName], logging, CancellationToken.None)
+                    && deletedPackages.Add(device.PackageName))
+                {
+                    freed += device.SizeBytes;
+                }
             }
 
-            if (!exported.Contains(device.PackageName)
-                && !await ExportPackageAsync(pnputil, device.PackageName, staging, logging, CancellationToken.None))
+            foreach (var package in packagesToDelete)
             {
-                skipped++;
-                continue;
+                // Returned, not thrown: the worker discards a cancelled call's outcome, and devices already
+                // removed plus the backup made for them are real work the user must be told about.
+                if (cancellationToken.IsCancellationRequested)
+                    return new CleanupOutcome(freed, deleted, skipped, WasStopped: true, DriverBackupFolderName: BackupFolderOrNull());
+
+                if (!DriverCleanupDiscovery.IsOemPackageName(package.PackageName))
+                {
+                    logging.Warn($"Driver cleanup: '{package.PackageName}' does not look like a driver package name; skipping.");
+                    skipped++;
+                    continue;
+                }
+
+                if (deletedPackages.Contains(package.PackageName))
+                {
+                    // Already removed together with its last device above.
+                    deleted++;
+                    continue;
+                }
+
+                if (!exported.Contains(package.PackageName)
+                    && !await ExportPackageAsync(pnputil, package.PackageName, staging, logging, CancellationToken.None))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                exported.Add(package.PackageName);
+
+                // No /force: a package a device still quietly depends on is reported by pnputil as skipped
+                // rather than being torn out from under it.
+                var removed = await RunPnputilAsync(pnputil, ["/delete-driver", package.PackageName], logging, CancellationToken.None);
+                if (removed)
+                {
+                    deleted++;
+                    freed += package.SizeBytes;
+                }
+                else
+                {
+                    skipped++;
+                }
             }
 
-            exported.Add(device.PackageName);
-
-            var removed = await RunPnputilAsync(pnputil, ["/remove-device", device.InstanceId], logging, CancellationToken.None);
-            if (!removed)
-            {
-                skipped++;
-                continue;
-            }
-
-            deleted++;
-            boundDevices.RemoveAll(d => string.Equals(d.InstanceId, device.InstanceId, StringComparison.OrdinalIgnoreCase));
-
-            // The device's own package may now be unused (no other device still bound to it); a package
-            // that still is stays exactly where it is, pnputil's own in-use check refuses it below and
-            // that refusal is counted as skipped, never as a failure of this step. The bindings come from
-            // the inventory taken once above, minus the devices removed since: a device that bound to the
-            // package meanwhile is still caught by that same in-use check, so enumerating every device
-            // again after each removal would buy nothing.
-            var stillBound = boundDevices
-                .Any(d => !string.IsNullOrEmpty(d.InfPath)
-                    && string.Equals(Path.GetFileName(d.InfPath), device.PackageName, StringComparison.OrdinalIgnoreCase));
-
-            if (!stillBound && await RunPnputilAsync(pnputil, ["/delete-driver", device.PackageName], logging, CancellationToken.None)
-                && deletedPackages.Add(device.PackageName))
-            {
-                freed += device.SizeBytes;
-            }
+            return new CleanupOutcome(freed, deleted, skipped, DriverBackupFolderName: BackupFolderOrNull());
         }
-
-        foreach (var package in packagesToDelete)
+        finally
         {
-            // Returned, not thrown: the worker discards a cancelled call's outcome, and devices already
-            // removed plus the backup made for them are real work the user must be told about.
-            if (cancellationToken.IsCancellationRequested)
-                return new CleanupOutcome(freed, deleted, skipped, WasStopped: true, DriverBackupFolderName: folderName);
-
-            if (!DriverCleanupDiscovery.IsOemPackageName(package.PackageName))
-            {
-                logging.Warn($"Driver cleanup: '{package.PackageName}' does not look like a driver package name; skipping.");
-                skipped++;
-                continue;
-            }
-
-            if (deletedPackages.Contains(package.PackageName))
-            {
-                // Already removed together with its last device above.
-                deleted++;
-                continue;
-            }
-
-            if (!exported.Contains(package.PackageName)
-                && !await ExportPackageAsync(pnputil, package.PackageName, staging, logging, CancellationToken.None))
-            {
-                skipped++;
-                continue;
-            }
-
-            // No /force: a package a device still quietly depends on is reported by pnputil as skipped
-            // rather than being torn out from under it.
-            var removed = await RunPnputilAsync(pnputil, ["/delete-driver", package.PackageName], logging, CancellationToken.None);
-            if (removed)
-            {
-                deleted++;
-                freed += package.SizeBytes;
-            }
-            else
-            {
-                skipped++;
-            }
+            // Whatever way the run ends (also a throw): trim old backups only if this run made one, else drop the empty folder.
+            staging.Finish(exported.Count > 0, logging);
         }
-
-        return new CleanupOutcome(freed, deleted, skipped, DriverBackupFolderName: folderName);
     }
 
     private static async Task<bool> ExportPackageAsync(

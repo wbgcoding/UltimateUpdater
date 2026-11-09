@@ -63,6 +63,36 @@ internal static class DriverBackupStaging
             return ResolvesTo(pin, BackupRoot);
         }
 
+        /// <summary>
+        /// The end of the run. When it exported at least one package, the older backup folders beyond the
+        /// newest few are trimmed (only then: a run that backed up nothing must never cost an older backup,
+        /// which is the only restore source for drivers removed earlier). When it exported nothing, its own
+        /// still-empty folder is removed again so it counts as no backup at all.
+        /// </summary>
+        public void Finish(bool exportedAnything, LoggingService logging)
+        {
+            if (exportedAnything)
+            {
+                var backupsRoot = Path.GetDirectoryName(BackupRoot);
+                if (backupsRoot is not null)
+                    PruneOldStagings(backupsRoot, FolderName, KeepNewest, logging, requireProtectedAcl: true);
+
+                return;
+            }
+
+            // The pin has no delete share, so it is released first; only an EMPTY folder goes (a non-recursive
+            // delete refuses anything else), and a link swapped in meanwhile would lose only itself.
+            pin.Dispose();
+            try
+            {
+                Directory.Delete(BackupRoot, recursive: false);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logging.Warn($"Driver cleanup: could not remove the empty backup folder '{FolderName}': {ex.Message}");
+            }
+        }
+
         public void Dispose() => pin.Dispose();
     }
 
@@ -165,15 +195,12 @@ internal static class DriverBackupStaging
             return null;
         }
 
-        // Best effort and after the new folder is safely pinned: an old backup that cannot be removed must
-        // never cost this run its own backup.
-        PruneOldStagings(backupsRoot, folderName, KeepNewest, logging);
-
         return new StagingFolder(target, folderName, pin);
     }
 
     /// <summary>How many driver backup folders stay, the one of the running job included. Each holds a full
-    /// package export, so they cannot pile up for ever; five is the default of the registry backups.</summary>
+    /// package export, so they cannot pile up for ever; five is the default of the registry backups. Only
+    /// folders that hold something count: an empty one is no backup.</summary>
     internal const int KeepNewest = 5;
 
     private static readonly System.Text.RegularExpressions.Regex StagingNamePattern = new(
@@ -185,12 +212,21 @@ internal static class DriverBackupStaging
     /// more than <paramref name="keepNewest"/> remain. <paramref name="keepName"/> (the running job's own
     /// folder) is never touched and counts as one of the kept ones. Only a plain folder whose name is exactly
     /// the timestamp shape is a candidate: a link, a file or anything with another name is left alone, and
-    /// a path that leads through a link is not entered. Failures are logged, never thrown.
+    /// a path that leads through a link is not entered. Folders are ranked by their creation time (a clock
+    /// that was wrong once cannot pin a slot through its name), empty ones neither count nor go, and nothing
+    /// is pruned at all unless the running job's own folder holds something. With
+    /// <paramref name="requireProtectedAcl"/> (the elevated side) a stale folder is deleted only when it is
+    /// still exactly the folder this code creates: real directory, our own token owner, the protected
+    /// three-entry ACL that keeps ordinary users from adding anything to it. Failures are logged, never thrown.
     /// </summary>
-    internal static void PruneOldStagings(string backupsRoot, string keepName, int keepNewest, LoggingService logging)
+    internal static void PruneOldStagings(
+        string backupsRoot, string keepName, int keepNewest, LoggingService logging, bool requireProtectedAcl = false)
     {
-        if (keepNewest <= 0 || CleanupSafety.AncestryLeadsThroughLink(backupsRoot))
+        if (keepNewest <= 0 || CleanupSafety.AncestryLeadsThroughLink(backupsRoot)
+            || !HasContent(Path.Combine(backupsRoot, keepName)))
+        {
             return;
+        }
 
         try
         {
@@ -198,7 +234,9 @@ internal static class DriverBackupStaging
             var older = SafeEnumerate.Directories(backupsRoot)
                 .Where(d => StagingNamePattern.IsMatch(Path.GetFileName(d))
                     && !string.Equals(Path.GetFileName(d), keepName, StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(d => Path.GetFileName(d), StringComparer.Ordinal)
+                .Where(HasContent)
+                .OrderByDescending(Directory.GetCreationTimeUtc)
+                .ThenByDescending(d => Path.GetFileName(d), StringComparer.Ordinal)
                 .ToList();
 
             foreach (var stale in older.Skip(Math.Max(0, keepNewest - 1)))
@@ -207,6 +245,12 @@ internal static class DriverBackupStaging
                 {
                     if (CleanupSafety.AncestryLeadsThroughLink(stale))
                         continue;
+
+                    if (requireProtectedAcl && !IsStillOurProtectedFolder(stale))
+                    {
+                        logging.Warn($"Driver cleanup: left the old backup folder '{Path.GetFileName(stale)}' in place, it is not the protected folder this tool created.");
+                        continue;
+                    }
 
                     Directory.Delete(stale, recursive: true);
                     logging.Info($"Driver cleanup: removed the old backup folder '{Path.GetFileName(stale)}'.");
@@ -221,6 +265,38 @@ internal static class DriverBackupStaging
         {
             logging.Warn($"Driver cleanup: could not prune old backups in '{backupsRoot}': {ex.Message}");
         }
+    }
+
+    /// <summary>The data-folder side of the retention, run after this run's copy arrived. Never from an
+    /// elevated process: there the data path is no longer the user's own, and a recursive delete under it
+    /// would run with administrator rights. A copy that holds nothing prunes nothing (see
+    /// <see cref="PruneOldStagings"/>).</summary>
+    internal static void PruneDataCopies(string dataBackupsRoot, string keepName, LoggingService logging)
+    {
+        if (ElevationService.IsElevated)
+            return;
+
+        PruneOldStagings(dataBackupsRoot, keepName, KeepNewest, logging);
+    }
+
+    private static bool HasContent(string directory)
+    {
+        try
+        {
+            return Directory.EnumerateFileSystemEntries(directory).Any();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>The folder is checked through an open handle, then released for the delete (the pin has no
+    /// delete share): what is inside such a folder could only be put there by an administrator.</summary>
+    private static bool IsStillOurProtectedFolder(string folder)
+    {
+        using var pin = CleanupSafety.TryLockForUse(folder);
+        return pin is not null && IsOurOwnNewFolder(pin, folder);
     }
 
     private static SecurityIdentifier? TokenOwner() => TokenOwnerOverride ?? WindowsIdentity.GetCurrent().Owner;

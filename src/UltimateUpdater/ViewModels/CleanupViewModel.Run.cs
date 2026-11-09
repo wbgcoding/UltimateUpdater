@@ -836,9 +836,8 @@ public partial class CleanupViewModel
                 {
                     // The data folder's copies are ours to trim; the ProgramData originals are trimmed by the
                     // elevated worker, the only side allowed to delete there.
-                    DriverBackupStaging.PruneOldStagings(
-                        Path.Combine(AppPaths.DataDirectory, "driver-backups"), folderName,
-                        DriverBackupStaging.KeepNewest, _logging);
+                    DriverBackupStaging.PruneDataCopies(
+                        Path.Combine(AppPaths.DataDirectory, "driver-backups"), folderName, _logging);
                 }
             }
 

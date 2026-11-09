@@ -97,6 +97,35 @@ public class CleanupReportingFixesTests : IDisposable
     }
 
     [Fact]
+    public async Task A_run_whose_every_export_fails_reports_no_backup_and_leaves_no_empty_folder()
+    {
+        var backups = Path.Combine(DriverBackupStaging.ProgramDataRootOverride!, "UltimateUpdater", "driver-backups");
+        var older = Path.Combine(backups, "2020-01-01_000000");
+        Directory.CreateDirectory(older);
+        File.WriteAllText(Path.Combine(older, "driver.inf"), "inf");
+        DriverBackupStaging.StagingNameOverride = "2020-01-02_000000";
+        var inventory = new FakeInventory([], [Package("oem20.inf", 5000)]);
+
+        var outcome = await RunDrivers(inventory, [], ["oem20.inf"], args => args[0] == "/export-driver" ? 5 : 0);
+
+        Assert.Equal(1, outcome.SkippedFiles);
+        Assert.Null(outcome.DriverBackupFolderName);
+        Assert.False(Directory.Exists(Path.Combine(backups, "2020-01-02_000000")));
+        Assert.True(File.Exists(Path.Combine(older, "driver.inf")));
+    }
+
+    [Fact]
+    public async Task A_run_that_exported_a_package_reports_its_backup_folder()
+    {
+        DriverBackupStaging.StagingNameOverride = "2020-01-02_000000";
+        var inventory = new FakeInventory([], [Package("oem20.inf", 5000)]);
+
+        var outcome = await RunDrivers(inventory, [], ["oem20.inf"], _ => 0);
+
+        Assert.Equal("2020-01-02_000000", outcome.DriverBackupFolderName);
+    }
+
+    [Fact]
     public async Task A_driver_package_that_could_not_be_deleted_frees_nothing()
     {
         var inventory = new FakeInventory([], [Package("oem20.inf", 5000)]);
