@@ -60,6 +60,21 @@ public static class PackageManagerOwnership
             Path.Combine(localAppData, "Microsoft", "WinGet", "Links"),
         };
 
+        // `winget install --scope machine` puts a portable package under Program Files, its shim in the
+        // machine-wide Links folder next to it.
+        foreach (var programFiles in new[]
+        {
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+        })
+        {
+            if (string.IsNullOrWhiteSpace(programFiles))
+                continue;
+
+            roots.Add(Path.Combine(programFiles, "WinGet", "Packages"));
+            roots.Add(Path.Combine(programFiles, "WinGet", "Links"));
+        }
+
         // Scoop is relocatable through its own environment variables, so those come first.
         var scoop = Environment.GetEnvironmentVariable("SCOOP");
         roots.Add(Path.Combine(string.IsNullOrWhiteSpace(scoop) ? Path.Combine(userProfile, "scoop") : scoop, "apps"));

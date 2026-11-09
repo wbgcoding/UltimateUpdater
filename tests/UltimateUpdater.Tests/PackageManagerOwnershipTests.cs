@@ -34,6 +34,20 @@ public class PackageManagerOwnershipTests
     /// than the payload, so the stub has to count too. Measured on the dev host: `uv` resolves exactly
     /// there.
     /// </summary>
+    /// <summary>A `winget install --scope machine` portable lands under Program Files, not the user
+    /// profile, with its shim in the machine-wide Links folder.</summary>
+    [Theory]
+    [InlineData(Environment.SpecialFolder.ProgramFiles, "Packages", "DenoLand.Deno_Microsoft.Winget.Source_8wekyb3d8bbwe/deno.exe")]
+    [InlineData(Environment.SpecialFolder.ProgramFiles, "Links", "deno.exe")]
+    [InlineData(Environment.SpecialFolder.ProgramFilesX86, "Packages", "astral-sh.uv_Microsoft.Winget.Source_8wekyb3d8bbwe/uv.exe")]
+    [InlineData(Environment.SpecialFolder.ProgramFilesX86, "Links", "uv.exe")]
+    public void A_machine_scope_winget_portable_belongs_to_winget(Environment.SpecialFolder root, string folder, string file)
+    {
+        var path = Path.Combine(Environment.GetFolderPath(root), "WinGet", folder, file);
+
+        Assert.True(PackageManagerOwnership.IsManagedElsewhere(path));
+    }
+
     [Fact]
     public void A_winget_shim_belongs_to_winget_too()
     {
