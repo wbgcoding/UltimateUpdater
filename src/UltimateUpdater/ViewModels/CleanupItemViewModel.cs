@@ -43,7 +43,9 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         ? LeftoverCandidates.Count(c => c.IsSelected)
         : IsOldPythonVersions
             ? OldPythonVersionCandidates.Count(c => c.IsSelected)
-            : Math.Max(0, Files - _unselectedEntryFiles);
+            : IsDriverCleanup
+                ? DriverDeviceCandidates.Count(c => c.IsSelected) + DriverPackageCandidates.Count(c => c.IsSelected)
+                : Math.Max(0, Files - _unselectedEntryFiles);
 
     /// <summary>A candidate tick changes what the run would free, so the figures that follow the
     /// selection (row, group header, ring, confirmation) are refreshed like for an entry tick.</summary>
@@ -496,15 +498,24 @@ public sealed partial class CleanupItemViewModel : ObservableObject
 
         if (devices is not null)
             foreach (var device in devices)
-                DriverDeviceCandidates.Add(new DriverDeviceCandidateViewModel(device));
+            {
+                var row = new DriverDeviceCandidateViewModel(device);
+                row.PropertyChanged += OnCandidateSelectionChanged;
+                DriverDeviceCandidates.Add(row);
+            }
 
         if (packages is not null)
             foreach (var package in packages)
-                DriverPackageCandidates.Add(new DriverPackageCandidateViewModel(package));
+            {
+                var row = new DriverPackageCandidateViewModel(package);
+                row.PropertyChanged += OnCandidateSelectionChanged;
+                DriverPackageCandidates.Add(row);
+            }
 
         OnPropertyChanged(nameof(ShowsNoDriverFindings));
         OnPropertyChanged(nameof(HasDriverDeviceCandidates));
         OnPropertyChanged(nameof(HasDriverPackageCandidates));
+        RaiseSelectedEntryFigures();
     }
 
     /// <summary>The one other row whose findings are shown as individually selectable rows rather than a

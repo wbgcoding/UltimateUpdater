@@ -97,4 +97,27 @@ public class DriverCleanupCatalogTests
         Assert.Equal(["X"], row.SelectedDriverDeviceInstanceIds);
         Assert.Equal(["oem1.inf"], row.SelectedDriverPackageNames);
     }
+
+    /// <summary>Driver findings start unticked, so the file count follows the ticks like the leftover and
+    /// old-Python rows do instead of counting every found device and package.</summary>
+    [Fact]
+    public void The_driver_row_counts_only_the_ticked_findings_as_files()
+    {
+        var target = CleanupCatalog.Build().Single(t => t.Id == "driver-cleanup");
+        var selectionChanges = 0;
+        var row = new CleanupItemViewModel(target, () => selectionChanges++, _ => { });
+        row.Files = 2;
+
+        row.SetDriverCandidates(
+            [new DriverDeviceCandidateDto { InstanceId = "X", DisplayName = "Gone device" }],
+            [new DriverPackageCandidateDto { PackageName = "oem1.inf", Provider = "Vendor" }]);
+        Assert.Equal(0, row.SelectedEntryFiles);
+
+        row.DriverDeviceCandidates[0].IsSelected = true;
+        Assert.Equal(1, row.SelectedEntryFiles);
+        Assert.Equal(1, selectionChanges);
+
+        row.DriverPackageCandidates[0].IsSelected = true;
+        Assert.Equal(2, row.SelectedEntryFiles);
+    }
 }
