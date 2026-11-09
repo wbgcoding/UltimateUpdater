@@ -192,6 +192,47 @@ public class WingetSourcePinTests
         return calls;
     }
 
+    private static async Task<List<string>> RunShowCalls(string? source)
+    {
+        var calls = new List<string>();
+        var winget = new WingetSource(new LoggingService())
+        {
+            RunOverride = args =>
+            {
+                calls.Add(string.Join(' ', args));
+                return Task.FromResult(new ProcessResult(0, "", ""));
+            },
+        };
+
+        await winget.CanFetchAsync(Item(source), CancellationToken.None);
+        await winget.EnrichAsync(Item(source), CancellationToken.None);
+        return calls;
+    }
+
+    [Fact]
+    public async Task The_reinstall_lookup_and_the_enrichment_show_name_the_source()
+    {
+        var calls = await RunShowCalls("winget");
+
+        Assert.Equal(2, calls.Count);
+        Assert.All(calls, call =>
+        {
+            Assert.StartsWith("show ", call);
+            Assert.Contains("--source winget", call);
+        });
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("-evil")]
+    public async Task The_show_calls_without_a_safe_source_run_as_before(string? source)
+    {
+        var calls = await RunShowCalls(source);
+
+        Assert.Equal(2, calls.Count);
+        Assert.All(calls, call => Assert.DoesNotContain("--source", call));
+    }
+
     [Fact]
     public async Task Every_call_of_a_full_ladder_run_names_the_source()
     {

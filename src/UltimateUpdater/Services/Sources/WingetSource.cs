@@ -450,11 +450,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         ProcessResult result;
         try
         {
-            result = await ProcessRunner.RunAsync(
-                "winget",
-                ["show", "--id", item.Id, "--exact", "--disable-interactivity", "--accept-source-agreements"],
-                ShowTimeout,
-                cancellationToken);
+            result = await RunQueryAsync(ShowArguments(item.Id, SafeSource(item)), ShowTimeout, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -486,7 +482,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
 
         try
         {
-            var result = await ProcessRunner.RunAsync("winget", ShowArguments(item.Id), ShowTimeout, cancellationToken);
+            var result = await RunQueryAsync(ShowArguments(item.Id, SafeSource(item)), ShowTimeout, cancellationToken);
             return !result.TimedOut && result.ExitCode == 0;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -500,8 +496,12 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         }
     }
 
-    internal static IReadOnlyList<string> ShowArguments(string packageId) =>
-        ["show", "--id", packageId, "--exact", "--disable-interactivity", "--accept-source-agreements"];
+    /// <summary>
+    /// Pinned to the row's source like every install call: with one broken extra source winget fails every
+    /// unpinned `show`, which would refuse every reinstall and empty every enrichment.
+    /// </summary>
+    internal static IReadOnlyList<string> ShowArguments(string packageId, string? source = null) =>
+        ["show", "--id", packageId, "--exact", .. SourceArguments(source), "--disable-interactivity", "--accept-source-agreements"];
 
     /// <summary>
     /// One plain `winget install` after the old version was removed. Not the ladder: there is nothing
