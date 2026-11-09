@@ -399,7 +399,8 @@ public partial class CleanupWindow
             // An async void handler is the one place an exception has nowhere to go: it is raised on the
             // dispatcher and takes the process with it. The run itself already survives a single target
             // failing and logs that, so anything arriving here is unexpected and belongs in front of the
-            // user rather than in a crash.
+            // user rather than in a crash. Logged first, so the stack is on record too.
+            _viewModel.Logging.Error("Cleanup run failed", ex);
             Dialogs.Error(loc["CleanupFailedHeadline"], details: ex.Message);
         }
         finally
