@@ -2846,7 +2846,8 @@ public partial class WindowLayoutTests
         {
             var (window, scroll, nav) = LayOutSettingsWindow(800);
             Assert.Equal(Visibility.Visible, nav.Visibility);
-            Assert.True(scroll.ScrollableHeight > 0);
+            Assert.True(scroll.ScrollableHeight > 0,
+                $"the settings page does not scroll (extent {scroll.ExtentHeight:0.#}, viewport {scroll.ViewportHeight:0.#})");
 
             var entry = nav.Items.OfType<ListBoxItem>().Single(i => (string)i.Tag == "NotifyHeader");
             nav.SelectedItem = entry;
