@@ -106,7 +106,7 @@ public static class UriLauncher
         if (string.IsNullOrWhiteSpace(target))
             return false;
 
-        if (System.IO.Path.IsPathRooted(target))
+        if (System.IO.Path.IsPathFullyQualified(target))
             return System.IO.File.Exists(target) || System.IO.Directory.Exists(target);
 
         return IsAllowedUri(target);

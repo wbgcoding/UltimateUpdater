@@ -143,6 +143,30 @@ public class ArgumentSafetyTests
         Assert.False(UriLauncher.IsAllowedUri(target));
     }
 
+    /// <summary>
+    /// "C:name" is rooted but drive-relative: it resolves against that drive's working directory, so a file
+    /// planted there would be launched. Only a fully qualified path counts as absolute.
+    /// </summary>
+    [Fact]
+    public void A_drive_relative_path_is_refused_even_when_the_file_exists()
+    {
+        var name = "zq-planted-" + Guid.NewGuid().ToString("N") + ".exe";
+        var planted = Path.Combine(Directory.GetCurrentDirectory(), name);
+        File.WriteAllText(planted, "x");
+        try
+        {
+            var driveRelative = Path.GetPathRoot(planted)![..2] + name;
+
+            Assert.True(Path.IsPathRooted(driveRelative));
+            Assert.False(UriLauncher.IsLaunchable(driveRelative));
+            Assert.True(UriLauncher.IsLaunchable(planted));
+        }
+        finally
+        {
+            File.Delete(planted);
+        }
+    }
+
     [Fact]
     public void An_absolute_path_is_launchable_only_when_it_exists()
     {
