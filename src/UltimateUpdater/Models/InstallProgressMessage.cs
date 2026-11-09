@@ -3,7 +3,7 @@ namespace UltimateUpdater.Models;
 /// <summary>One line of the worker→app named-pipe protocol (JSON per line).</summary>
 public sealed class InstallProgressMessage
 {
-    public required string Type { get; set; }   // "progress" | "result" | "done" | "log"
+    public required string Type { get; set; }   // "progress" | "result" | "done" | "log" | "restorePointCreated"
     public string? SourceId { get; set; }
     public string? ItemId { get; set; }
     public double Percent { get; set; }
