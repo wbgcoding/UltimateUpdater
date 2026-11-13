@@ -377,4 +377,31 @@ end;", RegexOptions.Singleline);
             Assert.False(bare.Contains("%ISCC%") || bare.Contains("%PF86%"), "unquoted expansion: " + line.Trim());
         }
     }
+
+    private static string ReadBuildScript()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "UltimateUpdater.slnx")))
+            directory = directory.Parent;
+        return File.ReadAllText(Path.Combine(directory!.FullName, "build.bat")).Replace("\r\n", "\n");
+    }
+
+    /// <summary>dir refuses a wildcard inside a path, so the old search never found a signtool.</summary>
+    [Fact]
+    public void The_signtool_search_walks_the_sdk_version_folders_instead_of_a_wildcard_in_the_middle_of_a_path()
+    {
+        var build = ReadBuildScript();
+        var start = build.IndexOf("set SIGNTOOL=", StringComparison.Ordinal);
+        Assert.True(start >= 0, "the signtool search is gone");
+        var block = build[start..build.IndexOf(":havesigntool", start, StringComparison.Ordinal)];
+
+        Assert.DoesNotContain("dir /b /s", block);
+        Assert.DoesNotContain("bin\\*\\", block);
+        Assert.Contains("for /d %%V in (", block);
+        Assert.True(
+            block.IndexOf("%%~V\\x64\\signtool.exe", StringComparison.Ordinal)
+                < block.IndexOf("%%~V\\arm64\\signtool.exe", StringComparison.Ordinal),
+            "x64 must be tried before arm64");
+    }
+
 }

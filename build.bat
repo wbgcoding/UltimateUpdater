@@ -239,7 +239,11 @@ if not defined WU_SIGN_THUMBPRINT goto :nosign
 
 set SIGNTOOL=
 for /f "delims=" %%i in ('where signtool 2^>nul') do set "SIGNTOOL=%%i"
-if not defined SIGNTOOL for /f "delims=" %%i in ('dir /b /s "%ProgramFiles(x86)%\Windows Kits\10\bin\*\x64\signtool.exe" 2^>nul') do set "SIGNTOOL=%%i"
+rem dir refuses a wildcard in the middle of a path, so the version folders are walked with for /d. They come
+rem in ascending order and the last hit wins, which is the newest SDK; x64 is taken before arm64.
+set "SDKBIN=%ProgramFiles(x86)%\Windows Kits\10\bin"
+if not defined SIGNTOOL if exist "%SDKBIN%\x64\signtool.exe" set "SIGNTOOL=%SDKBIN%\x64\signtool.exe"
+if not defined SIGNTOOL for /d %%V in ("%SDKBIN%\10.*") do if exist "%%~V\x64\signtool.exe" (set "SIGNTOOL=%%~V\x64\signtool.exe") else if exist "%%~V\arm64\signtool.exe" set "SIGNTOOL=%%~V\arm64\signtool.exe"
 if defined SIGNTOOL goto :havesigntool
 echo ERROR: WU_SIGN_THUMBPRINT is set but signtool.exe was not found ^(install the Windows SDK^).
 goto :error
