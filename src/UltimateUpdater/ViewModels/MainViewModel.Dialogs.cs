@@ -543,7 +543,7 @@ public partial class MainViewModel
     /// </summary>
     private void FirstFrameRevealFor(Window window, long? openStarted)
     {
-        Views.FirstFrameReveal.Attach(window);
+        Views.FirstFrameReveal.Attach(window, message => _logging.Info(message));
 
         if (openStarted is not { } started)
             return;

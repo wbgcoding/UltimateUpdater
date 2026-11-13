@@ -21,33 +21,52 @@ internal static class FirstFrameReveal
 
     /// <summary>Call before <see cref="Window.Show"/>. A window whose handle already exists is left alone:
     /// it has been on screen before, there is no first frame left to wait for.</summary>
-    public static void Attach(Window window)
+    public static void Attach(Window window, Action<string>? log = null)
     {
         if (new WindowInteropHelper(window).Handle != IntPtr.Zero)
             return;
 
-        var cloaked = false;
+        var revealed = false;
 
-        window.SourceInitialized += (_, _) => cloaked = SetCloak(window, true);
-
-        void Reveal()
+        // Safety net: a window must never stay invisible because its first frame was missed or the reveal
+        // below never got its turn. Normal priority, so a busy dispatcher cannot starve it.
+        var fallback = new System.Windows.Threading.DispatcherTimer(System.Windows.Threading.DispatcherPriority.Normal, window.Dispatcher)
         {
-            if (!cloaked)
+            Interval = TimeSpan.FromSeconds(2),
+        };
+        fallback.Tick += (_, _) => Reveal("fallback");
+
+        void Reveal(string how)
+        {
+            fallback.Stop();
+            if (revealed)
                 return;
 
-            cloaked = false;
+            revealed = true;
             SetCloak(window, false);
+            if (how != "first frame")
+                log?.Invoke($"{window.GetType().Name} revealed by {how}");
         }
 
         // Not straight away: a dialog that fits its height to its content (DialogSizing) corrects its size
         // on this same event, and revealing now would show one frame at the old size before the jump.
-        // Background priority runs only after that resize has been laid out and rendered.
+        // Loaded priority runs right after that resize has been laid out and rendered, and above input,
+        // so a stream of other work cannot hold it back.
         window.ContentRendered += (_, _) =>
-            window.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, (Action)Reveal);
+            window.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() => Reveal("first frame")));
 
         // A window closed before it ever rendered, or one that fails mid-build, must never stay cloaked
         // while still owning its taskbar slot or focus.
-        window.Closed += (_, _) => Reveal();
+        window.Closed += (_, _) => Reveal("close");
+
+        // The handle is created here rather than inside Show, so the cloak is in place before the window
+        // can ever reach the screen, independent of the order in which handle events reach their handlers.
+        // EnsureHandle raises SourceInitialized exactly as Show would; Show then reuses this handle.
+        new WindowInteropHelper(window).EnsureHandle();
+        if (SetCloak(window, true))
+            fallback.Start();
+        else
+            revealed = true;
     }
 
     private static bool SetCloak(Window window, bool cloak)
