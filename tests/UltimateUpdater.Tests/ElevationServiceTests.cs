@@ -133,6 +133,35 @@ public class ElevationServiceTests
         }
     }
 
+    /// <summary>The portable self-update gives the lock up while it swaps the exe; a worker launch in that
+    /// window would start a missing or unpinned image by path. The launch decision is tested here, because
+    /// a real launch is structurally blocked in the test process.</summary>
+    [Fact]
+    public void Worker_launch_is_refused_while_the_self_image_is_unlocked()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "wu-selfimage-gate-" + Guid.NewGuid() + ".exe");
+        File.WriteAllBytes(path, [0]);
+
+        try
+        {
+            ElevationService.ReleaseSelfImageLock();
+            ElevationService.ResetElevationRefusalForTests();
+            Assert.NotNull(ElevationService.WorkerRefusalReason());
+
+            ElevationService.LockSelfImageAt(new LoggingService(), path);
+            Assert.Null(ElevationService.WorkerRefusalReason());
+
+            ElevationService.ReleaseSelfImageLock();
+            Assert.NotNull(ElevationService.WorkerRefusalReason());
+        }
+        finally
+        {
+            ElevationService.ResetElevationRefusalForTests();
+            ElevationService.ReleaseSelfImageLock();
+            try { File.Delete(path); } catch { }
+        }
+    }
+
     [Fact]
     public void Locking_a_plain_path_keeps_elevation_allowed_and_replaces_an_earlier_lock()
     {

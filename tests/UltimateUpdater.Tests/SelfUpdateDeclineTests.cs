@@ -137,6 +137,61 @@ public sealed class SelfUpdateDeclineTests
     }
 
     [Fact]
+    public async Task A_running_setup_stays_pinned_through_a_later_download()
+    {
+        var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var downloadSucceeds = true;
+        var channel = new SelfUpdateOutcomeTests.ScriptedChannel
+        {
+            Get = (url, _) => SelfUpdateOutcomeTests.SignedFeed(key, url, Content, Content, "999.0.0", SetupName),
+            Download = (path, _) =>
+            {
+                if (!downloadSucceeds)
+                    return Task.FromResult(false);
+
+                File.WriteAllBytes(path, Content);
+                return Task.FromResult(true);
+            },
+        };
+        var service = new SelfUpdateService(
+            new HttpClient(), new LoggingService(), channel, publicKeyPem: key.ExportSubjectPublicKeyInfoPem(),
+            isInstalled: () => true, startSetup: _ => null);
+
+        var first = await service.DownloadVerifiedAsync(Update(), CancellationToken.None);
+        Assert.Equal(SelfUpdateDownloadOutcome.Downloaded, first.Outcome);
+        var firstPath = first.Path!;
+        string? secondPath = null;
+        try
+        {
+            Assert.Equal(SelfUpdateApplyResult.Started, service.Apply(firstPath));
+
+            // A cancelled quit lets the user click Install again while the Setup still runs from its file.
+            downloadSucceeds = false;
+            var failed = await service.DownloadVerifiedAsync(Update(), CancellationToken.None);
+            Assert.NotEqual(SelfUpdateDownloadOutcome.Downloaded, failed.Outcome);
+            AssertPinned(firstPath);
+
+            downloadSucceeds = true;
+            var second = await service.DownloadVerifiedAsync(Update(), CancellationToken.None);
+            Assert.Equal(SelfUpdateDownloadOutcome.Downloaded, second.Outcome);
+            secondPath = second.Path!;
+            AssertPinned(firstPath);
+        }
+        finally
+        {
+            service.DiscardVerified(firstPath);
+            if (secondPath is not null)
+                service.DiscardVerified(secondPath);
+        }
+    }
+
+    private static void AssertPinned(string path)
+    {
+        Assert.True(File.Exists(path));
+        Assert.Throws<IOException>(() => new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.None).Dispose());
+    }
+
+    [Fact]
     public async Task An_unverified_path_is_never_applied()
     {
         var (service, path) = await VerifiedAsync(_ => null);

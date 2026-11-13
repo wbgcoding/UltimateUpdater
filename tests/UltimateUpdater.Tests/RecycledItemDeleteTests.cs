@@ -210,6 +210,30 @@ public class RecycledItemDeleteTests : IDisposable
     }
 
     [Fact]
+    public void A_partly_deleted_recycled_folder_reports_what_it_freed()
+    {
+        var content = Path.Combine(BinFolder, "$R7");
+        Directory.CreateDirectory(content);
+        var gone = Path.Combine(content, "gone.bin");
+        var held = Path.Combine(content, "held.txt");
+        File.WriteAllBytes(gone, new byte[1000]);
+        File.WriteAllText(held, "x");
+
+        bool deleted;
+        long partialFreed;
+        using (new FileStream(held, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            deleted = _service.DeleteRecycledItem(EntryFor(content), Sid, AcceptAll, out partialFreed);
+        }
+
+        Assert.False(deleted);
+        // The delete reports the size on disk (a whole cluster), so only "something was freed" is stable.
+        Assert.True(partialFreed >= 1000);
+        Assert.False(File.Exists(gone));
+        Assert.True(File.Exists(held));
+    }
+
+    [Fact]
     public void A_junction_as_the_recycled_item_is_only_unlinked_and_its_target_survives()
     {
         var outside = MakeOutside();

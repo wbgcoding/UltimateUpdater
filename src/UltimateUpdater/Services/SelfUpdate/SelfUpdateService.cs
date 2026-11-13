@@ -85,6 +85,11 @@ public sealed partial class SelfUpdateService
     /// <summary>Holds the verified artifact open so it cannot be swapped before it is executed.</summary>
     private FileStream? _verified;
 
+    /// <summary>The pin of a Setup that was started and may still run from its file. Kept apart from
+    /// <see cref="_verified"/> so a later download (a cancelled quit lets the user click Install again)
+    /// cannot release it and let the file be replaced under the running Setup.</summary>
+    private FileStream? _handedOverSetup;
+
     /// <summary>The digest the verified artifact actually hashed to; see <see cref="ApplyPortable"/>.</summary>
     private string? _verifiedDigest;
 
@@ -407,6 +412,13 @@ public sealed partial class SelfUpdateService
     /// <summary>Gives up a verified download that will not be started: drops the pin and removes the staged file.</summary>
     internal void DiscardVerified(string path)
     {
+        if (_handedOverSetup is not null
+            && string.Equals(_handedOverSetup.Name, path, StringComparison.OrdinalIgnoreCase))
+        {
+            _handedOverSetup.Dispose();
+            _handedOverSetup = null;
+        }
+
         ReleaseVerified();
         TryDeleteStaged(path);
     }
@@ -596,6 +608,9 @@ public sealed partial class SelfUpdateService
                 // Setup is already running (elevated for an all-users install, so it never starts its own
                 // file again by path) and keeps running from this file after we return, so the pin is kept
                 // until this process exits and the file is neither released nor deleted here.
+                _handedOverSetup?.Dispose();
+                _handedOverSetup = _verified;
+                _verified = null;
                 _verifiedDigest = null;
                 _verifiedVersion = null;
             }

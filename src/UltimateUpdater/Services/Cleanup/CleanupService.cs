@@ -1977,15 +1977,16 @@ public class CleanupService(LoggingService logging)
                 cancellationToken.ThrowIfCancellationRequested();
                 stepsDone++;
 
-                if (DeleteRecycledItem(entry, ownSid))
+                if (DeleteRecycledItem(entry, ownSid, out var partialFreed))
                 {
                     freed += entry.Bytes;
                     deleted++;
                 }
                 else
                 {
+                    freed += partialFreed;
                     skipped++;
-                    skippedBytes += entry.Bytes;
+                    skippedBytes += Math.Max(0, entry.Bytes - partialFreed);
                 }
 
                 // The ORIGINAL path, never the $R name: "$RA1B2C3.tmp" tells the user nothing about which
@@ -2098,12 +2099,22 @@ public class CleanupService(LoggingService logging)
     /// be enumerated; deleting its path would mean deleting a drive root, so it is never attempted.
     /// </summary>
     internal bool DeleteRecycledItem(CleanupEntry entry, string? ownSid) =>
-        DeleteRecycledItem(entry, ownSid, CleanupSafety.IsInsideOwnRecycleBin);
+        DeleteRecycledItem(entry, ownSid, out _);
+
+    /// <summary><paramref name="partialFreed"/> is what a folder item that could not be removed completely
+    /// still gave back; it is 0 for every other outcome.</summary>
+    internal bool DeleteRecycledItem(CleanupEntry entry, string? ownSid, out long partialFreed) =>
+        DeleteRecycledItem(entry, ownSid, CleanupSafety.IsInsideOwnRecycleBin, out partialFreed);
+
+    internal bool DeleteRecycledItem(CleanupEntry entry, string? ownSid, Func<string, string?, bool> isInsideOwnBin) =>
+        DeleteRecycledItem(entry, ownSid, isInsideOwnBin, out _);
 
     /// <summary><paramref name="isInsideOwnBin"/> is the path gate; tests pass their own, because a real bin
     /// only exists at a drive root.</summary>
-    internal bool DeleteRecycledItem(CleanupEntry entry, string? ownSid, Func<string, string?, bool> isInsideOwnBin)
+    internal bool DeleteRecycledItem(
+        CleanupEntry entry, string? ownSid, Func<string, string?, bool> isInsideOwnBin, out long partialFreed)
     {
+        partialFreed = 0;
         if (entry.OriginalPath is null)
         {
             logging.Warn(
@@ -2137,8 +2148,16 @@ public class CleanupService(LoggingService logging)
             {
                 // Links inside first, so nothing the walk meets can lead out of the recycled tree.
                 UnlinkReparsePoints(entry.Path);
-                if (Directory.Exists(entry.Path) && !DeletePipLeftoverTree(entry.Path).Removed)
-                    return false;
+                if (Directory.Exists(entry.Path))
+                {
+                    var (removed, freedHere) = DeletePipLeftoverTree(entry.Path);
+                    if (!removed)
+                    {
+                        // The walk deletes file by file: what went before the blocked one is really freed.
+                        partialFreed = freedHere;
+                        return false;
+                    }
+                }
             }
             else if (File.Exists(entry.Path))
             {

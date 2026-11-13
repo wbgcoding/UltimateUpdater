@@ -165,6 +165,12 @@ public static class CleanupWorker
                 // One target failing must never take the session down: the app is waiting for a "done"
                 // and would otherwise sit there for ever.
                 logging.Error($"Cleanup worker failed for '{target.Id}'", ex);
+
+                // A clean with no result looks like a dropped helper to the app, which would then redo the
+                // target without administrator rights. A failed result says what really happened. A scan
+                // needs nothing: the app marks a row with no scan message as not measured.
+                if (command.Command == "clean")
+                    Send(writer, jobId, new CleanupWorkerMessage { Type = "result", Id = target.Id, Failed = true });
             }
 
             DrainLog(writer, jobId);

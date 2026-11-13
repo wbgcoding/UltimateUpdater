@@ -68,6 +68,11 @@ public static class ElevationService
     /// </summary>
     private static FileStream? _selfImageLock;
 
+    /// <summary>Taken around every change of <see cref="_selfImageLock"/> and around the whole worker launch,
+    /// so a self-update swap cannot begin in the middle of a launch and no launch can begin while the image
+    /// is unpinned.</summary>
+    private static readonly object SelfImageGate = new();
+
     /// <summary>
     /// Call once, as early in startup as possible and only in the normal (non-worker) process, before
     /// anything could start an elevated job. Best effort: a machine where the image cannot be opened this
@@ -122,8 +127,13 @@ public static class ElevationService
                 return;
             }
 
-            var previous = _selfImageLock;
-            _selfImageLock = opened;
+            FileStream? previous;
+            lock (SelfImageGate)
+            {
+                previous = _selfImageLock;
+                _selfImageLock = opened;
+            }
+
             previous?.Dispose();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -193,6 +203,19 @@ public static class ElevationService
         _elevationRefused = true;
     }
 
+    /// <summary>Why a worker may not be launched right now, or null when it may: elevation was refused, or the
+    /// running image is not pinned (a portable self-update swap has it unlocked, so the path could name a
+    /// missing or half-replaced file).</summary>
+    internal static string? WorkerRefusalReason()
+    {
+        if (_elevationRefused)
+            return "this copy could not be locked against replacement";
+
+        return _selfImageLock is null
+            ? "the running executable is not locked against replacement right now (an update is replacing it)"
+            : null;
+    }
+
     /// <summary>Test seam: static state would otherwise leak between tests.</summary>
     internal static void ResetElevationRefusalForTests() => _elevationRefused = false;
 
@@ -205,12 +228,19 @@ public static class ElevationService
     /// </summary>
     public static (uint VolumeSerial, ulong FileIndex)? ReleaseSelfImageLock()
     {
+        // Waits for a launch that is already under way: the swap must not pull the image out from under it.
         (uint VolumeSerial, ulong FileIndex)? released = null;
-        if (_selfImageLock is { } held && Cleanup.VerifiedDelete.TryGetIdentity(held.SafeFileHandle, out var identity))
+        FileStream? previous;
+        lock (SelfImageGate)
+        {
+            previous = _selfImageLock;
+            _selfImageLock = null;
+        }
+
+        if (previous is not null && Cleanup.VerifiedDelete.TryGetIdentity(previous.SafeFileHandle, out var identity))
             released = identity;
 
-        _selfImageLock?.Dispose();
-        _selfImageLock = null;
+        previous?.Dispose();
         return released;
     }
 
@@ -241,12 +271,6 @@ public static class ElevationService
             throw new InvalidOperationException(
                 "Refusing to start a real elevated worker from the test process.");
 
-        if (_elevationRefused)
-        {
-            logging.Error("Refusing to start the elevated worker: this copy could not be locked against replacement.");
-            return null;
-        }
-
         // The elevated copy must not come up with a profiler, a standalone GC or a startup hook named by the
         // user's environment: the runtime would load it into the administrator process before any of our code
         // runs. Dropped from this process first, so nothing is handed on.
@@ -272,21 +296,32 @@ public static class ElevationService
         startInfo.ArgumentList.Add(pipeName);
         startInfo.ArgumentList.Add(Environment.ProcessId.ToString());
 
-        try
+        // The check and the launch share one gate with the lock swap, so the image cannot be released
+        // between them. A self-update swap waits here for the UAC prompt to be answered.
+        lock (SelfImageGate)
         {
-            return Process.Start(startInfo);
-        }
-        catch (System.ComponentModel.Win32Exception ex)
-        {
-            // 1223 = ERROR_CANCELLED, the user dismissed the UAC prompt
-            if (ex.NativeErrorCode == 1223)
+            if (WorkerRefusalReason() is { } why)
             {
-                logging.Info("Elevation declined by user.");
+                logging.Error($"Refusing to start the elevated worker: {why}.");
                 return null;
             }
 
-            logging.Error("Failed to start elevated worker", ex);
-            throw;
+            try
+            {
+                return Process.Start(startInfo);
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                // 1223 = ERROR_CANCELLED, the user dismissed the UAC prompt
+                if (ex.NativeErrorCode == 1223)
+                {
+                    logging.Info("Elevation declined by user.");
+                    return null;
+                }
+
+                logging.Error("Failed to start elevated worker", ex);
+                throw;
+            }
         }
     }
 }
