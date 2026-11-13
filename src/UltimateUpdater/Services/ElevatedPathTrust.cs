@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -195,25 +196,48 @@ internal static class ElevatedPathTrust
         return kept.Count > 0 ? string.Join(';', kept) : Environment.SystemDirectory;
     }
 
+    private const uint ReadControl = 0x00020000;
+    private const uint FileReadAttributes = 0x80;
+    private const uint ShareAll = 7; // read, write, delete: the check must never be what blocks a program
+    private const uint OpenExisting = 3;
+    private const uint BackupSemantics = 0x02000000;
+    private const uint OpenReparsePoint = 0x00200000;
+    private const uint ReparsePointAttribute = 0x400;
+    private const uint OwnerAndDacl = 1 | 4;
+
+    [DllImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetKernelObjectSecurity(
+        SafeFileHandle handle, uint requestedInformation, byte[]? descriptor, uint length, out uint lengthNeeded);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern uint GetLongPathNameW(string shortPath, char[] longPath, uint length);
+
     /// <summary>The directory under rule (a) and each of its ancestors up to the volume root under rule (b).</summary>
     internal static bool IsTrustedDirectory(string directory)
     {
+        var handles = new List<SafeFileHandle>();
         try
         {
-            var current = new DirectoryInfo(Path.GetFullPath(directory));
+            var path = ExpandShortNames(Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory)));
+            var current = new DirectoryInfo(path);
             var own = true;
 
             for (; current is not null; current = current.Parent)
             {
-                // The ACL read follows a junction or symlink to its TARGET, so a link the user created (where
-                // they may create folders) pointing at an admin-owned folder passed, and its owner could
-                // re-point it while the elevated child runs with that PATH. A real, admin-owned folder
-                // cannot be turned into a link by the user, so refusing links on the whole chain suffices.
-                if (current.Attributes.HasFlag(FileAttributes.ReparsePoint))
+                // One open per level, and everything is read from THAT handle: the attributes, the final path
+                // and the owner and ACL. A path-based read after a path-based check could see another folder
+                // than the one that was checked, and a junction or symlink (where the user may create
+                // folders) is followed by an ACL read, so its owner could re-point it while the elevated child
+                // runs with that PATH. Reparse points themselves are opened, not followed, and refused.
+                var handle = OpenDirectoryPinned(current.FullName);
+                if (handle is null)
                     return false;
 
-                var security = current.GetAccessControl(AccessControlSections.Access | AccessControlSections.Owner);
-                if (!(own ? IsSafeOwnDirectory(security) : IsSafeAncestor(security)))
+                handles.Add(handle);
+
+                var security = ReadOwnerAndAccess(handle);
+                if (security is null || !(own ? IsSafeOwnDirectory(security) : IsSafeAncestor(security)))
                     return false;
 
                 own = false;
@@ -223,9 +247,68 @@ internal static class ElevatedPathTrust
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException
                                        or NotSupportedException or SecurityException or InvalidOperationException
-                                       or PlatformNotSupportedException)
+                                       or PlatformNotSupportedException or OverflowException)
         {
             return false;
         }
+        finally
+        {
+            foreach (var handle in handles)
+                handle.Dispose();
+        }
+    }
+
+    /// <summary>A directory handle, or null when the directory is a reparse point, cannot be opened, or its
+    /// final path is not the path that was asked for (a link further up the chain).</summary>
+    private static SafeFileHandle? OpenDirectoryPinned(string path)
+    {
+        var handle = CleanupNative.CreateFileW(
+            path, ReadControl | FileReadAttributes, ShareAll, IntPtr.Zero, OpenExisting,
+            BackupSemantics | OpenReparsePoint, IntPtr.Zero);
+        if (handle.IsInvalid)
+        {
+            handle.Dispose();
+            return null;
+        }
+
+        if (!CleanupNative.GetFileInformationByHandle(handle, out var info)
+            || (info.FileAttributes & ReparsePointAttribute) != 0
+            || RegistryBackupService.TryGetFinalPath(handle) is not { } finalPath
+            || !string.Equals(
+                Path.TrimEndingDirectorySeparator(finalPath), Path.TrimEndingDirectorySeparator(path),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            handle.Dispose();
+            return null;
+        }
+
+        return handle;
+    }
+
+    private static DirectorySecurity? ReadOwnerAndAccess(SafeFileHandle handle)
+    {
+        GetKernelObjectSecurity(handle, OwnerAndDacl, null, 0, out var needed);
+        if (needed == 0 || needed > 64 * 1024)
+            return null;
+
+        var descriptor = new byte[needed];
+        if (!GetKernelObjectSecurity(handle, OwnerAndDacl, descriptor, needed, out _))
+            return null;
+
+        var security = new DirectorySecurity();
+        security.SetSecurityDescriptorBinaryForm(descriptor);
+        return security;
+    }
+
+    /// <summary>A PATH entry may spell a folder with its 8.3 name; the final path of its handle never does, so
+    /// the name is expanded first (this does not resolve links, so a junction still shows as a difference).</summary>
+    private static string ExpandShortNames(string path)
+    {
+        if (!path.Contains('~'))
+            return path;
+
+        var buffer = new char[1024];
+        var length = GetLongPathNameW(path, buffer, (uint)buffer.Length);
+        return length is > 0 and < 1024 ? new string(buffer, 0, (int)length) : path;
     }
 }

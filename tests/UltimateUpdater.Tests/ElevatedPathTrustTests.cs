@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.IO;
 using System.Security.AccessControl;
@@ -281,6 +282,50 @@ public class ElevatedPathTrustTests
 
             Assert.False(ElevatedPathTrust.IsTrustedLocation(viaLink, pin));
             Assert.Throws<UntrustedToolException>(() => ProcessRunner.ResolveForPrivilege(viaLink, elevated: true));
+        }
+        finally
+        {
+            Directory.Delete(link);
+            Directory.Delete(parent, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void System32_is_a_trusted_directory_and_the_user_temp_folder_is_not()
+    {
+        Assert.True(ElevatedPathTrust.IsTrustedDirectory(Environment.GetFolderPath(Environment.SpecialFolder.System)));
+        Assert.False(ElevatedPathTrust.IsTrustedDirectory(Path.GetTempPath()));
+    }
+
+    /// <summary>A PATH entry written with 8.3 names must not be dropped only because the check compares the
+    /// handle's final path with the spelling it was given.</summary>
+    [Fact]
+    public void A_short_name_spelling_of_a_trusted_directory_is_still_trusted()
+    {
+        var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        var buffer = new char[1024];
+        var length = GetShortPathNameW(programFiles, buffer, (uint)buffer.Length);
+        var shortForm = length > 0 ? new string(buffer, 0, (int)length) : programFiles;
+
+        Assert.True(ElevatedPathTrust.IsTrustedDirectory(shortForm));
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint GetShortPathNameW(string longPath, char[] shortPath, uint length);
+
+    /// <summary>The ACL read of a link follows it to the target, so a link the user made to System32 would pass
+    /// on its target's ACL; it is refused whether it is the directory itself or somewhere above it.</summary>
+    [Fact]
+    public void A_junction_as_the_directory_or_above_it_is_refused_even_when_it_points_at_system32()
+    {
+        var parent = Directory.CreateTempSubdirectory("wu-junction-dir-").FullName;
+        var link = Path.Combine(parent, "sys");
+        CreateJunction(link, Environment.GetFolderPath(Environment.SpecialFolder.System));
+
+        try
+        {
+            Assert.False(ElevatedPathTrust.IsTrustedDirectory(link));
+            Assert.False(ElevatedPathTrust.IsTrustedDirectory(Path.Combine(link, "drivers")));
         }
         finally
         {
