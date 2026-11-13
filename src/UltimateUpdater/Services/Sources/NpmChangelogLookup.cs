@@ -4,8 +4,9 @@ using System.Text.Json;
 namespace UltimateUpdater.Services.Sources;
 
 /// <summary>
-/// The npm half: on click only, `npm view &lt;package&gt; homepage repository --json` names the
-/// package's repository and homepage; never called during a scan or the registry-based background
+/// The npm half: on click only, `npm view &lt;package&gt; &lt;field&gt; --json` (once for "repository", once
+/// for "homepage": with two fields npm prints a bare value, not an object, when only one of them exists, so
+/// the field cannot be told from the output) names the package's repository and homepage; never called during a scan or the registry-based background
 /// enrichment (<c>NpmEnrichment</c> deliberately never touches the changelog fields, see its own doc
 /// comment, precisely so a changelog button pointing at the same URL its info-link already uses does not
 /// duplicate that button). Two real captured shapes back the parser (`npm view react homepage repository
@@ -23,9 +24,9 @@ public static class NpmChangelogLookup
     public readonly record struct NpmChangelogSource(string? RepositoryUrl, string? Homepage);
 
     /// <summary>
-    /// Runs `npm view &lt;package&gt; homepage repository --json`. Never throws: a missing/unpublished
-    /// package, a timeout, or npm itself being unavailable all degrade to an empty result, the same
-    /// discipline as every other on-click enrichment fetch in this project.
+    /// Runs `npm view &lt;package&gt; repository --json` and the same for `homepage`. Never throws: a
+    /// missing/unpublished package, a timeout, or npm itself being unavailable all degrade to an empty
+    /// result, the same discipline as every other on-click enrichment fetch in this project.
     /// </summary>
     public static async Task<NpmChangelogSource> LookupAsync(
         string packageName, LoggingService logging, CancellationToken cancellationToken)
@@ -33,11 +34,20 @@ public static class NpmChangelogLookup
         if (!ProcessRunner.IsSafePositionalArgument(packageName))
             return default;
 
+        var repository = ViewFieldAsync(packageName, "repository", logging, cancellationToken);
+        var homepage = ViewFieldAsync(packageName, "homepage", logging, cancellationToken);
+        await Task.WhenAll(repository, homepage);
+        return new NpmChangelogSource(repository.Result.RepositoryUrl, homepage.Result.Homepage);
+    }
+
+    private static async Task<NpmChangelogSource> ViewFieldAsync(
+        string packageName, string field, LoggingService logging, CancellationToken cancellationToken)
+    {
         ProcessResult result;
         try
         {
             result = await ProcessRunner.RunAsync(
-                "npm", ["view", packageName, "homepage", "repository", "--json"], LookupTimeout, cancellationToken);
+                "npm", ["view", packageName, field, "--json"], LookupTimeout, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -56,11 +66,16 @@ public static class NpmChangelogLookup
         if (result.TimedOut || result.ExitCode != 0)
             return default;
 
-        return ParseView(result.StandardOutput);
+        return ParseView(result.StandardOutput, field);
     }
 
-    /// <summary>Pure parse of the `--json` output above. Malformed or unexpected JSON returns an empty result, never throws.</summary>
-    public static NpmChangelogSource ParseView(string stdout)
+    /// <summary>
+    /// Pure parse of the `--json` output above. Malformed or unexpected JSON returns an empty result, never
+    /// throws. <paramref name="singleField"/> names the one field a single-field query asked for ("homepage"
+    /// or "repository"): its output is the bare value (a string, or for a repository possibly the object),
+    /// not wrapped in a key.
+    /// </summary>
+    public static NpmChangelogSource ParseView(string stdout, string? singleField = null)
     {
         if (string.IsNullOrWhiteSpace(stdout))
             return default;
@@ -78,6 +93,23 @@ public static class NpmChangelogLookup
         using (document)
         {
             var root = document.RootElement;
+            if (singleField is not null && root.ValueKind == JsonValueKind.String)
+            {
+                var text = root.GetString();
+                if (string.IsNullOrWhiteSpace(text))
+                    return default;
+
+                return singleField == "homepage" ? new NpmChangelogSource(null, text) : new NpmChangelogSource(text, null);
+            }
+
+            if (singleField == "repository" && root.ValueKind == JsonValueKind.Object
+                && !root.TryGetProperty("repository", out _)
+                && root.TryGetProperty("url", out var bareUrl) && bareUrl.ValueKind == JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(bareUrl.GetString()))
+            {
+                return new NpmChangelogSource(bareUrl.GetString(), null);
+            }
+
             if (root.ValueKind != JsonValueKind.Object)
                 return default;
 

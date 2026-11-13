@@ -51,7 +51,7 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
     private static readonly TimeSpan ManifestMaxAge = TimeSpan.FromHours(6);
     private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
     private readonly SemaphoreSlim _manifestGate = new(1, 1);
-    private IReadOnlyDictionary<string, PackageMetadataParsers.AndroidSdkPackageEntry>? _manifestIndex;
+    private IReadOnlyDictionary<string, IReadOnlyList<PackageMetadataParsers.AndroidSdkPackageEntry>>? _manifestIndex;
     private DateTimeOffset _manifestFetchedAt;
     private volatile bool _manifestFetched;
 
@@ -370,7 +370,7 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
 
     private bool ManifestIsFresh => _manifestFetched && _time.GetUtcNow() - _manifestFetchedAt < ManifestMaxAge;
 
-    internal async Task<IReadOnlyDictionary<string, PackageMetadataParsers.AndroidSdkPackageEntry>?> GetRepositoryIndexAsync(
+    internal async Task<IReadOnlyDictionary<string, IReadOnlyList<PackageMetadataParsers.AndroidSdkPackageEntry>>?> GetRepositoryIndexAsync(
         CancellationToken cancellationToken)
     {
         if (ManifestIsFresh)

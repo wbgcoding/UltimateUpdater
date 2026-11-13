@@ -173,7 +173,8 @@ public partial class MainViewModel
         var candidates = Expand(rows)
             .Where(row => row.CanInstall
                           && row.InstallState is RowInstallState.Idle or RowInstallState.Failed or RowInstallState.Cancelled
-                          && !_installPending.Contains(row))
+                          && !_installPending.Contains(row)
+                          && !_reinstallingKeys.Contains(PackageKey(row.Item)))
             .ToList();
         if (candidates.Count == 0)
             return;
@@ -205,7 +206,8 @@ public partial class MainViewModel
         var resolved = ResolveLiveRows(resolvedCandidates)
             .Where(row => row.CanInstall
                           && row.InstallState is RowInstallState.Idle or RowInstallState.Failed or RowInstallState.Cancelled
-                          && !_installPending.Contains(row))
+                          && !_installPending.Contains(row)
+                          && !_reinstallingKeys.Contains(PackageKey(row.Item)))
             .ToList();
 
         // The version-based part of the guarantee, on top of the scan-reconciliation fix that

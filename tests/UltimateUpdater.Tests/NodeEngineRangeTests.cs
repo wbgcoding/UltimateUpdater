@@ -20,6 +20,34 @@ public class NodeEngineRangeTests
         Assert.Equal(expected, NodeEngineRange.Satisfies(range, node));
     }
 
+    /// <summary>npm reads a bound with fewer than three parts as a range: "20" is 20.x, "20.1" is 20.1.x.</summary>
+    [Theory]
+    [InlineData("20", "20.11.0", true)]
+    [InlineData("20", "21.0.0", false)]
+    [InlineData("20.1", "20.1.7", true)]
+    [InlineData("20.1", "20.2.0", false)]
+    [InlineData("<=22", "22.5.0", true)]
+    [InlineData("<=22", "23.0.0", false)]
+    [InlineData("<=22.1", "22.1.9", true)]
+    [InlineData("<=22.1", "22.2.0", false)]
+    [InlineData(">16", "16.5.0", false)]
+    [InlineData(">16", "17.0.0", true)]
+    [InlineData(">16.2", "16.2.9", false)]
+    [InlineData(">16.2", "16.3.0", true)]
+    [InlineData("~20", "20.11.0", true)]
+    [InlineData("~20", "21.0.0", false)]
+    [InlineData("~20.1", "20.1.9", true)]
+    [InlineData("~20.1", "20.2.0", false)]
+    [InlineData("^0", "0.9.0", true)]
+    [InlineData("^0", "1.0.0", false)]
+    [InlineData("18 || 20 || >=22", "20.11.0", true)]
+    [InlineData(">=18 <=22", "22.5.0", true)]
+    [InlineData(">=18 <=22", "23.0.0", false)]
+    public void A_partial_version_is_a_range_not_its_zero_padded_point(string range, string node, bool expected)
+    {
+        Assert.Equal(expected, NodeEngineRange.Satisfies(range, node));
+    }
+
     [Theory]
     [InlineData("1.x", "20.0.0")]
     [InlineData("*", "20.0.0")]

@@ -30,6 +30,9 @@ public partial class MainViewModelTests
         /// <summary>What the scope lookup answers (null = not known).</summary>
         public string? InstalledScope { get; set; }
 
+        /// <summary>When set, the scope lookup waits for it: the seconds the real `winget list` takes.</summary>
+        public TaskCompletionSource? ScopeGate { get; set; }
+
         /// <summary>The scope each fresh install was asked for (null entry = none).</summary>
         public List<string?> FreshScopes { get; } = [];
 
@@ -67,10 +70,12 @@ public partial class MainViewModelTests
             return Task.FromResult(Fetchable);
         }
 
-        public Task<string?> GetInstalledScopeAsync(UpdateItem item, CancellationToken cancellationToken)
+        public async Task<string?> GetInstalledScopeAsync(UpdateItem item, CancellationToken cancellationToken)
         {
             Calls.Add("scope");
-            return Task.FromResult(InstalledScope);
+            if (ScopeGate is { } gate)
+                await gate.Task;
+            return InstalledScope;
         }
 
         public Task FreshInstallAsync(UpdateItem item, IProgress<InstallProgress> progress, CancellationToken cancellationToken)
@@ -364,6 +369,90 @@ public partial class MainViewModelTests
 
             Assert.Empty(source.Calls);
             Assert.Equal(0, confirms());
+        });
+    }
+
+    /// <summary>The reinstall holds its row from the lookup on: while it reads the scope (the row is still
+    /// Failed then), a second reinstall or an uninstall of the same package is refused, so the package is
+    /// never removed twice.</summary>
+    [Fact]
+    public void A_reinstall_under_way_refuses_a_second_reinstall_and_an_uninstall_of_the_same_row()
+    {
+        var warnings = new List<string>();
+        Dialogs.WarnObserverForTests = warnings.Add;
+        try
+        {
+            WithAttendedUi(() =>
+            {
+                var (viewModel, source, row, confirms) = CreateReinstall();
+                var gate = source.ScopeGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                viewModel.UninstallConfirmOverride = () => true;
+
+                var first = viewModel.ReinstallRowAsync(row);
+                Assert.Equal(["fetch", "scope"], source.Calls);
+
+                RunPumped(viewModel.ReinstallRowAsync(row));
+                RunPumped(viewModel.UninstallRowAsync(row));
+
+                var refusal = LocalizationService.Instance["UninstallBlockedByActivity"];
+                Assert.Equal([refusal, refusal], warnings);
+                Assert.Equal(["fetch", "scope"], source.Calls);
+                Assert.Equal(1, confirms());
+
+                gate.SetResult();
+                RunPumped(first);
+
+                Assert.Equal(["fetch", "scope", "uninstall", "fresh"], source.Calls);
+                Assert.Equal(RowInstallState.Succeeded, row.InstallState);
+            });
+        }
+        finally
+        {
+            Dialogs.WarnObserverForTests = null;
+        }
+    }
+
+    /// <summary>A Retry (or any install) clicked while the reinstall reads the scope must not queue the row:
+    /// the upgrade would run beside the removal of the same package.</summary>
+    [Fact]
+    public void A_retry_during_the_scope_lookup_of_a_reinstall_does_not_queue_an_install_beside_it()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, _) = CreateReinstall();
+            var gate = source.ScopeGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            var first = viewModel.ReinstallRowAsync(row);
+            Assert.Equal(["fetch", "scope"], source.Calls);
+
+            row.RetryCommand.Execute(null);
+            Pump(Task.Delay(600));
+
+            Assert.DoesNotContain("install", source.Calls);
+            Assert.Equal(RowInstallState.Failed, row.InstallState);
+
+            gate.SetResult();
+            RunPumped(first);
+
+            Assert.Equal(["fetch", "scope", "uninstall", "fresh"], source.Calls);
+            Assert.Equal(RowInstallState.Succeeded, row.InstallState);
+        });
+    }
+
+    [Fact]
+    public void A_declined_or_refused_reinstall_releases_its_hold_on_the_row()
+    {
+        WithAttendedUi(() =>
+        {
+            var (viewModel, source, row, _) = CreateReinstall();
+            source.Fetchable = false;
+            RunPumped(viewModel.ReinstallRowAsync(row));
+
+            source.Fetchable = true;
+            source.Calls.Clear();
+            RunPumped(viewModel.ReinstallRowAsync(row));
+
+            Assert.Equal(["fetch", "scope", "uninstall", "fresh"], source.Calls);
         });
     }
 }

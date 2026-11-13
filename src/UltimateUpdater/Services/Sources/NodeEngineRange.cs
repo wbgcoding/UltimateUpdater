@@ -84,29 +84,37 @@ public static class NodeEngineRange
                 ? comparator[..1]
                 : string.Empty;
 
-        if (!TryParseVersion(comparator[op.Length..], out var bound))
+        if (!TryParseVersion(comparator[op.Length..], out var bound, out var given))
             return null;
 
+        // npm reads a bound with fewer than three parts as a range ("20" = 20.x, "<=22" = <23.0.0,
+        // ">16" = >=17.0.0), so the zero-padded point would hide a valid update or offer an unsupported one.
+        var next = given == 1 ? new Version(bound.Major + 1, 0, 0) : new Version(bound.Major, bound.Minor + 1, 0);
+        var partial = given < 3;
         return op switch
         {
             ">=" => version >= bound,
-            ">" => version > bound,
-            "<=" => version <= bound,
+            ">" => partial ? version >= next : version > bound,
+            "<=" => partial ? version < next : version <= bound,
             "<" => version < bound,
-            "^" => version >= bound && version < CaretCeiling(bound),
-            "~" => version >= bound && version < new Version(bound.Major, bound.Minor + 1, 0),
-            _ => version == bound,
+            "^" => version >= bound && version < CaretCeiling(bound, given),
+            "~" => version >= bound && version < next,
+            _ => partial ? version >= bound && version < next : version == bound,
         };
     }
 
-    private static Version CaretCeiling(Version bound) =>
-        bound.Major > 0 ? new Version(bound.Major + 1, 0, 0)
-        : bound.Minor > 0 ? new Version(0, bound.Minor + 1, 0)
+    private static Version CaretCeiling(Version bound, int given) =>
+        bound.Major > 0 || given == 1 ? new Version(bound.Major + 1, 0, 0)
+        : bound.Minor > 0 || given == 2 ? new Version(0, bound.Minor + 1, 0)
         : new Version(0, 0, bound.Build + 1);
 
-    private static bool TryParseVersion(string? text, out Version version)
+    private static bool TryParseVersion(string? text, out Version version) => TryParseVersion(text, out version, out _);
+
+    /// <summary><paramref name="given"/> is how many of the three parts the text named.</summary>
+    private static bool TryParseVersion(string? text, out Version version, out int given)
     {
         version = new Version(0, 0, 0);
+        given = 0;
         if (string.IsNullOrWhiteSpace(text))
             return false;
 
@@ -127,6 +135,7 @@ public static class NodeEngineRange
         }
 
         version = new Version(numbers[0], numbers[1], numbers[2]);
+        given = parts.Length;
         return true;
     }
 }
