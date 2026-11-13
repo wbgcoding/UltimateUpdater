@@ -1762,6 +1762,12 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>Ponowna próba później zwykle pomaga.</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>System Windows anulował instalację tej aktualizacji.</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>Zwykle dzieje się tak, gdy Windows Update w tym samym czasie instaluje coś samodzielnie lub komputer się wyłącza. Spróbuj ponownie później; jeśli Windows już zainstalował aktualizację, wiersz zniknie przy następnym skanowaniu.</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>Własna usługa Windows Update nie odpowiedziała tak, jak oczekiwała ta aplikacja.</value>
   </data>

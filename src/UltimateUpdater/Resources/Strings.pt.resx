@@ -1762,6 +1762,12 @@ Continuar com direitos de administrador?</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>Tentar novamente mais tarde costuma ajudar.</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>O Windows cancelou a instalação desta atualização.</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>Isso costuma acontecer quando o Windows Update instala algo por conta própria ao mesmo tempo ou o PC está desligando. Tente novamente mais tarde; se o Windows já instalou a atualização, a linha desaparece na próxima verificação.</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>O serviço do próprio Windows Update não respondeu da forma esperada por este aplicativo.</value>
   </data>

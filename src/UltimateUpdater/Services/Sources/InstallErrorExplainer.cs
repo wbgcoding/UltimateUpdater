@@ -454,6 +454,9 @@ public static class InstallErrorExplainer
             "InstallErrorWuHresult8024002DWhat", [], "InstallErrorWuHresult8024002DNow", [], InstallErrorClassification.ManualWork),
         [unchecked((int)0x80240022)] = new(
             "InstallErrorWuHresult80240022What", [], "InstallErrorWuHresult80240022Now", [], InstallErrorClassification.Recoverable),
+        // ERROR_CANCELLED: Windows itself stopped the run (its own servicing at the same time, or shutdown).
+        [unchecked((int)0x800704C7)] = new(
+            "InstallErrorWuHresult800704C7What", [], "InstallErrorWuHresult800704C7Now", [], InstallErrorClassification.Recoverable),
     };
 
     private static readonly InstallErrorExplanation WuInternalFailureExplanation = new(

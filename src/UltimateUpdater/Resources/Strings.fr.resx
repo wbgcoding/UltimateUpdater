@@ -1762,6 +1762,12 @@ Continuer avec les droits administrateur ?</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>Réessayer plus tard aide généralement.</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>Windows a annulé l'installation de cette mise à jour.</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>Cela arrive surtout quand Windows Update installe de lui-même au même moment ou que le PC s'arrête. Réessayez plus tard ; si Windows a déjà installé la mise à jour, la ligne disparaît à la prochaine analyse.</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>Le service propre à Windows Update n'a pas répondu comme cette application l'attendait.</value>
   </data>

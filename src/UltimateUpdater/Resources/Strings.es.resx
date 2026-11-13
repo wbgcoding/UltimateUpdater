@@ -1762,6 +1762,12 @@ Esto no se puede deshacer.</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>Volver a intentarlo más tarde suele ayudar.</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>Windows canceló la instalación de esta actualización.</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>Suele ocurrir cuando Windows Update instala por su cuenta al mismo tiempo o el equipo se está apagando. Vuelve a intentarlo más tarde; si Windows ya instaló la actualización, la fila desaparece en la próxima búsqueda.</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>El propio servicio de Windows Update no respondió como esperaba esta aplicación.</value>
   </data>

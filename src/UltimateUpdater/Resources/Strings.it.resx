@@ -1762,6 +1762,12 @@ Continuare con privilegi di amministratore?</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>Riprovare più tardi di solito aiuta.</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>Windows ha annullato l'installazione di questo aggiornamento.</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>Di solito succede quando Windows Update installa da solo nello stesso momento o il PC si sta spegnendo. Riprova più tardi; se Windows ha già installato l'aggiornamento, la riga scompare alla prossima ricerca.</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>Il servizio di Windows Update non ha risposto nel modo previsto da questa app.</value>
   </data>

@@ -386,6 +386,7 @@ public class InstallErrorExplainerTests
     [InlineData("0x80070422", "InstallErrorWuHresult80070422What")]
     [InlineData("0x8024002D", "InstallErrorWuHresult8024002DWhat")]
     [InlineData("0x80240022", "InstallErrorWuHresult80240022What")]
+    [InlineData("0x800704C7", "InstallErrorWuHresult800704C7What")]
     public void Every_known_windows_update_hresult_is_recognized(string hex, string expectedKey)
     {
         var text = $"Windows Update install returned result code 4 (failed), HRESULT {hex}.";

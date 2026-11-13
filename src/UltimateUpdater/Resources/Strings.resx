@@ -1762,6 +1762,12 @@ Continue with admin rights?</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>Trying again later usually helps.</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>Windows cancelled the installation of this update.</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>This usually happens when Windows Update installs on its own at the same time or the PC is shutting down. Try again later; if Windows already installed the update, the row disappears with the next scan.</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>Windows Update's own service did not respond the way this app expected.</value>
   </data>

@@ -1762,6 +1762,12 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>稍后重试通常会有帮助。</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>Windows 取消了此更新的安装。</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>这通常发生在 Windows 更新同时自行安装或电脑正在关机时。请稍后重试；如果 Windows 已安装此更新，该行会在下次扫描时消失。</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>Windows 更新自身的服务未按此应用预期的方式响应。</value>
   </data>

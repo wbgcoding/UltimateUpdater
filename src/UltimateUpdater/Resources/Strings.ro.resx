@@ -1762,6 +1762,12 @@ Continuați cu drepturi de administrator?</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>A încerca din nou mai târziu ajută de obicei.</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>Windows a anulat instalarea acestei actualizări.</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>De obicei se întâmplă când Windows Update instalează singur în același timp sau PC-ul se închide. Încearcă din nou mai târziu; dacă Windows a instalat deja actualizarea, rândul dispare la următoarea scanare.</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>Propriul serviciu al Windows Update nu a răspuns așa cum se aștepta această aplicație.</value>
   </data>

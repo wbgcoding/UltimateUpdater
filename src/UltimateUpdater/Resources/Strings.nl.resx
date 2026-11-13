@@ -1762,6 +1762,12 @@ Doorgaan met beheerdersrechten?</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>Het later opnieuw proberen helpt meestal.</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>Windows heeft de installatie van deze update geannuleerd.</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>Dit gebeurt meestal als Windows Update tegelijk zelf installeert of de pc wordt afgesloten. Probeer het later opnieuw; heeft Windows de update al geïnstalleerd, dan verdwijnt de rij bij de volgende scan.</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>De eigen service van Windows Update reageerde niet zoals deze app verwachtte.</value>
   </data>

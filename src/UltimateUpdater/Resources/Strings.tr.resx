@@ -1762,6 +1762,12 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>Daha sonra tekrar denemek genellikle yardımcı olur.</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>Windows bu güncelleştirmenin yüklenmesini iptal etti.</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>Bu genellikle Windows Update aynı anda kendi yüklemesini yaparken veya bilgisayar kapanırken olur. Daha sonra tekrar deneyin; Windows güncelleştirmeyi zaten yüklediyse satır bir sonraki taramada kaybolur.</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>Windows Update'in kendi hizmeti bu uygulamanın beklediği şekilde yanıt vermedi.</value>
   </data>

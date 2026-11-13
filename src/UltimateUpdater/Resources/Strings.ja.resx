@@ -1762,6 +1762,12 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="InstallErrorWuHresult80240022Now" xml:space="preserve">
     <value>後でもう一度試すと通常うまくいきます。</value>
   </data>
+  <data name="InstallErrorWuHresult800704C7What" xml:space="preserve">
+    <value>Windows がこの更新プログラムのインストールを取り消しました。</value>
+  </data>
+  <data name="InstallErrorWuHresult800704C7Now" xml:space="preserve">
+    <value>Windows Update が同時に独自にインストールしているときや、PC がシャットダウン中のときによく起こります。後でもう一度試してください。Windows がすでに更新プログラムをインストールしていれば、次回の検索でこの行は消えます。</value>
+  </data>
   <data name="InstallErrorWuInternalWhat" xml:space="preserve">
     <value>Windows Update 自体のサービスがこのアプリの想定どおりに応答しませんでした。</value>
   </data>
