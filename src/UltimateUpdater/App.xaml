@@ -25,6 +25,9 @@
             <Style x:Key="TitleBarAppIcon" TargetType="ui:ImageIcon">
                 <Setter Property="Width" Value="20"/>
                 <Setter Property="Height" Value="20"/>
+                <!-- WPF-UI's title bar template gives its icon slot a fixed 16 px height and clips anything
+                     taller; the negative margin lets the 20 px icon claim exactly that slot and draw past it. -->
+                <Setter Property="Margin" Value="0,-2"/>
                 <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
             </Style>
 

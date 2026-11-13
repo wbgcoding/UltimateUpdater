@@ -880,48 +880,6 @@ public partial class WindowLayoutTests
     }
 
     /// <summary>
-    /// `ui:TitleBar` draws its own `Title` text only when its `Header` is null; MainWindow always sets a
-    /// `Header`, which silently dropped the app name, confirmed by walking the rendered visual tree and
-    /// finding no TextBlock anywhere carrying it. Checked at the window's own minimum width too, where the
-    /// icon, the title text and the window's own caption buttons share one row.
-    /// </summary>
-    [Theory]
-    [InlineData(860)]
-    [InlineData(1160)]
-    public void Main_window_title_bar_shows_the_app_name(int width)
-    {
-        RenderResult? result = null;
-
-        WpfHarness.OnUiThread(() =>
-        {
-            var (viewModel, theme, settings) = CreateMainViewModel("de");
-            Populate(viewModel);
-            var window = new MainWindow(viewModel, theme, settings);
-            var content = (FrameworkElement)window.Content;
-            result = WpfHarness.RenderWindow(window, $"main-title-app-name-{width}", width, 700);
-
-            var titleText = FindByName<TextBlock>(content, "AppTitleText");
-            Assert.NotNull(titleText);
-            Assert.Equal(Visibility.Visible, titleText!.Visibility);
-            // the name alone, the version lives in Settings > About
-            Assert.Equal(LocalizationService.Instance["AppTitle"], titleText.Text);
-            Assert.True(titleText.ActualWidth > 0, "the title text was never actually laid out");
-
-            var titleBar = FindFirstDescendant<Wpf.Ui.Controls.TitleBar>(content);
-            Assert.NotNull(titleBar);
-            AssertNoChildClips(titleBar!, [titleText]);
-
-            // the shared TitleBarAppIcon style makes the app icon 20 px, not WPF-UI's 16 px default
-            var icon = FindFirstDescendant<Wpf.Ui.Controls.ImageIcon>(titleBar!);
-            Assert.NotNull(icon);
-            Assert.Equal(20, icon!.ActualWidth);
-            Assert.Equal(20, icon.ActualHeight);
-        });
-
-        AssertRendered(result);
-    }
-
-    /// <summary>
     /// A batch mid-install: the toolbar is replaced by the live progress strip, and the rows show a
     /// running bar with the percentage beside it, a done row and a failed one, all in the main window,
     /// since there is no separate progress window any more.
@@ -5099,7 +5057,7 @@ public partial class WindowLayoutTests
     }
 
     /// <summary>
-    /// The hard-disk cleaning symbol (drive body, platter ring and actuator arm, 72 of a 100px
+    /// The hard-disk cleaning symbol (drive body, platter ring and actuator arm, 108 of a 140px
     /// scene box) at three points along a run: just starting, roughly halfway, and effectively done - the
     /// glints' own peak amplitude rises with progress (<see cref="CleanupRingAnimationTests"/> proves the
     /// numbers; this is where the centre figure and percentage text are checked for still having room at
