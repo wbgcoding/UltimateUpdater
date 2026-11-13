@@ -33,6 +33,11 @@ versioning: [SemVer](https://semver.org).
 - When every GitHub lookup fails, the source names the reason; a reached GitHub limit says when lookups
   work again.
 - Settings sections open and close smoothly, and the About section shows the app icon.
+- The app icon in the title bar of every window is no longer cut off.
+- History, cleanup and other windows open without an empty frame flashing up first, and the larger
+  windows open faster.
+- A download no longer shows a size of a few bytes when the tool prints a step counter.
+- A Windows update that Windows itself cancelled says so in plain words.
 
 ### Cleanup
 - The status card beside the ring is new: "Area 7 of 14" with a bar, the current area and file, the
@@ -41,6 +46,9 @@ versioning: [SemVer](https://semver.org).
   of the list, already before cleaning.
 - The list card has clean rounded corners.
 - The main window's Clean up button shows the percentage while a cleanup runs.
+- The drive in the middle of the ring is larger and fills the circle.
+- Stop no longer lets a system repair start that had not begun yet; only a repair already running is
+  finished, and only then does the dialog say so.
 
 ## [1.1.2] - 2026-10-30
 
