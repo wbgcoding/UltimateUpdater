@@ -10,6 +10,8 @@ public class ProgressParserTests
     [InlineData("Downloading the package")]
     [InlineData("Installing…")]
     [InlineData("resolved 12 packages in 3s")]
+    [InlineData("1/7 Bereit")]
+    [InlineData("Step 2/7 Building")]
     public void Text_with_no_reading_yields_null(string segment)
     {
         Assert.Null(ProgressParser.Parse(segment));

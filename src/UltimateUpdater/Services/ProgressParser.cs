@@ -15,11 +15,12 @@ public readonly record struct ProgressSample(double? Percent, long? BytesReceive
 public static partial class ProgressParser
 {
     // "1.23 MB / 45.6 MB"; winget-style, a size unit after each number.
-    [GeneratedRegex(@"([\d.,]+)\s*(B|KB|KiB|MB|MiB|GB|GiB)\s*/\s*([\d.,]+)\s*(B|KB|KiB|MB|MiB|GB|GiB)", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"([\d.,]+)\s*(B|KB|KiB|MB|MiB|GB|GiB)\s*/\s*([\d.,]+)\s*(B|KB|KiB|MB|MiB|GB|GiB)(?![a-z])", RegexOptions.IgnoreCase)]
     private static partial Regex TwoUnitTransferRegex();
 
-    // "2.5/5.0 MB"; pip-style, one shared unit after the pair.
-    [GeneratedRegex(@"([\d.,]+)\s*/\s*([\d.,]+)\s*(B|KB|KiB|MB|MiB|GB|GiB)", RegexOptions.IgnoreCase)]
+    // "2.5/5.0 MB"; pip-style, one shared unit after the pair. Neither pattern accepts a unit that runs
+    // straight into a letter: a step counter such as "1/7 Bereit" otherwise read as a 7-byte download.
+    [GeneratedRegex(@"([\d.,]+)\s*/\s*([\d.,]+)\s*(B|KB|KiB|MB|MiB|GB|GiB)(?![a-z])", RegexOptions.IgnoreCase)]
     private static partial Regex SharedUnitTransferRegex();
 
     // A standalone percentage: "45%", "45 %", "45.0%", "66,6%". A comma is accepted as a decimal mark
