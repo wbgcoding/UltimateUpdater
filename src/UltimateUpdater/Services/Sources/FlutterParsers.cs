@@ -29,13 +29,15 @@ public static class FlutterParsers
 
         // A first run prints tool bootstrap lines ("Building flutter tool...", download progress) before the
         // JSON, so the object starts at the first brace and not at the start of the output.
+        // Notices can also follow it (analytics or upgrade banners), so it ends at the last closing brace.
         var start = json.IndexOf('{');
-        if (start < 0)
+        var end = json.LastIndexOf('}');
+        if (start < 0 || end < start)
             return null;
 
         try
         {
-            using var document = JsonDocument.Parse(json.AsMemory(start));
+            using var document = JsonDocument.Parse(json.AsMemory(start, end - start + 1));
             var root = document.RootElement;
             if (root.ValueKind != JsonValueKind.Object)
                 return null;

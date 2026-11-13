@@ -17,6 +17,15 @@ public class FlutterParserEdgeTests
     public void An_installed_report_missing_either_half_is_not_a_version(string json) =>
         Assert.Null(FlutterParsers.ParseInstalled(json));
 
+    [Fact]
+    public void A_notice_after_the_installed_report_still_reads_the_version()
+    {
+        var installed = FlutterParsers.ParseInstalled(
+            "{\"frameworkVersion\":\"3.1.0\",\"channel\":\"stable\"}\r\nA new version of Flutter is available!\r\n");
+
+        Assert.Equal(new FlutterInstalled("3.1.0", "stable"), installed);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
