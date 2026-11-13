@@ -609,6 +609,50 @@ public class EnrichmentAndDiagnosticsTests
         Assert.Equal(sizeKnown ? 12345678 : null, AndroidSize(AndroidSdkManifest, "platform-tools", offered));
     }
 
+    // The live manifest lists one release per channel under the same path, and the first is not always the
+    // stable one (emulator, platform-tools), or is a preview (ndk-bundle).
+    private const string AndroidSdkChannelManifest = """
+        <sdk:sdk-repository xmlns:sdk="http://schemas.android.com/sdk/android/repo/repository2/3">
+          <remotePackage path="emulator">
+            <revision><major>37</major><minor>3</minor><micro>9</micro></revision>
+            <channelRef ref="channel-1"/>
+            <archives><archive><complete><size>3000</size></complete><host-os>windows</host-os></archive></archives>
+          </remotePackage>
+          <remotePackage path="emulator">
+            <revision><major>37</major><minor>2</minor><micro>13</micro></revision>
+            <channelRef ref="channel-0"/>
+            <archives><archive><complete><size>2000</size></complete><host-os>windows</host-os></archive></archives>
+          </remotePackage>
+          <remotePackage path="ndk-bundle">
+            <revision><major>23</major><minor>0</minor><micro>7344513</micro><preview>4</preview></revision>
+            <channelRef ref="channel-1"/>
+            <archives><archive><complete><size>900</size></complete><host-os>windows</host-os></archive></archives>
+          </remotePackage>
+          <remotePackage path="ndk-bundle">
+            <revision><major>22</major><minor>1</minor><micro>7171670</micro></revision>
+            <channelRef ref="channel-0"/>
+            <archives><archive><complete><size>800</size></complete><host-os>windows</host-os></archive></archives>
+          </remotePackage>
+        </sdk:sdk-repository>
+        """;
+
+    [Theory]
+    [InlineData("emulator", "37.2.13", 2000)]
+    [InlineData("emulator", "37.3.9", 3000)]
+    [InlineData("emulator", "36.0.0", null)]
+    [InlineData("ndk-bundle", "22.1.7171670", 800)]
+    [InlineData("ndk-bundle", "23.0.7344513", null)]
+    public void Android_sdk_size_comes_from_the_channel_whose_revision_is_offered(string path, string offered, int? expected)
+    {
+        Assert.Equal(expected, AndroidSize(AndroidSdkChannelManifest, path, offered));
+    }
+
+    [Fact]
+    public void Android_sdk_size_without_a_comparable_offer_uses_the_first_stable_release()
+    {
+        Assert.Equal(800, AndroidSize(AndroidSdkChannelManifest, "ndk-bundle", null));
+    }
+
     [Fact]
     public void Packagist_missing_package_or_version_yields_nothing()
     {

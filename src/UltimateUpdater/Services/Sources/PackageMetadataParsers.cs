@@ -304,23 +304,25 @@ public static class PackageMetadataParsers
     }
 
     /// <summary>
-    /// One package of Google's Android SDK repository manifest: the revision it currently ships (null when
-    /// it has none or is a preview, whose text `sdkmanager` writes differently) and its Windows archive size.
+    /// One release of a package in Google's Android SDK repository manifest: its revision (null when it has
+    /// none), whether it is a preview (whose text `sdkmanager` writes differently) and its Windows archive size.
     /// </summary>
-    public sealed record AndroidSdkPackageEntry(string? Revision, long Size);
+    public sealed record AndroidSdkPackageEntry(string? Revision, bool IsPreview, long Size);
 
     /// <summary>
     /// Google's Android SDK repository manifest (`dl.google.com/android/repository/repository2-3.xml`)
-    /// parsed ONCE into one entry per package, keyed by its exact `path` attribute (the same string
+    /// parsed ONCE into the entries of each package, keyed by its exact `path` attribute (the same string
     /// `sdkmanager --list` uses as the package id, e.g. "build-tools;35.0.1", verified live). A manifest
-    /// runs to several MB, so the caller keeps this index instead of parsing it again per row.
+    /// runs to several MB, so the caller keeps this index instead of parsing it again per row. One path lists
+    /// a release per channel (stable, beta, preview) and the stable one is not always first, so every release
+    /// is kept and <see cref="AndroidSdkPackageSize"/> picks the offered one.
     /// No date: the manifest carries a revision number, not a publish date, matching what `sdkmanager`
     /// itself already shows. A package with no Windows archive (rare) gets no entry rather than a foreign
     /// platform's size. Not a manifest at all yields an empty index.
     /// </summary>
-    public static IReadOnlyDictionary<string, AndroidSdkPackageEntry> ParseAndroidSdkPackageIndex(string xml)
+    public static IReadOnlyDictionary<string, IReadOnlyList<AndroidSdkPackageEntry>> ParseAndroidSdkPackageIndex(string xml)
     {
-        var index = new Dictionary<string, AndroidSdkPackageEntry>(StringComparer.Ordinal);
+        var index = new Dictionary<string, IReadOnlyList<AndroidSdkPackageEntry>>(StringComparer.Ordinal);
         if (string.IsNullOrWhiteSpace(xml))
             return index;
 
@@ -333,7 +335,7 @@ public static class PackageMetadataParsers
             foreach (var package in root.Elements().Where(e => e.Name.LocalName == "remotePackage"))
             {
                 var path = (string?)package.Attribute("path");
-                if (string.IsNullOrWhiteSpace(path) || index.ContainsKey(path))
+                if (string.IsNullOrWhiteSpace(path))
                     continue;
 
                 var archives = package.Elements().FirstOrDefault(e => e.Name.LocalName == "archives");
@@ -350,7 +352,11 @@ public static class PackageMetadataParsers
                     var sizeText = complete?.Elements().FirstOrDefault(e => e.Name.LocalName == "size")?.Value;
                     if (long.TryParse(sizeText, out var bytes) && bytes > 0)
                     {
-                        index[path] = new AndroidSdkPackageEntry(ReadAndroidRevision(package), bytes);
+                        var (revision, isPreview) = ReadAndroidRevision(package);
+                        if (!index.TryGetValue(path, out var releases))
+                            index[path] = releases = new List<AndroidSdkPackageEntry>();
+
+                        ((List<AndroidSdkPackageEntry>)releases).Add(new AndroidSdkPackageEntry(revision, isPreview, bytes));
                         break;
                     }
                 }
@@ -360,41 +366,40 @@ public static class PackageMetadataParsers
         }
         catch (System.Xml.XmlException)
         {
-            return new Dictionary<string, AndroidSdkPackageEntry>(StringComparer.Ordinal);
+            return new Dictionary<string, IReadOnlyList<AndroidSdkPackageEntry>>(StringComparer.Ordinal);
         }
     }
 
     /// <summary>
-    /// The archive size for one package, but only when it is the revision the row offers: the manifest
-    /// always describes the NEWEST release, so a row whose offered version differs (the manifest moved on
-    /// since the scan, or the scan's listing is the older one) must show no size rather than another
-    /// release's. A revision or offered version that cannot be compared as plain numbers is not held against
-    /// the entry.
+    /// The archive size for one package, taken from the release the row offers: the manifest lists several
+    /// channels per path, so the entry whose revision equals the offered version is used, never another
+    /// release's size. A preview release is never the answer for a plain numeric offer (a stable offer
+    /// must not show a preview's size). A revision or offered version that cannot be compared as plain
+    /// numbers is not held against the entry: the first stable release answers then.
     /// </summary>
     public static long? AndroidSdkPackageSize(
-        IReadOnlyDictionary<string, AndroidSdkPackageEntry> index, string packagePath, string? offeredVersion)
+        IReadOnlyDictionary<string, IReadOnlyList<AndroidSdkPackageEntry>> index, string packagePath, string? offeredVersion)
     {
-        if (string.IsNullOrWhiteSpace(packagePath) || !index.TryGetValue(packagePath, out var entry))
+        if (string.IsNullOrWhiteSpace(packagePath) || !index.TryGetValue(packagePath, out var releases) || releases.Count == 0)
             return null;
 
-        if (entry.Revision is not null
-            && TrimmedNumericVersion(entry.Revision) is { } manifestVersion
-            && TrimmedNumericVersion(offeredVersion) is { } offered
-            && manifestVersion != offered)
-        {
-            return null;
-        }
+        var stable = releases.Where(release => !release.IsPreview).ToList();
+        if (TrimmedNumericVersion(offeredVersion) is not { } offered)
+            return (stable.FirstOrDefault() ?? releases[0]).Size;
 
-        return entry.Size;
+        return (stable.FirstOrDefault(release => TrimmedNumericVersion(release.Revision) == offered)
+            ?? stable.FirstOrDefault(release => TrimmedNumericVersion(release.Revision) is null))?.Size;
     }
 
-    /// <summary>"major.minor.micro" from a package's <c>revision</c> element; null for a preview or no revision.</summary>
-    private static string? ReadAndroidRevision(System.Xml.Linq.XElement package)
+    /// <summary>"major.minor.micro" from a package's <c>revision</c> element (null when it has none) and
+    /// whether that revision is a preview.</summary>
+    private static (string? Revision, bool IsPreview) ReadAndroidRevision(System.Xml.Linq.XElement package)
     {
         var revision = package.Elements().FirstOrDefault(e => e.Name.LocalName == "revision");
-        if (revision is null || revision.Elements().Any(e => e.Name.LocalName == "preview"))
-            return null;
+        if (revision is null)
+            return (null, false);
 
+        var isPreview = revision.Elements().Any(e => e.Name.LocalName == "preview");
         var parts = new List<string>();
         foreach (var name in new[] { "major", "minor", "micro" })
         {
@@ -405,7 +410,7 @@ public static class PackageMetadataParsers
             parts.Add(value.Trim());
         }
 
-        return parts.Count == 0 ? null : string.Join('.', parts);
+        return (parts.Count == 0 ? null : string.Join('.', parts), isPreview);
     }
 
     /// <summary>Dotted numbers with trailing ".0" parts dropped ("13.0" and "13.0.0" compare equal), or null
