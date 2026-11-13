@@ -278,8 +278,16 @@ if not defined ISCC if exist "%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" set
 if not defined ISCC if exist "%PF86%\Inno Setup 6\ISCC.exe" set "ISCC=%PF86%\Inno Setup 6\ISCC.exe"
 if not defined ISCC if exist "%ProgramFiles%\Inno Setup 6\ISCC.exe" set "ISCC=%ProgramFiles%\Inno Setup 6\ISCC.exe"
 
+set "NOSETUP="
 if not defined ISCC (
-    echo WARNING: Inno Setup ^(ISCC.exe^) not found - skipping the installer.
+    if "%WU_RELEASE%"=="1" (
+        echo ERROR: WU_RELEASE=1 but Inno Setup ^(ISCC.exe^) was not found, so this build could not be shipped.
+        goto :error
+    )
+    rem No Setup in dist means the build is incomplete: no freshness stamp is saved below, so the next plain run
+    rem builds again once Inno Setup is installed instead of reporting "up to date".
+    set "NOSETUP=1"
+    echo WARNING: Inno Setup ^(ISCC.exe^) not found - skipping the installer and not marking this build up to date.
 ) else (
     echo Using "%ISCC%"
     rem Compiled outside dist and moved in finished: anything that opens a new exe the moment it
@@ -354,7 +362,7 @@ echo.
 rem === build freshness: save (every final file in dist: exes, signatures, checksums) ===
 set "BSART=dist\UltimateUpdater.exe"
 for %%f in ("%DIST%\*.exe" "%DIST%\*.sig" "%DIST%\SHA256SUMS.txt") do if /i not "%%~nxf"=="UltimateUpdater.exe" set "BSART=!BSART!,dist\%%~nxf"
-if exist "%BS%" powershell -NoProfile -ExecutionPolicy RemoteSigned -File "%BS%" -Save -Project "%~dp0." -Key "%BSKEY%" -Extra "%BSEXTRA%" -Artifact "!BSART!" >nul 2>&1
+if not defined NOSETUP if exist "%BS%" powershell -NoProfile -ExecutionPolicy RemoteSigned -File "%BS%" -Save -Project "%~dp0." -Key "%BSKEY%" -Extra "%BSEXTRA%" -Artifact "!BSART!" >nul 2>&1
 echo BUILD OK - artifacts are in dist\.
 if defined INTERACTIVE "%SystemRoot%\System32\timeout.exe" /t 10
 endlocal

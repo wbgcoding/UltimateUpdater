@@ -404,4 +404,20 @@ end;", RegexOptions.Singleline);
             "x64 must be tried before arm64");
     }
 
+    [Fact]
+    public void A_missing_installer_compiler_never_marks_the_build_up_to_date_and_fails_a_release()
+    {
+        var build = ReadBuildScript();
+        var start = build.IndexOf("if not defined ISCC (", StringComparison.Ordinal);
+        Assert.True(start >= 0, "the installer block is gone");
+        var missing = build[start..build.IndexOf(") else (", start, StringComparison.Ordinal)];
+
+        var release = missing.IndexOf("if \"%WU_RELEASE%\"==\"1\" (", StringComparison.Ordinal);
+        Assert.True(release >= 0, "WU_RELEASE=1 must be refused when ISCC is missing");
+        Assert.Contains("goto :error", missing[release..missing.IndexOf("set \"NOSETUP=1\"", StringComparison.Ordinal)]);
+
+        var save = build.IndexOf("-Save", StringComparison.Ordinal);
+        var saveLine = build[build.LastIndexOf('\n', save)..save];
+        Assert.Contains("if not defined NOSETUP", saveLine);
+    }
 }
