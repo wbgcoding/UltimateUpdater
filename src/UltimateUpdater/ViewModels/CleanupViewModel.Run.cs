@@ -161,11 +161,22 @@ public partial class CleanupViewModel
         // Everything else ends within a moment; a repair step does not, and saying nothing about that is
         // what made a stopped run look like it was still going behind the user's back. The sfc and DISM steps are
         // deliberately never killed; DISM half way through restoring the component store can leave it
-        // inconsistent, so the dialog says so instead of pretending.
-        IsStoppingRepair = Items.Any(i => i.IsCleaning && i.Target.Kind == CleanupKind.SystemRepair);
+        // inconsistent, so the dialog says so instead of pretending. Only a repair that has really begun counts:
+        // a row is marked running the moment its job is handed over, long before the helper has a free slot
+        // for it, and a job still queued is simply skipped once the stop reaches it.
+        _stopRequested = true;
+        IsStoppingRepair = Items.Any(i =>
+            i.IsCleaning && i.Target.Kind == CleanupKind.SystemRepair && _startedRepairs.Contains(i));
 
         _cleanCts?.Cancel();
     }
+
+    /// <summary>The repair rows whose tool has reported its first step in this run: the proof that the repair
+    /// really began, as opposed to a row that is only waiting for the helper to take its job.</summary>
+    private readonly HashSet<CleanupItemViewModel> _startedRepairs = [];
+
+    /// <summary>Stop was pressed during the current run.</summary>
+    private bool _stopRequested;
 
     /// <summary>A repair step is finishing after the user asked to stop, because it cannot be interrupted.</summary>
     [ObservableProperty]
@@ -398,6 +409,8 @@ public partial class CleanupViewModel
         _recycleInsteadOfDeleteForRun = _settings.Current.CleanupRecycleInsteadOfDelete;
 
         _cleanCts = new CancellationTokenSource();
+        _stopRequested = false;
+        _startedRepairs.Clear();
 
         // Decided again from what is ticked NOW: the scan asked only for what was ticked then, and a target
         // that needs administrator rights ticked afterwards would otherwise run unelevated without a word.
@@ -520,6 +533,7 @@ public partial class CleanupViewModel
             _pause.Resume();
             IsPaused = false;
             IsStoppingRepair = false;
+            _startedRepairs.Clear();
 
             _entryProgressTimer.Stop();
             _pendingEntryProgress.Clear();
@@ -721,6 +735,12 @@ public partial class CleanupViewModel
 
         var progress = new Progress<CleanupProgress>(report =>
         {
+            // The first report of a repair step is sent as the step begins, so it is what tells a repair that
+            // is running from one still queued. Reports of a finished row are ignored: they can arrive late.
+            if (item.IsCleaning && item.Target.Kind == CleanupKind.SystemRepair
+                && _startedRepairs.Add(item) && _stopRequested)
+                IsStoppingRepair = true;
+
             var reported = report.FreedBytes + reportBase;
 
             // A report is posted, so a last one can arrive after the target has settled its figure.
@@ -779,6 +799,10 @@ public partial class CleanupViewModel
             // reports from zero again on top of it, and the helper's part is added to its outcome.
             async Task<CleanupOutcome> FallBackLocallyAsync()
             {
+                // A job the helper dropped because of the stop (still queued, never started) answers with no
+                // result. That is a stop, not a lost helper: redoing the target here would run it after Stop.
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var freedByHelper = liveFreed;
                 reportBase = freedByHelper;
                 var local = await CleanLocallyAsync();

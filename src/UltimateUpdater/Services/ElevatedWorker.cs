@@ -780,6 +780,12 @@ public static class ElevatedWorker
                 held = true;
             }
 
+            // A stop that landed in the instant the slot was granted must still end the job here: from this
+            // point a repair runs to its end and is never interrupted, so it must not be begun after a stop.
+            // Installs are left alone: they report a stopped item by item themselves.
+            if (job.Kind != "install")
+                control.Cancellation.Token.ThrowIfCancellationRequested();
+
             if (job.Kind == "install")
                 await RunInstallAsync(job, writer, logging, control);
             else
