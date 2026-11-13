@@ -256,7 +256,7 @@ public static class ParallelismAutoTune
         var step = 0;
         if (processorCount > 8 && totalRamBytes >= 16 * GigaByte)
             step = 2;
-        else if (processorCount is >= 5 and <= 8 && totalRamBytes >= 8 * GigaByte)
+        else if (processorCount >= 5 && totalRamBytes >= 8 * GigaByte)
             step = 1;
 
         // A battery-powered machine drops one step in both numbers; a machine already at the lowest

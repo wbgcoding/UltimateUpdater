@@ -49,6 +49,22 @@ public class ParallelismAutoTuneTests
         Assert.Equal(1, result.MaxParallelInstalls);
     }
 
+    /// <summary>The middle shape needs 8 GB and five cores, with no upper bound: more cores never earn a
+    /// lower shape than fewer ones.</summary>
+    [Theory]
+    [InlineData(5, 8, 8, 2)]
+    [InlineData(8, 8, 8, 2)]
+    [InlineData(12, 8, 8, 2)]
+    [InlineData(32, 15, 8, 2)]
+    [InlineData(12, 16, 12, 3)]
+    [InlineData(4, 8, 4, 1)]
+    public void More_cores_never_lower_the_shape(int cores, int ramGb, int sources, int installs)
+    {
+        var result = ParallelismAutoTune.Compute(cores, ramGb * GigaByte, hasBattery: false);
+
+        Assert.Equal((sources, installs), (result.MaxParallelSources, result.MaxParallelInstalls));
+    }
+
     [Theory]
     [InlineData(16, 32, 12, 3, 8, 2)]
     [InlineData(6, 8, 8, 2, 4, 1)]
