@@ -21,6 +21,14 @@ public class NativeLoadEnvironmentTests
             "DOTNET_CreateDumpVerboseDiagnostics", "DOTNET_CreateDumpLogToFile",
             "COMPlus_DbgEnableMiniDump", "COMPlus_DbgMiniDumpName", "COMPlus_CreateDumpDiagnostics",
             "COMPlus_CreateDumpVerboseDiagnostics", "COMPlus_CreateDumpLogToFile",
+            "CORECLR_PROFILER_PATH_ARM32", "CORECLR_PROFILER_PATH_ARM64",
+            "CORECLR_ENABLE_NOTIFICATION_PROFILERS", "CORECLR_NOTIFICATION_PROFILERS",
+            "CORECLR_NOTIFICATION_PROFILERS_32", "CORECLR_NOTIFICATION_PROFILERS_64",
+            "CORECLR_NOTIFICATION_PROFILERS_ARM32", "CORECLR_NOTIFICATION_PROFILERS_ARM64",
+            "DOTNET_DiagnosticPorts", "COMPlus_DiagnosticPorts",
+            "DOTNET_DefaultDiagnosticPortSuspend", "COMPlus_DefaultDiagnosticPortSuspend",
+            "DOTNET_StressLog", "DOTNET_StressLogFilename", "COMPlus_StressLog", "COMPlus_StressLogFilename",
+            "DOTNET_JitStdOutFile", "COMPlus_JitStdOutFile",
         ];
 
         Assert.Equal(expected.OrderBy(n => n), NativeLoadEnvironment.Names.OrderBy(n => n));
@@ -32,6 +40,9 @@ public class NativeLoadEnvironmentTests
     [InlineData("COMPlus_EventPipeOutputPath")]
     [InlineData("DOTNET_DbgMiniDumpName")]
     [InlineData("COMPlus_DbgMiniDumpName")]
+    [InlineData("CORECLR_NOTIFICATION_PROFILERS")]
+    [InlineData("DOTNET_DiagnosticPorts")]
+    [InlineData("DOTNET_JitStdOutFile")]
     public void A_variable_that_names_a_runtime_output_file_is_scrubbed(string name)
     {
         var env = new Dictionary<string, string?> { [name] = @"C:\Windows\System32\planted.bin" };

@@ -14,7 +14,16 @@ internal static class NativeLoadEnvironment
     [
         "CORECLR_ENABLE_PROFILING", "CORECLR_PROFILER", "CORECLR_PROFILER_PATH",
         "CORECLR_PROFILER_PATH_32", "CORECLR_PROFILER_PATH_64",
+        "CORECLR_PROFILER_PATH_ARM32", "CORECLR_PROFILER_PATH_ARM64",
+        // Notification profilers load by path even when CORECLR_ENABLE_PROFILING is unset.
+        "CORECLR_ENABLE_NOTIFICATION_PROFILERS", "CORECLR_NOTIFICATION_PROFILERS",
+        "CORECLR_NOTIFICATION_PROFILERS_32", "CORECLR_NOTIFICATION_PROFILERS_64",
+        "CORECLR_NOTIFICATION_PROFILERS_ARM32", "CORECLR_NOTIFICATION_PROFILERS_ARM64",
         "COR_ENABLE_PROFILING", "COR_PROFILER", "COR_PROFILER_PATH",
+        // A diagnostic port makes the runtime connect at startup to a pipe the user serves, and that
+        // protocol can attach a profiler or write a trace or dump before any code of the helper runs.
+        "DOTNET_DiagnosticPorts", "COMPlus_DiagnosticPorts",
+        "DOTNET_DefaultDiagnosticPortSuspend", "COMPlus_DefaultDiagnosticPortSuspend",
         "DOTNET_GCName", "DOTNET_GCPath", "COMPlus_GCName", "COMPlus_GCPath",
         "DOTNET_STARTUP_HOOKS",
         // Not a load, but the runtime writes a trace or a crash dump to the path the variable names. In the
@@ -26,6 +35,8 @@ internal static class NativeLoadEnvironment
         "DOTNET_CreateDumpVerboseDiagnostics", "DOTNET_CreateDumpLogToFile",
         "COMPlus_DbgEnableMiniDump", "COMPlus_DbgMiniDumpName", "COMPlus_CreateDumpDiagnostics",
         "COMPlus_CreateDumpVerboseDiagnostics", "COMPlus_CreateDumpLogToFile",
+        "DOTNET_StressLog", "DOTNET_StressLogFilename", "COMPlus_StressLog", "COMPlus_StressLogFilename",
+        "DOTNET_JitStdOutFile", "COMPlus_JitStdOutFile",
     ];
 
     /// <summary>The variables from <see cref="Names"/> that currently hold a non-empty value.</summary>
