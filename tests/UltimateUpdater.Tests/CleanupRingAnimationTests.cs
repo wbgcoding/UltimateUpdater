@@ -440,7 +440,7 @@ public class CleanupRingAnimationTests : IDisposable
     /// resource-key comparison would have missed the exact bug <see cref="PressedPixelTests"/> exists to
     /// catch elsewhere: two different keys can still resolve to visually near-identical colours. This
     /// renders the real pixels and samples the three parts by their known design coordinates (mapped
-    /// through the 24-unit design box, its x3 Viewbox scale, and the 14px centring offset inside the 100px
+    /// through the 24-unit design box, its x4.5 Viewbox scale, and the 16px centring offset inside the 140px
     /// scene) rather than trusting anything about where WPF laid the window out.
     /// </summary>
     [Theory]
@@ -473,8 +473,8 @@ public class CleanupRingAnimationTests : IDisposable
             var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(root);
 
-            // Design-space points (0-24 box) mapped to CenterScene-local pixels via x3 (Viewbox 72/24) plus
-            // the 14px offset that centres the 72px Viewbox inside the 100px CenterScene, then to window
+            // Design-space points (0-24 box) mapped to CenterScene-local pixels via x4.5 (Viewbox 108/24) plus
+            // the 16px offset that centres the 108px Viewbox inside the 140px CenterScene, then to window
             // pixels via CenterScene's own laid-out position - never assumed, always read back.
             var origin = window.CenterScene.TranslatePoint(new Point(0, 0), root);
             var bodyOnly = PixelAt(bitmap, InWindow(origin, 4.5, 3));      // corner of the body, clear of the ring and the arm
@@ -491,8 +491,8 @@ public class CleanupRingAnimationTests : IDisposable
     }
 
     private static (int X, int Y) InWindow(Point sceneOrigin, double designX, double designY) => (
-        (int)Math.Round(sceneOrigin.X + (designX * 3) + 14),
-        (int)Math.Round(sceneOrigin.Y + (designY * 3) + 14));
+        (int)Math.Round(sceneOrigin.X + (designX * 4.5) + 16),
+        (int)Math.Round(sceneOrigin.Y + (designY * 4.5) + 16));
 
     private static (byte R, byte G, byte B, byte A) PixelAt(RenderTargetBitmap bitmap, (int X, int Y) point)
     {

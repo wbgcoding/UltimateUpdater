@@ -1498,9 +1498,9 @@
                      not something meant to be tracked frame by frame. The percentage sits beneath, never
                      behind the animation. -->
                 <Grid Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}">
-                    <Grid x:Name="CenterScene" Width="100" Height="100"
+                    <Grid x:Name="CenterScene" Width="140" Height="140"
                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                          Margin="0,0,0,18" RenderTransformOrigin="0.5,0.5" IsHitTestVisible="False">
+                          Margin="0,0,0,22" RenderTransformOrigin="0.5,0.5" IsHitTestVisible="False">
                         <Grid.RenderTransform>
                             <ScaleTransform x:Name="SurfaceBreathe"/>
                         </Grid.RenderTransform>
@@ -1509,7 +1509,7 @@
                              reference drawing) scaled up together by this Viewbox, so the three stay aligned to each
                              other exactly as drawn: scaling each Path on its own instead would stretch them
                              against their own, different ink extents and throw the parts out of register. -->
-                        <Viewbox Width="72" Height="72" Stretch="Uniform">
+                        <Viewbox Width="108" Height="108" Stretch="Uniform">
                             <Canvas Width="24" Height="24">
                                 <!-- The resting body, always at its own quiet fill (CardBackgroundFillColorDefaultBrush -
                                      the same elevated-surface brush a card uses, distinct from every other
@@ -1573,27 +1573,27 @@
                              an invisible sparkle in every one of them. The fade animation below rests on
                              the same floor while running, so a glint dims toward this quiet value between
                              pulses instead of vanishing and popping back. -->
-                        <Path x:Name="Glint1" Data="{StaticResource CleaningGlintGeometry}" Width="14" Height="14"
+                        <Path x:Name="Glint1" Data="{StaticResource CleaningGlintGeometry}" Width="17" Height="17"
                               Stretch="Uniform" Opacity="0.22"
-                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="73,1,0,0"
+                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="105,4.5,0,0"
                               RenderTransformOrigin="0.5,0.5"
                               Fill="{DynamicResource AccentTextFillColorPrimaryBrush}">
                             <Path.RenderTransform>
                                 <ScaleTransform x:Name="Glint1Scale"/>
                             </Path.RenderTransform>
                         </Path>
-                        <Path x:Name="Glint2" Data="{StaticResource CleaningGlintGeometry}" Width="11" Height="11"
+                        <Path x:Name="Glint2" Data="{StaticResource CleaningGlintGeometry}" Width="13" Height="13"
                               Stretch="Uniform" Opacity="0.22"
-                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="86.5,16.5,0,0"
+                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="122,20.9,0,0"
                               RenderTransformOrigin="0.5,0.5"
                               Fill="{DynamicResource AccentTextFillColorPrimaryBrush}">
                             <Path.RenderTransform>
                                 <ScaleTransform x:Name="Glint2Scale"/>
                             </Path.RenderTransform>
                         </Path>
-                        <Path x:Name="Glint3" Data="{StaticResource CleaningGlintGeometry}" Width="8" Height="8"
+                        <Path x:Name="Glint3" Data="{StaticResource CleaningGlintGeometry}" Width="10" Height="10"
                               Stretch="Uniform" Opacity="0.22"
-                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="80,34,0,0"
+                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="113.9,41.6,0,0"
                               RenderTransformOrigin="0.5,0.5"
                               Fill="{DynamicResource AccentTextFillColorPrimaryBrush}">
                             <Path.RenderTransform>
@@ -1602,23 +1602,22 @@
                         </Path>
                     </Grid>
 
-                    <!-- Pushed down from 54 to 80: at 54 the text sat over the
-                         drive body's own lower edge, which now also carries a visible stroke that made the
-                         overlap obvious. 80 clears the body with a visible gap while staying well inside
-                         the 226px progress ring's own track. -->
+                    <!-- Sits just below the drive body (108px Viewbox in a 140px scene lifted 11px above the
+                         ring's centre) with a visible gap, and with the two lines under it still inside the
+                         226px progress ring's own track. -->
                     <TextBlock Text="{Binding CleanPercentText}" FontSize="17" FontWeight="SemiBold"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,80,0,0"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,100,0,0"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
 
                     <!-- What is gone so far, climbing while the run works. -->
                     <TextBlock x:Name="LiveFreedText" Text="{Binding LiveFreedText}" FontSize="11"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,118,0,0"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,136,0,0"
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
 
                     <!-- Held: the motion stops and this says so, rather than a frozen scene looking stuck.
                          Sits below the live figure. -->
                     <TextBlock Text="{Binding Loc[CleanupPausedNote]}" FontSize="12"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,150,0,0"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,158,0,0"
                                Visibility="{Binding IsPaused, Converter={StaticResource BoolToVisibility}}"
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                 </Grid>
