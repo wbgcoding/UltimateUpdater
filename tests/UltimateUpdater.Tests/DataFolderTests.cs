@@ -898,10 +898,10 @@ public class DataFolderTests
         }
     }
 
-    /// <summary>A retry fills gaps only: whatever the new folder already holds is the user's current data,
-    /// and once a retry has succeeded no later start copies anything again.</summary>
+    /// <summary>The failed start only wrote defaults into the new folder, so the retry lays the legacy data
+    /// over them; once a retry has succeeded no later start copies anything again.</summary>
     [Fact]
-    public void A_retry_never_overwrites_the_new_folder_and_runs_only_once()
+    public void A_retry_replaces_the_defaults_of_the_failed_start_and_runs_only_once()
     {
         var legacy = NewTempDir("retry-keep-legacy");
         var roaming = Path.Combine(TestRoot, "wu-datafolder-retry-keep-roaming-" + Guid.NewGuid());
@@ -917,11 +917,13 @@ public class DataFolderTests
             }
 
             Directory.CreateDirectory(roaming);
-            File.WriteAllText(Path.Combine(roaming, "settings.json"), "mine");
+            File.WriteAllText(Path.Combine(roaming, "settings.json"), "defaults");
+            File.WriteAllText(Path.Combine(roaming, "window.json"), "only new");
 
             AppPaths.TryMigrateLegacyDataFolder(roaming, legacy);
 
-            Assert.Equal("mine", File.ReadAllText(Path.Combine(roaming, "settings.json")));
+            Assert.Equal("old", File.ReadAllText(Path.Combine(roaming, "settings.json")));
+            Assert.Equal("only new", File.ReadAllText(Path.Combine(roaming, "window.json")));
             Assert.Equal("history", File.ReadAllText(Path.Combine(roaming, "history.json")));
 
             File.WriteAllText(Path.Combine(legacy, "late.json"), "late");

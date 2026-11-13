@@ -215,7 +215,7 @@ public static class AppPaths
     internal static void TryMigrateLegacyDataFolder(string roaming, string legacy)
     {
         // An existing new folder normally ends the migration for good. Only the marker of a failed copy
-        // reopens it, and then the copy fills gaps without touching what the new folder already holds.
+        // reopens it. What the failed start wrote there are defaults, so the legacy copy then replaces them.
         var retry = Directory.Exists(roaming);
         if (retry && !File.Exists(Path.Combine(roaming, MigrationPendingFileName)))
             return;
@@ -300,7 +300,8 @@ public static class AppPaths
         TryMigrateInto(source, destination, out _);
 
     /// <summary>When <paramref name="destination"/> already exists (a retry after a failed copy) the staged
-    /// copy only fills in what is missing there: the folder holds the user's current data by then.</summary>
+    /// copy is laid over it: the failed start only wrote defaults there, while the legacy folder holds the
+    /// user's real settings and history.</summary>
     internal static bool TryMigrateInto(string source, string destination, out string failure)
     {
         var staging = destination + ".migrating-" + Guid.NewGuid().ToString("N");
@@ -325,7 +326,7 @@ public static class AppPaths
 
             if (Directory.Exists(destination))
             {
-                MergeMissing(staging, destination);
+                MergeOver(staging, destination);
                 TryDeleteBestEffort(staging);
             }
             else
@@ -344,20 +345,16 @@ public static class AppPaths
         }
     }
 
-    private static void MergeMissing(string from, string into)
+    private static void MergeOver(string from, string into)
     {
         foreach (var file in Directory.EnumerateFiles(from))
-        {
-            var target = Path.Combine(into, Path.GetFileName(file));
-            if (!File.Exists(target))
-                File.Move(file, target);
-        }
+            File.Move(file, Path.Combine(into, Path.GetFileName(file)), overwrite: true);
 
         foreach (var directory in Directory.EnumerateDirectories(from))
         {
             var target = Path.Combine(into, Path.GetFileName(directory));
             Directory.CreateDirectory(target);
-            MergeMissing(directory, target);
+            MergeOver(directory, target);
         }
     }
 
