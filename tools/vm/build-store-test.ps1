@@ -1,6 +1,6 @@
 # Host side. Builds two signed MSIX versions of a tiny packaged WinForms app for the VM Store tests.
 # The exe has its own icon (dark shape on white) while the package logo is a white glyph on the manifest
-# color, the same split a real Store app like ChatGPT has. The private key lives only in the host's
+# color, the same split many real Store apps have. The private key lives only in the host's
 # CurrentUser store and is deleted again once both versions are signed; only the .cer leaves the host.
 #   powershell -NoProfile -File tools\vm\build-store-test.ps1 [-OutDir <dir>] [-Versions 1.0.0.0,2.0.0.0]
 param(
@@ -143,7 +143,7 @@ Import-Certificate -FilePath `$cer -CertStoreLocation Cert:\LocalMachine\Trusted
 Remove-Item `$log -ErrorAction SilentlyContinue
 Set-Content `$inner ("Add-AppxPackage -Path `$msix *> `$log; 'DONE' | Add-Content `$log") -Encoding Ascii
 `$a = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -ExecutionPolicy Bypass -File `$inner"
-`$p = New-ScheduledTaskPrincipal -UserId "`$env:COMPUTERNAME\claude" -LogonType Interactive -RunLevel Limited
+`$p = New-ScheduledTaskPrincipal -UserId "`$env:COMPUTERNAME\`$env:USERNAME" -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName uuStoreInner -Action `$a -Principal `$p -Force | Out-Null
 Start-ScheduledTask uuStoreInner
 for (`$i = 0; `$i -lt 90; `$i++) { Start-Sleep 1; if ((Test-Path `$log) -and (Select-String -Path `$log -Pattern 'DONE' -Quiet)) { break } }
@@ -189,11 +189,11 @@ New-Item -ItemType Directory -Force `$dir | Out-Null
 `$rootCer = Join-Path `$dir 'localhost.cer'
 Export-Certificate -Cert `$cert -FilePath `$rootCer | Out-Null
 Import-Certificate -FilePath `$rootCer -CertStoreLocation Cert:\LocalMachine\Root | Out-Null
-netsh http add urlacl url=https://localhost:19443/ user=claude | Out-Null
+netsh http add urlacl url=https://localhost:19443/ user=`$env:USERNAME | Out-Null
 netsh http add sslcert ipport=0.0.0.0:19443 certhash=`$(`$cert.Thumbprint) appid='{5b6b8d3a-4c1f-4f0e-9a39-6f0d6a7f1e11}' | Out-Null
 netsh http add sslcert ipport=[::]:19443 certhash=`$(`$cert.Thumbprint) appid='{5b6b8d3a-4c1f-4f0e-9a39-6f0d6a7f1e12}' | Out-Null
 `$a = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `$dir\server.ps1 `$dir\config.json"
-`$p = New-ScheduledTaskPrincipal -UserId "`$env:COMPUTERNAME\claude" -LogonType Interactive -RunLevel Limited
+`$p = New-ScheduledTaskPrincipal -UserId "`$env:COMPUTERNAME\`$env:USERNAME" -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName uuStoreSource -Action `$a -Principal `$p -Force | Out-Null
 Start-ScheduledTask uuStoreSource
 Start-Sleep -Seconds 4

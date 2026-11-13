@@ -18,7 +18,7 @@ $repo = Join-Path $dir 'repo'
 Set-Content (Join-Path $dir 'uu-hang-fetch.ps1') "`$g = 'C:\Program Files\Git\cmd\git.exe'; if (-not (Test-Path '$repo\.git')) { & `$g init -q '$repo' }; Set-Location '$repo'; & `$g fetch git://127.0.0.1:$port/none.git *> '$dir\fetch.log'" -Encoding Ascii
 
 $task = 'uuHangGit'
-$p = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\claude" -LogonType Interactive -RunLevel Limited
+$p = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\$env:USERNAME" -LogonType Interactive -RunLevel Limited
 foreach ($name in 'uu-hang-listener', 'uu-hang-fetch') {
   $a = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File $dir\$name.ps1"
   Register-ScheduledTask -TaskName "$task-$name" -Action $a -Principal $p -Force | Out-Null

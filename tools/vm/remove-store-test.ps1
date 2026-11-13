@@ -8,7 +8,7 @@ $inner = Join-Path $dir 'inner.ps1'; $log = Join-Path $dir 'inner.log'
 Remove-Item $log -ErrorAction SilentlyContinue
 Set-Content $inner "Get-AppxPackage UUTest.StoreApp | Remove-AppxPackage *> $log; 'DONE' | Add-Content $log" -Encoding Ascii
 $a = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -ExecutionPolicy Bypass -File $inner"
-$p = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\claude" -LogonType Interactive -RunLevel Limited
+$p = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\$env:USERNAME" -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName uuStoreInner -Action $a -Principal $p -Force | Out-Null
 Start-ScheduledTask uuStoreInner
 for ($i = 0; $i -lt 90; $i++) { Start-Sleep 1; if ((Test-Path $log) -and (Select-String -Path $log -Pattern 'DONE' -Quiet)) { break } }
