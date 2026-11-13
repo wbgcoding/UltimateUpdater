@@ -8,6 +8,10 @@ public static class AppPaths
     private const string InstalledMarkerFileName = ".installed";
     private const string ProbeFileName = ".writetest";
 
+    /// <summary>Left in the new folder when the legacy copy failed. The app creates that folder on every start,
+    /// so "the folder exists" alone would end every retry; this file keeps the migration open until it worked.</summary>
+    private const string MigrationPendingFileName = ".migration-pending";
+
     /// <summary>
     /// The roaming folder name used before the app was renamed to Ultimate Updater. Kept only so the
     /// one-time migration below can find data left there; never written to again.
@@ -114,6 +118,18 @@ public static class AppPaths
         return message;
     }
 
+    /// <summary>Set when the legacy copy failed; same deferred-logging shape as
+    /// <see cref="LegacyDataFolderMigrationMessage"/>.</summary>
+    public static string? LegacyDataFolderMigrationFailure { get; private set; }
+
+    /// <summary>Reads and clears <see cref="LegacyDataFolderMigrationFailure"/> in one step.</summary>
+    public static string? ConsumeLegacyDataFolderMigrationFailure()
+    {
+        var message = LegacyDataFolderMigrationFailure;
+        LegacyDataFolderMigrationFailure = null;
+        return message;
+    }
+
     /// <summary>
     /// Picks the first location that is actually writable. This runs in a static initializer, so a
     /// throw here would surface as a TypeInitializationException before any logging or crash handler
@@ -198,7 +214,13 @@ public static class AppPaths
 
     internal static void TryMigrateLegacyDataFolder(string roaming, string legacy)
     {
-        if (Directory.Exists(roaming) || !Directory.Exists(legacy))
+        // An existing new folder normally ends the migration for good. Only the marker of a failed copy
+        // reopens it, and then the copy fills gaps without touching what the new folder already holds.
+        var retry = Directory.Exists(roaming);
+        if (retry && !File.Exists(Path.Combine(roaming, MigrationPendingFileName)))
+            return;
+
+        if (!Directory.Exists(legacy))
             return;
 
         // The legacy folder can itself carry a "moved elsewhere" pointer, written by a
@@ -229,8 +251,16 @@ public static class AppPaths
             }
         }
 
-        if (!TryMigrateInto(source, roaming))
+        if (!TryMigrateInto(source, roaming, out var failure))
+        {
+            LegacyDataFolderMigrationFailure =
+                $"Could not copy data from the old '{source}' folder to '{roaming}' ({failure}); the next start tries again.";
+            MarkMigrationPending(roaming);
             return;
+        }
+
+        if (retry)
+            TryDeleteFile(Path.Combine(roaming, MigrationPendingFileName));
 
         LegacyDataFolderMigrationMessage =
             (fallbackReason is null ? string.Empty : fallbackReason + " ")
@@ -266,7 +296,12 @@ public static class AppPaths
     /// "does the new folder already exist" check keeps seeing nothing there and the next launch retries
     /// from scratch instead of being stuck on a half-migrated folder forever.
     /// </summary>
-    internal static bool TryMigrateInto(string source, string destination)
+    internal static bool TryMigrateInto(string source, string destination) =>
+        TryMigrateInto(source, destination, out _);
+
+    /// <summary>When <paramref name="destination"/> already exists (a retry after a failed copy) the staged
+    /// copy only fills in what is missing there: the folder holds the user's current data by then.</summary>
+    internal static bool TryMigrateInto(string source, string destination, out string failure)
     {
         var staging = destination + ".migrating-" + Guid.NewGuid().ToString("N");
 
@@ -274,20 +309,80 @@ public static class AppPaths
         {
             // A skipped log costs nothing; any other skipped file would be lost for good, since the new
             // folder existing stops every later retry.
-            if (!TryCopyDirectory(source, staging, out var skipped)
-                || skipped.Any(file => !IsUnder(file, Path.Combine(source, LogsFolderName))))
+            if (!TryCopyDirectory(source, staging, out var skipped))
             {
+                failure = "the copy failed part way";
                 TryDeleteBestEffort(staging);
                 return false;
             }
 
-            Directory.Move(staging, destination);
+            if (skipped.FirstOrDefault(file => !IsUnder(file, Path.Combine(source, LogsFolderName))) is { } left)
+            {
+                failure = $"'{Path.GetFileName(left)}' could not be read";
+                TryDeleteBestEffort(staging);
+                return false;
+            }
+
+            if (Directory.Exists(destination))
+            {
+                MergeMissing(staging, destination);
+                TryDeleteBestEffort(staging);
+            }
+            else
+            {
+                Directory.Move(staging, destination);
+            }
+
+            failure = string.Empty;
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            failure = ex.Message;
             TryDeleteBestEffort(staging);
             return false;
+        }
+    }
+
+    private static void MergeMissing(string from, string into)
+    {
+        foreach (var file in Directory.EnumerateFiles(from))
+        {
+            var target = Path.Combine(into, Path.GetFileName(file));
+            if (!File.Exists(target))
+                File.Move(file, target);
+        }
+
+        foreach (var directory in Directory.EnumerateDirectories(from))
+        {
+            var target = Path.Combine(into, Path.GetFileName(directory));
+            Directory.CreateDirectory(target);
+            MergeMissing(directory, target);
+        }
+    }
+
+    /// <summary>Best effort: a folder that cannot even take the marker is retried anyway while it does not
+    /// exist, and the failure is already reported.</summary>
+    private static void MarkMigrationPending(string roaming)
+    {
+        try
+        {
+            Directory.CreateDirectory(roaming);
+            File.WriteAllText(Path.Combine(roaming, MigrationPendingFileName), string.Empty);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+        }
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
         }
     }
 
@@ -811,9 +906,10 @@ public static class AppPaths
             afterEnumerated?.Invoke(file);
             var name = Path.GetFileName(file);
             // Neither belongs in a copy of the data itself: the pointer names a location (copying it would
-            // point the new folder at itself) and the write probe is transient housekeeping.
+            // point the new folder at itself), the write probe and the migration marker are transient housekeeping.
             if (string.Equals(name, PointerFileName, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(name, ProbeFileName, StringComparison.OrdinalIgnoreCase))
+                || string.Equals(name, ProbeFileName, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(name, MigrationPendingFileName, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

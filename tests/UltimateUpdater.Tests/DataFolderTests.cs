@@ -865,6 +865,78 @@ public class DataFolderTests
         }
     }
 
+    /// <summary>The app creates the new folder on every start, so a failed copy must leave a trace that makes
+    /// the next start try again instead of running for good on defaults.</summary>
+    [Fact]
+    public void A_failed_migration_is_retried_on_the_next_start_although_the_new_folder_now_exists()
+    {
+        var legacy = NewTempDir("retry-legacy");
+        var roaming = Path.Combine(TestRoot, "wu-datafolder-retry-roaming-" + Guid.NewGuid());
+        var settings = Path.Combine(legacy, "settings.json");
+        File.WriteAllText(settings, "{\"old\":true}");
+        AppPaths.ConsumeLegacyDataFolderMigrationMessage();
+        try
+        {
+            using (new FileStream(settings, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                AppPaths.TryMigrateLegacyDataFolder(roaming, legacy);
+            }
+
+            // What the start does next: it prepares the new folder and carries on with defaults.
+            Directory.CreateDirectory(roaming);
+
+            AppPaths.TryMigrateLegacyDataFolder(roaming, legacy);
+
+            Assert.Equal("{\"old\":true}", File.ReadAllText(Path.Combine(roaming, "settings.json")));
+            Assert.NotNull(AppPaths.ConsumeLegacyDataFolderMigrationMessage());
+        }
+        finally
+        {
+            Directory.Delete(legacy, recursive: true);
+            if (Directory.Exists(roaming))
+                Directory.Delete(roaming, recursive: true);
+        }
+    }
+
+    /// <summary>A retry fills gaps only: whatever the new folder already holds is the user's current data,
+    /// and once a retry has succeeded no later start copies anything again.</summary>
+    [Fact]
+    public void A_retry_never_overwrites_the_new_folder_and_runs_only_once()
+    {
+        var legacy = NewTempDir("retry-keep-legacy");
+        var roaming = Path.Combine(TestRoot, "wu-datafolder-retry-keep-roaming-" + Guid.NewGuid());
+        var settings = Path.Combine(legacy, "settings.json");
+        File.WriteAllText(settings, "old");
+        File.WriteAllText(Path.Combine(legacy, "history.json"), "history");
+        AppPaths.ConsumeLegacyDataFolderMigrationMessage();
+        try
+        {
+            using (new FileStream(settings, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                AppPaths.TryMigrateLegacyDataFolder(roaming, legacy);
+            }
+
+            Directory.CreateDirectory(roaming);
+            File.WriteAllText(Path.Combine(roaming, "settings.json"), "mine");
+
+            AppPaths.TryMigrateLegacyDataFolder(roaming, legacy);
+
+            Assert.Equal("mine", File.ReadAllText(Path.Combine(roaming, "settings.json")));
+            Assert.Equal("history", File.ReadAllText(Path.Combine(roaming, "history.json")));
+
+            File.WriteAllText(Path.Combine(legacy, "late.json"), "late");
+            AppPaths.TryMigrateLegacyDataFolder(roaming, legacy);
+
+            Assert.False(File.Exists(Path.Combine(roaming, "late.json")));
+        }
+        finally
+        {
+            Directory.Delete(legacy, recursive: true);
+            if (Directory.Exists(roaming))
+                Directory.Delete(roaming, recursive: true);
+        }
+    }
+
     /// <summary>A locked log is not worth blocking the migration for: logs are rewritten from scratch.</summary>
     [Fact]
     public void A_locked_log_does_not_block_the_migration()

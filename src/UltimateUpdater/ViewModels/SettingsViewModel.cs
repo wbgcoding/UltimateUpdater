@@ -472,6 +472,9 @@ public partial class SettingsViewModel : ObservableObject
         if (AppPaths.ConsumeLegacyDataFolderMigrationMessage() is { } migrationMessage)
             _logging.Info(migrationMessage);
 
+        if (AppPaths.ConsumeLegacyDataFolderMigrationFailure() is { } migrationFailure)
+            _logging.Warn(migrationFailure);
+
         SourceToggles = (sourceIds ?? [])
             .Select(id => new SourceToggle(
                 id, settings.Current.Sources.GetValueOrDefault(id, true), SetSourceEnabled,
