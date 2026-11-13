@@ -59,6 +59,35 @@ public class NpmChangelogLookupTests
         Assert.Equal("https://example.com", result.Homepage);
     }
 
+    /// <summary>With a single field asked for, npm prints the bare value instead of a keyed object.</summary>
+    [Fact]
+    public void ParseView_reads_a_bare_homepage_string_of_a_single_field_query()
+    {
+        var result = NpmChangelogLookup.ParseView("\"https://react.dev/\"", "homepage");
+
+        Assert.Null(result.RepositoryUrl);
+        Assert.Equal("https://react.dev/", result.Homepage);
+    }
+
+    [Fact]
+    public void ParseView_reads_a_bare_repository_object_and_a_bare_repository_string_of_a_single_field_query()
+    {
+        var asObject = NpmChangelogLookup.ParseView(
+            """{"url":"git+https://github.com/react/react.git","type":"git","directory":"packages/react"}""", "repository");
+        var asString = NpmChangelogLookup.ParseView("\"git+https://github.com/owner/repo.git\"", "repository");
+
+        Assert.Equal("git+https://github.com/react/react.git", asObject.RepositoryUrl);
+        Assert.Null(asObject.Homepage);
+        Assert.Equal("git+https://github.com/owner/repo.git", asString.RepositoryUrl);
+        Assert.Null(asString.Homepage);
+    }
+
+    [Fact]
+    public void ParseView_without_a_single_field_still_ignores_a_bare_value()
+    {
+        Assert.Equal(default, NpmChangelogLookup.ParseView("\"https://react.dev/\""));
+    }
+
     /// <summary>An unpublished/removed package's `npm view --json` prints an error object with neither
     /// expected key; the parser must read that as "nothing found", not throw or fabricate a value.</summary>
     [Fact]
