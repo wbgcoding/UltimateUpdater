@@ -168,6 +168,10 @@ for %%a in (x64 arm64) do (
     rem IncludeNativeLibrariesForSelfExtract is REQUIRED for the portable exe: without it WPF's native DLLs stay next to
     rem the exe and the "portable" exe dies with DllNotFoundException as soon as it is moved alone.
     rem
+    rem PublishReadyToRun precompiles the app's own code: without it every window's code is compiled on
+    rem first use, which froze the UI for up to a second the first time a larger window (cleanup, history)
+    rem opened.
+    rem
     rem EnableCompressionInSingleFile is deliberately NOT used, so the exe is never mistaken for malware.
     rem It deflate-compresses the whole payload into the exe, which leaves a
     rem file with no readable strings and the entropy profile of a packer - exactly what the generic
@@ -178,6 +182,7 @@ for %%a in (x64 arm64) do (
     dotnet publish "%ROOT%src\UltimateUpdater\UltimateUpdater.csproj" ^
         -c %CONFIG% -r win-%%a --self-contained ^
         -p:PublishSingleFile=true ^
+        -p:PublishReadyToRun=true ^
         -p:IncludeNativeLibrariesForSelfExtract=true ^
         -p:DebugType=pdbonly ^
         -o "%STAGE%\win-%%a"
@@ -195,6 +200,7 @@ for %%a in (x64 arm64) do (
     dotnet publish "%ROOT%src\UltimateUpdater\UltimateUpdater.csproj" ^
         -c %CONFIG% -r win-%%a --self-contained ^
         -p:PublishSingleFile=true ^
+        -p:PublishReadyToRun=true ^
         -p:IncludeNativeLibrariesForSelfExtract=false ^
         -p:DebugType=pdbonly ^
         -o "%STAGE%\installer-win-%%a"
