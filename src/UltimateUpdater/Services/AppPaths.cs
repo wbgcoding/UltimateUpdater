@@ -12,6 +12,12 @@ public static class AppPaths
     /// so "the folder exists" alone would end every retry; this file keeps the migration open until it worked.</summary>
     private const string MigrationPendingFileName = ".migration-pending";
 
+    /// <summary>Written into the marker when it cannot be deleted after a successful retry, so no later start
+    /// merges the legacy folder a second time.</summary>
+    private const string MigrationDoneContent = "done";
+
+    private const string MigrationReplacedSuffix = ".before-migration";
+
     /// <summary>
     /// The roaming folder name used before the app was renamed to Ultimate Updater. Kept only so the
     /// one-time migration below can find data left there; never written to again.
@@ -215,9 +221,9 @@ public static class AppPaths
     internal static void TryMigrateLegacyDataFolder(string roaming, string legacy)
     {
         // An existing new folder normally ends the migration for good. Only the marker of a failed copy
-        // reopens it. What the failed start wrote there are defaults, so the legacy copy then replaces them.
+        // reopens it. The legacy copy then wins, and each file it replaces is kept with a suffix.
         var retry = Directory.Exists(roaming);
-        if (retry && !File.Exists(Path.Combine(roaming, MigrationPendingFileName)))
+        if (retry && !IsMigrationPending(Path.Combine(roaming, MigrationPendingFileName)))
             return;
 
         if (!Directory.Exists(legacy))
@@ -260,7 +266,7 @@ public static class AppPaths
         }
 
         if (retry)
-            TryDeleteFile(Path.Combine(roaming, MigrationPendingFileName));
+            CloseMigrationMarker(Path.Combine(roaming, MigrationPendingFileName));
 
         LegacyDataFolderMigrationMessage =
             (fallbackReason is null ? string.Empty : fallbackReason + " ")
@@ -347,8 +353,15 @@ public static class AppPaths
 
     private static void MergeOver(string from, string into)
     {
+        // The app may have run for a while on the new folder before this retry, so what the legacy copy
+        // replaces is kept beside it instead of being lost.
         foreach (var file in Directory.EnumerateFiles(from))
-            File.Move(file, Path.Combine(into, Path.GetFileName(file)), overwrite: true);
+        {
+            var target = Path.Combine(into, Path.GetFileName(file));
+            if (File.Exists(target))
+                File.Move(target, target + MigrationReplacedSuffix, overwrite: true);
+            File.Move(file, target);
+        }
 
         foreach (var directory in Directory.EnumerateDirectories(from))
         {
@@ -369,6 +382,36 @@ public static class AppPaths
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+        }
+    }
+
+    private static bool IsMigrationPending(string marker)
+    {
+        try
+        {
+            return File.Exists(marker) && File.ReadAllText(marker).Trim() != MigrationDoneContent;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // An unreadable marker must not reopen a merge that may already have run.
+            return false;
+        }
+    }
+
+    private static void CloseMigrationMarker(string marker)
+    {
+        TryDeleteFile(marker);
+        if (!File.Exists(marker))
+            return;
+
+        try
+        {
+            File.WriteAllText(marker, MigrationDoneContent);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            LegacyDataFolderMigrationFailure =
+                $"The migration marker '{marker}' could not be removed ({ex.Message}); delete it so the next start does not copy the old data again.";
         }
     }
 

@@ -923,6 +923,7 @@ public class DataFolderTests
             AppPaths.TryMigrateLegacyDataFolder(roaming, legacy);
 
             Assert.Equal("old", File.ReadAllText(Path.Combine(roaming, "settings.json")));
+            Assert.Equal("defaults", File.ReadAllText(Path.Combine(roaming, "settings.json.before-migration")));
             Assert.Equal("only new", File.ReadAllText(Path.Combine(roaming, "window.json")));
             Assert.Equal("history", File.ReadAllText(Path.Combine(roaming, "history.json")));
 
@@ -936,6 +937,29 @@ public class DataFolderTests
             Directory.Delete(legacy, recursive: true);
             if (Directory.Exists(roaming))
                 Directory.Delete(roaming, recursive: true);
+        }
+    }
+
+    /// <summary>A marker that could not be deleted after a successful retry is closed with "done" instead,
+    /// and a closed marker never reopens the merge.</summary>
+    [Fact]
+    public void A_closed_migration_marker_does_not_merge_again()
+    {
+        var legacy = NewTempDir("retry-done-legacy");
+        var roaming = NewTempDir("retry-done-roaming");
+        File.WriteAllText(Path.Combine(legacy, "settings.json"), "old");
+        File.WriteAllText(Path.Combine(roaming, "settings.json"), "mine");
+        File.WriteAllText(Path.Combine(roaming, ".migration-pending"), "done");
+        try
+        {
+            AppPaths.TryMigrateLegacyDataFolder(roaming, legacy);
+
+            Assert.Equal("mine", File.ReadAllText(Path.Combine(roaming, "settings.json")));
+        }
+        finally
+        {
+            Directory.Delete(legacy, recursive: true);
+            Directory.Delete(roaming, recursive: true);
         }
     }
 
