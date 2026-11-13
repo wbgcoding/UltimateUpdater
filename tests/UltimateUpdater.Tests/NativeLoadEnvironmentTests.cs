@@ -14,9 +14,32 @@ public class NativeLoadEnvironmentTests
             "CORECLR_ENABLE_PROFILING", "CORECLR_PROFILER", "CORECLR_PROFILER_PATH", "CORECLR_PROFILER_PATH_32",
             "CORECLR_PROFILER_PATH_64", "COR_ENABLE_PROFILING", "COR_PROFILER", "COR_PROFILER_PATH",
             "DOTNET_GCName", "DOTNET_GCPath", "COMPlus_GCName", "COMPlus_GCPath", "DOTNET_STARTUP_HOOKS",
+            "DOTNET_EnableEventPipe", "DOTNET_EventPipeConfig", "DOTNET_EventPipeOutputPath",
+            "DOTNET_EventPipeOutputStreaming", "COMPlus_EnableEventPipe", "COMPlus_EventPipeConfig",
+            "COMPlus_EventPipeOutputPath", "COMPlus_EventPipeOutputStreaming",
+            "DOTNET_DbgEnableMiniDump", "DOTNET_DbgMiniDumpName", "DOTNET_CreateDumpDiagnostics",
+            "DOTNET_CreateDumpVerboseDiagnostics", "DOTNET_CreateDumpLogToFile",
+            "COMPlus_DbgEnableMiniDump", "COMPlus_DbgMiniDumpName", "COMPlus_CreateDumpDiagnostics",
+            "COMPlus_CreateDumpVerboseDiagnostics", "COMPlus_CreateDumpLogToFile",
         ];
 
         Assert.Equal(expected.OrderBy(n => n), NativeLoadEnvironment.Names.OrderBy(n => n));
+    }
+
+    /// <summary>The runtime writes a trace or a dump to a path the user picked, as the administrator.</summary>
+    [Theory]
+    [InlineData("DOTNET_EventPipeOutputPath")]
+    [InlineData("COMPlus_EventPipeOutputPath")]
+    [InlineData("DOTNET_DbgMiniDumpName")]
+    [InlineData("COMPlus_DbgMiniDumpName")]
+    public void A_variable_that_names_a_runtime_output_file_is_scrubbed(string name)
+    {
+        var env = new Dictionary<string, string?> { [name] = @"C:\Windows\System32\planted.bin" };
+
+        var removed = NativeLoadEnvironment.Scrub(n => env.GetValueOrDefault(n), n => env.Remove(n));
+
+        Assert.Equal([name], removed);
+        Assert.Empty(env);
     }
 
     [Fact]
