@@ -38,6 +38,7 @@ public partial class MainViewModel
             .Select(s => s.Id)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+        var openStarted = System.Diagnostics.Stopwatch.GetTimestamp();
         _historyOpening = true;
         try
         {
@@ -53,7 +54,7 @@ public partial class MainViewModel
         }
 
         // Released with its window: it holds every parsed history row, for the rest of the session otherwise.
-        ShowOwned(new Views.HistoryWindow(_historyViewModel, _logging), onClosed: () => _historyViewModel = null);
+        ShowOwned(new Views.HistoryWindow(_historyViewModel, _logging), onClosed: () => _historyViewModel = null, openStarted);
     }
 
     /// <summary>
@@ -70,13 +71,14 @@ public partial class MainViewModel
         if (IsOpen<Views.CleanupWindow>())
             return;
 
+        var openStarted = System.Diagnostics.Stopwatch.GetTimestamp();
         var cleanupViewModel = EnsureCleanupViewModel();
 
         // Covers a fresh instance (already subscribed once by its own constructor) and a reused one whose
         // earlier window close left it subscribed anyway; either way this is the one place a window
         // actually attaches.
         cleanupViewModel.WindowAttached();
-        ShowOwned(new Views.CleanupWindow(cleanupViewModel));
+        ShowOwned(new Views.CleanupWindow(cleanupViewModel), openStarted: openStarted);
     }
 
     /// <summary>
@@ -373,7 +375,8 @@ public partial class MainViewModel
 
         // Non-modal, so the follow-up work belongs in the Closed callback: the line after ShowOwned
         // returns does NOT mean "the window is gone".
-        ShowOwned(new Views.SettingsWindow(CreateSettingsViewModel()), onClosed: OnSettingsClosed);
+        var openStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+        ShowOwned(new Views.SettingsWindow(CreateSettingsViewModel()), onClosed: OnSettingsClosed, openStarted);
     }
 
     internal SettingsViewModel CreateSettingsViewModel()
@@ -490,7 +493,7 @@ public partial class MainViewModel
     /// One window per kind: a second click on the same toolbar button raises the one already open instead of
     /// stacking another copy, which non-modal windows would otherwise allow.
     /// </summary>
-    private void ShowOwned(Window window, Action? onClosed = null)
+    private void ShowOwned(Window window, Action? onClosed = null, long? openStarted = null)
     {
         var existing = Application.Current?.Windows.OfType<Window>()
             .FirstOrDefault(open => open.GetType() == window.GetType() && open.IsLoaded);
@@ -529,6 +532,32 @@ public partial class MainViewModel
         if (onClosed is not null)
             window.Closed += (_, _) => onClosed();
 
+        FirstFrameRevealFor(window, openStarted);
         window.Show();
+    }
+
+    /// <summary>
+    /// Keeps the window hidden until its first frame is drawn (no empty frame flashing up), and logs how
+    /// long opening took: up to here (data read and window built) and up to that first frame, so a slow
+    /// open shows up in the log split by phase rather than only as a feeling.
+    /// </summary>
+    private void FirstFrameRevealFor(Window window, long? openStarted)
+    {
+        Views.FirstFrameReveal.Attach(window);
+
+        if (openStarted is not { } started)
+            return;
+
+        var built = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+        var logged = false;
+        window.ContentRendered += (_, _) =>
+        {
+            if (logged)
+                return;
+
+            logged = true;
+            var total = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+            _logging.Info($"{window.GetType().Name} opened: built after {built:0} ms, first frame after {total:0} ms");
+        };
     }
 }

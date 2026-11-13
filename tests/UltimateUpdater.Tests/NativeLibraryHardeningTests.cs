@@ -77,7 +77,7 @@ public class NativeLibraryHardeningTests
     [Fact]
     public void Every_own_import_names_a_system_library()
     {
-        var allowed = new[] { "advapi32", "amsi", "cfgmgr32", "kernel32", "ntdll", "setupapi", "shell32", "user32", "wintrust" };
+        var allowed = new[] { "advapi32", "amsi", "cfgmgr32", "dwmapi", "kernel32", "ntdll", "setupapi", "shell32", "user32", "wintrust" };
         var root = FindSourceRoot();
         var pattern = new System.Text.RegularExpressions.Regex("DllImport\\(\"([^\"]+)\"");
 
