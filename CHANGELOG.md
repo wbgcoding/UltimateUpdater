@@ -8,6 +8,8 @@ versioning: [SemVer](https://semver.org).
 ### Updates
 - Stopping a row now also ends the short wait while its version is checked again after an install.
 - That wait no longer holds back other queued installs.
+- A winget uninstall that reports success but leaves the program installed now counts as failed, so
+  "Reinstall" no longer claims the old version is gone.
 - A pip version hidden after a failed install shows again after seven days, so a misread error cannot
   hide an update for good.
 - Updating the app itself shows the download with percent, size and speed, then "Verifying" and

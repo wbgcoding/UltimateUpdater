@@ -610,7 +610,46 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         if (!IsInstallSuccess(result.ExitCode))
             throw new InvalidOperationException(FailureDetail("uninstall", item.Id, result));
 
+        // Some uninstallers end with success and remove nothing (seen with an exe flavour of a package whose
+        // manifest offers MSI). Trusting the exit code alone made a reinstall report the old version as gone
+        // and then fail on the fresh install for the very same reason the reinstall was meant to clear.
+        if (await StaysListedAsync(ct => IsListedAsync(item.Id, ct), UninstallSettleTime, UninstallSettleStep, cancellationToken))
+            throw new InvalidOperationException(
+                $"winget reported the uninstall of '{item.Id}' as done, but the package is still installed.");
+
         progress.Report(new InstallProgress { PercentComplete = 100, StatusText = item.Name });
+    }
+
+    // An uninstaller may hand its work to a copy of itself and return at once; the package is given this
+    // long to leave the list before it counts as not removed.
+    private static readonly TimeSpan UninstallSettleTime = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan UninstallSettleStep = TimeSpan.FromSeconds(3);
+
+    /// <summary>True when <paramref name="isListed"/> still answers yes after <paramref name="settleTime"/>,
+    /// asked every <paramref name="step"/>; the first no ends the wait.</summary>
+    internal static async Task<bool> StaysListedAsync(
+        Func<CancellationToken, Task<bool>> isListed, TimeSpan settleTime, TimeSpan step, CancellationToken cancellationToken)
+    {
+        var deadline = DateTime.UtcNow + settleTime;
+        while (true)
+        {
+            if (!await isListed(cancellationToken))
+                return false;
+            if (DateTime.UtcNow >= deadline)
+                return true;
+            await Task.Delay(step, cancellationToken);
+        }
+    }
+
+    // A failed or timed out list call counts as "not listed": the check must never turn a real removal into
+    // a reported failure.
+    private static async Task<bool> IsListedAsync(string id, CancellationToken cancellationToken)
+    {
+        var result = await ProcessRunner.RunAsync(
+            "winget", ["list", "--id", id, "--exact", "--disable-interactivity", "--accept-source-agreements"],
+            ShowTimeout, cancellationToken);
+        return !result.TimedOut && result.ExitCode == 0
+            && WingetUpgradeParser.ParseListVersion(result.StandardOutput, id) is not null;
     }
 
     /// <summary>
