@@ -784,6 +784,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="HeadlineUpdatesOne" xml:space="preserve">
     <value>有 {0} 个可用更新</value>
   </data>
+  <data name="HeadlineCritical" xml:space="preserve">
+    <value>{0} 个严重</value>
+  </data>
   <data name="NotifyFoundOne" xml:space="preserve">
     <value>有 {0} 个可用更新</value>
   </data>

@@ -759,6 +759,7 @@ public partial class MainViewModel
             if (args.PropertyName == nameof(UpdateRowViewModel.InstallState))
             {
                 OnPropertyChanged(nameof(HeadlineText));
+                OnPropertyChanged(nameof(HeadlineCriticalText));
                 RefreshPillOpenCounts();
             }
 

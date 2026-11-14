@@ -784,6 +784,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="HeadlineUpdatesOne" xml:space="preserve">
     <value>{0} 件の更新があります</value>
   </data>
+  <data name="HeadlineCritical" xml:space="preserve">
+    <value>重要 {0} 件</value>
+  </data>
   <data name="NotifyFoundOne" xml:space="preserve">
     <value>{0} 件の更新があります</value>
   </data>

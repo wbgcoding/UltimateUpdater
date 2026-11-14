@@ -577,10 +577,16 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock Text="{Binding HeadlineText}"
-                           FontSize="26" FontWeight="SemiBold"
+                <!-- The critical count sits on the headline's baseline, a step smaller, in the critical
+                     colour; an empty run leaves the line as it was. -->
+                <TextBlock x:Name="HeadlineBlock" FontSize="26" FontWeight="SemiBold"
                            Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-                           TextWrapping="Wrap"/>
+                           TextWrapping="Wrap">
+                    <Run Text="{Binding HeadlineText, Mode=OneWay}"/>
+                    <Run x:Name="HeadlineCriticalRun" Text="{Binding HeadlineCriticalText, Mode=OneWay}"
+                         FontSize="18" FontWeight="SemiBold"
+                         Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+                </TextBlock>
                 <!-- Wrap before trimming: the German summary runs ~30% longer than the
                      English one, and a column that shrinks with the window would clip a trimmed-only
                      line's end. -->

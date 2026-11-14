@@ -147,6 +147,24 @@ public partial class MainViewModel
         }
     }
 
+    /// <summary>
+    /// "3 critical" beside the headline, counted over the same rows the headline counts. The leading space
+    /// adds to the one between the two runs, keeping it apart. Empty while scanning or when none of them
+    /// is critical, so the header shows nothing extra then.
+    /// </summary>
+    public string HeadlineCriticalText
+    {
+        get
+        {
+            if (IsScanning)
+                return "";
+
+            var critical = VisibleUpdateCount(u => u.Item.CanInstall && u.IsCritical
+                && (u.CanInstall || u.InstallState is RowInstallState.Queued or RowInstallState.Running));
+            return critical == 0 ? "" : " " + string.Format(Loc["HeadlineCritical"], critical);
+        }
+    }
+
     public string SubheadlineText
     {
         get
@@ -222,6 +240,7 @@ public partial class MainViewModel
     {
         RefreshHeaderRunCountForTest++;
         OnPropertyChanged(nameof(HeadlineText));
+        OnPropertyChanged(nameof(HeadlineCriticalText));
         OnPropertyChanged(nameof(SubheadlineText));
         RefreshFilteredState();
         RefreshPillOpenCounts();

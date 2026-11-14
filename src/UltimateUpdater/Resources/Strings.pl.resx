@@ -784,6 +784,9 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   <data name="HeadlineUpdatesOne" xml:space="preserve">
     <value>Dostępna aktualizacja: {0}</value>
   </data>
+  <data name="HeadlineCritical" xml:space="preserve">
+    <value>krytyczne: {0}</value>
+  </data>
   <data name="NotifyFoundOne" xml:space="preserve">
     <value>Dostępna aktualizacja: {0}</value>
   </data>

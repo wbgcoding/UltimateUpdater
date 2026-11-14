@@ -784,6 +784,9 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="HeadlineUpdatesOne" xml:space="preserve">
     <value>{0} güncelleme mevcut</value>
   </data>
+  <data name="HeadlineCritical" xml:space="preserve">
+    <value>{0} kritik</value>
+  </data>
   <data name="NotifyFoundOne" xml:space="preserve">
     <value>{0} güncelleme mevcut</value>
   </data>

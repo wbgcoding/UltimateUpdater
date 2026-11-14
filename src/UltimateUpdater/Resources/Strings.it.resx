@@ -784,6 +784,9 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="HeadlineUpdatesOne" xml:space="preserve">
     <value>{0} aggiornamento disponibile</value>
   </data>
+  <data name="HeadlineCritical" xml:space="preserve">
+    <value>{0} critici</value>
+  </data>
   <data name="NotifyFoundOne" xml:space="preserve">
     <value>{0} aggiornamento disponibile</value>
   </data>

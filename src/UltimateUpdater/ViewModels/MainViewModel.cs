@@ -290,6 +290,7 @@ public partial class MainViewModel : ObservableObject, IRowActions
     {
         OnPropertyChanged(nameof(ToolbarCleanupText));
         OnPropertyChanged(nameof(HeadlineText));
+        OnPropertyChanged(nameof(HeadlineCriticalText));
         OnPropertyChanged(nameof(SubheadlineText));
         OnPropertyChanged(nameof(EmptyStateText));
         OnPropertyChanged(nameof(SelectAllTooltip));

@@ -6,6 +6,7 @@ versioning: [SemVer](https://semver.org).
 ## [Unreleased]
 
 ### Updates
+- winget installs and updates now show the real download percent and size on the row instead of only an elapsed timer.
 - Stopping a row now also ends the short wait while its version is checked again after an install.
 - That wait no longer holds back other queued installs.
 - A winget uninstall that reports success but leaves the program installed now counts as failed, so
@@ -34,7 +35,11 @@ versioning: [SemVer](https://semver.org).
   manager instead of a random program icon.
 - When every GitHub lookup fails, the source names the reason; a reached GitHub limit says when lookups
   work again.
-- Settings sections open and close smoothly, and the About section shows the app icon.
+- Settings sections open and close smoothly, and the About section shows the app icon. Their content
+  slides out from under the heading like a drawer instead of fading in from nothing.
+- The headline names how many of the available updates are critical ("12 updates available 3 critical").
+- The History window shows its list on the same rounded card as the main window's table, and earlier
+  cleanups use the same card colours.
 - The app icon in the title bar of every window is no longer cut off.
 - The scrollbar of the update list no longer covers the rounded lower right corner of the list.
 - History, cleanup and other windows open without an empty frame flashing up first, and the larger
@@ -47,7 +52,9 @@ versioning: [SemVer](https://semver.org).
   last finished area, freed space and elapsed time, plus a summary at the end.
 - The selection shows the selected and found size ("276 MB / 326 MB selected"), and so does every row
   of the list, already before cleaning.
-- The list card has clean rounded corners.
+- The list card has clean rounded corners. Its categories are rows of that card with a line between
+  them, like the groups of the main window's table, instead of cards on a card.
+- The report button after a run has the same size and look as the history button.
 - The main window's Clean up button shows the percentage while a cleanup runs.
 - The drive in the middle of the ring is larger, fills the circle and looks like a real hard disk; its
   parts no longer run together at small sizes, and the sparkles beside it are gone.

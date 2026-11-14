@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Size = System.Windows.Size;
 
@@ -7,7 +8,9 @@ namespace UltimateUpdater.Views;
 
 /// <summary>
 /// The body of a settings card: opens and closes by growing and shrinking its own layout height, one
-/// eased move of the same length in both directions, with the content fading along.
+/// eased move of the same length in both directions. The content slides with the moving edge, as if it
+/// were pulled out from under the header like a drawer, and is fully visible after the first third of
+/// the move; a body that only faded in behind a fixed edge looked as if it came out of nowhere.
 ///
 /// WPF-UI's stock Expander only slides the body with a render transform and leaves its layout height at
 /// the full size until a timer flips it to Collapsed: opening looks fine (the slide covers the sudden
@@ -20,7 +23,7 @@ internal sealed class RevealDecorator : Decorator
 {
     /// <summary>Both directions take this long for the full distance; a reversal part-way takes
     /// proportionally less, so the speed stays the same.</summary>
-    internal static readonly TimeSpan FullDuration = TimeSpan.FromMilliseconds(170);
+    internal static readonly TimeSpan FullDuration = TimeSpan.FromMilliseconds(260);
 
     public static readonly DependencyProperty IsOpenProperty = DependencyProperty.Register(
         nameof(IsOpen), typeof(bool), typeof(RevealDecorator), new PropertyMetadata(false, OnIsOpenChanged));
@@ -72,9 +75,19 @@ internal sealed class RevealDecorator : Decorator
     private static void OnIsOpenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((RevealDecorator)d).MoveTo((bool)e.NewValue);
 
+    private readonly TranslateTransform _slide = new();
+
     private static void OnProgressChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
-        // Fading is a render-only change, so it adds nothing to the layout cost of a frame.
-        ((RevealDecorator)d).Opacity = (double)e.NewValue;
+        ((RevealDecorator)d).ApplySlide();
+
+    /// <summary>Moves the child up by the part not yet shown, so its lower edge rides on the visible edge.
+    /// Both the shift and the short fade are render-only changes: a frame adds no layout cost.</summary>
+    private void ApplySlide()
+    {
+        var progress = Progress;
+        Opacity = Math.Min(1.0, progress * 3.0);
+        _slide.Y = Child is null ? 0 : -(1.0 - progress) * Child.DesiredSize.Height;
+    }
 
     private bool CanAnimate =>
         MotionPreference.AnimationsEnabled && (IsLoaded || AnimateOutsideWindowForTest == true);
@@ -130,7 +143,13 @@ internal sealed class RevealDecorator : Decorator
     protected override Size ArrangeOverride(Size arrangeSize)
     {
         // The child always gets its full height; the clip is what hides the part not yet revealed.
-        Child?.Arrange(new Rect(0, 0, arrangeSize.Width, Child.DesiredSize.Height));
+        if (Child is not null)
+        {
+            Child.Arrange(new Rect(0, 0, arrangeSize.Width, Child.DesiredSize.Height));
+            if (Child.RenderTransform != _slide)
+                Child.RenderTransform = _slide;
+            ApplySlide();
+        }
         return arrangeSize;
     }
 }

@@ -784,6 +784,9 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
   <data name="HeadlineUpdatesOne" xml:space="preserve">
     <value>{0} atualização disponível</value>
   </data>
+  <data name="HeadlineCritical" xml:space="preserve">
+    <value>{0} críticas</value>
+  </data>
   <data name="NotifyFoundOne" xml:space="preserve">
     <value>{0} atualização disponível</value>
   </data>

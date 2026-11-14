@@ -2,9 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:views="clr-namespace:UltimateUpdater.Views"
         Title="{Binding Loc[HistoryTitle]}"
         Width="1040"
-        MinHeight="320" MinWidth="790"
+        MinHeight="320" MinWidth="838"
         SizeToContent="Height" MaxHeight="640"
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterOwner"
@@ -65,7 +66,7 @@
         </ui:TitleBar>
 
         <!-- Search plus filters that read as buttons: time range, failed-only, and one per source. -->
-        <StackPanel Grid.Row="1" Margin="16,4,28,10"
+        <StackPanel Grid.Row="1" Margin="24,4,24,12"
                     Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
             <!-- Search and the range chips share one line: the row beside the search box was empty while
                  the filters sat underneath it, so the panel was two lines tall for one line of content.
@@ -142,14 +143,13 @@
             </WrapPanel>
         </StackPanel>
 
-        <!-- Full-bleed so the list's scrollbar sits flush against the window's right edge; the header
-             and rows keep their own inset, and top/bottom hairlines stand in for the card outline. -->
-        <Grid Grid.Row="2" Margin="0,0,0,0">
-            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="0,1,0,1" CornerRadius="0"
+        <!-- The same rounded card on the window background as the main window's update table, with the
+             same insets, so both windows read as one app. RoundedClip keeps the scrollbar's square surface
+             inside the card's curve (7 = the card's radius 8 minus its 1px stroke). -->
+        <Grid Grid.Row="2" Margin="24,0,24,24">
+            <Border Style="{StaticResource PanelSurfaceBorder}"
                     Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
-                <Grid>
+                <Grid views:RoundedClip.Radius="7">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
@@ -159,7 +159,8 @@
                          same App.xaml GridLength resources, so the two can never drift apart again. The
                          five fixed ones (When/Source/Version/Size/Result: 130+110+170+90+110) add up to
                          610, plus the trailing 28px details column, 638; that is why the window's MinWidth
-                         is 790 and not 638, the extra 152 is the star Name column's own minimum, and at 638
+                         is 838 and not 638: 152 is the star Name column's own minimum, 48 the card's side
+                         insets, and at 638
                          it was squeezed to nothing with the right-hand cells clipped, horizontal scrollbar
                          disabled, leaving no way to read them. The trailing details column carries no
                          header content of its own; it exists only so the row template's details-button

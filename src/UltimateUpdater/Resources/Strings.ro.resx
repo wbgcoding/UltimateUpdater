@@ -784,6 +784,9 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   <data name="HeadlineUpdatesOne" xml:space="preserve">
     <value>{0} actualizare disponibilă</value>
   </data>
+  <data name="HeadlineCritical" xml:space="preserve">
+    <value>critice: {0}</value>
+  </data>
   <data name="NotifyFoundOne" xml:space="preserve">
     <value>{0} actualizare disponibilă</value>
   </data>

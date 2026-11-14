@@ -784,6 +784,9 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="HeadlineUpdatesOne" xml:space="preserve">
     <value>{0} Update verfügbar</value>
   </data>
+  <data name="HeadlineCritical" xml:space="preserve">
+    <value>{0} kritisch</value>
+  </data>
   <data name="NotifyFoundOne" xml:space="preserve">
     <value>{0} Update verfügbar</value>
   </data>

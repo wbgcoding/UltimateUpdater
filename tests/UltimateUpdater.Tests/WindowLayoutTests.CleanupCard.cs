@@ -100,15 +100,16 @@ public partial class WindowLayoutTests
     }
 
     /// <summary>
-    /// An expanded category is one clean card: the outer corners stay rounded top and bottom, the header's
-    /// own surface (hover, press) meets the body square at its bottom edge and still follows the curve at
-    /// its top, and a collapsed header is rounded all round. The header surface is painted red here on
-    /// purpose, because the real hover colour is a faint tint a pixel check could not tell from the card.
+    /// A category is a flat section of the list card, like a group of the main window's update table: no
+    /// fill of its own (a second card fill on the card made the list look inverted against the main
+    /// window), a hairline below it, and a header surface (hover, press) that runs square from edge to
+    /// edge, open or collapsed. The header surface is painted red here on purpose, because the real hover
+    /// colour is a faint tint a pixel check could not tell from the card.
     /// </summary>
     [Theory]
     [InlineData("dark")]
     [InlineData("light")]
-    public void Cleanup_window_expanded_group_card_is_one_clean_card(string themeName)
+    public void Cleanup_window_category_is_a_flat_section_of_the_list_card(string themeName)
     {
         try
         {
@@ -150,10 +151,14 @@ public partial class WindowLayoutTests
                 var hit = FindByName<Border>(open, "Hit")!;
                 var shutHit = FindByName<Border>(shut, "Hit")!;
 
-                if (hit.CornerRadius != new CornerRadius(7, 7, 0, 0))
-                    failures.Add($"expanded header radius is {hit.CornerRadius}, want 7,7,0,0");
-                if (shutHit.CornerRadius != new CornerRadius(7))
-                    failures.Add($"collapsed header radius is {shutHit.CornerRadius}, want 7");
+                if (hit.CornerRadius != new CornerRadius(0))
+                    failures.Add($"expanded header radius is {hit.CornerRadius}, want 0");
+                if (shutHit.CornerRadius != new CornerRadius(0))
+                    failures.Add($"collapsed header radius is {shutHit.CornerRadius}, want 0");
+                if (cardBorder.Background is not SolidColorBrush { Color.A: 0 })
+                    failures.Add($"a category paints its own fill ({cardBorder.Background}) on the list card");
+                if (cardBorder.BorderThickness != new Thickness(0, 0, 0, 1))
+                    failures.Add($"a category's outline is {cardBorder.BorderThickness}, want a hairline below only");
 
                 var host = (FrameworkElement)VisualTreeHelper.GetParent(content)!;
 
@@ -173,30 +178,15 @@ public partial class WindowLayoutTests
 
                 bool IsRed(Color c) => c.R > 200 && c.G < 80 && c.B < 80;
 
-                // Outer corners: the page shows through just outside the curve, top and bottom.
-                var w = cardBorder.ActualWidth;
-                var h = cardBorder.ActualHeight;
-                foreach (var (name, x, y, refX) in new (string, double, double, double)[]
-                         {
-                             ("top left", 1, 1, -1.5),
-                             ("top right", w - 2, 1, w + 0.5),
-                             ("bottom left", 1, h - 2, -1.5),
-                             ("bottom right", w - 2, h - 2, w + 0.5),
-                         })
-                {
-                    var corner = PixelAt(cardBorder, x, y);
-                    var page = PixelAt(cardBorder, refX, y);
-                    if (ColourDistance(corner, page) > 3)
-                        failures.Add($"{name}: corner {corner} but page {page}");
-                }
-
-                // The header surface: curved at the top, square where it meets the body.
+                // The header surface: square at all four corners, a full-width row.
                 var hw = hit.ActualWidth;
                 var hh = hit.ActualHeight;
-                if (IsRed(PixelAt(hit, 1, 1)) || IsRed(PixelAt(hit, hw - 2, 1)))
-                    failures.Add("the header surface paints past the card's top corners");
-                if (!IsRed(PixelAt(hit, 1, hh - 2)) || !IsRed(PixelAt(hit, hw - 2, hh - 2)))
-                    failures.Add("the header surface has notched bottom corners above the body");
+                foreach (var (name, x, y) in new (string, double, double)[]
+                         { ("top left", 2, 2), ("top right", hw - 3, 2), ("bottom left", 2, hh - 3), ("bottom right", hw - 3, hh - 3) })
+                {
+                    if (!IsRed(PixelAt(hit, x, y)))
+                        failures.Add($"the header surface is notched at its {name} corner");
+                }
             });
 
             AssertRendered(result);

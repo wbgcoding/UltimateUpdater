@@ -284,6 +284,7 @@ public partial class MainViewModel
 
         RefreshSelectionState();
         OnPropertyChanged(nameof(HeadlineText));
+        OnPropertyChanged(nameof(HeadlineCriticalText));
 
         _ = Background.Run(RunInstallLoopAsync(), _logging, "install loop");
     }

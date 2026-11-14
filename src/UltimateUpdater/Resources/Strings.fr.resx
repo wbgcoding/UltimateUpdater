@@ -784,6 +784,9 @@ Ultimate Updater ne peut pas annuler cette action.</value>
   <data name="HeadlineUpdatesOne" xml:space="preserve">
     <value>{0} mise à jour disponible</value>
   </data>
+  <data name="HeadlineCritical" xml:space="preserve">
+    <value>critiques : {0}</value>
+  </data>
   <data name="NotifyFoundOne" xml:space="preserve">
     <value>{0} mise à jour disponible</value>
   </data>

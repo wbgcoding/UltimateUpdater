@@ -41,7 +41,7 @@
         <Border Grid.Row="1" Margin="16,0,16,12" CornerRadius="8" BorderThickness="1"
                 Visibility="{Binding HasHistory, Converter={StaticResource BoolToVisibility}}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}">
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
             <Grid Margin="14,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -140,7 +140,9 @@
             <ItemsControl Grid.IsSharedSizeScope="True" ItemsSource="{Binding History}" Margin="16,4,16,16">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Expander Margin="0,4" IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+                        <Expander Margin="0,4" IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
+                                  Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                  BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                             <Expander.Header>
                                 <!-- Date and freed size each keep a shared column width across every row
                                      (SharedSizeGroup, scoped by the ItemsControl above), so the rows line
