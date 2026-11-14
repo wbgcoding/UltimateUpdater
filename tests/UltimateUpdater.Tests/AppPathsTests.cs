@@ -10,9 +10,9 @@ public class AppPathsTests
     public void IsPortable_is_the_opposite_of_IsInstalled() =>
         Assert.Equal(!AppPaths.IsInstalled, AppPaths.IsPortable);
 
-    private const string Profile = @"C:\Users\Test";
-    private const string Temp = @"C:\Users\Test\AppData\Local\Temp\";
-    private const string ProgramFolder = @"C:\Users\Test\AppData\Local\Programs\UltimateUpdater\";
+    private const string Profile = @"C:\Users\User";
+    private const string Temp = @"C:\Users\User\AppData\Local\Temp\";
+    private const string ProgramFolder = @"C:\Users\User\AppData\Local\Programs\UltimateUpdater\";
 
     private static AppPaths.DataFolderRejection Validate(string path, bool installed = true) =>
         AppPaths.ValidateRegistryBackupFolder(path, installed, ProgramFolder, Temp, Profile);
@@ -22,15 +22,15 @@ public class AppPathsTests
     [Fact]
     public void The_default_registry_backup_folder_is_accepted() =>
         Assert.Equal(AppPaths.DataFolderRejection.None,
-            Validate(@"C:\Users\Test\AppData\Roaming\UltimateUpdater\registry-backups"));
+            Validate(@"C:\Users\User\AppData\Roaming\UltimateUpdater\registry-backups"));
 
     [Fact]
     public void A_folder_inside_the_profile_is_accepted() =>
-        Assert.Equal(AppPaths.DataFolderRejection.None, Validate(@"C:\Users\Test\Documents\Registry backups"));
+        Assert.Equal(AppPaths.DataFolderRejection.None, Validate(@"C:\Users\User\Documents\Registry backups"));
 
     [Theory]
     [InlineData(@"D:\Backups")]
-    [InlineData(@"C:\Users\Other\backups")]
+    [InlineData(@"C:\Users\Guest\backups")]
     [InlineData(@"C:\Windows\System32\backups")]
     [InlineData("")]
     [InlineData("   ")]
@@ -39,12 +39,12 @@ public class AppPathsTests
 
     [Fact]
     public void A_temp_or_cache_folder_inside_the_profile_is_rejected() =>
-        Assert.Equal(AppPaths.DataFolderRejection.TempOrCache, Validate(@"C:\Users\Test\AppData\Local\Temp\backups"));
+        Assert.Equal(AppPaths.DataFolderRejection.TempOrCache, Validate(@"C:\Users\User\AppData\Local\Temp\backups"));
 
     [Fact]
     public void The_program_folder_is_rejected_only_for_an_installed_build()
     {
-        var inside = @"C:\Users\Test\AppData\Local\Programs\UltimateUpdater\backups";
+        var inside = @"C:\Users\User\AppData\Local\Programs\UltimateUpdater\backups";
 
         Assert.Equal(AppPaths.DataFolderRejection.InsideProgramFolder, Validate(inside, installed: true));
         Assert.Equal(AppPaths.DataFolderRejection.None, Validate(inside, installed: false));

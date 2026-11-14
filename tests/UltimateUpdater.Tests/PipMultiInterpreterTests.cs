@@ -14,10 +14,10 @@ namespace UltimateUpdater.Tests;
 public class PipMultiInterpreterTests
 {
     private static readonly PythonInterpreter Python313 =
-        new(@"C:\Users\testuser\AppData\Local\Programs\Python\Python313\python.exe", new Version(3, 13), PerUser: true, Is64Bit: true);
+        new(@"C:\Users\user\AppData\Local\Programs\Python\Python313\python.exe", new Version(3, 13), PerUser: true, Is64Bit: true);
 
     private static readonly PythonInterpreter Python314 =
-        new(@"C:\Users\testuser\AppData\Local\Programs\Python\Python314\python.exe", new Version(3, 14), PerUser: true, Is64Bit: true);
+        new(@"C:\Users\user\AppData\Local\Programs\Python\Python314\python.exe", new Version(3, 14), PerUser: true, Is64Bit: true);
 
     [Fact]
     public void A_single_interpreter_machine_keeps_the_plain_package_name_as_the_id()

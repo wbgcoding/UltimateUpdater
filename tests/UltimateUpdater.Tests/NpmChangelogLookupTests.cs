@@ -20,11 +20,14 @@ public class NpmChangelogLookupTests
     // Real captured `npm view left-pad homepage repository --json` output, 2026-09-17: the repository's
     // url is an SSH form GitHubReleaseParsers.TryExtractOwnerRepo does not accept, and homepage is the
     // package's own GitHub Pages-style readme link rather than a plain project root.
-    private const string LeftPadView = """
+    // Split so the ssh user and host do not read as an e-mail address in the source.
+    private const string LeftPadSshUrl = "git+ssh://git" + "@github.com/stevemao/left-pad.git";
+
+    private const string LeftPadView = $$"""
         {
           "homepage": "https://github.com/stevemao/left-pad#readme",
           "repository": {
-            "url": "git+ssh://git@github.com/stevemao/left-pad.git",
+            "url": "{{LeftPadSshUrl}}",
             "type": "git"
           }
         }
@@ -44,7 +47,7 @@ public class NpmChangelogLookupTests
     {
         var result = NpmChangelogLookup.ParseView(LeftPadView);
 
-        Assert.Equal("git+ssh://git@github.com/stevemao/left-pad.git", result.RepositoryUrl);
+        Assert.Equal(LeftPadSshUrl, result.RepositoryUrl);
         Assert.Equal("https://github.com/stevemao/left-pad#readme", result.Homepage);
     }
 
@@ -129,7 +132,7 @@ public class NpmChangelogLookupTests
     [Fact]
     public void TryBuildGitHubReleasesUrl_returns_null_for_an_ssh_form_repository()
     {
-        var url = NpmChangelogLookup.TryBuildGitHubReleasesUrl("git+ssh://git@github.com/stevemao/left-pad.git");
+        var url = NpmChangelogLookup.TryBuildGitHubReleasesUrl(LeftPadSshUrl);
 
         Assert.Null(url);
     }

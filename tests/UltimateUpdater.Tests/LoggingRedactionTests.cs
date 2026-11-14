@@ -67,7 +67,7 @@ public class LoggingRedactionTests
     /// still diagnosable; the value does not.
     /// </summary>
     [Theory]
-    [InlineData("npm ERR! https://user:s3cr3t-value@registry.internal/pkg", "s3cr3t-value")]
+    [InlineData("npm ERR! https://user:s3cr3t-value@registry.example/pkg", "s3cr3t-value")]
     [InlineData("GET https://api.example.com/v1/pkg?api_key=AKIA12345EXAMPLE&page=2", "AKIA12345EXAMPLE")]
     [InlineData("request failed, authorization: Bearer eyJhbGciOiJIUzI1NiJ9.abc", "eyJhbGciOiJIUzI1NiJ9.abc")]
     [InlineData("could not read _authToken=npm_ZZZZexampletoken from .npmrc", "npm_ZZZZexampletoken")]
@@ -124,7 +124,7 @@ public class LoggingRedactionTests
     [Theory]
     [InlineData(@"OSError: [WinError 5] Access is denied: 'C:\\Users\\someone\\AppData\\x'", "someone")]
     [InlineData(@"extracting to C:\Users\USER~1\AppData\Local\Temp\a", "USER~1")]
-    [InlineData(@"C:/Users/otheruser/.npmrc", "otheruser")]
+    [InlineData(@"C:/Users/guest/.npmrc", "guest")]
     public void Other_spellings_of_a_user_profile_are_redacted(string message, string userName) =>
         Assert.DoesNotContain(userName, LoggingService.Redact(message));
 

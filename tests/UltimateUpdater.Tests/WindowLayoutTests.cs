@@ -2733,7 +2733,7 @@ public partial class WindowLayoutTests
             var settings = new SettingsService(logging);
             settings.Current.CleanupPermanentlyExcludedPaths.AddRange(
             [
-                @"C:\Users\Test\AppData\Local\SomeApp\Cache",
+                @"C:\Users\User\AppData\Local\SomeApp\Cache",
                 @"C:\ProgramData\AnotherApp\Temp",
                 @"D:\Games\ExampleGame\Logs",
             ]);
@@ -5369,10 +5369,10 @@ public partial class WindowLayoutTests
                 [
                     new CleanupEntry(@"C:\$Recycle.Bin\S-1-5-21-1-2-3-1001\$RA1B2C3.mp4",
                         "Urlaubsvideo 2026.mp4", 1200L * 1024 * 1024, 1, deleted, deleted, CleanupEntryType.Other,
-                        @"C:\Users\Benutzer\Videos\Urlaub\Urlaubsvideo 2026.mp4"),
+                        @"C:\Users\User\Videos\Urlaub\Urlaubsvideo 2026.mp4"),
                     new CleanupEntry(@"C:\$Recycle.Bin\S-1-5-21-1-2-3-1001\$RD4E5F6.docx",
                         "Bewerbung.docx", 180L * 1024, 1, deleted, deleted, CleanupEntryType.Other,
-                        @"C:\Users\Benutzer\Dokumente\Bewerbung.docx"),
+                        @"C:\Users\User\Dokumente\Bewerbung.docx"),
                     new CleanupEntry(@"D:\$Recycle.Bin\S-1-5-21-1-2-3-1001\$RG7H8I9",
                         "Alte Projekte", 200L * 1024 * 1024, 1, deleted, deleted, CleanupEntryType.Other,
                         @"D:\Archiv\Alte Projekte"),

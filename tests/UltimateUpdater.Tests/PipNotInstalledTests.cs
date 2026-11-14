@@ -12,9 +12,9 @@ namespace UltimateUpdater.Tests;
 public class PipNotInstalledTests
 {
     private static readonly PythonInterpreter Python = new(
-        @"C:\Users\testuser\AppData\Local\Programs\Python\Python313\python.exe", new Version(3, 13), PerUser: true, Is64Bit: true);
+        @"C:\Users\user\AppData\Local\Programs\Python\Python313\python.exe", new Version(3, 13), PerUser: true, Is64Bit: true);
 
-    private const string NoPipOutput = @"C:\Users\testuser\AppData\Local\Programs\Python\Python313\python.exe: No module named pip";
+    private const string NoPipOutput = @"C:\Users\user\AppData\Local\Programs\Python\Python313\python.exe: No module named pip";
 
     [Fact]
     public void No_pip_on_disk_and_no_module_output_is_an_absent_tool()

@@ -352,7 +352,7 @@ public sealed class LoggingService
     {
         if (ProfilePath.Length > 0)
         {
-            // Only a whole profile folder: "C:\Users\test" must not turn "C:\Users\testuser\x" into "%USERPROFILE%user\x".
+            // Only a whole profile folder: "C:\Users\user" must not turn "C:\Users\username\x" into "%USERPROFILE%name\x".
             message = ProfilePathPattern.Replace(message, "%USERPROFILE%");
         }
 

@@ -12,7 +12,7 @@ namespace UltimateUpdater.Services.Sources;
 /// duplicate that button). Two real captured shapes back the parser (`npm view react homepage repository
 /// --json` and `npm view left-pad homepage repository --json`): a package's "repository"
 /// field can be a plain JSON string or an object with a "url", and that url can be a plain
-/// "git+https://..." (react) or an ssh form, "git+ssh://git@github.com/..." (left-pad) that
+/// "git+https://..." (react) or an ssh form, "git+ssh://<user>@github.com/..." (left-pad) that
 /// <see cref="GitHubReleaseParsers.TryExtractOwnerRepo"/> does not accept. The ssh/shorthand cases are
 /// deliberately left unrecognised, this project's "never guess a URL" rule, and fall back to the
 /// homepage instead of a hand-rolled second recogniser.

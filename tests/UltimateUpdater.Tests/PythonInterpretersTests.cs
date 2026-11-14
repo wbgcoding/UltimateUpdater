@@ -77,10 +77,10 @@ public class PythonInterpretersTests
     public void Finds_both_interpreters_of_a_two_version_per_user_install()
     {
         var registry = new FakeRegistry()
-            .AddTag(HkcuRoot, "3.13", @"C:\Users\testuser\AppData\Local\Programs\Python\Python313",
-                executablePath: @"C:\Users\testuser\AppData\Local\Programs\Python\Python313\python.exe")
-            .AddTag(HkcuRoot, "3.14", @"C:\Users\testuser\AppData\Local\Programs\Python\Python314",
-                executablePath: @"C:\Users\testuser\AppData\Local\Programs\Python\Python314\python.exe");
+            .AddTag(HkcuRoot, "3.13", @"C:\Users\user\AppData\Local\Programs\Python\Python313",
+                executablePath: @"C:\Users\user\AppData\Local\Programs\Python\Python313\python.exe")
+            .AddTag(HkcuRoot, "3.14", @"C:\Users\user\AppData\Local\Programs\Python\Python314",
+                executablePath: @"C:\Users\user\AppData\Local\Programs\Python\Python314\python.exe");
 
         var found = PythonInterpreters.Discover(registry, _ => true);
 
@@ -118,8 +118,8 @@ public class PythonInterpretersTests
     {
         var registry = new FakeRegistry().AddTag(
             HkcuRoot, "3.11",
-            @"C:\Users\testuser\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0",
-            executablePath: @"C:\Users\testuser\AppData\Local\Microsoft\WindowsApps\python3.11.exe");
+            @"C:\Users\user\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0",
+            executablePath: @"C:\Users\user\AppData\Local\Microsoft\WindowsApps\python3.11.exe");
 
         var found = PythonInterpreters.Discover(registry, _ => true);
 

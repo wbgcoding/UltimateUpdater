@@ -125,16 +125,19 @@ public class SecretScanTests
 
     [Theory]
     [InlineData(@"var p = @""C:\Users\someone\AppData\Local"";")]
-    [InlineData(@"D:\Users\TestUser2\Documents")]
+    [InlineData(@"D:\Users\Username\Documents")]
     [InlineData(@"C:\Users\Public\Desktop")]
     [InlineData("rem (decided 2026-07-23: build.bat must ALWAYS fill dist\\)")]
     public void Placeholder_profile_paths_are_allowed(string line) => Assert.Empty(ProfilePaths(line));
 
+    // Joined into the path at run time, so this file itself carries no real-looking profile path.
+    private const string RealLooking = "mmustermann";
+
     [Fact]
     public void A_real_looking_profile_path_is_still_caught()
     {
-        Assert.Equal(["mmustermann"], ProfilePaths(@"var p = @""C:\Users\mmustermann\Desktop\notes.txt"";"));
-        Assert.Equal(["mmustermann"], ProfilePaths(@"var p = ""C:\\Users\\mmustermann\\Desktop"";"));
+        Assert.Equal([RealLooking], ProfilePaths(@"var p = @""C:\Users\" + RealLooking + @"\Desktop\notes.txt"";"));
+        Assert.Equal([RealLooking], ProfilePaths(@"var p = ""C:\\Users\\" + RealLooking + @"\\Desktop"";"));
     }
 
     // \\{1,2}: a regular C# string literal writes every backslash doubled, which a single-backslash
@@ -144,7 +147,7 @@ public class SecretScanTests
     /// <summary>Account names that name nobody, Windows' own, plus the ones the fixtures invent.</summary>
     private static readonly string[] PlaceholderAccounts =
         ["public", "default", "all users", "user", "username", "someone", "somebody", "me", "other",
-         "test", "testuser", "testuser2", "benutzer", "x", "y", "z"];
+         "guest", "x", "y", "z"];
 
     private static IEnumerable<string> ProfilePaths(string line)
     {

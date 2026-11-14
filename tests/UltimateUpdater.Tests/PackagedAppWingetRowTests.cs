@@ -9,8 +9,8 @@ namespace UltimateUpdater.Tests;
 /// </summary>
 public class PackagedAppWingetRowTests
 {
-    private const string Full = "OpenAI.ChatterPkg_26.1.0.0_x64__2p2nqsd0c76g0";
-    private const string Root = @"C:\Program Files\WindowsApps\OpenAI.ChatterPkg_26.1.0.0_x64__2p2nqsd0c76g0";
+    private const string Full = "Contoso.ChatterPkg_26.1.0.0_x64__2p2nqsd0c76g0";
+    private const string Root = @"C:\Program Files\WindowsApps\Contoso.ChatterPkg_26.1.0.0_x64__2p2nqsd0c76g0";
     private const string ArpRoot = @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
 
     private sealed class Table(params string[] classicNames) : IRegistryView
@@ -36,10 +36,10 @@ public class PackagedAppWingetRowTests
     {
         var apps = new PackagedApps(new Table("Git", "Visual Studio Code"));
 
-        var package = apps.FindForWingetRow("OpenAI.Chatter", "Chatter");
+        var package = apps.FindForWingetRow("Contoso.Chatter", "Chatter");
 
         Assert.NotNull(package);
-        Assert.Equal("OpenAI.ChatterPkg_2p2nqsd0c76g0", package!.FamilyName);
+        Assert.Equal("Contoso.ChatterPkg_2p2nqsd0c76g0", package!.FamilyName);
     }
 
     [Fact]

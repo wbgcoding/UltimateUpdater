@@ -314,12 +314,12 @@ public class RegistryBackupServiceTests
         Assert.True(RegistryBackupService.IsWithinUserProfile(RegistryCleanupSettings.DefaultBackupFolder));
 
     [Theory]
-    [InlineData(@"C:\Users\TestUser", @"C:\Users\TestUser", true)]
-    [InlineData(@"C:\Users\TestUser\Documents\Backups", @"C:\Users\TestUser", true)]
-    [InlineData(@"C:\Users\TestUser2", @"C:\Users\TestUser", false)] // sibling folder that merely starts with the same text
-    [InlineData(@"C:\Windows\System32", @"C:\Users\TestUser", false)]
-    [InlineData(@"C:\Users\Other\Documents", @"C:\Users\TestUser", false)]
-    [InlineData("", @"C:\Users\TestUser", false)]
+    [InlineData(@"C:\Users\User", @"C:\Users\User", true)]
+    [InlineData(@"C:\Users\User\Documents\Backups", @"C:\Users\User", true)]
+    [InlineData(@"C:\Users\Username", @"C:\Users\User", false)] // sibling folder that merely starts with the same text
+    [InlineData(@"C:\Windows\System32", @"C:\Users\User", false)]
+    [InlineData(@"C:\Users\Guest\Documents", @"C:\Users\User", false)]
+    [InlineData("", @"C:\Users\User", false)]
     public void Backup_folder_boundary_matches_only_the_users_own_profile_tree(string backupFolder, string profile, bool expected) =>
         Assert.Equal(expected, RegistryBackupService.IsWithinUserProfile(backupFolder, profile));
 
