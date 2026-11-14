@@ -257,6 +257,9 @@
   <data name="HistoryCopied" xml:space="preserve">
     <value>{0} Einträge kopiert</value>
   </data>
+  <data name="HistoryCopiedOne" xml:space="preserve">
+    <value>{0} Eintrag kopiert</value>
+  </data>
   <data name="HistoryCopyColumnFrom" xml:space="preserve">
     <value>Von</value>
   </data>
@@ -430,6 +433,9 @@
 Ultimate Updater kann das nicht rückgängig machen.</value>
   </data>
   <data name="UninstallBlockedByActivity" xml:space="preserve">
+    <value>Gerade nicht möglich: es läuft noch eine Installation. Versuche es erneut, sobald sie fertig ist.</value>
+  </data>
+  <data name="ReinstallBlockedByActivity" xml:space="preserve">
     <value>Gerade nicht möglich: es läuft noch eine Installation. Versuche es erneut, sobald sie fertig ist.</value>
   </data>
   <data name="RowDowngrade" xml:space="preserve">
@@ -917,7 +923,7 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
     <value>Neu prüfen</value>
   </data>
   <data name="CleanupRescanMenu" xml:space="preserve">
-    <value>Neu scannen</value>
+    <value>Neu prüfen</value>
   </data>
   <data name="CleanupStoppingRepair" xml:space="preserve">
     <value>Gestoppt. Die laufende Systemreparatur muss zu Ende laufen; ein Abbruch könnte den Windows-Komponentenspeicher beschädigen.</value>
@@ -1583,7 +1589,7 @@ Mit Admin-Rechten fortfahren?</value>
     <value>Alle Bereiche anzeigen ({0} ausgeblendet)</value>
   </data>
   <data name="CleanupRecycleInsteadOfDelete" xml:space="preserve">
-    <value>In den Papierkorb statt endgültig löschen</value>
+    <value>In den Papierkorb verschieben statt endgültig löschen</value>
   </data>
   <data name="CleanupRecycleInsteadOfDeleteHint" xml:space="preserve">
     <value>Der Platz wird erst beim Leeren des Papierkorbs frei.</value>
@@ -1862,7 +1868,7 @@ Mit Admin-Rechten fortfahren?</value>
     <value>Trotzdem versuchen</value>
   </data>
   <data name="InstallBlockerForceKillHeadline" xml:space="preserve">
-    <value>Erzwungen beenden?</value>
+    <value>Beenden erzwingen?</value>
   </data>
   <data name="InstallBlockerForceKillBody" xml:space="preserve">
     <value>Ungespeicherte Arbeit geht verloren.</value>
@@ -1884,6 +1890,9 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="InstallSpaceUnknown" xml:space="preserve">
     <value>{0} Pakete melden keine Größe.</value>
+  </data>
+  <data name="InstallSpaceUnknownOne" xml:space="preserve">
+    <value>{0} Paket meldet keine Größe.</value>
   </data>
   <data name="InstallSpaceOpenCleanup" xml:space="preserve">
     <value>Bereinigen öffnen</value>
@@ -1995,6 +2004,9 @@ Mit Admin-Rechten fortfahren?</value>
   </data>
   <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
     <value>{0} ({1} Pakete)</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetailOne" xml:space="preserve">
+    <value>{0} ({1} Paket)</value>
   </data>
   <data name="CleanupDriverInstalledDate" xml:space="preserve">
     <value>Installiert am {0}</value>
@@ -2122,8 +2134,14 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
     <value>Alle {0} ignorierten Updates wieder anzeigen?</value>
   </data>
+  <data name="IgnoreListRemoveAllHeadlineOne" xml:space="preserve">
+    <value>Das ignorierte Update wieder anzeigen?</value>
+  </data>
   <data name="IgnoreListRemoveAllBody" xml:space="preserve">
     <value>Sie erscheinen bei der nächsten Suche wieder in der Liste.</value>
+  </data>
+  <data name="IgnoreListRemoveAllBodyOne" xml:space="preserve">
+    <value>Es erscheint bei der nächsten Suche wieder in der Liste.</value>
   </data>
   <data name="HeadlineNoSourceChecked" xml:space="preserve">
     <value>Keine Quelle konnte geprüft werden</value>
@@ -2204,7 +2222,7 @@ Mit Admin-Rechten fortfahren?</value>
     <value>Bereinigung gestoppt</value>
   </data>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
-    <value>Bereinigen {0} %</value>
+    <value>Bereinigung {0} %</value>
   </data>
   <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
     <value>Wird heruntergeladen… {0} %</value>
@@ -2411,7 +2429,7 @@ Mit Admin-Rechten fortfahren?</value>
     <value>Konnte nicht ausgeführt werden</value>
   </data>
   <data name="FilterChipCritical" xml:space="preserve">
-    <value>Wichtig</value>
+    <value>Kritisch</value>
   </data>
   <data name="FilterChipIgnored" xml:space="preserve">
     <value>Ignoriert</value>

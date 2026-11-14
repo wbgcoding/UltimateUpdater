@@ -257,6 +257,9 @@
   <data name="HistoryCopied" xml:space="preserve">
     <value>{0} entradas copiadas</value>
   </data>
+  <data name="HistoryCopiedOne" xml:space="preserve">
+    <value>{0} entrada copiada</value>
+  </data>
   <data name="HistoryCopyColumnFrom" xml:space="preserve">
     <value>De</value>
   </data>
@@ -431,6 +434,9 @@ Esto no se puede deshacer con Ultimate Updater.</value>
   </data>
   <data name="UninstallBlockedByActivity" xml:space="preserve">
     <value>No se puede desinstalar ahora: hay una instalación en curso. Vuelve a intentarlo cuando termine.</value>
+  </data>
+  <data name="ReinstallBlockedByActivity" xml:space="preserve">
+    <value>No se puede reinstalar ahora: hay una instalación en curso. Vuelve a intentarlo cuando termine.</value>
   </data>
   <data name="RowDowngrade" xml:space="preserve">
     <value>Volver a {0}</value>
@@ -1885,6 +1891,9 @@ Esto no se puede deshacer.</value>
   <data name="InstallSpaceUnknown" xml:space="preserve">
     <value>{0} paquetes no informan de un tamaño.</value>
   </data>
+  <data name="InstallSpaceUnknownOne" xml:space="preserve">
+    <value>{0} paquete no informa de un tamaño.</value>
+  </data>
   <data name="InstallSpaceOpenCleanup" xml:space="preserve">
     <value>Abrir limpieza</value>
   </data>
@@ -1995,6 +2004,9 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
     <value>{0} ({1} paquetes)</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetailOne" xml:space="preserve">
+    <value>{0} ({1} paquete)</value>
   </data>
   <data name="CleanupDriverInstalledDate" xml:space="preserve">
     <value>Instalado el {0}</value>
@@ -2122,8 +2134,14 @@ Esto no se puede deshacer.</value>
   <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
     <value>¿Volver a mostrar las {0} actualizaciones ignoradas?</value>
   </data>
+  <data name="IgnoreListRemoveAllHeadlineOne" xml:space="preserve">
+    <value>¿Volver a mostrar la actualización ignorada?</value>
+  </data>
   <data name="IgnoreListRemoveAllBody" xml:space="preserve">
     <value>Volverán a la lista de actualizaciones en la próxima búsqueda.</value>
+  </data>
+  <data name="IgnoreListRemoveAllBodyOne" xml:space="preserve">
+    <value>Volverá a la lista de actualizaciones en la próxima búsqueda.</value>
   </data>
   <data name="HeadlineNoSourceChecked" xml:space="preserve">
     <value>No se pudo comprobar ninguna fuente</value>
@@ -2204,7 +2222,7 @@ Esto no se puede deshacer.</value>
     <value>Limpieza detenida</value>
   </data>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
-    <value>Limpiar {0} %</value>
+    <value>Limpiando {0} %</value>
   </data>
   <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
     <value>Descargando… {0} %</value>

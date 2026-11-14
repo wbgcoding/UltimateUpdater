@@ -128,6 +128,20 @@ public class IgnoreListViewModelTests
         Assert.Equal(loc["IgnoreListRemoveAll"], confirmText);
     }
 
+    [Fact]
+    public void The_remove_all_confirmation_speaks_of_one_update_when_only_one_is_ignored()
+    {
+        var settings = CreateSettings("wu-ignorelist-removeall-one-", out _);
+        settings.Current.Excludes.Add("winget:git");
+
+        var viewModel = new IgnoreListViewModel(settings);
+        var (headline, body, _) = viewModel.BuildRemoveAllConfirmation();
+
+        var loc = LocalizationService.Instance;
+        Assert.Equal(loc["IgnoreListRemoveAllHeadlineOne"], headline);
+        Assert.Equal(loc["IgnoreListRemoveAllBodyOne"], body);
+    }
+
     /// <summary>Same fail-closed proof as <c>SettingsViewModelTests.Releasing_all_excluded_paths_is_declined_without_confirmation</c>:
     /// Dialogs.Confirm always declines under SuppressInteractiveDialogs, so this proves the remove-all
     /// action is actually gated behind it rather than clearing regardless.</summary>

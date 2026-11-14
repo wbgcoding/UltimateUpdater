@@ -6,8 +6,8 @@ namespace UltimateUpdater.Tests;
 public partial class MainViewModelTests
 {
     [Theory]
-    [InlineData("en", "Clean up", "Clean up 47 %")]
-    [InlineData("de", "Bereinigen", "Bereinigen 47 %")]
+    [InlineData("en", "Clean up", "Cleaning up 47 %")]
+    [InlineData("de", "Bereinigen", "Bereinigung 47 %")]
     public void The_toolbar_cleanup_button_carries_the_progress_while_a_cleanup_runs(
         string language, string resting, string running)
     {
@@ -51,12 +51,12 @@ public partial class MainViewModelTests
             var cleanup = viewModel.EnsureCleanupViewModel();
             cleanup.CleanPercent = 30;
             cleanup.Phase = CleanupPhase.Cleaning;
-            Assert.Equal("Clean up 30 %", viewModel.ToolbarCleanupText);
+            Assert.Equal("Cleaning up 30 %", viewModel.ToolbarCleanupText);
 
             LocalizationService.Instance.Apply("de");
             viewModel.RefreshLocalizedText();
 
-            Assert.Equal("Bereinigen 30 %", viewModel.ToolbarCleanupText);
+            Assert.Equal("Bereinigung 30 %", viewModel.ToolbarCleanupText);
         });
     }
 }

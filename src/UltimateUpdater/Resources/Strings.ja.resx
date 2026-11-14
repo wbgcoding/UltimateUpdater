@@ -257,6 +257,9 @@
   <data name="HistoryCopied" xml:space="preserve">
     <value>{0} 件をコピーしました</value>
   </data>
+  <data name="HistoryCopiedOne" xml:space="preserve">
+    <value>{0} 件をコピーしました</value>
+  </data>
   <data name="HistoryCopyColumnFrom" xml:space="preserve">
     <value>変更前</value>
   </data>
@@ -431,6 +434,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="UninstallBlockedByActivity" xml:space="preserve">
     <value>現在アンインストールできません：インストールが進行中です。完了後にもう一度お試しください。</value>
+  </data>
+  <data name="ReinstallBlockedByActivity" xml:space="preserve">
+    <value>現在再インストールできません：インストールが進行中です。完了後にもう一度お試しください。</value>
   </data>
   <data name="RowDowngrade" xml:space="preserve">
     <value>{0} に戻す</value>
@@ -1885,6 +1891,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="InstallSpaceUnknown" xml:space="preserve">
     <value>{0} 件のパッケージはサイズを報告していません。</value>
   </data>
+  <data name="InstallSpaceUnknownOne" xml:space="preserve">
+    <value>{0} 件のパッケージはサイズを報告していません。</value>
+  </data>
   <data name="InstallSpaceOpenCleanup" xml:space="preserve">
     <value>クリーンアップを開く</value>
   </data>
@@ -1994,6 +2003,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
     <value>このバージョンをまだ使用しているプログラムやスクリプトは動作しなくなります。インストール済みのパッケージも一緒に削除されます。</value>
   </data>
   <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
+    <value>{0}（パッケージ{1}個）</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetailOne" xml:space="preserve">
     <value>{0}（パッケージ{1}個）</value>
   </data>
   <data name="CleanupDriverInstalledDate" xml:space="preserve">
@@ -2122,7 +2134,13 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
     <value>無視した {0} 件の更新をすべて再表示しますか？</value>
   </data>
+  <data name="IgnoreListRemoveAllHeadlineOne" xml:space="preserve">
+    <value>無視した更新を再表示しますか？</value>
+  </data>
   <data name="IgnoreListRemoveAllBody" xml:space="preserve">
+    <value>次回の確認で更新の一覧に戻ります。</value>
+  </data>
+  <data name="IgnoreListRemoveAllBodyOne" xml:space="preserve">
     <value>次回の確認で更新の一覧に戻ります。</value>
   </data>
   <data name="HeadlineNoSourceChecked" xml:space="preserve">
@@ -2204,7 +2222,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
     <value>クリーンアップを停止しました</value>
   </data>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
-    <value>クリーンアップ {0}%</value>
+    <value>クリーンアップ中 {0}%</value>
   </data>
   <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
     <value>ダウンロード中… {0} %</value>

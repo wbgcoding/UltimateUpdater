@@ -257,6 +257,9 @@
   <data name="HistoryCopied" xml:space="preserve">
     <value>{0} entrées copiées</value>
   </data>
+  <data name="HistoryCopiedOne" xml:space="preserve">
+    <value>{0} entrée copiée</value>
+  </data>
   <data name="HistoryCopyColumnFrom" xml:space="preserve">
     <value>De</value>
   </data>
@@ -431,6 +434,9 @@ Ultimate Updater ne peut pas annuler cette action.</value>
   </data>
   <data name="UninstallBlockedByActivity" xml:space="preserve">
     <value>Désinstallation impossible pour le moment : une installation est en cours. Réessayez une fois qu'elle est terminée.</value>
+  </data>
+  <data name="ReinstallBlockedByActivity" xml:space="preserve">
+    <value>Réinstallation impossible pour le moment : une installation est en cours. Réessayez une fois qu'elle est terminée.</value>
   </data>
   <data name="RowDowngrade" xml:space="preserve">
     <value>Retour à {0}</value>
@@ -1885,6 +1891,9 @@ Continuer avec les droits administrateur ?</value>
   <data name="InstallSpaceUnknown" xml:space="preserve">
     <value>{0} paquets ne signalent pas de taille.</value>
   </data>
+  <data name="InstallSpaceUnknownOne" xml:space="preserve">
+    <value>{0} paquet ne signale pas de taille.</value>
+  </data>
   <data name="InstallSpaceOpenCleanup" xml:space="preserve">
     <value>Ouvrir le nettoyage</value>
   </data>
@@ -1995,6 +2004,9 @@ Continuer avec les droits administrateur ?</value>
   </data>
   <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
     <value>{0} ({1} paquets)</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetailOne" xml:space="preserve">
+    <value>{0} ({1} paquet)</value>
   </data>
   <data name="CleanupDriverInstalledDate" xml:space="preserve">
     <value>Installé le {0}</value>
@@ -2122,8 +2134,14 @@ Continuer avec les droits administrateur ?</value>
   <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
     <value>Réafficher les {0} mises à jour ignorées ?</value>
   </data>
+  <data name="IgnoreListRemoveAllHeadlineOne" xml:space="preserve">
+    <value>Réafficher la mise à jour ignorée ?</value>
+  </data>
   <data name="IgnoreListRemoveAllBody" xml:space="preserve">
     <value>Elles reviennent dans la liste des mises à jour à la prochaine recherche.</value>
+  </data>
+  <data name="IgnoreListRemoveAllBodyOne" xml:space="preserve">
+    <value>Elle revient dans la liste des mises à jour à la prochaine recherche.</value>
   </data>
   <data name="HeadlineNoSourceChecked" xml:space="preserve">
     <value>Aucune source n'a pu être vérifiée</value>
@@ -2204,7 +2222,7 @@ Continuer avec les droits administrateur ?</value>
     <value>Nettoyage arrêté</value>
   </data>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
-    <value>Nettoyer {0} %</value>
+    <value>Nettoyage {0} %</value>
   </data>
   <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
     <value>Téléchargement… {0} %</value>

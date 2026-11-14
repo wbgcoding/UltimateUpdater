@@ -854,7 +854,7 @@ public partial class MainViewModel
 
         if (UninstallBlockedForRow(row))
         {
-            Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
+            Dialogs.Warn(Loc["ReinstallBlockedByActivity"]);
             return;
         }
 
@@ -909,7 +909,7 @@ public partial class MainViewModel
         // reinstall's own hold is not "activity" (UninstallBlockedForRow would refuse it).
         if (ReinstallRowGone(row))
         {
-            Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
+            Dialogs.Warn(Loc["ReinstallBlockedByActivity"]);
             return;
         }
 
@@ -922,7 +922,7 @@ public partial class MainViewModel
         // The scope read takes seconds with the row still Failed: a Retry clicked meanwhile has queued it.
         if (ReinstallRowGone(row))
         {
-            Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
+            Dialogs.Warn(Loc["ReinstallBlockedByActivity"]);
             return;
         }
 
@@ -971,7 +971,7 @@ public partial class MainViewModel
 
         if (UninstallBlockedForRow(row))
         {
-            Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
+            Dialogs.Warn(Loc["ReinstallBlockedByActivity"]);
             return;
         }
 

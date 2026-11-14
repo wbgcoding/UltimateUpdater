@@ -394,8 +394,9 @@ public partial class MainViewModelTests
                 RunPumped(viewModel.ReinstallRowAsync(row));
                 RunPumped(viewModel.UninstallRowAsync(row));
 
-                var refusal = LocalizationService.Instance["UninstallBlockedByActivity"];
-                Assert.Equal([refusal, refusal], warnings);
+                Assert.Equal(
+                    [LocalizationService.Instance["ReinstallBlockedByActivity"], LocalizationService.Instance["UninstallBlockedByActivity"]],
+                    warnings);
                 Assert.Equal(["fetch", "scope"], source.Calls);
                 Assert.Equal(1, confirms());
 

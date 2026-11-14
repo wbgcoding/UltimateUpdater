@@ -40,7 +40,7 @@ public sealed partial class PythonVersionCandidateViewModel(PythonVersionCandida
     public string VenvUseTip => LocalizationService.Instance["CleanupOldPythonVenvUsesTip"];
 
     public string DetailText => string.Format(
-        LocalizationService.Instance["CleanupOldPythonVersionDetail"], PythonExe, PackageCount);
+        LocalizationService.Instance[PackageCount == 1 ? "CleanupOldPythonVersionDetailOne" : "CleanupOldPythonVersionDetail"], PythonExe, PackageCount);
 
     public void RefreshLocalizedText()
     {

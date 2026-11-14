@@ -257,6 +257,9 @@
   <data name="HistoryCopied" xml:space="preserve">
     <value>已复制 {0} 条记录</value>
   </data>
+  <data name="HistoryCopiedOne" xml:space="preserve">
+    <value>已复制 {0} 条记录</value>
+  </data>
   <data name="HistoryCopyColumnFrom" xml:space="preserve">
     <value>从</value>
   </data>
@@ -431,6 +434,9 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="UninstallBlockedByActivity" xml:space="preserve">
     <value>现在无法卸载：有安装正在进行。请等其完成后再试。</value>
+  </data>
+  <data name="ReinstallBlockedByActivity" xml:space="preserve">
+    <value>现在无法重新安装：有安装正在进行。请等其完成后再试。</value>
   </data>
   <data name="RowDowngrade" xml:space="preserve">
     <value>回退到 {0}</value>
@@ -1885,6 +1891,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="InstallSpaceUnknown" xml:space="preserve">
     <value>{0} 个软件包未报告大小。</value>
   </data>
+  <data name="InstallSpaceUnknownOne" xml:space="preserve">
+    <value>{0} 个软件包未报告大小。</value>
+  </data>
   <data name="InstallSpaceOpenCleanup" xml:space="preserve">
     <value>打开清理</value>
   </data>
@@ -1994,6 +2003,9 @@ Ultimate Updater 无法撤销此操作。</value>
     <value>仍在使用此版本的程序和脚本将无法运行。其中安装的软件包也会一并删除。</value>
   </data>
   <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
+    <value>{0}（{1} 个软件包）</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetailOne" xml:space="preserve">
     <value>{0}（{1} 个软件包）</value>
   </data>
   <data name="CleanupDriverInstalledDate" xml:space="preserve">
@@ -2122,8 +2134,14 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
     <value>重新显示全部 {0} 个已忽略的更新？</value>
   </data>
+  <data name="IgnoreListRemoveAllHeadlineOne" xml:space="preserve">
+    <value>重新显示已忽略的更新？</value>
+  </data>
   <data name="IgnoreListRemoveAllBody" xml:space="preserve">
     <value>它们会在下次检查时重新出现在更新列表中。</value>
+  </data>
+  <data name="IgnoreListRemoveAllBodyOne" xml:space="preserve">
+    <value>它会在下次检查时重新出现在更新列表中。</value>
   </data>
   <data name="HeadlineNoSourceChecked" xml:space="preserve">
     <value>无法检查任何来源</value>
@@ -2204,7 +2222,7 @@ Ultimate Updater 无法撤销此操作。</value>
     <value>清理已停止</value>
   </data>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
-    <value>清理 {0}%</value>
+    <value>清理中 {0}%</value>
   </data>
   <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
     <value>正在下载… {0} %</value>

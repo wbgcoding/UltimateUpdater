@@ -577,7 +577,7 @@ public partial class HistoryViewModel : ObservableObject
         try
         {
             System.Windows.Clipboard.SetText(BuildClipboardText(rows));
-            CopiedMessage = string.Format(Loc["HistoryCopied"], rows.Count);
+            CopiedMessage = string.Format(Loc[rows.Count == 1 ? "HistoryCopiedOne" : "HistoryCopied"], rows.Count);
         }
         catch (System.Runtime.InteropServices.ExternalException)
         {

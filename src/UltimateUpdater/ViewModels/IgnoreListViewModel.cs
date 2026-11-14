@@ -78,8 +78,8 @@ public sealed partial class IgnoreListViewModel : ObservableObject
     /// <summary>The confirmation says what removing does (the entries come back on the next search) and
     /// how many, with the button keeping its own short label.</summary>
     internal (string Headline, string Body, string ConfirmText) BuildRemoveAllConfirmation() =>
-        (string.Format(Loc["IgnoreListRemoveAllHeadline"], Entries.Count),
-            Loc["IgnoreListRemoveAllBody"],
+        (Entries.Count == 1 ? Loc["IgnoreListRemoveAllHeadlineOne"] : string.Format(Loc["IgnoreListRemoveAllHeadline"], Entries.Count),
+            Loc[Entries.Count == 1 ? "IgnoreListRemoveAllBodyOne" : "IgnoreListRemoveAllBody"],
             Loc["IgnoreListRemoveAll"]);
 
     [RelayCommand]

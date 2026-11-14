@@ -257,6 +257,9 @@
   <data name="HistoryCopied" xml:space="preserve">
     <value>{0} entries copied</value>
   </data>
+  <data name="HistoryCopiedOne" xml:space="preserve">
+    <value>{0} entry copied</value>
+  </data>
   <data name="HistoryCopyColumnFrom" xml:space="preserve">
     <value>From</value>
   </data>
@@ -431,6 +434,9 @@ This cannot be undone by Ultimate Updater.</value>
   </data>
   <data name="UninstallBlockedByActivity" xml:space="preserve">
     <value>Cannot uninstall right now: an installation is in progress. Try again once it has finished.</value>
+  </data>
+  <data name="ReinstallBlockedByActivity" xml:space="preserve">
+    <value>Cannot reinstall right now: an installation is in progress. Try again once it has finished.</value>
   </data>
   <data name="RowDowngrade" xml:space="preserve">
     <value>Back to {0}</value>
@@ -1885,6 +1891,9 @@ Continue with admin rights?</value>
   <data name="InstallSpaceUnknown" xml:space="preserve">
     <value>{0} packages do not report a size.</value>
   </data>
+  <data name="InstallSpaceUnknownOne" xml:space="preserve">
+    <value>{0} package does not report a size.</value>
+  </data>
   <data name="InstallSpaceOpenCleanup" xml:space="preserve">
     <value>Open cleanup</value>
   </data>
@@ -1995,6 +2004,9 @@ Continue with admin rights?</value>
   </data>
   <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
     <value>{0} ({1} packages)</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetailOne" xml:space="preserve">
+    <value>{0} ({1} package)</value>
   </data>
   <data name="CleanupDriverInstalledDate" xml:space="preserve">
     <value>Installed {0}</value>
@@ -2122,8 +2134,14 @@ Continue with admin rights?</value>
   <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
     <value>Show all {0} ignored updates again?</value>
   </data>
+  <data name="IgnoreListRemoveAllHeadlineOne" xml:space="preserve">
+    <value>Show the ignored update again?</value>
+  </data>
   <data name="IgnoreListRemoveAllBody" xml:space="preserve">
     <value>They return to the update list on the next search.</value>
+  </data>
+  <data name="IgnoreListRemoveAllBodyOne" xml:space="preserve">
+    <value>It returns to the update list on the next search.</value>
   </data>
   <data name="HeadlineNoSourceChecked" xml:space="preserve">
     <value>No source could be checked</value>
@@ -2204,7 +2222,7 @@ Continue with admin rights?</value>
     <value>Cleanup stopped</value>
   </data>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
-    <value>Clean up {0} %</value>
+    <value>Cleaning up {0} %</value>
   </data>
   <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
     <value>Downloading… {0} %</value>

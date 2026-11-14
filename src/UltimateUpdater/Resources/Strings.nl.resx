@@ -257,6 +257,9 @@
   <data name="HistoryCopied" xml:space="preserve">
     <value>{0} items gekopieerd</value>
   </data>
+  <data name="HistoryCopiedOne" xml:space="preserve">
+    <value>{0} item gekopieerd</value>
+  </data>
   <data name="HistoryCopyColumnFrom" xml:space="preserve">
     <value>Van</value>
   </data>
@@ -431,6 +434,9 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   </data>
   <data name="UninstallBlockedByActivity" xml:space="preserve">
     <value>Nu niet mogelijk om te verwijderen: er loopt een installatie. Probeer het opnieuw zodra deze is voltooid.</value>
+  </data>
+  <data name="ReinstallBlockedByActivity" xml:space="preserve">
+    <value>Nu niet mogelijk om opnieuw te installeren: er loopt een installatie. Probeer het opnieuw zodra deze is voltooid.</value>
   </data>
   <data name="RowDowngrade" xml:space="preserve">
     <value>Terug naar {0}</value>
@@ -1885,6 +1891,9 @@ Doorgaan met beheerdersrechten?</value>
   <data name="InstallSpaceUnknown" xml:space="preserve">
     <value>{0} pakketten melden geen grootte.</value>
   </data>
+  <data name="InstallSpaceUnknownOne" xml:space="preserve">
+    <value>{0} pakket meldt geen grootte.</value>
+  </data>
   <data name="InstallSpaceOpenCleanup" xml:space="preserve">
     <value>Opschonen openen</value>
   </data>
@@ -1995,6 +2004,9 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
     <value>{0} ({1} pakketten)</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetailOne" xml:space="preserve">
+    <value>{0} ({1} pakket)</value>
   </data>
   <data name="CleanupDriverInstalledDate" xml:space="preserve">
     <value>Geïnstalleerd op {0}</value>
@@ -2122,8 +2134,14 @@ Doorgaan met beheerdersrechten?</value>
   <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
     <value>Alle {0} genegeerde updates weer tonen?</value>
   </data>
+  <data name="IgnoreListRemoveAllHeadlineOne" xml:space="preserve">
+    <value>De genegeerde update weer tonen?</value>
+  </data>
   <data name="IgnoreListRemoveAllBody" xml:space="preserve">
     <value>Ze verschijnen bij de volgende controle weer in de updatelijst.</value>
+  </data>
+  <data name="IgnoreListRemoveAllBodyOne" xml:space="preserve">
+    <value>Deze verschijnt bij de volgende controle weer in de updatelijst.</value>
   </data>
   <data name="HeadlineNoSourceChecked" xml:space="preserve">
     <value>Geen enkele bron kon worden gecontroleerd</value>

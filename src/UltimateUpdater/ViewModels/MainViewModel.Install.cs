@@ -480,7 +480,7 @@ public partial class MainViewModel
         // only ever reflects what is actually known.
         var text = string.Format(Loc["InstallSpaceShort"], FormatBytes(verdict.FreeBytes), FormatBytes(verdict.RequiredBytes));
         if (verdict.UnknownCount > 0)
-            text += " " + string.Format(Loc["InstallSpaceUnknown"], verdict.UnknownCount);
+            text += " " + string.Format(Loc[verdict.UnknownCount == 1 ? "InstallSpaceUnknownOne" : "InstallSpaceUnknown"], verdict.UnknownCount);
 
         return new InstallPreflightLineViewModel(
             text, isCritical: true, actionText: Loc["InstallSpaceOpenCleanup"], action: ShowCleanup);

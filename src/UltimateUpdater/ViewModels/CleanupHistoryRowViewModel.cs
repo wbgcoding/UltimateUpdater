@@ -138,7 +138,7 @@ public sealed partial class CleanupHistoryRowViewModel : ObservableObject
     /// <summary>A run the user stopped freed what it freed and no more, worth saying, not worth shouting.</summary>
     public bool WasStopped => _entry.Stopped;
 
-    public string StoppedText => LocalizationService.Instance["CleanupStop"];
+    public string StoppedText => LocalizationService.Instance["CleanupStateStopped"];
 
     public string DeleteTooltip => LocalizationService.Instance["CleanupHistoryDeleteEntry"];
 

@@ -68,6 +68,15 @@ versioning: [SemVer](https://semver.org).
 - Stop no longer lets a system repair start that had not begun yet; only a repair already running is
   finished, and only then does the dialog say so.
 - The npm cache is emptied by npm itself, never file by file, so a cleanup can no longer leave it broken.
+- Earlier cleanups that were stopped say "Stopped" instead of "Stop", and the main window's button reads
+  "Cleaning up 47 %" while a cleanup runs.
+
+### Wording
+- Counts of one use the singular ("1 package reports no size", "1 entry copied"), and restoring a single
+  ignored update asks about that one update.
+- A reinstall that has to wait says "Cannot reinstall right now" instead of naming an uninstall.
+- German: the filter chip reads "Kritisch" like the headline, plus clearer labels for rescanning a
+  cleanup area, moving files to the recycle bin and forcing a program to close.
 
 ## [1.1.2] - 2026-10-30
 

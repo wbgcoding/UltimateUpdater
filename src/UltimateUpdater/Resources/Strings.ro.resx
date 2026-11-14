@@ -257,6 +257,9 @@
   <data name="HistoryCopied" xml:space="preserve">
     <value>{0} intrări copiate</value>
   </data>
+  <data name="HistoryCopiedOne" xml:space="preserve">
+    <value>{0} intrare copiată</value>
+  </data>
   <data name="HistoryCopyColumnFrom" xml:space="preserve">
     <value>De la</value>
   </data>
@@ -431,6 +434,9 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   </data>
   <data name="UninstallBlockedByActivity" xml:space="preserve">
     <value>Nu se poate dezinstala acum: o instalare este în curs. Încercați din nou după ce s-a terminat.</value>
+  </data>
+  <data name="ReinstallBlockedByActivity" xml:space="preserve">
+    <value>Nu se poate reinstala acum: o instalare este în curs. Încercați din nou după ce s-a terminat.</value>
   </data>
   <data name="RowDowngrade" xml:space="preserve">
     <value>Revenire la {0}</value>
@@ -1885,6 +1891,9 @@ Continuați cu drepturi de administrator?</value>
   <data name="InstallSpaceUnknown" xml:space="preserve">
     <value>{0} pachete nu raportează o dimensiune.</value>
   </data>
+  <data name="InstallSpaceUnknownOne" xml:space="preserve">
+    <value>{0} pachet nu raportează o dimensiune.</value>
+  </data>
   <data name="InstallSpaceOpenCleanup" xml:space="preserve">
     <value>Deschide curățarea</value>
   </data>
@@ -1995,6 +2004,9 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
     <value>{0} ({1} pachete)</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetailOne" xml:space="preserve">
+    <value>{0} ({1} pachet)</value>
   </data>
   <data name="CleanupDriverInstalledDate" xml:space="preserve">
     <value>Instalat la {0}</value>
@@ -2122,8 +2134,14 @@ Continuați cu drepturi de administrator?</value>
   <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
     <value>Afișați din nou toate cele {0} actualizări ignorate?</value>
   </data>
+  <data name="IgnoreListRemoveAllHeadlineOne" xml:space="preserve">
+    <value>Afișați din nou actualizarea ignorată?</value>
+  </data>
   <data name="IgnoreListRemoveAllBody" xml:space="preserve">
     <value>Vor reapărea în lista de actualizări la următoarea căutare.</value>
+  </data>
+  <data name="IgnoreListRemoveAllBodyOne" xml:space="preserve">
+    <value>Va reapărea în lista de actualizări la următoarea căutare.</value>
   </data>
   <data name="HeadlineNoSourceChecked" xml:space="preserve">
     <value>Nicio sursă nu a putut fi verificată</value>
@@ -2204,7 +2222,7 @@ Continuați cu drepturi de administrator?</value>
     <value>Curățare oprită</value>
   </data>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
-    <value>Curăță {0} %</value>
+    <value>Curățare {0} %</value>
   </data>
   <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
     <value>Se descarcă… {0} %</value>

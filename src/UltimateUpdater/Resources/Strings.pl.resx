@@ -257,6 +257,9 @@
   <data name="HistoryCopied" xml:space="preserve">
     <value>Skopiowano {0} pozycji</value>
   </data>
+  <data name="HistoryCopiedOne" xml:space="preserve">
+    <value>Skopiowano {0} pozycję</value>
+  </data>
   <data name="HistoryCopyColumnFrom" xml:space="preserve">
     <value>Z</value>
   </data>
@@ -431,6 +434,9 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   </data>
   <data name="UninstallBlockedByActivity" xml:space="preserve">
     <value>Nie można teraz odinstalować: trwa instalacja. Spróbuj ponownie po jej zakończeniu.</value>
+  </data>
+  <data name="ReinstallBlockedByActivity" xml:space="preserve">
+    <value>Nie można teraz zainstalować ponownie: trwa instalacja. Spróbuj ponownie po jej zakończeniu.</value>
   </data>
   <data name="RowDowngrade" xml:space="preserve">
     <value>Wróć do {0}</value>
@@ -1885,6 +1891,9 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="InstallSpaceUnknown" xml:space="preserve">
     <value>{0} pakietów nie podaje rozmiaru.</value>
   </data>
+  <data name="InstallSpaceUnknownOne" xml:space="preserve">
+    <value>{0} pakiet nie podaje rozmiaru.</value>
+  </data>
   <data name="InstallSpaceOpenCleanup" xml:space="preserve">
     <value>Otwórz czyszczenie</value>
   </data>
@@ -1995,6 +2004,9 @@ Kontynuować z uprawnieniami administratora?</value>
   </data>
   <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
     <value>{0} ({1} pakietów)</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetailOne" xml:space="preserve">
+    <value>{0} ({1} pakiet)</value>
   </data>
   <data name="CleanupDriverInstalledDate" xml:space="preserve">
     <value>Zainstalowano {0}</value>
@@ -2122,8 +2134,14 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
     <value>Pokazać ponownie wszystkie ignorowane aktualizacje ({0})?</value>
   </data>
+  <data name="IgnoreListRemoveAllHeadlineOne" xml:space="preserve">
+    <value>Pokazać ponownie ignorowaną aktualizację?</value>
+  </data>
   <data name="IgnoreListRemoveAllBody" xml:space="preserve">
     <value>Wrócą na listę aktualizacji przy następnym sprawdzaniu.</value>
+  </data>
+  <data name="IgnoreListRemoveAllBodyOne" xml:space="preserve">
+    <value>Wróci na listę aktualizacji przy następnym sprawdzaniu.</value>
   </data>
   <data name="HeadlineNoSourceChecked" xml:space="preserve">
     <value>Nie udało się sprawdzić żadnego źródła</value>
@@ -2204,7 +2222,7 @@ Kontynuować z uprawnieniami administratora?</value>
     <value>Czyszczenie zatrzymane</value>
   </data>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
-    <value>Wyczyść {0} %</value>
+    <value>Czyszczenie {0} %</value>
   </data>
   <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
     <value>Pobieranie… {0} %</value>

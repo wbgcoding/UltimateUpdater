@@ -257,6 +257,9 @@
   <data name="HistoryCopied" xml:space="preserve">
     <value>{0} kayıt kopyalandı</value>
   </data>
+  <data name="HistoryCopiedOne" xml:space="preserve">
+    <value>{0} kayıt kopyalandı</value>
+  </data>
   <data name="HistoryCopyColumnFrom" xml:space="preserve">
     <value>Eski</value>
   </data>
@@ -431,6 +434,9 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   </data>
   <data name="UninstallBlockedByActivity" xml:space="preserve">
     <value>Şu anda kaldırma yapılamıyor: bir yükleme devam ediyor. Tamamlandıktan sonra tekrar deneyin.</value>
+  </data>
+  <data name="ReinstallBlockedByActivity" xml:space="preserve">
+    <value>Şu anda yeniden yükleme yapılamıyor: bir yükleme devam ediyor. Tamamlandıktan sonra tekrar deneyin.</value>
   </data>
   <data name="RowDowngrade" xml:space="preserve">
     <value>{0} sürümüne dön</value>
@@ -1885,6 +1891,9 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="InstallSpaceUnknown" xml:space="preserve">
     <value>{0} paket boyut bildirmiyor.</value>
   </data>
+  <data name="InstallSpaceUnknownOne" xml:space="preserve">
+    <value>{0} paket boyut bildirmiyor.</value>
+  </data>
   <data name="InstallSpaceOpenCleanup" xml:space="preserve">
     <value>Temizliği aç</value>
   </data>
@@ -1994,6 +2003,9 @@ Yönetici haklarıyla devam edilsin mi?</value>
     <value>Bu sürümü hâlâ kullanan programlar ve betikler artık çalışmaz. İçindeki yüklü paketler de onunla birlikte kaldırılır.</value>
   </data>
   <data name="CleanupOldPythonVersionDetail" xml:space="preserve">
+    <value>{0} ({1} paket)</value>
+  </data>
+  <data name="CleanupOldPythonVersionDetailOne" xml:space="preserve">
     <value>{0} ({1} paket)</value>
   </data>
   <data name="CleanupDriverInstalledDate" xml:space="preserve">
@@ -2122,8 +2134,14 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="IgnoreListRemoveAllHeadline" xml:space="preserve">
     <value>Yoksayılan {0} güncellemenin tümü yeniden gösterilsin mi?</value>
   </data>
+  <data name="IgnoreListRemoveAllHeadlineOne" xml:space="preserve">
+    <value>Yoksayılan güncelleme yeniden gösterilsin mi?</value>
+  </data>
   <data name="IgnoreListRemoveAllBody" xml:space="preserve">
     <value>Bir sonraki denetimde güncelleme listesine geri dönerler.</value>
+  </data>
+  <data name="IgnoreListRemoveAllBodyOne" xml:space="preserve">
+    <value>Bir sonraki denetimde güncelleme listesine geri döner.</value>
   </data>
   <data name="HeadlineNoSourceChecked" xml:space="preserve">
     <value>Hiçbir kaynak denetlenemedi</value>
@@ -2204,7 +2222,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
     <value>Temizlik durduruldu</value>
   </data>
   <data name="ToolbarCleanupRunning" xml:space="preserve">
-    <value>Temizle %{0}</value>
+    <value>Temizleniyor %{0}</value>
   </data>
   <data name="SelfUpdatePhaseDownloading" xml:space="preserve">
     <value>İndiriliyor… {0} %</value>
