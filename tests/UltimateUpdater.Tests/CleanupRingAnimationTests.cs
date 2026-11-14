@@ -38,15 +38,6 @@ public class CleanupRingAnimationTests : IDisposable
         (window.LightSlide, TranslateTransform.XProperty, "LightSlide.X"),
         (window.SurfaceBreathe, ScaleTransform.ScaleXProperty, "SurfaceBreathe.ScaleX"),
         (window.SurfaceBreathe, ScaleTransform.ScaleYProperty, "SurfaceBreathe.ScaleY"),
-        (window.Glint1, UIElement.OpacityProperty, "Glint1.Opacity"),
-        (window.Glint2, UIElement.OpacityProperty, "Glint2.Opacity"),
-        (window.Glint3, UIElement.OpacityProperty, "Glint3.Opacity"),
-        (window.Glint1Scale, ScaleTransform.ScaleXProperty, "Glint1Scale.ScaleX"),
-        (window.Glint1Scale, ScaleTransform.ScaleYProperty, "Glint1Scale.ScaleY"),
-        (window.Glint2Scale, ScaleTransform.ScaleXProperty, "Glint2Scale.ScaleX"),
-        (window.Glint2Scale, ScaleTransform.ScaleYProperty, "Glint2Scale.ScaleY"),
-        (window.Glint3Scale, ScaleTransform.ScaleXProperty, "Glint3Scale.ScaleX"),
-        (window.Glint3Scale, ScaleTransform.ScaleYProperty, "Glint3Scale.ScaleY"),
     ];
 
     /// <summary>What the closing flourish animates on top of that. No opacity pulse on the ring any more
@@ -355,84 +346,6 @@ public class CleanupRingAnimationTests : IDisposable
     }
 
     /// <summary>
-    /// The glints' peak opacity and peak scale both rise with the run's own progress: quiet near the start,
-    /// at their full amplitude once the run is nearly done - never flattened onto one shared ramp, and
-    /// never past the hard ceilings the ambient-motion test above already pins.
-    /// </summary>
-    [Fact]
-    public void Glint_peak_amplitude_scales_with_the_runs_progress()
-    {
-        WpfHarness.OnUiThread(() =>
-        {
-            var (window, viewModel) = CreateCleaningWindow();
-
-            viewModel.CleanPercent = 0;
-            Call(window, "StartSweep");
-            var sweepAtZero = Field<Storyboard>(window, "_sweep")!;
-            var opacityAtZero = PeakGlintOpacities(window, sweepAtZero);
-            var scaleAtZero = PeakGlintScales(window, sweepAtZero);
-            Call(window, "StopSweep");
-            Tick();
-
-            viewModel.CleanPercent = 100;
-            Call(window, "StartSweep");
-            var sweepAtFull = Field<Storyboard>(window, "_sweep")!;
-            var opacityAtFull = PeakGlintOpacities(window, sweepAtFull);
-            var scaleAtFull = PeakGlintScales(window, sweepAtFull);
-
-            Assert.Equal(3, opacityAtZero.Length);
-            Assert.All(opacityAtZero, o => Assert.True(o <= 0.3, $"peak opacity at 0% is {o}, expected <= 0.3"));
-            Assert.All(opacityAtFull, o => Assert.True(o <= 0.55, $"peak opacity at 100% is {o}, expected <= 0.55"));
-            Assert.True(
-                opacityAtFull.Max() > opacityAtZero.Max(),
-                $"peak opacity at 100% ({opacityAtFull.Max()}) is not greater than at 0% ({opacityAtZero.Max()})");
-
-            // Never flattened onto one shared ramp: the three glints' own ceilings (1.06/1.04/1.05) already
-            // differ, so "still differ" means more than one distinct value survives the progress scaling,
-            // not that all three are pairwise unique.
-            Assert.True(scaleAtFull.Distinct().Count() > 1, "every glint scales to the same peak - flattened onto one ramp");
-
-            // Every scale peak stays under the 1.06 hard ceiling even at 100%, where the full ceiling is reached.
-            Assert.All(scaleAtFull, s => Assert.True(s <= 1.06, $"peak scale at 100% is {s}, expected <= 1.06"));
-            Assert.All(scaleAtZero, s => Assert.True(s <= 1.06, $"peak scale at 0% is {s}, expected <= 1.06"));
-
-            Call(window, "StopSweep");
-            Tick();
-        });
-    }
-
-    /// <summary>
-    /// Progress crossing into a new 20%-wide band rebuilds the sweep (WPF seals key-frame values once a
-    /// storyboard has begun, so the running one cannot simply be nudged) - proven by the sweep's identity
-    /// itself changing, not by its amplitude, since a same-band change must NOT rebuild anything.
-    /// </summary>
-    [Fact]
-    public void Progress_crossing_a_band_rebuilds_the_sweep_but_staying_inside_one_does_not()
-    {
-        WpfHarness.OnUiThread(() =>
-        {
-            var (window, viewModel) = CreateCleaningWindow();
-
-            viewModel.CleanPercent = 5;
-            Call(window, "StartSweep");
-            var first = Field<Storyboard>(window, "_sweep");
-
-            // Still inside the same 0-19 band: no rebuild.
-            viewModel.CleanPercent = 12;
-            Assert.Same(first, Field<Storyboard>(window, "_sweep"));
-
-            // Crosses into the 20-39 band: rebuilt.
-            viewModel.CleanPercent = 25;
-            var second = Field<Storyboard>(window, "_sweep");
-            Assert.NotSame(first, second);
-            Assert.NotNull(second);
-
-            Call(window, "StopSweep");
-            Tick();
-        });
-    }
-
-    /// <summary>
     /// The platter ring and the actuator arm are drawn once, in their own colours
     /// (AccentFillColorDefaultBrush / TextFillColorSecondaryBrush against the body's
     /// CardBackgroundFillColorDefaultBrush), never masked or never animated, unlike the body and the travelling
@@ -477,9 +390,9 @@ public class CleanupRingAnimationTests : IDisposable
             // the 16px offset that centres the 108px Viewbox inside the 140px CenterScene, then to window
             // pixels via CenterScene's own laid-out position - never assumed, always read back.
             var origin = window.CenterScene.TranslatePoint(new Point(0, 0), root);
-            var bodyOnly = PixelAt(bitmap, InWindow(origin, 4.5, 3));      // corner of the body, clear of the ring and the arm
-            var ring = PixelAt(bitmap, InWindow(origin, 16.25, 11.2));    // midway between the ring's outer and inner radius
-            var arm = PixelAt(bitmap, InWindow(origin, 15.25, 15.1));     // midway along the tapered arm
+            var bodyOnly = PixelAt(bitmap, InWindow(origin, 9, 20.5));     // lower edge of the body, clear of the ring, the arm and the screws
+            var ring = PixelAt(bitmap, InWindow(origin, 18.8, 10.2));     // on the ring stroke, right on the platter edge
+            var arm = PixelAt(bitmap, InWindow(origin, 15.7, 16.75));    // midway along the tapered arm
 
             Assert.True(
                 ColourDistance(bodyOnly, ring) > 24,
@@ -507,36 +420,6 @@ public class CleanupRingAnimationTests : IDisposable
 
     private static double ColourDistance((byte R, byte G, byte B, byte A) a, (byte R, byte G, byte B, byte A) b) =>
         Math.Sqrt(Math.Pow(a.R - b.R, 2) + Math.Pow(a.G - b.G, 2) + Math.Pow(a.B - b.B, 2));
-
-    /// <summary>Every glint's own fade (opacity) animation's peak value, in <see cref="GlintElements"/>
-    /// order. The fade is built from the DependencyProperty overload of <see cref="PropertyPath"/>
-    /// (<c>AddGlint</c>'s call for <see cref="System.Windows.UIElement.OpacityProperty"/>), whose own
-    /// <see cref="PropertyPath.Path"/> reads back as the literal string "(0)", never the word "Opacity" -
-    /// unlike the pop (scale) animations below, built from the STRING overload instead.</summary>
-    private static double[] PeakGlintOpacities(CleanupWindow window, Storyboard sweep) =>
-        GlintElements(window)
-            .Select(glint => sweep.Children
-                .OfType<DoubleAnimationUsingKeyFrames>()
-                .Where(child => ReferenceEquals(Storyboard.GetTarget(child), glint))
-                .Where(child => Storyboard.GetTargetProperty(child)?.Path == "(0)")
-                .Select(child => child.KeyFrames.Cast<DoubleKeyFrame>().Max(k => Math.Abs(k.Value)))
-                .Single())
-            .ToArray();
-
-    /// <summary>Every glint's own pop (scale) animation's peak value (ScaleX and ScaleY always carry the
-    /// same peak, so either one stands for the glint).</summary>
-    private static double[] PeakGlintScales(CleanupWindow window, Storyboard sweep) =>
-        GlintElements(window)
-            .Select(glint => sweep.Children
-                .OfType<DoubleAnimationUsingKeyFrames>()
-                .Where(child => ReferenceEquals(Storyboard.GetTarget(child), glint))
-                .Where(child => (Storyboard.GetTargetProperty(child)?.Path ?? "").Contains("Scale", StringComparison.Ordinal))
-                .Select(child => child.KeyFrames.Cast<DoubleKeyFrame>().Max(k => Math.Abs(k.Value)))
-                .First())
-            .ToArray();
-
-    private static UIElement[] GlintElements(CleanupWindow window) =>
-        [window.Glint1, window.Glint2, window.Glint3];
 
     /// <summary>The ring itself never became part of the calm redesign, its fill still has to track
     /// <see cref="CleanupWindow.DisplayPercent"/> exactly the way it always did.</summary>
@@ -694,42 +577,6 @@ public class CleanupRingAnimationTests : IDisposable
             CallWithArg(window, "ApplySweepVisibility", true);
             Assert.True(
                 TickUntil(() => (sweep.GetCurrentGlobalSpeed(window) ?? 0) > 0), "restoring the window never resumed the sweep");
-
-            Call(window, "StopSweep");
-            Tick();
-        });
-    }
-
-    /// <summary>
-    /// A band crossing rebuilds the sweep; a rebuild while the run is held must come back paused, or the
-    /// light would travel again for a run that deletes nothing.
-    /// </summary>
-    [Fact]
-    public void A_band_crossing_while_the_run_is_held_leaves_the_rebuilt_sweep_paused()
-    {
-        WpfHarness.OnUiThread(() =>
-        {
-            var (window, viewModel) = CreateCleaningWindow();
-
-            viewModel.CleanPercent = 5;
-            Call(window, "StartSweep");
-            var first = Field<Storyboard>(window, "_sweep")!;
-            Tick();
-
-            viewModel.IsPaused = true;
-            Assert.True(TickUntil(() => first.GetCurrentGlobalSpeed(window) == 0), "the run's own pause never took hold");
-
-            viewModel.CleanPercent = 45;
-            var rebuilt = Field<Storyboard>(window, "_sweep")!;
-            Assert.NotSame(first, rebuilt);
-
-            Thread.Sleep(60);
-            Tick();
-            Assert.Equal(0, rebuilt.GetCurrentGlobalSpeed(window));
-
-            viewModel.IsPaused = false;
-            Assert.True(
-                TickUntil(() => (rebuilt.GetCurrentGlobalSpeed(window) ?? 0) > 0), "the run's own resume never started the rebuilt sweep");
 
             Call(window, "StopSweep");
             Tick();

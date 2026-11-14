@@ -302,18 +302,9 @@
             </Setter>
         </Style>
 
-        <!-- Replaced the plain rounded square with a hard disk: a filled disc plus a separate stroked
-             ring plus a separate hub and centre dot, not a punched ring, with the screw holes as their
-             own filled colour rather than a cutout to whatever sits behind the body, each drawn as its
-             own geometry rather than two combined EvenOdd paths (body+holes, ring+bore). The
-             body/platter/hub/arm geometry itself moved to CleaningDiskGeometries.xaml: the main toolbar's
-             cleanup button reuses the exact same shapes for its own running-state icon, minus the
-             sparkles below, which stay local here. -->
-        <!-- Three sparkles (five before this), outside the body at the upper right, each pulsing on
-             its own phase. The draft's own four-point "spark" path, used as-is (Stretch=Uniform on each
-             Path scales it to its own Width/Height, so the path's own coordinate box does not need to
-             match the 24-unit design box above). -->
-        <Geometry x:Key="CleaningGlintGeometry">M12 3.2 C12.9 8.4 14.6 10.1 20.8 12 C14.6 13.9 12.9 15.6 12 20.8 C11.1 15.6 9.4 13.9 3.2 12 C9.4 10.1 11.1 8.4 12 3.2 Z</Geometry>
+        <!-- The centre drive's parts (body, screws, platter, hub, arm, pivot) live in
+             CleaningDiskGeometries.xaml, each its own geometry in its own colour rather than a cutout
+             to whatever sits behind the body; the main toolbar's cleanup button draws the same shapes. -->
 
         <!-- Read-only, DISM's own component store analysis, shown inside the component cleanup card (the
              analysis state lives on the window's view model, hence this template is bound to it). It runs
@@ -1488,11 +1479,10 @@
                 </StackPanel>
 
                 <!-- Centre while cleaning ("ruhig + hochwertig", calm and high-quality): a hard disk (a real
-                     drive body, platter ring and actuator arm) with a light slowly travelling across the body, plus three small glints
-                     outside it. The light is the SAME geometry as the body underneath it used as an
-                     OpacityMask, so it can never spill past the body's own silhouette without a separate
-                     Clip or a recomputed Geometry, only the mask's own RelativeTransform (a
-                     TranslateTransform) ever moves. The platter ring and the arm are drawn once, always at
+                     drive body, platter ring and actuator arm) with a light slowly travelling across the body.
+                     The light is the SAME geometry as the body underneath it used as an OpacityMask, so it
+                     can never spill past the body's own silhouette without a separate Clip or a recomputed
+                     Geometry, only the mask's own RelativeTransform (a TranslateTransform) ever moves. The platter ring and the arm are drawn once, always at
                      full opacity, never animated. Nothing here triggers a layout pass, the ring never
                      rotates, and the whole thing is capped at 30 fps: this is ambient background motion,
                      not something meant to be tracked frame by frame. The percentage sits beneath, never
@@ -1560,46 +1550,11 @@
                                       Fill="{DynamicResource ControlFillColorSecondaryBrush}"/>
                                 <Path x:Name="ActuatorArm" Data="{StaticResource CleaningDriveArmGeometry}"
                                       Fill="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                <Path x:Name="PivotDot" Data="{StaticResource CleaningDrivePivotDotGeometry}"
+                                      Fill="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
                             </Canvas>
                         </Viewbox>
 
-                        <!-- Three glints (five before this, now outside the body at its upper right),
-                             each parked where the light passes near it and only ever fading in and out plus
-                             a small pop in place, never drifting, never spinning; each runs its own
-                             phase/period/peak in the code-behind so the three never pulse in lockstep. -->
-                        <!-- Resting opacity 0.22, never 0: a static render never
-                             runs StartSweep's Storyboard (WindowLayoutTests, the render harness in general)
-                             so the XAML-declared value here IS what shows in every snapshot - at 0 that was
-                             an invisible sparkle in every one of them. The fade animation below rests on
-                             the same floor while running, so a glint dims toward this quiet value between
-                             pulses instead of vanishing and popping back. -->
-                        <Path x:Name="Glint1" Data="{StaticResource CleaningGlintGeometry}" Width="17" Height="17"
-                              Stretch="Uniform" Opacity="0.22"
-                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="105,4.5,0,0"
-                              RenderTransformOrigin="0.5,0.5"
-                              Fill="{DynamicResource AccentTextFillColorPrimaryBrush}">
-                            <Path.RenderTransform>
-                                <ScaleTransform x:Name="Glint1Scale"/>
-                            </Path.RenderTransform>
-                        </Path>
-                        <Path x:Name="Glint2" Data="{StaticResource CleaningGlintGeometry}" Width="13" Height="13"
-                              Stretch="Uniform" Opacity="0.22"
-                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="122,20.9,0,0"
-                              RenderTransformOrigin="0.5,0.5"
-                              Fill="{DynamicResource AccentTextFillColorPrimaryBrush}">
-                            <Path.RenderTransform>
-                                <ScaleTransform x:Name="Glint2Scale"/>
-                            </Path.RenderTransform>
-                        </Path>
-                        <Path x:Name="Glint3" Data="{StaticResource CleaningGlintGeometry}" Width="10" Height="10"
-                              Stretch="Uniform" Opacity="0.22"
-                              HorizontalAlignment="Left" VerticalAlignment="Top" Margin="113.9,41.6,0,0"
-                              RenderTransformOrigin="0.5,0.5"
-                              Fill="{DynamicResource AccentTextFillColorPrimaryBrush}">
-                            <Path.RenderTransform>
-                                <ScaleTransform x:Name="Glint3Scale"/>
-                            </Path.RenderTransform>
-                        </Path>
                     </Grid>
 
                     <!-- Sits just below the drive body (108px Viewbox in a 140px scene lifted 11px above the

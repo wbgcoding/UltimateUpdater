@@ -46,7 +46,8 @@ versioning: [SemVer](https://semver.org).
   of the list, already before cleaning.
 - The list card has clean rounded corners.
 - The main window's Clean up button shows the percentage while a cleanup runs.
-- The drive in the middle of the ring is larger and fills the circle.
+- The drive in the middle of the ring is larger, fills the circle and looks like a real hard disk; its
+  parts no longer run together at small sizes, and the sparkles beside it are gone.
 - Stop no longer lets a system repair start that had not begun yet; only a repair already running is
   finished, and only then does the dialog say so.
 

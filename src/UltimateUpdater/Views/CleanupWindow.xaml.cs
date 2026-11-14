@@ -10,13 +10,6 @@ public partial class CleanupWindow
     private readonly CleanupViewModel _viewModel;
     private Storyboard? _sweep;
 
-    /// <summary>Which 20%-wide progress band the glints' amplitudes were last built for. WPF seals a
-    /// storyboard's key-frame VALUES once it has begun, so scaling the glints with progress cannot be done
-    /// by nudging the running storyboard: the sweep is rebuilt from scratch whenever progress crosses into
-    /// a new band, accepting the brief phase reset (invisible at these amplitudes, well under the ambient
-    /// period). -1 so the very first StartSweep always counts as a new band.</summary>
-    private int _glintBand = -1;
-
     /// <summary>The closing pulse and count-up. Its own storyboard because it is a one-shot that begins
     /// exactly where the sweep ends, so it cannot be a child of it. It is held and let go with the run just
     /// like the sweep, ends itself, and is taken off for good when the dialog closes.</summary>
@@ -322,13 +315,6 @@ public partial class CleanupWindow
 
         var target = _viewModel.RingPercent;
 
-        // The glints' amplitude tracks progress in fixed 20%-wide bands (see RestartSweepForCurrentBand)
-        // rather than continuously, so this only rebuilds on an actual band crossing, never on every single
-        // percentage-point tick. Only while a sweep is actually running: a window opened onto a phase with
-        // nothing sweeping has no storyboard to rebuild.
-        if (_sweep is not null && BandFor(target) != _glintBand)
-            RestartSweepForCurrentBand();
-
         if (Math.Abs(target - DisplayPercent) < 0.01)
             return;
 
@@ -416,13 +402,9 @@ public partial class CleanupWindow
     /// </summary>
     private const int AmbientPeriodMs = 2600;
 
-    /// <summary>The glints' own rest, between pulses and in every static render alike -
-    /// never 0, matched by the same literal value on each Glint Path in the XAML.</summary>
-    private const double RestingGlintOpacity = 0.22;
-
     /// <summary>
-    /// The calm cleaning animation: a light glides across the surface and back, the surface itself breathes
-    /// very slightly, and two glints fade in and pop near where the light passes. Opacity, a Brush's own
+    /// The calm cleaning animation: a light glides across the surface and back and the surface itself
+    /// breathes very slightly. Opacity, a Brush's own
     /// RelativeTransform and RenderTransforms only (nothing triggers a layout pass or rotates the ring),
     /// capped at 30 fps: ambient background motion, not something the eye tracks. One storyboard for all
     /// of it, so pausing, stopping and removing cover every part at once.
@@ -430,8 +412,7 @@ public partial class CleanupWindow
     private void StartSweep()
     {
         // ClientAreaAnimation is the system's "animations on" setting, the same gate the main window's
-        // toolbar sweep uses. Also covers RestartSweepForCurrentBand, which rebuilds through here, and the
-        // closing flourish, which only plays for a sweep that actually ran.
+        // toolbar sweep uses. Also covers the closing flourish, which only plays for a sweep that actually ran.
         if (_sweep is not null || !MotionPreference.AnimationsEnabled)
             return;
 
@@ -448,56 +429,14 @@ public partial class CleanupWindow
         sweep.Children.Add(Motion(CenterScene, "RenderTransform.ScaleX", 1.0, 1.05, AmbientPeriodMs / 2));
         sweep.Children.Add(Motion(CenterScene, "RenderTransform.ScaleY", 1.0, 1.05, AmbientPeriodMs / 2));
 
-        // Timed to roughly where the light is on its own pass, so each glint reads as riding its leading
-        // edge rather than blinking on a schedule of its own. Each one also runs its own period (0.95x to
-        // 1.15x the ambient period, never below the 2.4s floor) and its own peak scale (under the 1.06
-        // ceiling), so three glints never pulse in lockstep the way two on a shared schedule would.
-        // Peak opacity and peak scale both scale with the run's own progress (see GlintPeakOpacityFor/
-        // GlintPeakScaleFor): quiet near the start, at their full amplitude once the run is nearly done.
-        var percent = _viewModel.RingPercent;
-        var opacity = GlintPeakOpacityFor(percent);
-        AddGlint(sweep, Glint1, delayMs: (int)(AmbientPeriodMs * 0.1), periodMs: AmbientPeriodMs, peakScale: GlintPeakScaleFor(percent, 1.06), peakOpacity: opacity);
-        AddGlint(sweep, Glint2, delayMs: (int)(AmbientPeriodMs * 0.6), periodMs: (int)(AmbientPeriodMs * 1.15), peakScale: GlintPeakScaleFor(percent, 1.04), peakOpacity: opacity);
-        AddGlint(sweep, Glint3, delayMs: (int)(AmbientPeriodMs * 0.3), periodMs: (int)(AmbientPeriodMs * 0.95), peakScale: GlintPeakScaleFor(percent, 1.05), peakOpacity: opacity);
-
-        _glintBand = BandFor(percent);
         _sweep = sweep;
         _sweep.Begin(this, isControllable: true);
         ApplySweepSpeed();
 
-        // Rebuilt (RestartSweepForCurrentBand) while the window is minimised or hidden, or while the run
-        // is held: the fresh storyboard begins running like any other, so it needs the same pause applied
-        // to the one it replaced, or it would keep animating until the next band crossing.
+        // Started while the window is minimised or hidden, or while the run is held: the storyboard begins
+        // running like any other, so the pause has to be applied to it at once.
         if (_pausedForVisibility || _viewModel.IsPaused)
             _sweep.Pause(this);
-    }
-
-    /// <summary>Which 20%-wide progress band a percentage falls in (0-4): the unit the glints' amplitudes
-    /// are rebuilt on crossing, rather than on every single percentage-point change.</summary>
-    private static int BandFor(double percent) => Math.Min(4, (int)(Math.Clamp(percent, 0, 100) / 20));
-
-    /// <summary>0.25 at 0%, rising to 0.55 at 100% (still under the 0.6 hard ceiling
-    /// <see cref="CleanupRingAnimationTests"/> pins).</summary>
-    private static double GlintPeakOpacityFor(double percent) => 0.25 + 0.30 * Math.Clamp(percent, 0, 100) / 100.0;
-
-    /// <summary>Half of the glint's own excess over 1.0 at 0%, its full excess at 100% - so
-    /// <paramref name="ceiling"/> (never above 1.06) is still the maximum anyone ever sees, only reached
-    /// once the run is actually almost done.</summary>
-    private static double GlintPeakScaleFor(double percent, double ceiling) =>
-        1.0 + (ceiling - 1.0) * (0.5 + 0.5 * Math.Clamp(percent, 0, 100) / 100.0);
-
-    /// <summary>
-    /// Rebuilds the sweep from scratch so the glints' amplitudes reflect the new band, without going
-    /// through <see cref="StopSweep"/> (which would treat this as the run actually ending and play the
-    /// closing flourish). Stop and remove first, exactly like StopSweep does, so nothing is left animating
-    /// mid-stroke before the fresh storyboard begins.
-    /// </summary>
-    private void RestartSweepForCurrentBand()
-    {
-        _sweep?.Stop(this);
-        _sweep?.Remove(this);
-        _sweep = null;
-        StartSweep();
     }
 
     /// <summary>
@@ -530,62 +469,11 @@ public partial class CleanupWindow
         return animation;
     }
 
-    /// <summary>
-    /// One glint: it fades in, pops very slightly (never past the caller's own <paramref name="peakScale"/>,
-    /// itself never past the 1.06 ceiling) and fades away again, all within its own period so it never
-    /// slides out of phase with the light. Peak opacity is the caller's own <paramref name="peakOpacity"/>
-    /// (never past the 0.6 ceiling), eased throughout, never a hard on/off, so it never reads as a blink.
-    /// </summary>
-    private static void AddGlint(
-        Storyboard storyboard, System.Windows.UIElement glint, int delayMs, int periodMs, double peakScale, double peakOpacity)
-    {
-        var begin = TimeSpan.FromMilliseconds(delayMs);
-        var life = TimeSpan.FromMilliseconds(periodMs);
-
-        var fade = new DoubleAnimationUsingKeyFrames
-        {
-            BeginTime = begin,
-            Duration = life,
-            RepeatBehavior = RepeatBehavior.Forever,
-        };
-        // Rests at RestingGlintOpacity, never 0: the XAML-declared value on each
-        // glint is this same floor, so a static render (no Storyboard ever runs there) already shows the
-        // sparkle instead of nothing, and the running animation now dims toward it between pulses rather
-        // than vanishing and popping back from full transparency.
-        fade.KeyFrames.Add(new LinearDoubleKeyFrame(RestingGlintOpacity, KeyTime.FromPercent(0)));
-        fade.KeyFrames.Add(new EasingDoubleKeyFrame(peakOpacity, KeyTime.FromPercent(0.3), new CubicEase { EasingMode = EasingMode.EaseOut }));
-        fade.KeyFrames.Add(new EasingDoubleKeyFrame(RestingGlintOpacity, KeyTime.FromPercent(0.65), new CubicEase { EasingMode = EasingMode.EaseIn }));
-        fade.KeyFrames.Add(new LinearDoubleKeyFrame(RestingGlintOpacity, KeyTime.FromPercent(1)));
-        Storyboard.SetTarget(fade, glint);
-        Storyboard.SetTargetProperty(fade, new PropertyPath(System.Windows.UIElement.OpacityProperty));
-        storyboard.Children.Add(fade);
-
-        foreach (var axis in new[] { "ScaleX", "ScaleY" })
-        {
-            var pop = new DoubleAnimationUsingKeyFrames
-            {
-                BeginTime = begin,
-                Duration = life,
-                RepeatBehavior = RepeatBehavior.Forever,
-            };
-            pop.KeyFrames.Add(new LinearDoubleKeyFrame(1, KeyTime.FromPercent(0)));
-            pop.KeyFrames.Add(new EasingDoubleKeyFrame(peakScale, KeyTime.FromPercent(0.3), new CubicEase { EasingMode = EasingMode.EaseOut }));
-            pop.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromPercent(0.65), new CubicEase { EasingMode = EasingMode.EaseIn }));
-            pop.KeyFrames.Add(new LinearDoubleKeyFrame(1, KeyTime.FromPercent(1)));
-
-            // Addressed through the glint itself (which owns the transform), never straight at its
-            // ScaleTransform: see Motion's own remark on why that never applies.
-            Storyboard.SetTarget(pop, glint);
-            Storyboard.SetTargetProperty(pop, new PropertyPath($"RenderTransform.{axis}"));
-            storyboard.Children.Add(pop);
-        }
-    }
-
     private void StopSweep()
     {
         // Stop AND remove: a stopped storyboard leaves its animated values in place, so the light would
         // freeze mid-pass at whatever position it happened to be at. Every moving part is a child of this
-        // one storyboard, so this covers the surface breathe and both glints as well.
+        // one storyboard, so this covers the surface breathe as well.
         var wasSweeping = _sweep is not null;
         _sweep?.Stop(this);
         _sweep?.Remove(this);

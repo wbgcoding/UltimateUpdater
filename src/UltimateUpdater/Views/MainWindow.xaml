@@ -724,7 +724,7 @@
                                          self-contained instead of touching it. -->
                                     <Viewbox Width="30" Height="30" Margin="-5" Stretch="Uniform">
                                         <Canvas Width="24" Height="24">
-                                            <Path Data="M4.6 2 L19.4 2 A1.6,1.6 0 0 1 21 3.6 L21 20.4 A1.6,1.6 0 0 1 19.4 22 L4.6 22 A1.6,1.6 0 0 1 3 20.4 L3 3.6 A1.6,1.6 0 0 1 4.6 2 Z"
+                                            <Path Data="M4.8 2 L19.2 2 A1.8,1.8 0 0 1 21 3.8 L21 20.2 A1.8,1.8 0 0 1 19.2 22 L4.8 22 A1.8,1.8 0 0 1 3 20.2 L3 3.8 A1.8,1.8 0 0 1 4.8 2 Z"
                                                   Fill="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                                                   Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" StrokeThickness="0.35"/>
                                             <!-- The travelling light: same body silhouette, shown only through a moving
@@ -732,7 +732,7 @@
                                                  animation uses (CleanupWindow.xaml, SurfaceLight) so the light can never
                                                  spill past the body's own edge. -->
                                             <Path x:Name="ToolbarCleaningLight"
-                                                  Data="M4.6 2 L19.4 2 A1.6,1.6 0 0 1 21 3.6 L21 20.4 A1.6,1.6 0 0 1 19.4 22 L4.6 22 A1.6,1.6 0 0 1 3 20.4 L3 3.6 A1.6,1.6 0 0 1 4.6 2 Z"
+                                                  Data="M4.8 2 L19.2 2 A1.8,1.8 0 0 1 21 3.8 L21 20.2 A1.8,1.8 0 0 1 19.2 22 L4.8 22 A1.8,1.8 0 0 1 3 20.2 L3 3.8 A1.8,1.8 0 0 1 4.8 2 Z"
                                                   Opacity="0.5" Fill="{DynamicResource AccentFillColorDefaultBrush}">
                                                 <Path.OpacityMask>
                                                     <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5" MappingMode="RelativeToBoundingBox">
@@ -755,16 +755,18 @@
                                                  BeginAnimation call straight on ToolbarLightSlide, the same
                                                  technique the install bar's own glide already uses, does not
                                                  have that problem. -->
-                                            <Path Data="M18.25 11.2 A6.25,6.25 0 1 1 5.75 11.2 A6.25,6.25 0 1 1 18.25 11.2 Z"
+                                            <Path Data="M18.8 10.2 A6.8,6.8 0 1 1 5.2 10.2 A6.8,6.8 0 1 1 18.8 10.2 Z"
                                                   Fill="{DynamicResource ControlFillColorSecondaryBrush}"/>
-                                            <Path Data="M18.25 11.2 A6.25,6.25 0 1 1 5.75 11.2 A6.25,6.25 0 1 1 18.25 11.2 Z"
+                                            <Path Data="M18.8 10.2 A6.8,6.8 0 1 1 5.2 10.2 A6.8,6.8 0 1 1 18.8 10.2 Z"
                                                   Stroke="{DynamicResource AccentFillColorDefaultBrush}" StrokeThickness="0.8"/>
-                                            <Path Data="M14 11.2 A2,2 0 1 1 10 11.2 A2,2 0 1 1 14 11.2 Z"
+                                            <Path Data="M13.8 10.2 A1.8,1.8 0 1 1 10.2 10.2 A1.8,1.8 0 1 1 13.8 10.2 Z"
                                                   Fill="{DynamicResource TextFillColorSecondaryBrush}"/>
-                                            <Path Data="M12.75 11.2 A0.75,0.75 0 1 1 11.25 11.2 A0.75,0.75 0 1 1 12.75 11.2 Z"
+                                            <Path Data="M12.65 10.2 A0.65,0.65 0 1 1 11.35 10.2 A0.65,0.65 0 1 1 12.65 10.2 Z"
                                                   Fill="{DynamicResource ControlFillColorSecondaryBrush}"/>
-                                            <Path Data="M18.731 16.815 L13.654 11.743 A1,1 0 0 1 12.146 13.057 L16.469 18.785 A1.5,1.5 0 0 1 18.731 16.815 Z"
+                                            <Path Data="F1 M17.468 18.558 L14.978 14.406 L14.222 14.794 L16.132 19.242 Z M15.201 14.293 L14.632 13.18 L13.43 13.795 L13.999 14.907 Z M18.3 18.9 A1.5,1.5 0 1 1 15.3 18.9 A1.5,1.5 0 1 1 18.3 18.9 Z"
                                                   Fill="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                            <Path Data="M17.3 18.9 A0.5,0.5 0 1 1 16.3 18.9 A0.5,0.5 0 1 1 17.3 18.9 Z"
+                                                  Fill="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
                                         </Canvas>
                                     </Viewbox>
                                 </Grid>
