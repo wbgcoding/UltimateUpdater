@@ -356,6 +356,8 @@ public class CleanupDeveloperCacheTests : IDisposable
         ProcessRunner.ChildFactoryForTest.Value = () => child;
         try
         {
+            // The run policy refuses an elevated app, so no command would start on an elevated runner
+            ElevationService.IsElevatedForTest.Value = false;
             // The real runner, so the choice of not killing is the one the cleanup makes.
             var service = new CleanupService(new LoggingService());
             service.TrustedToolResolver = _ => Environment.ProcessPath;
