@@ -87,17 +87,24 @@ public class PanelSurfaceStyleTests
     }
 
     [Fact]
-    public void Cleanup_window_group_card_template_carries_the_glass_highlight()
+    public void Cleanup_window_category_is_a_flat_section_of_the_card_that_carries_the_glass_highlight()
     {
-        var style = LoadXaml("Views/CleanupWindow.xaml").Descendants(Presentation + "Style")
-            .FirstOrDefault(s => Key(s) == "CleanupGroupCard");
+        var xaml = LoadXaml("Views/CleanupWindow.xaml");
+        var style = xaml.Descendants(Presentation + "Style").FirstOrDefault(s => Key(s) == "CleanupGroupCard");
 
         Assert.NotNull(style);
         var border = style!.Descendants(Presentation + "Border").FirstOrDefault();
 
+        // A category is a row of the list card, like a group of the main table: no second card fill.
         Assert.NotNull(border);
-        Assert.Equal("{DynamicResource CardBackgroundFillColorDefaultBrush}",
-            (string?)border!.Attribute("Background"));
-        Assert.Equal("True", GlassCardHighlightShow(border));
+        Assert.Equal("Transparent", (string?)border!.Attribute("Background"));
+        Assert.Null(GlassCardHighlightShow(border));
+
+        // The list card itself is the surface and carries the highlight.
+        var card = xaml.Descendants(Presentation + "Border")
+            .FirstOrDefault(b => (string?)b.Attribute(X + "Name") == "CleanupTargetsCard");
+        Assert.NotNull(card);
+        Assert.Equal("{DynamicResource CardBackgroundFillColorDefaultBrush}", (string?)card!.Attribute("Background"));
+        Assert.Equal("True", GlassCardHighlightShow(card));
     }
 }
