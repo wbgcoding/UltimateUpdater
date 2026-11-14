@@ -208,8 +208,13 @@ public class CleanupNamedFileTests : IDisposable
     {
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
 
-        Assert.True(CleanupSafety.IsSafeToEmpty(Path.Combine(windows, "LiveKernelReports"), out var reason), reason);
-        Assert.True(CleanupSafety.IsSafeToEmpty(Path.Combine(windows, "Minidump"), out reason), reason);
+        // The existence check is the last rule of the gate, so a folder this machine never made ("does not exist",
+        // as on a fresh CI image) has passed every name and location rule before it.
+        foreach (var folder in new[] { "LiveKernelReports", "Minidump" })
+        {
+            var safe = CleanupSafety.IsSafeToEmpty(Path.Combine(windows, folder), out var reason);
+            Assert.True(safe || reason == "does not exist", $"{folder}: {reason}");
+        }
     }
 
     [Fact]
