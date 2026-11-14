@@ -43,8 +43,13 @@ public class WingetLadderRunTests
         return (source, calls);
     }
 
-    private static Task Install(WingetSource source) =>
-        source.InstallAsync(Item(), new Progress<InstallProgress>(), CancellationToken.None);
+    private static Task Install(WingetSource source)
+    {
+        // An elevated process ends the ladder early to hand the user-scope retry to the queue; these tests
+        // describe the unelevated run, whatever token the test runner has.
+        ElevationService.IsElevatedForTest.Value = false;
+        return source.InstallAsync(Item(), new Progress<InstallProgress>(), CancellationToken.None);
+    }
 
     [Fact]
     public async Task A_machine_wide_package_reaches_the_install_rung_and_then_the_pinned_attempt()

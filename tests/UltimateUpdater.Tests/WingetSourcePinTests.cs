@@ -169,6 +169,9 @@ public class WingetSourcePinTests
 
     private static async Task<List<string>> RunInstall(string? source, int upgradeExit)
     {
+        // The ladder stops early while the process is elevated (the user-scope retry belongs to the queue), so an
+        // elevated test runner would see fewer calls than the unelevated run this test describes.
+        ElevationService.IsElevatedForTest.Value = false;
         var calls = new List<string>();
         var winget = new WingetSource(new LoggingService())
         {
