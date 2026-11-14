@@ -34,6 +34,7 @@ versioning: [SemVer](https://semver.org).
   work again.
 - Settings sections open and close smoothly, and the About section shows the app icon.
 - The app icon in the title bar of every window is no longer cut off.
+- The scrollbar of the update list no longer covers the rounded lower right corner of the list.
 - History, cleanup and other windows open without an empty frame flashing up first, and the larger
   windows open faster.
 - A download no longer shows a size of a few bytes when the tool prints a step counter.

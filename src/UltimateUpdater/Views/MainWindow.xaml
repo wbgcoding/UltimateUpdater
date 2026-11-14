@@ -1557,7 +1557,9 @@
 
             <Border Style="{StaticResource SectionCard}"
                     Visibility="{Binding HasResults, Converter={StaticResource BoolToVisibility}}">
-              <Grid>
+              <!-- RoundedClip: the scrollbar's square surface would otherwise paint over the card's rounded
+                   lower right corner (7 = the card's radius 8 minus its 1px stroke). -->
+              <Grid x:Name="ResultsCardContent" views:RoundedClip.Radius="7">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>   <!-- clickable column headers -->
                     <!-- Rows + the manual-open block share ONE scroll area (below) so the compact block
