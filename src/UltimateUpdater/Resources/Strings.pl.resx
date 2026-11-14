@@ -2356,6 +2356,12 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>Nie udało się wyświetlić niektórych aktualizacji winget.</value>
   </data>
+  <data name="WindowsUpdateRestartPendingNoteOne" xml:space="preserve">
+    <value>1 zainstalowana aktualizacja czeka na ponowne uruchomienie.</value>
+  </data>
+  <data name="WindowsUpdateRestartPendingNote" xml:space="preserve">
+    <value>Zainstalowane aktualizacje czekające na ponowne uruchomienie: {0}.</value>
+  </data>
   <data name="WingetBootstrapDone" xml:space="preserve">
     <value>winget został zainstalowany.</value>
   </data>

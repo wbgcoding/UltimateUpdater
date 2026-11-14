@@ -2356,6 +2356,12 @@ Continuer avec les droits administrateur ?</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>Certaines mises à jour winget n'ont pas pu être listées.</value>
   </data>
+  <data name="WindowsUpdateRestartPendingNoteOne" xml:space="preserve">
+    <value>1 mise à jour installée attend un redémarrage.</value>
+  </data>
+  <data name="WindowsUpdateRestartPendingNote" xml:space="preserve">
+    <value>{0} mises à jour installées attendent un redémarrage.</value>
+  </data>
   <data name="WingetBootstrapDone" xml:space="preserve">
     <value>winget est installé.</value>
   </data>

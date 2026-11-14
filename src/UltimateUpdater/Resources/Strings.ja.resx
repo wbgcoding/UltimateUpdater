@@ -2356,6 +2356,12 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>一部のwingetアップデートを一覧表示できませんでした。</value>
   </data>
+  <data name="WindowsUpdateRestartPendingNoteOne" xml:space="preserve">
+    <value>インストール済みの更新 1 件が再起動を待っています。</value>
+  </data>
+  <data name="WindowsUpdateRestartPendingNote" xml:space="preserve">
+    <value>インストール済みの更新 {0} 件が再起動を待っています。</value>
+  </data>
   <data name="WingetBootstrapDone" xml:space="preserve">
     <value>wingetをインストールしました。</value>
   </data>

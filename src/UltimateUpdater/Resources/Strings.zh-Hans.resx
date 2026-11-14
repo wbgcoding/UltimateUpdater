@@ -2356,6 +2356,12 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>部分 winget 更新无法列出。</value>
   </data>
+  <data name="WindowsUpdateRestartPendingNoteOne" xml:space="preserve">
+    <value>1 个已安装的更新正在等待重启。</value>
+  </data>
+  <data name="WindowsUpdateRestartPendingNote" xml:space="preserve">
+    <value>{0} 个已安装的更新正在等待重启。</value>
+  </data>
   <data name="WingetBootstrapDone" xml:space="preserve">
     <value>winget 已安装。</value>
   </data>

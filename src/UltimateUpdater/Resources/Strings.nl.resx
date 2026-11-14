@@ -2356,6 +2356,12 @@ Doorgaan met beheerdersrechten?</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>Sommige winget-updates konden niet worden weergegeven.</value>
   </data>
+  <data name="WindowsUpdateRestartPendingNoteOne" xml:space="preserve">
+    <value>1 geïnstalleerde update wacht op een herstart.</value>
+  </data>
+  <data name="WindowsUpdateRestartPendingNote" xml:space="preserve">
+    <value>{0} geïnstalleerde updates wachten op een herstart.</value>
+  </data>
   <data name="WingetBootstrapDone" xml:space="preserve">
     <value>winget is geïnstalleerd.</value>
   </data>

@@ -2356,6 +2356,12 @@ Esto no se puede deshacer.</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>No se pudieron mostrar algunas actualizaciones de winget.</value>
   </data>
+  <data name="WindowsUpdateRestartPendingNoteOne" xml:space="preserve">
+    <value>1 actualización instalada espera un reinicio.</value>
+  </data>
+  <data name="WindowsUpdateRestartPendingNote" xml:space="preserve">
+    <value>{0} actualizaciones instaladas esperan un reinicio.</value>
+  </data>
   <data name="WingetBootstrapDone" xml:space="preserve">
     <value>winget está instalado.</value>
   </data>

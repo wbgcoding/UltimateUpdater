@@ -18,7 +18,7 @@ namespace UltimateUpdater.Services.Sources;
 /// would need a registry `UninstallString` fallback, which is out of scope for this app on principle;
 /// an arbitrary registry command is not something to trust without knowing what it actually runs.
 /// </summary>
-public sealed class WindowsUpdateSource : IUpdateSource
+public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
 {
     private const string SearchCriteria = "IsInstalled=0 and IsHidden=0";
 
@@ -46,13 +46,41 @@ public sealed class WindowsUpdateSource : IUpdateSource
         var search = Task.Run(() => Search(cancellationToken), cancellationToken);
         _ = search.ContinueWith(t => _ = t.Exception, CancellationToken.None,
             TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        ScanNote = null;
         var items = await search.WaitAsync(cancellationToken);
 
-        foreach (var item in items)
+        var (offered, waiting) = SplitRestartPending(items);
+        if (waiting.Count > 0)
+        {
+            _logging.Info($"windowsupdate: {waiting.Count} installed update(s) wait for a restart and are not offered again: "
+                + string.Join(", ", waiting.Select(i => i.Name)));
+            ScanNote = string.Format(LocalizationService.Instance[waiting.Count == 1
+                ? "WindowsUpdateRestartPendingNoteOne" : "WindowsUpdateRestartPendingNote"], waiting.Count);
+        }
+
+        foreach (var item in offered)
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return item;
         }
+    }
+
+    /// <summary>Localized note about the last scan: how many installed updates only wait for a restart.</summary>
+    public string? ScanNote { get; private set; }
+
+    /// <summary>
+    /// An update that is installed but needs a restart to finish still reports IsInstalled=0 until that
+    /// restart, so the search lists it again and the table offered it for a second install. Windows marks
+    /// exactly those with RebootRequired (an update not installed yet has it false; one that must restart
+    /// BEFORE it installs says so through its installation behaviour, not here), so they are held back.
+    /// </summary>
+    internal static (List<UpdateItem> Offered, List<UpdateItem> Waiting) SplitRestartPending(IEnumerable<UpdateItem> items)
+    {
+        var offered = new List<UpdateItem>();
+        var waiting = new List<UpdateItem>();
+        foreach (var item in items)
+            (item.Meta.TryGetValue("rebootRequired", out var reboot) && reboot == "true" ? waiting : offered).Add(item);
+        return (offered, waiting);
     }
 
     public Task InstallAsync(UpdateItem item, IProgress<Models.InstallProgress> progress, CancellationToken cancellationToken)

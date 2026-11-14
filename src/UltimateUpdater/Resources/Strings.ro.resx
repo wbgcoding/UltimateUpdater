@@ -2356,6 +2356,12 @@ Continuați cu drepturi de administrator?</value>
   <data name="WingetShortIdNote" xml:space="preserve">
     <value>Unele actualizări winget nu au putut fi listate.</value>
   </data>
+  <data name="WindowsUpdateRestartPendingNoteOne" xml:space="preserve">
+    <value>1 actualizare instalată așteaptă o repornire.</value>
+  </data>
+  <data name="WindowsUpdateRestartPendingNote" xml:space="preserve">
+    <value>Actualizări instalate care așteaptă o repornire: {0}.</value>
+  </data>
   <data name="WingetBootstrapDone" xml:space="preserve">
     <value>winget este instalat.</value>
   </data>
