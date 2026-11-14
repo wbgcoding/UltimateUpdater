@@ -130,13 +130,15 @@ public sealed class ThemeService
     /// fill", and a WCAG ratio has no shortcut around how far a stroke must sit from a near-black fill to
     /// clear 3:1.
     ///
-    /// The surfaces use the zinc palette of the sibling AI-Usage tool: page #18181B, card #202023, control
-    /// fill #28282C. <c>DarkStroke</c> is that palette's control border #71717B, not its softer card border
+    /// The surfaces use the zinc palette of the sibling AI-Usage tool (card #202023, control fill #28282C)
+    /// on the page colour the main window has always shown, #202020: WindowBackgroundManager gives the
+    /// windows this service is attached to the Fluent dark page as a local value, so the zinc page #18181B
+    /// only ever reached the other windows, which then looked much darker than the main window. <c>DarkStroke</c> is that palette's control border #71717B, not its softer card border
     /// #3A3A3F: a visible card edge must clear 3.0:1 (3.4:1 against the card, 3.0:1 against the control
     /// fill), and the softer one measures 1.44:1. The text keys move with the surfaces so text keeps its
     /// 4.5:1 margin.
     /// </summary>
-    private static readonly Color DarkPageBackground = Color.FromRgb(0x18, 0x18, 0x1B);
+    private static readonly Color DarkPageBackground = Color.FromRgb(0x20, 0x20, 0x20);
     private static readonly Color DarkCardBackground = Color.FromRgb(0x20, 0x20, 0x23);
     private static readonly Color DarkControlFill = Color.FromRgb(0x28, 0x28, 0x2C);
     private static readonly Color DarkStroke = Color.FromRgb(0x71, 0x71, 0x7B);

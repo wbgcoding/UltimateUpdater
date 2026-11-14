@@ -53,11 +53,13 @@ public class ThemeIsolationTests
         WpfHarness.OnUiThread(() =>
         {
             var resources = System.Windows.Application.Current!.Resources;
+            object overriddenPage;
             try
             {
                 ThemeService.ApplyDarkPaletteOverrides();
 
-                Assert.Equal(Color.FromRgb(0x18, 0x18, 0x1B), ((SolidColorBrush)resources["ApplicationBackgroundBrush"]).Color);
+                overriddenPage = resources["ApplicationBackgroundBrush"];
+                Assert.Equal(Color.FromRgb(0x20, 0x20, 0x20), ((SolidColorBrush)overriddenPage).Color);
                 Assert.Equal(Color.FromRgb(0xF4, 0xF4, 0xF5), ((SolidColorBrush)resources["TextFillColorPrimaryBrush"]).Color);
             }
             finally
@@ -66,7 +68,8 @@ public class ThemeIsolationTests
             }
 
             // Removed means the lookup falls back to the Fluent theme's own entry, never the dark override.
-            Assert.NotEqual(Color.FromRgb(0x18, 0x18, 0x1B), ((SolidColorBrush)resources["ApplicationBackgroundBrush"]).Color);
+            // The page shares its colour with the Fluent dark page on purpose, so the brush itself is compared.
+            Assert.NotSame(overriddenPage, resources["ApplicationBackgroundBrush"]);
             Assert.NotEqual(Color.FromRgb(0xF4, 0xF4, 0xF5), ((SolidColorBrush)resources["TextFillColorPrimaryBrush"]).Color);
         });
     }

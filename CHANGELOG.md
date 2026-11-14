@@ -40,6 +40,10 @@ versioning: [SemVer](https://semver.org).
 - The headline names how many of the available updates are critical ("12 updates available 3 critical").
 - The History window shows its list on the same rounded card as the main window's table, and earlier
   cleanups use the same card colours.
+- In the dark theme every window has the same background as the main window; History, Settings and the
+  other windows were much darker.
+- Windows updates that are installed and only wait for a restart are no longer offered again; the
+  Windows Update source says how many wait for the restart.
 - The app icon in the title bar of every window is no longer cut off.
 - The scrollbar of the update list no longer covers the rounded lower right corner of the list.
 - History, cleanup and other windows open without an empty frame flashing up first, and the larger
@@ -54,7 +58,8 @@ versioning: [SemVer](https://semver.org).
   of the list, already before cleaning.
 - The list card has clean rounded corners. Its categories are rows of that card with a line between
   them, like the groups of the main window's table, instead of cards on a card.
-- The report button after a run has the same size and look as the history button.
+- The report button after a run has the same size and look as the history button and sits right beside
+  it on the same line.
 - The main window's Clean up button shows the percentage while a cleanup runs.
 - The drive in the middle of the ring is larger, fills the circle and looks like a real hard disk; its
   parts no longer run together at small sizes, and the sparkles beside it are gone.

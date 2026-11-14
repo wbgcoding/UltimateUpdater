@@ -35,6 +35,9 @@ public partial class WindowLayoutTests
         string caption = string.Empty;
         string lastDone = string.Empty;
         string headline = string.Empty;
+        var reportVisible = false;
+        var reportTop = double.NaN;
+        var reportSharesHistoryRow = false;
 
         WpfHarness.OnUiThread(() =>
         {
@@ -121,6 +124,13 @@ public partial class WindowLayoutTests
                 caption = FindByName<TextBlock>(content, "CleanupStatusCaption")!.Text;
                 lastDone = FindByName<TextBlock>(content, "CleanupStatusLastDone")!.Text;
                 headline = FindByName<TextBlock>(content, "CleanupStatusHeadline")!.Text;
+
+                // After a run the report button sits on the history button's line, at the band's top edge.
+                var report = FindByName<FrameworkElement>(content, "CleanupOpenReportButton")!;
+                var history = FindByName<FrameworkElement>(content, "CleanupHistoryButton")!;
+                reportVisible = report.Visibility == Visibility.Visible;
+                reportTop = report.TranslatePoint(new Point(0, 0), band).Y;
+                reportSharesHistoryRow = ReferenceEquals(report.Parent, history.Parent);
             }
         });
 
@@ -134,6 +144,10 @@ public partial class WindowLayoutTests
             Assert.False(string.IsNullOrWhiteSpace(lastDone));
         Assert.False(string.IsNullOrWhiteSpace(headline));
         Assert.Equal(206, panelHeight, 1);
+        Assert.Equal(face != "running", reportVisible);
+        Assert.True(reportSharesHistoryRow, "the report button is not on the history button's line");
+        if (reportVisible)
+            Assert.True(Math.Abs(reportTop) < 0.5, $"the report button starts {reportTop:F1}px below the band's top edge");
         Assert.True(bandHeight >= 228 - 0.5, $"the header band is {bandHeight:F0}px high");
     }
 

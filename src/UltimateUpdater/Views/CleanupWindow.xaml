@@ -1292,31 +1292,6 @@
                         <TextBlock x:Name="CleanupStatusCaption" Grid.Column="0" Text="{Binding StatusCaptionText}"
                                    FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-
-                        <!-- Once the run is over: its report, the newest entry of the history, opened. The same
-                             size and look as the history button at the top right, so the two read as a pair;
-                             negative-margined so the caption row keeps its height and the fixed-height panel
-                             does not move. -->
-                        <ui:Button x:Name="CleanupOpenReportButton" Grid.Column="1" Appearance="Secondary"
-                                   Padding="10,6" Margin="4,-12,0,-12"
-                                   VerticalAlignment="Center" Click="OnShowReport"
-                                   ToolTip="{Binding Loc[CleanupOpenReport]}"
-                                   AutomationProperties.Name="{Binding Loc[CleanupOpenReport]}">
-                            <ui:Button.Icon><ui:SymbolIcon Symbol="DocumentBulletList24" FontSize="18"/></ui:Button.Icon>
-                            <ui:Button.Style>
-                                <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding StatusKind}" Value="Done">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding StatusKind}" Value="Stopped">
-                                            <Setter Property="Visibility" Value="Visible"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ui:Button.Style>
-                        </ui:Button>
                     </Grid>
 
                     <!-- Progress over the areas of the run, not over bytes: the ring already carries those. -->
@@ -1414,14 +1389,36 @@
 
             <!-- Earlier cleanups get their own window, opened from top-right of this band, not on the OS
                  title bar row, which is WPF-UI's own caption-button territory and not a safe place to add
-                 a second control. Only shown once there is something to show. -->
-            <ui:Button Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Top"
-                       Appearance="Secondary" Padding="10,6" Click="OnShowHistory"
-                       ToolTip="{Binding Loc[CleanupHistoryButton]}"
-                       AutomationProperties.Name="{Binding Loc[CleanupHistoryButton]}"
-                       Visibility="{Binding HasHistory, Converter={StaticResource BoolToVisibility}}">
-                <ui:Button.Icon><ui:SymbolIcon Symbol="History24" FontSize="18"/></ui:Button.Icon>
-            </ui:Button>
+                 a second control. Only shown once there is something to show. Once a run is over, its
+                 report (the newest entry of that history, opened) sits right beside it on the same line,
+                 same size and look, so the two read as a pair. -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <ui:Button x:Name="CleanupOpenReportButton" Appearance="Secondary" Padding="10,6" Margin="0,0,8,0"
+                           Click="OnShowReport"
+                           ToolTip="{Binding Loc[CleanupOpenReport]}"
+                           AutomationProperties.Name="{Binding Loc[CleanupOpenReport]}">
+                    <ui:Button.Icon><ui:SymbolIcon Symbol="DocumentBulletList24" FontSize="18"/></ui:Button.Icon>
+                    <ui:Button.Style>
+                        <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding StatusKind}" Value="Done">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StatusKind}" Value="Stopped">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ui:Button.Style>
+                </ui:Button>
+                <ui:Button x:Name="CleanupHistoryButton" Appearance="Secondary" Padding="10,6" Click="OnShowHistory"
+                           ToolTip="{Binding Loc[CleanupHistoryButton]}"
+                           AutomationProperties.Name="{Binding Loc[CleanupHistoryButton]}"
+                           Visibility="{Binding HasHistory, Converter={StaticResource BoolToVisibility}}">
+                    <ui:Button.Icon><ui:SymbolIcon Symbol="History24" FontSize="18"/></ui:Button.Icon>
+                </ui:Button>
+            </StackPanel>
 
             <Grid x:Name="CleanupRingBox" Grid.Column="1" Width="240" Height="240" HorizontalAlignment="Center"
                   VerticalAlignment="Top" Margin="0,10,0,0">
