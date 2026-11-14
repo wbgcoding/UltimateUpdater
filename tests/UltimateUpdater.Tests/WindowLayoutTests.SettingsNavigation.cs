@@ -14,7 +14,9 @@ public partial class WindowLayoutTests
         double width)
     {
         var logging = new LoggingService();
-        var settings = new SettingsService(logging);
+        // A settings file of its own: the default path follows AppPaths, which other tests in the same run
+        // move and fill, so the page could open with whatever state they left behind.
+        var settings = new SettingsService(logging, Path.Combine(Path.GetTempPath(), $"wu-test-settings-{Guid.NewGuid():N}.json"));
         LocalizationService.Instance.Apply("en");
 
         var viewModel = new SettingsViewModel(
@@ -32,9 +34,21 @@ public partial class WindowLayoutTests
         host.Arrange(new Rect(0, 0, width, window.Height));
         host.UpdateLayout();
 
-        return (window,
-            (System.Windows.Controls.ScrollViewer)window.FindName("SettingsScroll")!,
-            (ListBox)window.FindName("SettingsNav")!);
+        // The scroll viewer copies extent and viewport from its presenter after layout, in a step of its own;
+        // late in a long run that step had not run yet (sized 604x672, extent 0, viewport 0). Pump the
+        // dispatcher until it has, 3 s at most, as a shown window's own message loop would.
+        var scroll = (System.Windows.Controls.ScrollViewer)window.FindName("SettingsScroll")!;
+        var deadline = DateTime.UtcNow.AddSeconds(3);
+        while (scroll.ViewportHeight <= 0 && DateTime.UtcNow < deadline)
+        {
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
+                System.Windows.Threading.DispatcherPriority.Background, new Action(() => { }));
+            scroll.InvalidateScrollInfo();
+            host.UpdateLayout();
+            System.Threading.Thread.Sleep(10);
+        }
+
+        return (window, scroll, (ListBox)window.FindName("SettingsNav")!);
     }
 
     private static double HeaderTopInViewport(
@@ -53,7 +67,9 @@ public partial class WindowLayoutTests
             var (window, scroll, nav) = LayOutSettingsWindow(800);
             Assert.Equal(Visibility.Visible, nav.Visibility);
             Assert.True(scroll.ScrollableHeight > 0,
-                $"the settings page does not scroll (extent {scroll.ExtentHeight:0.#}, viewport {scroll.ViewportHeight:0.#})");
+                $"the settings page does not scroll (extent {scroll.ExtentHeight:0.#}, viewport {scroll.ViewportHeight:0.#}, "
+                + $"window height {window.Height:0.#}, scroll {scroll.ActualWidth:0.#}x{scroll.ActualHeight:0.#}, "
+                + $"measured {scroll.IsMeasureValid}, visible {scroll.IsVisible}/{scroll.Visibility})");
 
             var entry = nav.Items.OfType<ListBoxItem>().Single(i => (string)i.Tag == "NotifyHeader");
             nav.SelectedItem = entry;
