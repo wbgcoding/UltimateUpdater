@@ -106,7 +106,10 @@ public static class ProcessRunner
     /// <paramref name="onOutput"/> as the tool prints it. Segments split on BOTH '\n' and '\r' because
     /// the package managers animate their progress line with a carriage return and never a newline;
     /// a line-based reader would see nothing until the download finished. The full output is still
-    /// captured and returned exactly as <see cref="RunAsync"/> does.
+    /// captured and returned exactly as <see cref="RunAsync"/> does. With <paramref name="pseudoConsole"/> the
+    /// tool runs in a hidden pseudo console (see <see cref="PseudoConsoleHost"/>) so one that prints its
+    /// progress bar only to a console (winget) does; the output has its terminal sequences removed, there is
+    /// no separate error stream, and where no pseudo console can be made the run silently uses pipes.
     /// </summary>
     public static Task<ProcessResult> RunStreamingAsync(
         string fileName,
@@ -116,8 +119,10 @@ public static class ProcessRunner
         CancellationToken cancellationToken,
         IReadOnlyDictionary<string, string>? environment = null,
         TimeSpan? idleTimeout = null,
-        StallWatchOptions? stallWatch = null) =>
-        ExecuteAsync(fileName, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding: null, stallWatch);
+        StallWatchOptions? stallWatch = null,
+        bool pseudoConsole = false) =>
+        ExecuteAsync(fileName, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding: null, stallWatch,
+            pseudoConsole: pseudoConsole);
 
     private static async Task<ProcessResult> ExecuteAsync(
         string fileName,
@@ -129,7 +134,8 @@ public static class ProcessRunner
         TimeSpan? idleTimeout = null,
         Encoding? outputEncoding = null,
         StallWatchOptions? stallWatch = null,
-        bool killOnTimeout = true)
+        bool killOnTimeout = true,
+        bool pseudoConsole = false)
     {
         // Defense in depth, checked before anything else and regardless of elevation or caller
         // (Security.CommandDenyList): every current caller only ever issues package-manager-
@@ -152,7 +158,7 @@ public static class ProcessRunner
 
         return await RunResolvedAsync(
             executable, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding, elevated,
-            scrubEnvironment, stallWatch, killOnTimeout);
+            scrubEnvironment, stallWatch, killOnTimeout, pseudoConsole);
     }
 
     /// <summary>The launch and the wait for an already resolved executable. Separate from
@@ -170,7 +176,8 @@ public static class ProcessRunner
         bool elevated,
         bool? scrubEnvironment = null,
         StallWatchOptions? stallWatch = null,
-        bool killOnTimeout = true)
+        bool killOnTimeout = true,
+        bool pseudoConsole = false)
     {
         var startInfo = BuildStartInfo(executable, arguments, environment, outputEncoding, elevated, scrubEnvironment: scrubEnvironment);
 
@@ -183,7 +190,7 @@ public static class ProcessRunner
         // Owns the child, and with killOnTimeout false its own pump token source too: both outlive this call
         // when the tool is left running after a timeout or a cancel (FinishDetachedAsync releases them then).
         // Not linked to the caller's token, or a cancel would stop the readers while the tool still writes.
-        var process = ChildFactoryForTest.Value?.Invoke() ?? StartChild(executable, startInfo, ScanScope.IsActive);
+        var process = ChildFactoryForTest.Value?.Invoke() ?? StartChild(executable, startInfo, ScanScope.IsActive, pseudoConsole);
         using var lease = new ChildLease(process, killOnTimeout ? null : new CancellationTokenSource());
         var pumpCts = lease.PumpCts ?? timeoutCts;
 
@@ -1144,24 +1151,25 @@ public static class ProcessRunner
     /// system mapped is compared with the pinned, verified target before it may run
     /// (<see cref="SuspendedChildProcess"/>).
     /// </summary>
-    private static IChildProcess StartChild(ResolvedExecutable executable, ProcessStartInfo startInfo, bool lowPriority)
+    private static IChildProcess StartChild(
+        ResolvedExecutable executable, ProcessStartInfo startInfo, bool lowPriority, bool pseudoConsole = false)
     {
-        if (executable.AliasPin is not null)
+        if (pseudoConsole)
         {
-            var expected = executable.ShimTargetPin is { } targetPin
-                ? SuspendedChildProcess.PlainFinalPath(targetPin.SafeFileHandle)
-                : null;
-            if (expected is null)
-                throw new UntrustedToolException(executable.Path, "the verified target cannot be identified");
-
-            // The seam lets a test run an unpackaged stand-in image through the same route; production
-            // always demands the App Installer's identity.
-            (string Family, string Aumid)? expectedPackage = UnpackagedImageForTest.Value
-                ? null
-                : (AppExecutionAlias.WingetPackageFamily, AppExecutionAlias.WingetAppUserModelId);
-
-            return SuspendedChildProcess.Start(startInfo, expected, expectedPackage, lowPriority);
+            try
+            {
+                return StartSuspended(executable, startInfo, lowPriority, pseudoConsole: true);
+            }
+            catch (Exception ex) when (ex is not UntrustedToolException)
+            {
+                // Old Windows or any failure of the console route: the pipe launch below still works, only
+                // without the progress bar.
+                Diagnostics?.Invoke($"No pseudo console for '{Path.GetFileName(executable.Path)}' ({ex.GetType().Name}: {ex.Message}); using pipes.");
+            }
         }
+
+        if (executable.AliasPin is not null)
+            return StartSuspended(executable, startInfo, lowPriority, pseudoConsole: false);
 
         var process = new Process { StartInfo = startInfo };
         try
@@ -1192,5 +1200,29 @@ public static class ProcessRunner
         }
 
         return new ManagedChildProcess(process);
+    }
+
+    /// <summary>The start through <see cref="SuspendedChildProcess"/>. For the verified alias the image the
+    /// system maps is checked against the pinned target; any other executable was resolved and pinned by the
+    /// caller already, so only the alias carries that check.</summary>
+    private static IChildProcess StartSuspended(
+        ResolvedExecutable executable, ProcessStartInfo startInfo, bool lowPriority, bool pseudoConsole)
+    {
+        if (executable.AliasPin is null)
+            return SuspendedChildProcess.Start(startInfo, null, null, lowPriority, pseudoConsole);
+
+        var expected = executable.ShimTargetPin is { } targetPin
+            ? SuspendedChildProcess.PlainFinalPath(targetPin.SafeFileHandle)
+            : null;
+        if (expected is null)
+            throw new UntrustedToolException(executable.Path, "the verified target cannot be identified");
+
+        // The seam lets a test run an unpackaged stand-in image through the same route; production
+        // always demands the App Installer's identity.
+        (string Family, string Aumid)? expectedPackage = UnpackagedImageForTest.Value
+            ? null
+            : (AppExecutionAlias.WingetPackageFamily, AppExecutionAlias.WingetAppUserModelId);
+
+        return SuspendedChildProcess.Start(startInfo, expected, expectedPackage, lowPriority, pseudoConsole);
     }
 }

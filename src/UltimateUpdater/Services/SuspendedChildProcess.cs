@@ -80,6 +80,7 @@ internal sealed class SuspendedChildProcess : IChildProcess
     private const uint CreateNoWindow = 0x08000000;
     private const uint StartfUseStdHandles = 0x00000100;
     private static readonly IntPtr ProcThreadAttributeHandleList = (IntPtr)0x00020002;
+    private static readonly IntPtr ProcThreadAttributePseudoConsole = (IntPtr)0x00020016;
     private const uint HandleFlagInherit = 0x1;
     private const uint GenericRead = 0x80000000;
     private const uint ShareReadWrite = 0x3;
@@ -91,8 +92,9 @@ internal sealed class SuspendedChildProcess : IChildProcess
 
     private readonly SafeWaitHandle _process;
     private readonly SafeFileHandle? _job;
-    private readonly AnonymousPipeServerStream _stdoutPipe;
-    private readonly AnonymousPipeServerStream _stderrPipe;
+    private readonly IDisposable _stdoutPipe;
+    private readonly IDisposable _stderrPipe;
+    private readonly PseudoConsoleHost? _console;
 
     public StreamReader StandardOutput { get; }
 
@@ -108,6 +110,19 @@ internal sealed class SuspendedChildProcess : IChildProcess
         _stderrPipe = stderr;
         StandardOutput = new StreamReader(stdout, stdoutEncoding);
         StandardError = new StreamReader(stderr, stderrEncoding);
+    }
+
+    /// <summary>The launch with a pseudo console: the output is the console's text, and there is no separate
+    /// error stream (an empty reader ends its pump at once).</summary>
+    private SuspendedChildProcess(SafeWaitHandle process, SafeFileHandle? job, PseudoConsoleHost console)
+    {
+        _process = process;
+        _job = job;
+        _console = console;
+        _stdoutPipe = console;
+        _stderrPipe = Stream.Null;
+        StandardOutput = new StreamReader(console.Output, Encoding.UTF8);
+        StandardError = new StreamReader(Stream.Null, Encoding.UTF8);
     }
 
     public int ExitCode =>
@@ -144,6 +159,9 @@ internal sealed class SuspendedChildProcess : IChildProcess
         {
             registration.Unregister(null);
         }
+
+        // The console ends its output only once it is closed; the reader then gets the last lines and the end.
+        _console?.CloseInBackground();
     }
 
     public void Kill()
@@ -158,6 +176,8 @@ internal sealed class SuspendedChildProcess : IChildProcess
             _ = TerminateJobObject(_job, 1);
         else
             _ = TerminateProcess(_process, 1);
+
+        _console?.CloseInBackground();
     }
 
     public void Dispose()
@@ -172,18 +192,20 @@ internal sealed class SuspendedChildProcess : IChildProcess
 
     /// <summary>
     /// Starts <paramref name="info"/>.FileName suspended, requires the image the system mapped to be
-    /// <paramref name="expectedImagePath"/>, and resumes it. Throws <see cref="UntrustedToolException"/>
+    /// <paramref name="expectedImagePath"/> (null: no image check, for a launch whose path was pinned and
+    /// verified by the caller), and resumes it. With <paramref name="pseudoConsole"/> the child is attached to a
+    /// hidden pseudo console instead of pipes, so a tool that prints its progress bar only to a console does. Throws <see cref="UntrustedToolException"/>
     /// (with the process already ended) on any other image, <see cref="Win32Exception"/> when the start
     /// itself fails.
     /// </summary>
     internal static SuspendedChildProcess Start(
-        ProcessStartInfo info, string expectedImagePath, (string Family, string Aumid)? expectedPackage,
-        bool lowPriority = false)
+        ProcessStartInfo info, string? expectedImagePath, (string Family, string Aumid)? expectedPackage,
+        bool lowPriority = false, bool pseudoConsole = false)
     {
         // Held from the creation of the inheritable pipe ends until our copies of them are closed: a
         // launch through Process.Start in that span would inherit the write ends.
         lock (ProcessRunner.ChildStartLock)
-            return StartLocked(info, expectedImagePath, expectedPackage, lowPriority);
+            return StartLocked(info, expectedImagePath, expectedPackage, lowPriority, pseudoConsole);
     }
 
     /// <summary>The process creation flags. The priority class is a creation flag here, so the child is
@@ -198,8 +220,8 @@ internal sealed class SuspendedChildProcess : IChildProcess
     internal static readonly AsyncLocal<Action?> AfterPipesCreatedForTest = new();
 
     private static SuspendedChildProcess StartLocked(
-        ProcessStartInfo info, string expectedImagePath, (string Family, string Aumid)? expectedPackage,
-        bool lowPriority)
+        ProcessStartInfo info, string? expectedImagePath, (string Family, string Aumid)? expectedPackage,
+        bool lowPriority, bool pseudoConsole)
     {
         var applicationPath = info.FileName;
         var commandLine = new StringBuilder();
@@ -207,8 +229,9 @@ internal sealed class SuspendedChildProcess : IChildProcess
         foreach (var argument in info.ArgumentList)
             AppendArgument(commandLine, argument);
 
-        var stdout = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable);
-        var stderr = new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable);
+        var console = pseudoConsole ? PseudoConsoleHost.Create() : null;
+        var stdout = console is null ? new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable) : null;
+        var stderr = console is null ? new AnonymousPipeServerStream(PipeDirection.In, HandleInheritability.Inheritable) : null;
         SafeFileHandle? nul = null;
         SafeWaitHandle? process = null;
         SafeFileHandle? thread = null;
@@ -223,17 +246,21 @@ internal sealed class SuspendedChildProcess : IChildProcess
         {
             AfterPipesCreatedForTest.Value?.Invoke();
 
-            var security = new SecurityAttributes { Length = Marshal.SizeOf<SecurityAttributes>(), InheritHandle = true };
-            nul = CreateFileW("NUL", GenericRead, ShareReadWrite, ref security, OpenExisting, 0, IntPtr.Zero);
-            if (nul.IsInvalid)
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-
-            var inheritedHandles = new[]
+            var inheritedHandles = new IntPtr[3];
+            if (console is null)
             {
-                nul.DangerousGetHandle(),
-                stdout.ClientSafePipeHandle.DangerousGetHandle(),
-                stderr.ClientSafePipeHandle.DangerousGetHandle(),
-            };
+                var security = new SecurityAttributes { Length = Marshal.SizeOf<SecurityAttributes>(), InheritHandle = true };
+                nul = CreateFileW("NUL", GenericRead, ShareReadWrite, ref security, OpenExisting, 0, IntPtr.Zero);
+                if (nul.IsInvalid)
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+
+                inheritedHandles =
+                [
+                    nul.DangerousGetHandle(),
+                    stdout!.ClientSafePipeHandle.DangerousGetHandle(),
+                    stderr!.ClientSafePipeHandle.DangerousGetHandle(),
+                ];
+            }
 
             // Only these three handles are inherited. Without the list the child would inherit every
             // inheritable handle of this process, including the pipes of a launch running at the same time.
@@ -248,12 +275,25 @@ internal sealed class SuspendedChildProcess : IChildProcess
 
             attributeListInitialised = true;
 
-            handleArray = Marshal.AllocHGlobal(inheritedHandles.Length * IntPtr.Size);
-            Marshal.Copy(inheritedHandles, 0, handleArray, inheritedHandles.Length);
-            if (!UpdateProcThreadAttribute(
-                    attributeList, 0, ProcThreadAttributeHandleList, handleArray,
-                    (IntPtr)(inheritedHandles.Length * IntPtr.Size), IntPtr.Zero, IntPtr.Zero))
-                throw new Win32Exception(Marshal.GetLastWin32Error());
+            if (console is not null)
+            {
+                // The console handle itself is the value, not a pointer to it. The standard handles stay
+                // empty on purpose: without STARTF_USESTDHANDLES a newer Windows hands the child the
+                // standard handles of THIS process instead of the console's.
+                if (!UpdateProcThreadAttribute(
+                        attributeList, 0, ProcThreadAttributePseudoConsole, console.Handle, (IntPtr)IntPtr.Size,
+                        IntPtr.Zero, IntPtr.Zero))
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+            else
+            {
+                handleArray = Marshal.AllocHGlobal(inheritedHandles.Length * IntPtr.Size);
+                Marshal.Copy(inheritedHandles, 0, handleArray, inheritedHandles.Length);
+                if (!UpdateProcThreadAttribute(
+                        attributeList, 0, ProcThreadAttributeHandleList, handleArray,
+                        (IntPtr)(inheritedHandles.Length * IntPtr.Size), IntPtr.Zero, IntPtr.Zero))
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
 
             var startup = new StartupInfoEx
             {
@@ -271,8 +311,8 @@ internal sealed class SuspendedChildProcess : IChildProcess
             environment = Marshal.StringToHGlobalUni(BuildEnvironmentBlock(info.Environment));
 
             if (!CreateProcessW(
-                    applicationPath, commandLine, IntPtr.Zero, IntPtr.Zero, true,
-                    CreationFlags(lowPriority),
+                    applicationPath, commandLine, IntPtr.Zero, IntPtr.Zero, console is null,
+                    pseudoConsole ? CreationFlags(lowPriority) & ~CreateNoWindow : CreationFlags(lowPriority),
                     environment, string.IsNullOrEmpty(info.WorkingDirectory) ? null : info.WorkingDirectory,
                     ref startup, out var created))
                 throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -283,13 +323,16 @@ internal sealed class SuspendedChildProcess : IChildProcess
             // The system's own answer to "what image did you map" and "which package identity did you get",
             // both read before the process ran anything. The identity is a token attribute set when the
             // process is created, so the suspended process already carries it.
-            var mapped = QueryImagePath(process);
-            var identityRead = TryReadPackageIdentity(process, out var family, out var aumid);
-            if (!identityRead || !MayResume(mapped, expectedImagePath, family, aumid, expectedPackage))
+            if (expectedImagePath is not null)
             {
-                _ = TerminateProcess(process, 1);
-                throw new UntrustedToolException(
-                    applicationPath, "the image or package identity the system started is not the verified executable");
+                var mapped = QueryImagePath(process);
+                var identityRead = TryReadPackageIdentity(process, out var family, out var aumid);
+                if (!identityRead || !MayResume(mapped, expectedImagePath, family, aumid, expectedPackage))
+                {
+                    _ = TerminateProcess(process, 1);
+                    throw new UntrustedToolException(
+                        applicationPath, "the image or package identity the system started is not the verified executable");
+                }
             }
 
             // Put into a job so a timeout or Stop can end everything it started, as the tree kill of the
@@ -319,9 +362,16 @@ internal sealed class SuspendedChildProcess : IChildProcess
                 throw new Win32Exception(error);
             }
 
+            if (console is not null)
+            {
+                var consoleChild = new SuspendedChildProcess(process, job, console);
+                started = true;
+                return consoleChild;
+            }
+
             // Our copies of the write ends must go, or the readers never see the end of the output.
-            stdout.DisposeLocalCopyOfClientHandle();
-            stderr.DisposeLocalCopyOfClientHandle();
+            stdout!.DisposeLocalCopyOfClientHandle();
+            stderr!.DisposeLocalCopyOfClientHandle();
 
             var child = new SuspendedChildProcess(
                 process, job, stdout, stderr,
@@ -333,8 +383,9 @@ internal sealed class SuspendedChildProcess : IChildProcess
         {
             if (!started)
             {
-                stdout.Dispose();
-                stderr.Dispose();
+                console?.Dispose();
+                stdout?.Dispose();
+                stderr?.Dispose();
                 job?.Dispose();
                 process?.Dispose();
             }

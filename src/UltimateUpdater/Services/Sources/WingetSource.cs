@@ -139,7 +139,8 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
                 InstallTimeout,
                 segment => Report(progress, item.Name, segment),
                 cancellationToken,
-                stallWatch: StallWatchOptions.ForInstall);
+                stallWatch: StallWatchOptions.ForInstall,
+                pseudoConsole: true);
 
             if (pinnedResult.TimedOut)
                 throw new InvalidOperationException($"winget install timed out for '{item.Id}'.");
@@ -263,7 +264,8 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
                 InstallTimeout,
                 segment => Report(progress, name, segment),
                 cancellationToken,
-                stallWatch: StallWatchOptions.ForInstall);
+                stallWatch: StallWatchOptions.ForInstall,
+                pseudoConsole: true);
 
     private Task<ProcessResult> RunQueryAsync(
         IReadOnlyList<string> arguments, TimeSpan timeout, CancellationToken cancellationToken) =>
@@ -521,7 +523,8 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
             InstallTimeout,
             segment => Report(progress, item.Name, segment),
             cancellationToken,
-            stallWatch: StallWatchOptions.ForInstall);
+            stallWatch: StallWatchOptions.ForInstall,
+            pseudoConsole: true);
 
         if (result.TimedOut)
             throw new InvalidOperationException($"winget install timed out for '{item.Id}'.");
