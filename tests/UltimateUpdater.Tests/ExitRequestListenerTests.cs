@@ -115,7 +115,7 @@ public class ExitRequestListenerTests
 
         Assert.StartsWith("D:P", dacl);
         // Windows prints the bare modify-state bit 0x2 with the directory-service alias DC
-        Assert.Contains($"(A;;DC;;;{sid})", dacl);
+        Assert.Contains($"(A;;DC;;;{SddlAlias(sid)})", dacl);
         Assert.Contains("(A;;0x1f0003;;;SY)", dacl);
         Assert.Contains("(A;;0x1f0003;;;BA)", dacl);
         // the owner keeps only reading: its implicit right to rewrite the DACL would let it grant itself the wait right
@@ -175,7 +175,7 @@ public class ExitRequestListenerTests
 
         var dacl = ReadSddl(OpenMutexW, name, DaclInformation);
 
-        Assert.Contains($"(A;;0x100000;;;{NamedObjectSecurity.CurrentUserSid()})", dacl);
+        Assert.Contains($"(A;;0x100000;;;{SddlAlias(NamedObjectSecurity.CurrentUserSid())})", dacl);
         Assert.Contains("(A;;0x1f0001;;;SY)", dacl);
         Assert.Contains("(A;;0x1f0001;;;BA)", dacl);
         Assert.Contains("(A;;RC;;;OW)", dacl);
@@ -281,6 +281,38 @@ public class ExitRequestListenerTests
             CloseHandle(handle);
         }
     }
+
+    /// <summary>
+    /// How Windows prints this SID when it reads a descriptor back: the built-in administrator account (RID 500,
+    /// the account a hosted runner uses) comes back as the alias LA, other accounts as the plain SID. Asking the
+    /// system itself keeps the expectation exact for whatever account runs the test.
+    /// </summary>
+    private static string SddlAlias(string sid)
+    {
+        Assert.True(ConvertStringSecurityDescriptorToSecurityDescriptorW($"D:(A;;GA;;;{sid})", 1, out var descriptor, out _));
+        try
+        {
+            Assert.True(ConvertSecurityDescriptorToStringSecurityDescriptorW(descriptor, 1, DaclInformation, out var text, out _));
+            try
+            {
+                var printed = Marshal.PtrToStringUni(text)!;
+                var start = printed.LastIndexOf(";;;", StringComparison.Ordinal) + 3;
+                return printed[start..printed.LastIndexOf(')')];
+            }
+            finally
+            {
+                LocalFree(text);
+            }
+        }
+        finally
+        {
+            LocalFree(descriptor);
+        }
+    }
+
+    [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool ConvertStringSecurityDescriptorToSecurityDescriptorW(
+        string sddl, uint revision, out IntPtr descriptor, out uint size);
 
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern IntPtr OpenEventW(uint access, bool inherit, string name);
