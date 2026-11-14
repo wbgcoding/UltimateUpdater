@@ -21,10 +21,16 @@ public partial class WindowLayoutTests
             settings, logging, new ThemeService(), new AutostartService(logging), ["winget"]);
         var window = new SettingsWindow(viewModel);
 
+        // Laid out in a host of its own, as WpfHarness.RenderWindow does: left inside the unshown window,
+        // a layout pass could reach the window first, which measured the page at no size at all in a
+        // long test run (extent 0, viewport 0). The names stay registered on the window.
         var root = (FrameworkElement)window.Content;
-        root.Measure(new Size(width, window.Height));
-        root.Arrange(new Rect(0, 0, width, window.Height));
-        root.UpdateLayout();
+        var dataContext = window.DataContext;
+        window.Content = null;
+        var host = new Border { Width = width, Height = window.Height, Child = root, DataContext = dataContext };
+        host.Measure(new Size(width, window.Height));
+        host.Arrange(new Rect(0, 0, width, window.Height));
+        host.UpdateLayout();
 
         return (window,
             (System.Windows.Controls.ScrollViewer)window.FindName("SettingsScroll")!,
