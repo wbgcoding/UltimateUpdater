@@ -144,6 +144,9 @@ public class CleanupSelectedRiskDotTests
     public async Task The_group_checkbox_and_the_standard_selection_move_the_dot_too()
     {
         var (vm, _) = await CreateScannedAsync();
+        // CreateScannedAsync's own elevation override does not reach this async flow, so the group would read the
+        // real token: an elevated runner then ticks the admin-only entries the expectation below leaves out
+        ElevationService.IsElevatedForTest.Value = false;
         UntickEverything(vm);
         var considered = FirstWithTargetLevel(vm, CleanupRiskLevel.Considered);
         var group = GroupOf(vm, considered);
