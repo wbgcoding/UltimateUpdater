@@ -959,7 +959,12 @@ public class CleanupService(LoggingService logging)
             return $"{command.ToolName} was not found";
 
         var arguments = command.Arguments
-            .Select(argument => argument == DirectoryCleanCommand.FolderToken ? directory : argument)
+            .Select(argument => argument switch
+            {
+                DirectoryCleanCommand.FolderToken => directory,
+                DirectoryCleanCommand.ParentFolderToken => Path.GetDirectoryName(directory) ?? directory,
+                _ => argument,
+            })
             .ToList();
         try
         {

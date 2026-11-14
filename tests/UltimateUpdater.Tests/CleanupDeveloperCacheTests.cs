@@ -205,6 +205,47 @@ public class CleanupDeveloperCacheTests : IDisposable
         Assert.False(CleanupCatalog.Build().First(t => t.Id == "package-manager-cache").NeedsElevation);
     }
 
+    [Fact]
+    public void The_npm_cache_is_cleaned_by_npm_with_its_cache_root_passed_explicitly()
+    {
+        var npm = Folder(_local, "npm-cache", "_cacache");
+
+        var commands = CleanupCatalog.PackageCacheCleanCommands(_local, _profile);
+
+        var command = Assert.Single(commands);
+        Assert.Equal(Path.GetFullPath(npm), command.Key, ignoreCase: true);
+        Assert.Equal("npm", command.Value.ToolName);
+        Assert.Null(command.Value.FallbackPath);
+        Assert.Equal(TimeSpan.FromMinutes(10), command.Value.Timeout);
+        Assert.Equal(["cache", "clean", "--force", "--cache", DirectoryCleanCommand.ParentFolderToken,
+            "--no-update-notifier", "--loglevel=error"], command.Value.Arguments);
+        Assert.Contains(Path.GetFullPath(npm),
+            CleanupCatalog.PackageCacheDirectories(_local, _profile, Path.Combine(_root, "tmp")), StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task The_parent_token_hands_the_tool_the_folder_above_the_cleaned_one()
+    {
+        var npm = Folder(_local, "npm-cache", "_cacache");
+        AgedFile(npm, "index.bin", TimeSpan.FromDays(3), 300);
+        var tool = new FakeTool();
+        var command = new DirectoryCleanCommand(
+            "npm", null, ["cache", "clean", "--force", "--cache", DirectoryCleanCommand.ParentFolderToken],
+            "npm cache clean", TimeSpan.FromSeconds(120));
+        var target = new CleanupTarget("test-pkg", "x", "y", CleanupKind.Directories, DefaultEnabled: true,
+            RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "x")
+        {
+            Directories = [npm],
+            MinFileAge = CleanupCatalog.CacheMinFileAge,
+            CleanCommands = new Dictionary<string, DirectoryCleanCommand>(StringComparer.OrdinalIgnoreCase) { [npm] = command },
+        };
+
+        await ServiceWith(tool, @"C:\tools\npm.cmd").CleanAsync(target, progress: null, CancellationToken.None);
+
+        var call = Assert.Single(tool.Calls);
+        Assert.Equal(["cache", "clean", "--force", "--cache", Path.GetDirectoryName(npm)!], call.Args);
+    }
+
     // ---- the uv cache is cleaned by uv, never file by file ----
 
     private sealed class FakeTool

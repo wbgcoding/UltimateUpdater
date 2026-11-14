@@ -17,6 +17,10 @@ public sealed record DirectoryCleanCommand(
 {
     /// <summary>The argument that stands for the folder the command is run for.</summary>
     public const string FolderToken = "{folder}";
+
+    /// <summary>The argument that stands for the folder's parent, for a tool whose option names the cache root
+    /// that holds the folder (npm's <c>--cache</c> names the folder above <c>_cacache</c>).</summary>
+    public const string ParentFolderToken = "{parent}";
 }
 
 /// <summary>

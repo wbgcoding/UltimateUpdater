@@ -33,6 +33,10 @@ public sealed class NpmSource(LoggingService logging, HttpClient httpClient) : C
     {
         var result = await RunAsync(["outdated", "-g", "--json"], cancellationToken);
 
+        // A broken cache fails every scan until it is repaired; one repair and one more try, never a loop.
+        if (!result.TimedOut && !IsOutdatedReport(result) && IsBrokenCache(result) && await RepairCacheAsync(cancellationToken))
+            result = await RunAsync(["outdated", "-g", "--json"], cancellationToken);
+
         // The prefix is only needed to judge a failure, so the extra npm call stays off the normal path.
         string? prefix = null;
         if (!result.TimedOut && !IsAcceptedScanExitCode(result.ExitCode) && !IsOutdatedReport(result) && MentionsEnoent(result))
@@ -119,17 +123,7 @@ public sealed class NpmSource(LoggingService logging, HttpClient httpClient) : C
         if (string.IsNullOrWhiteSpace(globalPrefix))
             return false;
 
-        string? code = null;
-        string? path = null;
-        foreach (var line in (result.StandardError + "\n" + result.StandardOutput).Split('\n').Select(l => l.Trim()))
-        {
-            if (TryField(line, "code") is { } c)
-                code ??= c;
-            else if (TryField(line, "path") is { } p)
-                path ??= p;
-        }
-
-        if (!string.Equals(code, "ENOENT", StringComparison.Ordinal) || path is null)
+        if (EnoentPath(result) is not { } path)
             return false;
 
         try
@@ -143,6 +137,55 @@ public sealed class NpmSource(LoggingService logging, HttpClient httpClient) : C
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// A cache whose index still names content files that are gone (half emptied by hand or by an older
+    /// cleanup) makes npm fail with ENOENT on a file inside its own <c>_cacache</c> folder on every call that
+    /// reads that entry; npm never repairs it by itself. Only that exact shape counts: code ENOENT and the
+    /// failing path inside a <c>_cacache</c> folder.
+    /// </summary>
+    internal static bool IsBrokenCache(ProcessResult result)
+    {
+        if (EnoentPath(result) is not { } path)
+            return false;
+
+        var segments = path.Trim().Trim('"').Split('\\', '/');
+        return segments.Length > 1
+            && segments[..^1].Any(s => string.Equals(s, "_cacache", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>The failing path of an `npm error code ENOENT` report, null for any other error.</summary>
+    private static string? EnoentPath(ProcessResult result)
+    {
+        string? code = null;
+        string? path = null;
+        foreach (var line in (result.StandardError + "\n" + result.StandardOutput).Split('\n').Select(l => l.Trim()))
+        {
+            if (TryField(line, "code") is { } c)
+                code ??= c;
+            else if (TryField(line, "path") is { } p)
+                path ??= p;
+        }
+
+        return string.Equals(code, "ENOENT", StringComparison.Ordinal) ? path : null;
+    }
+
+    /// <summary>
+    /// Lets npm repair its own cache: `npm cache verify` drops index entries whose content is gone, keeps the
+    /// rest, and fetches nothing. True when it succeeded, so the scan is worth running again.
+    /// </summary>
+    private async Task<bool> RepairCacheAsync(CancellationToken cancellationToken)
+    {
+        Logging.Warn($"{Id}: the npm cache names files that are gone; running 'npm cache verify' to repair it.");
+        var result = await RunAsync(["cache", "verify", "--no-update-notifier"], cancellationToken);
+        if (result.TimedOut || result.ExitCode != 0)
+        {
+            Logging.Warn($"{Id}: 'npm cache verify' did not succeed (exit code {result.ExitCode}).");
+            return false;
+        }
+
+        return true;
     }
 
     private static string Normalize(string path) =>

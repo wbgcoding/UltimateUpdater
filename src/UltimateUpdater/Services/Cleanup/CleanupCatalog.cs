@@ -493,9 +493,14 @@ public static class CleanupCatalog
     /// half a cache): the cleanup stops waiting and counts the folder as not freed.</summary>
     internal static readonly TimeSpan UvCacheCleanTimeout = TimeSpan.FromMinutes(10);
 
-    /// <summary>The uv cache is emptied by uv itself, never file by file: a half-emptied entry would still be
-    /// linked into new environments. The folder is passed explicitly so uv cleans exactly the folder that was
-    /// measured, whatever its own settings or environment say.</summary>
+    /// <summary>How long the cleanup waits for npm to clear its cache; past it npm is left to finish on its own.</summary>
+    internal static readonly TimeSpan NpmCacheCleanTimeout = TimeSpan.FromMinutes(10);
+
+    /// <summary>The uv and npm caches are emptied by their own tool, never file by file. A half-emptied uv entry
+    /// would still be linked into new environments; npm keeps an index beside the content, and an index entry
+    /// whose content file is gone makes every later npm call that reads it fail with ENOENT. The folder is passed
+    /// explicitly so the tool cleans exactly the folder that was measured, whatever its own settings or
+    /// environment say.</summary>
     internal static IReadOnlyDictionary<string, DirectoryCleanCommand> PackageCacheCleanCommands(string local, string profile)
     {
         var commands = new Dictionary<string, DirectoryCleanCommand>(StringComparer.OrdinalIgnoreCase);
@@ -506,6 +511,16 @@ public static class CleanupCatalog
                 "uv", Path.Combine(profile, ".local", "bin", "uv.exe"),
                 ["cache", "clean", "--cache-dir", DirectoryCleanCommand.FolderToken, "--no-config", "--no-progress"],
                 "uv cache clean", UvCacheCleanTimeout);
+        }
+
+        var npmCache = Path.TrimEndingDirectorySeparator(Path.GetFullPath(Path.Combine(local, "npm-cache", "_cacache")));
+        if (Directory.Exists(npmCache))
+        {
+            commands[npmCache] = new DirectoryCleanCommand(
+                "npm", null,
+                ["cache", "clean", "--force", "--cache", DirectoryCleanCommand.ParentFolderToken,
+                 "--no-update-notifier", "--loglevel=error"],
+                "npm cache clean", NpmCacheCleanTimeout);
         }
 
         return commands;

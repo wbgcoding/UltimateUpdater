@@ -50,6 +50,8 @@ versioning: [SemVer](https://semver.org).
   windows open faster.
 - A download no longer shows a size of a few bytes when the tool prints a step counter.
 - A Windows update that Windows itself cancelled says so in plain words.
+- npm repairs its own cache when an earlier cleanup left it half emptied, instead of failing every scan
+  and install with "Invalid response body ... ENOENT".
 
 ### Cleanup
 - The status card beside the ring is new: "Area 7 of 14" with a bar, the current area and file, the
@@ -65,6 +67,7 @@ versioning: [SemVer](https://semver.org).
   parts no longer run together at small sizes, and the sparkles beside it are gone.
 - Stop no longer lets a system repair start that had not begun yet; only a repair already running is
   finished, and only then does the dialog say so.
+- The npm cache is emptied by npm itself, never file by file, so a cleanup can no longer leave it broken.
 
 ## [1.1.2] - 2026-10-30
 
