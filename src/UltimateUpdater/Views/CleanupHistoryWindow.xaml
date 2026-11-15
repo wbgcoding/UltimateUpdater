@@ -86,7 +86,9 @@
                             Visibility="{Binding HasFreedAnything, Converter={StaticResource BoolToVisibility}}">
                     <local:PieChart Slices="{Binding HistorySlices}"
                                     NeutralFill="{DynamicResource TextFillColorDisabledBrush}"/>
-                    <ItemsControl ItemsSource="{Binding HistorySlices}" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <!-- Shared columns: every percentage ends at the same right edge, whatever the title length. -->
+                    <ItemsControl x:Name="HistorySliceLegend" ItemsSource="{Binding HistorySlices}" Margin="16,0,0,0"
+                                  VerticalAlignment="Center" Grid.IsSharedSizeScope="True">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,2" Background="Transparent"
@@ -94,8 +96,8 @@
                                       AutomationProperties.Name="{Binding ToolTipText}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="SliceTitle"/>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="SlicePercent"/>
                                     </Grid.ColumnDefinitions>
                                     <Ellipse Grid.Column="0" Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center">
                                         <Ellipse.Style>
@@ -113,6 +115,7 @@
                                                TextTrimming="CharacterEllipsis"
                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                     <TextBlock Grid.Column="2" Text="{Binding PercentText}" FontSize="12" Margin="12,0,0,0"
+                                               HorizontalAlignment="Right" TextAlignment="Right"
                                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                                 </Grid>
                             </DataTemplate>

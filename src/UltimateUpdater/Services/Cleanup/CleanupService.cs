@@ -2602,15 +2602,7 @@ public class CleanupService(LoggingService logging)
             timeout,
             segment =>
             {
-                // Sfc (and DISM, on the same path) writes UTF-16LE once it notices its output is
-                // redirected; ProcessRunner decodes every tool as UTF-8, which turns that into a real
-                // character followed by a NUL, over and over, so the percentage below never matched. Undone
-                // here, scoped to this one caller, rather than by changing how every OTHER tool's output is
-                // decoded.
-                if (Utf16RedirectRecovery.LooksLikeMisdecodedUtf16(segment))
-                    segment = Utf16RedirectRecovery.Recover(segment);
-
-                var line = segment.Trim();
+                var line = DecodeStepSegment(segment).Trim();
                 if (line.Length == 0)
                     return;
 
@@ -2652,7 +2644,23 @@ public class CleanupService(LoggingService logging)
                         $"{label}: {LocalizationService.Instance["CleanupNoProgressHint"]}", stepBase, 0));
                 }
             },
-            cancellationToken);
+            cancellationToken,
+            outputEncoding: Encoding.Latin1);
+    }
+
+    /// <summary>
+    /// One output segment of a repair or defrag step, read as Latin1 so every byte survives. Sfc writes
+    /// UTF-16LE once its output is redirected (a character, then a NUL, over and over; for the Latin1 range
+    /// dropping the NULs is the exact text). DISM and defrag write the machine's OEM code page, one byte per
+    /// accented letter, which a UTF-8 read turned into a replacement sign ("f?r" instead of "für"). Plain ASCII
+    /// is the same text in every one of these and is left alone.
+    /// </summary>
+    internal static string DecodeStepSegment(string latin1Segment)
+    {
+        if (Utf16RedirectRecovery.LooksLikeMisdecodedUtf16(latin1Segment))
+            return Utf16RedirectRecovery.Recover(latin1Segment);
+
+        return OemTextRecovery.NeedsRecovery(latin1Segment) ? OemTextRecovery.Recover(latin1Segment) : latin1Segment;
     }
 
     /// <summary>

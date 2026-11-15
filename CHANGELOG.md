@@ -70,6 +70,9 @@ versioning: [SemVer](https://semver.org).
 - The npm cache is emptied by npm itself, never file by file, so a cleanup can no longer leave it broken.
 - Earlier cleanups that were stopped say "Stopped" instead of "Stop", and the main window's button reads
   "Cleaning up 47 %" while a cleanup runs.
+- The live lines of DISM, sfc and drive optimisation show umlauts and other accented letters correctly
+  instead of a replacement sign.
+- In the overview of earlier cleanups the percentages of the legend line up on the right.
 
 ### Wording
 - Counts of one use the singular ("1 package reports no size", "1 entry copied"), and restoring a single

@@ -120,8 +120,9 @@ public static class ProcessRunner
         IReadOnlyDictionary<string, string>? environment = null,
         TimeSpan? idleTimeout = null,
         StallWatchOptions? stallWatch = null,
-        bool pseudoConsole = false) =>
-        ExecuteAsync(fileName, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding: null, stallWatch,
+        bool pseudoConsole = false,
+        Encoding? outputEncoding = null) =>
+        ExecuteAsync(fileName, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding, stallWatch,
             pseudoConsole: pseudoConsole);
 
     private static async Task<ProcessResult> ExecuteAsync(
