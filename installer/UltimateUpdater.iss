@@ -13,7 +13,7 @@
 #endif
 
 #ifndef AppVersion
-  #define AppVersion "1.1.2"
+  #define AppVersion "1.2.0"
 #endif
 
 #define AppName "Ultimate Updater"
