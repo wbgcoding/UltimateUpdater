@@ -30,3 +30,5 @@ coverage/
 .signing/
 .DS_Store
 Thumbs.db
+
+.idea/
