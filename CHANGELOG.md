@@ -3,6 +3,8 @@
 All notable changes to Ultimate Updater. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
+## [Unreleased]
+
 ## [1.2.0] - 2026-11-15
 
 ### Updates
