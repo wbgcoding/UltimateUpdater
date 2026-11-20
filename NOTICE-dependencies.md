@@ -1,18 +1,19 @@
 # Third-party dependencies
 
-Every direct NuGet package this project references, its version at the time of writing and its
-licence. Transitive packages are not listed here; `dotnet list package --include-transitive` prints them.
+Every direct NuGet package this project references and its licence. The exact versions live in the
+two `.csproj` files and change with routine dependency updates, so they are not repeated here.
+Transitive packages are not listed here; `dotnet list package --include-transitive` prints them.
 
-| Package | Version | Licence |
-| --- | --- | --- |
-| CommunityToolkit.Mvvm | 8.4.2 | MIT |
-| Raffinert.FuzzySharp | 6.0.1 | MIT |
-| System.Management | 10.0.13 | MIT |
-| WPF-UI | 4.3.0 | MIT |
-| coverlet.collector | 10.1.0 | MIT |
-| Microsoft.NET.Test.Sdk | 18.11.0 | MIT |
-| xunit | 2.9.3 | Apache-2.0 |
-| xunit.runner.visualstudio | 4.0.1 | Apache-2.0 |
+| Package | Licence |
+| --- | --- |
+| CommunityToolkit.Mvvm | MIT |
+| Raffinert.FuzzySharp | MIT |
+| System.Management | MIT |
+| WPF-UI | MIT |
+| coverlet.collector | MIT |
+| Microsoft.NET.Test.Sdk | MIT |
+| xunit | Apache-2.0 |
+| xunit.runner.visualstudio | Apache-2.0 |
 
 This file is checked against both `.csproj` files by an automated test: adding a package without
 adding it here fails the build. Update this table in the same change that adds, removes or
