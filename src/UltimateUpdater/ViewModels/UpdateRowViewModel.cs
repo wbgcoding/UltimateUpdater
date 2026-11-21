@@ -1267,14 +1267,13 @@ public partial class UpdateRowViewModel : ObservableObject
     /// <summary>Download size in bytes (source or enrichment), for the pre-install batch preview.</summary>
     public long? DownloadSizeBytes => EnrichedDownloadSize ?? Item.DownloadSize;
 
-    // Sort keys for the column headers. Rows without a date/size sort as the oldest/smallest (MinValue/0):
-    // last in the default descending sort, first in an ascending one. Version sorts as text, good enough next to a
-    // full semver comparer, which the mixed version strings here do not warrant.
+    // Sort keys for the column headers. The table sorts by HasPublishDate/HasDownloadSize/HasVersions
+    // first, so rows without a value stay at the bottom in either direction.
     public DateTimeOffset SortDate => EffectivePublishDate ?? DateTimeOffset.MinValue;
 
     public long SortSize => EffectiveDownloadSize ?? 0L;
 
-    public string SortVersion => AvailableVersion ?? string.Empty;
+    public string SortVersion => VersionSortKey.For(AvailableVersion);
 
     /// <summary>
     /// Opens the raw failure text on request in the error-details window. The winget source in particular hands
@@ -1581,6 +1580,7 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowUnsnoozeEntry));
         OnPropertyChanged(nameof(ShowRetryButton));
         OnPropertyChanged(nameof(ShowResetAndRetryButton));
+        OnPropertyChanged(nameof(ShowStateWord));
         InstallCommand.NotifyCanExecuteChanged();
         RetryCommand.NotifyCanExecuteChanged();
         ResetAndRetryCommand.NotifyCanExecuteChanged();

@@ -685,9 +685,11 @@ public partial class MainViewModelTests
             Assert.False(row.ShowResetAndRetryButton);
             Assert.False(row.ResetAndRetryCommand.CanExecute(null));
 
+            changed.Clear();
             row.IsSnoozed = false;
             Assert.True(row.ShowResetAndRetryButton);
             Assert.True(row.ResetAndRetryCommand.CanExecute(null));
+            Assert.Contains(nameof(UpdateRowViewModel.ShowStateWord), changed);
         });
     }
 }
