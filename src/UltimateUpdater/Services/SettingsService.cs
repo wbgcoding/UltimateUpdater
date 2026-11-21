@@ -8,7 +8,8 @@ using UltimateUpdater.Services.Sources;
 
 namespace UltimateUpdater.Services;
 
-/// <summary>Loads/saves settings.json: atomic write, UTF-8 no BOM. Fails closed to defaults on a corrupt file rather than crashing.</summary>
+/// <summary>Loads/saves settings.json: atomic write, UTF-8 no BOM. Fails closed to defaults on a corrupt file rather
+/// than crashing.</summary>
 public sealed class SettingsService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -47,11 +48,10 @@ public sealed class SettingsService
         ApplyRepairDefaultsReset();
     }
 
-    /// <summary>The two system repair targets default to off. A saved
-    /// tick from an earlier default would keep them on for everyone who ever closed the cleanup window, so
-    /// their saved choice is dropped exactly once (the catalogue default then applies). Runs at load, before
-    /// any restore of the selection, so every reader of it sees the result. Persists only when an entry was
-    /// actually removed; otherwise the flag rides along with the next ordinary save.</summary>
+    /// <summary>The two system repair targets default to off. A tick saved under an earlier default would keep
+    /// them on, so their saved choice is dropped exactly once (the catalogue default then applies). Runs at
+    /// load, before any restore of the selection. Persists only when an entry was removed; otherwise the flag
+    /// rides along with the next ordinary save.</summary>
     private void ApplyRepairDefaultsReset()
     {
         if (Current.CleanupRepairDefaultsApplied)
@@ -69,9 +69,9 @@ public sealed class SettingsService
     private static readonly string[] RepairTargetIds = ["system-repair-dism", "system-repair-sfc"];
 
     /// <summary>
-    /// Puts every setting back to its factory default. The <see cref="Current"/>
-    /// object is mutated in place rather than replaced, because view models, the scan orchestrator and the
-    /// install queue all hold a reference to this very instance. Does not write; the caller saves.
+    /// Puts every setting back to its factory default. <see cref="Current"/> is mutated in place rather than
+    /// replaced, because view models, the scan orchestrator and the install queue hold a reference to this
+    /// instance. Does not write; the caller saves.
     /// </summary>
     public void Reset()
     {
@@ -87,8 +87,8 @@ public sealed class SettingsService
             Current.Autostart = defaults.Autostart;
             Current.SelfUpdate = defaults.SelfUpdate;
             Current.Security = defaults.Security;
-            // Any section added to AppSettings has to be listed here AND in Normalize, or a factory
-            // reset silently leaves that section's values untouched.
+            // Any section added to AppSettings has to be listed here and in Normalize, or a factory reset leaves
+            // that section untouched.
             Current.RegistryCleanup = defaults.RegistryCleanup;
             Current.Logs = defaults.Logs;
             Current.CleanupRecycleInsteadOfDelete = defaults.CleanupRecycleInsteadOfDelete;
@@ -110,7 +110,8 @@ public sealed class SettingsService
 
     private const int MaxMoveAttempts = 5;
 
-    /// <summary>Throws IOException/UnauthorizedAccessException if all retries are exhausted (e.g. AV briefly locking the file); callers must handle it (fail closed, never let a save error crash the app).</summary>
+    /// <summary>Throws IOException/UnauthorizedAccessException if all retries are exhausted (e.g. AV briefly locking
+    /// the file); callers must handle it (fail closed, never let a save error crash the app).</summary>
     public void Save()
     {
         if (_saveSuppressed)
@@ -127,15 +128,15 @@ public sealed class SettingsService
             return;
         }
 
-        // Serialised BEFORE the lock below, never inside it: SerializeCurrentOnOwningThread can block this
-        // thread on the UI dispatcher, and Reset() also takes _lock on the UI thread itself, so waiting on
-        // the dispatcher while holding _lock could deadlock the two against each other.
+        // Serialised before the lock below, never inside it: SerializeCurrentOnOwningThread can block this
+        // thread on the UI dispatcher, and Reset() also takes _lock on the UI thread, so waiting on the
+        // dispatcher while holding _lock could deadlock.
         var (json, sequence) = SerializeCurrentOnOwningThread();
 
         lock (_lock)
         {
-            // Two saves can overlap (the timer's and a Flush); the snapshot taken LATER must win, so an older
-            // one that reaches this point second never overwrites a newer file.
+            // Two saves can overlap (the timer's and a Flush); the later snapshot must win, so an older one reaching
+            // this point second never overwrites a newer file.
             if (sequence < _lastWrittenSequence)
                 return;
 
@@ -161,10 +162,9 @@ public sealed class SettingsService
     }
 
     /// <summary>
-    /// Writes the settings as they are in memory right now to <paramref name="path"/>, for a data folder copy
-    /// that ran in the background while the user could still change something. Does nothing while saves are
-    /// suppressed: the file on disk is the truth then, and the copy already holds it. Throws like
-    /// <see cref="Save"/> on a failed write.
+    /// Writes the settings as they are in memory now to <paramref name="path"/>, for a data folder copy that
+    /// ran in the background while the user could still change something. Does nothing while saves are
+    /// suppressed: the file on disk is the truth then. Throws like <see cref="Save"/> on a failed write.
     /// </summary>
     public void WriteCopyTo(string path)
     {
@@ -176,25 +176,24 @@ public sealed class SettingsService
     }
 
     /// <summary>
-    /// <see cref="Current"/>'s collections (Sources, Excludes, Snoozed, ...) are mutated straight from the
-    /// UI thread by every view model that touches settings, with no lock of their own. Serialising them
-    /// from <see cref="OnSaveTimer"/>'s thread-pool thread would race a live mutation and throw
-    /// InvalidOperationException ("Collection was modified"), so the read and serialise step runs on the
-    /// dispatcher that owns those mutations, where nothing else can run meanwhile. A caller already on that
-    /// thread (<see cref="Flush"/> at app exit) or with no dispatcher at all (tests) runs inline;
-    /// <see cref="OnSaveTimer"/>'s catch-all keeps a failure on that inline path from ending the process.
+    /// <see cref="Current"/>'s collections are mutated straight from the UI thread by every view model, with
+    /// no lock. Serialising them from <see cref="OnSaveTimer"/>'s thread-pool thread would race a live
+    /// mutation and throw InvalidOperationException ("Collection was modified"), so the read and serialise
+    /// step runs on the dispatcher that owns those mutations. A caller already on that thread
+    /// (<see cref="Flush"/> at app exit) or with no dispatcher (tests) runs inline; <see cref="OnSaveTimer"/>'s
+    /// catch-all keeps a failure on that inline path from ending the process.
     /// </summary>
     private (string Json, long Sequence) SerializeCurrentOnOwningThread()
     {
-        // The sequence number is taken in the same step as the snapshot, so it orders snapshots exactly.
+        // The sequence number is taken with the snapshot, so it orders snapshots exactly.
         (string, long) Snapshot() => (JsonSerializer.Serialize(Current, JsonOptions), Interlocked.Increment(ref _serializeSequence));
 
         var dispatcher = System.Windows.Application.Current?.Dispatcher;
         if (dispatcher is null || dispatcher.CheckAccess() || dispatcher.HasShutdownStarted)
             return Snapshot();
 
-        // An Invoke the dispatcher aborts (shutdown racing this timer) yields null; writing that would
-        // replace settings.json with an empty file, so it fails instead and the old file stays.
+        // An Invoke the dispatcher aborts (shutdown racing this timer) yields null; writing that would replace
+        // settings.json with an empty file, so it fails and the old file stays.
         var snapshot = dispatcher.Invoke(Snapshot);
         return snapshot.Item1 is null
             ? throw new InvalidOperationException("Settings were not serialised: the UI dispatcher shut down.")
@@ -219,18 +218,16 @@ public sealed class SettingsService
 
     private int _diskWrites;
 
-    /// <summary>How many times the file was really written. Test seam: the point of the deferred save is
-    /// that a burst of calls collapses into one write, and only counting the writes proves it.</summary>
+    /// <summary>How many times the file was really written. Test seam: counting writes is the only way to
+    /// prove a burst of deferred saves collapses into one.</summary>
     internal int DiskWrites => Volatile.Read(ref _diskWrites);
 
     /// <summary>
-    /// The save every UI click goes through. <see cref="Save"/> serialises, writes a temp file and then
-    /// retries a locked move with a growing sleep; up to about three quarters of a second on the caller's
-    /// thread, which on the UI thread is a visible freeze on something as small as ticking a checkbox.
-    /// This marks the settings dirty and writes them on a thread-pool thread once the changes stop coming,
-    /// so a burst of toggles costs one write instead of one per click. Never throws: a failed write is
-    /// logged. Anything that needs the file to be current
-    /// right now calls <see cref="Flush"/>.
+    /// The save every UI click goes through. <see cref="Save"/> serialises, writes a temp file and retries a
+    /// locked move with a growing sleep, up to about three quarters of a second on the caller's thread, a
+    /// visible freeze on the UI thread. This marks the settings dirty and writes them on a thread-pool thread
+    /// once the changes stop coming, so a burst of toggles costs one write. Never throws: a failed write is
+    /// logged. Anything that needs the file current right now calls <see cref="Flush"/>.
     /// </summary>
     public void SaveDeferred()
     {
@@ -242,14 +239,12 @@ public sealed class SettingsService
     }
 
     /// <summary>
-    /// Writes a pending deferred save out NOW, on the calling thread, and does nothing when there is
-    /// nothing pending. Called wherever the on-disk file has to be current: application exit, and before an
-    /// elevated job starts (the worker is a separate process and reads what is on disk, not what is in this
-    /// object). A timer save that is still writing counts as pending: it cleared the flag before it wrote,
-    /// so returning on the flag alone let the caller go on (and the process exit) while that write was not
-    /// on disk yet. Flush then writes the current state itself; that save queues behind the file lock the
-    /// in-flight write holds, and the newer snapshot wins. It never waits on the timer thread, which may
-    /// itself be waiting for the UI thread Flush is usually running on.
+    /// Writes a pending deferred save out now, on the calling thread; does nothing when none is pending.
+    /// Called wherever the on-disk file has to be current: application exit, and before an elevated job
+    /// starts (the worker is a separate process and reads the disk). A timer save that is still writing
+    /// counts as pending, since it cleared the flag before writing; Flush then writes the current state
+    /// itself, queues behind the in-flight write's file lock, and the newer snapshot wins. It never waits on
+    /// the timer thread, which may be waiting for the UI thread Flush usually runs on.
     /// </summary>
     public void Flush()
     {
@@ -291,11 +286,10 @@ public sealed class SettingsService
         }
         catch (Exception ex)
         {
-            // Nothing may escape a System.Threading.Timer callback: it runs on a thread-pool thread with
-            // no caller to catch it, and an unhandled exception there tears down the whole process, not
-            // just this one save. WriteAndLogFailure's own catch below handles every failure it knows to
-            // expect; this is the backstop for whatever it does not (a mutation racing the no-dispatcher
-            // fallback in SerializeCurrentOnOwningThread, or the dispatcher itself shutting down mid-save).
+            // Nothing may escape a System.Threading.Timer callback: it runs on a thread-pool thread with no caller,
+            // and an unhandled exception there tears down the whole process. WriteAndLogFailure handles the failures
+            // it expects; this is the backstop for the rest (a mutation racing the no-dispatcher fallback, or the
+            // dispatcher shutting down mid-save).
             _logging.Error("Unhandled exception in the settings deferred-save timer", ex);
         }
     }
@@ -309,16 +303,15 @@ public sealed class SettingsService
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
             or JsonException or ArgumentException or InvalidOperationException)
         {
-            // InvalidOperationException also covers "Collection was modified" when a live mutation races
-            // the inline serialize used without a dispatcher (tests, or any host without a WPF Application).
+            // InvalidOperationException also covers "Collection was modified" when a live mutation races the inline
+            // serialize used without a dispatcher.
             _logging.Error("Failed to save settings.json", ex);
         }
     }
 
     /// <summary>
-    /// A legitimate settings.json is a few KB. Checked BEFORE reading: without this, a huge
-    /// file (planted, or corrupted into a giant string) would be buffered whole before the parser ever got a
-    /// chance to fail closed, which could exhaust memory before startup's own fallback logic ever ran.
+    /// A legitimate settings.json is a few KB. Checked before reading, so a huge file (planted or corrupted)
+    /// cannot exhaust memory before the parser gets a chance to fail closed.
     /// </summary>
     private const long MaxSettingsFileBytes = 5L * 1024 * 1024;
 
@@ -361,8 +354,8 @@ public sealed class SettingsService
                 _saveSuppressed = true;
                 return new AppSettings();
             }
-            // Widest sensible net: this method's whole contract is to fall back to defaults, and an
-            // exception escaping it took the app down at startup with no way to recover from the UI.
+            // Widest sensible net: this method's contract is to fall back to defaults, and an exception escaping it
+            // would take the app down at startup with no way to recover from the UI.
             catch (Exception ex) when (ex is JsonException or NotSupportedException or ArgumentException)
             {
                 _logging.Error("settings.json unreadable/corrupt; falling back to defaults", ex);
@@ -381,9 +374,9 @@ public sealed class SettingsService
     private bool _suppressedSaveLogged;
 
     /// <summary>
-    /// Falling back to defaults means the next save overwrites the file, so a broken file is set aside first:
-    /// whoever hand-edited it can still recover their settings. At most <see cref="MaxCorruptCopies"/> such
-    /// files are kept, the newest ones. Best effort; keeping a copy must never block startup.
+    /// Falling back to defaults means the next save overwrites the file, so a broken file is set aside first
+    /// and a hand-editor can recover their settings. At most <see cref="MaxCorruptCopies"/> such files are
+    /// kept, the newest ones. Best effort; keeping a copy must never block startup.
     /// </summary>
     private void KeepUnreadableFile(bool move)
     {
@@ -412,10 +405,9 @@ public sealed class SettingsService
     }
 
     /// <summary>
-    /// An explicit <c>null</c> in the file deserialises SUCCESSFULLY into a null section; the property
-    /// initialisers only run for members the JSON never mentions. `"scan": null` therefore took the app down
-    /// with a NullReferenceException long after loading, in whichever view model read it first. Every section
-    /// and every collection is put back to its default here, so nothing downstream has to null-check.
+    /// An explicit <c>null</c> in the file deserialises successfully into a null section; the property
+    /// initialisers only run for members the JSON never mentions. Every section and collection is put back
+    /// to its default here, so nothing downstream has to null-check.
     /// </summary>
     private static AppSettings Normalize(AppSettings? settings)
     {
@@ -438,8 +430,7 @@ public sealed class SettingsService
 
         // A hand-edited or out-of-range value must never reach the elevated worker unchecked.
         settings.Install.MaxParallelInstalls = Math.Clamp(settings.Install.MaxParallelInstalls, 1, 5);
-        // Added later than the sections above and never given the same treatment: a null here reached the
-        // cleanup dialog's ctor (TryGetValue on the saved selection) and every scan's ApplyPermanentExclusions.
+        // A null here would reach the cleanup dialog's constructor and every scan's ApplyPermanentExclusions.
         settings.CleanupSelection ??= defaults.CleanupSelection;
         settings.CleanupPermanentlyExcludedPaths ??= defaults.CleanupPermanentlyExcludedPaths;
 
@@ -447,8 +438,8 @@ public sealed class SettingsService
         settings.Ui.Theme ??= defaults.Ui.Theme;
         settings.Ui.Language ??= defaults.Ui.Language;
 
-        // The table layouts are read in MainViewModel's ctor: a null here ("tables": null, "main": null or
-        // "hiddenColumns": null) failed every launch with a fatal error that no UI could ever repair.
+        // The table layouts are read in MainViewModel's constructor: a null here ("tables": null, "main": null or
+        // "hiddenColumns": null) would fail every launch with an error no UI could repair.
         settings.Ui.Tables ??= defaults.Ui.Tables;
         foreach (var broken in settings.Ui.Tables.Where(e => e.Value is null).Select(e => e.Key).ToList())
             settings.Ui.Tables.Remove(broken);
@@ -459,8 +450,8 @@ public sealed class SettingsService
             table.PinnedColumns ??= [];
         }
 
-        // The violet theme was renamed. Without this, a stored old id matches nothing and the user
-        // would silently land back on the system theme.
+        // The violet theme id "aipurple" is a legacy name; without this a stored old id matches nothing and the
+        // user silently lands on the system theme.
         if (string.Equals(settings.Ui.Theme, "aipurple", StringComparison.OrdinalIgnoreCase))
             settings.Ui.Theme = "neon";
 
@@ -468,10 +459,8 @@ public sealed class SettingsService
         if (string.IsNullOrWhiteSpace(settings.RegistryCleanup.BackupFolder))
             settings.RegistryCleanup.BackupFolder = RegistryCleanupSettings.DefaultBackupFolder;
 
-        // An earlier registry-backup default was the profile root itself, which put exported .reg
-        // files directly in the user's home directory. Only a value
-        // that matches that default EXACTLY is rewritten; a folder the user picked themselves (even one
-        // that happens to sit inside the profile) is left untouched.
+        // An earlier registry-backup default was the profile root itself. Only a value that matches that default
+        // exactly is rewritten; a folder the user picked (even one inside the profile) is left alone.
         if (string.Equals(
                 settings.RegistryCleanup.BackupFolder,
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
@@ -480,10 +469,8 @@ public sealed class SettingsService
             settings.RegistryCleanup.BackupFolder = RegistryCleanupSettings.DefaultBackupFolder;
         }
 
-        // The app itself was later renamed from Windows Updater to Ultimate Updater, and the roaming data
-        // folder followed; a settings file saved before that still points at the old folder name. Same
-        // rule as above: only an exact match with the old DEFAULT is rewritten, never a folder the user
-        // chose themselves.
+        // A settings file saved under the legacy roaming folder name still points there. Same rule: only an exact
+        // match with the old default is rewritten, never a folder the user chose.
         if (string.Equals(
                 settings.RegistryCleanup.BackupFolder,
                 RegistryCleanupSettings.LegacyDefaultBackupFolder,
@@ -493,29 +480,26 @@ public sealed class SettingsService
         }
 
         // A JSON array may hold nulls; every reader of this list treats an entry as a key.
-        // IntervalMinutes is deliberately NOT clamped; 0 or less is how the interval scan is turned off.
+        // IntervalMinutes is deliberately not clamped: 0 or less turns the interval scan off.
         settings.Excludes.RemoveAll(string.IsNullOrWhiteSpace);
 
         // Same reasoning: a blank entry is compared against a real path on every scan and can never match.
         settings.CleanupPermanentlyExcludedPaths.RemoveAll(string.IsNullOrWhiteSpace);
 
-        // Swept here too (not only lazily on lookup): an install that stays closed past a snooze's due
-        // date must not resurrect it the moment the app is opened again days or weeks later.
+        // Swept here too, not only on lookup: an install closed past a snooze's due date must not resurrect it
+        // when the app is opened days later.
         var now = DateTimeOffset.UtcNow;
         foreach (var expired in settings.Snoozed.Where(e => e.Value <= now).Select(e => e.Key).ToList())
             settings.Snoozed.Remove(expired);
 
-        // A reference-typed dictionary value CAN be an explicit JSON null (unlike Excludes' plain
-        // strings-in-a-list or Snoozed's struct values); a hand-edited or corrupted entry here must not
-        // throw the first time a scan reads it back.
+        // A reference-typed dictionary value can be an explicit JSON null (unlike Excludes' strings or Snoozed's
+        // structs); a corrupted entry must not throw the first time a scan reads it back.
         foreach (var broken in settings.PersistentFailures.Where(e => e.Value is null).Select(e => e.Key).ToList())
             settings.PersistentFailures.Remove(broken);
 
-        // MainViewModel.RowActions caps and redacts LastErrorText the same way
-        // HistoryService.Append holds Detail to, but only at the moment it is NEWLY set; a value already
-        // sitting in settings.json from before that cap existed, or from a larger cap that later shrank,
-        // would otherwise survive on disk uncapped for ever, reloaded verbatim on every future launch.
-        // CapDetail is idempotent, an already-capped value passes through unchanged.
+        // LastErrorText is capped and redacted when newly set, but a value already in settings.json from before
+        // the cap, or from a larger cap, would otherwise survive uncapped and reload verbatim on every launch.
+        // CapDetail is idempotent.
         foreach (var record in settings.PersistentFailures.Values)
             record.LastErrorText = HistoryService.CapDetail(record.LastErrorText);
 
@@ -524,10 +508,9 @@ public sealed class SettingsService
     }
 
     /// <summary>
-    /// Version 2 shows the publisher column by default. A profile saved before that had it hidden by default
+    /// Version 2 shows the publisher column by default. A profile saved earlier had it hidden by default
     /// (silence in the file meant hidden), so its choice is written out explicitly: hidden unless the file
-    /// recorded an opt-in. A profile that never saved a main layout gets the same hidden entry. Only a fresh
-    /// install (no file, already the current version) shows the column.
+    /// recorded an opt-in. Only a fresh install (no file, already the current version) shows the column.
     /// </summary>
     private static void MigrateSchema(AppSettings settings)
     {
@@ -548,12 +531,10 @@ public sealed class SettingsService
     }
 
     /// <summary>
-    /// Drops settings.json keys of a source no longer in <see cref="SourceRegistry"/>, which would
-    /// otherwise stay for ever: <see cref="Normalize"/> only fills in missing sections, it never prunes stale keys out of
-    /// existing ones, and being `private static` it has no logger to name what it drops anyway. This runs
-    /// once per load, after Normalize, and only ever removes keys; the cleaned dictionary reaches disk the
-    /// next time something calls <see cref="Save"/> or <see cref="SaveDeferred"/>, same as any other
-    /// in-memory change made here.
+    /// Drops settings.json keys of a source no longer in <see cref="SourceRegistry"/>, which would otherwise
+    /// stay for ever: <see cref="Normalize"/> only fills in missing sections and never prunes stale keys. Runs
+    /// once per load, after Normalize, and only removes keys; the cleaned dictionary reaches disk with the
+    /// next <see cref="Save"/> or <see cref="SaveDeferred"/>.
     /// </summary>
     private void DropUnknownSourceKeys(AppSettings settings)
     {

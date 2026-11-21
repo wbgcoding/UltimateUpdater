@@ -24,7 +24,8 @@ public static class InstallWorker
     private const int MaxItems = 500;
     private const int MaxFieldLength = 512;
 
-    /// <summary>Hard ceiling on the parallel-install budget, whatever the job claims (see <see cref="InstallJobFile.MaxParallelInstalls"/>).</summary>
+    /// <summary>Hard ceiling on the parallel-install budget, whatever the job claims (see <see
+    /// cref="InstallJobFile.MaxParallelInstalls"/>).</summary>
     private const int MaxParallelInstallsCap = 5;
 
     /// <summary>The source name from the job, kept only when it is a plain name: it lands on an elevated winget

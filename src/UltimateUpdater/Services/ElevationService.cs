@@ -185,7 +185,8 @@ public static class ElevationService
     /// </summary>
     private static bool _elevationRefused;
 
-    /// <summary>Whether elevation is switched off for this process; test-visible because there is no other getter.</summary>
+    /// <summary>Whether elevation is switched off for this process; test-visible because there is no other
+    /// getter.</summary>
     internal static bool IsElevationRefused => _elevationRefused;
 
     /// <summary>Switches elevation off for the rest of the session, for a state in which the image the

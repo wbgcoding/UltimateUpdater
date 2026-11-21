@@ -2,14 +2,16 @@ using System.IO;
 
 namespace UltimateUpdater.Services;
 
-/// <summary>Resolves data/log/cache locations; installed vs. portable is decided by the Inno installer's marker file.</summary>
+/// <summary>Resolves data/log/cache locations; installed vs. portable is decided by the Inno installer's marker
+/// file.</summary>
 public static class AppPaths
 {
     private const string InstalledMarkerFileName = ".installed";
     private const string ProbeFileName = ".writetest";
 
     /// <summary>Left in the new folder when the legacy copy failed. The app creates that folder on every start,
-    /// so "the folder exists" alone would end every retry; this file keeps the migration open until it worked.</summary>
+    /// so "the folder exists" alone would end every retry; this file keeps the migration open until it
+    /// worked.</summary>
     private const string MigrationPendingFileName = ".migration-pending";
 
     /// <summary>Written into the marker when it cannot be deleted after a successful retry, so no later start

@@ -194,9 +194,9 @@ internal sealed class SuspendedChildProcess : IChildProcess
     /// Starts <paramref name="info"/>.FileName suspended, requires the image the system mapped to be
     /// <paramref name="expectedImagePath"/> (null: no image check, for a launch whose path was pinned and
     /// verified by the caller), and resumes it. With <paramref name="pseudoConsole"/> the child is attached to a
-    /// hidden pseudo console instead of pipes, so a tool that prints its progress bar only to a console does. Throws <see cref="UntrustedToolException"/>
-    /// (with the process already ended) on any other image, <see cref="Win32Exception"/> when the start
-    /// itself fails.
+    /// hidden pseudo console instead of pipes, so a tool that prints its progress bar only to a console does. Throws
+    /// <see cref="UntrustedToolException"/> (with the process already ended) on any other image, <see
+    /// cref="Win32Exception"/> when the start itself fails.
     /// </summary>
     internal static SuspendedChildProcess Start(
         ProcessStartInfo info, string? expectedImagePath, (string Family, string Aumid)? expectedPackage,

@@ -648,16 +648,16 @@ public static class ProcessRunner
                 {
                     var c = buffer[i];
 
-                    // '\b' as well as '\r'/'\n': DISM redraws its progress bar with backspaces and emits no newline until
-                    // the step is over.
+                    // '\b' as well as '\r'/'\n': DISM redraws its progress bar with backspaces and emits no newline
+                    // until the step is over.
                     if (c is '\r' or '\n' or '\b')
                         Emit(segment, sink, onSegment);
                     else
                     {
                         segment.Append(c);
 
-                        // A delimiter-free stream would grow this buffer without bound; MaxOutputChars only guards the sink
-                        // after a segment completes. Force a flush once one segment alone exceeds the cap.
+                        // A delimiter-free stream would grow this buffer without bound; MaxOutputChars only guards the
+                        // sink after a segment completes. Force a flush once one segment alone exceeds the cap.
                         if (segment.Length >= MaxOutputChars)
                             Emit(segment, sink, onSegment);
                     }

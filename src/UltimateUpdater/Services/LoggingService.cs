@@ -7,7 +7,8 @@ using System.Threading.Channels;
 
 namespace UltimateUpdater.Services;
 
-/// <summary>Rolling daily log file under AppPaths.LogsDirectory. Never throws, a failed log write must not crash the app.</summary>
+/// <summary>Rolling daily log file under AppPaths.LogsDirectory. Never throws, a failed log write must not crash the
+/// app.</summary>
 public sealed class LoggingService
 {
     private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
@@ -333,7 +334,8 @@ public sealed class LoggingService
     {
         if (ProfilePath.Length > 0)
         {
-            // Only a whole profile folder: "C:\Users\user" must not turn "C:\Users\username\x" into "%USERPROFILE%name\x".
+            // Only a whole profile folder: "C:\Users\user" must not turn "C:\Users\username\x" into
+            // "%USERPROFILE%name\x".
             message = ProfilePathPattern.Replace(message, "%USERPROFILE%");
         }
 
@@ -506,8 +508,8 @@ public sealed class LoggingService
                 {
                     if (job.Barrier is { } barrier)
                     {
-                        // Closed, not just flushed, before signalling: a caller returning from Flush may delete or move the log
-                        // folder at once.
+                        // Closed, not just flushed, before signalling: a caller returning from Flush may delete or move
+                        // the log folder at once.
                         try
                         {
                             FlushWriter();
@@ -527,7 +529,8 @@ public sealed class LoggingService
                     }
                     catch (Exception)
                     {
-                        // One bad line must not end the consumer: with nobody draining the queue every later line would drop.
+                        // One bad line must not end the consumer: with nobody draining the queue every later line would
+                        // drop.
                     }
                 }
 
@@ -588,9 +591,9 @@ public sealed class LoggingService
     }
 
     /// <summary>
-    /// Opens the writer for <paramref name="path"/>, closing whatever was open before. <see cref="FileShare.ReadWrite"/>
-    /// so a held-open handle does not stop another instance from writing. <c>AutoFlush = false</c>: flushing is
-    /// the consumer's job, once per drained batch (<see cref="FlushWriter"/>).
+    /// Opens the writer for <paramref name="path"/>, closing whatever was open before. <see
+    /// cref="FileShare.ReadWrite"/> so a held-open handle does not stop another instance from writing. <c>AutoFlush =
+    /// false</c>: flushing is the consumer's job, once per drained batch (<see cref="FlushWriter"/>).
     /// </summary>
     private void OpenWriterFor(string path)
     {

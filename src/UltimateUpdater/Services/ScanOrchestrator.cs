@@ -452,9 +452,9 @@ public sealed class ScanOrchestrator
                     if (token.IsCancellationRequested)
                         break;
 
-                    // A cancelled scan is abandoned by RunAsync, so this provider may still be running while the next scan
-                    // fills the table. The check and the publish are one step under _generationLock, so a generation bump
-                    // cannot land between them.
+                    // A cancelled scan is abandoned by RunAsync, so this provider may still be running while the next
+                    // scan fills the table. The check and the publish are one step under _generationLock, so a
+                    // generation bump cannot land between them.
                     bool stillCurrent;
                     lock (_generationLock)
                     {
@@ -470,8 +470,8 @@ public sealed class ScanOrchestrator
                         break;
                 }
 
-                // The pill's cancel can trip between the source's last check and its end, leaving a partial result. That
-                // must not read as done or count as found.
+                // The pill's cancel can trip between the source's last check and its end, leaving a partial result.
+                // That must not read as done or count as found.
                 if (token.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
                 {
                     status.State = ProviderScanState.Cancelled;
@@ -507,7 +507,8 @@ public sealed class ScanOrchestrator
             }
             catch (ProxyConnectionFailedException ex)
             {
-                // The ordinary error state, worded to name the proxy instead of the bare socket error of the direct retry.
+                // The ordinary error state, worded to name the proxy instead of the bare socket error of the direct
+                // retry.
                 if (IsCurrent(generation))
                 {
                     Interlocked.Increment(ref _failedThisRun);
@@ -560,9 +561,9 @@ public sealed class ScanOrchestrator
             }
             catch (Exception ex)
             {
-                // Intentionally broad: a fault in one provider (COM, parsing, I/O) must never kill the overall scan. The
-                // exception text is raw English tool output that often contains the user's paths, so it goes to the log
-                // and the pill gets a translated line instead.
+                // Intentionally broad: a fault in one provider (COM, parsing, I/O) must never kill the overall scan.
+                // The exception text is raw English tool output that often contains the user's paths, so it goes to the
+                // log and the pill gets a translated line instead.
                 if (IsCurrent(generation))
                     Interlocked.Increment(ref _failedThisRun);
 

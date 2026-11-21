@@ -45,64 +45,58 @@ public sealed class HistoryEntry
     public bool Success { get; set; }
     public string? Error { get; set; }
 
-    /// <summary>The download size <see cref="Models.UpdateItem.DownloadSize"/> reported at install time,
-    /// bytes. Null for every entry written before this field existed and for a source that never reports
-    /// one (pre-release rule: no migration, an older entry simply has no value, the history window shows
-    /// a hyphen).</summary>
+    /// <summary>The download size <see cref="Models.UpdateItem.DownloadSize"/> reported at install time, in
+    /// bytes. Null for a source that reports none; the history window then shows a hyphen.</summary>
     public long? SizeBytes { get; set; }
 
     /// <summary>
-    /// The failing tool's own captured output, same text the main table's error-detail button already
-    /// shows for a live row; redacted and length-capped by <see cref="HistoryService.Append"/> before it
-    /// ever reaches disk, never set directly. Null for a success, for a terminal non-failure, and for
-    /// every entry written before this field existed; the history window falls back to a log excerpt and
-    /// then to <see cref="Error"/> when it is missing.
+    /// The failing tool's own captured output, the same text the main table's error-detail button shows for a
+    /// live row. Redacted and length-capped by <see cref="HistoryService.Append"/> before it reaches disk,
+    /// never set directly. Null for a success and for a terminal non-failure; the history window falls back
+    /// to a log excerpt and then to <see cref="Error"/> when it is missing.
     /// </summary>
     public string? Detail { get; set; }
 
-    /// <summary>"install" (default, covers updates) or "uninstall". Absent in older files reads as install.</summary>
+    /// <summary>"install" (default, covers updates) or "uninstall". Absent reads as install.</summary>
     public string Action { get; set; } = "install";
 
     /// <summary>
-    /// The source could only open a vendor's own confirmation dialog and cannot see the real outcome
-    /// (e.g. Steam's uninstall). Neither success nor failure; <see cref="Success"/> is meaningless when
-    /// this is true. Absent in older files reads as false, which is the correct reading for every entry
-    /// written before this existed.
+    /// The source could only open a vendor's own confirmation dialog and cannot see the real outcome (e.g.
+    /// Steam's uninstall). Neither success nor failure; <see cref="Success"/> is meaningless when this is
+    /// true. Absent reads as false.
     /// </summary>
     public bool IsManualHandoff { get; set; }
 
     /// <summary>
-    /// The package manager offers no version that fits this installation (winget's 0x8A15002B). Terminal,
-    /// but nothing went wrong and nothing changed; read like <see cref="IsManualHandoff"/>, not like a
-    /// failure. Absent in older files reads as false.
+    /// The package manager offers no version that fits this installation (winget's 0x8A15002B). Terminal, but
+    /// nothing went wrong and nothing changed; read like <see cref="IsManualHandoff"/>, not like a failure.
+    /// Absent reads as false.
     /// </summary>
     public bool IsNotApplicable { get; set; }
 
     /// <summary>
-    /// The user stopped just this one row with its own stop button, the rest of the queue kept
-    /// running. Terminal, but not a failure, read like <see cref="IsManualHandoff"/>. Absent in older
-    /// files reads as false.
+    /// The user stopped just this one row with its own stop button while the rest of the queue kept running.
+    /// Terminal, but not a failure; read like <see cref="IsManualHandoff"/>. Absent reads as false.
     /// </summary>
     public bool IsCancelled { get; set; }
 
     /// <summary>
-    /// The source's post-install re-check found the same version that was installed before this
-    /// run, on an otherwise successful entry. Not a failure, read like a footnote on <see cref="Success"/>,
-    /// not a replacement for it. Absent in older files reads as false.
+    /// The source's post-install re-check found the version that was installed before this run, on an
+    /// otherwise successful entry. A footnote on <see cref="Success"/>, not a replacement for it. Absent reads
+    /// as false.
     /// </summary>
     public bool VersionUnchanged { get; set; }
 
     /// <summary>
-    /// This entry is a deliberate downgrade, not an ordinary update - <see cref="ToVersion"/> is
-    /// OLDER than <see cref="FromVersion"/> on purpose. Absent in older files reads as false, the correct
-    /// reading for every entry written before this existed.
+    /// A deliberate downgrade: <see cref="ToVersion"/> is older than <see cref="FromVersion"/> on purpose.
+    /// Absent reads as false.
     /// </summary>
     public bool IsRollback { get; set; }
 }
 
 /// <summary>
-/// Append-only install history as JSONL. EVERY install attempt lands here,
-/// successful or not. Rotates at 5 MB.
+/// Append-only install history as JSONL. Every install attempt lands here, successful or not. Rotates
+/// at 5 MB.
 /// </summary>
 public sealed class HistoryService
 {
@@ -115,24 +109,20 @@ public sealed class HistoryService
     private readonly string _path;
     private readonly LoggingService _logging;
 
-    /// <summary>The real file an explicit-path-less <see cref="HistoryService"/> reads and writes in a
-    /// normal run. Internal for the same reason as <see cref="ScanResultCache.DefaultPath"/>: a test that
-    /// needs to name this file exactly should not duplicate it as a second literal.</summary>
+    /// <summary>The real file an explicit-path-less <see cref="HistoryService"/> reads and writes in a normal
+    /// run. Internal so a test that needs this file exactly does not duplicate it as a second literal.</summary>
     internal static string DefaultPath { get; } = Path.Combine(AppPaths.DataDirectory, "history.jsonl");
 
-    /// <summary>Test-only override of the path an explicit-path-less <see cref="HistoryService"/> falls
-    /// back to, same shape as <see cref="ScanResultCache.PathOverride"/>. Null (the only value ever set in
-    /// production) means <see cref="DefaultPath"/>. Every <c>new HistoryService(logging)</c> in
-    /// MainViewModelTests.cs hits this same fallback and, via the MainViewModel it feeds, gets appended to
-    /// by a real install/uninstall: without this override those tests write the real user's own
-    /// %APPDATA%\UltimateUpdater\history.jsonl. Pointed at a fresh, per-test-name temp file by the test
-    /// project's WpfHarness on every call into it, never assigned directly by an individual test.</summary>
+    /// <summary>Test-only override of the path an explicit-path-less <see cref="HistoryService"/> falls back
+    /// to, same shape as <see cref="ScanResultCache.PathOverride"/>. Null in production, meaning
+    /// <see cref="DefaultPath"/>. Without it, tests that build a <c>HistoryService</c> without a path and run
+    /// a real install through a view model would write the real user's history file. The test project's
+    /// WpfHarness points it at a per-test temp file; no individual test assigns it.</summary>
     internal static string? PathOverride { get; set; }
 
-    /// <summary>The path an explicit-path-less <see cref="HistoryService"/> actually resolves to right
-    /// now: <see cref="PathOverride"/> during tests, <see cref="DefaultPath"/> otherwise. Internal so a
-    /// test that pre-clears "the" history file before using one does not clear the real file while every
-    /// unparameterized instance in the same run actually reads and writes the redirected one.</summary>
+    /// <summary>The path an explicit-path-less <see cref="HistoryService"/> resolves to right now:
+    /// <see cref="PathOverride"/> during tests, <see cref="DefaultPath"/> otherwise. Internal so a test that
+    /// pre-clears the history file clears the file the instances actually use.</summary>
     internal static string EffectivePath => PathOverride ?? DefaultPath;
 
     public HistoryService(LoggingService logging, string? path = null)
@@ -143,10 +133,8 @@ public sealed class HistoryService
 
     public void Append(HistoryEntry entry)
     {
-        // Detail already went through this, but Error itself (InstallQueue.cs, RowActions.cs,
-        // MainViewModel.Install.cs all set it straight from a tool's own output) never did, so it reached
-        // disk unredacted and uncapped, the profile-path redaction the log itself always gets, missing on
-        // the one field a shared history file also carries.
+        // Error is set straight from a tool's own output by several callers, so it gets the same redaction and
+        // cap as Detail before it reaches disk.
         entry.Detail = CapDetail(entry.Detail);
         entry.Error = CapDetail(entry.Error);
 
@@ -160,37 +148,34 @@ public sealed class HistoryService
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    // A rotation that cannot happen right now must not cost the entry itself; it is tried
-                    // again on the next append.
+                    // A rotation that cannot happen now must not cost the entry; it is tried again on the next append.
                     _logging.Warn($"History rotation failed: {ex.Message}");
                 }
 
                 File.AppendAllText(_path, JsonSerializer.Serialize(entry, JsonOptions) + Environment.NewLine, Utf8NoBom);
 
-                // The new entry is the newest of all, so it IS somebody's newest successful install when it
-                // qualifies. Patched in place instead of dropped: dropping it made the next reader re-parse the
-                // whole file, and that reader is the scan's drain on the UI thread. An index nobody has built
-                // yet is left alone; its first build reads this entry from the file anyway. A rotation moves the
-                // older half to the .1 file without deleting rows the index already holds, which only means the
+                // The new entry is the newest of all, so it is somebody's newest successful install when it qualifies.
+                // Patched in place instead of dropped: dropping it would make the next reader re-parse the whole file,
+                // and that reader is the scan's drain on the UI thread. An index nobody has built yet is left alone. A
+                // rotation moves the older half to the .1 file without deleting rows the index already holds, so the
                 // index can briefly know a package the files no longer do, until the next start.
                 if (_rollbackIndex is { } index && QualifiesForRollback(entry))
                     index[RollbackKey(entry)] = entry;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                // one unwritable history file must not abort the install queue mid-batch
+                // One unwritable history file must not abort the install queue mid-batch.
                 _logging.Error("Failed to append history entry", ex);
             }
         }
     }
 
     /// <summary>
-    /// Every package's own newest successful "install" entry, keyed <c>"{SourceId}:{ItemId}"</c>, built from
-    /// the WHOLE history (both files, no row cap) in one pass and then kept current by <see cref="Append"/> and
-    /// <see cref="CleanupOldEntries"/> without re-reading anything. Rollback eligibility only ever needs the
-    /// latest entry per package, so a manual, cancelled, not-applicable or handed-off entry, or one missing
-    /// the from-version a rollback would target, is never a candidate.
-    /// This call BUILDS the index when it does not exist yet, which parses the file: never call it on the UI
+    /// Every package's newest successful "install" entry, keyed <c>"{SourceId}:{ItemId}"</c>, built from the
+    /// whole history (both files, no row cap) in one pass and then kept current by <see cref="Append"/> and
+    /// <see cref="CleanupOldEntries"/>. A manual, cancelled, not-applicable or handed-off entry, or one
+    /// missing the from-version a rollback would target, is never a candidate.
+    /// This call builds the index when it does not exist yet, which parses the file: never call it on the UI
     /// thread. Use <see cref="EnsureRollbackIndexAsync"/> to build it elsewhere and <see cref="RollbackIndex"/>
     /// to read what is there.
     /// </summary>
@@ -247,7 +232,7 @@ public sealed class HistoryService
         var index = new ConcurrentDictionary<string, HistoryEntry>(StringComparer.Ordinal);
 
         // Oldest file first and each file in order, so a later qualifying entry for the same key replaces an
-        // earlier one: the newest wins, exactly as the newest-first scan it replaces had it.
+        // earlier one and the newest wins.
         void Visit(HistoryEntry entry)
         {
             if (QualifiesForRollback(entry))
@@ -257,8 +242,8 @@ public sealed class HistoryService
         var failed = !ReadEach(_path + ".1", Visit);
         failed |= !ReadEach(_path, Visit);
 
-        // An index built from a failed read would miss rows that are really there, and a missing row hides
-        // a rollback. Hand it to this caller but leave it uncached, so the next ensure reads again.
+        // An index built from a failed read would miss rows, and a missing row hides a rollback. Hand it to
+        // this caller but leave it uncached, so the next ensure reads again.
         indexIsComplete = !failed;
         return index;
     }
@@ -273,8 +258,8 @@ public sealed class HistoryService
         && !entry.IsNotApplicable && !entry.IsCancelled && !entry.IsRollback && !entry.VersionUnchanged
         && !string.IsNullOrEmpty(entry.FromVersion);
 
-    /// <summary>The history file rotates at 5 MB, so one unbounded detail could push real history out;
-    /// same cap the main table's own error output is held to. Redacted the same way the log itself is.</summary>
+    /// <summary>The history file rotates at 5 MB, so one unbounded detail could push real history out; the
+    /// same cap as the main table's error output. Redacted the same way the log is.</summary>
     private const int MaxDetailChars = 4000;
 
     /// <summary>
@@ -298,10 +283,8 @@ public sealed class HistoryService
     }
 
     /// <summary>
-    /// Newest first. Malformed lines are skipped rather than failing the whole read.
-    /// The rotated file is read too, oldest part first. Without it the history window fell from
-    /// hundreds of entries to a single one the moment the active file crossed the rotation size;
-    /// the entries were never lost, they were simply not being looked at.
+    /// Newest first. Malformed lines are skipped rather than failing the whole read. The rotated file is read
+    /// too, oldest part first, so the window does not shrink when the active file crosses the rotation size.
     /// </summary>
     public IReadOnlyList<HistoryEntry> Read(int maxEntries = 500)
     {
@@ -347,8 +330,8 @@ public sealed class HistoryService
         {
             foreach (var line in ReadLinesBounded(path, Encoding.UTF8, MaxLineChars))
             {
-                // null marks a line that ran past the length cap; skipped without ever holding the whole
-                // thing in memory, same "corrupt line, keep going" outcome as a JSON parse failure below.
+                // null marks a line past the length cap: skipped without holding it in memory, the same "corrupt line,
+                // keep going" outcome as a JSON parse failure below.
                 if (line is null || string.IsNullOrWhiteSpace(line))
                     continue;
                 try
@@ -359,7 +342,7 @@ public sealed class HistoryService
                 }
                 catch (JsonException)
                 {
-                    // truncated/corrupt line; skip it, keep the rest of the history readable
+                    // Truncated or corrupt line: skip it, keep the rest of the history readable.
                 }
             }
         }
@@ -374,9 +357,8 @@ public sealed class HistoryService
 
     /// <summary>
     /// Line-by-line like <see cref="File.ReadLines(string, Encoding)"/>, but a line over
-    /// <paramref name="maxLineChars"/> comes back as <c>null</c> instead of ever being fully materialised;
-    /// scanning still continues character by character to find the next newline, so the file stays in sync
-    /// and every following line reads normally.
+    /// <paramref name="maxLineChars"/> comes back as <c>null</c> instead of being materialised; scanning
+    /// continues to the next newline so every following line reads normally.
     /// </summary>
     internal static IEnumerable<string?> ReadLinesBounded(string path, Encoding encoding, int maxLineChars)
     {
@@ -414,24 +396,20 @@ public sealed class HistoryService
         if (!info.Exists || info.Length < MaxBytes)
             return;
 
-        // One replacing move: deleting the archive first lost all of it whenever the move then failed (a
-        // scanner or an editor holding history.jsonl).
+        // One replacing move: deleting the archive first would lose it if the move then failed (a scanner or an
+        // editor holding history.jsonl).
         File.Move(_path, _path + ".1", overwrite: true);
     }
 
     /// <summary>
-    /// Discards rows older than the retention window. Meant to run once at start-up
-    /// (App.xaml.cs, next to LoggingService.CleanupOldLogs); same contract as the log's own housekeeping,
-    /// a shorter value takes effect on the next launch, not immediately. Reads both the active and the
-    /// rotated file and consolidates the survivors back into one, since keeping two files around after
-    /// pruning serves no purpose; the 5 MB rotation itself is untouched and keeps working as a second,
-    /// independent cap.
+    /// Discards rows older than the retention window. Meant to run once at start-up, like the log's own
+    /// housekeeping: a shorter value takes effect on the next launch. Reads both the active and the rotated
+    /// file and consolidates the survivors into one; the 5 MB rotation stays as an independent second cap.
     /// </summary>
     public void CleanupOldEntries(int retentionDays)
     {
-        // A non-positive value puts the cutoff in the future and discards the WHOLE history, including the
-        // row written seconds ago. settings.json is hand-editable, so this is not hypothetical; same guard
-        // and same reason as LoggingService.CleanupOldLogs.
+        // A non-positive value puts the cutoff in the future and discards the whole history. settings.json is
+        // hand-editable; same guard as LoggingService.CleanupOldLogs.
         if (retentionDays < 1)
             return;
 
@@ -445,13 +423,12 @@ public sealed class HistoryService
                 var complete = ReadInto(_path + ".1", entries);
                 complete &= ReadInto(_path, entries);
 
-                // Writing the survivors back after a failed read would delete every row the read could not
-                // see: the active file is replaced and the rotated one removed.
+                // Writing survivors back after a failed read would delete every row the read could not see.
                 if (!complete)
                     return;
 
-                // Rows present in both files (a previous prune whose delete of the rotated file failed) are
-                // written back once, so the duplicate goes away instead of surviving every later prune.
+                // Rows present in both files (a prune whose delete of the rotated file failed) are written back once,
+                // so the duplicate does not survive every later prune.
                 var kept = new List<HistoryEntry>();
                 var survivors = new System.Text.StringBuilder();
                 var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -468,17 +445,14 @@ public sealed class HistoryService
                 if (kept.Count == entries.Count)
                     return;
 
-                // Survivors go to a temp file first and replace the active one in a single move, the same
-                // way SettingsService and EnrichmentCache save. Deleting the rotated file and THEN
-                // overwriting the active one in place left a window in which a crash or an AV lock lost
-                // both at once. The rotated file goes last on purpose: interrupted after the move, its rows
-                // are read twice rather than lost, until the next prune folds them back into one.
+                // Survivors go to a temp file and replace the active one in a single move, like SettingsService and
+                // EnrichmentCache, so a crash or AV lock cannot lose both files. The rotated file goes last on purpose:
+                // interrupted after the move, its rows are read twice rather than lost.
                 AtomicFile.WriteAllText(_path, survivors.ToString());
                 File.Delete(_path + ".1");
 
-                // Some rows just left the file for good. The survivors are already in memory, in file order, so
-                // an index that exists is rebuilt from them without another read; one that does not exist yet
-                // stays unbuilt. This runs on the caller's thread, which at start-up is a background task.
+                // The survivors are already in memory, in file order, so an existing index is rebuilt from them without
+                // another read; one not built yet stays unbuilt.
                 if (_rollbackIndex is not null)
                 {
                     var index = new ConcurrentDictionary<string, HistoryEntry>(StringComparer.Ordinal);

@@ -20,7 +20,8 @@ public sealed record InstallItemStatus(string SourceId, string ItemId, double Pe
     /// <summary>Download or install stage as far as the tool's output shows it; Unknown when it does not.</summary>
     public Models.InstallPhase Phase { get; init; }
 
-    /// <summary>Raw, unlocalized diagnostic for a failure, shown only when the user asks for it (SECURITY.md).</summary>
+    /// <summary>Raw, unlocalized diagnostic for a failure, shown only when the user asks for it
+    /// (SECURITY.md).</summary>
     public string? Detail { get; init; }
 
     /// <summary>The item installed but a reboot is needed to finish (winget's 3010/1641). Not a failure.</summary>
@@ -343,7 +344,8 @@ public sealed class InstallQueue
                     }
                     catch (ObjectDisposedException)
                     {
-                        // The row finished and released its source between the lookup and this call: nothing left to stop.
+                        // The row finished and released its source between the lookup and this call: nothing left to
+                        // stop.
                     }
 
                     return;
@@ -649,8 +651,8 @@ public sealed class InstallQueue
                         item = run.Pending[index];
                         run.Pending.RemoveAt(index);
 
-                        // Registered in the block that takes the row out of Pending: a stop between the two would find the row
-                        // in neither place and the install would start anyway.
+                        // Registered in the block that takes the row out of Pending: a stop between the two would find
+                        // the row in neither place and the install would start anyway.
                         itemCts = RegisterItemCancellation(run, item, cancellationToken);
                     }
 
@@ -1252,7 +1254,8 @@ public sealed class InstallQueue
         ApplyWorkerResult(message, item, action, reported, run, awaitsRetry: false, terminalNonFailure: false);
     }
 
-    /// <summary>Reports one worker message to the row and, for a result, records it (log, history, accounted-for set).</summary>
+    /// <summary>Reports one worker message to the row and, for a result, records it (log, history, accounted-for
+    /// set).</summary>
     private void ApplyWorkerResult(
         InstallProgressMessage message, UpdateItem? item, InstallAction action, ISet<string> reported, RunState run,
         bool awaitsRetry, bool terminalNonFailure)
