@@ -4,19 +4,17 @@ namespace UltimateUpdater.Services;
 
 /// <summary>
 /// Turns a raw Ollama model tag (<c>llama3.2:3b-instruct-q4_K_M</c>) into a readable, shortened name
-/// (<c>Llama 3.2 3B Instruct</c>), rule-based rather than a lookup against a fixed list, so a model
-/// released after this shipped still gets a sensible name instead of its raw tag. Pure and static: no
-/// network, no state. <see cref="OllamaSource"/> uses <see cref="Friendly"/> for a row's display name;
-/// the raw tag stays the row's <c>Id</c> and is shown as a tooltip/detail wherever the row shows ids.
+/// (<c>Llama 3.2 3B Instruct</c>). Rule-based rather than a fixed list, so a newer model still gets a
+/// sensible name. Pure and static. <see cref="OllamaSource"/> uses <see cref="Friendly"/> for a row's
+/// display name; the raw tag stays the row's <c>Id</c>.
 /// </summary>
 public static class AiModelNames
 {
     /// <summary>
-    /// Family names this table cannot decompose generically: a hyphenated version that keeps its hyphen
-    /// and glues its digit directly onto a letter (DeepSeek-R1, unlike every other family's "Name N.N"
-    /// spacing), and two brand names that are themselves lower-case/hyphenated
-    /// (gpt-oss, all-MiniLM). Keyed by the family segment with every separator normalized to a single
-    /// "-" and lower-cased.
+    /// Family names this table cannot decompose generically: a hyphenated version that keeps its hyphen and
+    /// glues its digit onto a letter (DeepSeek-R1), and brand names that are themselves lower-case or
+    /// hyphenated (gpt-oss, all-MiniLM). Keyed by the family segment, separators normalised to one "-",
+    /// lower-cased.
     /// </summary>
     private static readonly Dictionary<string, string> ExactFamilies = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -209,9 +207,8 @@ public static class AiModelNames
         return string.Join(' ', kept);
     }
 
-    /// <summary>Upper-cases only the first letter; the rest of a raw tag word is normally already
-    /// lower-case, and forcing the remainder to lower-case as well would mangle an embedded version
-    /// like "V1.5".</summary>
+    /// <summary>Upper-cases only the first letter: forcing the rest to lower-case would mangle an embedded
+    /// version like "V1.5".</summary>
     private static string TitleCase(string word) =>
         word.Length == 0 ? word : char.ToUpperInvariant(word[0]) + word[1..];
 }

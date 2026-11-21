@@ -8,13 +8,12 @@ namespace UltimateUpdater.Services;
 
 /// <summary>
 /// Reads and verifies the app-execution alias of winget (<c>%LOCALAPPDATA%\Microsoft\WindowsApps\winget.exe</c>).
-/// The alias is a reparse point the user can write, so "it cannot be opened" proves nothing: anyone running
-/// as this user can create an APPEXECLINK reparse point with any target. What the elevated launch needs is
-/// the link's CONTENT: the App Installer package family and a target inside the package store. Reading it
-/// through a held handle does NOT freeze it: rewriting a reparse point needs only write-attributes access,
-/// which share modes do not block, so the content can change after the check. The launch therefore never
-/// trusts the alias by name; it compares the image the system actually mapped with the verified target
-/// (see <see cref="SuspendedChildProcess"/>).
+/// The alias is a reparse point the user can write, so "it cannot be opened" proves nothing: any process
+/// running as this user can create an APPEXECLINK point with any target. What the elevated launch needs is
+/// the link's content: the App Installer package family and a target inside the package store. A held
+/// handle does not freeze it (rewriting a reparse point needs only write-attributes access), so the launch
+/// never trusts the alias by name; it compares the image the system actually mapped with the verified
+/// target (see <see cref="SuspendedChildProcess"/>).
 /// </summary>
 internal static class AppExecutionAlias
 {
@@ -22,8 +21,8 @@ internal static class AppExecutionAlias
 
     internal const string WingetPackageFamily = "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe";
 
-    /// <summary>The application id the alias starts; the suspended launch requires the same identity on the
-    /// process token, so the link check and the launch check share this one definition.</summary>
+    /// <summary>The application id the alias starts; the link check and the suspended launch share this one
+    /// definition.</summary>
     internal const string WingetAppUserModelId = WingetPackageFamily + "!winget";
 
     private const string PackageDirectoryPrefix = "Microsoft.DesktopAppInstaller_";
@@ -137,9 +136,9 @@ internal static class AppExecutionAlias
         }
     }
 
-    /// <summary>The package store roots: the default, the one Windows records when "new apps save to"
-    /// moved it to another volume, and the store of every further package volume (HKLM, writable by
-    /// administrators only).</summary>
+    /// <summary>The package store roots: the default, the one recorded when "new apps save to" moved it to
+    /// another volume, and the store of every further package volume (HKLM, writable by administrators
+    /// only).</summary>
     internal static IReadOnlyList<string> PackageRoots()
     {
         var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
@@ -190,10 +189,9 @@ internal static class AppExecutionAlias
 
     /// <summary>
     /// Opens the alias itself (not what it points to) and reads its reparse data through that same handle.
-    /// The returned handle denies data writers and deleters until it is disposed. It does not stop a
-    /// rewrite of the reparse point itself (that needs only write-attributes access), so what was read is a
-    /// snapshot, not a guarantee about what a later launch resolves. Null when the file cannot be opened or
-    /// read this way.
+    /// The handle denies data writers and deleters until disposed but cannot stop a rewrite of the reparse
+    /// point, so what was read is a snapshot, not a guarantee about a later launch. Null when the file cannot
+    /// be opened or read this way.
     /// </summary>
     internal static SafeFileHandle? TryOpen(string path, out byte[]? reparseBuffer)
     {

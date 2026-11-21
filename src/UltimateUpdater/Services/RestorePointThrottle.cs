@@ -5,15 +5,12 @@ using System.Text.Json;
 namespace UltimateUpdater.Services;
 
 /// <summary>
-/// The at-most-once-per-24-hours restore point decision, shared by every caller that can trigger
-/// one: installing (<see cref="InstallQueue"/>) and cleaning up registry entries or running
-/// a system repair (<see cref="ViewModels.CleanupViewModel"/>). ONE timestamp file, not one per caller,
-/// because the 24-hour rule is about how often THIS APP asks Windows for a restore point, not about which
-/// feature happened to ask for it; a cleanup run five minutes after an install already got its restore
-/// point has nothing new to protect.
-/// Written by the APP only, never an elevated worker (the worker writes no files of its own beyond
-/// cleanup's own deletions) - every worker only ever REPORTS that it created one, over the pipe, and this
-/// class is what turns that report into the next decision.
+/// The at-most-once-per-24-hours restore point decision, shared by every caller that can trigger one:
+/// installing (<see cref="InstallQueue"/>) and cleaning up registry entries or running a system repair
+/// (<see cref="ViewModels.CleanupViewModel"/>). One timestamp file, because the rule is about how often
+/// this app asks Windows for a restore point, not about which feature asked. Written by the app only,
+/// never by an elevated worker: the worker reports over the pipe that it created one, and this class
+/// turns that report into the next decision.
 /// </summary>
 public static class RestorePointThrottle
 {
@@ -24,20 +21,16 @@ public static class RestorePointThrottle
     private sealed record RestorePointRecord(DateTimeOffset CreatedAt);
 
     /// <summary>
-    /// Whether a NEW restore point is worth the wait: Windows itself refuses one anyway inside the same
-    /// day, and each one costs up to a minute before the first real step starts. A pure function so it can
-    /// be driven directly by a test. No record yet (never created, or the file could not be read) always
-    /// says yes. A stored timestamp in the FUTURE (a corrupted file, a clock that jumped back,
-    /// or a same-user edit of the unprivileged app's own state file) must read the same as no timestamp at
-    /// all, never as "just created" - the naive subtraction below would otherwise go negative and this
-    /// throttle would silently refuse every restore point until that future date arrives.
+    /// Whether a new restore point is worth the wait: Windows refuses one inside the same day anyway, and
+    /// each costs up to a minute. Pure, for tests. No record (never created, or unreadable) says yes. A
+    /// timestamp in the future (corrupt file, clock jumped back, a same-user edit) reads as no timestamp,
+    /// never as "just created", or the throttle would refuse every restore point until that date.
     /// </summary>
     public static bool ShouldCreate(DateTimeOffset? lastCreated, DateTimeOffset now) =>
         lastCreated is null || lastCreated.Value > now || now - lastCreated.Value >= TimeSpan.FromHours(24);
 
-    /// <summary>Best effort: a missing, damaged or locked file reads the same as "never created", the safe
-    /// direction to be wrong in (an extra restore point costs time, a skipped one costs nothing at all to
-    /// actually have).</summary>
+    /// <summary>Best effort: a missing, damaged or locked file reads as "never created", the safe direction to
+    /// be wrong in (an extra restore point costs time, a skipped one costs nothing).</summary>
     public static DateTimeOffset? TryReadLastCreated(LoggingService logging) =>
         TryReadLastCreated(logging, TimestampPath);
 
@@ -69,8 +62,7 @@ public static class RestorePointThrottle
         }
     }
 
-    /// <summary>Temp file then rename, the same atomic-write shape every other small state file in this
-    /// app already uses (see <see cref="SettingsService"/>, <see cref="EnrichmentCache"/>).</summary>
+    /// <summary>Temp file then rename, the atomic-write shape of the app's other small state files.</summary>
     public static void TryWriteCreated(LoggingService logging, DateTimeOffset timestamp)
     {
         try
@@ -85,12 +77,10 @@ public static class RestorePointThrottle
     }
 
     /// <summary>
-    /// The one line the pre-flight dialog and the cleanup window header both show. The unelevated
-    /// app cannot ask Windows directly whether a restore point exists (that needs admin, same as actually
-    /// creating one) - this timestamp file, written only after THIS app itself created one, is the only
-    /// thing it can honestly read back. No record at all reads as "never created by this program", not as
-    /// "the system truly has none": Windows or another program may well have created points of their own
-    /// that this file knows nothing about.
+    /// The one line the pre-flight dialog and the cleanup window header both show. The unelevated app cannot
+    /// ask Windows whether a restore point exists (that needs admin), so the only thing it can honestly read
+    /// back is this timestamp file, written after this app created one. No record reads as "never created by
+    /// this program", not "the system has none".
     /// </summary>
     public static string DescribeLastCreated(LoggingService logging) =>
         TryReadLastCreated(logging) is { } lastCreated

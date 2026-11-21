@@ -35,12 +35,11 @@ public static partial class ProgressParser
     [GeneratedRegex(@",(?=\d{3}(?!\d))")]
     private static partial Regex ThousandsCommaRegex();
 
-    // Lines the tools print once the download is over and the real install has begun. Matched in English
-    // and German because winget, pip and choco localise their output and the app runs on German Windows
-    // as often as English. Contains-matches for the long phrases; the generic "Installing"/"Installation"
-    // only at the start of a line (after a spinner glyph), so a path or a package name containing the word
-    // is not read as a phase change. "Installing build dependencies" is pip preparing a source build in the
-    // middle of its downloads, not the install step.
+    // Lines the tools print once the download is over and the real install has begun. Matched in English and
+    // German because winget, pip and choco localise their output. Contains-matches for the long phrases; the
+    // generic "Installing"/"Installation" only at the start of a line (after a spinner glyph), so a path or a
+    // package name containing the word is not read as a phase change. "Installing build dependencies" is pip
+    // preparing a source build in the middle of its downloads, not the install step.
     [GeneratedRegex(
         @"Successfully\s+verified\s+installer\s+hash"
         + @"|Starting\s+package\s+install"
@@ -80,11 +79,7 @@ public static partial class ProgressParser
         return new ProgressSample(percent, received, total);
     }
 
-    /// <summary>
-    /// Convenience for the streaming install path: turns one output segment straight into an install
-    /// progress report, or null when the segment carries no reading. Keeps the byte/percent glue in
-    /// one place instead of repeated in every source.
-    /// </summary>
+    /// <summary>Turns one output segment into an install progress report, or null when it carries no reading.</summary>
     public static Models.InstallProgress? ToInstallProgress(string? segment, string statusText)
     {
         var sample = Parse(segment);
@@ -131,10 +126,8 @@ public static partial class ProgressParser
     {
         bytes = 0;
 
-        // Tool output runs in whatever locale the machine does (same reasoning as PercentRegex above): a
-        // comma followed by exactly three digits is a thousands grouping ("1,234,567") and is dropped;
-        // any other comma is a German-style decimal mark ("1,23 MB") and becomes a '.' instead; otherwise
-        // "1,23 MB" reads as 123, a hundred times too large.
+        // Tool output follows the machine's locale: a comma followed by exactly three digits is a thousands
+        // grouping ("1,234,567") and is dropped; any other comma is a decimal mark ("1,23 MB") and becomes '.'.
         var cleaned = ThousandsCommaRegex().Replace(number, string.Empty).Replace(',', '.');
         if (!double.TryParse(cleaned, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) || value < 0)
             return false;

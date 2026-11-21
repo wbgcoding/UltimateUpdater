@@ -4,9 +4,8 @@ namespace UltimateUpdater.Services;
 
 /// <summary>
 /// The wording of everything the app records about what it did. Pure string building, kept in one place
-/// so the log reads the same from every caller and so the shapes can be tested without a disk: a line is
-/// meant to answer "what went wrong" and "when was this installed" months later, in as few characters as
-/// the answer needs.
+/// so the log reads the same from every caller and the shapes can be tested without a disk: a line should
+/// answer "what went wrong" and "when was this installed" months later, in as few characters as needed.
 /// </summary>
 public static class ActivityLog
 {
@@ -47,20 +46,16 @@ public static class ActivityLog
     public static string BatchStarted(int items, bool elevated) =>
         $"batch {items} item{(items == 1 ? string.Empty : "s")}{(elevated ? " admin" : string.Empty)}";
 
-    /// <summary>
-    /// The run's own duration, not any one item's: per-item timing
-    /// (<see cref="InstallSucceeded"/>/<see cref="InstallFailed"/>) does not answer "how long did the
-    /// WHOLE run take" when a batch installs several items back to back.
-    /// </summary>
+    /// <summary>The run's own duration: per-item timing does not answer how long a batch of several items
+    /// took.</summary>
     public static string BatchFinished(int items, TimeSpan duration) =>
         $"batch done {items} item{(items == 1 ? string.Empty : "s")} {Seconds(duration)}";
 
     public static string ScanFinished(int sources, int found, int failed, TimeSpan duration) =>
         $"done {sources} sources {found} updates{(failed > 0 ? $" {failed} failed" : string.Empty)} {Seconds(duration)}";
 
-    /// <summary>Process start to the main window's first painted frame. The start point is
-    /// the real process start (<c>Process.GetCurrentProcess().StartTime</c>), never <c>App.OnStartup</c>,
-    /// which begins measurably later.</summary>
+    /// <summary>Process start (the real one, not <c>App.OnStartup</c>, which begins later) to the main
+    /// window's first painted frame.</summary>
     public static string FirstPaint(DateTime processStart, DateTime paintedAt) =>
         $"first paint {Millis(processStart, paintedAt)}ms";
 
@@ -69,8 +64,7 @@ public static class ActivityLog
     public static string FirstCachedRow(DateTime processStart, DateTime shownAt) =>
         $"first cached row {Millis(processStart, shownAt)}ms";
 
-    /// <summary>Private working set after a given scan number in this session, read straight
-    /// from <c>Process.GetCurrentProcess().WorkingSet64</c> at the moment the scan finished.</summary>
+    /// <summary>Private working set after a given scan number in this session.</summary>
     public static string WorkingSetAfterScan(int scanNumber, long workingSetBytes) =>
         $"working set after scan {scanNumber} {ByteSize.FormatInvariant(workingSetBytes)}";
 

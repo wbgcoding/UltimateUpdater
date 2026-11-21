@@ -6,15 +6,12 @@ namespace UltimateUpdater.Services;
 
 /// <summary>
 /// Authenticode check for an executable the ELEVATED worker is about to launch.
-/// Why this exists: tools are resolved through %PATH%, and on a normal machine winget is reachable
-/// only through %LOCALAPPDATA%\Microsoft\WindowsApps: a directory the user can write without admin.
-/// Any process running as this user could drop its own winget.exe there and would then be executed
-/// with the administrator token the user granted to THIS app, on the back of our UAC prompt.
-/// Both signature forms have to be handled, and the catalog one is not optional: measured on Windows
-/// 11, winget.exe, powershell.exe and notepad.exe are ALL catalog-signed and carry no embedded
-/// signature at all. Verifying only the embedded form would reject every tool the worker runs and
-/// break installing outright: so the file's hash is looked up in the system catalogs first, exactly
-/// as Windows does it, and only then is the embedded signature tried.
+/// Tools are resolved through %PATH%, and winget is reachable only through
+/// %LOCALAPPDATA%\Microsoft\WindowsApps, a directory the user can write without admin. Any process running
+/// as this user could drop its own winget.exe there and have it run with the administrator token granted
+/// to this app. Both signature forms must be handled: winget.exe, powershell.exe and notepad.exe are
+/// catalog-signed on Windows 11 and carry no embedded signature, so the file's hash is looked up in the
+/// system catalogs first, as Windows does, and only then is the embedded signature tried.
 /// </summary>
 internal static class TrustedBinary
 {
@@ -112,10 +109,9 @@ internal static class TrustedBinary
 
     /// <summary>
     /// True for a file Windows itself would consider signed, by catalog or embedded signature.
-    /// <paramref name="pinned"/> is the handle the caller is holding open across the launch: given one,
-    /// BOTH forms read their bytes through it instead of reopening the path, so the answer is about the
-    /// file that will actually run and not about whatever the path happens to name a moment later. Passing
-    /// null answers for the path, fine for a question that is not about launching anything.
+    /// <paramref name="pinned"/> is the handle the caller holds open across the launch: given one, both forms
+    /// read their bytes through it instead of reopening the path, so the answer is about the file that will
+    /// actually run. Null answers for the path, fine for a question that is not about launching anything.
     /// </summary>
     public static bool IsSigned(string path, FileStream? pinned = null)
     {
@@ -179,7 +175,7 @@ internal static class TrustedBinary
     /// <summary>
     /// Walks the catalogs that list a file hash: <paramref name="enumerate"/> returns the one after the given
     /// handle (zero first, zero again at the end), <paramref name="verify"/> judges one. Enumerating hands the
-    /// previous context back to the system itself, so only the context that verified is released here.
+    /// previous context back to the system, so only the context that verified is released here.
     /// </summary>
     internal static bool AnyCatalogVerifies(Func<IntPtr, IntPtr> enumerate, Func<IntPtr, bool> verify, Action<IntPtr> release)
     {

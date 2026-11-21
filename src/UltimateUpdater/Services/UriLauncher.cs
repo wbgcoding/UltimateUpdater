@@ -10,11 +10,10 @@ namespace UltimateUpdater.Services;
 public static class UriLauncher
 {
     /// <summary>
-    /// The ONLY URI schemes this app ever opens: the web, plus the fixed launcher protocols its Tier B/C
-    /// rows hand off to. Accepting any scheme with a registered handler was a real hole; a row's open
-    /// target can come from a vendor's API response (NVIDIA's DetailsURL), and a scheme is exactly how one
-    /// would reach an arbitrary local protocol handler on the back of a click in this window. New schemes
-    /// belong here explicitly, alongside the source that needs them.
+    /// The only URI schemes this app opens: the web, plus the fixed launcher protocols its Tier B/C rows hand
+    /// off to. A row's open target can come from a vendor's API response (NVIDIA's DetailsURL), and accepting
+    /// any scheme with a registered handler would let a click reach an arbitrary local protocol handler. New
+    /// schemes belong here explicitly, alongside the source that needs them.
     /// </summary>
     private static readonly HashSet<string> AllowedSchemes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -27,8 +26,8 @@ public static class UriLauncher
     };
 
     /// <summary>
-    /// True when this URI is one the app is allowed to hand to the shell. Public so a source can check a
-    /// target it read from a remote response at INGEST time, rather than leaving it to the click.
+    /// True when this URI may be handed to the shell. Public so a source can check a target read from a
+    /// remote response at ingest time, rather than leaving it to the click.
     /// </summary>
     public static bool IsAllowedUri(string? target) =>
         !string.IsNullOrWhiteSpace(target)
@@ -36,18 +35,17 @@ public static class UriLauncher
         && AllowedSchemes.Contains(uri.Scheme);
 
     /// <summary>
-    /// Fire-and-forget launch for anything triggered from the UI. ShellExecute is NOT quick: it starts the
-    /// program, and a large application, a launcher client or a shell extension can hold that call for many
-    /// seconds; on the UI thread the whole window freezes for exactly that long. Nothing here needs the
-    /// result, so it does not wait for it.
+    /// Fire-and-forget launch for anything triggered from the UI. ShellExecute can hold the call for many
+    /// seconds (a large application, a launcher client, a shell extension), which would freeze the window
+    /// on the UI thread, and nothing here needs the result.
     /// </summary>
     public static void LaunchDetached(string target, LoggingService logging) =>
         _ = Task.Run(() => Launch(target, logging));
 
     /// <summary>
-    /// Opens a folder of the app's own in Explorer, creating it first: nothing writes there until something
-    /// happens, and Explorer answers a path that does not exist with an error box rather than a window.
-    /// <paramref name="label"/> names the folder in the warning if it cannot be created.
+    /// Opens a folder of the app's own in Explorer, creating it first: Explorer answers a path that does not
+    /// exist with an error box rather than a window. <paramref name="label"/> names the folder in the warning
+    /// if it cannot be created.
     /// </summary>
     public static void OpenFolderDetached(string folder, string label, LoggingService logging)
     {
@@ -69,9 +67,8 @@ public static class UriLauncher
 
     public static bool Launch(string target, LoggingService logging)
     {
-        // A bare name would be resolved by ShellExecute's own search order, which includes the
-        // working directory; a file planted there could be launched instead of the intended
-        // launcher. Only a real URI or an existing absolute path is accepted.
+        // A bare name would be resolved by ShellExecute's own search order, which includes the working directory,
+        // so a planted file could be launched instead. Only a real URI or an existing absolute path is accepted.
         if (!IsLaunchable(target))
         {
             logging.Warn($"Refusing to open '{target}': not an allowed URI scheme, and not an existing path.");
@@ -89,13 +86,8 @@ public static class UriLauncher
         }
         catch (Exception ex)
         {
-            // This is called only through LaunchDetached's fire-and-forget Task.Run, never
-            // awaited by its callers. The previous catch (Win32Exception or InvalidOperationException:
-            // no handler registered for the URI, or the launcher is gone) named the two common cases, but
-            // anything else Process.Start could throw had nowhere to go but the process-wide unobserved-
-            // task handler. Every caller already treats a false return as "could not open it" and moves
-            // on, so widening this to every exception only changes where an unusual failure (e.g.
-            // Process.Start running out of handles) is reported, never what the app does about it.
+            // Runs inside a fire-and-forget Task.Run that nobody awaits, so any exception left uncaught would go to
+            // the process-wide unobserved-task handler. Callers treat a false return as "could not open it" anyway.
             logging.Warn($"Could not open '{target}': {ex.Message}");
             return false;
         }
