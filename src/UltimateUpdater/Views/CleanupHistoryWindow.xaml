@@ -111,7 +111,7 @@
                                             </Style>
                                         </Ellipse.Style>
                                     </Ellipse>
-                                    <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="12" MaxWidth="190"
+                                    <TextBlock Grid.Column="1" Text="{Binding Title}" ToolTip="{Binding Title, Converter={StaticResource EmptyToNull}}" FontSize="12" MaxWidth="190"
                                                TextTrimming="CharacterEllipsis"
                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                     <TextBlock Grid.Column="2" Text="{Binding PercentText}" FontSize="12" Margin="12,0,0,0"

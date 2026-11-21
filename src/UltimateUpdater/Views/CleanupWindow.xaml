@@ -414,7 +414,7 @@
                     </Grid.ColumnDefinitions>
 
                     <TextBlock x:Name="ItemTitle" Text="{Binding Title}" FontSize="13" FontWeight="SemiBold"
-                               TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"
+                               TextTrimming="CharacterEllipsis" ToolTip="{Binding Title, Converter={StaticResource EmptyToNull}}"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -1203,7 +1203,7 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Title}" FontSize="12"
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Title}" ToolTip="{Binding Title, Converter={StaticResource EmptyToNull}}" FontSize="12"
                                            TextTrimming="CharacterEllipsis"
                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SizeText}" FontSize="11"
@@ -1289,7 +1289,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock x:Name="CleanupStatusCaption" Grid.Column="0" Text="{Binding StatusCaptionText}"
+                        <TextBlock x:Name="CleanupStatusCaption" Grid.Column="0" Text="{Binding StatusCaptionText}" ToolTip="{Binding StatusCaptionText, Converter={StaticResource EmptyToNull}}"
                                    FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                     </Grid>
@@ -1379,7 +1379,7 @@
                     </Grid>
 
                     <!-- After the run: what stayed behind. -->
-                    <TextBlock Grid.Row="6" Margin="0,8,0,0" Text="{Binding SkippedText}" FontSize="12"
+                    <TextBlock Grid.Row="6" Margin="0,8,0,0" Text="{Binding SkippedText}" ToolTip="{Binding SkippedText, Converter={StaticResource EmptyToNull}}" FontSize="12"
                                TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="48"
                                VerticalAlignment="Top"
                                Visibility="{Binding IsFinished, Converter={StaticResource BoolToVisibility}}"
