@@ -567,8 +567,15 @@ public static class ElevatedWorker
 
             // Registered here rather than inside the task: the pipe is ordered, so a control line that
             // follows this job always finds its switch, however soon it arrives.
+            // A second job under an id still in flight would leave the first one without its stop switch; the
+            // app never sends one, so it is treated like any other unusable line.
             var control = new JobControl();
-            Active[job.Id] = control;
+            if (!Active.TryAdd(job.Id, control))
+            {
+                logging.Warn($"Elevated worker received a second job under a running id ('{job.Kind}'); ending the session.");
+                control.Cancellation.Dispose();
+                break;
+            }
 
             // Each job on its own task, so the read loop is free to accept the next one immediately.
             var task = Task.Run(() => RunJobAsync(job, writer, logging, control));

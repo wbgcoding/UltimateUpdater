@@ -152,6 +152,21 @@ public class PauseAndStopTests
         Assert.True(write < attach, "handle?.Attach runs before the job envelope is written.");
     }
 
+    /// <summary>
+    /// A second job under an id still in flight must not replace the first job's stop switch: a Stop, and the
+    /// stop-all on a lost pipe, would no longer reach the first job. Asserted on the source text because
+    /// keeping a job reliably in flight over a real pipe needs a real elevated handler.
+    /// </summary>
+    [Fact]
+    public void A_job_id_already_in_flight_never_replaces_its_stop_switch()
+    {
+        var source = File.ReadAllText(FindSourceFile("Services", "ElevatedWorker.cs"));
+
+        Assert.Contains("if (!Active.TryAdd(job.Id, control))", source);
+        Assert.DoesNotContain("Active[job.Id] =", source);
+        Assert.Contains("Active.TryRemove(new KeyValuePair<string, JobControl>(job.Id, control));", source);
+    }
+
     private static string FindSourceFile(params string[] relativeParts)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
