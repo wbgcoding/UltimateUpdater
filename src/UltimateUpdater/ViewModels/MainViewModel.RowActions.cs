@@ -18,34 +18,18 @@ namespace UltimateUpdater.ViewModels;
 // snooze and persistent-failure state.
 public partial class MainViewModel
 {
-    /// <summary>
-    /// Package keys with an uninstall currently in flight. <see cref="TrackPersistentFailure"/> checks this
-    /// because <see cref="InstallItemStatus"/> carries no action, so the shared status dispatch
-    /// (<see cref="OnInstallStatusChanged"/>) cannot tell an install's terminal status from an uninstall's.
-    /// Without it, a failed removal would count toward the SAME three-strikes tally as a failed install
-    /// (three failed uninstalls would flag the package NeedsManualWork and refuse to let it be INSTALLED),
-    /// and a successful removal would clear a real install-failure streak. Populated only by
-    /// <see cref="UninstallRowAsync"/>, the only call site that passes <see cref="InstallAction.Uninstall"/>,
-    /// for exactly the span of its single-item, synchronously dispatched <c>_installQueue.RunAsync</c> call.
-    /// </summary>
+    /// <summary>Package keys with an uninstall in flight. <see cref="InstallItemStatus"/> carries no action, so <see cref="TrackPersistentFailure"/> uses this to tell an uninstall's terminal status from an install's; otherwise three failed removals would flag the package NeedsManualWork and block its install, and a removal would clear a real install-failure streak. Populated only by <see cref="UninstallRowAsync"/>, for the span of its single-item <c>_installQueue.RunAsync</c> call.</summary>
     private readonly HashSet<string> _uninstallingKeys = new(StringComparer.Ordinal);
 
-    /// <summary>Ignoring an update means "stop telling me about it", so it stops being counted too. A
-    /// deferred (snoozed) row is excluded the same way: "not now" is not "I want to hear
-    /// about it again in this count until the date I actually asked for" either.</summary>
+    /// <summary>Ignoring an update means "stop telling me about it", so it stops being counted too. A snoozed row is excluded the same way.</summary>
     private IEnumerable<UpdateRowViewModel> NotIgnored => Updates.Where(u => !IsIgnored(u.Item) && !IsSnoozed(u.Item));
 
-    /// <summary>
-    /// An update is ignored either by package (all versions) or by the exact available version. The
-    /// version key is what makes a winget "phantom" upgrade (a version that reappears after it installs)
-    /// stay gone until a genuinely newer one shows up.
-    /// </summary>
+    /// <summary>An update is ignored by package (all versions) or by the exact available version. The version key keeps a winget "phantom" upgrade (a version that reappears after it installs) gone until a really newer one shows up.</summary>
     private bool IsIgnored(UpdateItem item) =>
         _settings.Current.Excludes.Contains(PackageKey(item))
         || (!string.IsNullOrEmpty(item.AvailableVersion) && _settings.Current.Excludes.Contains(VersionKey(item)));
 
-    /// <summary>Same package-vs-version key shape as <see cref="IsIgnored"/>, over the <c>Snoozed</c>
-    /// dictionary instead of <c>Excludes</c>.</summary>
+    /// <summary>The same package-or-version key shape as <see cref="IsIgnored"/>, over the <c>Snoozed</c> dictionary instead of <c>Excludes</c>.</summary>
     private bool IsSnoozed(UpdateItem item) => SnoozedUntilFor(item) is not null;
 
     private DateTimeOffset? SnoozedUntilFor(UpdateItem item)
@@ -59,10 +43,7 @@ public partial class MainViewModel
         return null;
     }
 
-    /// <summary>Passive expiry, same pattern as <see cref="EnrichmentCache.TryGet"/>: an entry whose due
-    /// date has passed is dropped the moment anything looks at it again, so a snooze reappears on its own
-    /// without waiting for the next app start. <see cref="SettingsService"/> already sweeps on load, this
-    /// covers the far more common case of the app staying open across the due date.</summary>
+    /// <summary>Passive expiry, like <see cref="EnrichmentCache.TryGet"/>: an entry past its due date is dropped as soon as anything looks at it, so a snooze reappears without an app restart. <see cref="SettingsService"/> sweeps on load; this covers the app staying open across the due date.</summary>
     private bool TryGetActiveSnooze(string key, out DateTimeOffset until)
     {
         if (_settings.Current.Snoozed.TryGetValue(key, out until))
@@ -77,11 +58,7 @@ public partial class MainViewModel
         return false;
     }
 
-    /// <summary>Applies the persisted snooze state to a row and its children (Steam's own game rows), at
-    /// the same level <c>IsIgnored</c> is already applied at in <see cref="DrainPendingItems"/>. Also
-    /// what makes an expired snooze reappear on the very next scan even when nothing else about the row
-    /// changed (the common case, where the "unchanged, keep the existing row" fast path would otherwise
-    /// never re-check it).</summary>
+    /// <summary>Applies the persisted snooze state to a row and its children (Steam's game rows), at the level <c>IsIgnored</c> is applied in <see cref="DrainPendingItems"/>. It also makes an expired snooze reappear on the next scan even when the "unchanged, keep the row" fast path would skip it.</summary>
     private void ApplySnoozeState(UpdateRowViewModel row)
     {
         var until = SnoozedUntilFor(row.Item);
@@ -92,22 +69,16 @@ public partial class MainViewModel
             ApplySnoozeState(child);
     }
 
-    /// <summary>Ignore this exact available version. "source:id@version".</summary>
+    /// <summary>Ignore this exact available version: "source:id@version".</summary>
     private static string VersionKey(UpdateItem item) => $"{item.SourceId}:{item.Id}@{item.AvailableVersion}";
 
-    /// <summary>Ignore the package whatever its version. "source:id". Also the row-reconcile identity.</summary>
+    /// <summary>Ignore the package whatever its version: "source:id". Also the row-reconcile identity.</summary>
     private static string PackageKey(UpdateItem item) => $"{item.SourceId}:{item.Id}";
 
-    /// <summary>Raised after a row action changed the ignore list (ignore, ignore all versions, un-ignore, or a
-    /// snooze that replaced an ignore), so an ignore list dialog that is open beside the table re-reads it.</summary>
+    /// <summary>Raised after a row action changed the ignore list (ignore, ignore all versions, un-ignore, or a snooze that replaced an ignore), so an open ignore list dialog re-reads it.</summary>
     public event Action? IgnoreMarksChanged;
 
-    /// <summary>
-    /// Toggle: ignore THIS version of an update, or show an already-ignored one again. An ignored row
-    /// leaves the table at once unless "show ignored" is on (then it stays, marked); either way this
-    /// only flips the flag, the persisted list and the counts, the row object itself is never removed.
-    /// Un-ignoring clears both key forms.
-    /// </summary>
+    /// <summary>Toggle: ignore this version of an update, or show an ignored one again. The row leaves the table at once unless "show ignored" is on (then it stays, marked); either way only the flag, the persisted list and the counts change, the row object is never removed. Un-ignoring clears both key forms.</summary>
     [RelayCommand]
     private void Ignore(UpdateRowViewModel? row)
     {
@@ -123,8 +94,7 @@ public partial class MainViewModel
         }
         else
         {
-            // A manual-open row (a launcher/store, even Steam with build ids) has no per-version ignore, so
-            // it is ignored as a whole package. Real update rows ignore just the current version.
+            // A manual-open row (launcher, store, even Steam with build ids) has no per-version ignore and is ignored as a whole package; real update rows ignore the current version.
             var wholePackage = string.IsNullOrEmpty(row.Item.AvailableVersion) || row.IsManualOnly;
             var key = wholePackage ? PackageKey(row.Item) : VersionKey(row.Item);
             if (!_settings.Current.Excludes.Contains(key))
@@ -132,8 +102,7 @@ public partial class MainViewModel
             row.IsIgnored = true;
             row.IsIgnoredAllVersions = wholePackage;
 
-            // Ignore and Snooze are mutually exclusive: setting one clears the other, or a row could end
-            // up marked both "never tell me" and "tell me again on a date" at once.
+            // Ignore and Snooze are mutually exclusive, or a row could be marked both "never tell me" and "tell me on a date".
             ClearSnooze(row);
         }
 
@@ -145,10 +114,10 @@ public partial class MainViewModel
         RefreshHeader();
     }
 
-    /// <summary>Ignores EVERY version of just this one package (the row menu's "Ignore all versions").</summary>
+    /// <summary>Ignores every version of this package (the row menu's "Ignore all versions").</summary>
     void IRowActions.IgnoreAllVersions(UpdateRowViewModel row)
     {
-        // the package-wide key supersedes any single-version one already set for it
+        // The package-wide key supersedes any single-version one.
         _settings.Current.Excludes.Remove(VersionKey(row.Item));
         var key = PackageKey(row.Item);
         if (!_settings.Current.Excludes.Contains(key))
@@ -166,8 +135,7 @@ public partial class MainViewModel
         RefreshHeader();
     }
 
-    /// <summary>"Remind me later" for a fixed duration ("day"/"week"/"month"). Clears any Ignore on the
-    /// same row first: the two are mutually exclusive.</summary>
+    /// <summary>"Remind me later" for a fixed duration (day, week, month). Clears any Ignore on the row first: the two are mutually exclusive.</summary>
     void IRowActions.Snooze(UpdateRowViewModel row, string duration)
     {
         _settings.Current.Excludes.Remove(PackageKey(row.Item));
@@ -175,12 +143,10 @@ public partial class MainViewModel
         row.IsIgnored = false;
         row.IsIgnoredAllVersions = false;
 
-        // Same package-vs-version split as Ignore: a manual-open row snoozes as a whole package, a real
-        // update row snoozes just the version currently on offer.
+        // The same package-or-version split as Ignore: a manual-open row snoozes as a whole package, a real update row just the version on offer.
         var wholePackage = string.IsNullOrEmpty(row.Item.AvailableVersion) || row.IsManualOnly;
         var key = wholePackage ? PackageKey(row.Item) : VersionKey(row.Item);
-        // clear the other key form too, so a package-wide snooze does not leave a stale per-version one
-        // behind that would otherwise keep matching after this one expires
+        // Clear the other key form too, so a package-wide snooze leaves no stale per-version one that would keep matching after it expires.
         _settings.Current.Snoozed.Remove(wholePackage ? VersionKey(row.Item) : PackageKey(row.Item));
 
         var until = DateTimeOffset.UtcNow + SnoozeDuration(duration);
@@ -195,7 +161,7 @@ public partial class MainViewModel
         RefreshHeader();
     }
 
-    /// <summary>"Show again now" clears a snooze early, without waiting for it to expire.</summary>
+    /// <summary>"Show again now" clears a snooze early.</summary>
     void IRowActions.Unsnooze(UpdateRowViewModel row)
     {
         ClearSnooze(row);
@@ -214,9 +180,7 @@ public partial class MainViewModel
         row.SnoozedUntil = null;
     }
 
-    /// <summary>Flat day counts rather than calendar arithmetic (AddMonths): same pragmatic choice the
-    /// rest of the app's day-based settings already make (HistoryRetentionDays, LogSettings.RetentionDays,
-    /// EnrichmentCache's 7-day TTL): simpler, and a snooze due date does not need calendar precision.</summary>
+    /// <summary>Flat day counts rather than calendar arithmetic, like the app's other day-based settings (HistoryRetentionDays, LogSettings.RetentionDays, the enrichment cache TTL): a snooze due date needs no calendar precision.</summary>
     private static TimeSpan SnoozeDuration(string duration) => duration switch
     {
         "week" => TimeSpan.FromDays(7),
@@ -224,8 +188,7 @@ public partial class MainViewModel
         _ => TimeSpan.FromDays(1),
     };
 
-    /// <summary>"Try normally again": the only way back from <see cref="RowInstallState.NeedsManualWork"/>,
-    /// clearing both the row's own flag and the persisted tally behind it.</summary>
+    /// <summary>"Try normally again": the only way back from <see cref="RowInstallState.NeedsManualWork"/>; clears the row's flag and the persisted tally.</summary>
     void IRowActions.ResetPersistentFailure(UpdateRowViewModel row)
     {
         _settings.Current.PersistentFailures.Remove(PackageKey(row.Item));
@@ -239,28 +202,18 @@ public partial class MainViewModel
         RefreshHeader();
     }
 
-    /// <summary>
-    /// Called after every terminal install/uninstall result. A success clears any tally for the package
-    /// immediately: an update that once failed three times but now succeeds is not still broken. A Failed
-    /// or Stuck result is counted only when <see cref="InstallErrorExplainer"/> can classify it: an
-    /// unclassified failure has no signature to compare against a later one, and raw text alone would never
-    /// see two failures as "the same" (changing paths/timestamps/versions). Three matching signatures in a
-    /// row promote the live row to NeedsManualWork; anything else (first occurrence, or a changed
-    /// signature) records the new tally and leaves the row's Failed/Stuck state as ApplyInstallStatus set it.
-    /// </summary>
+    /// <summary>Called after every terminal install or uninstall result. A success clears the package's tally. A Failed or Stuck result counts only when <see cref="InstallErrorExplainer"/> can classify it: an unclassified failure has no signature to compare, and raw text never matches twice (paths, timestamps and versions change). Three matching signatures in a row promote the live row to NeedsManualWork; anything else records the new tally and leaves the row's state as ApplyInstallStatus set it.</summary>
     private void TrackPersistentFailure(UpdateRowViewModel row)
     {
         var key = PackageKey(row.Item);
 
-        // See _uninstallingKeys' own doc comment: an uninstall's outcome must never feed or clear the
-        // INSTALL three-strikes tally for the same package.
+        // An uninstall's outcome must not feed or clear the install tally for the same package (see _uninstallingKeys).
         if (_uninstallingKeys.Contains(key))
             return;
 
         if (row.InstallState == RowInstallState.Succeeded)
         {
-            // An install whose version stayed the same is tallied like a failure of one reason: the same
-            // from/to pair repeating means more retries will not change it. Never ignored on its own.
+            // An install whose version stayed the same counts like a failure of one reason: the same from-to pair repeating means more retries will not change it. Never ignored on its own.
             if (row.VersionUnchanged)
             {
                 // A Store app waiting for its window to close is not a vendor quirk to ignore the package for.
@@ -283,10 +236,7 @@ public partial class MainViewModel
 
         var signature = $"{explanation.WhatHappenedKey}:{string.Join(",", explanation.WhatHappenedArgs)}";
 
-        // Capped and redacted the same way HistoryService.Append holds its own Detail field: this is raw
-        // tool output, up to 10 M chars, otherwise stored unbounded in settings.json where an
-        // oversized file falls back to defaults on next load, and an unredacted detail could carry a
-        // token or a profile path onto disk.
+        // Capped and redacted like HistoryService.Append's Detail field: this is raw tool output of up to 10 M chars, which would sit unbounded in settings.json (an oversized file falls back to defaults on load) and could carry a token or profile path onto disk.
         var cappedErrorText = HistoryService.CapDetail(row.InstallErrorDetail);
 
         if (_settings.Current.PersistentFailures.TryGetValue(key, out var record) && record.Signature == signature)
@@ -342,9 +292,7 @@ public partial class MainViewModel
         Persist();
     }
 
-    /// <summary>Applies a persisted 3-strike flag to a freshly scanned row: same level <see
-    /// cref="ApplySnoozeState"/> already applies Snooze at, and for the same reason: the flag must survive
-    /// a restart, not just the live session the 3rd failure happened in.</summary>
+    /// <summary>Applies a persisted 3-strike flag to a freshly scanned row, at the level <see cref="ApplySnoozeState"/> applies a snooze, so the flag survives a restart.</summary>
     private void ApplyPersistentFailureState(UpdateRowViewModel row)
     {
         if (_settings.Current.PersistentFailures.TryGetValue(PackageKey(row.Item), out var record) && record.Count >= 3)
@@ -358,17 +306,10 @@ public partial class MainViewModel
             ApplyPersistentFailureState(child);
     }
 
-    /// <summary>
-    /// Whether this row can offer "back to the previous version", and if so, which one. Only a
-    /// source whose <see cref="Services.Sources.IUpdateSource.SupportsVersionPinning"/> is true is ever
-    /// offered one; everyone else's rows simply never carry a target. Same level <see
-    /// cref="ApplyPersistentFailureState"/> is applied at, for the same reason: the row must read as
-    /// rollback-capable the moment it appears, not only after the user opens its menu once already.
-    /// </summary>
+    /// <summary>Whether this row can offer "back to the previous version", and which one. Only a source whose <see cref="Services.Sources.IUpdateSource.SupportsVersionPinning"/> is true is offered one. Applied at the same level as <see cref="ApplyPersistentFailureState"/>, so the row reads as rollback-capable the moment it appears.</summary>
     private void ApplyDowngradeState(UpdateRowViewModel row, IReadOnlyDictionary<string, HistoryEntry> lastSuccessfulInstalls)
     {
-        // A target equal to what is installed now (the package was already rolled back, or reinstalled at
-        // that version) would offer a no-op.
+        // A target equal to what is installed now (already rolled back, or reinstalled at that version) would offer a no-op.
         row.DowngradeTargetVersion =
             SourceFor(row.Item)?.SupportsVersionPinning == true
             && lastSuccessfulInstalls.TryGetValue(PackageKey(row.Item), out var entry)
@@ -383,7 +324,7 @@ public partial class MainViewModel
     void IRowActions.RetryDowngrade(UpdateRowViewModel row, string targetVersion) =>
         _ = Background.Run(DowngradeAsync(row, targetVersion), _logging, "downgrade");
 
-    // IRowActions: the row menu's "back to the previous version" entry.
+    // The row menu's "back to the previous version" entry.
     void IRowActions.Downgrade(UpdateRowViewModel row)
     {
         if (row.DowngradeTargetVersion is not { Length: > 0 } targetVersion)
@@ -392,13 +333,7 @@ public partial class MainViewModel
         _ = Background.Run(DowngradeAsync(row, targetVersion), _logging, "downgrade");
     }
 
-    /// <summary>
-    /// A second entry point for downgrade: the History window's own downgrade button, offered on an entry
-    /// for a package that may have no live row on screen at all (it is fully current, so no source lists it
-    /// as an update). Reuses a live row when the table has one for the exact same package instead of
-    /// creating a second, ambiguous one that would race it for the same status updates
-    /// (<see cref="FindRow"/> matches by source+id alone, never by row instance).
-    /// </summary>
+    /// <summary>A second entry point for downgrade: the History window's button, offered for a package that may have no live row (it is fully current, so no source lists it). Reuses a live row for the same package rather than creating a second one that would race it for status updates (<see cref="FindRow"/> matches by source and id, never by row instance).</summary>
     internal void DowngradeFromHistory(string sourceId, string itemId, string name, string? installedVersion, string targetVersion)
     {
         var existing = FindRow(sourceId, itemId);
@@ -406,8 +341,7 @@ public partial class MainViewModel
         _ = Background.Run(DowngradeAsync(row, targetVersion, removeRowIfNotStarted: existing is null), _logging, "downgrade");
     }
 
-    /// <summary>Takes back a row built only for a downgrade that never started, so a declined or refused
-    /// downgrade leaves no ghost entry in the table.</summary>
+    /// <summary>Takes back a row built only for a downgrade that never started, so a declined or refused downgrade leaves no ghost entry.</summary>
     private void RemoveUnusedTransientRow(UpdateRowViewModel row)
     {
         var key = PackageKey(row.Item);
@@ -417,10 +351,7 @@ public partial class MainViewModel
         Updates.Remove(row);
     }
 
-    /// <summary>A row for a package the table currently has no reason to show (fully up to date), built
-    /// only so the History window's downgrade button has something to run and report progress on. Tracked
-    /// in <see cref="_rowsByKey"/>/<see cref="Updates"/> like any other row so the next real scan reconciles
-    /// or removes it exactly like it would a normal finished row, rather than leaving a permanent ghost.</summary>
+    /// <summary>A row for a package the table has no reason to show (fully up to date), built only so the History window's downgrade button has something to run and report progress on. Tracked in <see cref="_rowsByKey"/> and <see cref="Updates"/> so the next scan reconciles or removes it like a finished row.</summary>
     internal UpdateRowViewModel CreateTransientRow(string sourceId, string itemId, string name, string? installedVersion)
     {
         var item = new UpdateItem
@@ -440,16 +371,7 @@ public partial class MainViewModel
         return row;
     }
 
-    /// <summary>
-    /// "back to {version}". Confirmed first, with an explicit warning that the newer version will be offered
-    /// again on the next scan, then run through the same machinery as an uninstall (one item, the shared
-    /// elevation/progress/history plumbing); only the target item differs, its
-    /// <see cref="UpdateItem.AvailableVersion"/>/<see cref="UpdateItem.PinnedVersion"/> pinned to the older
-    /// version by <see cref="UpdateItem.WithPinnedVersion"/> rather than whatever the source would resolve
-    /// as the latest upgrade. A solo activity like uninstall and interactive retry (see
-    /// <see cref="_installActivityRunning"/>): it owns the same shared progress/elevation state, so it
-    /// cannot run alongside a batch install or another solo activity.
-    /// </summary>
+    /// <summary>"Back to {version}". Confirmed first, with a warning that the newer version will be offered again on the next scan, then run like an uninstall (one item, the shared elevation, progress and history plumbing) with the target item's <see cref="UpdateItem.AvailableVersion"/> and <see cref="UpdateItem.PinnedVersion"/> pinned to the older version by <see cref="UpdateItem.WithPinnedVersion"/>. A solo activity like uninstall and interactive retry (see <see cref="_installActivityRunning"/>): it owns the shared progress and elevation state and cannot run beside a batch or another solo activity.</summary>
     private async Task DowngradeAsync(UpdateRowViewModel row, string targetVersion, bool removeRowIfNotStarted = false)
     {
         if (_installActivityRunning)
@@ -460,10 +382,7 @@ public partial class MainViewModel
             return;
         }
 
-        // A plain hyphen for the rare row with no known installed version (same fallback
-        // HistoryRowViewModel.FromVersionText uses), pulled out of the confirmation dialog's own argument
-        // list so the hardwired-text scan does not mistake a punctuation placeholder for an untranslated
-        // word (HardwiredTextTests.cs).
+        // A plain hyphen for a row with no known installed version, kept out of the dialog's argument list so the hardwired-text scan does not take it for an untranslated word (HardwiredTextTests.cs).
         var installedVersionText = row.Item.InstalledVersion ?? "-";
         var confirmBody = string.Format(Loc["DowngradeConfirmBody"], row.Name, installedVersionText, targetVersion);
         var confirmText = string.Format(Loc["RowDowngrade"], targetVersion);
@@ -476,8 +395,7 @@ public partial class MainViewModel
             return;
         }
 
-        // Dialogs.Confirm pumps messages while it is up; re-check for the same reason UninstallRowAsync
-        // does right after its own confirmation.
+        // Dialogs.Confirm pumps messages; re-check as UninstallRowAsync does after its confirmation.
         if (_installActivityRunning)
         {
             Dialogs.Warn(Loc["DowngradeBlockedByActivity"]);
@@ -515,8 +433,7 @@ public partial class MainViewModel
         }
         catch (Exception ex)
         {
-            // A user-triggered command handler, same reasoning as UninstallRowAsync: whatever the source
-            // throws must end this row's run, never the app.
+            // A user-triggered handler: whatever the source throws must end this row's run, never the app.
             _logging.Error("Downgrade failed", ex);
             if (row.InstallState is RowInstallState.Queued or RowInstallState.Running)
                 row.MarkNotInstalled(Loc["InstallFailed"]);
@@ -530,13 +447,13 @@ public partial class MainViewModel
         }
     }
 
-    // IRowActions: the per-row "Install" button queues just that one row.
+    // The per-row "Install" button queues just that row.
     void IRowActions.InstallSingle(UpdateRowViewModel row) => _ = Background.Run(EnqueueInstallAsync([row]), _logging, "install single");
 
-    // IRowActions: the per-row "stop this one" button; the rest of the queue keeps running.
+    // The per-row "stop this one" button; the rest of the queue keeps running.
     void IRowActions.CancelSingle(UpdateRowViewModel row) => _installQueue.CancelItem(row.Item.SourceId, row.Item.Id);
 
-    // IRowActions: the Start and Uninstall entries on a row's context menu.
+    // The Start and Uninstall entries on a row's context menu.
 
     bool IRowActions.CanStart(UpdateItem item) => SourceFor(item)?.LaunchTarget(item) is not null;
 
@@ -544,14 +461,12 @@ public partial class MainViewModel
 
     void IRowActions.Start(UpdateRowViewModel row)
     {
-        // The source's own target first (a launcher URI, a Steam game); otherwise the executable resolved
-        // for the row from the uninstall registry, which is what gives an ordinary package a Start at all.
+        // The source's own target first (a launcher URI, a Steam game); otherwise the executable resolved from the uninstall registry, which gives an ordinary package a Start at all.
         var target = SourceFor(row.Item)?.LaunchTarget(row.Item) ?? row.LaunchTargetPath;
         if (string.IsNullOrEmpty(target))
             return;
 
-        // A Store app has no exe to run; its application id is started through explorer, and nothing else
-        // starting with "shell:" ever gets that far (the URI launcher refuses the scheme).
+        // A Store app has no exe to run; its application id is started through explorer, and nothing else starting with "shell:" gets that far (the URI launcher refuses the scheme).
         if (PackagedAppLauncher.IsPackagedAppTarget(target))
             PackagedAppLauncher.LaunchDetached(target, _logging);
         else
@@ -562,29 +477,14 @@ public partial class MainViewModel
 
     void IRowActions.RetryInteractive(UpdateRowViewModel row) => _ = Background.Run(RetryInteractiveAsync(row), _logging, "retry interactive");
 
-    /// <summary>
-    /// Test-only seam (never set outside <c>UltimateUpdater.Tests</c>): when set, replaces the actual call
-    /// to <see cref="Services.Sources.WingetSource.InstallInteractiveAsync"/> so a test can hold the
-    /// interactive retry "running" on demand. The gate in <see cref="RetryInteractiveAsync"/> (the row must
-    /// resolve to a real <see cref="Services.Sources.WingetSource"/>) is untouched; only the OS-level call
-    /// is substitutable.
-    /// </summary>
+    /// <summary>Test seam, set only by the tests: replaces the call to <see cref="Services.Sources.WingetSource.InstallInteractiveAsync"/> so a test can hold the interactive retry "running". The gate in <see cref="RetryInteractiveAsync"/> (the row must resolve to a real <see cref="Services.Sources.WingetSource"/>) stays.</summary>
     internal Func<UpdateItem, IProgress<Models.InstallProgress>, CancellationToken, Task>? RetryInteractiveOverride { get; set; }
 
-    /// <summary>
-    /// The one deliberate, narrow exception to "never --interactive".
-    /// Every hard boundary is enforced here, not only by the UI hiding the entry:
-    /// 1. reachable only from a click on this one row (its context menu;
-    ///    <see cref="ShowRetryInteractiveButton"/> is never read by any batch/automatic path);
-    /// 2. refuses outright when <see cref="App.IsUnattended"/>;
-    /// 3. never goes through the elevated worker: it calls <see cref="WingetSource.InstallInteractiveAsync"/>
-    ///    directly, in-process, bypassing <see cref="InstallQueue"/>/<see cref="InstallQueue.NeedsElevation"/>
-    ///    (which would route every winget job to the elevated worker). A per-machine install that needs
-    ///    administrator rights is winget's own concern (it can raise its own UAC prompt) and may not
-    ///    succeed from here: an accepted trade-off for a last-resort, one-shot retry;
-    /// 4. exactly one attempt: no loop, no re-arming; the row returns to the normal Failed/Succeeded path
-    ///    whatever the outcome.
-    /// </summary>
+    /// <summary>The one narrow exception to "never --interactive", with every boundary enforced here rather than by the UI hiding the entry:
+    /// 1. reachable only from a click on this row's context menu (<see cref="ShowRetryInteractiveButton"/> is never read by a batch or automatic path);
+    /// 2. refuses when <see cref="App.IsUnattended"/>;
+    /// 3. never goes through the elevated worker: it calls <see cref="WingetSource.InstallInteractiveAsync"/> in-process, bypassing <see cref="InstallQueue"/> and <see cref="InstallQueue.NeedsElevation"/>. A per-machine install needing administrator rights is winget's own concern (it can raise its own UAC prompt) and may not succeed from here, an accepted trade-off for a last-resort retry;
+    /// 4. exactly one attempt: no loop, no re-arming; the row returns to the normal Failed or Succeeded path.</summary>
     internal async Task RetryInteractiveAsync(UpdateRowViewModel row)
     {
         if (App.IsUnattended || !row.ShowRetryInteractiveButton)
@@ -635,9 +535,7 @@ public partial class MainViewModel
             _logging.Event(ActivityLog.Install, ActivityLog.InstallSucceeded(row.Item, InstallAction.Install, started.Elapsed));
             row.ApplyInstallStatus(new InstallItemStatus(row.SourceId, row.Item.Id, 100, null, true, null));
             AppendInteractiveRetryHistory(row, success: true, error: null);
-            // This path never goes through ReportInstallStatus (Install.cs), the normal batch loop's status
-            // dispatch: an interactive retry runs standalone, direct on the source. Every OTHER terminal
-            // status already calls this from there; this is the one entry point that has to call it itself.
+            // This path bypasses ReportInstallStatus (Install.cs), the batch loop's status dispatch: an interactive retry runs standalone on the source. Every other terminal status calls this from there, so this entry point must call it itself.
             TrackPersistentFailure(row);
         }
         catch (OperationCanceledException)
@@ -646,9 +544,7 @@ public partial class MainViewModel
         }
         catch (Exception ex)
         {
-            // A user-triggered command handler: winget's own exception surface here is unbounded (it runs
-            // out-of-process through the CLI/module), and it must resolve to a failed row, never an
-            // unhandled exception on the dispatcher.
+            // A user-triggered handler: winget's exception surface is unbounded (it runs out of process through the CLI or module) and must end in a failed row, never an unhandled dispatcher exception.
             _logging.EventFailed(ActivityLog.Install, ActivityLog.InstallFailed(row.Item, InstallAction.Install, started.Elapsed, ex.Message));
             _logging.Error("Interactive retry failed", ex);
             var message = Loc["InstallFailed"];
@@ -670,8 +566,7 @@ public partial class MainViewModel
     private void AppendInteractiveRetryHistory(UpdateRowViewModel row, bool success, string? error, string? detail = null) =>
         _history.Append(HistoryEntry.ForItem(row.Item, InstallAction.Install, success, error, detail: detail));
 
-    // A row's own sub-list (Steam's games) collapses like a category group and is remembered the same
-    // way: the row is rebuilt whenever a scan streams in results, so the state cannot live on it.
+    // A row's sub-list (Steam's games) collapses like a category group and is remembered the same way: the row is rebuilt whenever a scan streams in results, so the state cannot live on it.
     bool IRowActions.IsSubListExpanded(string key) => IsGroupExpanded(key);
 
     void IRowActions.SetSubListExpanded(string key, bool expanded) => SetGroupExpanded(key, expanded);
@@ -679,24 +574,13 @@ public partial class MainViewModel
     private Services.Sources.IUpdateSource? SourceFor(UpdateItem item) =>
         _sources.FirstOrDefault(s => s.Id == item.SourceId);
 
-    /// <summary>Test seam (null in production): answers the uninstall confirmation, which the headless
-    /// dialog layer would otherwise always decline.</summary>
+    /// <summary>Test seam (null in production): answers the uninstall confirmation, which the headless dialog layer would decline.</summary>
     internal Func<bool>? UninstallConfirmOverride { get; set; }
 
-    /// <summary>
-    /// Removing a package is destructive, so it is confirmed first and then run through the very same
-    /// queue and progress window as an install: one item, action = Uninstall. Admin sources still take
-    /// the elevated worker (one UAC prompt); user-scope ones run in-process.
-    /// With nothing else running it owns the shared install state like any solo activity. While a batch
-    /// (or another activity) runs it is a side run instead: its own concurrent queue run and token, the
-    /// row appended to the progress list, no flags of its own touched. An admin uninstall then waits for
-    /// the elevated worker's exclusive slot and shows as queued meanwhile. Only the very row that is
-    /// already queued or running is refused.
-    /// </summary>
+    /// <summary>Removing a package is destructive, so it is confirmed first and then runs through the same queue and progress window as an install: one item, action Uninstall. Admin sources use the elevated worker (one UAC prompt), user-scope ones run in-process. With nothing else running it owns the shared install state like any solo activity; while a batch or another activity runs it is a side run: its own concurrent queue run and token, the row appended to the progress list, no flags touched. An admin uninstall then waits for the elevated worker's exclusive slot and shows as queued. Only a row that is already queued or running is refused.</summary>
     internal async Task UninstallRowAsync(UpdateRowViewModel row)
     {
-        // A scan may be running; removing something is independent of looking for updates, and so is a
-        // running install batch: the queue takes concurrent runs. Only this row's own work blocks it.
+        // A scan or a running install batch does not matter: removing something is independent of looking for updates and the queue takes concurrent runs. Only this row's own work blocks it.
         if (UninstallBlockedForRow(row))
         {
             Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
@@ -711,10 +595,7 @@ public partial class MainViewModel
         if (!confirmed)
             return;
 
-        // Dialogs.Confirm pumps messages while it is up: an interactive retry's non-modal window
-        // (ErrorDetailWindow, shown via ShowOwned) can finish and hand off to a fresh install loop in
-        // that window, or the same row can be queued meanwhile. Re-check now: proceeding regardless
-        // would run the row twice at once.
+        // Dialogs.Confirm pumps messages: an interactive retry's non-modal window (ErrorDetailWindow, via ShowOwned) can finish and hand off to a fresh loop meanwhile, or the row can be queued. Re-check, or the row would run twice at once.
         if (UninstallBlockedForRow(row))
         {
             Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
@@ -727,12 +608,7 @@ public partial class MainViewModel
         await RunSingleRowActionAsync(row, InstallAction.Uninstall);
     }
 
-    /// <summary>
-    /// The run itself, after the caller confirmed and checked its gates: one row through the install queue as
-    /// <paramref name="action"/> (Uninstall or FreshInstall), as a side run when another activity is going.
-    /// The row's own state carries the outcome. Shared so the reinstall flow can confirm ONCE and still run
-    /// its removal and its install through exactly the paths the single actions use.
-    /// </summary>
+    /// <summary>The run itself, after the caller confirmed and checked its gates: one row through the install queue as <paramref name="action"/> (Uninstall or FreshInstall), as a side run when another activity is going. The row's state carries the outcome. Shared so the reinstall flow can confirm once and still use the same paths as the single actions.</summary>
     private async Task RunSingleRowActionAsync(UpdateRowViewModel row, InstallAction action, UpdateItem? runItem = null)
     {
         var uninstall = action == InstallAction.Uninstall;
@@ -750,7 +626,7 @@ public partial class MainViewModel
                 InstallBatch.Add(row);
             row.BeginInstall();
             row.IsSelected = false;
-            // so the finished row reads "Uninstalled" in red rather than a green "done"
+            // So the finished row reads "Uninstalled" in red rather than a green "done".
             row.WasUninstalled = uninstall;
             RefreshInstallProgress();
         }
@@ -782,16 +658,9 @@ public partial class MainViewModel
         }
         catch (Exception ex)
         {
-            // A user-triggered command handler, same reasoning as RetryInteractiveAsync above: whatever the
-            // source throws must end this row's uninstall, never the app. Logging alone would leave the
-            // row itself stuck showing BeginInstall's running state for ever. _installQueue.RunAsync
-            // normally reports failure through ReportInstallStatus, but an exception that escapes it
-            // entirely (rather than a reported failed status) never reaches the row at all unless this
-            // catch tells it too.
+            // A user-triggered handler, like RetryInteractiveAsync: whatever the source throws must end this row's uninstall, never the app. Logging alone would leave the row showing BeginInstall's running state for ever. _installQueue.RunAsync normally reports failure through ReportInstallStatus, but an exception that escapes it never reaches the row unless this catch tells it.
             _logging.Error($"{action} failed", ex);
-            // InstallQueue.RunAsync's own finally/FailRemaining usually already gave the row a real
-            // terminal status (Failed/Succeeded/NeedsManualWork) before this exception ever reached us.
-            // Only fall back to Idle if nothing did, else this would overwrite a correct result.
+            // InstallQueue.RunAsync's own finally or FailRemaining usually already gave the row a terminal status. Fall back to Idle only if nothing did, or a correct result would be overwritten.
             if (row.InstallState is RowInstallState.Queued or RowInstallState.Running)
                 row.MarkNotInstalled(Loc[uninstall ? "UninstallFailed" : "InstallFailed"]);
         }
@@ -817,13 +686,10 @@ public partial class MainViewModel
     /// <summary>Test seam (null in production): answers the reinstall confirmation.</summary>
     internal Func<bool>? ReinstallConfirmOverride { get; set; }
 
-    /// <summary>Packages whose reinstall is between its confirmation and its end. Their row is the only
-    /// way back to the program once the old version is gone, so a scan neither drops nor replaces it
-    /// (<see cref="HeldByReinstall"/>).</summary>
+    /// <summary>Packages whose reinstall is between its confirmation and its end. Their row is the only way back to the program once the old version is gone, so a scan neither drops nor replaces it (<see cref="HeldByReinstall"/>).</summary>
     private readonly HashSet<string> _reinstallingKeys = new(StringComparer.Ordinal);
 
-    /// <summary>A row a scan must leave alone: a reinstall is running on it, or its old version is removed
-    /// and only the install is left (the row carries that install's retry).</summary>
+    /// <summary>A row a scan must leave alone: a reinstall is running on it, or its old version is removed and only the install is left (the row carries that install's retry).</summary>
     private bool HeldByReinstall(UpdateRowViewModel row) =>
         row.PendingFreshInstall || _reinstallingKeys.Contains(PackageKey(row.Item));
 
@@ -831,24 +697,15 @@ public partial class MainViewModel
 
     void IRowActions.RetryFreshInstall(UpdateRowViewModel row) => _ = Background.Run(RetryFreshInstallAsync(row), _logging, "retry fresh install");
 
-    /// <summary>
-    /// Remove the old version and install the new one, for winget's different-install-technology refusal.
-    /// In order, each step only after the one before succeeded:
-    /// 1. the source must be able to fetch the new version (<see cref="IFreshInstallSource.CanFetchAsync"/>),
-    ///    else nothing is touched;
-    /// 2. the user confirms, once, with the package named;
-    /// 3. the removal runs through the same path as the row's own uninstall;
-    /// 4. the fresh install (<see cref="InstallAction.FreshInstall"/>), through the same queue, into the scope
-    ///    the program had (read before the removal; unknown = no scope named), so a package that lives in the
-    ///    user scope is reinstalled there, in this process, and a machine-wide one machine-wide.
-    /// A failure of step 3 leaves the row flagged <see cref="UpdateRowViewModel.ReinstallRemovalFailed"/>, so its
-    /// retry runs this whole flow again.
-    /// A failure of step 4 leaves the row flagged <see cref="UpdateRowViewModel.PendingFreshInstall"/>, so its
-    /// retry repeats step 4 only (<see cref="RetryFreshInstallAsync"/>).
-    /// </summary>
+    /// <summary>Removes the old version and installs the new one, for winget's different-install-technology refusal. Each step runs only after the one before succeeded:
+    /// 1. the source must be able to fetch the new version (<see cref="IFreshInstallSource.CanFetchAsync"/>), else nothing is touched;
+    /// 2. the user confirms once, with the package named;
+    /// 3. the removal runs through the row's own uninstall path;
+    /// 4. the fresh install (<see cref="InstallAction.FreshInstall"/>) runs through the same queue into the scope the program had (read before the removal; unknown means no scope named), so a user-scope package is reinstalled in this process and a machine-wide one machine-wide.
+    /// A failure of step 3 flags the row <see cref="UpdateRowViewModel.ReinstallRemovalFailed"/>, so its retry runs the whole flow again. A failure of step 4 flags it <see cref="UpdateRowViewModel.PendingFreshInstall"/>, so its retry repeats step 4 only (<see cref="RetryFreshInstallAsync"/>).</summary>
     internal async Task ReinstallRowAsync(UpdateRowViewModel row)
     {
-        // Every gate is enforced here, not only by the menu entry being hidden.
+        // Every gate is enforced here, not only by hiding the menu entry.
         if (!(row.ShowReinstallButton || row.ReinstallRemovalFailed) || SourceFor(row.Item) is not IFreshInstallSource source)
             return;
 
@@ -858,9 +715,7 @@ public partial class MainViewModel
             return;
         }
 
-        // Held from here, before the first await: the lookup, the confirm dialog and the scope read all
-        // leave the row looking Failed, so a second reinstall, an uninstall or a Retry would otherwise
-        // pass its own gate and work on the same package beside this one.
+        // Held from here, before the first await: the lookup, the confirm dialog and the scope read all leave the row looking Failed, so a second reinstall, an uninstall or a Retry would pass its own gate and work on the same package.
         var key = PackageKey(row.Item);
         _reinstallingKeys.Add(key);
         try
@@ -905,8 +760,7 @@ public partial class MainViewModel
             return;
         }
 
-        // The confirm dialog pumps messages: the row can have been queued or changed meanwhile. This
-        // reinstall's own hold is not "activity" (UninstallBlockedForRow would refuse it).
+        // The confirm dialog pumps messages: the row can have been queued or changed meanwhile. This reinstall's own hold is not "activity" (UninstallBlockedForRow would refuse it).
         if (ReinstallRowGone(row))
         {
             Dialogs.Warn(Loc["ReinstallBlockedByActivity"]);
@@ -916,7 +770,7 @@ public partial class MainViewModel
         if (RefusedWhileSelfUpdateApplies("Reinstall"))
             return;
 
-        // Before the removal: afterwards there is nothing left to read the scope from.
+        // Before the removal: afterwards there is nothing to read the scope from.
         var scope = await ReadInstalledScopeAsync(row, source);
 
         // The scope read takes seconds with the row still Failed: a Retry clicked meanwhile has queued it.
@@ -931,8 +785,7 @@ public partial class MainViewModel
         await RunSingleRowActionAsync(row, InstallAction.Uninstall);
         if (row.InstallState != RowInstallState.Succeeded)
         {
-            // The row carries the failed removal; its Retry reruns the whole reinstall, because a bare
-            // removal that succeeded would leave the program gone with nothing installed.
+            // The row carries the failed removal; its Retry reruns the whole reinstall, since a bare removal that succeeded would leave the program gone with nothing installed.
             row.ReinstallRemovalFailed = true;
             _logging.Warn($"Reinstall of '{row.Item.Id}': the removal did not finish; the new version was not installed.");
             return;
@@ -942,7 +795,7 @@ public partial class MainViewModel
         await RunFreshInstallAsync(row);
     }
 
-    /// <summary>The reinstall's own post-wait gate: the row no longer offers it, or other work took the row.</summary>
+    /// <summary>The reinstall's post-wait gate: the row no longer offers it, or other work took the row.</summary>
     private bool ReinstallRowGone(UpdateRowViewModel row) =>
         !(row.ShowReinstallButton || row.ReinstallRemovalFailed) || RowBusyForUninstall(row);
 
@@ -997,18 +850,14 @@ public partial class MainViewModel
         }
     }
 
-    /// <summary>The lane (package manager) an interactive retry is using right now. The retry runs outside
-    /// the install queue, so a side uninstall in the same lane would run beside it and fail on the
-    /// manager's own single-operation lock.</summary>
+    /// <summary>The lane (package manager) an interactive retry is using. The retry runs outside the install queue, so a side uninstall in the same lane would run beside it and hit the manager's single-operation lock.</summary>
     private string? _interactiveRetryLane;
 
-    /// <summary>The cases an uninstall is refused: this very row is already queued or running (a batch
-    /// install, another uninstall, an interactive retry), or an interactive retry holds its manager.</summary>
+    /// <summary>The cases an uninstall is refused: this row is already queued or running (batch install, another uninstall, interactive retry), or an interactive retry holds its manager.</summary>
     internal bool UninstallBlockedForRow(UpdateRowViewModel row) =>
         _reinstallingKeys.Contains(PackageKey(row.Item)) || RowBusyForUninstall(row);
 
-    /// <summary>The row's own activity, without a reinstall's hold: what a reinstall already under way
-    /// re-checks after each wait.</summary>
+    /// <summary>The row's own activity, without a reinstall's hold: what a running reinstall re-checks after each wait.</summary>
     private bool RowBusyForUninstall(UpdateRowViewModel row) =>
         row.InstallState is RowInstallState.Queued or RowInstallState.Running
         || row.IsRunningInteractively
