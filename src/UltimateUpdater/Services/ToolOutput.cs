@@ -18,7 +18,13 @@ public static class ToolOutput
         // stderr first (where a tool that separates its streams puts the actual error) then stdout.
         var lines = Lines(standardError)
             .Concat(Lines(standardOutput))
+            .Select(StripSpinner)
             .Where(line => line.Length > 0 && !IsNoise(line))
+            .ToList();
+
+        // A status line repainted behind a spinner ("Waiting for another install to complete...") arrives
+        // once per frame; dozens of copies filled the whole tail and pushed the real error out of it.
+        lines = lines.Where((line, index) => index == 0 || !string.Equals(line, lines[index - 1], StringComparison.Ordinal))
             .ToList();
 
         var tail = lines.Count > MaxTailLines ? lines.Skip(lines.Count - MaxTailLines) : lines;
@@ -37,6 +43,11 @@ public static class ToolOutput
             ? []
             : text.Replace("\r\n", "\n").Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries)
                 .Select(line => line.Trim());
+
+    /// <summary>The spinner frame winget paints in front of a status line ("\ Waiting..."), so the frames of
+    /// one line compare equal.</summary>
+    private static string StripSpinner(string line) =>
+        line.Length > 2 && line[0] is ('-' or '\\' or '/' or '|') && line[1] == ' ' ? line[2..].TrimStart() : line;
 
     /// <summary>
     /// A repainted progress line (a run of bar glyphs, spinner characters or a bare percentage) carries

@@ -691,6 +691,19 @@ public class EnrichmentAndDiagnosticsTests
         Assert.NotEqual(string.Empty, summary.Trim());
     }
 
+    /// <summary>winget repaints a waiting line behind a spinner once per frame; a real failure's summary
+    /// was nothing but copies of it. Each frame collapses to one line and the error stays visible.</summary>
+    [Fact]
+    public void Summarize_collapses_a_status_line_repainted_behind_a_spinner()
+    {
+        var frames = Enumerable.Range(0, 40).Select(i => "-\\|/"[i % 4] + " Waiting for another install to complete...");
+        var stdout = string.Join("\r", frames) + "\nInstaller failed with exit code: 1618";
+
+        var summary = ToolOutput.Summarize(stdout, standardError: null, exitCode: 1618);
+
+        Assert.Equal("Waiting for another install to complete... · Installer failed with exit code: 1618 (exit code 1618)", summary);
+    }
+
     [Fact]
     public void Row_date_follows_the_chosen_ui_language_short_date_order()
     {

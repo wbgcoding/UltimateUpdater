@@ -396,6 +396,18 @@ public class InstallErrorExplainerTests
         Assert.Equal(expectedKey, explanation!.WhatHappenedKey);
     }
 
+    /// <summary>A COMException out of the update installer carries nothing but its HRESULT as its message
+    /// (seen in a real log as just "0x8024001E"); that bare form must still be explained.</summary>
+    [Fact]
+    public void A_bare_service_stop_hresult_from_windows_update_is_explained_as_cancelled()
+    {
+        var explanation = InstallErrorExplainer.Explain("windowsupdate", "0x8024001E");
+
+        Assert.NotNull(explanation);
+        Assert.Equal("InstallErrorWuHresult800704C7What", explanation!.WhatHappenedKey);
+        Assert.Equal(InstallErrorClassification.Recoverable, explanation.Classification);
+    }
+
     [Fact]
     public void An_unknown_windows_update_hresult_falls_back_to_the_result_code_bucket()
     {

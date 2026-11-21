@@ -441,6 +441,9 @@ public static class InstallErrorExplainer
         [5] = new("InstallErrorWuAbortedWhat", [], "InstallErrorWuAbortedNow", [], InstallErrorClassification.Recoverable),
     };
 
+    private static readonly InstallErrorExplanation WuCancelledExplanation = new(
+        "InstallErrorWuHresult800704C7What", [], "InstallErrorWuHresult800704C7Now", [], InstallErrorClassification.Recoverable);
+
     private static readonly Dictionary<int, InstallErrorExplanation> WuHresultTable = new()
     {
         [unchecked((int)0x80240016)] = new(
@@ -455,8 +458,9 @@ public static class InstallErrorExplainer
         [unchecked((int)0x80240022)] = new(
             "InstallErrorWuHresult80240022What", [], "InstallErrorWuHresult80240022Now", [], InstallErrorClassification.Recoverable),
         // ERROR_CANCELLED: Windows itself stopped the run (its own servicing at the same time, or shutdown).
-        [unchecked((int)0x800704C7)] = new(
-            "InstallErrorWuHresult800704C7What", [], "InstallErrorWuHresult800704C7Now", [], InstallErrorClassification.Recoverable),
+        [unchecked((int)0x800704C7)] = WuCancelledExplanation,
+        // WU_E_SERVICE_STOP: the update service or Windows was shutting down mid-run; same cause, same advice.
+        [unchecked((int)0x8024001E)] = WuCancelledExplanation,
     };
 
     private static readonly InstallErrorExplanation WuInternalFailureExplanation = new(
