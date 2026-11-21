@@ -32,27 +32,20 @@ public sealed partial class HistoryRowViewModel(
     /// <summary>The readable source name, for the source filter buttons.</summary>
     public string SourceDisplay => SourceNames.Display(entry.SourceId);
 
-    /// <summary>Right side of the version lane's fixed 3-column grid (mirroring the main table's own version
-    /// lane), so the arrow between the two sits at the same x position regardless of how long either version
-    /// string is. A missing value is a plain hyphen, never blank.</summary>
+    /// <summary>Right side of the version lane's fixed 3-column grid, mirroring the main table, so the arrow sits at the same x whatever the version lengths. A missing value is a hyphen, never blank.</summary>
     public string FromVersionText => entry.FromVersion ?? "-";
 
     public string ToVersionText => entry.ToVersion ?? "-";
 
-    /// <summary>False centres <see cref="ToVersionText"/> alone across the whole lane instead of its own
-    /// column, same "nothing to point an arrow away from" treatment the main table already gives a row
-    /// with no installed version.</summary>
+    /// <summary>False centres <see cref="ToVersionText"/> across the whole lane, as the main table does for a row with no installed version.</summary>
     public bool HasFromVersion => entry.FromVersion is not null;
 
-    /// <summary>A single plain-text string for the failed-row error detail window, which shows the
-    /// version change as one line rather than the grid-based lane above: null when the entry carries no
-    /// version info at all (unlike the lane's own cells, which always show at least a hyphen).</summary>
+    /// <summary>One plain-text line for the failed-row error detail window; null when the entry carries no version info at all.</summary>
     public string? VersionChangeText => entry.FromVersion is null && entry.ToVersion is null
         ? null
         : $"{FromVersionText} → {ToVersionText}";
 
-    /// <summary>The size column's own sort key: the real byte count, so sorting is numeric rather than
-    /// alphabetic on the formatted text (which would put "1.2 GB" before "500 MB").</summary>
+    /// <summary>The size column's sort key: the real byte count, so sorting is numeric rather than on the formatted text.</summary>
     public long SortSize => entry.SizeBytes ?? 0;
 
     public bool HasSize => entry.SizeBytes is not null;
@@ -61,8 +54,7 @@ public sealed partial class HistoryRowViewModel(
 
     public bool HasToVersion => !string.IsNullOrWhiteSpace(entry.ToVersion);
 
-    /// <summary>Same helper and culture the main table's own size column uses, so German shows a comma;
-    /// a missing value (no size reported, or an entry from before this column existed) is a plain hyphen.</summary>
+    /// <summary>Same helper and culture as the main table's size column; a missing value is a hyphen.</summary>
     public string SizeText => entry.SizeBytes is { } bytes ? ByteSize.Format(bytes) : "-";
 
     /// <summary>A success says what was done: updated, rolled back to an older version, or uninstalled.</summary>
@@ -77,8 +69,7 @@ public sealed partial class HistoryRowViewModel(
 
     public string? Error => entry.Error;
 
-    /// <summary>The Result cell's hover text: the failure text, or for an install that left the version
-    /// unchanged why that happens (and how often this package already did the same).</summary>
+    /// <summary>The Result cell's hover text: the failure text, or for an install that left the version unchanged, why and how often this package already did the same.</summary>
     public string? ResultTooltip => entry is { Action: "install", Success: true, VersionUnchanged: true }
         ? unchangedCount >= 2
             ? LocalizationService.Instance["InstallVersionUnchangedDetail"] + "\n"
@@ -86,35 +77,24 @@ public sealed partial class HistoryRowViewModel(
             : LocalizationService.Instance["InstallVersionUnchangedDetail"]
         : entry.Error;
 
-    /// <summary>The failing tool's own captured output, when this entry was written with one; null for
-    /// every entry from before Detail existed, which falls back to a log excerpt (HistoryWindow.xaml.cs).</summary>
+    /// <summary>The failing tool's captured output when the entry was written with one; null otherwise, which falls back to a log excerpt (HistoryWindow.xaml.cs).</summary>
     public string? Detail => entry.Detail;
 
     public DateTimeOffset Timestamp => entry.Timestamp;
 
-    /// <summary>A handoff is neither: nothing is actually known to have gone wrong, so it must not count
-    /// toward "show only failed" or paint in the failure colour. Neither is a package the manager simply
-    /// has no fitting version for, nor a row the user stopped.</summary>
+    /// <summary>A handoff, a package the manager has no fitting version for, and a row the user stopped are not failures: they do not count toward "show only failed" or paint in the failure colour.</summary>
     public bool Failed => !entry.Success && !entry.IsManualHandoff && !entry.IsNotApplicable && !entry.IsCancelled;
 
-    /// <summary>A real success paints in the success colour; a handoff, a not-applicable outcome and a
-    /// stopped row carry no usable <c>Success</c> and never count.</summary>
+    /// <summary>A real success paints in the success colour; a handoff, a not-applicable outcome and a stopped row never count.</summary>
     public bool Succeeded => entry.Success && !IsManualHandoff;
 
     /// <summary>All terminal non-failures share the row's caution styling.</summary>
     public bool IsManualHandoff => entry.IsManualHandoff || entry.IsNotApplicable || entry.IsCancelled;
 
-    /// <summary>A tooltip alone is not enough to read past a log file's first line; a
-    /// small button on failed rows opens the full text instead, through the same ErrorDetailWindow a
-    /// failed install row in the main table already uses.</summary>
+    /// <summary>A tooltip cannot show past a log file's first line, so failed rows get a button that opens the full text in the same ErrorDetailWindow the main table uses.</summary>
     public string ShowDetailsTooltip => LocalizationService.Instance["HistoryShowDetails"];
 
-    /// <summary>
-    /// Same rule the live row's own button applies, computed once by <see cref="HistoryViewModel"/>
-    /// when the window opens (whether the source can pin a version, and whether this is the NEWEST
-    /// successful install on record for the package, i.e. the one that produced the currently installed
-    /// version) and handed in here rather than recomputed per entry.
-    /// </summary>
+    /// <summary>The same rule as the live row's button, computed once by <see cref="HistoryViewModel"/> when the window opens (the source can pin a version, and this is the newest successful install on record for the package) and handed in.</summary>
     public bool CanDowngrade => canDowngrade;
 
     public string DowngradeHeader =>
@@ -174,13 +154,7 @@ public sealed partial class HistorySourceFilter : ObservableObject
 
 public partial class HistoryViewModel : ObservableObject
 {
-    /// <summary>
-    /// Optional (trailing, added later) rather than required: several existing tests construct this
-    /// view model directly with only a HistoryService and positional filter/downgrade arguments, and
-    /// changing those call sites is out of this item's own owned-files scope. Null simply means the
-    /// column chooser state is never persisted (nothing to load, nothing to save), everything else works
-    /// the same.
-    /// </summary>
+    /// <summary>Optional: null means the column chooser state is never persisted, everything else works the same.</summary>
     private readonly SettingsService? _settings;
 
     public LocalizationService Loc => LocalizationService.Instance;
@@ -196,11 +170,7 @@ public partial class HistoryViewModel : ObservableObject
     [ObservableProperty]
     private bool showOnlyFailed;
 
-    /// <summary>
-    /// One toggle button per source that actually appears in the history; so the row of buttons stays
-    /// short and never offers a filter that would match nothing. None active means
-    /// "all sources".
-    /// </summary>
+    /// <summary>One toggle button per source that appears in the history, so the row stays short and never offers a filter matching nothing. None active means all sources.</summary>
     public IReadOnlyList<HistorySourceFilter> SourceFilters { get; }
 
     public bool HasSourceFilters => SourceFilters.Count > 0;
@@ -232,10 +202,7 @@ public partial class HistoryViewModel : ObservableObject
     /// <summary>Nothing matches the current search/filter, though the history is not itself empty.</summary>
     public bool NoMatches => HasEntries && !EntriesView.Cast<object>().Any();
 
-    /// <summary>
-    /// Reads and parses the history file on the CALLING thread. Production code uses
-    /// <see cref="CreateAsync"/>; this one is for callers that already are off the UI thread, and for tests.
-    /// </summary>
+    /// <summary>Reads and parses the history file on the calling thread. Production code uses <see cref="CreateAsync"/>; this is for callers already off the UI thread, and tests.</summary>
     internal HistoryViewModel(
         HistoryService history,
         IReadOnlySet<string>? pinningCapableSourceIds = null,
@@ -245,8 +212,7 @@ public partial class HistoryViewModel : ObservableObject
     {
     }
 
-    /// <summary>Reads the history file on a pool thread and builds the view model on the caller's thread
-    /// afterwards, so opening the window never parses up to 5 MB of JSON on the dispatcher.</summary>
+    /// <summary>Reads the history file on a pool thread and builds the view model on the caller's thread, so opening the window never parses up to 5 MB of JSON on the dispatcher.</summary>
     public static async Task<HistoryViewModel> CreateAsync(
         HistoryService history,
         IReadOnlySet<string>? pinningCapableSourceIds = null,
@@ -265,9 +231,7 @@ public partial class HistoryViewModel : ObservableObject
     {
         _settings = settings;
 
-        // The newest successful "install" entry per package is the one that produced the
-        // CURRENTLY installed version, so it is the only one a rollback can be offered from; Read() is
-        // already newest first, so the first match per key here is that entry.
+        // The newest successful install per package produced the currently installed version, so it is the only one a rollback is offered from; Read() is newest first, so the first match per key is that entry.
         var newestSuccessfulInstallKeys = new HashSet<string>(StringComparer.Ordinal);
         var canDowngradeFlags = new bool[read.Count];
         for (var i = 0; i < read.Count; i++)
@@ -286,8 +250,7 @@ public partial class HistoryViewModel : ObservableObject
             canDowngradeFlags[i] = pinningCapableSourceIds?.Contains(entry.SourceId) == true;
         }
 
-        // Per "installed, version unchanged" entry: its place in the run of identical results for the
-        // same package and versions. Read() is newest first, so walk it from the oldest end.
+        // For each "installed, version unchanged" entry: its place in the run of identical results for the same package and versions. Read() is newest first, so walk it from the oldest end.
         var unchangedCounts = new int[read.Count];
         var unchangedSeen = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         for (var i = read.Count - 1; i >= 0; i--)
@@ -314,17 +277,14 @@ public partial class HistoryViewModel : ObservableObject
         EntriesView = CollectionViewSource.GetDefaultView(Entries);
         EntriesView.Filter = Matches;
 
-        // Newest first by default, which is what a history is read for.
+        // Newest first by default.
         ApplySort();
 
         // The remembered column chooser state and sort, after the default above.
         LoadTableLayout();
     }
 
-    /// <summary>
-    /// The history table's own column list for the shared chooser (<see cref="Views.ColumnChooser"/>).
-    /// The details button is structural (no header of its own) and is never offered; Name may not be hidden.
-    /// </summary>
+    /// <summary>The history table's column list for the shared chooser (<see cref="Views.ColumnChooser"/>). The details button is structural and never offered; Name may not be hidden.</summary>
     public static IReadOnlyList<ColumnDescriptor> HistoryTableColumns { get; } =
     [
         new("name", () => LocalizationService.Instance["ColumnName"], CanHide: false),
@@ -344,9 +304,7 @@ public partial class HistoryViewModel : ObservableObject
         ["result"] = 110,
     };
 
-    /// <summary>Same DynamicResource-write trick as the main table's own column widths
-    /// (<see cref="MainViewModel.MainColumnResourceKeys"/>): one write here collapses (or restores) the
-    /// column in both the header Grid and the row template at once.</summary>
+    /// <summary>The same DynamicResource write as the main table's column widths (<see cref="MainViewModel.MainColumnResourceKeys"/>): one write collapses or restores a column in both the header and the row template.</summary>
     private static readonly Dictionary<string, string> HistoryColumnResourceKeys = new(StringComparer.Ordinal)
     {
         ["when"] = "HistoryColWidthWhen",
@@ -394,8 +352,7 @@ public partial class HistoryViewModel : ObservableObject
     {
         if (_settings is null || !_settings.Current.Ui.Tables.TryGetValue("history", out var state))
         {
-            // The widths live in app-wide resources that outlive this view model: with no saved state
-            // (first run, or after a full reset) a column hidden earlier would otherwise stay at width 0.
+            // The widths live in app-wide resources that outlive this view model: with no saved state a column hidden earlier would stay at width 0.
             ApplyColumnWidths();
             return;
         }
@@ -418,8 +375,7 @@ public partial class HistoryViewModel : ObservableObject
         RefreshSortGlyphs();
     }
 
-    /// <summary>Written on every change and again when the window closes (HistoryWindow.xaml.cs); a no-op
-    /// without a SettingsService (see the field's own doc comment).</summary>
+    /// <summary>Written on every change and when the window closes; a no-op without a SettingsService.</summary>
     public void SaveTableLayout()
     {
         if (_settings is null)
@@ -460,7 +416,7 @@ public partial class HistoryViewModel : ObservableObject
         _ => null,
     };
 
-    // Sorting: click a column header to sort by it, click the active one again to flip direction.
+    // Sorting: a header click sorts by that column, a second click flips the direction.
 
     [ObservableProperty]
     private string sortColumn = "when";
@@ -523,10 +479,7 @@ public partial class HistoryViewModel : ObservableObject
     public string SizeSortGlyph => GlyphFor("size");
     public string ResultSortGlyph => GlyphFor("result");
 
-    /// <summary>
-    /// The language changed while this window was open. The rows read their result word from the resources
-    /// in code, so nothing would re-read it; the list stayed in the old language until it was reopened.
-    /// </summary>
+    /// <summary>The language changed while this window was open. The rows read their result word in code, so nothing else re-reads it.</summary>
     public void RefreshLocalizedText()
     {
         foreach (var entry in Entries)
@@ -562,8 +515,7 @@ public partial class HistoryViewModel : ObservableObject
         RefreshView();
     }
 
-    /// <summary>The pressed source buttons, gathered once per refresh instead of once per row: the filter runs
-    /// for every row of a history that can be megabytes long, on every keystroke.</summary>
+    /// <summary>The pressed source buttons, gathered once per refresh: the filter runs for every row of a history that can be megabytes long, on every keystroke.</summary>
     private HashSet<string> _activeSourceIds = new(StringComparer.OrdinalIgnoreCase);
 
     private void RefreshView()
@@ -574,8 +526,7 @@ public partial class HistoryViewModel : ObservableObject
         OnPropertyChanged(nameof(NoMatches));
     }
 
-    // Copy the currently filtered/sorted rows as tab-separated text, the same shape a paste
-    // into a spreadsheet expects. Plain text only, no file dialog and no file format.
+    // Copies the filtered and sorted rows as tab-separated text, the shape a spreadsheet paste expects.
 
     [ObservableProperty]
     private string copiedMessage = string.Empty;
@@ -595,18 +546,11 @@ public partial class HistoryViewModel : ObservableObject
         }
         catch (System.Runtime.InteropServices.ExternalException)
         {
-            // the clipboard can be held open by another process; a failed copy is not worth surfacing
-            // (same reasoning as ErrorDetailViewModel.Copy)
+            // The clipboard can be held open by another process; a failed copy is not worth surfacing.
         }
     }
 
-    /// <summary>
-    /// Pure and testable on its own: a header line (name, from, to, source, date, result) followed by
-    /// one line per row, in whatever order <paramref name="rows"/> is already filtered/sorted into.
-    /// An empty <paramref name="rows"/> yields only the header, never an empty string. Each row reads
-    /// its cells from the SAME formatted properties the table itself shows, so a copy can never show a
-    /// number or date in a different shape (or a different culture) than the window the user just looked at.
-    /// </summary>
+    /// <summary>Pure and testable on its own: a header line followed by one line per row in the order given; an empty list yields only the header. Cells come from the same formatted properties the table shows, so a copy matches the window in shape and culture.</summary>
     internal static string BuildClipboardText(IEnumerable<HistoryRowViewModel> rows)
     {
         var loc = LocalizationService.Instance;

@@ -10,9 +10,7 @@ using UltimateUpdater.Services;
 
 namespace UltimateUpdater.ViewModels;
 
-/// <summary>
-/// Settings apply instantly (no Save button for toggles) and persist immediately.
-/// </summary>
+/// <summary>Settings apply instantly (no Save button for toggles) and persist immediately.</summary>
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly SettingsService _settings;
@@ -21,16 +19,10 @@ public partial class SettingsViewModel : ObservableObject
     private readonly AutostartService _autostart;
     private readonly Func<Task<Services.SelfUpdate.SelfUpdateCheckOutcome>>? _checkForUpdates;
 
-    /// <summary>
-    /// Whether a source's own tool was last seen missing on this machine
-    /// (<c>ScanOrchestrator.IsKnownNotInstalled</c>). Optional and defaulting to "never hidden", so a caller
-    /// that cannot answer simply shows every source.
-    /// </summary>
+    /// <summary>Whether a source's own tool was last seen missing on this machine. Optional: a caller that cannot answer shows every source.</summary>
     private readonly Func<string, bool>? _isSourceNotInstalled;
 
-    /// <summary>Snapshot of the table's rows at the moment Settings was opened, keyed the same "source:id"
-    /// way <c>MainViewModel.PackageKey</c> builds its own keys, so the ignore-list dialog can
-    /// show a real name instead of the raw settings key. See <see cref="ShowIgnoreList"/>.</summary>
+    /// <summary>Snapshot of the table's rows when Settings was opened, keyed like <c>MainViewModel.PackageKey</c>, so the ignore list can show a real name instead of the raw key. See <see cref="ShowIgnoreList"/>.</summary>
     private readonly IReadOnlyDictionary<string, string> _ignoredPackageNames;
 
     [ObservableProperty]
@@ -55,12 +47,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int maxParallelSources;
 
-    /// <summary>
-    /// False until either parallelism slider has been moved by hand, mirrors
-    /// <see cref="Models.Settings.AppSettings.ParallelismChosenByUser"/>. Drives the "set automatically"
-    /// caption next to both sliders; once true, the caption is gone for good on this machine (short of a
-    /// factory reset).
-    /// </summary>
+    /// <summary>False until either parallelism slider has been moved by hand; mirrors <see cref="Models.Settings.AppSettings.ParallelismChosenByUser"/> and drives the "set automatically" caption. Once true it stays true on this machine, short of a factory reset.</summary>
     [ObservableProperty]
     private bool parallelismChosenByUser;
 
@@ -72,16 +59,11 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private int registryBackupRetentionCount;
 
-    /// <summary>
-    /// How many days of logs are kept. A stored value that is not one of the offered ones (an older
-    /// default, or a hand-edited settings.json) is SHOWN as the nearest offered one but not written back
-    /// until the user picks something; housekeeping keeps using whatever is actually stored until then.
-    /// </summary>
+    /// <summary>How many days of logs are kept. A stored value that is not an offered one (a hand-edited settings.json) is shown as the nearest offered one but not written back until the user picks; housekeeping keeps using the stored value until then.</summary>
     [ObservableProperty]
     private int logRetentionDays;
 
-    /// <summary>Same "shown as the nearest offered value, not written back until picked"
-    /// contract as <see cref="LogRetentionDays"/>.</summary>
+    /// <summary>Same "shown as the nearest offered value, not written back until picked" contract as <see cref="LogRetentionDays"/>.</summary>
     [ObservableProperty]
     private int historyRetentionDays;
 
@@ -101,19 +83,15 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool closeToTray;
 
-    /// <summary>Toggle inverted from the settings root's CleanupReminderOff so the switch
-    /// reads naturally ("on" means the reminder can appear); the banner's own "never again" sets that
-    /// flag directly, this is just the other way to reach the same setting.</summary>
+    /// <summary>Inverted from the settings root's CleanupReminderOff so the switch reads naturally; the banner's "never again" sets that flag directly.</summary>
     [ObservableProperty]
     private bool cleanupReminderEnabled;
 
-    /// <summary>Measure the cleanup areas in the background at startup (see
-    /// <c>AppSettings.CleanupPrescanAtStartup</c>).</summary>
+    /// <summary>Measure the cleanup areas in the background at startup (see <c>AppSettings.CleanupPrescanAtStartup</c>).</summary>
     [ObservableProperty]
     private bool cleanupPrescanAtStartup;
 
-    /// <summary>File targets go to the recycle bin instead of being deleted outright; the cleanup run reads
-    /// the stored setting when it starts. A target that needs admin rights ignores it regardless.</summary>
+    /// <summary>File targets go to the recycle bin instead of being deleted outright; read when a cleanup starts. A target that needs admin rights ignores it.</summary>
     [ObservableProperty]
     private bool cleanupRecycleInsteadOfDelete;
 
@@ -151,12 +129,11 @@ public partial class SettingsViewModel : ObservableObject
     public IReadOnlyList<DayOption> LogRetentionOptions { get; } =
         [new(3), new(7), new(30), new(365)];
 
-    /// <summary>How long an install-history row is kept: same offered values as the log, a separate list
-    /// because it is a separate setting.</summary>
+    /// <summary>How long an install-history row is kept; the same offered values as the log, in a separate list for a separate setting.</summary>
     public IReadOnlyList<DayOption> HistoryRetentionOptions { get; } =
         [new(3), new(7), new(30), new(365)];
 
-    /// <summary>Where the log files are, shown so the button below is not a leap of faith.</summary>
+    /// <summary>Where the log files are, shown beside the button that opens them.</summary>
     public string LogFolder => AppPaths.LogsDirectory;
 
     /// <summary>Where the last ten one-click error reports are saved.</summary>
@@ -165,21 +142,14 @@ public partial class SettingsViewModel : ObservableObject
     /// <summary>Where settings, history, caches, logs and reports actually live right now.</summary>
     public string DataFolder => AppPaths.DataDirectory;
 
-    /// <summary>
-    /// Paths permanently excluded from the cleanup dialog via its own right-click menu
-    /// (<see cref="Models.Settings.AppSettings.CleanupPermanentlyExcludedPaths"/>): this is where one is released
-    /// again. Rebuilt in place by <see cref="RebuildExcludedPaths"/>
-    /// rather than a fixed list like <see cref="SourceToggles"/>, because releasing a path (unlike a
-    /// source) actually shrinks it at runtime.
-    /// </summary>
+    /// <summary>Paths permanently excluded from the cleanup dialog via its right-click menu (<see cref="Models.Settings.AppSettings.CleanupPermanentlyExcludedPaths"/>); this is where one is released again. Rebuilt in place by <see cref="RebuildExcludedPaths"/>, since releasing a path shrinks the list at runtime.</summary>
     public ObservableCollection<ExcludedPathRow> ExcludedPaths { get; } = [];
 
     public int ExcludedPathCount => ExcludedPaths.Count;
 
     public bool HasExcludedPaths => ExcludedPaths.Count > 0;
 
-    /// <summary>Drives the empty-state line: when there is nothing to show, the row says so quietly
-    /// rather than being missing outright.</summary>
+    /// <summary>Drives the empty-state line.</summary>
     public bool HasNoExcludedPaths => ExcludedPaths.Count == 0;
 
     public string ExcludedPathsHeaderText => string.Format(Loc["SettingsExcludedPathsHeader"], ExcludedPathCount);
@@ -196,8 +166,7 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(ExcludedPathsHeaderText));
     }
 
-    /// <summary>Case-insensitive, same matching <c>CleanupViewModel.PermanentlyExcludePath</c> uses to add
-    /// one in the first place.</summary>
+    /// <summary>Case-insensitive, matching <c>CleanupViewModel.PermanentlyExcludePath</c>.</summary>
     private void ReleaseExcludedPath(string path)
     {
         var removed = _settings.Current.CleanupPermanentlyExcludedPaths
@@ -209,8 +178,7 @@ public partial class SettingsViewModel : ObservableObject
         RebuildExcludedPaths();
     }
 
-    /// <summary>Releasing is reversible in effect (cleanup simply offers the path again next time it is
-    /// found), so a normal confirm rather than the destructive/red one factory reset uses.</summary>
+    /// <summary>Releasing is reversible (cleanup simply offers the path again), so a normal confirm rather than the red one factory reset uses.</summary>
     [RelayCommand]
     private void ReleaseAllExcludedPaths()
     {
@@ -230,18 +198,10 @@ public partial class SettingsViewModel : ObservableObject
         RebuildExcludedPaths();
     }
 
-    /// <summary>
-    /// One switch per source. Absent from settings means on, so a source added by a later version
-    /// starts enabled rather than silently missing.
-    /// </summary>
+    /// <summary>One switch per source. Absent from settings means on, so a source added by a later version starts enabled.</summary>
     public IReadOnlyList<SourceToggle> SourceToggles { get; }
 
-    /// <summary>
-    /// Filtered view over <see cref="SourceToggles"/> for the search box, with over 100 sources planned,
-    /// the plain list stopped being scannable. A live <see cref="ICollectionView"/>
-    /// rather than a second collection: toggling a source must not fight the filter for which list is the
-    /// truth, and "all sources" still walks the real, unfiltered <see cref="SourceToggles"/>.
-    /// </summary>
+    /// <summary>Filtered view over <see cref="SourceToggles"/> for the search box. A live view rather than a second collection, so toggling a source does not fight the filter for which list is the truth; "all sources" still walks the unfiltered list.</summary>
     public ICollectionView SourceToggleView { get; }
 
     [ObservableProperty]
@@ -253,8 +213,7 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(HasNoSourceMatches));
     }
 
-    /// <summary>Shown only while a search narrows the chips to nothing, so an empty result reads as "no
-    /// match" rather than "every source vanished".</summary>
+    /// <summary>Shown only while a search narrows the chips to nothing, so an empty result reads as "no match".</summary>
     public bool HasNoSourceMatches => !string.IsNullOrWhiteSpace(SourceSearchText) && SourceToggleView.IsEmpty;
 
     private bool FilterSourceToggle(object candidate)
@@ -262,8 +221,7 @@ public partial class SettingsViewModel : ObservableObject
         if (candidate is not SourceToggle toggle)
             return true;
 
-        // The settings list's own "show all" escape, same shape as the pill-strip toggle:
-        // a source with no tool on this machine stays out of the way until asked for, never gone for good.
+        // A source with no tool on this machine stays out of the way until "show all" is on.
         if (!ShowAllSources && toggle.IsNotInstalled)
             return false;
 
@@ -271,12 +229,7 @@ public partial class SettingsViewModel : ObservableObject
             || toggle.Display.Contains(SourceSearchText, StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>
-    /// Off by default, so a fresh settings window does not lead with a wall of tools that are not
-    /// even on this machine. Not settings-backed, the same "this is the app's own judgement of what is
-    /// worth a default look, not a saved preference" reasoning <see cref="CleanupViewModel.ShowAllCategories"/>
-    /// already documents for its own twin toggle.
-    /// </summary>
+    /// <summary>Off by default, so a fresh window does not lead with tools that are not on this machine. Not settings-backed: it is the app's own judgement of a default look, like <see cref="CleanupViewModel.ShowAllCategories"/>.</summary>
     [ObservableProperty]
     private bool showAllSources;
 
@@ -293,10 +246,7 @@ public partial class SettingsViewModel : ObservableObject
 
     public string ShowAllSourcesText => string.Format(Loc["SettingsShowAllSources"], HiddenSourceCount);
 
-    /// <summary>
-    /// Tri-state for the "all sources" checkbox: every source on (true), none (false), or a mix (null →
-    /// indeterminate). Bound one-way; the box's click runs <see cref="ToggleAllSources"/>.
-    /// </summary>
+    /// <summary>Tri-state for the "all sources" checkbox: every source on, none, or a mix (null). Bound one-way; the click runs <see cref="ToggleAllSources"/>.</summary>
     public bool? AllSourcesEnabled
     {
         get
@@ -332,13 +282,7 @@ public partial class SettingsViewModel : ObservableObject
     public string AboutLegalFull =>
         string.Join("\n\n", Loc["AboutThirdParty"], Loc["AboutTrademarks"], Loc["AboutIcons"]);
 
-    /// <summary>
-    /// One row of outbound traffic this program itself generates, mirroring
-    /// the outbound traffic table of the design notes; when those notes are present, a test asserts the two
-    /// tables hold the same hosts so they cannot drift apart. Hosts and the calling code are plain
-    /// non-localized fields; the purpose is a resource key rendered in the current language. The calling
-    /// code is a maintainer reference and is never shown in the window.
-    /// </summary>
+    /// <summary>One row of outbound traffic this program itself generates, mirroring the outbound traffic table of the design notes; a test asserts both tables hold the same hosts. The calling code is a maintainer reference and is never shown.</summary>
     public sealed class NetworkTarget(string hosts, string purposeKey, string callingCode, IReadOnlyList<string> sourceIds)
         : ObservableObject
     {
@@ -355,12 +299,7 @@ public partial class SettingsViewModel : ObservableObject
         public override string ToString() => $"{Hosts}: {Purpose}";
     }
 
-    /// <summary>
-    /// The full inventory, regardless of what is installed on this machine; <see cref="NetworkTargets"/>
-    /// is what the window actually shows. Kept in the SAME order and grouping as the design doc's own
-    /// table, and the design doc is what to update first, this table follows it, never the other way
-    /// round.
-    /// </summary>
+    /// <summary>The full inventory, regardless of what is installed; <see cref="NetworkTargets"/> is what the window shows. Same order and grouping as the design doc's table, which is updated first.</summary>
     public static IReadOnlyList<NetworkTarget> NetworkTargetCatalog { get; } =
     [
         new(
@@ -405,12 +344,7 @@ public partial class SettingsViewModel : ObservableObject
             ["ollama"]),
     ];
 
-    /// <summary>
-    /// The rows actually shown: everything whose owning sources are not ALL known to be missing from this
-    /// machine (an empty <see cref="NetworkTarget.SourceIds"/> means the row is not tied to one particular
-    /// source and always shows, self-update and the changelog fetch are not something a "source" is
-    /// switched off for). A one-time snapshot at construction, same as <see cref="SourceToggles"/>.
-    /// </summary>
+    /// <summary>The rows shown: everything whose owning sources are not all known to be missing. An empty <see cref="NetworkTarget.SourceIds"/> means the row is tied to no source and always shows (self-update, changelog fetch). A snapshot at construction, like <see cref="SourceToggles"/>.</summary>
     public IReadOnlyList<NetworkTarget> NetworkTargets { get; }
 
     public bool HasNetworkTargets => NetworkTargets.Count > 0;
@@ -461,14 +395,11 @@ public partial class SettingsViewModel : ObservableObject
         _ignoredPackageNames = ignoredPackageNames ?? new Dictionary<string, string>(StringComparer.Ordinal);
         _isSourceNotInstalled = isSourceNotInstalled;
 
-        // A broken data-folder pointer falls back silently at the point AppPaths resolves it
-        // (before any logger exists); this is the first place afterward that actually owns one, so it is
-        // where the one line about it finally gets written.
+        // A broken data-folder pointer falls back silently where AppPaths resolves it, before any logger exists; this is the first place that owns one, so the line is written here.
         if (AppPaths.ConsumePointerFallbackReason() is { } fallbackReason)
             _logging.Warn(fallbackReason);
 
-        // Same deferred-logging shape, for the one-time folder-name migration after the app was
-        // renamed (AppPaths.TryMigrateLegacyDataFolder).
+        // Same deferred logging, for the one-time legacy folder-name migration.
         if (AppPaths.ConsumeLegacyDataFolderMigrationMessage() is { } migrationMessage)
             _logging.Info(migrationMessage);
 
@@ -537,16 +468,10 @@ public partial class SettingsViewModel : ObservableObject
 
     partial void OnParallelismChosenByUserChanged(bool value) => OnPropertyChanged(nameof(ShowParallelismAutoNote));
 
-    /// <summary>
-    /// Set only while <see cref="ReloadFromSettings"/> writes MaxParallelSources/MaxParallelInstalls back
-    /// from a just-reloaded (or freshly reset) settings object: without it, a factory reset would
-    /// immediately re-pin the flag it just cleared, as the reloaded value round-trips through the two
-    /// setters below.
-    /// </summary>
+    /// <summary>Set only while <see cref="ReloadFromSettings"/> writes the parallelism values back from a reloaded or reset settings object, so the setters do not re-pin the flag a factory reset just cleared.</summary>
     private bool _suppressParallelismPin;
 
-    /// <summary>Moving either slider by hand is what "chosen by the user" means: once true, the hardware
-    /// auto-tune at startup never touches these two settings again, not even after an update.</summary>
+    /// <summary>Moving either slider by hand is what "chosen by the user" means: the hardware auto-tune at startup never touches these settings again.</summary>
     private void ApplyParallelismChange(Action<Models.Settings.AppSettings> change)
     {
         Apply(s =>
@@ -560,11 +485,10 @@ public partial class SettingsViewModel : ObservableObject
             ParallelismChosenByUser = true;
     }
 
-    /// <summary>The folder last stored (or loaded), what a rejected entry falls back to.</summary>
+    /// <summary>The folder last stored or loaded; what a rejected entry falls back to.</summary>
     private string _acceptedRegistryBackupFolder = string.Empty;
 
-    /// <summary>Set while the box is put back to <see cref="_acceptedRegistryBackupFolder"/> or loaded from
-    /// settings: neither is user input, so neither is validated again.</summary>
+    /// <summary>Set while the box is put back or loaded from settings: neither is user input, so neither is validated.</summary>
     private bool _registryBackupFolderIsProgrammatic;
 
     partial void OnRegistryBackupFolderChanged(string value)
@@ -597,17 +521,14 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
-    /// <summary>Why a typed or picked registry backup folder is refused, or null when it is fine. The
-    /// elevated backup itself only accepts folders inside the user profile, so a folder outside would
-    /// silently stop every registry backup later.</summary>
+    /// <summary>Why a typed or picked registry backup folder is refused, or null when fine. The elevated backup only accepts folders inside the user profile, so another folder would silently stop every backup.</summary>
     internal string? RegistryBackupFolderProblem(string folder)
     {
         var rejection = AppPaths.ValidateRegistryBackupFolder(folder);
         return rejection == AppPaths.DataFolderRejection.None ? null : DataFolderRejectionText(rejection);
     }
 
-    /// <summary>The folder picker next to the backup folder box; the choice goes through the same
-    /// validation as typed text.</summary>
+    /// <summary>The folder picker; the choice goes through the same validation as typed text.</summary>
     [RelayCommand]
     private void BrowseRegistryBackupFolder()
     {
@@ -627,24 +548,17 @@ public partial class SettingsViewModel : ObservableObject
 
     partial void OnHistoryRetentionDaysChanged(int value) => Apply(s => s.HistoryRetentionDays = value);
 
-    /// <summary>
-    /// The smallest offered value that is at least what is stored, so the dropdown never comes up blank
-    /// and never claims a SHORTER retention than the one actually in force: a stored 14 shows as 30, not
-    /// as 7, because 7 would read as a promise to delete files that are still there.
-    /// </summary>
+    /// <summary>The smallest offered value at least what is stored, so the dropdown is never blank and never claims a shorter retention than the one in force: a stored 14 shows as 30, since 7 would promise deleting files that are still kept.</summary>
     internal int NearestLogRetention(int days) =>
         LogRetentionOptions.FirstOrDefault(option => option.Days >= days)?.Days
         ?? LogRetentionOptions[^1].Days;
 
-    /// <summary>Same rule as <see cref="NearestLogRetention"/> for the registry backup count: never fewer
-    /// backups than the stored number promises, and never a blank dropdown for an unlisted value.</summary>
+    /// <summary>Same rule as <see cref="NearestLogRetention"/> for the registry backup count.</summary>
     internal int NearestRegistryBackupRetention(int count) =>
         RetentionCountOptions.FirstOrDefault(option => option.Count >= count)?.Count
         ?? RetentionCountOptions[^1].Count;
 
-    /// <summary>The offered interval closest to the stored one, so a hand-edited value never leaves the
-    /// dropdown blank. Off (0) is only ever picked for 0 itself or below: a stored 60 minutes means a
-    /// scan was wanted, so it must not silently turn into "never".</summary>
+    /// <summary>The offered interval closest to the stored one. Off (0) is picked only for 0 itself or below: a stored 60 minutes means a scan was wanted and must not turn into "never".</summary>
     internal int NearestScanInterval(int minutes)
     {
         if (minutes <= 0)
@@ -656,8 +570,7 @@ public partial class SettingsViewModel : ObservableObject
             .First().Minutes;
     }
 
-    /// <summary>Same reasoning as <see cref="NearestLogRetention"/>, its own method since the two lists
-    /// could diverge later even though they share the same four values today.</summary>
+    /// <summary>Same rule as <see cref="NearestLogRetention"/>, kept separate because the two lists may diverge.</summary>
     internal int NearestHistoryRetention(int days) =>
         HistoryRetentionOptions.FirstOrDefault(option => option.Days >= days)?.Days
         ?? HistoryRetentionOptions[^1].Days;
@@ -665,7 +578,7 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnScanDownloadsChanged(bool value)
     {
         Apply(s => s.Security.ScanDownloads = value);
-        // The sources are built without settings, so the scanner reads this static gate instead.
+        // The sources are built without settings, so the scanner reads this static gate.
         Services.Security.MalwareScanner.ScanDownloads = value;
     }
 
@@ -699,14 +612,12 @@ public partial class SettingsViewModel : ObservableObject
         Apply(s => s.Ui.Language = value);
         LocalizationService.Instance.Apply(value);
 
-        // Computed text bound in this very window, not reached by the Loc[...] bindings.
+        // Computed text bound in this window, not reached by the Loc[...] bindings.
         OnPropertyChanged(nameof(ExcludedPathsHeaderText));
         OnPropertyChanged(nameof(AboutVersionText));
         OnPropertyChanged(nameof(AboutLegalFull));
 
-        // Loc[...] bindings refresh through the localization service itself, but the interval items
-        // are ordinary objects with their own Display property. Without this the one list in the very
-        // window that switches the language stayed in the old one until it was closed and reopened.
+        // Loc[...] bindings refresh through the localization service, but the interval items are plain objects with their own Display property.
         foreach (var option in IntervalOptions)
             option.RefreshDisplay();
 
@@ -729,20 +640,16 @@ public partial class SettingsViewModel : ObservableObject
         foreach (var target in NetworkTargets)
             target.RefreshDisplay();
 
-        // And the main window's own computed text, its rows and its dialogs: this is the place the
-        // language is normally switched from, so leaving it to the next close left the app half-translated.
+        // And the main window's computed text, rows and dialogs: this is where the language is normally switched.
         LanguageChanged?.Invoke();
     }
 
-    /// <summary>
-    /// Raised right after the language has been applied, so the owner can re-raise the computed text that no
-    /// binding reaches (see <c>MainViewModel.RefreshLocalizedText</c>).
-    /// </summary>
+    /// <summary>Raised right after the language has been applied, so the owner can re-raise the computed text that no binding reaches (see <c>MainViewModel.RefreshLocalizedText</c>).</summary>
     public event Action? LanguageChanged;
 
     partial void OnAutostartEnabledChanged(bool value)
     {
-        // registry write can fail on a locked-down machine; reflect reality rather than the wish
+        // The registry write can fail on a locked-down machine; reflect reality rather than the wish.
         if (!_autostart.TrySet(value))
         {
             AutostartEnabled = _autostart.IsEnabled();
@@ -755,8 +662,7 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void OpenLogFolder() => UriLauncher.OpenFolderDetached(AppPaths.LogsDirectory, "log folder", _logging);
 
-    /// <summary>Same "create it first" reasoning as <see cref="OpenLogFolder"/>: a report is only written
-    /// once a Copy click actually saved one, so the folder itself may not exist yet.</summary>
+    /// <summary>Creates the folder first, as <see cref="OpenLogFolder"/> does: it exists only once a report has been saved.</summary>
     [RelayCommand]
     private void OpenReports()
     {
@@ -772,8 +678,7 @@ public partial class SettingsViewModel : ObservableObject
         UriLauncher.LaunchDetached(ErrorReportBuilder.ReportsDirectory, _logging);
     }
 
-    /// <summary>The data folder itself, same "create it first" reasoning as the two folders above
-    /// it, in practice always already there since the app itself just wrote to it.</summary>
+    /// <summary>The data folder itself; created first like the two above, though in practice it already exists.</summary>
     [RelayCommand]
     private void OpenDataFolder()
     {
@@ -789,12 +694,7 @@ public partial class SettingsViewModel : ObservableObject
         UriLauncher.LaunchDetached(AppPaths.DataDirectory, _logging);
     }
 
-    /// <summary>
-    /// Picks a new home for the data folder, validates it with the same checks the cleanup dialog
-    /// already relies on, copies everything across and records the new location for the NEXT launch to
-    /// pick up. Never touches the folder currently in use, that keeps working exactly as it does today
-    /// until the restart the success message asks for.
-    /// </summary>
+    /// <summary>Picks a new home for the data folder, validates it as the cleanup dialog does, copies everything across and records the location for the next launch. The folder in use is untouched until the restart.</summary>
     [RelayCommand]
     private async Task ChangeDataFolderAsync()
     {
@@ -822,8 +722,7 @@ public partial class SettingsViewModel : ObservableObject
         // Only a subfolder this move creates may be removed again if a later step fails.
         var createdTarget = !Directory.Exists(effectiveTarget);
 
-        // The copy covers logs, caches, history and backups and can take a while on a slow drive or a
-        // network share, so it runs off the UI thread; the command stays disabled until it is done.
+        // The copy can take a while on a slow drive or network share, so it runs off the UI thread; the command stays disabled until done.
         var (moved, blockingSkippedFiles) = await Task.Run(() =>
         {
             var ok = AppPaths.TryMoveDataFolder(effectiveTarget, out var skipped);
@@ -839,9 +738,7 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        // The copy ran while the windows stayed usable: a setting changed meanwhile would otherwise be
-        // missing from the new folder after the restart. The same goes for the history and the reports
-        // written meanwhile.
+        // The copy ran while the windows stayed usable: a setting, history entry or report written meanwhile would otherwise be missing from the new folder.
         if (!AppPaths.SyncLiveDataTo(effectiveTarget))
         {
             _logging.Warn("The current history and reports could not be written into the new data folder.");
@@ -876,8 +773,7 @@ public partial class SettingsViewModel : ObservableObject
             Loc["SettingsDataFolderChange"], string.Format(Loc["SettingsDataFolderMoved"], effectiveTarget, oldFolder));
     }
 
-    /// <summary>Up to three file names, then an ellipsis, never the full path (the folder is
-    /// already named in the dialog's own context).</summary>
+    /// <summary>Up to three file names, then an ellipsis, never the full path.</summary>
     private static string FormatSkippedFileNames(IReadOnlyList<string> files)
     {
         var names = files.Select(Path.GetFileName).Take(3);
@@ -903,9 +799,7 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void OpenRepository() => UriLauncher.LaunchDetached(RepositoryUrl, _logging);
 
-    /// <summary>Opens the ignore-list management dialog, seeded with the row-name snapshot taken
-    /// when this window was constructed. Non-modal, same "one window per kind" rule the rest of the app's
-    /// owned dialogs follow.</summary>
+    /// <summary>Opens the ignore-list dialog, seeded with the row-name snapshot taken when this window was constructed. Non-modal, one window per kind.</summary>
     [RelayCommand]
     private void ShowIgnoreList()
     {
@@ -924,8 +818,7 @@ public partial class SettingsViewModel : ObservableObject
                 _openIgnoreList = null;
         };
 
-        // Owned by the settings window it was opened from, so it closes with it; the main window only when
-        // there is no settings window (it cannot be opened any other way, but the fallback keeps an owner).
+        // Owned by the settings window so it closes with it; the main window is the fallback owner.
         window.Owner = Application.Current?.Windows.OfType<Views.SettingsWindow>().FirstOrDefault(open => open.IsLoaded)
                        ?? Application.Current?.MainWindow;
         window.Show();
@@ -934,8 +827,7 @@ public partial class SettingsViewModel : ObservableObject
     /// <summary>Raised when the ignore list dialog removed entries; the owner re-reads the table's ignore marks.</summary>
     public event Action? IgnoreListChanged;
 
-    /// <summary>Raised after a factory reset deleted the app's files, so whoever holds them in memory (the
-    /// enrichment cache, the history's rollback index, the main table's view state) drops them too.</summary>
+    /// <summary>Raised after a factory reset deleted the app's files, so whoever holds them in memory (enrichment cache, rollback index, table view state) drops them too.</summary>
     public event Action? DataReset;
 
     internal IgnoreListViewModel CreateIgnoreListViewModel()
@@ -946,19 +838,13 @@ public partial class SettingsViewModel : ObservableObject
         return viewModel;
     }
 
-    /// <summary>The ignore list dialog while it is open, so a reset or an ignore made in the table can make it
-    /// re-read the list it shows.</summary>
+    /// <summary>The ignore list dialog while open, so a reset or an ignore made in the table can make it re-read its list.</summary>
     private IgnoreListViewModel? _openIgnoreList;
 
     /// <summary>The table changed the ignore list (the main view model forwards its marks event here).</summary>
     internal void RefreshOpenIgnoreList() => _openIgnoreList?.Refresh();
 
-    /// <summary>
-    /// Factory state in ONE action: every
-    /// option, every source switch and the ignore list go back to their defaults AND every file this app
-    /// wrote (history, logs, caches) is deleted. Destructive and irreversible, so the confirmation is a red
-    /// warning.
-    /// </summary>
+    /// <summary>Factory state in one action: every option, source switch and the ignore list go back to defaults and every file this app wrote (history, logs, caches) is deleted. Irreversible, so the confirmation is a red warning.</summary>
     [RelayCommand]
     private async Task ResetEverythingAsync()
     {
@@ -975,8 +861,7 @@ public partial class SettingsViewModel : ObservableObject
         Persist();
         ReloadFromSettings();
 
-        // Off the UI thread: deleting every cache/history/log file this app wrote can take a
-        // while, and running it synchronously here would freeze the window for that long.
+        // Off the UI thread: deleting every cache, history and log file can take a while.
         var failed = await Task.Run(() => AppDataCleaner.DeleteCachesAndHistory(_logging));
         _logging.Info("Application reset to factory state on user request.");
         DataReset?.Invoke();
@@ -988,10 +873,7 @@ public partial class SettingsViewModel : ObservableObject
             Dialogs.Success(Loc["SettingsResetDoneHeadline"], Loc["SettingsResetDoneBody"]);
     }
 
-    /// <summary>Set while <see cref="ReloadFromSettings"/> is writing the UI-bound toggles back to what
-    /// <see cref="_settings"/> already says, without this, each one round-tripped through
-    /// <see cref="SetSourceEnabled"/> and saved settings.json AGAIN, once per source, even
-    /// though the value being set already matches what was just persisted.</summary>
+    /// <summary>Set while <see cref="ReloadFromSettings"/> writes the UI-bound toggles back, so each does not round-trip through <see cref="SetSourceEnabled"/> and save settings.json again.</summary>
     private bool _suppressSourceToggleChanges;
 
     /// <summary>Re-reads every bound value from the (just replaced) settings object.</summary>
@@ -999,7 +881,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         var current = _settings.Current;
 
-        // through the generated properties, so theme/language/autostart really re-apply
+        // Through the generated properties, so theme, language and autostart really re-apply.
         ScanIntervalMinutes = NearestScanInterval(current.Scan.IntervalMinutes);
         ScanOnStart = current.Scan.OnStart;
         ScanRespectMetered = current.Scan.RespectMetered;
@@ -1051,10 +933,7 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(AllSourcesEnabled));
     }
 
-    /// <summary>
-    /// Manual "check now" for a new app version. The check itself lives on the main view model (it owns
-    /// the banner and the pending update); this just drives it and reports the outcome in the card.
-    /// </summary>
+    /// <summary>Manual "check now" for a new app version. The check lives on the main view model, which owns the banner and the pending update; this drives it and reports the outcome in the card.</summary>
     [RelayCommand]
     private async Task CheckForUpdatesAsync()
     {
@@ -1085,7 +964,7 @@ public partial class SettingsViewModel : ObservableObject
             return;
 
         Apply(s => s.Sources[sourceId] = enabled);
-        // keep the "all sources" checkbox's tri-state in step when a single source is toggled
+        // Keeps the "all sources" tri-state in step when a single source is toggled.
         OnPropertyChanged(nameof(AllSourcesEnabled));
     }
 
@@ -1095,16 +974,10 @@ public partial class SettingsViewModel : ObservableObject
         Persist();
     }
 
-    /// <summary>
-    /// Every checkbox in this window ends up here, so the write is deferred and coalesced by the settings
-    /// service instead of blocking the UI thread per click (see <see cref="SettingsService.SaveDeferred"/>).
-    /// </summary>
+    /// <summary>Every checkbox in this window ends up here, so the write is deferred and coalesced instead of blocking the UI thread per click (see <see cref="SettingsService.SaveDeferred"/>).</summary>
     private void Persist() => _settings.SaveDeferred();
 
-    /// <summary>
-    /// Labelled the way the rows and the provider pills label it, so the switch is recognisably the
-    /// same thing. The id stays the storage key and never reaches the screen.
-    /// </summary>
+    /// <summary>Labelled the way the rows and provider pills label it. The id stays the storage key and never reaches the screen.</summary>
     public sealed partial class SourceToggle : ObservableObject
     {
         private readonly Action<string, bool> _onChanged;
@@ -1122,9 +995,7 @@ public partial class SettingsViewModel : ObservableObject
 
         public string Id { get; }
 
-        /// <summary>The tool behind this source was not found on this machine the last time
-        /// anything scanned for it (<c>ScanOrchestrator.IsKnownNotInstalled</c>), taken as a one-time
-        /// snapshot when the settings window opens, same as every other value in this list.</summary>
+        /// <summary>The tool behind this source was not found the last time anything scanned for it (<c>ScanOrchestrator.IsKnownNotInstalled</c>); a snapshot when the window opens.</summary>
         public bool IsNotInstalled { get; }
 
         public string Display => SourceNames.Display(Id);
@@ -1136,9 +1007,7 @@ public partial class SettingsViewModel : ObservableObject
 
         partial void OnIsEnabledChanged(bool value) => _onChanged(Id, value);
 
-        /// <summary>Display and Description are read from the resources in code, not through
-        /// a binding: same reason IntervalOption/RetentionOption need this, so a language switch does
-        /// not leave the source list's names and tooltips in the old language.</summary>
+        /// <summary>Display and Description are read from the resources in code, so a language switch must re-raise them.</summary>
         internal void RefreshDisplay()
         {
             OnPropertyChanged(nameof(Display));
@@ -1146,8 +1015,7 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
-    /// <summary>One row in the permanently-excluded-paths list, with the same
-    /// callback-into-the-parent shape as <see cref="SourceToggle"/>.</summary>
+    /// <summary>One row in the permanently-excluded-paths list, with the same callback shape as <see cref="SourceToggle"/>.</summary>
     public sealed partial class ExcludedPathRow(string path, Action<string> onRelease) : ObservableObject
     {
         public string Path => path;
@@ -1166,9 +1034,7 @@ public partial class SettingsViewModel : ObservableObject
 
         internal void RefreshDisplay() => OnPropertyChanged(nameof(Display));
 
-        /// <summary>WPF's ComboBoxItem automation peer falls back to this for the item's accessible
-        /// name when the bound object is not itself a string, without it, a screen reader announced
-        /// the full ".NET type name" instead of the visible text (found live on the VM, `vmctl items`).</summary>
+        /// <summary>WPF's ComboBoxItem automation peer uses this as the item's accessible name when the bound object is not a string; without it a screen reader announces the .NET type name.</summary>
         public override string ToString() => Display;
     }
 
