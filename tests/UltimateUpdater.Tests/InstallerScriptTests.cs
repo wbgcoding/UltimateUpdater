@@ -66,6 +66,23 @@ public class InstallerScriptTests
     }
 
     /// <summary>
+    /// Setup's [Run] entries start the installed exe before ssPostInstall. The marker that tells the app it is
+    /// installed must already exist then, or that run takes itself for portable and writes a data folder
+    /// beside the exe that the uninstaller leaves behind.
+    /// </summary>
+    [Fact]
+    public void The_installed_marker_is_written_as_soon_as_the_exe_is_copied()
+    {
+        var script = Script();
+
+        var installedExes = Regex.Matches(script,
+            @"Source: ""\.\.\\build\\publish\\installer-win-[a-z0-9]+\\UltimateUpdater\.exe"".*?\r?\n.*?\r?\n", RegexOptions.None);
+        Assert.Equal(2, installedExes.Count);
+        Assert.All(installedExes, entry => Assert.Contains("AfterInstall: WriteInstalledMarker", entry.Value));
+        Assert.DoesNotContain("ssPostInstall", script);
+    }
+
+    /// <summary>
     /// The elevated PowerShell inherits Setup's environment. A command planted in a user PATH folder or a
     /// .NET profiler variable would run as admin, so Setup resets both before every PowerShell call.
     /// </summary>

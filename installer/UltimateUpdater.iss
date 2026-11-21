@@ -202,11 +202,11 @@ Source: "..\build\publish\win-x64\UltimateUpdater.exe"; DestDir: "{app}"; DestNa
 Source: "..\build\publish\win-arm64\UltimateUpdater.exe"; DestDir: "{app}"; DestName: "{code:GetExeName}"; \
     Check: IsPortableMode and IsArm64; Flags: ignoreversion
 Source: "..\build\publish\installer-win-x64\UltimateUpdater.exe"; DestDir: "{app}"; DestName: "{code:GetExeName}"; \
-    Check: (not IsPortableMode) and (not IsArm64); Flags: ignoreversion
+    Check: (not IsPortableMode) and (not IsArm64); Flags: ignoreversion; AfterInstall: WriteInstalledMarker
 Source: "..\build\publish\installer-win-x64\*.dll"; DestDir: "{app}"; \
     Check: (not IsPortableMode) and (not IsArm64); Flags: ignoreversion
 Source: "..\build\publish\installer-win-arm64\UltimateUpdater.exe"; DestDir: "{app}"; DestName: "{code:GetExeName}"; \
-    Check: (not IsPortableMode) and IsArm64; Flags: ignoreversion
+    Check: (not IsPortableMode) and IsArm64; Flags: ignoreversion; AfterInstall: WriteInstalledMarker
 Source: "..\build\publish\installer-win-arm64\*.dll"; DestDir: "{app}"; \
     Check: (not IsPortableMode) and IsArm64; Flags: ignoreversion
 
@@ -1055,16 +1055,12 @@ begin
 end;
 
 { An installed copy is marked with a file next to the exe, which the app checks at runtime to decide
-  between installed and portable data locations. A portable install deliberately omits it. }
-procedure CurStepChanged(CurStep: TSetupStep);
-var
-  MarkerPath: string;
+  between installed and portable data locations. A portable install deliberately omits it. Written right
+  after the exe lands, because the [Run] entries start the exe before the post-install step: without the marker
+  that run took itself for portable and created a data folder beside the exe. }
+procedure WriteInstalledMarker;
 begin
-  if (CurStep = ssPostInstall) and not IsPortableMode then
-  begin
-    MarkerPath := ExpandConstant('{app}\.installed');
-    SaveStringToFile(MarkerPath, '', False);
-  end;
+  SaveStringToFile(ExpandConstant('{app}\.installed'), '', False);
 end;
 
 { Settings and history in %APPDATA% are the user's and are always left behind, as Windows apps
