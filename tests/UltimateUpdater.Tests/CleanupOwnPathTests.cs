@@ -86,6 +86,19 @@ public class CleanupOwnPathTests : IDisposable
     }
 
     [Fact]
+    public void The_extraction_folder_is_protected_under_every_temp_spelling_given()
+    {
+        var first = Path.Combine(_temp, "wu-ownpath-a-" + Guid.NewGuid());
+        var second = Path.Combine(_temp, "wu-ownpath-b-" + Guid.NewGuid());
+
+        CleanupSafety.OwnPathsOverrideForTest.Value = CleanupSafety.BuildOwnPaths(null, null, [first, second], []);
+
+        Assert.True(CleanupSafety.IsOwnPath(Path.Combine(first, ".net", "App")));
+        Assert.True(CleanupSafety.IsOwnPath(Path.Combine(second, ".net", "App")));
+        Assert.True(CleanupSafety.IsOwnPath(Path.Combine(second, "UltimateUpdater")));
+    }
+
+    [Fact]
     public async Task A_refused_existing_target_names_the_rule_that_refused_it()
     {
         var folder = Path.Combine(_temp, "wu-ownpath-" + Guid.NewGuid());

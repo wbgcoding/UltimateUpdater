@@ -55,7 +55,36 @@ public static class CleanupSafety
     /// probe file in locations the unelevated user controls.
     /// </summary>
     private static readonly string[] OwnPaths = BuildOwnPaths(
-        AppContext.BaseDirectory, Environment.ProcessPath, Path.GetTempPath(), ResolveProtectedFolders());
+        AppContext.BaseDirectory, Environment.ProcessPath, OwnTempRoots(), ResolveProtectedFolders());
+
+    /// <summary>Where the extraction root can sit: the process's temp path and the profile's Local\Temp (the
+    /// two differ when the TEMP variable points elsewhere), each as spelled and as its long form, since a
+    /// listing reports the long names while TEMP often holds 8.3 ones.</summary>
+    private static List<string> OwnTempRoots()
+    {
+        var roots = new List<string>();
+        var localTemp = SafeFolderPath(Environment.SpecialFolder.LocalApplicationData) is { } local
+            ? Path.Combine(local, "Temp")
+            : null;
+        foreach (var root in new[] { Path.GetTempPath(), localTemp })
+        {
+            if (string.IsNullOrWhiteSpace(root))
+                continue;
+
+            roots.Add(root);
+            try
+            {
+                if (LongPathOf(Path.TrimEndingDirectorySeparator(Path.GetFullPath(root))) is { } longRoot)
+                    roots.Add(longRoot);
+            }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+            {
+                // the spelling as given is still protected
+            }
+        }
+
+        return roots;
+    }
 
     /// <summary>Test seam: replaces <see cref="OwnPaths"/> for the current async flow, so a test can fake where
     /// the program lives (a profile root, a drive root) without moving the running test host.</summary>
@@ -74,7 +103,11 @@ public static class CleanupSafety
     /// folder is judged by the ordinary rules. Pure, so a test can feed it any location.
     /// </summary>
     internal static string[] BuildOwnPaths(
-        string? baseDirectory, string? processPath, string tempPath, IReadOnlyList<string> protectedPaths)
+        string? baseDirectory, string? processPath, string tempPath, IReadOnlyList<string> protectedPaths) =>
+        BuildOwnPaths(baseDirectory, processPath, [tempPath], protectedPaths);
+
+    internal static string[] BuildOwnPaths(
+        string? baseDirectory, string? processPath, IReadOnlyList<string> tempPaths, IReadOnlyList<string> protectedPaths)
     {
         var paths = new List<string>();
 
@@ -95,8 +128,11 @@ public static class CleanupSafety
 
         // Single-file extraction root (ours and everyone else's) and the Temp-resident data folder AppPaths
         // falls back to.
-        Add(Path.Combine(tempPath, ".net"));
-        Add(Path.Combine(tempPath, "UltimateUpdater"));
+        foreach (var tempPath in tempPaths)
+        {
+            Add(Path.Combine(tempPath, ".net"));
+            Add(Path.Combine(tempPath, "UltimateUpdater"));
+        }
 
         if (string.IsNullOrWhiteSpace(baseDirectory))
             return paths.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
