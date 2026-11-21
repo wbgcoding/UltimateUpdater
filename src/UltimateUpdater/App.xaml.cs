@@ -18,10 +18,8 @@ public partial class App : Application
     private const string TrayArgument = "--tray";
 
     /// <summary>
-    /// Test-only sentinel a worker-mode launch can carry as its 4th argument. A real worker
-    /// launch (<see cref="ElevationService.StartWorker"/>) never passes it; when present, the worker
-    /// branch below reports whether <see cref="AppPaths"/> was ever touched during this run, through
-    /// <see cref="AppPathsTouchTracker"/> rather than AppPaths itself (see that type's remarks for why).
+    /// Test-only sentinel a worker-mode launch can carry as its 4th argument: the worker then reports
+    /// whether <see cref="AppPaths"/> was touched, through <see cref="AppPathsTouchTracker"/>.
     /// </summary>
     internal const string ReportAppPathsTouchArgument = "--report-apppaths-touch";
 
@@ -55,36 +53,21 @@ public partial class App : Application
         if (RunningAsWorker)
             return;
 
-        // Installed before anything else this class does, before WPF has even loaded the resource
-        // dictionaries. A failure that early happens before the real logging exists, and the process
-        // then disappears leaving nothing behind but a Windows error report, which is exactly the
-        // position we were in with a crash we could not explain. This writes one line to a place
-        // that always exists and that no build ever deletes.
+        // Installed first, before WPF loads its resources and before the real log exists: a crash this early writes one line to a place that always exists.
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {
             WriteLastResortCrashNote(args.ExceptionObject as Exception);
 
-            // The CLR terminates the process right after every subscriber to this event returns, with no
-            // normal Shutdown()/OnExit in between, so whatever the OTHER handler on this same event
-            // (InstallCrashHandlers, once startup has gotten that far) already queued through the
-            // background writer must be forced out here rather than left for an exit path that is never
-            // going to run. Bounded, and harmless when nothing is pending or _logging is still null.
+            // The CLR ends the process right after this handler returns, so flush what the background log writer still holds.
             _logging?.Flush();
         };
     }
 
     /// <summary>
-    /// Makes the window buttons (minimise / maximise / close) light up under the mouse.
-    /// WPF-UI drives that highlight ONLY from a win32 message hook; <c>TitleBarButton.Hover()</c> is called
-    /// from WM_NCHITTEST, and the TitleBar installs the hook in its handler for the window's ContentRendered
-    /// event. Nothing in the control reacts to WPF's own IsMouseOver, so wherever that hook does not end up
-    /// installed the buttons never highlight at all.
-    /// Done in code rather than in App.xaml because WPF-UI keys no base style for TitleBarButton: a XAML
-    /// style deriving from the implicit style for its own target type is a self-reference, which WPF resolves
-    /// to nothing and which therefore strips the control's template outright. Reading the existing style
-    /// first and replacing the entry afterwards has no such ambiguity.
-    /// The trigger writes the button's OWN MouseOverBackground, so the close button stays red and, where the
-    /// hook does work, both paths set the same brush and nothing flickers.
+    /// Makes the window buttons (minimise / maximise / close) light up under the mouse. WPF-UI drives that
+    /// highlight only from a win32 message hook that may never be installed here. Done in code because a XAML
+    /// style deriving from the implicit TitleBarButton style is a self-reference that strips the template.
+    /// The trigger sets the button's own MouseOverBackground, so the close button stays red.
     /// </summary>
     private void AddTitleBarHover()
     {
@@ -126,10 +109,7 @@ public partial class App : Application
         {
             var path = Path.Combine(Path.GetTempPath(), "UltimateUpdater-crash.log");
 
-            // Same treatment the ordinary log gets: the user's own name out of the paths, and anything
-            // credential-shaped in an exception message out of the file entirely. Started fresh once it
-            // passes a quarter of a megabyte, so this cannot become a growing archive of stack traces in
-            // a folder nobody looks at.
+            // Same redaction as the ordinary log; the file restarts above 256 KB so it cannot grow unbounded.
             if (File.Exists(path) && new FileInfo(path).Length > 256 * 1024)
                 File.Delete(path);
 
@@ -193,16 +173,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        // WpfHarness builds a real Application only to load WPF-UI's resource dictionaries and give each
-        // test a Dispatcher; it never calls Run(). WPF schedules OnStartup to fire the moment that
-        // Dispatcher starts pumping messages regardless, so without this guard every WPF-harness test
-        // process quietly ran the WHOLE real startup path too: SourceRegistry.CreateAll and, when
-        // Scan.OnStart is on, a live scan of every real source on the machine, through a second, genuine
-        // MainViewModel sharing the one Dispatcher every test's own MainViewModel runs on. That second
-        // scan's flush timer and the test's own ScanAsync/Flush calls then interleaved on the same thread
-        // whenever a test pumped a nested dispatcher frame, which is what produced a
-        // ListCollectionView.PrepareLocalArray NullReferenceException, and the same interleaving could
-        // as easily land as a timeout or a wrong row count depending on how far the real scan had gotten.
+        // WpfHarness builds a real Application but never calls Run(); WPF still fires OnStartup, so real startup is skipped for tests.
         if (SuppressRealStartupForTests)
             return;
 
@@ -218,13 +189,9 @@ public partial class App : Application
         if (NativeLibraryHardening.DefaultDirectoriesError != 0)
             logging.Warn($"Could not restrict the native library search path (error {NativeLibraryHardening.DefaultDirectoriesError}).");
 
-        // DriveMediaTypeReader logged nothing at all, so a published build's "unknown" media
-        // type had no trail to follow. Wired once, here, so every drive's WMI read (success or failure)
-        // reaches the real log from the very first cleanup catalogue build.
+        // Wired once so every drive's WMI read reaches the real log.
         Services.Cleanup.DriveMediaTypeReader.Log = logging.Info;
 
-        // Anything that escapes must reach the log. Without this a startup failure only showed up
-        // as the process disappearing, with nothing written down and no way to tell what happened.
         InstallCrashHandlers(logging);
 
         if (!_isWorker)
@@ -261,10 +228,7 @@ public partial class App : Application
                 return;
             }
 
-            // Setup asks for the autostart entry rather than writing it itself: it may be running under a
-            // different administrator account than the person installing, and its HKCU is that account's,
-            // not theirs. Started with runasoriginaluser, this lands in the right hive. No window, no
-            // single-instance guard, no services: it writes one registry value and leaves.
+            // Setup asks for the autostart entry instead of writing it: it may run as a different administrator whose HKCU is not the user's. Started with runasoriginaluser, this lands in the right hive.
             if (ApplyAutostartRequest(e.Args, logging))
                 return;
 
@@ -280,9 +244,7 @@ public partial class App : Application
                     Services.SelfUpdate.SelfUpdateService.CleanupPreviousUpdate,
                     () => SingleInstanceService.TryAcquire(logging)))
             {
-                // Hand over to the instance that is already running. If it cannot be reached, say
-                // so rather than vanishing: an exit with no window on screen reads as a failure to
-                // start, which is exactly how this looked in practice.
+                // Hand over to the running instance. If it cannot be reached, say so: an exit with no window reads as a failure to start.
                 if (await SingleInstanceService.NotifyExistingInstanceAsync())
                 {
                     logging.Info("Another instance is already running; asked it to show itself.");
@@ -299,9 +261,7 @@ public partial class App : Application
 
             logging.Info("Application starting.");
 
-            // Started here rather than after the UI is up: building the settings, the sources and the
-            // window takes long enough that a second launch in that window would fail to hand over and
-            // tell the user the app is "already running" instead of raising it.
+            // Started before the UI is built so a second launch in that window is handed over instead of reported as "already running".
             SingleInstanceService.StartListening(RequestFocus);
 
             StartUi(e, logging);
@@ -309,8 +269,6 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            // The outermost boundary of startup: whatever failed, wherever, this is what turns it into a
-            // logged error and a dialog instead of the process vanishing with no window and no explanation.
             logging.Error("Startup failed", ex);
             ReportFatal(ex, logging);
             Shutdown(1);
@@ -321,16 +279,11 @@ public partial class App : Application
     {
         var settings = _settings = new SettingsService(logging);
 
-        // Retention sweeps over however many days of logs and history have piled up. Pure housekeeping
-        // that nothing else in startup needs, so it runs fire-and-forget through Background.Run (a failure
-        // is still logged) and off the UI thread, where it cannot delay first paint.
+        // Retention sweeps for logs and history: housekeeping, fire-and-forget and off the UI thread so first paint is not delayed.
         _ = Background.Run(
             Task.Run(() => logging.CleanupOldLogs(settings.Current.Logs.RetentionDays)), logging, "log retention sweep");
 
-        // Runs on every start until a slider is moved by hand, not only a genuine first launch:
-        // recomputing the same machine's numbers again before that point is harmless, and needs no
-        // one-shot flag of its own. Once ParallelismChosenByUser is true this never runs again, not
-        // even across an update.
+        // Runs on every start until a slider is moved by hand; recomputing the same numbers is harmless.
         if (!settings.Current.ParallelismChosenByUser)
             TuneParallelismForThisMachine(settings, logging);
 
@@ -348,10 +301,7 @@ public partial class App : Application
         var iconCache = new IconCacheService(logging);
         var history = new HistoryService(logging);
 
-        // Same reasoning as the log retention sweep above: fire-and-forget off the UI thread so it never
-        // delays first paint. Safe to race a concurrent Append from an install that finishes before this
-        // sweep gets scheduled: HistoryService's own _lock serialises the two, and whichever runs first
-        // simply wins the ordering, the same as if this still ran synchronously right here.
+        // Fire-and-forget off the UI thread; HistoryService's own lock serialises it against a concurrent Append.
         _ = Background.Run(
             Task.Run(() => history.CleanupOldEntries(settings.Current.HistoryRetentionDays)), logging, "history retention sweep");
         _ = Background.Run(Task.Run(() => AppDataCleaner.DeleteStaleTempSiblings(AppPaths.DataDirectory, TimeSpan.FromDays(1))), logging, "stale temp sweep");
@@ -363,10 +313,7 @@ public partial class App : Application
                 Path.GetTempPath(), TimeSpan.FromDays(1), logging)),
             logging, "stale update download sweep");
 
-        // --mock-sources: deterministic fake providers for offline UI and VM testing.
-        // isMockSession rides the SAME switch, so InstallQueue never elevates for a mock row -
-        // the elevated worker builds its own provider set from SourceRegistry (the real one) and has never
-        // heard of this flag, and a mock row deliberately carries the same ids a real one would.
+        // --mock-sources: fake providers for offline UI and VM testing. isMockSession rides the same switch so InstallQueue never elevates for a mock row (the elevated worker builds the real provider set).
         var isMockSession = e.Args.Contains("--mock-sources");
         var sources = isMockSession
             ? MockUpdateSource.CreateAll(showcase: e.Args.Contains("--showcase"))
@@ -388,10 +335,7 @@ public partial class App : Application
 
         Services.SelfUpdate.IUpdateChannel updateChannel =
             new Services.SelfUpdate.PublicUpdateChannel(logging);
-        // No client-side timeout: HttpClient's 100 second default also covers reading the response
-        // body, and the artifacts are well over 100 MB, so every download on an ordinary connection
-        // was cancelled part-way through. The download enforces its own size cap and honours the
-        // caller's cancellation token, which is what should end it.
+        // No client-side timeout: HttpClient's 100 second default also covers reading the body and the artifacts are over 100 MB. The download enforces its own size cap and honours the cancellation token.
         var updateTrafficHandler = new Services.Security.TrafficLoggingHandler { Logging = logging };
         var updateHttpClient = new System.Net.Http.HttpClient(updateTrafficHandler) { Timeout = Timeout.InfiniteTimeSpan };
         var selfUpdate = new Services.SelfUpdate.SelfUpdateService(updateHttpClient, logging, updateChannel);
@@ -432,9 +376,7 @@ public partial class App : Application
 
         if (!StartedInTray)
         {
-            // Process start to the first painted frame. ContentRendered can fire again later
-            // (e.g. after certain layout passes), so the handler detaches itself after the first hit;
-            // only the FIRST paint answers "how long until the user sees something".
+            // Process start to the first painted frame; ContentRendered can fire again, so the handler detaches after the first hit.
             var processStart = System.Diagnostics.Process.GetCurrentProcess().StartTime;
             EventHandler? onFirstPaint = null;
             onFirstPaint = (_, _) =>
@@ -454,9 +396,7 @@ public partial class App : Application
             mainWindow.BringToFront();
         }
 
-        // An autostart (tray) launch has nobody looking at the window, so its scan goes the scheduled way and
-        // announces what it found: otherwise only an interval scan ever notified, and a PC shut down every
-        // evening never reached one with the default 24-hour interval, so the user was never told.
+        // An autostart (tray) launch has nobody looking at the window, so its scan goes the scheduled way and announces what it found.
         if (settings.Current.Scan.OnStart)
         {
             _ = StartedInTray
@@ -474,12 +414,9 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Nobody is there to click anything: a build, a test run or a scripted launch. Recognised from the
-    /// `--unattended` switch and from WU_UNATTENDED, which build.bat sets for its own steps. Also true when
-    /// the headless dialog suppression is on, so the render harness can never be stopped by a dialog.
-    /// Public and computed live (not cached from <see cref="StartupEventArgs"/>) so any caller can ask,
-    /// including the pre-install blocker check and the interactive-retry gate, which run long after
-    /// startup and have no <see cref="StartupEventArgs"/> of their own to read.
+    /// True when nobody is there to click anything: a build, a test run or a scripted launch (`--unattended`,
+    /// or WU_UNATTENDED set by build.bat), or when headless dialog suppression is on. Computed live so callers
+    /// long after startup can ask too.
     /// </summary>
     public static bool IsUnattended =>
         !ForceAttendedForTest &&
@@ -488,20 +425,14 @@ public partial class App : Application
         || Dialogs.SuppressInteractiveDialogs);
 
     /// <summary>
-    /// Test-only (never set outside <c>UltimateUpdater.Tests</c>, and only for the one test's duration,
-    /// reset in its own <c>finally</c>): <c>WpfHarness</c> sets <see cref="Dialogs.SuppressInteractiveDialogs"/>
-    /// once, process-wide, which makes <see cref="IsUnattended"/> true for the entire test run, including
-    /// paths, like the interactive-retry gate, whose own real behavior a test needs to exercise. This
-    /// is the one switch to get past that without weakening the gate itself.
+    /// Test-only: <c>WpfHarness</c> makes <see cref="IsUnattended"/> true for the whole test run; this lets one
+    /// test exercise a path such as the interactive-retry gate without weakening the gate itself.
     /// </summary>
     internal static bool ForceAttendedForTest { get; set; }
 
     /// <summary>
-    /// Test-only, set by <c>WpfHarness</c> before its Application is ever constructed, for the whole test
-    /// process: OnStartup runs the real production pipeline (real sources, a real scan, a real
-    /// MainViewModel) the instant the harness's Dispatcher starts pumping, whether or not anything ever
-    /// calls Run(). A render or view-model test wants a Dispatcher and WPF-UI's resource dictionaries,
-    /// never a second, genuine application instance racing its own MainViewModel on that Dispatcher.
+    /// Test-only, set by <c>WpfHarness</c> before its Application is constructed: skips the real startup
+    /// pipeline (sources, scan, MainViewModel) that OnStartup would otherwise run on the harness Dispatcher.
     /// </summary>
     internal static bool SuppressRealStartupForTests { get; set; }
 
@@ -638,9 +569,7 @@ public partial class App : Application
         _busyTimer.Tick += (_, _) => _busySignal.Set(mainViewModel.WorkIsRunning);
         _busyTimer.Start();
 
-        // The timer alone lets the signal appear up to half a second after a run starts, a gap in which Setup's
-        // last check (right before it ends the app) can still read "idle". The two flags every install and
-        // cleanup run raises first are therefore followed at once, not on the next tick.
+        // The timer alone can show the signal half a second late, so the two flags every install and cleanup run raises first are followed at once.
         mainViewModel.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(MainViewModel.IsInstalling) or nameof(MainViewModel.IsCleanupRunning))
@@ -695,16 +624,11 @@ public partial class App : Application
     /// <summary>Real exit, as opposed to close-to-tray.</summary>
     internal void ExitApplication()
     {
-        // Quitting kills a running drive optimisation (there is no scheduled task behind
-        // it to carry on), unlike a plain cleanup run, which keeps going in the background regardless of
-        // this window. Both quit paths (the tray icon and the main window's own exit action) reach here,
-        // which is what lets one check cover both.
+        // Quitting kills a running drive optimisation (no scheduled task carries on), unlike a plain cleanup run. Both quit paths reach here.
         if (DefragRunState.IsRunning && !ConfirmQuitDuringDriveOptimisation())
             return;
 
-        // An install batch or a cleanup run dies with the process (the elevated helper goes with it), leaving
-        // half-installed packages and no history. Closing the window hides it while installs run; tray Exit
-        // came straight here and ended them without a word.
+        // An install batch or a cleanup run dies with the process, leaving half-installed packages and no history.
         if (!DefragRunState.IsRunning && _mainViewModel?.WorkIsRunning == true && !ConfirmQuitDuringRunningWork())
             return;
 
@@ -736,9 +660,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        // Settings are written on a delay while the app runs, so the last click before the exit: a
-        // theme switch, the window placement saved on close; can still be sitting in that delay.
-        // First thing here, before anything else that could fail: it belongs on disk either way.
+        // Settings are written on a delay, so the last click before exit may still be pending: flush first, before anything that could fail.
         _settings?.Flush();
 
         // After a data folder move this run still writes to the old folder until the restart; what it
@@ -789,12 +711,9 @@ public partial class App : Application
     private static extern bool GetPhysicallyInstalledSystemMemory(out ulong totalMemoryInKilobytes);
 
     /// <summary>
-    /// Picks starting values for both parallelism sliders from this machine's own hardware, so a slow or
-    /// battery-only PC does not inherit numbers tuned for a fast desktop. The caller only invokes this
-    /// while <see cref="Models.Settings.AppSettings.ParallelismChosenByUser"/> is still false, so it never
-    /// runs again once either slider has been moved by hand. A failed RAM read is treated as 0 bytes,
-    /// which <see cref="ParallelismAutoTune"/> reads the same way a genuinely low-memory machine would,
-    /// the safe direction to fail in.
+    /// Picks starting values for both parallelism sliders from this machine's hardware. Only called while
+    /// <see cref="Models.Settings.AppSettings.ParallelismChosenByUser"/> is false. A failed RAM read counts as
+    /// 0 bytes, which <see cref="ParallelismAutoTune"/> treats as a low-memory machine (the safe direction).
     /// </summary>
     private static void TuneParallelismForThisMachine(SettingsService settings, LoggingService logging)
     {

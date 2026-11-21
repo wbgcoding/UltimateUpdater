@@ -22,18 +22,15 @@
             <views:GroupSelectionConverter x:Key="GroupSelection" />
             <views:WideEnoughToVisibilityConverter x:Key="WideEnough" />
 
-            <!-- App icon in every window's title bar: a little larger than WPF-UI's 16 px default, smoothly scaled. -->
             <Style x:Key="TitleBarAppIcon" TargetType="ui:ImageIcon">
                 <Setter Property="Width" Value="20"/>
                 <Setter Property="Height" Value="20"/>
-                <!-- WPF-UI's title bar template gives its icon slot a fixed 16 px height and clips anything
-                     taller; the negative margin lets the 20 px icon claim exactly that slot and draw past it. -->
+                <!-- WPF-UI's title bar gives its icon slot a fixed 16 px height and clips anything taller; the negative margin lets the 20 px icon draw past it. -->
                 <Setter Property="Margin" Value="0,-2"/>
                 <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
             </Style>
 
-            <!-- Themed row context menu (updates only): rounded card surface, flat items with a rounded
-                 hover highlight, matching the rest of the app rather than the classic Win32 menu. -->
+            <!-- Themed row context menu: rounded card surface, flat items with a rounded hover highlight. -->
             <Style x:Key="RowMenuItem" TargetType="MenuItem">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
                 <Setter Property="Padding" Value="11,7"/>
@@ -57,9 +54,7 @@
                 </Setter>
             </Style>
 
-            <!-- RowMenuItem's own template has no Popup at all (it only ever drew a plain header before now),
-                 so it cannot host a submenu, reusing it for "Remind me later" would render the header but
-                 never open the three durations under it. Same themed surface, plus the Popup a submenu needs. -->
+            <!-- RowMenuItem's template has no Popup, so it cannot host a submenu; this adds the Popup a submenu needs. -->
             <Style x:Key="RowSubmenuItem" TargetType="MenuItem" BasedOn="{StaticResource RowMenuItem}">
                 <Setter Property="Template">
                     <Setter.Value>
@@ -107,13 +102,10 @@
             </Style>
 
             <Style x:Key="RowContextMenu" TargetType="ContextMenu">
-                <!-- An OPAQUE solid fill, not the semi-transparent card brush, so the menu never shows the
-                     rows through it. -->
+                <!-- Opaque fill, so the menu never shows the rows through it. -->
                 <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
-                <!-- The popup window is exactly the size of the template, so the card carries a margin as wide
-                     as its shadow; without it the shadow is cut off square at the card's edge. The negative
-                     offsets give that margin back, so the card still opens at the click or under its anchor. -->
+                <!-- The popup window is exactly the template's size, so the card carries a margin as wide as its shadow; the negative offsets give it back. -->
                 <Setter Property="HorizontalOffset" Value="-10"/>
                 <Setter Property="VerticalOffset" Value="-8"/>
                 <Setter Property="Template">
@@ -124,8 +116,6 @@
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.35" Direction="270"/>
                                 </Border.Effect>
-                                <!-- One size scope for all items, so the check, shortcut and arrow columns line up
-                                     between a ticked, a plain and a submenu item. -->
                                 <StackPanel IsItemsHost="True" Grid.IsSharedSizeScope="True"/>
                             </Border>
                         </ControlTemplate>
@@ -133,10 +123,7 @@
                 </Setter>
             </Style>
 
-            <!-- Every other menu in the app (the cleanup window's menus, the column chooser, the filter menu,
-                 the changelog text box) takes the row menu's look through these implicit styles, instead of the
-                 grey system menu. Unlike RowMenuItem this template carries everything a general menu item can
-                 need: a check mark for checkable items, the shortcut text, and the arrow and popup of a submenu. -->
+            <!-- Every other menu in the app takes the row menu's look through these implicit styles. This template also carries check marks, shortcut text and submenu arrow and popup. -->
             <Style TargetType="ContextMenu" BasedOn="{StaticResource RowContextMenu}"/>
             <Style TargetType="MenuItem">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
@@ -154,11 +141,7 @@
                                             <ColumnDefinition Width="Auto" SharedSizeGroup="MenuGesture"/>
                                             <ColumnDefinition Width="Auto" SharedSizeGroup="MenuArrow"/>
                                         </Grid.ColumnDefinitions>
-                                        <!-- Hidden, not collapsed, on an unchecked checkable item, so the labels
-                                             of a checkbox menu stay in one line whatever is ticked. The columns share
-                                             their width across the menu (see the size scope on the item list), so a
-                                             plain item in a menu that also has ticked ones, such as a reset entry,
-                                             keeps its label in the same line; a menu with no ticked item gets no gutter. -->
+                                        <!-- Hidden, not collapsed, on an unchecked item so the labels stay in one line; the columns share their width across the menu. -->
                                         <ui:SymbolIcon x:Name="Check" Grid.Column="0" Symbol="Checkmark16" FontSize="14"
                                                        Width="16" Margin="0,0,8,0" VerticalAlignment="Center"
                                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -224,124 +207,60 @@
                 </Setter>
             </Style>
 
-            <!-- The one shared tone for a standalone panel surface (a hint banner, the main table, the
-                 cleanup targets card, a settings card, a history list): defined ONCE here so every one of
-                 them stays in step, rather than each window copying the same four properties locally and
-                 drifting apart over time (the fix for exactly that drift, a table that no longer matched
-                 the hint banner it sits directly under, is what this style is for). Windows with their own
-                 already-established local style (MainWindow's own "SectionCard", SettingsWindow's own
-                 "Card") derive from this one with BasedOn instead of repeating its setters. -->
+            <!-- The shared tone for a standalone panel surface (hint banner, main table, cleanup targets card, settings card, history list). Windows with their own local style derive from it with BasedOn. -->
             <Style x:Key="PanelSurfaceBorder" TargetType="Border">
                 <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
                 <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="8"/>
-                <!-- The dark theme's glass top highlight (Views/GlassCardHighlight.cs); transparent, so a
-                     no-op, in every other theme. -->
+                <!-- The dark theme's glass top highlight (Views/GlassCardHighlight.cs); transparent in every other theme. -->
                 <Setter Property="views:GlassCardHighlight.Show" Value="True"/>
             </Style>
 
-            <!-- The main table's column widths: check · icon · name(*) · date ·
-                 version · size · action. Defined ONCE here and referenced by both the header row and
-                 every row template that shares this lane layout (MainWindow.xaml); they used to be six
-                 literal numbers typed out twice, and a mismatch between the two copies is exactly the
-                 kind of drift nobody notices until a column silently stops lining up with its header. -->
+            <!-- The main table's column widths, shared by the header row and every row template that uses this lane layout. -->
             <GridLength x:Key="ColWidthCheck">44</GridLength>
             <GridLength x:Key="ColWidthIcon">36</GridLength>
             <GridLength x:Key="ColWidthDate">104</GridLength>
             <GridLength x:Key="ColWidthVersion">168</GridLength>
             <GridLength x:Key="ColWidthSize">96</GridLength>
             <GridLength x:Key="ColWidthAction">176</GridLength>
-            <!-- Publisher, hideable through the column chooser but visible by
-                 default; a trailing column, past Action, so showing/hiding it never re-lines-up anything
-                 to its left. MainViewModel.Filtering.cs.ApplyMainColumnWidths overwrites this at
-                 construction and on every column-chooser change; the literal below is just the
-                 pre-construction fallback. -->
+            <!-- Publisher: hideable through the column chooser, a trailing column so showing or hiding it never shifts the others. ApplyMainColumnWidths overwrites this at runtime; the literal is the pre-construction fallback. -->
             <GridLength x:Key="ColWidthPublisher">120</GridLength>
 
-            <!-- HistoryWindow's own column widths, same reasoning: one definition shared by the header
-                 grid and the row template so the two can never drift apart again. -->
+            <!-- HistoryWindow's column widths, shared by the header grid and the row template. -->
             <GridLength x:Key="HistoryColWidthWhen">130</GridLength>
             <GridLength x:Key="HistoryColWidthSource">110</GridLength>
             <GridLength x:Key="HistoryColWidthVersion">170</GridLength>
-            <!-- The version lane's own two number columns and the fixed arrow cell between them,
-                 mirroring the main table's 62/14/62 version lane so the arrow lines up regardless of
-                 what either version string looks like. HistoryColWidthVersion above is the OUTER lane
-                 width and stays as it is; these two size only the inner grid. -->
+            <!-- The version lane's two number columns and the fixed arrow cell between them, mirroring the main table's 62/14/62 lane. -->
             <GridLength x:Key="HistoryVersionColWidthNumber">62</GridLength>
             <GridLength x:Key="HistoryVersionColWidthArrow">14</GridLength>
             <GridLength x:Key="HistoryColWidthSize">90</GridLength>
             <GridLength x:Key="HistoryColWidthResult">110</GridLength>
-            <!-- Fixed rather than Auto: an Auto column sizes itself per Grid instance, so a failed row's
-                 visible details button used to steal width from that ONE row's own star column while a
-                 successful row (button collapsed) and the header (no button at all) did not, shifting
-                 columns 2-4 out of step depending on which rows had a button. -->
+            <!-- Fixed rather than Auto: an Auto column sizes per Grid instance, so a visible details button on one row would shift that row's columns out of step. -->
             <GridLength x:Key="HistoryColWidthDetails">28</GridLength>
 
-            <!-- Pressing a button must not turn its label and icon BLACK.
-
-                 The cause is in WPF-UI itself, not in this app's styling: ui:Button declares its own
-                 PressedForeground dependency property and its default value is SystemColors.ControlTextBrush
-                , plain black, while nothing in the shipped style ever sets it. The pressed multi-trigger
-                 then writes that black onto the button's Foreground, which the content AND the icon inherit,
-                 in every theme and for every Appearance. Setting the property is the whole fix; the earlier
-                 attempt (overriding TextOnAccentFillColor*Brush) could not work here because it is not the
-                 brush this path reads.
-
-                 DynamicResource on purpose: ThemeService replaces the on-accent brushes when a named theme
-                 changes the accent, and this has to follow. -->
-            <!-- BasedOn names WPF-UI's own keyed base style, NOT "{x:Type ui:Button}". A style that derives
-                 from the implicit style for the very type it is itself the implicit style for is a
-                 self-reference, and WPF resolves it to nothing: every ui:Button in the app then falls back
-                 to the plain WPF Button template, no icon, no accent fill (caught in a render snapshot).
-                 WPF-UI keys its base style `DefaultUiButtonStyle`, so this derives from that. -->
+            <!-- WPF-UI's ui:Button declares its own PressedForeground, defaulting to black, which the pressed trigger writes onto the label and icon in every theme. Setting it fixes that. DynamicResource so a changed accent follows. -->
+            <!-- BasedOn names WPF-UI's keyed base style (DefaultUiButtonStyle), not "{x:Type ui:Button}": deriving from the implicit style of the very type is a self-reference that WPF resolves to nothing. -->
             <Style x:Key="PressedForegroundFix" TargetType="{x:Type ui:Button}"
                    BasedOn="{StaticResource DefaultUiButtonStyle}">
-                <!-- A themed brush, NOT a binding to the button's own Foreground. Binding it looked like the
-                     tidier answer: pressing would then change nothing at all, but it hands one WPF-UI
-                     brush instance to a second dependency property, and such a brush resolves its own Color
-                     through a deferred application-resource reference: the render then died with a
-                     NullReferenceException inside SolidColorBrush.get_Color and took every UI snapshot with
-                     it. This is the same borrowed-brush trap the theme code already documents.
-                     DynamicResource, so a theme change follows. -->
-                <!-- What actually keeps the label readable while the button is held down: WPF-UI's own
-                     pressed trigger tries to write PressedForeground onto TextElement.Foreground and lands
-                     on plain black instead (measured on a rendered pressed button, see ButtonLabelColour),
-                     and a template trigger cannot be outvoted by a style setter, only by a local value.
-                     The PressedForeground setter below stays as the second line of defence. -->
+                <!-- A themed brush, not a binding to the button's own Foreground: sharing one WPF-UI brush instance with a second property breaks its deferred Color lookup (NullReferenceException in SolidColorBrush.get_Color). DynamicResource so a theme change follows. -->
+                <!-- WPF-UI's pressed template trigger writes black and cannot be outvoted by a style setter, only by a local value; see ButtonLabelColour. The PressedForeground setter below is the second line of defence. -->
                 <Setter Property="views:ButtonLabelColour.Keep" Value="True" />
                 <Setter Property="PressedForeground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                 <Style.Triggers>
-                    <!-- An accent-filled button keeps its on-accent label while pressed; the other filled
-                         appearances already carry the primary text colour when they are not pressed, so the
-                         base setter is right for them. -->
+                    <!-- An accent-filled button keeps its on-accent label while pressed; other filled appearances already carry the primary text colour. -->
                     <Trigger Property="Appearance" Value="Primary">
-                        <!-- AccentButtonForeground, which is WPF-UI's own name for "the label of a button
-                             filled with the accent", the same brush the button already uses unpressed. -->
+                        <!-- AccentButtonForeground is the brush the button already uses unpressed. -->
                         <Setter Property="PressedForeground" Value="{DynamicResource AccentButtonForeground}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
             <Style TargetType="{x:Type ui:Button}" BasedOn="{StaticResource PressedForegroundFix}" />
 
-            <!-- The window buttons' hover state is added in code (App.AddTitleBarHover): WPF-UI keys no base
-                 style for TitleBarButton, so it cannot be derived from in XAML without the self-reference
-                 trap described above. -->
+            <!-- The window buttons' hover state is added in code (App.AddTitleBarHover): WPF-UI keys no base style for TitleBarButton, so XAML cannot derive from it without the self-reference trap above. -->
 
-            <!-- App-wide scrollbar: a solid, opaque gutter with a left edge, so content ends to its LEFT and
-                 it never draws over icons/buttons in the last column (which WPF-UI's thin overlay bar did on
-                 hover). Fixed 14px width, rounded thumb on a themed track, no up/down buttons (the repeat
-                 buttons stay present but invisible; clicking the track still pages). Implicit by type so
-                 every window's default ScrollViewer picks it up without repeating it per window
-                 (previously table-only; the cleanup window used the plain default bar). -->
-            <!-- The thumb's minimum length is NOT a Thumb MinHeight/MinWidth: the Track sizes the thumb itself
-                 and ignores those. It takes half of SystemParameters.VerticalScrollBarButtonHeight (vertical)
-                 or HorizontalScrollBarButtonWidth (horizontal) as the floor, so the Track in the ScrollBar
-                 template below overrides those two keys with 96, giving a floor of 48 points: a list of
-                 thousands of rows still leaves a thumb to grab, and it reaches the end of the track. One step
-                 stronger than before (secondary text fill, not tertiary) for the same reason: a short thumb
-                 needs the extra contrast to still read as grabbable. Track width (14pt) and corner radius
-                 (pill shape) are unchanged. -->
+            <!-- App-wide scrollbar: a solid, opaque 14 px gutter so content ends to its left and never draws under icons in the last column. Rounded thumb, no up/down buttons. Implicit by type so every ScrollViewer picks it up. -->
+            <!-- The thumb's minimum length is not a Thumb MinHeight/MinWidth (the Track ignores those): it takes half of VerticalScrollBarButtonHeight / HorizontalScrollBarButtonWidth, so the Track in the template overrides those keys with 96 for a 48 point floor. -->
             <Style x:Key="AppScrollThumb" TargetType="Thumb">
                 <Setter Property="Template">
                     <Setter.Value>
@@ -352,37 +271,19 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-            <!-- Digit columns across the app (sizes, dates, percentages, the error window's exit codes):
-                 Segoe UI Variable's tabular figures keep a column of numbers lined up, where the app's
-                 default proportional figures drift (columns of digits must line up). A Style, not a converter: every
-                 other visual property (size, colour, margin) stays exactly what each TextBlock already
-                 sets, only FontFamily and NumeralAlignment are touched. "Segoe UI" is the fallback for
-                 a Windows without the variable font family installed. -->
+            <!-- Digit columns (sizes, dates, percentages, exit codes): tabular figures keep numbers lined up. A Style rather than a converter so each TextBlock keeps its other properties; "Segoe UI" is the fallback without the variable font. -->
             <Style x:Key="TabularNumberText" TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
                 <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
             </Style>
 
-            <!-- Fallback only: ThemeService.ApplyCore always writes the real value (white at 6 percent in
-                 the dark theme, transparent otherwise) before any window shows, see
-                 ThemeService.ApplyDarkPaletteOverrides. Declared here too so a card's DynamicResource
-                 lookup never comes up empty if something renders before a theme has ever been applied. -->
+            <!-- Fallback only: ThemeService always writes the real value before any window shows. Declared so a card's DynamicResource lookup never comes up empty. -->
             <SolidColorBrush x:Key="GlassTopHighlightBrush" Color="Transparent"/>
 
-            <!-- Fallback only, same pattern as GlassTopHighlightBrush above: ThemeService writes the real
-                 value (SystemColors.WindowTextBrush) while Windows high contrast is on
-                 (ApplyHighContrastSurfaceOverrides) and removes it again on leaving. Transparent
-                 everywhere else, so a toggle that asks for this border outside high contrast draws no
-                 border at all. -->
+            <!-- Fallback only, like GlassTopHighlightBrush: ThemeService writes the real value while Windows high contrast is on. Transparent elsewhere. -->
             <SolidColorBrush x:Key="HighContrastToggleBorderBrush" Color="Transparent"/>
 
-            <!-- A filter/toggle that reads as a pill button, not a checkbox: pressed = accent fill, nothing
-                 else changes shape. App-wide (was local to HistoryWindow) so a second surface with the same
-                 "pick some tags" shape, the Settings sources list, uses the exact same control
-                 instead of reinventing a checkbox-inside-a-coloured-border version of it, which is what made
-                 that list look busy: two separate "this is on" signals (the fill AND a checkbox glyph) doing
-                 the same job. Originally used for history filters ("failed only", time ranges,
-                 each source). -->
+            <!-- A filter/toggle that reads as a pill button, not a checkbox: pressed = accent fill. Shared by the history filters and the Settings sources list. -->
             <Style x:Key="FilterChip" TargetType="ToggleButton">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
                 <Setter Property="Padding" Value="11,5"/>
