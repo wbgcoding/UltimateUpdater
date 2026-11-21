@@ -1232,7 +1232,7 @@ Ultimate Updater ne peut pas annuler cette action.</value>
     <value>Windows Subsystem for Linux. Uniquement pour le sélecteur de sources, car wsl ne peut pas vérifier une mise à jour sans l'appliquer ; aucune ligne n'apparaît donc jamais.</value>
   </data>
   <data name="SourceNameWsl" xml:space="preserve">
-    <value>Windows Subsystem for Linux</value>
+    <value>Sous-système Windows pour Linux</value>
   </data>
   <data name="IgnoredAllBadge" xml:space="preserve">
     <value>Tout ignoré</value>

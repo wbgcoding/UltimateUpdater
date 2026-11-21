@@ -2015,7 +2015,7 @@ Doorgaan met beheerdersrechten?</value>
     <value>Geïnstalleerd op {0}</value>
   </data>
   <data name="CleanupDriverProviderLabel" xml:space="preserve">
-    <value>Provider</value>
+    <value>Fabrikant</value>
   </data>
   <data name="CleanupDriverClassLabel" xml:space="preserve">
     <value>Klasse</value>
