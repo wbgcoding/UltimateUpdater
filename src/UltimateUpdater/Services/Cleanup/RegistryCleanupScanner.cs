@@ -153,8 +153,13 @@ public static class RegistryCleanupScanner
     /// just the same permission probe run against a scratch key the test itself owns.</summary>
     internal static bool CanDeleteForTest(RegistryFinding finding) => CanDelete(finding);
 
-    private static bool CanDeleteKeyTree(string keyPath)
+    private static bool CanDeleteKeyTree(string keyPath, int depth = 0)
     {
+        // OpenSubKey follows a registry link, so a link cycle would otherwise recurse without end. The real
+        // delete refuses a tree this deep as well, so such a finding could never be removed anyway.
+        if (depth > RegistryBackupService.MaxKeyDepth)
+            return false;
+
         // Delete alone is not enough to walk the subtree: DeleteSubKeyTree itself needs to enumerate every
         // child before it can delete them (.NET's GetSubKeyNames calls RegQueryInfoKey first, which itself
         // needs KEY_QUERY_VALUE), so this probe requests all three rights together.
@@ -174,7 +179,7 @@ public static class RegistryCleanupScanner
 
         foreach (var child in children)
         {
-            if (!CanDeleteKeyTree($@"{keyPath}\{child}"))
+            if (!CanDeleteKeyTree($@"{keyPath}\{child}", depth + 1))
                 return false;
         }
 
@@ -455,7 +460,8 @@ public static class RegistryCleanupScanner
 
         RegistryCleanupCategory.SharedDlls =>
             finding.ValueName is { Length: > 0 } dllPath && !ExistsInAnyView(dllPath)
-                && ValueNames(SharedDllsKey).Contains(dllPath, StringComparer.OrdinalIgnoreCase),
+                && string.Equals(finding.KeyPath, SharedDllsKey, StringComparison.OrdinalIgnoreCase)
+                && ValueExists(SharedDllsKey, dllPath),
 
         RegistryCleanupCategory.ActiveXCom =>
             RegistryCleanupSafety.TryGetAllBrokenPaths(
@@ -696,6 +702,19 @@ public static class RegistryCleanupScanner
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
             return [];
+        }
+    }
+
+    private static bool ValueExists(string keyPath, string valueName)
+    {
+        try
+        {
+            using var key = OpenReadable(keyPath);
+            return key?.GetValue(valueName) is not null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            return false;
         }
     }
 

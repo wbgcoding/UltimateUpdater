@@ -87,6 +87,28 @@ public class RegistryCleanupScannerDeleteRightsTests
         }
     }
 
+    [Fact]
+    public void A_tree_nested_deeper_than_the_delete_cap_is_not_offered()
+    {
+        var relativePath = NewScratchPath();
+        try
+        {
+            var deep = relativePath;
+            for (var i = 0; i < RegistryBackupService.MaxKeyDepth + 6; i++)
+                deep += @"\k";
+            Registry.CurrentUser.CreateSubKey(deep).Dispose();
+
+            var finding = new RegistryFinding(
+                RegistryCleanupCategory.ActiveXCom, $@"HKCU\{relativePath}", ValueName: null, "Scratch", "C:\\missing.dll");
+
+            Assert.False(RegistryCleanupScanner.CanDeleteForTest(finding));
+        }
+        finally
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(relativePath, throwOnMissingSubKey: false);
+        }
+    }
+
     private static void DenyOwnDeleteAccess(string relativePath)
     {
         using var key = Registry.CurrentUser.OpenSubKey(relativePath, RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl);

@@ -39,7 +39,7 @@ public static partial class RegistryBackupService
 
     // A same-user registry link cycle must never recurse forever; this is generous for any
     // real key tree while still being a hard, provable bound.
-    private const int MaxKeyDepth = 64;
+    internal const int MaxKeyDepth = 64;
 
     // A value that keeps growing between the size query and the read retries with the
     // freshly reported size; bounded so a value that never stops growing cannot spin here indefinitely.
