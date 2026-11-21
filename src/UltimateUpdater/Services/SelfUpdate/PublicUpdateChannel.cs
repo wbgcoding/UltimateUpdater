@@ -3,8 +3,8 @@ using System.Net.Http;
 namespace UltimateUpdater.Services.SelfUpdate;
 
 /// <summary>
-/// The channel that ships. Dormant until the repository is public: with no credentials the API
-/// returns 404 for a private repo, which surfaces as "no update available" rather than an error.
+/// The channel that ships. Without credentials the API answers 404 for a repository it cannot see, which
+/// surfaces as "no update available" rather than an error.
 /// </summary>
 public sealed class PublicUpdateChannel : IUpdateChannel
 {
@@ -38,8 +38,8 @@ public sealed class PublicUpdateChannel : IUpdateChannel
         HttpClient client, string url, string targetPath, long maxBytes, CancellationToken cancellationToken,
         IProgress<(long Read, long? Total)>? progress = null)
     {
-        // The artifact URL comes out of the release JSON and can point anywhere. Checking it only on
-        // the metadata call left the download itself free to go to any host, over plain HTTP.
+        // The artifact URL comes out of the release JSON and can point anywhere, so the download is checked too,
+        // not only the metadata call.
         if (!SelfUpdateService.IsAllowedUrl(url))
         {
             _logging.Warn("Self-update: refusing a download from a host that is not on the allowlist.");

@@ -14,9 +14,8 @@ public static class UpdateManifest
 {
     /// <summary>
     /// Reads the GitHub releases API payload (single release object or an array of them). Drafts are
-    /// skipped, and so are PRE-RELEASES unless <paramref name="allowPrereleases"/>, only the private dev
-    /// channel wants those. Without that, the newest tag on the repository moved a stable install onto a
-    /// beta, and the stripped suffix made it look like a plain version bump.
+    /// skipped, and so are pre-releases unless <paramref name="allowPrereleases"/>: a stable install must
+    /// not be moved onto a beta because it carries the newest tag.
     /// </summary>
     public static ReleaseInfo? ParseRelease(string json, bool allowPrereleases = false) =>
         TryParseRelease(json, allowPrereleases, out var release) ? release : null;
@@ -43,11 +42,8 @@ public static class UpdateManifest
             var root = document.RootElement;
             if (root.ValueKind == JsonValueKind.Array)
             {
-                // releases list: take the highest valid SemVer, not feed order (GitHub sorts by creation
-                // date, so a later backfill of an older version would otherwise hide the newer one). A
-                // malformed entry (not an object, no tag_name, an unparseable tag) must not stop the whole
-                // feed, every release after it, including genuinely valid newer ones, would otherwise be
-                // hidden behind one bad element.
+                // Releases list: take the highest valid SemVer, not feed order (GitHub sorts by creation date, so a
+                // backfilled older version would hide the newer one). A malformed entry must not stop the whole feed.
                 (Version Core, string Prerelease)? best = null;
                 foreach (var element in root.EnumerateArray())
                 {
@@ -67,9 +63,8 @@ public static class UpdateManifest
                 return true;
             }
 
-            // A readable root that is neither a release list nor a release object (null, a string, a
-            // number, {}) is a broken answer, not "nothing new": reporting it as up to date would hide a
-            // feed that no longer works.
+            // A readable root that is neither a release list nor a release object is a broken answer, not
+            // "nothing new": reporting it as up to date would hide a feed that no longer works.
             if (root.ValueKind != JsonValueKind.Object
                 || !root.TryGetProperty("tag_name", out var tag) || tag.ValueKind != JsonValueKind.String)
                 return false;
@@ -136,7 +131,8 @@ public static class UpdateManifest
         return ParseSemver(version) is null ? null : version;
     }
 
-    /// <summary>True when both texts are the same valid version (a leading "v" and build metadata are ignored).</summary>
+    /// <summary>True when both texts are the same valid version (a leading "v" and build metadata are
+    /// ignored).</summary>
     public static bool IsSameVersion(string left, string right) =>
         ParseSemver(left) is { } a && ParseSemver(right) is { } b && Compare(a, b) == 0;
 
@@ -173,10 +169,9 @@ public static class UpdateManifest
     }
 
     /// <summary>
-    /// True when <paramref name="candidate"/> is strictly newer than <paramref name="current"/>, compared
-    /// as semver INCLUDING the pre-release part: cutting the suffix before comparing makes
-    /// `1.2.0-beta.1` and `1.2.0` look like the same version, so the beta→stable step at one numeric
-    /// version would never be offered and a beta would look like a plain bump. Unparseable input fails closed.
+    /// True when <paramref name="candidate"/> is strictly newer than <paramref name="current"/>, compared as
+    /// semver including the pre-release part, so 1.2.0-beta.1 to 1.2.0 counts as an update. Unparseable
+    /// input fails closed.
     /// </summary>
     public static bool IsNewer(string current, string candidate)
     {
@@ -189,7 +184,8 @@ public static class UpdateManifest
         return Compare(candidateVersion.Value, currentVersion.Value) > 0;
     }
 
-    /// <summary>The tag's own text, minus a leading "v". The pre-release suffix is KEPT: it is part of the version.</summary>
+    /// <summary>The tag's own text, minus a leading "v". The pre-release suffix is KEPT: it is part of the
+    /// version.</summary>
     private static string NormalizeVersion(string value)
     {
         var trimmed = value.Trim();
@@ -285,9 +281,8 @@ public static class UpdateManifest
             if (i >= rightParts.Length)
                 return 1;
 
-            // A pure-digit run is a numeric identifier by SemVer's own definition, however many digits,
-            // int.TryParse alone silently misclassified anything past Int32.MaxValue as alphanumeric and
-            // compared it as a string, which sorts wrong ("100000000000" < "99999999999" ordinally).
+            // A pure-digit run is a numeric identifier however many digits: int.TryParse alone would treat
+            // anything past Int32.MaxValue as alphanumeric and compare it as text, which sorts wrong.
             var leftIsNumber = IsNumericIdentifier(leftParts[i]);
             var rightIsNumber = IsNumericIdentifier(rightParts[i]);
 

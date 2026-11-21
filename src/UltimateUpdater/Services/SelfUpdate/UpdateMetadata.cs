@@ -3,10 +3,8 @@ using System.Net.Http;
 namespace UltimateUpdater.Services.SelfUpdate;
 
 /// <summary>
-/// Reading the metadata (the releases JSON and SHA256SUMS.txt) with a ceiling. The artifact download
-/// has always been capped both ways; these two were read straight into a string, so a response far
-/// larger than any real one would simply be buffered whole, SECURITY.md asks for oversized input to
-/// be rejected at every boundary, and this is one.
+/// Reads the metadata (the releases JSON and SHA256SUMS.txt) with a ceiling, so an oversized response is
+/// rejected instead of buffered whole.
 /// </summary>
 internal static class UpdateMetadata
 {

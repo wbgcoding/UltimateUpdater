@@ -13,7 +13,8 @@ internal sealed class DownloadRateMeter
     private TimeSpan _lastTime;
     private double _rate;
 
-    /// <summary>Takes the bytes read so far at <paramref name="now"/> and returns the smoothed bytes per second.</summary>
+    /// <summary>Takes the bytes read so far at <paramref name="now"/> and returns the smoothed bytes per
+    /// second.</summary>
     public double Add(long bytes, TimeSpan now)
     {
         if (!_started)

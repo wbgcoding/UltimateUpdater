@@ -34,7 +34,8 @@ public enum SelfUpdatePhase { Downloading, Verifying }
 /// declined the elevation prompt (the verified file is kept for a second try), or it failed.</summary>
 public enum SelfUpdateApplyResult { Started, Declined, Failed }
 
-/// <summary>One progress reading; <see cref="Total"/> is null when the server did not say how big the file is.</summary>
+/// <summary>One progress reading; <see cref="Total"/> is null when the server did not say how big the file
+/// is.</summary>
 public readonly record struct SelfUpdateProgress(SelfUpdatePhase Phase, long Read = 0, long? Total = null);
 
 public sealed record SelfUpdateDownloadResult(SelfUpdateDownloadOutcome Outcome, string? Path = null);
@@ -56,11 +57,9 @@ public sealed partial class SelfUpdateService
     private const long MaxAssetBytes = 300L * 1024 * 1024;
 
     /// <summary>
-    /// The shared client runs without a timeout on purpose; its 100 second default also covers reading
-    /// the response body, and these artifacts are well over 100 MB, so every download died part-way
-    /// through. That left the OPERATIONS unbounded instead: a check that never answers hung for the rest
-    /// of the process's life, holding whatever the caller passed. Each operation now carries its
-    /// own deadline: seconds for the small JSON check, generous but finite for the download.
+    /// The shared client has no timeout on purpose: its 100 second default also covers reading the body,
+    /// and these artifacts are well over 100 MB. Each operation carries its own deadline instead: seconds
+    /// for the small JSON check, generous but finite for the download.
     /// </summary>
     private static readonly TimeSpan CheckTimeout = ExternalCallTimeouts.Long;
 
@@ -104,10 +103,12 @@ public sealed partial class SelfUpdateService
     /// <summary>The key releases must be signed with; a test passes its own so no real key is ever needed.</summary>
     private readonly string _publicKeyPem;
 
-    /// <summary>Whether this copy was set up by the installer; decides which asset it may take. A test passes its own.</summary>
+    /// <summary>Whether this copy was set up by the installer; decides which asset it may take. A test passes its
+    /// own.</summary>
     private readonly Func<bool> _isInstalled;
 
-    /// <summary>Starts the installer for an installed copy; a test replaces it so no process is ever launched.</summary>
+    /// <summary>Starts the installer for an installed copy; a test replaces it so no process is ever
+    /// launched.</summary>
     private readonly Func<ProcessStartInfo, Process?> _startSetup;
 
     public SelfUpdateService(
@@ -124,9 +125,8 @@ public sealed partial class SelfUpdateService
     }
 
     /// <summary>
-    /// The running version INCLUDING a prerelease suffix ("0.4.0-beta.1"). The assembly version cannot carry
-    /// one, so a beta build read as "0.4.0": it was never offered the next beta, nor 0.4.0 itself (equal),
-    /// until 0.4.1. The csproj sets InformationalVersion to $(Version) without the commit hash.
+    /// The running version including a prerelease suffix ("0.4.0-beta.1"), which the assembly version cannot
+    /// carry. The csproj sets InformationalVersion to $(Version) without the commit hash.
     /// </summary>
     public static string CurrentVersion { get; } = ReadCurrentVersion();
 
@@ -409,7 +409,8 @@ public sealed partial class SelfUpdateService
             target.Report(new SelfUpdateProgress(SelfUpdatePhase.Downloading, value.Read, value.Total));
     }
 
-    /// <summary>Gives up a verified download that will not be started: drops the pin and removes the staged file.</summary>
+    /// <summary>Gives up a verified download that will not be started: drops the pin and removes the staged
+    /// file.</summary>
     internal void DiscardVerified(string path)
     {
         if (_handedOverSetup is not null
@@ -498,7 +499,7 @@ public sealed partial class SelfUpdateService
     /// <summary>
     /// How the verified setup is started. For an all-users install it is started elevated right here, while
     /// the verified file is still pinned, so Setup never has to start its own file again by path to get
-    /// elevation. A per-user install needs no elevation and starts as before.
+    /// elevation. A per-user install needs no elevation.
     /// </summary>
     internal static ProcessStartInfo BuildSetupStartInfo(string verifiedPath, bool machineScope)
     {

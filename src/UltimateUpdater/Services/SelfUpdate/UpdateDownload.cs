@@ -7,7 +7,8 @@ namespace UltimateUpdater.Services.SelfUpdate;
 /// <summary>Shared streaming download with a hard byte cap, so a hostile server cannot fill the disk.</summary>
 internal static class UpdateDownload
 {
-    /// <summary>A few readings a second are plenty for a progress bar; one per buffer would flood the dispatcher.</summary>
+    /// <summary>A few readings a second are plenty for a progress bar; one per buffer would flood the
+    /// dispatcher.</summary>
     internal static readonly TimeSpan ReportInterval = TimeSpan.FromMilliseconds(250);
 
     public static async Task<bool> ExecuteAsync(

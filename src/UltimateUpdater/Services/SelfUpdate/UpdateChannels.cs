@@ -3,10 +3,9 @@ using System.Net.Http;
 namespace UltimateUpdater.Services.SelfUpdate;
 
 /// <summary>
-/// The pre-request IsAllowedUrl check only covers where a call STARTS; the shared HttpClient follows
-/// redirects by default, so the response can still come from anywhere. RequestMessage.RequestUri is
-/// the address after every redirect actually taken, and this is the one check that covers that
-/// (mirrors DriverSources.IsAllowedDownload's same fix for the NVIDIA path).
+/// The pre-request IsAllowedUrl check only covers where a call starts; the shared HttpClient follows
+/// redirects, so the response can still come from anywhere. RequestMessage.RequestUri is the address
+/// after every redirect actually taken, and this is the one check that covers it.
 /// </summary>
 internal static class SelfUpdateUrlGuard
 {
