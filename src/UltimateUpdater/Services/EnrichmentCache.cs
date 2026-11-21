@@ -7,22 +7,18 @@ using UltimateUpdater.Services.Sources;
 namespace UltimateUpdater.Services;
 
 /// <summary>
-/// Remembers the background-enrichment results (release date, download size) keyed by source, item and
-/// version, so a rescan does not hit PyPI/npm again for a package whose available version has not moved.
-/// Entries expire after a week (a package can be re-released under the same version, rarely). Persisted
-/// as one small JSON file in the data directory; every failure is swallowed: the cache is an
-/// optimisation, never a correctness dependency.
+/// Remembers background-enrichment results (release date, download size) keyed by source, item and version,
+/// so a rescan does not hit PyPI/npm again for a package whose available version has not moved. Entries
+/// expire after a week. Persisted as one small JSON file in the data directory; every failure is
+/// swallowed: the cache is an optimisation, never a correctness dependency.
 /// </summary>
 public sealed class EnrichmentCache
 {
     private static readonly TimeSpan Ttl = TimeSpan.FromDays(7);
 
     /// <summary>
-    /// Unlike IconCacheService's disk cache, TTL eviction here is passive (a key is only dropped when
-    /// looked up again after expiring), so a very long-running instance whose watched packages keep
-    /// releasing new versions could otherwise grow this dictionary, and the file it is serialised to;
-    /// without bound. A hard count cap with oldest-first eviction on write gives it the same "cannot
-    /// grow forever" guarantee the icon cache already has.
+    /// Hard cap with oldest-first eviction on write. Expiry is passive (a key is only dropped when looked up
+    /// again), so without a cap a long-running instance could grow the dictionary and its file without bound.
     /// </summary>
     private const int MaxEntries = 5000;
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -36,13 +32,13 @@ public sealed class EnrichmentCache
         /// <summary>The newest version, for the sources whose own listing cannot report one.</summary>
         public string? Version { get; set; }
 
-        /// <summary>Release notes text/link: a source that provides them found them in the
-        /// same fetch the date/size come from, so caching follows the same key and the same week.</summary>
+        /// <summary>Release notes text or link, fetched together with the date and size, so it shares their key
+        /// and expiry.</summary>
         public string? ChangelogBody { get; set; }
         public string? ChangelogUrl { get; set; }
 
-        /// <summary>The vendor/author name a registry reported, where it did (pip's PyPI lookup today);
-        /// same fetch, same key, same week as everything else in this entry.</summary>
+        /// <summary>The vendor or author name a registry reported, where it did; same fetch, key and expiry as the
+        /// rest of the entry.</summary>
         public string? Publisher { get; set; }
 
         public long FetchedAtUnix { get; set; }
@@ -82,10 +78,9 @@ public sealed class EnrichmentCache
     private readonly Action? _beforeReadForTest;
 
     /// <summary>
-    /// Reads the cache file on a pool thread (up to <see cref="MaxFileBytes"/>, which must never block the
-    /// window's start). Started once, later calls return the same task. The lookups and writes below wait
-    /// for it themselves, so nothing can ever run against a half-loaded cache; callers on the UI thread
-    /// await this first so that wait is already over by then.
+    /// Reads the cache file on a pool thread (up to <see cref="MaxFileBytes"/>) so it never blocks the
+    /// window's start. Started once, later calls return the same task. Lookups and writes wait for it
+    /// themselves, so nothing runs against a half-loaded cache.
     /// </summary>
     public Task LoadAsync()
     {
@@ -143,9 +138,8 @@ public sealed class EnrichmentCache
     }
 
     /// <summary>Drops the oldest-fetched entries down to 90 % of <see cref="MaxEntries"/>, so a full cache
-    /// does not sort all its entries again on every following Set. Best-effort: a key removed here between
-    /// the snapshot and the actual removal (a concurrent Set/TryGet) just means one fewer eviction happens
-    /// this round, not a torn cache.</summary>
+    /// does not re-sort on every following Set. Best-effort: a key removed concurrently just means one fewer
+    /// eviction this round, not a torn cache.</summary>
     private void EvictOldest()
     {
         var excess = _entries.Count - MaxEntries / 10 * 9;
@@ -156,9 +150,8 @@ public sealed class EnrichmentCache
             _entries.TryRemove(key, out _);
     }
 
-    /// <summary>Forgets every entry, for "delete my data": the file is gone, and the next save must not write
-    /// the old entries straight back. Loaded first, so a lazy read that has not happened yet cannot bring
-    /// back entries from a file the delete has not reached.</summary>
+    /// <summary>Forgets every entry, for "delete my data". Loads first, so a lazy read that has not happened
+    /// yet cannot bring back entries from a file the delete has not reached.</summary>
     public void Clear()
     {
         EnsureLoaded();
@@ -170,11 +163,9 @@ public sealed class EnrichmentCache
     }
 
     /// <summary>
-    /// Serialised and written through a temporary file: two saves could overlap: the scan's
-    /// own save and the one on exit, and File.WriteAllText from two threads at once either throws (the
-    /// later write silently lost) or leaves a half-written file that the next start throws away entirely.
-    /// One writer at a time, and the replacement is a single move, so the file on disk is always a
-    /// complete one.
+    /// Serialised and written through a temporary file. Two saves can overlap (the scan's own and the one on
+    /// exit); concurrent writes to one file would throw or leave a half-written file. One writer at a time,
+    /// and the replacement is a single move, so the file on disk is always complete.
     /// </summary>
     public void Save()
     {
@@ -225,7 +216,7 @@ public sealed class EnrichmentCache
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException)
         {
-            // a corrupt or unreadable cache is simply ignored and overwritten on the next save
+            // A corrupt or unreadable cache is ignored and overwritten on the next save.
             _logging.Warn($"Enrichment cache could not be loaded: {ex.Message}");
         }
         finally

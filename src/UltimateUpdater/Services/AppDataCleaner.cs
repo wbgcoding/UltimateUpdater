@@ -17,8 +17,7 @@ public static class AppDataCleaner
 
     /// <summary>
     /// Single files the app owns by name. Every writer of a file under the data directory belongs here, or
-    /// its file quietly survives an action the settings window calls "delete my data": the rotated history
-    /// (HistoryService.RotateIfNeeded) and the cleanup history (CleanupHistoryService) both did.
+    /// its file quietly survives the settings window's "delete my data".
     /// </summary>
     internal static readonly string[] OwnedFiles =
     [
@@ -41,9 +40,8 @@ public static class AppDataCleaner
         var failed = DeleteOwnedContent(
             AppPaths.DataDirectory, logging, Path.GetTempPath(), new AutostartService(logging));
 
-        // AppPaths resolved these once, in a static initializer, and nothing else ever recreates them,
-        // so without this the app silently stopped logging and caching icons for the rest of the session,
-        // right after the action a user is most likely to want a log for.
+        // AppPaths resolved these once in a static initializer and nothing else recreates them, so without
+        // this the app would stop logging and caching icons for the rest of the session.
         Recreate(AppPaths.LogsDirectory, logging);
         Recreate(AppPaths.IconCacheDirectory, logging);
 
@@ -73,10 +71,7 @@ public static class AppDataCleaner
         }
     }
 
-    /// <summary>
-    /// The deletion itself, against any data directory: so the list above can be proven against a
-    /// throwaway folder instead of the machine's real one.
-    /// </summary>
+    /// <summary>The deletion itself, against any data directory, so it can be tested on a throwaway folder.</summary>
     internal static bool DeleteOwnedContent(
         string dataDirectory, LoggingService logging, string? tempDirectory = null, AutostartService? autostart = null)
     {

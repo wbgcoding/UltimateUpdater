@@ -8,44 +8,33 @@ using UltimateUpdater.Models;
 namespace UltimateUpdater.Services;
 
 /// <summary>
-/// Persists the last finished scan (<see cref="ScanOrchestrator"/>) to disk so the table can show
-/// something the instant the window opens instead of starting empty for however long the first real
-/// scan of the session takes. Read once at startup, before the first scan runs; a cached row is replaced the moment its own source
-/// reports a live result and is otherwise left dimmed, still installable (install re-fetches the item
-/// by id at install time regardless, per <see cref="UpdateItem"/>'s own summary, so serving a cached
-/// row is safe). Same atomic-write/fail-open shape as <see cref="EnrichmentCache"/>: a corrupt,
-/// too-old or wrong-version file is simply discarded, never thrown from <see cref="TryLoad"/>.
+/// Persists the last finished scan (<see cref="ScanOrchestrator"/>) so the table shows something the
+/// instant the window opens. Read once at startup, before the first scan; a cached row is replaced when
+/// its own source reports a live result and is otherwise left dimmed, still installable (install
+/// re-fetches the item by id regardless). Same atomic-write, fail-open shape as
+/// <see cref="EnrichmentCache"/>: a corrupt, too-old or wrong-version file is discarded, never thrown
+/// from <see cref="TryLoad"/>.
 /// </summary>
 public sealed class ScanResultCache
 {
     private static readonly TimeSpan Ttl = TimeSpan.FromDays(7);
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-    /// <summary>The running app's own version, exactly as written into a freshly saved cache; a cache
-    /// written by any other version is discarded unread rather than risk replaying a shape the current
-    /// model classes no longer agree with.</summary>
+    /// <summary>The running app's own version, as written into a freshly saved cache; a cache from any other
+    /// version is discarded unread rather than replayed against changed model classes.</summary>
     public static string CurrentAppVersion { get; } = SelfUpdate.SelfUpdateService.CurrentVersion;
 
-    /// <summary>The real, non-portable-mode file this cache reads and writes in a normal run. Internal so a
-    /// test that needs to reach the cache's own file (rather than an injected test path) can name it
-    /// without duplicating the file name as a second literal that could drift from this one.</summary>
+    /// <summary>The real file this cache reads and writes in a normal run; internal so tests can name it
+    /// without a second literal.</summary>
     internal static string DefaultPath { get; } = Path.Combine(AppPaths.DataDirectory, "last-scan.json");
 
-    /// <summary>Test-only override of the path <see cref="DefaultPath"/> would otherwise resolve to, same
-    /// style as <see cref="Cleanup.CleanupService.RecycleBinDriveRootsOverride"/>. Null (the only value
-    /// ever set in production) means the real machine's own <see cref="DefaultPath"/>. <see
-    /// cref="UltimateUpdater.ViewModels.MainViewModel"/> owns exactly one <see cref="ScanResultCache"/>, built through the
-    /// parameterless constructor with no way for a test to inject a different one, and finishing a scan
-    /// SAVES it: without this override, any MainViewModel test that completes a scan writes the real
-    /// user's own %APPDATA%\UltimateUpdater\last-scan.json and a later test can read that pollution back.
-    /// Pointed at a fresh, per-test-name temp file by the test project's WpfHarness on every call into it,
-    /// never assigned directly by an individual test.</summary>
+    /// <summary>Test-only override of <see cref="DefaultPath"/>; null in production. The main view model
+    /// builds its own cache through the parameterless constructor and saves after every scan, so without this
+    /// any test that completes a scan would write the real user's last-scan file.</summary>
     internal static string? PathOverride { get; set; }
 
-    /// <summary>The path a parameterless <see cref="ScanResultCache"/> actually resolves to right now:
-    /// <see cref="PathOverride"/> during tests, <see cref="DefaultPath"/> otherwise. Internal so a test
-    /// that needs the exact file its own unparameterized instances read and write does not have to
-    /// duplicate this fallback logic.</summary>
+    /// <summary>The path a parameterless <see cref="ScanResultCache"/> resolves to right now:
+    /// <see cref="PathOverride"/> during tests, <see cref="DefaultPath"/> otherwise.</summary>
     internal static string EffectivePath => PathOverride ?? DefaultPath;
 
     private sealed class CachedChild
@@ -72,7 +61,8 @@ public sealed class ScanResultCache
         public List<CachedChild> Items { get; set; } = [];
     }
 
-    /// <summary>A real scan cache is a few hundred KB; anything past this is damaged or foreign and is not loaded.</summary>
+    /// <summary>A real scan cache is a few hundred KB; anything past this is damaged or foreign and is not
+    /// loaded.</summary>
     internal const int MaxFileBytes = 20 * 1024 * 1024;
 
     private readonly string _path;
@@ -93,9 +83,8 @@ public sealed class ScanResultCache
     public readonly record struct LoadResult(IReadOnlyList<UpdateItem> Items, DateTimeOffset SavedAt);
 
     /// <summary>
-    /// Serialised through a temporary file and a single move, same as <see cref="EnrichmentCache.Save"/>:
-    /// a write is never observed half-finished. Every failure is swallowed; this cache is an
-    /// optimisation, never a correctness dependency.
+    /// Written through a temporary file and a single move, like <see cref="EnrichmentCache.Save"/>. Every
+    /// failure is swallowed: this cache is an optimisation, never a correctness dependency.
     /// </summary>
     public void Save(IReadOnlyList<UpdateItem> items)
     {
@@ -150,9 +139,8 @@ public sealed class ScanResultCache
                 return null;
             }
 
-            // A literal null where a collection (or an item's identity) belongs is a damaged file, and the
-            // mapping below would throw out of startup. Nothing is deleted here: the next saved scan
-            // replaces the file, and the empty result is the same "nothing usable" every other path gives.
+            // A literal null where a collection or an item's identity belongs is a damaged file, and the mapping
+            // below would throw out of startup. Nothing is deleted: the next saved scan replaces the file.
             if (!IsStructurallyValid(cached.Items))
             {
                 _logging.Warn("Scan result cache holds an empty required value and was ignored.");

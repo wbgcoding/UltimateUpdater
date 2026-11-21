@@ -17,17 +17,15 @@ public enum ThreeWayChoice
 
 /// <summary>
 /// The app's own message boxes. Every notice, warning and confirmation goes through here so it matches
-/// the app's look instead of the grey system MessageBox. Always shown on the UI thread,
-/// owned by the main window; if anything about that fails it falls back to the system box so a message is
-/// never silently lost.
+/// the app's look. Shown on the UI thread, owned by the active window; if that fails it falls back to
+/// the system box so a message is never silently lost.
 /// </summary>
 public static class Dialogs
 {
     /// <summary>
-    /// Set by the render/test harness. A modal dialog on a thread with no user in front of it waits for a
-    /// click that can never come, which hung the whole test run for ever, and the crash handler routes
-    /// through here, so ANY exception during a render turned into a permanent hang. Never set in the real
-    /// app: the user always gets their dialogs.
+    /// Set by the render/test harness. A modal dialog with no user in front of it waits for a click that
+    /// never comes, and the crash handler routes through here, so any exception during a render would hang
+    /// the run. Never set in the real app.
     /// </summary>
     public static bool SuppressInteractiveDialogs { get; set; }
 
@@ -86,11 +84,9 @@ public static class Dialogs
     }
 
     /// <summary>
-    /// A three-way question (the blocker dialog: close-and-continue / skip / try-anyway):
-    /// a minimal extension of <see cref="Confirm"/>'s shape (see <see cref="ThreeWayChoice"/>) rather than a
-    /// second dialog system. Headless callers get <see cref="ThreeWayChoice.Dismissed"/>, same fail-closed
-    /// contract as every other dialog here: a caller that treats Dismissed as "do the safe/no-op thing"
-    /// never blocks a test run.
+    /// A three-way question (the blocker dialog: close-and-continue / skip / try-anyway), shaped like
+    /// <see cref="Confirm"/>. Headless callers get <see cref="ThreeWayChoice.Dismissed"/>, which every caller
+    /// treats as the safe no-op, so it never blocks a test run.
     /// </summary>
     public static ThreeWayChoice ConfirmThreeWay(
         string headline, string body, string primaryText, string secondaryText, string tertiaryText)
@@ -149,10 +145,8 @@ public static class Dialogs
         {
             var window = new Views.MessageDialogWindow(viewModel);
 
-            // The ACTIVE window, not the main one: a dialog owned by the wrong window leaves its real
-            // parent with an empty OwnedWindows, so the "click away closes me" rule fired the moment this
-            // dialog appeared: the cleanup window vanished and then deleted with no UI at all, and the
-            // settings window disappeared while its own confirmation was still open.
+            // The ACTIVE window, not the main one: a dialog owned by the wrong window leaves its real parent with
+            // an empty OwnedWindows, so the "click away closes me" rule would close that parent at once.
             var owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
                         ?? Application.Current?.MainWindow;
 
@@ -179,10 +173,8 @@ public static class Dialogs
         }
     }
 
-    /// <summary>
-    /// The system box's buttons when the themed dialog failed. A question keeps a way to say no: with OK
-    /// alone, a destructive confirmation would come back confirmed whatever the user did, even on Close.
-    /// </summary>
+    /// <summary>The system box's buttons when the themed dialog failed. A question keeps a way to say no: with
+    /// OK alone, a destructive confirmation would come back confirmed whatever the user did.</summary>
     internal static MessageBoxButton FallbackButtons(MessageDialogViewModel viewModel) =>
         viewModel.HasSecondary ? MessageBoxButton.OKCancel : MessageBoxButton.OK;
 }

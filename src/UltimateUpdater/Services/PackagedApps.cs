@@ -9,9 +9,9 @@ namespace UltimateUpdater.Services;
 /// <summary>
 /// The installed Store (MSIX) packages, read from the per-user package repository. A package is matched by
 /// its display name, exactly, never by similarity; a winget row additionally needs proof that the name is
-/// not a classic install (<see cref="FindAllForWingetRow"/>). Everything the manifest names (an executable, an
-/// application id) is untrusted text until it has been checked: an executable counts only when it lies
-/// inside the package's own folder, with no link on the way there.
+/// not a classic install (<see cref="FindAllForWingetRow"/>). Everything the manifest names is untrusted
+/// text until checked: an executable counts only when it lies inside the package's own folder, with no
+/// link on the way there.
 /// </summary>
 public sealed class PackagedApps
 {
@@ -34,10 +34,12 @@ public sealed class PackagedApps
     /// the registry key is not shaped like a package full name; such a package still gives its icon).</summary>
     public sealed record Package(string Name, string Root, string? FamilyName);
 
-    /// <summary>An Application of a package whose executable was verified to be a real file inside the package folder.</summary>
+    /// <summary>An Application of a package whose executable was verified to be a real file inside the package
+    /// folder.</summary>
     public sealed record Application(string Id, string ExecutablePath);
 
-    /// <summary>How long a read of the package list is reused: an app installed or removed while this one runs shows up soon.</summary>
+    /// <summary>How long a read of the package list is reused: an app installed or removed while this one runs shows up
+    /// soon.</summary>
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromSeconds(30);
 
     public PackagedApps(IRegistryView registry, Func<DateTime>? now = null)
@@ -60,7 +62,8 @@ public sealed class PackagedApps
         }
     }
 
-    /// <summary>The packages whose display name is exactly this one (a trailing bracketed note ignored), newest first.</summary>
+    /// <summary>The packages whose display name is exactly this one (a trailing bracketed note ignored), newest
+    /// first.</summary>
     public IEnumerable<Package> FindAll(string displayName)
     {
         var wanted = IconCacheService.CleanName(displayName);
@@ -129,8 +132,8 @@ public sealed class PackagedApps
     }
 
     /// <summary>
-    /// The launch target of the package's first Application, <c>shell:AppsFolder\&lt;family&gt;!&lt;app id&gt;</c>, which
-    /// starts the app the way the Start menu does (also for apps whose manifest names no usable executable).
+    /// The launch target of the package's first Application, <c>shell:AppsFolder\&lt;family&gt;!&lt;app id&gt;</c>,
+    /// which starts the app the way the Start menu does (also for apps whose manifest names no usable executable).
     /// Null when the family name is unknown, the manifest has no Application, or the pair is not well formed.
     /// </summary>
     public string? StartTargetOf(Package package)
@@ -163,8 +166,8 @@ public sealed class PackagedApps
     {
         var found = new List<Package>();
 
-        // Newest first, so an old version left behind never wins over the current one. The version is
-        // compared as a version: as text, 9.0 would sort above 10.0.
+        // Newest first, so an old version left behind never wins. Compared as versions: as text, 9.0 would
+        // sort above 10.0.
         var keys = _registry.SubKeyNames(PackagesKey)
             .OrderByDescending(VersionOf)
             .ThenByDescending(k => k, StringComparer.OrdinalIgnoreCase);

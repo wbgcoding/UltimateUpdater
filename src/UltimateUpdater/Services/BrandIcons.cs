@@ -19,9 +19,7 @@ internal sealed record BrandMark(Geometry Geometry, Color Color)
     /// <summary>A brand colour with less spread between its channels than this is grey for all purposes.</summary>
     private const int MinimumChroma = 0x28;
 
-    /// <summary>
-    /// True when the brand colour stands out from the tile it is drawn on.
-    /// </summary>
+    /// <summary>True when the brand colour stands out from the tile it is drawn on.</summary>
     internal static bool IsLegibleOn(Color mark, Color tile) =>
         AccentPalette.Contrast(mark, tile) >= MinimumContrast;
 
@@ -50,7 +48,8 @@ internal sealed record BrandMark(Geometry Geometry, Color Color)
         return null;
     }
 
-    /// <summary>The colour that results from <paramref name="top"/> painted over an opaque <paramref name="below"/>.</summary>
+    /// <summary>The colour that results from <paramref name="top"/> painted over an opaque <paramref
+    /// name="below"/>.</summary>
     internal static Color Composite(Color top, Color below)
     {
         var alpha = top.A / 255.0;
@@ -60,12 +59,10 @@ internal sealed record BrandMark(Geometry Geometry, Color Color)
 }
 
 /// <summary>
-/// Bundled brand marks, used only when the row has no icon of its own. Package-manager rows are the
-/// real reason this exists: an npm or pip package has no installed application on disk to take an
-/// icon from at all, so without this they can never show anything but a letter. An icon extracted
-/// from the installed program always wins over these.
-/// Matching is by an explicit table rather than by similarity on purpose: the wrong company's mark on
-/// a row is worse than no mark at all. Licensing: NOTICE-brand-icons.md.
+/// Bundled brand marks, used only when the row has no icon of its own. They exist mainly for package
+/// manager rows: an npm or pip package has no installed application to take an icon from. An icon
+/// extracted from the installed program always wins. Matching is by an explicit table, never by
+/// similarity: the wrong company's mark on a row is worse than none. Licensing: NOTICE-brand-icons.md.
 /// </summary>
 internal static class BrandIcons
 {
@@ -105,12 +102,11 @@ internal static class BrandIcons
     };
 
     /// <summary>
-    /// Sources whose rows are libraries or tools a package manager installs, not applications. They have
-    /// no program of their own on the machine, so an icon found by name (Uninstall entry, Start menu,
-    /// PATH) can only belong to something unrelated: pip's "google-auth" is not the Google app, and
-    /// the script launcher beside a Python tool is not the tool's icon. These rows never look for an
-    /// icon on disk and wear the language or ecosystem mark instead. Chocolatey, Scoop and mise are
-    /// absent on purpose: their packages are mostly applications with an icon of their own.
+    /// Sources whose rows are libraries or tools a package manager installs, not applications. They have no
+    /// program of their own, so an icon found by name (Uninstall entry, Start menu, PATH) can only belong to
+    /// something unrelated: pip's "google-auth" is not the Google app. These rows never look for an icon on
+    /// disk and wear the language or ecosystem mark. Chocolatey, Scoop and mise are absent on purpose: their
+    /// packages are mostly applications with an icon of their own.
     /// </summary>
     private static readonly Dictionary<string, string> LibrarySources = new(StringComparer.Ordinal)
     {
@@ -128,18 +124,15 @@ internal static class BrandIcons
         ["vcpkg"] = "",
     };
 
-    /// <summary>
-    /// True when the source's rows are libraries or package-manager tools that must never be matched
-    /// against installed applications.
-    /// </summary>
+    /// <summary>True when the source's rows are libraries or package-manager tools that must never be matched
+    /// against installed applications.</summary>
     public static bool IsLibrarySource(string? sourceId) =>
         !string.IsNullOrEmpty(sourceId) && LibrarySources.ContainsKey(sourceId);
 
     /// <summary>
-    /// Sources where the whole source gives the row its mark: a launcher row IS the launcher, and a
-    /// library row is a package of its ecosystem. Application package managers are deliberately absent:
-    /// every Chocolatey package would otherwise wear Chocolatey's logo, which says nothing the source
-    /// pill on the row does not already say, and looks like a claim about the package itself.
+    /// Sources where the whole source gives the row its mark: a launcher row is the launcher, a library row a
+    /// package of its ecosystem. Application package managers are absent on purpose: every Chocolatey package
+    /// would otherwise wear Chocolatey's logo, which the source pill already says.
     /// </summary>
     private static readonly Dictionary<string, string> BySource = new(StringComparer.Ordinal)
     {
