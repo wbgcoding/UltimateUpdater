@@ -5,7 +5,7 @@
         xmlns:views="clr-namespace:UltimateUpdater.Views"
         Title="{Binding Loc[CleanupTitle]}"
         Width="980" Height="880" MinWidth="860" MinHeight="580"
-        WindowStartupLocation="CenterOwner"
+        WindowStartupLocation="CenterScreen"
         ExtendsContentIntoTitleBar="True"
         Background="{DynamicResource ApplicationBackgroundBrush}">
     <ui:FluentWindow.Resources>

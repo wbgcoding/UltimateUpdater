@@ -21,8 +21,7 @@ public static class DismissOnDeactivate
     /// </summary>
     /// <param name="canDismiss">
     /// Optional veto, asked at click time, for a dialog that must stay open while a stray click could do
-    /// harm. No window passes one today: the cleanup dialog closes without one, because closing it puts a
-    /// running cleanup in the background rather than aborting it.
+    /// harm. No window passes one today.
     /// </param>
     public static void Attach(Window window, Func<bool>? canDismiss = null)
     {

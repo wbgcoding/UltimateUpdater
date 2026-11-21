@@ -166,9 +166,9 @@ public partial class CleanupWindow
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
         Closed += (_, _) => viewModel.PropertyChanged -= OnViewModelPropertyChanged;
 
-        // Clicking the main window beside this one closes it. No veto while cleaning: closing puts the
-        // run in the background rather than aborting it, so there is nothing for a stray click to break.
-        DismissOnDeactivate.Attach(this);
+        // Deliberately no DismissOnDeactivate: this is a window of its own beside the main one, not a popup
+        // over it (see MainViewModel.ShowCleanup), so working in the main window, a new scan included,
+        // leaves it open.
         DialogKeyboard.CloseOnEscape(this);
     }
 

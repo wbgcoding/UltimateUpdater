@@ -78,7 +78,11 @@ public partial class MainViewModel
         // earlier window close left it subscribed anyway; either way this is the one place a window
         // actually attaches.
         cleanupViewModel.WindowAttached();
-        ShowOwned(new Views.CleanupWindow(cleanupViewModel), openStarted: openStarted);
+
+        // Independent, not owned: an owned window always floats above the main one, minimises with it and
+        // closed whenever the main window was clicked, so starting a scan there took the cleanup away.
+        // Unowned, both windows can be used side by side and each has its own taskbar button.
+        ShowOwned(new Views.CleanupWindow(cleanupViewModel), openStarted: openStarted, independent: true);
     }
 
     /// <summary>
@@ -488,12 +492,38 @@ public partial class MainViewModel
         ownerVisible && ownerState != WindowState.Minimized && !appExiting;
 
     /// <summary>
+    /// Opens an unowned window centred over <paramref name="anchor"/> while that one sits in its normal
+    /// state; a maximised, minimised or hidden anchor has no useful frame to centre on, so the screen is
+    /// used then. DialogSizing.FitToWorkArea still pulls the result fully onto the monitor afterwards.
+    /// </summary>
+    private static void PlaceOver(Window window, Window? anchor)
+    {
+        if (anchor is null || !anchor.IsVisible || anchor.WindowState != WindowState.Normal)
+        {
+            window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            return;
+        }
+
+        var origin = CenterOver(new System.Windows.Rect(anchor.Left, anchor.Top, anchor.ActualWidth, anchor.ActualHeight),
+            new System.Windows.Size(window.Width, window.Height));
+        window.WindowStartupLocation = WindowStartupLocation.Manual;
+        window.Left = origin.X;
+        window.Top = origin.Y;
+    }
+
+    /// <summary>Top-left corner that centres a window of <paramref name="size"/> over <paramref name="anchor"/>.</summary>
+    internal static System.Windows.Point CenterOver(System.Windows.Rect anchor, System.Windows.Size size) =>
+        new(anchor.Left + (anchor.Width - size.Width) / 2, anchor.Top + (anchor.Height - size.Height) / 2);
+
+    /// <summary>
     /// Shows an owned dialog NON-modally, so a click in the main window can close it: that is what
     /// "beside the popup" means; a modal dialog disables its owner and there is no such click.
     /// One window per kind: a second click on the same toolbar button raises the one already open instead of
     /// stacking another copy, which non-modal windows would otherwise allow.
+    /// <paramref name="independent"/> opens it as a window of its own instead: no owner, centred over the
+    /// main window, so neither one hides, closes or minimises the other.
     /// </summary>
-    private void ShowOwned(Window window, Action? onClosed = null, long? openStarted = null)
+    private void ShowOwned(Window window, Action? onClosed = null, long? openStarted = null, bool independent = false)
     {
         var existing = Application.Current?.Windows.OfType<Window>()
             .FirstOrDefault(open => open.GetType() == window.GetType() && open.IsLoaded);
@@ -512,20 +542,27 @@ public partial class MainViewModel
         }
 
         var owner = Application.Current?.MainWindow;
-        window.Owner = owner;
-
-        // When an owned window closes while it is not the active one (after a UAC prompt or a confirm
-        // dialog, say), Windows hands activation to the next window in z-order, and the owner can fall
-        // behind another application. Raising it while the closing window still exists keeps it in front.
-        window.Closing += (_, args) =>
+        if (independent)
         {
-            if (args.Cancel || owner is null)
-                return;
+            PlaceOver(window, owner);
+        }
+        else
+        {
+            window.Owner = owner;
 
-            var exiting = Application.Current is App { IsExiting: true };
-            if (ShouldActivateOwnerOnClose(owner.IsVisible, owner.WindowState, exiting))
-                owner.Activate();
-        };
+            // When an owned window closes while it is not the active one (after a UAC prompt or a confirm
+            // dialog, say), Windows hands activation to the next window in z-order, and the owner can fall
+            // behind another application. Raising it while the closing window still exists keeps it in front.
+            window.Closing += (_, args) =>
+            {
+                if (args.Cancel || owner is null)
+                    return;
+
+                var exiting = Application.Current is App { IsExiting: true };
+                if (ShouldActivateOwnerOnClose(owner.IsVisible, owner.WindowState, exiting))
+                    owner.Activate();
+            };
+        }
 
         window.Closed += (_, _) => _logging.Info($"Owned window closed: {window.GetType().Name}");
 
