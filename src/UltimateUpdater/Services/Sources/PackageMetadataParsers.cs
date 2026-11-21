@@ -815,8 +815,7 @@ public static class PackageMetadataParsers
 
         var padded = string.Join('.', parts.Concat(Enumerable.Repeat("0", 4 - parts.Length))) + suffix;
 
-        return string.Equals(normalized, padded, StringComparison.OrdinalIgnoreCase)
-            || (suffix.Length == 0 && normalized.StartsWith(padded + "-", StringComparison.OrdinalIgnoreCase));
+        return string.Equals(normalized, padded, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
