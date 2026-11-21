@@ -850,19 +850,21 @@ public partial class CleanupViewModel
             // true without ever trusting this process's own data path with admin rights.
             if (outcome.DriverBackupFolderName is { Length: > 0 } folderName)
             {
-                var copySource = DriverBackupStaging.ResolveExistingPath(folderName);
-                var copyDestination = Path.Combine(AppPaths.DataDirectory, "driver-backups", folderName);
-                if (!AppPaths.TryCopyDirectory(copySource, copyDestination, out _))
+                // Exported driver packages can be hundreds of MB: copied off the UI thread.
+                var backupsRoot = Path.Combine(AppPaths.DataDirectory, "driver-backups");
+                await Task.Run(() =>
                 {
-                    _logging.Warn($"Driver cleanup: could not copy the backup folder '{folderName}' into the data folder.");
-                }
-                else
-                {
+                    var copySource = DriverBackupStaging.ResolveExistingPath(folderName);
+                    if (!AppPaths.TryCopyDirectory(copySource, Path.Combine(backupsRoot, folderName), out _))
+                    {
+                        _logging.Warn($"Driver cleanup: could not copy the backup folder '{folderName}' into the data folder.");
+                        return;
+                    }
+
                     // The data folder's copies are ours to trim; the ProgramData originals are trimmed by the
                     // elevated worker, the only side allowed to delete there.
-                    DriverBackupStaging.PruneDataCopies(
-                        Path.Combine(AppPaths.DataDirectory, "driver-backups"), folderName, _logging);
-                }
+                    DriverBackupStaging.PruneDataCopies(backupsRoot, folderName, _logging);
+                });
             }
 
             // WasStopped (Disk Cleanup only, see CleanupOutcome) means this target swallowed its own
