@@ -533,7 +533,8 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
 
         var result = await ProcessRunner.RunStreamingAsync(
             executable, InstallArguments(item), InstallTimeout,
-            segment => ReportSegment(progress, item.Name, segment), cancellationToken, Utf8Environment);
+            segment => ReportSegment(progress, item.Name, segment), cancellationToken, Utf8Environment,
+            stallWatch: StallWatchOptions.ForInstall);
 
         var firstAttempt = result;
         ProcessResult? retried = null;
@@ -541,7 +542,8 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
         {
             result = retried = await ProcessRunner.RunStreamingAsync(
                 executable, retryArguments, InstallTimeout,
-                segment => ReportSegment(progress, item.Name, segment), cancellationToken, Utf8Environment);
+                segment => ReportSegment(progress, item.Name, segment), cancellationToken, Utf8Environment,
+                stallWatch: StallWatchOptions.ForInstall);
         }
 
         if (result.TimedOut)
