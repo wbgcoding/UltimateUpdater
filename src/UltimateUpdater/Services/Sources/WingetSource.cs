@@ -5,14 +5,13 @@ using UltimateUpdater.Models;
 namespace UltimateUpdater.Services.Sources;
 
 /// <summary>
-/// Tier A: winget. Two scan paths, both driving the SYSTEM winget (always current, nothing bundled):
+/// Tier A: winget. Two scan paths, both driving the system winget (always current, nothing bundled):
 /// 1. the `winget upgrade` CLI table, parsed defensively (see WingetUpgradeParser), is the authority
-/// because the module misses packages winget's own upgrade list shows;
-/// 2. the official Microsoft.WinGet.Client PowerShell module (structured, locale-independent objects)
-/// is the fallback when the CLI cannot be started.
-/// The winget COM API is not used: an unpackaged, unelevated process cannot marshal its objects (no
-/// package identity), and the in-proc alternative measured 190 s/scan with a private 244 MB index and
-/// missed results, versus 5 s (module) / 16 s (CLI) against the system winget.
+/// because the PowerShell module misses packages winget's own upgrade list shows;
+/// 2. the official Microsoft.WinGet.Client module (structured, locale-independent objects) is the
+/// fallback when the CLI cannot be started.
+/// The winget COM API is not used: an unpackaged, unelevated process cannot marshal its objects, and
+/// the in-proc alternative is far slower and misses results.
 /// Installs always run through winget itself, so its manifest hash verification is untouched.
 /// </summary>
 public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNoteSource
@@ -122,10 +121,9 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
 
         progress.Report(new InstallProgress { PercentComplete = 0, StatusText = item.Name });
 
-        // A deliberate rollback bypasses the whole upgrade ladder below - that ladder exists to
-        // find winget's OWN idea of the best upgrade, exactly what a pinned downgrade must NOT do. One
-        // hash-verified attempt at the exact requested version, same command the ladder's own last-resort
-        // rung already uses; a failure here is a real failure, never escalated further.
+        // A deliberate rollback bypasses the upgrade ladder below: that ladder looks for winget's own idea of
+        // the best upgrade, which a pinned downgrade must not do. One hash-verified attempt at the exact
+        // requested version; a failure here is a real failure, never escalated further.
         if (item.PinnedVersion is { } pinnedVersion)
         {
             // The rollback target comes from history the unelevated user can edit, and this can run in
@@ -327,7 +325,7 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         }
     }
 
-    /// <summary>Still hash-verified, with no --force, unlike the rung this replaced.</summary>
+    /// <summary>Still hash-verified, with no --force.</summary>
     internal static IReadOnlyList<string> VersionPinnedInstallArguments(string packageId, string version, string? source = null) =>
     [
         "install", "--id", packageId, "--exact", "--version", version,
@@ -613,9 +611,8 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         if (!IsInstallSuccess(result.ExitCode))
             throw new InvalidOperationException(FailureDetail("uninstall", item.Id, result));
 
-        // Some uninstallers end with success and remove nothing (seen with an exe flavour of a package whose
-        // manifest offers MSI). Trusting the exit code alone made a reinstall report the old version as gone
-        // and then fail on the fresh install for the very same reason the reinstall was meant to clear.
+        // Some uninstallers end with success and remove nothing (an exe flavour of a package whose manifest
+        // offers MSI), so the exit code alone cannot be trusted to say the old version is gone.
         if (await StaysListedAsync(ct => IsListedAsync(item.Id, ct), UninstallSettleTime, UninstallSettleStep, cancellationToken))
             throw new InvalidOperationException(
                 $"winget reported the uninstall of '{item.Id}' as done, but the package is still installed.");
@@ -820,8 +817,8 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
         "--silent", "--disable-interactivity",
         "--accept-package-agreements", "--accept-source-agreements",
         // The scan passes this too; the two commands have to agree about what counts as upgradable,
-        // otherwise winget lists packages as upgradable and then refuses to upgrade them ("Die Versionsnummer dieses Pakets kann nicht bestimmt werden…",
-        // PokeMMO).
+        // otherwise winget lists packages as upgradable and then refuses to upgrade them ("Die Versionsnummer dieses
+        // Pakets kann nicht bestimmt werden…", PokeMMO).
         "--include-unknown",
         .. SourceArguments(source),
     ];
