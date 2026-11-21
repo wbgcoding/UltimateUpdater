@@ -56,11 +56,12 @@ public static partial class RegistryCleanupSafety
             if (closing <= 1)
                 return null; // an unterminated quote is not a value we understand
 
-            var quoted = value[1..closing];
+            // Windows reads a ",<index>" inside the quotes as an icon index too.
+            var quoted = UninstallEntryPaths.StripIconIndex(value[1..closing]);
             return quoted.Length > 0 && IsConfidentlyQualified(quoted) ? quoted : null;
         }
 
-        if (!value.Contains(' '))
+        if (!value.Any(char.IsWhiteSpace))
         {
             var stripped = UninstallEntryPaths.StripIconIndex(value);
 
@@ -81,7 +82,7 @@ public static partial class RegistryCleanupSafety
         var candidates = new List<string>();
         for (var i = 0; i < value.Length; i++)
         {
-            var atTokenBoundary = i == value.Length - 1 || value[i + 1] == ' ';
+            var atTokenBoundary = i == value.Length - 1 || char.IsWhiteSpace(value[i + 1]);
             if (!atTokenBoundary)
                 continue;
 
@@ -176,6 +177,11 @@ public static partial class RegistryCleanupSafety
     /// </summary>
     private static bool IsConfidentlyQualified(string path)
     {
+        // A REG_SZ can carry a %VAR% that Windows expands when it uses the value; this process does not, so
+        // the literal text would never exist and a working entry would read as broken.
+        if (path.Contains('%'))
+            return false;
+
         try
         {
             return Path.IsPathFullyQualified(path);

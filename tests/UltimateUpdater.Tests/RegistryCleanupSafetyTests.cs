@@ -50,6 +50,47 @@ public class RegistryCleanupSafetyTests
         Assert.False(RegistryCleanupSafety.IsBrokenFileReference(value, _ => false));
     }
 
+    [Fact]
+    public void An_icon_index_inside_the_quotes_is_not_part_of_the_file_name()
+    {
+        Assert.Equal(
+            @"C:\Program Files\App\app.exe",
+            RegistryCleanupSafety.ExtractFilePath(@"""C:\Program Files\App\app.exe,0""", _ => true));
+        Assert.Equal(
+            @"C:\Program Files\App\app.exe",
+            RegistryCleanupSafety.ExtractFilePath(@"""C:\Program Files\App\app.exe,-12""", _ => true));
+    }
+
+    [Theory]
+    [InlineData("C:\\App\\app.exe\t--minimized")]
+    [InlineData("\"C:\\App\\app.exe\"\t--minimized")]
+    [InlineData("C:\\App\\app.exe --minimized")]
+    public void Any_whitespace_separates_the_program_from_its_arguments(string value)
+    {
+        Assert.Equal(@"C:\App\app.exe", RegistryCleanupSafety.ExtractFilePath(value, p => p == @"C:\App\app.exe"));
+        Assert.False(RegistryCleanupSafety.IsBrokenFileReference(value, p => p == @"C:\App\app.exe"));
+    }
+
+    [Fact]
+    public void A_tab_after_a_path_with_a_space_in_a_folder_name_still_splits()
+    {
+        var value = "C:\\Program Files\\App\\app.exe\t--minimized";
+
+        Assert.Equal(
+            @"C:\Program Files\App\app.exe",
+            RegistryCleanupSafety.ExtractFilePath(value, p => p == @"C:\Program Files\App\app.exe"));
+    }
+
+    [Theory]
+    [InlineData(@"C:\Users\%USERNAME%\App\app.exe")]
+    [InlineData(@"""%ProgramFiles%\App\app.exe""")]
+    [InlineData(@"C:\Program Files\%APP%\app.exe --run")]
+    public void A_value_with_an_unexpanded_variable_is_never_judged_broken(string value)
+    {
+        Assert.Null(RegistryCleanupSafety.ExtractFilePath(value, _ => false));
+        Assert.False(RegistryCleanupSafety.IsBrokenFileReference(value, _ => false));
+    }
+
     [Theory]
     [InlineData(@"C:\Gone\icon.ico", @"C:\Gone\icon.ico")]
     [InlineData(@"C:\Gone\x.dll,3", @"C:\Gone\x.dll")]
