@@ -112,10 +112,8 @@ UninstallDisplayIcon={code:GetAppExePath}
 UninstallDisplayName={#AppName}
 
 ; The payload entries below carry a Check parameter, because which architecture installs is only known
-; at run time - and Setup leaves entries it cannot decide on out of its "space required" figure. That
-; left the wizard claiming ~4 MB, the size of the uninstaller alone, for an ~84 MB install. Declaring
-; the payload here puts the real number back, and pins the size shown in Programs and Features to it
-; instead of letting that be estimated the same way.
+; at run time, and Setup leaves such entries out of its "space required" figure. Declaring the payload
+; here gives the wizard and Programs and Features the real size.
 #if PayloadSize > 0
 ExtraDiskSpaceRequired={#PayloadSize}
 UninstallDisplaySize={#PayloadSize}
@@ -141,18 +139,13 @@ ArchitecturesInstallIn64BitMode=x64compatible arm64
 ; the running app through the Restart Manager so the file replacement works without a reboot.
 CloseApplications=yes
 CloseApplicationsFilter=*.exe
-; Left "yes" here, the Restart Manager restarts whatever it
-; closed as soon as the files are copied, which is BEFORE the Finish page - the app came back while
-; the wizard was still open, and the "start now" checkbox on Finish then had nothing left to do. The
-; [Run] section already knew this about the SAME mechanism ("does not do it reliably") for the
-; self-updater's own relaunch two lines above its entry. The app now comes back only through the
-; Finish page's checkbox or through the self-updater's explicit /RELAUNCH=1, never through this.
-; Do not set this back to "yes".
+; Must stay "no": the Restart Manager would restart the closed app as soon as the files are copied, before
+; the Finish page. The app comes back only through the Finish page's checkbox or the self-updater's
+; explicit /RELAUNCH=1.
 RestartApplications=no
 
-; LicenseFile carries the MIT text followed by the disclaimer, both in one page the user has to
-; accept before continuing. InfoBeforeFile was dropped here: it used to show the disclaimer alone
-; on its own page, which would now just repeat the second half of the licence page word for word.
+; LicenseFile carries the MIT text followed by the disclaimer, both on one page the user has to accept
+; before continuing.
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"; LicenseFile: "license.en.txt"
 Name: "de"; MessagesFile: "compiler:Languages\German.isl"; LicenseFile: "license.de.txt"
@@ -237,7 +230,7 @@ Filename: "{code:GetAppExePath}"; Parameters: "--set-autostart"; \
     Flags: runhidden waituntilterminated runasoriginaluser; \
     Tasks: autostart; Check: (not IsPortableMode) and (not WantsRelaunch) and (not KeepsAutostartSetting)
 ; Unticking the task in an interactive (re)install means "do not start with Windows": --clear-autostart
-; was implemented in the app but never sent, so an existing value simply stayed.
+; removes an existing autostart value.
 Filename: "{code:GetAppExePath}"; Parameters: "--clear-autostart"; \
     Flags: runhidden waituntilterminated runasoriginaluser; \
     Tasks: not autostart; Check: (not IsPortableMode) and (not WizardSilent)
@@ -306,7 +299,7 @@ var
   position Setup is in when it is launched from a browser, Explorer or another app - so the call alone is
   not enough and the window has to be held on top until it really has the focus.
 
-  Measured live: fsStayOnTop + BringToFront + a bare SetForegroundWindow call, launched from an
+  Observed: fsStayOnTop + BringToFront + a bare SetForegroundWindow call, launched from an
   already-focused console window, exactly the scenario this comment describes, did NOT bring Setup's wizard to the front; the console stayed
   on top the entire run, confirmed by screenshot. Topmost alone is not enough either: a window can be
   WS_EX_TOPMOST and still lose the ACTIVE/focused slot to whatever else is already marked topmost or
@@ -346,7 +339,7 @@ const
   state (focus, key state, caret) for as long as both live, which is not something Setup should be
   doing to some other, unrelated foreground process for its whole run.
 
-  Measured on a test VM: the AttachThreadInput trick above still lost
+  On a test VM the AttachThreadInput trick above still lost
   on the very FIRST page (ModePage, no elevation involved yet) - GetForegroundWindow still named
   something else right after SetForegroundWindow returned. SwitchToThisWindow does not go through
   the same foreground-lock check user32 applies to SetForegroundWindow, so it is tried as a second
@@ -846,9 +839,9 @@ begin
     'if ($busy) { exit ' + IntToStr(BusyExitCode) + ' }; ';
 end;
 
-{ Ends the copies in the install folder and waits for them to be gone. A tray-resident copy used to answer
-  the Restart Manager's close request with "ok" and stay alive, which left Setup on the "applications in
-  use" page; doing it here, before the Restart Manager looks, keeps that page from appearing at all.
+{ Ends the copies in the install folder and waits for them to be gone. A tray-resident copy answers the
+  Restart Manager's close request with "ok" and stays alive, so it is ended here, before the Restart
+  Manager looks, to keep the "applications in use" page from appearing.
   A copy whose path cannot be read (started as administrator) is asked to end through its exit event, named
   after the user and a hash of the install folder (ExitRequestListener builds the same name), so a copy in
   another folder or of another user is not reached; the event is opened for modify access only. After at most
@@ -919,7 +912,7 @@ begin
 end;
 
 { Uninstalling while the app runs blocks on files that cannot be deleted, and a silent uninstall has
-  nobody to ask. Measured on a test machine, it waits for ever. So the app is closed first, always.
+  nobody to ask. It would wait for ever. So the app is closed first, always.
   An interactive uninstall asks first when the app is installing or cleaning up (the same question
   Setup asks before it replaces a running copy); declining stops the uninstall and leaves the app
   running. A silent uninstall cannot ask and closes it. Deliberately keyed to UninstallSilent only for
@@ -1029,7 +1022,5 @@ begin
 end;
 
 { Settings and history in %APPDATA% are the user's and are always left behind, as Windows apps
-  normally do. There used to be a Yes/No box asking about it at the very end of the uninstall: it is
-  not suppressed by /SUPPRESSMSGBOXES, so an unattended removal stopped there and waited forever with
-  no window to answer. Deleting the question removes the failure mode; the README says where the
-  folder is for anyone who wants it gone. }
+  normally do. No question is asked at the end of the uninstall, since a message box is not suppressed
+  by /SUPPRESSMSGBOXES and an unattended removal would wait forever; the README says where the folder is. }
