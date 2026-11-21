@@ -196,10 +196,9 @@
             </Setter>
         </Style>
 
-        <!-- One category = one section of the list card, drawn like a group of the main window's update
-             table: no surface of its own (a second card fill on the card made the list look inverted
-             against the main window), a hairline below it, and a content area the header is separated
-             from by that same hairline. -->
+        <!-- One category = one section of the list card, drawn like a group of the main window's update table: no
+             surface of its own, a hairline below it, and a content area separated from the header by that same
+             hairline. -->
         <Style x:Key="CleanupGroupCard" TargetType="Expander">
             <!-- A category the finished scan found nothing in sits dimmed rather than looking
                  indistinguishable from one with real work to offer. -->
@@ -266,20 +265,14 @@
                             <Border x:Name="Body" Visibility="Collapsed" Margin="8,2,0,0"
                                     Padding="12,0,0,0" BorderThickness="1,0,0,0"
                                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
-                                <!-- No MaxHeight here: the 240 cap sits on the
-                                     entries ItemsControl's OWN internal ScrollViewer below, because a
-                                     StackPanel measures its children at infinite height and a plain
-                                     ItemsControl realises every row the moment it is measured at all,
-                                     however this outer ScrollViewer is capped. This one just carries the
-                                     select-all header and the "omitted" line along with whatever height the
-                                     (now internally-capped) entries list reports, and rarely needs to
-                                     scroll itself. It inherits WPF-UI's overlay scrollbar style (measured:
-                                     ViewportWidth == ActualWidth even while ScrollableHeight > 0, it does
-                                     NOT reserve a column the way the default WPF template does, the thumb
-                                     draws on TOP of the content's own right edge) - kept here in case a very
-                                     long translation of the header ever needs it. BubbleScroll hands the
-                                     wheel back to the outer target list once this one can no longer scroll
-                                     further in that direction. -->
+                                <!-- No MaxHeight here: the 240 cap sits on the entries ItemsControl's own
+                                     internal ScrollViewer below, because a StackPanel measures its children at
+                                     infinite height and a plain ItemsControl realises every row once measured.
+                                     This one carries the select-all header and the "omitted" line along with the
+                                     capped list and rarely scrolls itself. It inherits WPF-UI's overlay scrollbar
+                                     (the thumb draws over the content's right edge and reserves no column), kept
+                                     in case a very long translation of the header needs it. BubbleScroll hands
+                                     the wheel back to the outer target list once this one cannot scroll further. -->
                                 <ScrollViewer x:Name="EntriesScroll" VerticalScrollBarVisibility="Auto"
                                               views:BubbleScroll.Enabled="True">
                                     <ContentPresenter/>
@@ -418,12 +411,10 @@
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <!-- Risk level: a quiet dot. Red now paints "Risky" too, its own
-                             word rather than borrowing update severity's language, so the cleanup scale never
-                             uses "Critical" - red means "this one can hurt", in updates and in cleanup alike.
-                             "Considered" keeps the caution amber. The word and the consequence sentence are
-                             one hover away, not a permanently-visible line, a resting list of ~20 rows stays
-                             as calm as the register asks for. -->
+                        <!-- Risk level: a quiet dot. Red means "this one can hurt" (Risky), in updates and in
+                             cleanup alike, with its own word rather than update severity's "Critical";
+                             "Considered" keeps the caution amber. The word and the consequence sentence are one
+                             hover away, not a permanent line, so a resting list of ~20 rows stays calm. -->
                         <Border Width="8" Height="8" CornerRadius="4" Margin="8,0,0,0"
                                 VerticalAlignment="Center"
                                 ToolTip="{Binding RiskTooltip}"
@@ -485,10 +476,9 @@
                      quiet and grey, because it is the absence of a figure rather than one.
                      Targets that cannot report a size in advance (Disk Cleanup decides for itself, a
                      repair pass deletes nothing) show NOTHING at all here. -->
-                <!-- Collapsed rather than merely empty for a HasUnknownSize target (Disk Cleanup, system
-                     repair, defrag) once scanning/waiting are both done: none of its four children ever
-                     show for that kind, and the MinWidth below used to keep the column's width reserved
-                     anyway, a small empty box sitting beside the row's own risk dot for no reason. -->
+                <!-- Collapsed rather than merely empty for a HasUnknownSize target (Disk Cleanup, system repair,
+                     defrag) once scanning and waiting are done: none of its four children ever show for that
+                     kind, and a reserved MinWidth would leave a small empty box beside the risk dot. -->
                 <!-- Right margin 26: the size figures of a group header, its targets and their detail rows
                      all end on one vertical line (the group header's meta text ends 42px inside the card,
                      before its chevron), so the sizes read as one column down the whole table. -->
@@ -890,31 +880,25 @@
                             <!-- Right margin keeps every row (and the group headers below) clear of the
                                  overlay scrollbar this ScrollViewer inherits from WPF-UI's theme, 14px
                                  track plus 4px air, not just cosmetic spacing (see the Border above). -->
-                            <!-- Virtualized so a target with thousands of entries does not
-                                 build every row's visual tree the moment the expander opens (measured
-                                 7256.7 ms for 3000 entries before this change). A plain ItemsControl
-                                 only virtualizes when a VirtualizingStackPanel sits DIRECTLY under a
-                                 ScrollViewer with CanContentScroll="True" - the outer EntriesScroll
-                                 above does not qualify (it wraps the select-all header and the omitted
-                                 line too, not just this list), so this control gets its own template
-                                 carrying that ScrollViewer, with the 240 cap (8 rows at this list's own
-                                 ~30px row height) moved onto it. IsVirtualizingWhenGrouping is required:
-                                 the view is grouped (recycle bin, by drive) whenever the bin's rows put
-                                 GroupDescriptions on EntriesView. -->
+                            <!-- Virtualized so a target with thousands of entries does not build every row's
+                                 visual tree the moment the expander opens. A plain ItemsControl only virtualizes
+                                 when a VirtualizingStackPanel sits DIRECTLY under a ScrollViewer with
+                                 CanContentScroll="True"; the outer EntriesScroll above does not qualify (it also
+                                 wraps the select-all header and the omitted line), so this control gets its own
+                                 template carrying that ScrollViewer, with the 240 cap (8 rows at ~30px) on it.
+                                 IsVirtualizingWhenGrouping is required: the view is grouped (recycle bin, by
+                                 drive) whenever the bin's rows put GroupDescriptions on EntriesView. -->
                             <ItemsControl ItemsSource="{Binding EntriesView}"
                                           VirtualizingPanel.IsVirtualizing="True"
                                           VirtualizingPanel.VirtualizationMode="Recycling"
                                           VirtualizingPanel.IsVirtualizingWhenGrouping="True">
                                 <ItemsControl.Template>
                                     <ControlTemplate TargetType="ItemsControl">
-                                        <!-- No margin on the ItemsControl itself any more: its own scrollbar
-                                             now lives on THIS ScrollViewer, so a right margin here would
-                                             shift the scrollbar left along with the rows instead of only the
-                                             rows, putting both back flush against each other. The 26px
-                                             clearance moved onto the VirtualizingStackPanel below, which
-                                             insets the ROWS but leaves this ScrollViewer (and its overlay
-                                             scrollbar) spanning the full width, exactly where the old outer
-                                             EntriesScroll's own scrollbar used to sit. -->
+                                        <!-- No margin on the ItemsControl itself: its scrollbar lives on THIS
+                                             ScrollViewer, so a right margin here would shift the scrollbar left
+                                             along with the rows. The 26px clearance sits on the
+                                             VirtualizingStackPanel below, which insets the rows but leaves this
+                                             ScrollViewer (and its overlay scrollbar) spanning the full width. -->
                                         <ScrollViewer x:Name="EntriesItemsScroll" MaxHeight="240"
                                                       VerticalScrollBarVisibility="Auto"
                                                       CanContentScroll="True"
@@ -1148,10 +1132,9 @@
              ProgressBar, and this project keeps WPF-UI's ProgressBar out of measured containers. -->
         <!-- Three columns: the facts flank the ring so the top of the dialog carries information instead
              of empty space. Dragging works anywhere in this band, not only on the thin title bar. -->
-        <!-- The band itself stretches with the window; what keeps the ring from being marooned between two
-             distant blocks of text is that each side block hugs the ring (MaxWidth + inward alignment
-             below), not a cap on the band. Capping the band was what made the window stop scaling past a
-             point. -->
+        <!-- The band stretches with the window; what keeps the ring from being marooned between two distant
+             blocks of text is that each side block hugs the ring (MaxWidth + inward alignment below). Capping the
+             band instead would stop the window scaling past a point. -->
         <!-- Auto + MinHeight, not a fixed Height: a longer translation of any of the three text blocks
              flanking the ring (German routinely runs longer than English) can wrap onto an extra line,
              and a fixed 228 clips that. MinHeight keeps the band exactly as tall as it needs for the
@@ -1423,27 +1406,21 @@
             <Grid x:Name="CleanupRingBox" Grid.Column="1" Width="240" Height="240" HorizontalAlignment="Center"
                   VerticalAlignment="Top" Margin="0,10,0,0">
                 <!-- Track. 226 = 2*105 (the arc's radius) + 16 (the stroke), because a Shape draws its stroke
-                     INSIDE the box it is given: Width=226 with StrokeThickness=16 puts its centre line on
-                     exactly radius 105, which is the circle the arc is drawn on. At 180 the two ran on
-                     different circles and the fill sat outside its own track. -->
+                     INSIDE the box it is given: Width=226 with StrokeThickness=16 puts its centre line on exactly
+                     radius 105, the circle the arc is drawn on. -->
                 <Ellipse x:Name="RingTrack" Width="226" Height="226" StrokeThickness="16"
                          Stroke="{DynamicResource ControlFillColorSecondaryBrush}"
                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
                 <!-- The arc is drawn from DisplayPercent, not straight from the view model: that value is
-                     animated towards the real one, so ticking a box or a progress step GLIDES instead of
-                     snapping from one arc to the next.
-
-                     The explicit 226x226 is what keeps it STRAIGHT. Without a size, a Path's layout box is
-                     the bounds of whatever geometry it currently holds, and a part-filled arc only spans
-                     one corner of the circle, so centring the element centred that corner instead and the
-                     ring visibly leaned away from its track at every value below 100 %. Stretch=None so
-                     the geometry keeps the coordinates the converter computed.
-
-                     The geometry is assigned from the code-behind rather than bound through a RelativeSource
-                     to the window: the render harness detaches this content from its Window to photograph
-                     it, and an ancestor binding then resolves to nothing, the ring came out as a bare track
-                     in every snapshot, which is exactly the picture that was meant to prove it sits straight. -->
+                     animated towards the real one, so ticking a box or a progress step glides instead of
+                     snapping.  The explicit 226x226 keeps it straight. Without a size, a Path's layout box is the
+                     bounds of its current geometry, and a part-filled arc spans only one corner of the circle, so
+                     centring the element would centre that corner and the ring would lean away from its track
+                     below 100 %. Stretch=None so the geometry keeps the coordinates the converter computed.  The
+                     geometry is assigned from the code-behind rather than bound through a RelativeSource to the
+                     window: the render harness detaches this content from its Window, and an ancestor binding
+                     then resolves to nothing. -->
                 <Path x:Name="RingFill" Width="226" Height="226" Stretch="None"
                       StrokeThickness="16" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                       Stroke="{DynamicResource AccentFillColorDefaultBrush}"
@@ -1470,15 +1447,13 @@
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                 </StackPanel>
 
-                <!-- Centre while cleaning ("ruhig + hochwertig", calm and high-quality): a hard disk (a real
-                     drive body, platter ring and actuator arm) with a light slowly travelling across the body.
-                     The light is the SAME geometry as the body underneath it used as an OpacityMask, so it
-                     can never spill past the body's own silhouette without a separate Clip or a recomputed
-                     Geometry, only the mask's own RelativeTransform (a TranslateTransform) ever moves. The platter ring and the arm are drawn once, always at
-                     full opacity, never animated. Nothing here triggers a layout pass, the ring never
-                     rotates, and the whole thing is capped at 30 fps: this is ambient background motion,
-                     not something meant to be tracked frame by frame. The percentage sits beneath, never
-                     behind the animation. -->
+                <!-- Centre while cleaning: a hard disk (a real drive body, platter ring and actuator arm) with a
+                     light slowly travelling across the body. The light is the same geometry as the body, used as
+                     an OpacityMask, so it cannot spill past the body's silhouette without a separate Clip; only
+                     the mask's RelativeTransform (a TranslateTransform) moves. The platter ring and the arm are
+                     drawn once at full opacity, never animated. Nothing here triggers a layout pass, the ring
+                     never rotates, and the whole thing is capped at 30 fps: this is ambient motion. The
+                     percentage sits beneath, never behind the animation. -->
                 <Grid Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}">
                     <Grid x:Name="CenterScene" Width="140" Height="140"
                           HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -1493,12 +1468,11 @@
                              against their own, different ink extents and throw the parts out of register. -->
                         <Viewbox Width="108" Height="108" Stretch="Uniform">
                             <Canvas Width="24" Height="24">
-                                <!-- The resting body, always at its own quiet fill (CardBackgroundFillColorDefaultBrush -
-                                     the same elevated-surface brush a card uses, distinct from every other
-                                     brush on this drawing and, unlike ControlFillColorSecondaryBrush used
-                                     here before, opaque enough to still read against the page in the light
-                                     theme) with a themed edge stroke so the silhouette holds even where the
-                                     fill and the page are close in tone. -->
+                                <!-- The resting body, always at its own quiet fill
+                                     (CardBackgroundFillColorDefaultBrush, the elevated-surface brush a card uses,
+                                     opaque enough to still read against the page in the light theme) with a
+                                     themed edge stroke so the silhouette holds where fill and page are close in
+                                     tone. -->
                                 <Path x:Name="SurfaceBase" Data="{StaticResource CleaningDriveBodyOutlineGeometry}"
                                       Fill="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                                       Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" StrokeThickness="0.35"/>
@@ -1525,13 +1499,11 @@
                                 <Path x:Name="ScrewHoles" Data="{StaticResource CleaningDriveScrewHolesGeometry}"
                                       Fill="{DynamicResource ControlStrokeColorDefaultBrush}"/>
 
-                                <!-- The platter: a recessed disc (ControlFillColorSecondaryBrush - the
-                                     brush the body used to carry, now free for the platter's own sunken
-                                     look now that the body sits on CardBackgroundFillColorDefaultBrush),
-                                     an accent-coloured STROKE ring drawn on top of its own edge (never
-                                     filled - the ring is not what fills with progress, that is the
-                                     separate outer RingFill arc around the whole dialog), the hub and its
-                                     centre dot. Always drawn, never masked or animated. -->
+                                <!-- The platter: a recessed disc (ControlFillColorSecondaryBrush), an
+                                     accent-coloured STROKE ring drawn on top of its own edge (never filled: the
+                                     ring is not what fills with progress, that is the separate outer RingFill arc
+                                     around the whole dialog), the hub and its centre dot. Always drawn, never
+                                     masked or animated. -->
                                 <Path x:Name="PlatterDisc" Data="{StaticResource CleaningDrivePlatterDiscGeometry}"
                                       Fill="{DynamicResource ControlFillColorSecondaryBrush}"/>
                                 <Path x:Name="PlatterRing" Data="{StaticResource CleaningDrivePlatterDiscGeometry}"
@@ -1590,12 +1562,10 @@
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                 views:GlassCardHighlight.Show="True">
-            <!-- Style="{x:Null}" drops WPF-UI's overlay scrollbar (thumb drawn on top of the content's own
-                 right edge, confirmed measured the same way EntriesScroll below documents it) for the
-                 classic ScrollViewer template, which genuinely reserves its own column for the bar instead
-                 of floating over it, themed by the app-wide ScrollBar style in App.xaml. A group card's own
-                 right-hand size text used to sit right under that overlay thumb whenever the list actually
-                 needed to scroll. -->
+            <!-- Style="{x:Null}" drops WPF-UI's overlay scrollbar (the thumb draws on top of the content's right
+                 edge) for the classic ScrollViewer template, which reserves its own column for the bar instead of
+                 floating over it, themed by the app-wide ScrollBar style in App.xaml. Otherwise a group card's
+                 right-hand size text sits under the thumb whenever the list scrolls. -->
             <!-- RoundedClip: the scrollbar's square surface would otherwise paint over the card's rounded
                  right-hand corners (7 = the card's radius 8 minus its 1px stroke). -->
             <ScrollViewer Style="{x:Null}" VerticalScrollBarVisibility="Auto" Padding="0,4,0,0"
@@ -1620,10 +1590,9 @@
                                AutomationProperties.Name="{Binding Loc[CleanupDefaultSelection]}"/>
                 </DockPanel>
 
-                <!-- The escape hatch for whatever the (still unset, pending the two-machine
-                     measurement) DefaultVisible=false categories hide from the resting list. Only shown once
-                     there is actually something hidden, same "nothing disappears silently" rule the pill strip's own
-                     toggle already follows for the source pills. -->
+                <!-- The escape hatch for whatever the DefaultVisible=false categories hide from the resting list.
+                     Only shown once something is actually hidden, the same "nothing disappears silently" rule the
+                     pill strip's toggle follows for the source pills. -->
                 <ui:ToggleSwitch Margin="12,0,12,10" HorizontalAlignment="Left"
                                  Visibility="{Binding HasHiddenCategories, Converter={StaticResource BoolToVisibility}}"
                                  IsChecked="{Binding ShowAllCategories}"
@@ -1643,9 +1612,8 @@
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                            Visibility="{Binding IsCatalogLoading, Converter={StaticResource BoolToVisibility}}"/>
 
-                <!-- The catalogue build itself failing outright (not a single drive, see CleanupCatalog's
-                     own per-drive skip) used to leave the window on the "…" state above forever, or crash
-                     the app outright; this shows a plain message instead. -->
+                <!-- A catalogue build that fails outright (not a single drive, see CleanupCatalog's per-drive
+                     skip) shows a plain message instead of leaving the window on the "…" state above or crashing. -->
                 <TextBlock x:Name="CatalogLoadFailedText" Text="{Binding Loc[CleanupCatalogLoadFailed]}" FontSize="14" Margin="0,24,0,0"
                            HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="360"
                            Foreground="{DynamicResource SystemFillColorCautionBrush}"
@@ -1793,8 +1761,8 @@
         </Border>
 
         <StackPanel Grid.Row="3" Margin="24,12,24,18">
-            <!-- A repair step cannot be cut short, and saying nothing about that made a stopped run look
-                 like it was still going behind the user's back. -->
+            <!-- A repair step cannot be cut short; saying so keeps a stopped run from looking like it is still
+                 going. -->
             <TextBlock Text="{Binding StoppingRepairText}" FontSize="12" Margin="0,0,0,8" TextWrapping="Wrap"
                        Visibility="{Binding IsStoppingRepair, Converter={StaticResource BoolToVisibility}}"
                        Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
