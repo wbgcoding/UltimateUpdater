@@ -806,7 +806,8 @@ public static class ElevatedWorker
         }
         finally
         {
-            Active.TryRemove(job.Id, out _);
+            // Only this job's own control: a later job with the same id keeps its stop switch.
+            Active.TryRemove(new KeyValuePair<string, JobControl>(job.Id, control));
 
             // Resumed first: a paused job that is being torn down must not leave a worker thread parked on
             // the gate for the rest of the session.
