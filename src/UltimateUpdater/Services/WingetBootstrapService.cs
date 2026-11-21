@@ -6,13 +6,11 @@ using System.Security.Cryptography.X509Certificates;
 namespace UltimateUpdater.Services;
 
 /// <summary>
-/// Offers to install winget itself when the scan finds it missing. This is deliberately
-/// NOT part of <see cref="Sources.WingetSource"/> or <see cref="ScanOrchestrator"/>: the "a source may
-/// never install, fetch or self-update anything just to be able to check it" rule is about the passive
-/// scan path, and stays intact because this class is only ever driven by an explicit, user-consented
-/// action from the UI layer after a scan has already finished, never from inside a scan.
-/// Asked at most once per running session regardless of the answer: a "no" is not repeated, and once
-/// winget is present the question no longer applies.
+/// Offers to install winget itself when the scan finds it missing. Deliberately not part of
+/// <see cref="Sources.WingetSource"/> or <see cref="ScanOrchestrator"/>: the rule that a source never
+/// installs, fetches or self-updates anything to check itself is about the passive scan path, and holds
+/// because this class is only driven by an explicit, user-consented action from the UI layer after a scan
+/// has finished. Asked at most once per session regardless of the answer.
 /// </summary>
 public sealed class WingetBootstrapService(
     HttpClient httpClient, LoggingService logging, Func<bool>? isWingetPresent = null)
@@ -24,7 +22,7 @@ public sealed class WingetBootstrapService(
     private const string OrganizationNameOid = "2.5.4.10";
 
     /// <summary>The App Installer bundle carries every supported architecture in one file; generous but
-    /// still bounded so a compromised or redirected response cannot fill the disk.</summary>
+    /// bounded so a compromised or redirected response cannot fill the disk.</summary>
     private const long MaxBundleBytes = 400L * 1024 * 1024;
 
     private static readonly TimeSpan ApiTimeout = Sources.ExternalCallTimeouts.ScanDeadline;
@@ -44,17 +42,14 @@ public sealed class WingetBootstrapService(
     internal bool IsWingetPresent => isWingetPresent?.Invoke() ?? ProcessRunner.Exists("winget");
 
     /// <summary>Split out from <see cref="NeedsOffer"/> so the "ask at most once, and only while winget is
-    /// actually missing" rule is directly unit-testable without needing to fake <see cref="ProcessRunner"/>
-    /// or the machine's real winget install state.</summary>
+    /// missing" rule can be unit-tested without faking <see cref="ProcessRunner"/>.</summary>
     internal static bool ShouldOffer(bool alreadyOfferedThisSession, bool wingetIsPresent) =>
         !alreadyOfferedThisSession && !wingetIsPresent;
 
     /// <summary>
-    /// Shows the one-time dialog and, on "yes", downloads and installs winget. Safe to call after every
-    /// scan: it is a no-op once winget is present or once this session has already asked. A failure is
-    /// logged and handed back as an outcome with its reason, so the caller can tell the user instead of
-    /// leaving them to wonder; the caller does not need its own try/catch, the winget source simply stays
-    /// absent, exactly like it already does today when nothing installs it.
+    /// Shows the one-time dialog and, on "yes", downloads and installs winget. Safe to call after every scan:
+    /// a no-op once winget is present or this session has already asked. A failure is logged and handed back
+    /// as an outcome with its reason, so the caller needs no try/catch; the winget source simply stays absent.
     /// </summary>
     /// <param name="progress">Download progress of the installer package in percent (0 to 100).</param>
     public async Task<WingetBootstrapOutcome> OfferAsync(IProgress<int>? progress, CancellationToken cancellationToken)
@@ -62,8 +57,8 @@ public sealed class WingetBootstrapService(
         if (!NeedsOffer)
             return WingetBootstrapOutcome.NotOffered;
 
-        // Set before the dialog, not after: a dialog dismissed by closing the app, or a re-entrant call
-        // that races this one, must still count as "asked" so it can never show twice in one run.
+        // Set before the dialog, not after: a dialog dismissed by closing the app, or a re-entrant call racing
+        // this one, must still count as "asked".
         _offeredThisSession = true;
 
         if (!Dialogs.Confirm(
@@ -121,8 +116,8 @@ public sealed class WingetBootstrapService(
             await DownloadAsync(assetUrl, target, progress, cancellationToken);
             pin = new FileStream(target, FileMode.Open, FileAccess.Read, FileShare.Read);
 
-            // Both checks read and hash the whole bundle (about 200 MB); this method continues on the UI
-            // thread that showed the confirmation, so they run on the thread pool instead.
+            // Both checks read and hash the whole bundle (about 200 MB), and this method continues on the UI thread
+            // that showed the confirmation, so they run on the thread pool.
             var trusted = await Task.Run(() => IsTrustedPackage(target), cancellationToken);
             if (!trusted)
                 return WingetBootstrapOutcome.Failed("WingetBootstrapReasonNotSigned");
@@ -134,9 +129,9 @@ public sealed class WingetBootstrapService(
                     return WingetBootstrapOutcome.Failed("WingetBootstrapReasonVirus", outcome.Detail);
             }
 
-            // A machine without the framework packages (an LTSC edition, typically) cannot install the
-            // bundle alone. Any problem with the optional dependency archive only skips it: the bundle's own
-            // error then names what is missing.
+            // A machine without the framework packages (typically an LTSC edition) cannot install the bundle alone.
+            // A problem with the optional dependency archive only skips it; the bundle's own error then names what
+            // is missing.
             dependencies = await PrepareDependenciesAsync(json, staging, cancellationToken);
             foreach (var dependency in dependencies)
             {
@@ -145,9 +140,8 @@ public sealed class WingetBootstrapService(
                     _logging.Warn($"winget bootstrap: a dependency did not install (exit {dependencyResult.ExitCode}): {FirstLine(dependencyResult.StandardError)}");
             }
 
-            // Add-AppxPackage installs a .msixbundle directly, picking the entry matching this machine's
-            // architecture; no manual extraction needed. Per-user, so no elevation, unlike a winget PACKAGE
-            // install (InstallQueue.NeedsElevation), which is a different question about a different tool.
+            // Add-AppxPackage installs a .msixbundle directly, picking the entry for this machine's architecture.
+            // Per-user, so no elevation, unlike a winget package install (InstallQueue.NeedsElevation).
             var result = await AddPackageAsync(target, cancellationToken);
             if (result.TimedOut)
                 return WingetBootstrapOutcome.Failed("WingetBootstrapReasonInstallTimeout");
@@ -188,7 +182,7 @@ public sealed class WingetBootstrapService(
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // temp leftovers are swept by the OS; nothing to tell the user
+            // Temp leftovers are swept by the OS; nothing to tell the user.
         }
     }
 
@@ -333,8 +327,8 @@ public sealed class WingetBootstrapService(
         (["-NoProfile", "-NonInteractive", "-Command", $"Add-AppxPackage -Path $env:{PackagePathVariable}"],
          new Dictionary<string, string> { [PackagePathVariable] = packagePath });
 
-    /// <summary>Pure so it is directly testable against a captured GitHub API payload: no network, no temp
-    /// files. Reuses the same release-JSON parser the self-update path already trusts.</summary>
+    /// <summary>Pure so it can be tested against a captured GitHub API payload with no network or temp files.
+    /// Reuses the release-JSON parser the self-update path trusts.</summary>
     internal static string? SelectAssetUrl(string releaseJson) => SelectAssetUrl(releaseJson, AssetName);
 
     internal static string? SelectAssetUrl(string releaseJson, string assetName)
@@ -370,8 +364,8 @@ public sealed class WingetBootstrapService(
         using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
         response.EnsureSuccessStatusCode();
 
-        // As with the NVIDIA download: check the FINAL address after every redirect, not the one the
-        // release JSON named, since a redirect could carry the request off GitHub entirely.
+        // As with the NVIDIA download: check the final address after every redirect, not the one the release
+        // JSON named, since a redirect could carry the request off GitHub.
         var finalUrl = response.RequestMessage?.RequestUri?.ToString();
         if (finalUrl is null || !SelfUpdate.SelfUpdateService.IsAllowedUrl(finalUrl))
             throw new InvalidOperationException("the download redirected off GitHub; refusing.");
@@ -422,9 +416,8 @@ public sealed class WingetBootstrapService(
         }
     }
 
-    /// <summary>Split out from <see cref="IsMicrosoftPublisher"/> so the RDN-matching rule can be
-    /// unit-tested against a Subject string directly, the same shape as
-    /// <see cref="Sources.NvidiaDriverSource.IsNvidiaOrganization"/>.</summary>
+    /// <summary>Split out from <see cref="IsMicrosoftPublisher"/> so the RDN-matching rule can be tested
+    /// against a Subject string, the same shape as <see cref="Sources.NvidiaDriverSource.IsNvidiaOrganization"/>.</summary>
     internal static bool IsMicrosoftOrganization(string subject)
     {
         try

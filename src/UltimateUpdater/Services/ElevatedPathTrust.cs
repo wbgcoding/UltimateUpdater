@@ -27,7 +27,7 @@ internal static class ElevatedPathTrust
     /// <summary>Rule (b), every ancestor: only what could swap an existing child for another one. Creating a
     /// new subfolder in an ancestor cannot replace a child that already exists. WriteData is left out on
     /// purpose: on a folder it only adds files, never a subfolder, so nothing can become a junction and a
-    /// child with content cannot be removed (measured on real ACLs, see ElevatedPathTrustAncestorTests).</summary>
+    /// child with content cannot be removed.</summary>
     private const FileSystemRights AncestorForbidden =
         FileSystemRights.DeleteSubdirectoriesAndFiles | FileSystemRights.ChangePermissions
         | FileSystemRights.TakeOwnership | FileSystemRights.Delete | Generic;
@@ -80,10 +80,9 @@ internal static class ElevatedPathTrust
             if (rule.IdentityReference is not SecurityIdentifier sid)
                 return false;
 
-            // CREATOR OWNER on the object itself stands for whoever owns it. An inheritable one on an ancestor
-            // is only a template for children created later (the owner of an existing child is whoever made
-            // it), and a user who may create folders there owns just those new ones, none on an admin's path
-            // (measured, see ElevatedPathTrustAncestorTests).
+            // CREATOR OWNER on the object itself stands for whoever owns it. An inheritable one on an ancestor is
+            // only a template for children created later (the owner of an existing child is whoever made it), and a
+            // user who may create folders there owns just those new ones, none on an admin's path.
             if (sid.Equals(CreatorOwner))
                 sid = owner;
 

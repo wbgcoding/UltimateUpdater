@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 
 namespace UltimateUpdater.Services;
 
-/// <summary>Mutex + named-pipe focus signal. The main window always
-/// runs unelevated, so the pipe carries no privileged data.</summary>
+/// <summary>Mutex and named-pipe focus signal. The main window always runs unelevated, so the pipe
+/// carries no privileged data.</summary>
 public static class SingleInstanceService
 {
     private const string MutexBaseName = "Local\\UltimateUpdater-SingleInstance-Mutex";
@@ -98,12 +98,10 @@ public static class SingleInstanceService
     }
 
     /// <summary>
-    /// True when this process is the first instance.
-    /// The mutex is deliberately NOT owned: all that matters is whether the named object already
-    /// exists, and an open handle is enough for that. Owning it meant calling ReleaseMutex on the way
-    /// out, which is the one thing in.NET that throws ApplicationException; from the wrong thread,
-    /// or after ownership is already gone, it takes the process down during shutdown and buries
-    /// whatever really happened. Nothing here needs ownership, so nothing here asks for it.
+    /// True when this process is the first instance. The mutex is deliberately not owned: all that matters is
+    /// whether the named object already exists, and an open handle is enough. Owning it would require
+    /// ReleaseMutex on the way out, which throws ApplicationException from the wrong thread or after
+    /// ownership is gone, taking the process down during shutdown.
     /// </summary>
     public static bool TryAcquire(LoggingService? logging = null)
     {
@@ -115,10 +113,9 @@ public static class SingleInstanceService
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or WaitHandleCannotBeOpenedException)
         {
-            // Another account in this session created the name with an ACL that locks this user out, or as
-            // an object of another type (an event). Refusing to start would hand that account a way to keep
-            // the app from running at all, and the focus pipe that this guard supports is per user anyway,
-            // so the app starts as a first instance.
+            // Another account in this session created the name with an ACL that locks this user out, or as an object
+            // of another type (an event). Refusing to start would let that account keep the app from running at all,
+            // and the focus pipe this guard supports is per user anyway, so the app starts as a first instance.
             logging?.Warn(SquattedWarning);
             return true;
         }
@@ -126,8 +123,8 @@ public static class SingleInstanceService
         if (!createdNew)
         {
             // The name exists. Only a mutex this user (or this token's default owner) created means another
-            // instance; a name that grants everyone access but belongs to someone else would otherwise make
-            // every launch exit as "already running" while nothing answers on the pipe.
+            // instance; a name that grants everyone access but belongs to someone else would make every launch exit
+            // as "already running" while nothing answers on the pipe.
             var ownerSid = (ReadMutexOwnerForTest.Value ?? ReadMutexOwnerSid)(BuildMutexName(CurrentUserSid));
             mutex.Dispose();
 
@@ -138,7 +135,7 @@ public static class SingleInstanceService
             return true;
         }
 
-        // held open for the lifetime of the process; Windows drops the handle when it exits
+        // Held open for the lifetime of the process; Windows drops the handle when it exits.
         _mutex = mutex;
         return true;
     }
@@ -226,9 +223,8 @@ public static class SingleInstanceService
     }
 
     /// <summary>
-    /// Asks the running instance to show itself. Returns false when it could not be reached, so the
-    /// caller can say something instead of exiting silently; from the user's side, a launch that
-    /// produces no window looks like the app failed to start.
+    /// Asks the running instance to show itself. Returns false when it could not be reached, so the caller
+    /// can say something: a launch that produces no window looks like the app failed to start.
     /// </summary>
     public static Task<bool> NotifyExistingInstanceAsync() => NotifyExistingInstanceAsync(PipeName);
 
@@ -237,18 +233,17 @@ public static class SingleInstanceService
         try
         {
             using var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, Options);
-            // generous: the other instance may be busy scanning when the request arrives
+            // Generous: the other instance may be busy scanning when the request arrives.
             await client.ConnectAsync(3000);
 
             await using var writer = new StreamWriter(client) { AutoFlush = true };
             using var reader = new StreamReader(client, leaveOpen: true);
             await writer.WriteLineAsync(FocusRequest);
 
-            // A write that succeeds only proves that SOMETHING owns the name. Any process running as
-            // this user can create this pipe at logon and accept every request without doing anything,
-            // and every launch (including the autostart one) would then quietly exit with no window:
-            // the machine would silently stop being scanned, which is the whole purpose of the tool.
-            // Only the real instance knows to answer, so an answer is what decides it.
+            // A successful write only proves that something owns the name. Any process running as this user could
+            // create this pipe at logon and accept every request without doing anything, and every launch (the
+            // autostart one included) would then exit with no window, so the machine would silently stop being
+            // scanned. Only the real instance knows to answer, so an answer is what decides it.
             using var timeout = new CancellationTokenSource(3000);
             return await reader.ReadLineAsync(timeout.Token) == FocusAck;
         }
@@ -279,18 +274,18 @@ public static class SingleInstanceService
 
                     if (await ReadRequestAsync(reader, MaxRequestChars, RequestTimeout) == FocusRequest)
                     {
-                        // answered before the window is raised: raising it blocks on the dispatcher,
-                        // and the waiting instance must not sit through a scan before it hears back
+                        // Answered before the window is raised: raising it blocks on the dispatcher, and the waiting
+                        // instance must not sit through a scan before it hears back.
                         await writer.WriteLineAsync(FocusAck);
                         onFocusRequested();
                     }
                 }
                 catch (Exception)
                 {
-                    // Must not escape: an unhandled exception here ends the loop for good, and from then
-                    // on every launch tells the user the app is already running instead of raising its
-                    // window. Re-creating the pipe instance while the previous client handle is still
-                    // open raises UnauthorizedAccessException, which is the case this guards against.
+                    // Must not escape: an unhandled exception here ends the loop for good, and every later launch would
+                    // report the app as already running instead of raising its window. Re-creating the pipe instance
+                    // while the previous client handle is still open raises UnauthorizedAccessException, which this
+                    // guards against.
                 }
 
                 // Also stops a failure that repeats immediately from spinning a core.
