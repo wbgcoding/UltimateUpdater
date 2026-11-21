@@ -21,8 +21,7 @@ public partial class MainViewModel
     [ObservableProperty]
     private bool isInstalling;
 
-    /// <summary>True once the batch's own automatic second attempt has actually started, so the
-    /// queue panel can show it as its own visibly separate section. Reset on the next fresh batch.</summary>
+    /// <summary>True once the batch's own automatic second attempt has started, so the queue panel can show it as a separate section. Reset on the next fresh batch.</summary>
     [ObservableProperty]
     private bool isSecondAttemptActive;
 
@@ -31,14 +30,10 @@ public partial class MainViewModel
         RefreshSelectionState();
         InstallSelfUpdateCommand.NotifyCanExecuteChanged();
 
-        // Deferred, not inline: whatever clears this flag finishes its own step first (clearing
-        // _installActivityRunning, handing rows queued meanwhile to the next batch), and only then is the
-        // work known to be over.
+        // Deferred: whatever clears this flag finishes its own step first (clearing _installActivityRunning, handing queued rows to the next batch), and only then is the work really over.
         _dispatcher.InvokeAsync(ApplyWaitingSelfUpdateWhenIdle);
 
-        // The batch loop always calls BeginInstallProgress right alongside setting this flag, but that is
-        // caller discipline, not a guarantee: whatever else flips this flag must find the queue and running
-        // strips already matching InstallBatch, not stale from before the flip.
+        // The batch loop calls BeginInstallProgress right alongside setting this flag, but nothing enforces that: whatever else flips it must find the queue and running strips already matching InstallBatch.
         SyncQueueRows();
         SyncRunningRows();
     }
@@ -46,46 +41,26 @@ public partial class MainViewModel
     [RelayCommand]
     private async Task InstallSelected()
     {
-        // only what is on screen: a hidden row is one the user never agreed to
+        // Only what is on screen: a hidden row is one the user never agreed to.
         await EnqueueInstallAsync(VisibleRows.Where(u => u.IsSelected).ToList());
     }
 
     /// <summary>Rows waiting to be installed. Only ever touched on the UI thread (see RunInstallLoopAsync).</summary>
     private readonly List<UpdateRowViewModel> _installPending = [];
 
-    /// <summary>
-    /// True while ANY activity owns the shared install machinery (<see cref="InstallBatch"/>,
-    /// <see cref="_installPending"/>, <see cref="_installCts"/>, the progress timer): the batch loop
-    /// (<see cref="RunInstallLoopAsync"/>), an interactive retry, or an uninstall. Setting only
-    /// <see cref="IsInstalling"/> would not do: a per-row Install click on a DIFFERENT row while a retry or
-    /// uninstall runs would find the loop "not running" and start a second, concurrent
-    /// <see cref="RunInstallLoopAsync"/> that resets the same shared state under the first activity. Every
-    /// one of the three entry points sets this before it touches anything shared and clears it in its own
-    /// <c>finally</c>; a click that lands while it is true is never rejected, it queues in
-    /// <see cref="_installPending"/> (see <see cref="EnqueueInstallAsync"/>) for
-    /// <see cref="HandOffPendingInstalls"/> to pick up once the activity holding the flag is done.
-    /// </summary>
+    /// <summary>True while any activity owns the shared install machinery (<see cref="InstallBatch"/>, <see cref="_installPending"/>, <see cref="_installCts"/>, the progress timer): the batch loop, an interactive retry or an uninstall. <see cref="IsInstalling"/> alone is not enough: an Install click on another row during a retry would start a second loop that resets the shared state. Each of the three entry points sets this before touching anything shared and clears it in its own <c>finally</c>. A click that lands meanwhile queues in <see cref="_installPending"/> for <see cref="HandOffPendingInstalls"/>.</summary>
     private bool _installActivityRunning;
 
-    /// <summary>
-    /// Uninstalls started while another activity already owns the shared machinery. Each is its own
-    /// concurrent <see cref="InstallQueue.RunAsync"/> run (see <see cref="UninstallRowAsync"/>) and
-    /// takes no ownership: not the token, not the progress list, not the flags.
-    /// </summary>
+    /// <summary>Uninstalls started while another activity owns the shared machinery. Each is its own concurrent <see cref="InstallQueue.RunAsync"/> run and takes no ownership of the token, the progress list or the flags.</summary>
     private int _sideUninstalls;
 
-    /// <summary>The cancellation sources of the running <see cref="_sideUninstalls"/>, so Stop reaches them too.</summary>
+    /// <summary>The cancellation sources of the running side uninstalls, so Stop reaches them too.</summary>
     private readonly List<CancellationTokenSource> _sideUninstallCts = [];
 
-    /// <summary>True once the activity that owns the shared state has finished while a side uninstall
-    /// still runs: the state stays up until the last of both ends.</summary>
+    /// <summary>True once the owning activity has finished while a side uninstall still runs: the shared state stays up until both have ended.</summary>
     private bool _ownerEnded;
 
-    /// <summary>
-    /// The owner activity's closing step. With no side uninstall running it releases the shared state
-    /// and returns true (the caller then hands the rows queued meanwhile to the next batch). Otherwise
-    /// the state stays up and the last side uninstall releases it, see <see cref="EndSideUninstall"/>.
-    /// </summary>
+    /// <summary>The owner activity's closing step. With no side uninstall running it releases the shared state and returns true, so the caller hands queued rows to the next batch. Otherwise the last side uninstall releases it (see <see cref="EndSideUninstall"/>).</summary>
     private bool EndInstallActivity()
     {
         if (_sideUninstalls > 0)
@@ -125,13 +100,7 @@ public partial class MainViewModel
         RefreshInstallProgress();
     }
 
-    /// <summary>
-    /// Turns the rows the user picked into the rows that actually have to be installed: a row the table
-    /// folded several sources into stands for a REAL installation per source, so every one of them must be
-    /// updated, best-ranked first; otherwise updating a folded row (e.g. graphify via both uv and pip)
-    /// would update only the winning source's copy, and the next scan would list the other one again at
-    /// the very same version. One row on screen, one click, every copy current.
-    /// </summary>
+    /// <summary>Turns the picked rows into the rows that really have to be installed. A row the table folded several sources into stands for one real installation per source; all of them are updated, best-ranked first, or the next scan would list the other copy again at the same version.</summary>
     private static IReadOnlyList<UpdateRowViewModel> Expand(IEnumerable<UpdateRowViewModel> rows)
     {
         var expanded = new List<UpdateRowViewModel>();
@@ -148,25 +117,15 @@ public partial class MainViewModel
         return expanded;
     }
 
-    /// <summary>
-    /// True only when the row's own data says there is genuinely nothing to install, both
-    /// versions known and equal. Null-vs-null (no version info at all, e.g. Steam's launcher row) must
-    /// never read as "already current".
-    /// </summary>
+    /// <summary>True only when both versions are known and equal. No version info at all (a launcher row) never counts as current.</summary>
     private static bool IsAlreadyCurrent(UpdateItem item) =>
         item.InstalledVersion is not null
         && string.Equals(item.InstalledVersion, item.AvailableVersion, StringComparison.Ordinal);
 
-    /// <summary>
-    /// Adds rows to the install queue. If nothing is running it starts the queue; if a batch is already
-    /// running the rows start at once beside it (only a lane already busy makes them wait); the per-row Install button feeds
-    /// the queue of running updates. Rows already done or in flight are skipped.
-    /// </summary>
+    /// <summary>Adds rows to the install queue. Nothing running: starts the queue. A batch running: the rows start at once beside it, waiting only for a busy lane. Rows already done or in flight are skipped.</summary>
     private async Task EnqueueInstallAsync(IReadOnlyList<UpdateRowViewModel> rows)
     {
-        // Scanning and installing run side by side without colliding: a scan RECONCILES the table rather
-        // than clearing it, DrainPendingItems only reuses rows that are Idle, and RemoveStaleRows
-        // leaves queued and running rows alone.
+        // Scanning and installing do not collide: a scan reconciles the table rather than clearing it, DrainPendingItems reuses only Idle rows, and RemoveStaleRows leaves queued and running rows alone.
         if (RefusedWhileSelfUpdateApplies("Install", tellUser: true))
             return;
 
@@ -179,15 +138,10 @@ public partial class MainViewModel
         if (candidates.Count == 0)
             return;
 
-        // The pre-flight dialog can pump messages while it is up; re-entrant clicks during
-        // that wait could otherwise queue the same row twice. Every row is re-checked against the exact
-        // conditions `candidates` was built from above, not just re-filtered by identity, since a row's
-        // state can also have moved on for other reasons while the dialog was up (e.g. finishing a batch
-        // that was already running).
+        // The pre-flight dialog pumps messages, so a re-entrant click could queue the same row twice. Every row is re-checked against the conditions the candidates were built from, since its state may also have moved on meanwhile.
         var skippedBlocked = new List<UpdateRowViewModel>();
 
-        // The pre-flight window counts as work for the self update: without it a cleanup ending while the
-        // window is up would let the update start applying, and end the app under the user's open dialog.
+        // The pre-flight window counts as work for the self update: otherwise a cleanup ending while it is up would let the update start applying under the open dialog.
         List<UpdateRowViewModel> resolvedCandidates;
         _installPreflightsOpen++;
         try
@@ -210,12 +164,7 @@ public partial class MainViewModel
                           && !_reinstallingKeys.Contains(PackageKey(row.Item)))
             .ToList();
 
-        // The version-based part of the guarantee, on top of the scan-reconciliation fix that
-        // stops a mid-install row from ever being replaced by an installable-looking clone in the first
-        // place (Scan.cs's DrainPendingItems). If a row's own data already says the installed and
-        // available versions match, running the installer again would be a no-op the user never asked
-        // for; refused here rather than run, one status line, same pattern as the auto-skipped-blocker
-        // message below.
+        // When the row's own data says installed and available versions match, running the installer again is a no-op nobody asked for: refused with one status line, like the auto-skipped-blocker message below.
         var toAdd = new List<UpdateRowViewModel>(resolved.Count);
         foreach (var row in resolved)
         {
@@ -235,21 +184,17 @@ public partial class MainViewModel
             return;
         }
 
-        // Only THIS batch's own rows are sorted among themselves, critical first; OrderByDescending
-        // is a stable sort, so two rows tied on IsCritical keep the order the user (or the table) already
-        // gave them. Rows queued later still simply append behind whatever is already in _installPending
-        // (untouched below), and a batch already running is never re-sorted, only extended.
+        // Only this batch's rows are sorted, critical first. The sort is stable, so rows tied on IsCritical keep their order; later rows append behind _installPending and a running batch is only extended.
         toAdd = toAdd.OrderByDescending(row => row.IsCritical).ToList();
 
-        // A fresh run starts a clean progress list; joining rows extend the one already showing.
+        // A fresh run starts a clean progress list; joining rows extend the one showing.
         if (!_installActivityRunning)
         {
             InstallBatch.Clear();
             IsSecondAttemptActive = false;
         }
 
-        // Rows skipped for a running program stay visible in this run's strip (table row and history
-        // already say why); added only now, because the clear above belongs to the run they were skipped for.
+        // Rows skipped for a running program stay visible in this run's strip; added only now because the clear above belongs to the run they were skipped for.
         foreach (var row in skippedBlocked.Where(row => !_mergedAway.Contains(row) && !InstallBatch.Contains(row)))
             InstallBatch.Add(row);
 
@@ -259,8 +204,7 @@ public partial class MainViewModel
             return;
         }
 
-        // One selection refresh for the whole batch, not two per row (BeginInstall moves CanInstall, the
-        // untick moves IsSelected, each re-walking every visible row): quadratic for a few hundred rows.
+        // One selection refresh for the whole batch: BeginInstall and the untick each re-walk every visible row, which is quadratic for a few hundred rows.
         _suppressSelectionRefresh = true;
         try
         {
@@ -270,9 +214,7 @@ public partial class MainViewModel
                 row.IsSelected = false;
                 _installPending.Add(row);
 
-                // A package the table folded into ONE row stays one row here too. Both sources are installed
-                // (they are two real installations), but the one the user cannot see does not get a line of
-                // its own in the strip.
+                // A package folded into one row stays one row here: both sources are installed, but the hidden one gets no line in the strip.
                 if (!_mergedAway.Contains(row))
                     InstallBatch.Add(row);
             }
@@ -289,12 +231,7 @@ public partial class MainViewModel
         _ = Background.Run(RunInstallLoopAsync(), _logging, "install loop");
     }
 
-    /// <summary>
-    /// A scan that finished while the pre-flight window was up may have replaced or removed a candidate's
-    /// row. A replaced row that offers the same version is swapped for the live one, any other stale row is
-    /// dropped: queuing it would orphan the entry while the live row stays installable a second time.
-    /// A row the lookup does not know at all counts as live only while it is still in the table, as a row or as a sub-row.
-    /// </summary>
+    /// <summary>A scan that finished while the pre-flight window was up may have replaced or removed a candidate's row. A replaced row offering the same version is swapped for the live one, any other stale row is dropped, or the entry would be orphaned while the live row stays installable. An unknown row counts as live only while it is still in the table, as a row or sub-row.</summary>
     private List<UpdateRowViewModel> ResolveLiveRows(IReadOnlyList<UpdateRowViewModel> rows)
     {
         var live = new List<UpdateRowViewModel>(rows.Count);
@@ -317,50 +254,25 @@ public partial class MainViewModel
         return live;
     }
 
-    /// <summary>
-    /// Test-only seam (same shape as <see cref="RetryInteractiveOverride"/>): replaces the pre-flight
-    /// window itself, so a test can simulate Start/Cancel and set each blocker line's <c>Choice</c> without
-    /// a real WPF window. Null in production, where <see cref="ShowInstallPreflight"/> opens the real
-    /// <see cref="Views.InstallPreflightWindow"/>.
-    /// </summary>
+    /// <summary>Test seam: replaces the pre-flight window so a test can simulate Start or Cancel and set each blocker line's <c>Choice</c> without a WPF window. Null in production, where <see cref="ShowInstallPreflight"/> opens <see cref="Views.InstallPreflightWindow"/>.</summary>
     internal Func<InstallPreflightViewModel, bool>? InstallPreflightOverride { get; set; }
 
-    /// <summary>Test seam for "close and continue": replaces the real close/force-kill step, so a test can
-    /// simulate a declined force close without touching a live process. Null in production.</summary>
+    /// <summary>Test seam for "close and continue": replaces the close and force-kill step. Null in production.</summary>
     internal Func<IReadOnlyList<string>, Task<bool>>? CloseBlockingProcessesOverride { get; set; }
 
-    /// <summary>Test seam for the metered-connection check: default <see cref="MeteredConnection.IsMetered"/>,
-    /// the real probe reads whatever connection genuinely happens to be active on the host it runs on.</summary>
+    /// <summary>Test seam for the metered-connection check; the real probe reads the host's active connection.</summary>
     internal Func<bool>? IsMeteredOverride { get; set; }
 
-    /// <summary>Test seam for the battery check: default reads the real
-    /// <c>SystemInformation.PowerStatus</c>, which reflects whatever power state genuinely happens to be
-    /// true on the host it runs on.</summary>
+    /// <summary>Test seam for the battery check; the real one reads <c>SystemInformation.PowerStatus</c>.</summary>
     internal Func<(System.Windows.Forms.PowerLineStatus Line, float BatteryLifePercent)>? PowerStatusOverride { get; set; }
 
-    /// <summary>
-    /// A program an update would overwrite may still be running (winget's Visual Studio exit code 8006);
-    /// the disk may be too small, the connection metered, or the battery low. Runs app-side, unelevated,
-    /// before any row is queued.
-    /// Unattended (build, scheduled scan, tray run; <see cref="App.IsUnattended"/>): none of this is
-    /// checked: a blocked row is skipped automatically with its reason recorded rather than silently
-    /// dropped, and there is nobody to warn about disk space or battery.
-    /// Interactive with nothing to say (no lines): the candidates are returned unchanged, no window, no
-    /// extra click for the normal case. Interactive with something to say: the pre-flight window collects
-    /// every warning and lists every blocked group, then asks once for all of them; the start button picked
-    /// returns exactly the accepted rows (unblocked candidates, plus every blocked group when it was "close
-    /// and continue" or "try anyway"), Cancel returns none at all, not even the rows nothing was wrong with.
-    /// </summary>
+    /// <summary>Checks what could spoil the batch before any row is queued, app-side and unelevated: a program the update would overwrite may be running (winget's Visual Studio exit code 8006), the disk may be too small, the connection metered or the battery low. Unattended runs (<see cref="App.IsUnattended"/>) skip these checks: a blocked row is skipped with its reason recorded. Interactive with nothing to report: the candidates come back unchanged, no window. Otherwise one pre-flight window lists every warning and blocked group; Start returns the accepted rows, Cancel returns none.</summary>
     private async Task<List<UpdateRowViewModel>> ResolveInstallCandidatesAsync(
         IReadOnlyList<UpdateRowViewModel> candidates, List<UpdateRowViewModel> skipped)
     {
         var accepted = new List<UpdateRowViewModel>(candidates.Count);
 
-        // First pass: detect only, never ask yet. Two rows waiting on the SAME running program (two Visual
-        // Studio components both held up by devenv) are one real decision, not two, so the question is
-        // asked once per group below, not once per row here. One process snapshot for the whole batch,
-        // taken off the UI thread: a full system enumeration per row would both repeat the same work and
-        // block the window while it runs.
+        // First pass: detect only. Two rows waiting on the same running program (two Visual Studio components held up by devenv) are one decision, asked once per group below. One process snapshot per batch, off the UI thread: a full enumeration per row would repeat the work and block the window.
         var detections = await Task.Run(() =>
         {
             var runningProcessNames = _installBlockers.CaptureBatchSnapshot();
@@ -379,7 +291,7 @@ public partial class MainViewModel
                 continue;
             }
 
-            // Never asked about and never closed, attended or not: it is the next run's job, not a failure.
+            // Never asked about and never closed: it is the next run's job, not a failure.
             if (blocker.SkipOnly)
             {
                 SkipRowInUse(row, blocker);
@@ -402,7 +314,7 @@ public partial class MainViewModel
 
         var blockerLines = InstallPreflightLineViewModel.FromBlockedGroups(blocked);
 
-        // Warnings read before the blocked-group questions.
+        // Warnings come before the blocked-group questions.
         var lines = new List<InstallPreflightLineViewModel>();
         if (BuildDiskSpaceLine(candidates) is { } diskSpaceLine)
             lines.Add(diskSpaceLine);
@@ -415,8 +327,7 @@ public partial class MainViewModel
         if (lines.Count == 0)
             return accepted;
 
-        // The restore point is only ever made for an elevated batch with the setting on (InstallQueue), so
-        // the dialog mentions it only then.
+        // The restore point is made only for an elevated batch with the setting on (InstallQueue), so the dialog mentions it only then.
         var restorePointRelevant = _settings.Current.Install.CreateRestorePoint
             && candidates.Any(row => InstallQueue.NeedsElevation(row.SourceId));
         var preflight = new InstallPreflightViewModel(lines, _logging, restorePointRelevant);
@@ -429,8 +340,7 @@ public partial class MainViewModel
             switch (preflight.BlockerChoice)
             {
                 case ThreeWayChoice.Primary: // "Programm schließen und fortfahren"
-                    // Rows are only queued once the blocking program is really gone; a declined force-kill
-                    // or a process that survived leaves them out, exactly like "Blockierte überspringen".
+                    // Rows are queued only once the blocking program is really gone; a declined force-kill or a survivor leaves them out, like "skip blocked".
                     if (await (CloseBlockingProcessesOverride
                                  ?? (names => CloseBlockingProcessesAsync(names, onlyInsideFolder: line.BlockedOnlyInsideFolder)))(line.BlockedProcessNames!))
                         accepted.AddRange(line.BlockedRows!);
@@ -456,18 +366,10 @@ public partial class MainViewModel
         return accepted;
     }
 
-    /// <summary>
-    /// Does the machine have room for the WHOLE candidate list, blocked rows included, before any of it is
-    /// queued? An installer needs the download plus the unpacked copy, so
-    /// <see cref="Services.Install.DiskSpaceCheck"/> doubles the known sizes; the smaller of the system
-    /// drive and the temp drive's free space is what it is checked against, since most installers land
-    /// their download in %TEMP% before unpacking to Program Files. Null when there is nothing to warn
-    /// about, including when every row's size is unknown: <see cref="Services.Install.DiskSpaceVerdict.IsShort"/>
-    /// is never true on a guess.
-    /// </summary>
+    /// <summary>Whether the machine has room for the whole candidate list, blocked rows included, before any of it is queued. An installer needs the download plus the unpacked copy, so <see cref="Services.Install.DiskSpaceCheck"/> doubles the known sizes and compares them with the smaller of the system drive's and the temp drive's free space. Null when there is nothing to warn about, including when no size is known: <see cref="Services.Install.DiskSpaceVerdict.IsShort"/> is never true on a guess.</summary>
     private InstallPreflightLineViewModel? BuildDiskSpaceLine(IReadOnlyList<UpdateRowViewModel> candidates)
     {
-        // The row's own figure, enrichment included: the source's scan often reports no size at all.
+        // The row's own figure, enrichment included: the source's scan often reports no size.
         var sizes = candidates.Select(row => row.DownloadSizeBytes).ToList();
         var freeSystem = SafeFreeBytes(Path.GetPathRoot(Environment.SystemDirectory));
         var freeTemp = SafeFreeBytes(Path.GetPathRoot(Path.GetTempPath()));
@@ -476,8 +378,7 @@ public partial class MainViewModel
         if (!verdict.IsShort)
             return null;
 
-        // Unknown sizes are named separately, never folded into the required-bytes figure: that number
-        // only ever reflects what is actually known.
+        // Unknown sizes are named separately and never folded into the required-bytes figure.
         var text = string.Format(Loc["InstallSpaceShort"], FormatBytes(verdict.FreeBytes), FormatBytes(verdict.RequiredBytes));
         if (verdict.UnknownCount > 0)
             text += " " + string.Format(Loc[verdict.UnknownCount == 1 ? "InstallSpaceUnknownOne" : "InstallSpaceUnknown"], verdict.UnknownCount);
@@ -486,9 +387,7 @@ public partial class MainViewModel
             text, isCritical: true, actionText: Loc["InstallSpaceOpenCleanup"], action: ShowCleanup);
     }
 
-    /// <summary>A drive that cannot be read (a removed root, a permissions quirk) must never manufacture
-    /// a false "short" warning; treated as effectively unlimited, same fail-open contract as every other
-    /// environment probe in this app.</summary>
+    /// <summary>An unreadable drive (removed root, permissions) must not produce a false "short" warning: treated as unlimited, like every other environment probe here.</summary>
     private static long SafeFreeBytes(string? root)
     {
         if (root is null)
@@ -504,12 +403,7 @@ public partial class MainViewModel
         }
     }
 
-    /// <summary>
-    /// Metered plus at least one known size greater than zero warns with the total size; starting
-    /// stays available regardless, this only informs. A batch with no known sizes at all (every row a
-    /// launcher hand-off, say) has nothing worth quoting a total for, so it stays silent even while
-    /// metered.
-    /// </summary>
+    /// <summary>Metered with at least one known size above zero warns with the total size; starting stays possible. With no known size there is nothing to quote, so it stays silent.</summary>
     private InstallPreflightLineViewModel? BuildMeteredLine(IReadOnlyList<UpdateRowViewModel> candidates)
     {
         var isMetered = IsMeteredOverride ?? MeteredConnection.IsMetered;
@@ -523,9 +417,7 @@ public partial class MainViewModel
         return new InstallPreflightLineViewModel(string.Format(Loc["InstallMeteredWarn"], FormatBytes(knownTotal)));
     }
 
-    /// <summary>No setting, no blocking, just a line when the battery is genuinely low and
-    /// nothing is plugged in. <see cref="Services.Install.PowerPrecondition.ShouldWarn"/> never guesses:
-    /// an unknown line status or an unreported percent means no warning.</summary>
+    /// <summary>A line only when the battery is low and nothing is plugged in; an unknown line status or percentage never warns (<see cref="Services.Install.PowerPrecondition.ShouldWarn"/>).</summary>
     private InstallPreflightLineViewModel? BuildBatteryLine()
     {
         var (line, percent) = PowerStatusOverride is not null
@@ -540,12 +432,7 @@ public partial class MainViewModel
         return new InstallPreflightLineViewModel(string.Format(Loc["InstallBatteryWarn"], wholePercent));
     }
 
-    /// <summary>
-    /// Opens the real pre-flight window (owned by whichever window is active, same rule
-    /// <see cref="Dialogs.ShowCore"/> uses) and returns whether Start was pressed. Test seam first;
-    /// failing that, <see cref="Dialogs.SuppressInteractiveDialogs"/> (headless test runs) returns the
-    /// safe/no-op Cancel rather than opening a real window that nothing would ever click.
-    /// </summary>
+    /// <summary>Opens the pre-flight window, owned by the active window like <see cref="Dialogs.ShowCore"/>, and returns whether Start was pressed. The test seam wins; with <see cref="Dialogs.SuppressInteractiveDialogs"/> (headless tests) it returns Cancel instead of a window nobody would click.</summary>
     private bool ShowInstallPreflight(InstallPreflightViewModel viewModel)
     {
         if (InstallPreflightOverride is not null)
@@ -566,13 +453,7 @@ public partial class MainViewModel
         return viewModel.Started;
     }
 
-    /// <summary>
-    /// "Programm schließen und fortfahren": ask nicely first (<c>CloseMainWindow</c>, up to 10 s, polled;
-    /// never a blocking <c>Thread.Sleep</c> on a UI-reachable path), and only on a SECOND, separate
-    /// confirmation (never silently), <c>Kill()</c> whatever is still standing. Returns true only when no
-    /// blocking process is left, so a declined force-kill or a refused Kill never lets the install start
-    /// against a program that is still open.
-    /// </summary>
+    /// <summary>"Close the program and continue": asks politely first (<c>CloseMainWindow</c>, up to 10 s, polled, never a blocking sleep on a UI-reachable path) and only after a second, separate confirmation kills what is left. True only when no blocking process remains, so a declined kill never lets the install start against an open program.</summary>
     internal static async Task<bool> CloseBlockingProcessesAsync(
         IReadOnlyList<string> processNames,
         Func<string, IReadOnlyList<System.Diagnostics.Process>>? processLookup = null,
@@ -593,8 +474,7 @@ public partial class MainViewModel
         }
     }
 
-    /// <summary>True when the process's image lies under the Windows folder. A path that cannot be read
-    /// counts as false, so such a process is handled exactly as before.</summary>
+    /// <summary>True when the process image lies under the Windows folder; an unreadable path counts as false.</summary>
     internal static bool RunsFromWindowsFolder(System.Diagnostics.Process process)
     {
         try
@@ -635,30 +515,26 @@ public partial class MainViewModel
         var exempt = new List<System.Diagnostics.Process>();
         foreach (var name in processNames)
         {
-            // Re-checked HERE, not only where the names were detected: this is the step that actually
-            // reaches a live process, and a name resolves to whatever is running under it right now.
-            // Killing this app itself would abandon the very install it is clearing the way for.
+            // Checked again here, not only where the names were detected: this step reaches a live process, and a name resolves to whatever runs under it now. Killing this app would abandon the install it is clearing the way for.
             if (Services.Install.InstallBlockers.IsNeverClosed(name))
                 continue;
 
             foreach (var process in processLookup(name))
             {
-                // Every handle is disposed by the caller's finally, the skipped ones included.
+                // The caller's finally disposes every handle, skipped ones included.
                 stillRunning.Add(process);
 
                 if (process.Id == Environment.ProcessId)
                     continue;
 
-                // A short, common name ("ssh", "bash") also belongs to Windows' own OpenSSH and WSL: those run
-                // from the Windows folder, which no update writes to, so they are never in the way and never closed.
+                // A short name ("ssh", "bash") also belongs to Windows' own OpenSSH and WSL. Those run from the Windows folder, which no update writes to, so they are never closed.
                 if (RunsFromWindowsFolder(process))
                 {
                     exempt.Add(process);
                     continue;
                 }
 
-                // A Store app is only its own package's processes: a same-named program from anywhere else
-                // (or one whose image cannot be read) is not the program in the way and is left alone.
+                // A Store app is only its own package's processes; a same-named program elsewhere, or one whose image cannot be read, is left alone.
                 if (onlyInsideFolder is not null && !RunsFromFolder(process, onlyInsideFolder))
                 {
                     exempt.Add(process);
@@ -672,13 +548,12 @@ public partial class MainViewModel
                 }
                 catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
                 {
-                    // Already gone, or no main window to ask nicely; the wait/force-kill pass below still
-                    // checks HasExited itself, so this is not fatal to the flow.
+                    // Already gone, or no main window to ask; the wait and force-kill pass below checks HasExited itself.
                 }
             }
         }
 
-        // This app's own process was only collected for disposal, never asked to close.
+        // This app's own process is collected for disposal only, never asked to close.
         var closing = stillRunning.Where(p => !IsThisProcess(p) && !exempt.Contains(p)).ToList();
         if (closing.Count == 0)
             return true;
@@ -707,8 +582,7 @@ public partial class MainViewModel
             }
             catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
             {
-                // Best effort; a process that exited or refuses to be killed between the check and here
-                // must not abort the rest of the batch.
+                // Best effort: a process that exited or refuses to die must not abort the rest of the batch.
             }
         }
 
@@ -754,8 +628,7 @@ public partial class MainViewModel
     {
         try
         {
-            // Every session's processes come back; only this user's session is one the install can be
-            // blocked by and one this app may close, so the rest are released at once.
+            // Every session's processes come back; only this user's session can block an install or be closed by this app, so the rest are released at once.
             var sessionId = CurrentSessionId();
             var mine = new List<System.Diagnostics.Process>();
             foreach (var process in System.Diagnostics.Process.GetProcessesByName(name))
@@ -784,18 +657,12 @@ public partial class MainViewModel
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
-            // Cannot ask (access denied, protected process): it may well still be running, and the caller
-            // is deciding whether the program that blocks an install is gone. Fail closed, so the row stays
-            // blocked with its usual text rather than installing over a live program.
+            // Cannot ask (access denied, protected process): it may still run, so fail closed and keep the row blocked rather than install over a live program.
             return false;
         }
     }
 
-    /// <summary>
-    /// Unattended path: no dialog, ever. The row is not silently dropped; it is marked failed with the
-    /// reason, recorded in history exactly like any other install outcome, so it does not vanish with no
-    /// trace.
-    /// </summary>
+    /// <summary>Unattended path, no dialog: the row is marked failed with the reason and recorded in history like any install outcome, never silently dropped.</summary>
     private void SkipBlockedRowUnattended(UpdateRowViewModel row, string blockingProgramName)
     {
         var message = string.Format(Loc["InstallBlockerAutoSkipped"], blockingProgramName);
@@ -806,11 +673,7 @@ public partial class MainViewModel
         _history.Append(HistoryEntry.ForItem(row.Item, InstallAction.Install, success: false, error: message));
     }
 
-    /// <summary>
-    /// A program that must not be closed is using the files the update would replace (Git's own shells).
-    /// The row ends as Cancelled with the reason, not as a failure, so it is never counted towards the
-    /// repeated-failure flag and simply comes back on the next scan.
-    /// </summary>
+    /// <summary>A program that must not be closed (Git's own shells) uses the files the update would replace. The row ends Cancelled with the reason, not as a failure, so it never counts towards the repeated-failure flag and returns on the next scan.</summary>
     private void SkipRowInUse(UpdateRowViewModel row, Services.Install.BlockedInstall blocker)
     {
         var message = string.Format(Loc["InstallBlockerInUse"], blocker.DescribeProcesses());
@@ -824,13 +687,7 @@ public partial class MainViewModel
         _history.Append(HistoryEntry.ForItem(row.Item, InstallAction.Install, success: false, error: message, isCancelled: true));
     }
 
-    /// <summary>
-    /// Interactive path: the user picked "skip blocked", or "close and continue" did not get the program
-    /// closed (a declined force close, a survivor). The rows are not silently dropped: each shows
-    /// Cancelled with the reason and gets one cancelled history entry, so the table and the history say
-    /// why nothing happened. Not a failure: the user (or the program still being open) decided, nothing
-    /// went wrong.
-    /// </summary>
+    /// <summary>Interactive path: the user chose "skip blocked", or "close and continue" did not get the program closed. Each row shows Cancelled with the reason and gets one cancelled history entry. Not a failure.</summary>
     private void SkipBlockedRowsStillOpen(InstallPreflightLineViewModel line)
     {
         var message = string.Format(Loc["InstallBlockerSkippedStillOpen"], line.BlockedProgramName);
@@ -847,18 +704,16 @@ public partial class MainViewModel
         }
     }
 
-    /// <summary>Completed when rows join the queue while <see cref="RunInstallLoopAsync"/> runs, so they start
-    /// right away. Null while no loop runs.</summary>
+    /// <summary>Completed when rows join the queue while <see cref="RunInstallLoopAsync"/> runs, so they start right away. Null while no loop runs.</summary>
     private TaskCompletionSource? _installWake;
 
     private async Task RunInstallLoopAsync()
     {
-        // The batch that owned the shared state has ended and only a side uninstall keeps it up: this loop
-        // takes ownership back instead of leaving the new rows waiting for that uninstall to finish.
+        // The batch that owned the shared state has ended and only a side uninstall keeps it up: this loop takes ownership back instead of leaving the new rows waiting.
         var takingOver = _installActivityRunning && _ownerEnded && _installWake is null;
         if (_installActivityRunning && !takingOver)
         {
-            // A running loop starts the new rows at once, beside the run already going.
+            // A running loop starts the new rows at once, beside the run going.
             _installWake?.TrySetResult();
             RefreshInstallProgress();
             return;
@@ -872,16 +727,13 @@ public partial class MainViewModel
         RebootRequiredNotice = false;
         BeginInstallProgress();
 
-        // Pairs with BatchFinished in the finally below, so a run's total duration is on record and a
-        // "it hung for a minute" report is provable.
+        // Pairs with BatchFinished in the finally below, so a run's total duration is on record.
         _logging.Event(ActivityLog.Install, ActivityLog.BatchStarted(
             _installPending.Count, _installPending.Any(r => InstallQueue.NeedsElevation(r.SourceId))));
 
         try
         {
-            // Rows queued while a run is going start their own run straight away instead of waiting for the
-            // first one to finish: the queue's lanes are shared across runs, so a package manager still never
-            // runs two of its own installs at once, while every other lane gets going immediately.
+            // Rows queued during a run start their own run at once: the queue's lanes are shared across runs, so a package manager never runs two of its installs at a time while every other lane starts immediately.
             var running = new List<Task>();
             while (!_installCts.IsCancellationRequested)
             {
@@ -893,9 +745,7 @@ public partial class MainViewModel
 
                 if (snapshot.Count > 0)
                 {
-                    // ONE call per turn, not one per elevation half: InstallQueue.RunAsync already splits by
-                    // elevation and starts both halves together internally, and its automatic retry round runs
-                    // once, after both halves of that same turn. Admin rows of one turn go out in ONE elevated batch.
+                    // One call per turn: InstallQueue.RunAsync splits by elevation itself, starts both halves together and runs its automatic retry once after both. Admin rows of one turn go out in one elevated batch.
                     var adminBatch = snapshot.Where(r => InstallQueue.NeedsElevation(r.SourceId));
                     var userScope = snapshot.Where(r => !InstallQueue.NeedsElevation(r.SourceId));
                     var items = userScope.Select(r => r.Item).Concat(adminBatch.Select(r => r.Item)).ToList();
@@ -918,7 +768,7 @@ public partial class MainViewModel
                     }
                     catch (Exception ex)
                     {
-                        // One turn failing must not end the others still running beside it.
+                        // One turn failing must not end the others running beside it.
                         _logging.Error("Install batch failed", ex);
                     }
                 }
@@ -945,21 +795,14 @@ public partial class MainViewModel
         }
         catch (Exception ex)
         {
-            // The top of the install loop: whatever failed, the finally below still has to close out every
-            // pending/held row rather than leave them stuck reading "queued" forever.
+            // Whatever failed, the finally below still has to close out every pending or held row instead of leaving them reading "queued".
             _logging.Error("Install batch failed", ex);
         }
         finally
         {
             _installWake = null;
 
-            // Rows that were still waiting when Stop was pressed never ran, and clearing the list silently
-            // left them showing "queued" for ever. They are closed out here; the only
-            // place that knows they never reached the queue. Admin-scope rows held back for the elevated
-            // batch are the same story: a cancellation while the user-scope phase was still running never
-            // reaches the loop iteration that would have dispatched or cleared them.
-            // After a Stop, CancelInstall already settled every row waiting at that moment; what is pending
-            // now was queued during the unwind and is handed to a fresh batch below instead.
+            // Rows still waiting at Stop never ran and would stay "queued", so they are closed out here, the only place that knows they never reached the queue. The same holds for admin rows held back for the elevated batch. After a Stop, CancelInstall already settled every row waiting then; what is pending now was queued during the unwind and goes to a fresh batch below.
             var stopped = _installCts.IsCancellationRequested;
             if (!stopped)
             {
@@ -973,7 +816,7 @@ public partial class MainViewModel
 
             var released = EndInstallActivity();
 
-            // Surface any "installed, reboot pending" results once the batch is done.
+            // Surface "installed, reboot pending" results once the batch is done.
             ReportRebootsFor(InstallBatch);
 
             // Held open by a running uninstall: that one hands the pending rows on when it ends.
@@ -982,17 +825,10 @@ public partial class MainViewModel
         }
     }
 
-    /// <summary>Rows whose restart request was already announced (dialog or balloon). A takeover run keeps
-    /// the previous batch's rows in <see cref="InstallBatch"/> until its side uninstall ends, so without
-    /// this the next batch's end would announce the same package a second time.</summary>
+    /// <summary>Rows whose restart request was already announced. A takeover run keeps the previous batch's rows in <see cref="InstallBatch"/> until its side uninstall ends, so without this the next batch's end would announce the same package twice.</summary>
     private readonly HashSet<UpdateRowViewModel> _rebootReported = [];
 
-    /// <summary>
-    /// Raises the restart banner for every row that still waits for a restart, and the dialog (or the
-    /// balloon when the window is hidden) once for the rows not announced before. Called when a batch ends
-    /// and when a solo activity (downgrade, uninstall, reinstall, interactive retry) ends, so a restart
-    /// request is never only a small badge on the row.
-    /// </summary>
+    /// <summary>Raises the restart banner for every row still waiting for a restart, and the dialog (or a balloon when the window is hidden) once for rows not announced before. Called when a batch or a solo activity (downgrade, uninstall, reinstall, retry) ends.</summary>
     private void ReportRebootsFor(IEnumerable<UpdateRowViewModel> rows)
     {
         // A row that started over no longer asks for a restart; if it asks again it is news again.
@@ -1014,7 +850,7 @@ public partial class MainViewModel
 
     private int _rebootPendingCount;
 
-    /// <summary>Built on every read from the stored count, so a language switch only has to re-raise it.</summary>
+    /// <summary>Built on every read from the stored count, so a language switch only re-raises it.</summary>
     public string RebootInfoText => _rebootPendingCount == 0
         ? string.Empty
         : string.Format(Loc[_rebootPendingCount == 1 ? "RebootRequiredInfoOne" : "RebootRequiredInfo"], _rebootPendingCount);
@@ -1029,31 +865,16 @@ public partial class MainViewModel
     [RelayCommand]
     private void DismissRebootNotice() => RebootRequiredNotice = false;
 
-    /// <summary>The packages that asked for a restart in the batch that just finished. Read by
-    /// <see cref="ShowRebootDialogIfNeeded"/> and exposed for whatever else wants the list (a future
-    /// notification detail, a test).</summary>
+    /// <summary>The packages that asked for a restart in the batch that just finished; read by <see cref="ShowRebootDialogIfNeeded"/>.</summary>
     internal IReadOnlyList<string> RebootRequestedBy { get; private set; } = [];
 
-    /// <summary>Test seam: replaces the real two-button dialog, returning whether "restart now" was
-    /// chosen. Null in production, where <see cref="ShowRebootDialog"/> opens the real
-    /// <see cref="Views.MessageDialogWindow"/> through <see cref="Dialogs.Confirm"/>.</summary>
+    /// <summary>Test seam: replaces the two-button dialog and returns whether "restart now" was chosen. Null in production, where <see cref="ShowRebootDialog"/> goes through <see cref="Dialogs.Confirm"/>.</summary>
     internal Func<IReadOnlyList<string>, bool>? RebootDialogOverride { get; set; }
 
-    /// <summary>Test seam: default reads the real <c>Application.Current.MainWindow.IsVisible</c>, which
-    /// reflects whether the window genuinely happens to be hidden to tray on the host it runs on.
-    /// Constructing and showing a real <see cref="Window"/> against the shared test-process
-    /// <see cref="Application"/> proved unsafe (it corrupted later tests' own windows), so this is a plain
-    /// probe rather than a live window, the same shape as <see cref="IsMeteredOverride"/>.</summary>
+    /// <summary>Test seam for whether the main window is visible. A real <see cref="Window"/> against the shared test <see cref="Application"/> corrupts later tests' windows, so this is a plain probe.</summary>
     internal Func<bool>? MainWindowVisibleOverride { get; set; }
 
-    /// <summary>
-    /// Once per batch or solo activity (called only from <see cref="ReportRebootsFor"/>, never
-    /// mid-batch), and never onto a window nobody can see: hidden to tray gets the banner plus one balloon
-    /// instead, no reminder option and never an automatic restart, so a hidden run is never left to
-    /// restart itself unattended. Internal, not private: like <see cref="ScanScheduler.TickAsync"/>, a test
-    /// calls it directly instead of driving a whole batch through a mock source that cannot report
-    /// <c>RebootRequired</c>.
-    /// </summary>
+    /// <summary>Once per batch or solo activity, called only from <see cref="ReportRebootsFor"/>, never mid-batch, and never onto a window nobody can see: hidden to tray gets the banner plus one balloon, with no reminder option and no automatic restart. Internal so a test can call it without driving a batch through a mock source that cannot report <c>RebootRequired</c>.</summary>
     internal void ShowRebootDialogIfNeeded(IReadOnlyList<string> names)
     {
         RebootRequestedBy = names;
@@ -1076,8 +897,7 @@ public partial class MainViewModel
         return Dialogs.Confirm(Loc["RebootDialogTitle"], body, Loc["RebootDialogNow"], Loc["RebootDialogLater"]);
     }
 
-    /// <summary>Full path resolution like every other external call here (ProcessRunner.Resolve); fire
-    /// and forget, the restart itself is imminent either way.</summary>
+    /// <summary>Resolves the full path like every other external call (ProcessRunner.Resolve); fire and forget, the restart is imminent either way.</summary>
     private async Task RestartNowAsync()
     {
         try
@@ -1090,9 +910,7 @@ public partial class MainViewModel
         }
     }
 
-    /// <summary>Stops the batch. Rows still waiting are settled right here, as cancelled: the loop only
-    /// notices the token at its next turn, and rows the user queues while the batch is still unwinding (an
-    /// installer being killed, the elevated worker shutting down) belong to a NEW batch, not to this Stop.</summary>
+    /// <summary>Stops the batch. Rows still waiting are settled here as cancelled: the loop only sees the token at its next turn, and rows queued while the batch unwinds (an installer being killed, the elevated worker shutting down) belong to a new batch.</summary>
     [RelayCommand]
     private void CancelInstall()
     {
@@ -1105,20 +923,14 @@ public partial class MainViewModel
         RefreshInstallProgress();
     }
 
-    /// <summary>
-    /// Called from every solo activity's (interactive retry, uninstall) <c>finally</c> block, right after
-    /// it clears <see cref="_installActivityRunning"/>: a per-row Install click that landed on a
-    /// different row while the activity was running never started a second loop (see
-    /// <see cref="_installActivityRunning"/>'s doc); its row just sits in <see cref="_installPending"/>
-    /// instead. This is what actually installs it, now that the shared machinery is free again.
-    /// </summary>
+    /// <summary>Called from the <c>finally</c> of every solo activity (interactive retry, uninstall) right after it clears <see cref="_installActivityRunning"/>. An Install click on another row meanwhile only sat in <see cref="_installPending"/>; this installs it now that the machinery is free.</summary>
     private void HandOffPendingInstalls()
     {
         if (_installPending.Count > 0)
             _ = Background.Run(RunInstallLoopAsync(), _logging, "install loop");
     }
 
-    /// <summary>The batch that is running, in the order it will be installed.</summary>
+    /// <summary>The batch that is running, in install order.</summary>
     public ObservableCollection<UpdateRowViewModel> InstallBatch { get; } = [];
 
     private DispatcherTimer? _installTimer;
@@ -1127,11 +939,7 @@ public partial class MainViewModel
     [ObservableProperty]
     private string installElapsedText = "0:00";
 
-    // HandedOff belongs here as much as the other two: it is a terminal state, so leaving it out had the
-    // strip read "0 of 1" next to a bar already sitting at 100 % after a handoff to Steam. NeedsManualWork
-    // is terminal too (a row there is never Idle again); a three-strikes row mid-batch was left out of
-    // the count for ever, so the strip could get permanently stuck at "2 of 3" or similar. Cancelled
-    // (a row the user stopped) is terminal for the same reason.
+    // HandedOff is terminal, like NeedsManualWork (never Idle again) and Cancelled; leaving any of them out would pin the strip at "2 of 3" or "0 of 1" beside a full bar.
     public int InstallDoneCount => InstallBatch.Count(r => IsTerminalInstallState(r.InstallState));
 
     private static bool IsTerminalInstallState(RowInstallState state) =>
@@ -1140,10 +948,7 @@ public partial class MainViewModel
 
     public int InstallTotalCount => InstallBatch.Count;
 
-    // A finished row is a finished share of the work whatever its outcome: a failed or handed-off row left
-    // at its last reported percent kept the bar from ever reaching 100 % at the end of a batch. A row that
-    // is installing has its whole download behind it and counts as that, but never as finished: only a
-    // terminal state takes a share to 100, so the figure cannot read complete while a row still works.
+    // A finished row is a finished share whatever its outcome. An installing row counts as its whole download but never as finished: only a terminal state takes a share to 100, so the figure cannot read complete while a row still works.
     public double InstallOverallPercent =>
         InstallBatch.Count == 0
             ? 0
@@ -1155,22 +960,14 @@ public partial class MainViewModel
     public string InstallOverallPercentText =>
         IsInstalling && !InstallHasRealProgress ? string.Empty : PercentFormat.Format(InstallOverallPercent);
 
-    /// <summary>False while no running row has a real download figure (all installing, or nothing
-    /// measurable reported yet); the install band shows a wandering shine instead of a bar stuck at 0.</summary>
+    /// <summary>False while no running row has a real download figure; the install band then shows a wandering shine instead of a bar stuck at 0.</summary>
     public bool InstallHasRealProgress => InstallBatch.Any(r =>
         (r.HasRealProgress && r.Phase != InstallPhase.Installing) || r.InstallState == RowInstallState.Succeeded);
 
     public string InstallCountText =>
         string.Format(Loc["InstallProgressCount"], InstallDoneCount, InstallTotalCount);
 
-    /// <summary>
-    /// Batch-wide throughput for the install strip: total size, how much has come down, and how fast right
-    /// now; three separate figures (total top-left, downloaded below it, speed to its right), each shown
-    /// only when it has a real number, so a batch that reports no bytes (a launcher hand-off) shows nothing
-    /// rather than a zero. Not gated on batch size: a single queued item reports exactly like a batch of
-    /// ten. Deliberately excludes the free space on the system drive, which has nothing to do with the
-    /// batch.
-    /// </summary>
+    /// <summary>Batch-wide figures for the install strip: total size, downloaded so far and current speed, each shown only when it has a real number, so a batch that reports no bytes (a launcher hand-off) shows nothing rather than a zero. Not gated on batch size. The system drive's free space is deliberately not part of it.</summary>
     public string InstallTotalSizeText
     {
         get
@@ -1206,12 +1003,7 @@ public partial class MainViewModel
 
     private static string FormatBytes(long bytes) => ByteSize.Format(bytes);
 
-    /// <summary>
-    /// The queue panel's own row order; separate from <see cref="InstallBatch"/> (whose order reflects
-    /// when rows were added, not the user's drag-and-drop) so a reorder never has to reason about where
-    /// running or finished rows sit. Rebuilt incrementally: rows that left the Queued state drop out, new
-    /// ones append at the end, and everything else keeps whatever order the user last set.
-    /// </summary>
+    /// <summary>The queue panel's own row order, separate from <see cref="InstallBatch"/> (which follows the order rows were added, not the user's drag and drop). Rebuilt incrementally: rows that left Queued drop out, new ones append, the rest keep the user's order.</summary>
     public ObservableCollection<UpdateRowViewModel> QueueRows { get; } = [];
 
     [ObservableProperty]
@@ -1221,8 +1013,7 @@ public partial class MainViewModel
 
     public string QueuePanelHeaderText => string.Format(Loc["InstallQueueHeader"], QueueRows.Count);
 
-    /// <summary>Sits right-aligned beside the header text; the queue's own combined download size, empty
-    /// (not "0 B") when nothing in it reports one.</summary>
+    /// <summary>The queue's combined download size beside the header text; empty, not "0 B", when nothing reports one.</summary>
     public string QueueTotalSizeText
     {
         get
@@ -1253,9 +1044,7 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(HasQueueTotalSize));
     }
 
-    /// <summary>Same incremental rebuild <see cref="SyncQueueRows"/> already does for the queue panel,
-    /// applied to the running-rows strip: rows that stopped running drop out, newly running ones append,
-    /// everything else is left untouched instead of the whole list being thrown away and rebuilt.</summary>
+    /// <summary>The same incremental rebuild as <see cref="SyncQueueRows"/>, for the running-rows strip.</summary>
     private void SyncRunningRows()
     {
         var running = InstallBatch.Where(r => r.InstallState == RowInstallState.Running).ToList();
@@ -1275,20 +1064,14 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(InstallRunningCountText));
     }
 
-    /// <summary>
-    /// Pushes the queue panel's current order down into whatever is actually holding those rows back;
-    /// the pending list for rows not yet handed to the queue, and the queue itself for rows
-    /// already inside a running <see cref="InstallQueue.RunAsync"/> call. Either is a no-op for rows it
-    /// does not recognise, so calling both unconditionally is safe.
-    /// </summary>
+    /// <summary>Pushes the queue panel's order into whatever holds the rows back: the pending list for rows not yet handed over, the queue itself for rows inside a running <see cref="InstallQueue.RunAsync"/>. Each ignores rows it does not know, so calling both is safe.</summary>
     private void PushQueueOrder()
     {
         var order = QueueRows.ToList();
         if (order.Count == 0)
             return;
 
-        // Rows the panel does not list (the folded-away twins of a shown row) sort behind the listed ones;
-        // OrderBy is stable, so they keep their relative order.
+        // Rows the panel does not list (the folded-away twins of a shown row) sort behind the listed ones; OrderBy is stable.
         var position = new Dictionary<UpdateRowViewModel, int>();
         for (var i = 0; i < order.Count; i++)
             position[order[i]] = i;
@@ -1300,7 +1083,7 @@ public partial class MainViewModel
         _installQueue.Reorder(order.Select(r => (r.Item.SourceId, r.Item.Id)).ToList());
     }
 
-    /// <summary>Called by the queue panel's drag-and-drop drop handler with the row's old and new index.</summary>
+    /// <summary>Called by the queue panel's drop handler with the row's old and new index.</summary>
     public void MoveQueueRow(int oldIndex, int newIndex)
     {
         if (oldIndex == newIndex || oldIndex < 0 || newIndex < 0 || oldIndex >= QueueRows.Count || newIndex >= QueueRows.Count)
@@ -1316,10 +1099,7 @@ public partial class MainViewModel
         if (row is null || row.InstallState != RowInstallState.Queued)
             return;
 
-        // The row goes only once something has really let go of it: either the pending list, which still
-        // holds the rows the loop has not handed over yet, or the queue itself. A queue that
-        // says no has already handed the item to the elevated worker; taking the row away then would tell
-        // the user it was cancelled while it carries on installing.
+        // The row goes only once something has really let go of it: the pending list, or the queue. A queue that refuses has already handed the item to the elevated worker; removing the row then would say cancelled while it keeps installing.
         if (!_installPending.Remove(row) && !_installQueue.Remove(row.Item.SourceId, row.Item.Id))
             return;
 
@@ -1328,8 +1108,7 @@ public partial class MainViewModel
 
         row.MarkNotInstalled(Loc["InstallQueueItemRemoved"]);
 
-        // The folded-away copies were queued together with this row (see Expand) and have no queue line
-        // of their own to remove them by, so they leave with it, under the same "really let go" rule.
+        // The folded-away copies were queued with this row (see Expand) and have no queue line of their own, so they leave with it under the same rule.
         foreach (var partner in row.MergedPartners.Where(p => p.InstallState == RowInstallState.Queued && !QueueRows.Contains(p)))
         {
             if (!_installPending.Remove(partner) && !_installQueue.Remove(partner.Item.SourceId, partner.Item.Id))
@@ -1342,24 +1121,19 @@ public partial class MainViewModel
         RefreshInstallProgress();
     }
 
-    /// <summary>What the window puts at the top: the package actually being worked on.</summary>
+    /// <summary>What the window shows at the top: the package being worked on.</summary>
     public UpdateRowViewModel? CurrentInstallRow =>
         InstallBatch.FirstOrDefault(r => r.InstallState == RowInstallState.Running)
         ?? InstallBatch.FirstOrDefault(r => r.InstallState == RowInstallState.Queued);
 
     public bool HasCurrentInstall => CurrentInstallRow is not null;
 
-    /// <summary>Every row currently installing, in batch order: the strip's own per-row list
-    /// once more than one row is running at the same time (which can happen now). Rebuilt incrementally
-    /// by <see cref="SyncRunningRows"/> (same pattern as <see cref="QueueRows"/>), not replaced wholesale
-    /// every tick: a brand new list every 250ms gave the bound ItemsControl a full reset instead of the
-    /// handful of Add/Remove notifications a running batch actually produces.</summary>
+    /// <summary>Every row currently installing, in batch order: the strip's per-row list once more than one runs at a time. Rebuilt incrementally by <see cref="SyncRunningRows"/>; a new list every 250 ms would give the bound ItemsControl a full reset instead of a few Add/Remove notifications.</summary>
     public ObservableCollection<UpdateRowViewModel> RunningRows { get; } = [];
 
     public int RunningCount => RunningRows.Count;
 
-    /// <summary>The strip's own switch: its single-row look while at most one row runs (unchanged
-    /// from before multiple rows could run at once), the compact multi-row list once a second one starts alongside it.</summary>
+    /// <summary>The strip's switch: single-row look while at most one row runs, the compact list once a second starts.</summary>
     public bool HasMultipleRunning => RunningCount >= 2;
 
     public bool ShowSingleInstallView => !HasMultipleRunning;
@@ -1375,15 +1149,14 @@ public partial class MainViewModel
         BeginInstallProgress();
     }
 
-    /// <summary>Starts the elapsed/throughput ticker for whatever is in <see cref="InstallBatch"/>.</summary>
+    /// <summary>Starts the elapsed and throughput ticker for <see cref="InstallBatch"/>.</summary>
     private void BeginInstallProgress()
     {
         _installStartedAt = DateTimeOffset.UtcNow;
 
         _installTimer ??= new DispatcherTimer(DispatcherPriority.Background, _dispatcher)
         {
-            // 250ms: the aggregate batch figures (MB/s, elapsed) only move on this tick, and a slower
-            // interval reads as visibly static next to how often a real per-row report can arrive.
+            // 250 ms: the batch figures (MB/s, elapsed) only move on this tick, and a slower one looks static next to how often per-row reports arrive.
             Interval = TimeSpan.FromMilliseconds(250),
         };
         _installTimer.Tick -= OnInstallTimerTick;
@@ -1395,8 +1168,7 @@ public partial class MainViewModel
 
     private void OnInstallTimerTick(object? sender, EventArgs e)
     {
-        // Ends a finished download's pause and moves each running row's elapsed time before the figures
-        // are recomputed.
+        // Ends a finished download's pause and advances each running row's elapsed time before the figures are recomputed.
         foreach (var row in InstallBatch)
             row.Tick();
 
@@ -1429,15 +1201,13 @@ public partial class MainViewModel
         SyncRunningRows();
     }
 
-    /// <summary>UI cue: fires once the batch's own retry round actually starts.</summary>
+    /// <summary>UI cue: fires once the batch's own retry round starts.</summary>
     private void OnSecondAttemptStarted() => _dispatcher.Invoke(() => IsSecondAttemptActive = true);
 
-    /// <summary>How often a row's plain progress reaches the window: at most four times a second, however
-    /// often the tool prints. A synchronous hop per report ran at a priority above input, so the app's other
-    /// windows could not be opened or scrolled while several installs were chatting.</summary>
+    /// <summary>How often a row's plain progress reaches the window: at most four times a second however often the tool prints. A synchronous hop per report ran above input priority and froze the other windows while several installs were chatting.</summary>
     internal static readonly TimeSpan InstallProgressFlushInterval = TimeSpan.FromMilliseconds(250);
 
-    /// <summary>Newest not yet applied plain progress per row; guarded by <see cref="_lastDispatchedInstallStatus"/>.</summary>
+    /// <summary>Newest not yet applied plain progress per row.</summary>
     private readonly Dictionary<string, InstallItemStatus> _pendingInstallProgress = new(StringComparer.OrdinalIgnoreCase);
 
     private bool _installProgressFlushScheduled;
@@ -1447,9 +1217,7 @@ public partial class MainViewModel
         var key = $"{status.SourceId}:{status.ItemId}";
         var rounded = Math.Floor(status.Percent);
 
-        // Only a plain, mid-install progress tick may be dropped or delayed; a terminal result (Success/Error
-        // set, or a manual handoff) and the flags a later tick must not overwrite always cross immediately,
-        // so a chatty tool's redraw storm can never delay the one report the user is actually waiting for.
+        // Only a plain mid-install tick may be dropped or delayed. A terminal result (Success or Error set, a manual handoff) and the flags a later tick must not overwrite cross at once, so a chatty tool never delays the report the user waits for.
         var isImmediate = status.IsTerminal || status.Error is not null || status.IsAwaitingRetry
             || status.RebootRequired || status.VersionUnchanged;
         var isTerminal = status.IsTerminal || status.Error is not null;
@@ -1471,7 +1239,7 @@ public partial class MainViewModel
 
             if (isImmediate)
             {
-                // Whatever was waiting for this row is older than this report.
+                // Whatever waited for this row is older than this report.
                 _pendingInstallProgress.Remove(key);
             }
             else
@@ -1514,11 +1282,7 @@ public partial class MainViewModel
 
     private void ApplyInstallStatus(InstallItemStatus status, bool isTerminal)
     {
-        // Source included: ids are unique per source only, and chocolatey/scoop/pip/npm share
-        // package names, so matching on the id alone would report two installs onto one row.
-        // Children too: Steam's parent row carries id "steam", and every actual game
-        // update rides as a CHILD with its own id; searching only the top level would leave a
-        // Steam child's install/uninstall progress or manual-handoff result never reaching its row.
+        // Source included: ids are unique per source only, and chocolatey, scoop, pip and npm share package names. Children too: Steam's parent row has id "steam" and every game update is a child with its own id.
         var row = FindRow(status.SourceId, status.ItemId);
         if (row is null)
             return;
@@ -1527,11 +1291,7 @@ public partial class MainViewModel
         if (isTerminal)
             TrackPersistentFailure(row);
 
-        // WindowsUpdateSource.Install throws this exact text only once the update's own GUID is
-        // genuinely gone from a fresh search, never for a mere revision bump (WindowsUpdateMatching
-        // already handles that case without failing). The row is stale either way it arrived here (an
-        // in-process install or the elevated worker's own "result" message both funnel through this
-        // same status), so the source is rescanned on its own rather than making the user do it by hand.
+        // WindowsUpdateSource.Install throws this exact text only once the update's GUID is gone from a fresh search, never for a mere revision bump. The row is stale either way (in-process or from the elevated worker), so the source is rescanned instead of leaving that to the user.
         if (status.Success == false
             && string.Equals(status.SourceId, "windowsupdate", StringComparison.Ordinal)
             && status.Detail?.Contains("is no longer offered", StringComparison.Ordinal) == true)
