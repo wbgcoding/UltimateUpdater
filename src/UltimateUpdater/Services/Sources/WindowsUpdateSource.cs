@@ -417,17 +417,20 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
         cancellationToken.ThrowIfCancellationRequested();
         progress.Report(new Models.InstallProgress { PercentComplete = 10, StatusText = item.Name });
 
-        var downloader = com.Track(Invoke(session, "CreateUpdateDownloader"))!;
+        var downloader = com.Track(Invoke(session, "CreateUpdateDownloader"))
+            ?? throw new InvalidOperationException("Windows Update downloader unavailable.");
         SetProperty(downloader, "Updates", collection);
         // Checked like the install result: a failed download (network, WSUS refusal) would otherwise go on to
         // Install and surface as a misleading install-stage code instead of the download's own HRESULT.
-        var downloadResult = com.Track(Invoke(downloader, "Download"));
+        var downloadResult = com.Track(Invoke(downloader, "Download"))
+            ?? throw new InvalidOperationException("Windows Update download returned no result.");
         VerifySucceeded(downloadResult, com, "download");
 
         cancellationToken.ThrowIfCancellationRequested();
         progress.Report(new Models.InstallProgress { PercentComplete = 60, StatusText = item.Name });
 
-        var installer = com.Track(Invoke(session, "CreateUpdateInstaller"))!;
+        var installer = com.Track(Invoke(session, "CreateUpdateInstaller"))
+            ?? throw new InvalidOperationException("Windows Update installer unavailable.");
         SetProperty(installer, "Updates", collection);
 
         WaitWhileBusy(installer, cancellationToken);
@@ -435,7 +438,8 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
         if (GetProperty(installer, "RebootRequiredBeforeInstallation") is true)
             throw new InvalidOperationException("A restart is pending before this update can install.");
 
-        var installResult = com.Track(Invoke(installer, "Install"));
+        var installResult = com.Track(Invoke(installer, "Install"))
+            ?? throw new InvalidOperationException("Windows Update install returned no result.");
 
         VerifySucceeded(installResult, com, "install");
 
