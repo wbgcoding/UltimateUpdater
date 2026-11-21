@@ -17,11 +17,7 @@ public sealed class CleanupHistoryAreaViewModel : ObservableObject
         _area = area;
     }
 
-    /// <summary>The area's name in the CURRENT language, the record stores the key, not the text. A
-    /// per-drive defragmentation area also stores its own drive display name as a formatting argument
-    /// (<see cref="CleanupHistoryArea.TitleArguments"/>), the same shape <see
-    /// cref="CleanupItemViewModel.Title"/> already formats live during a run, so a history row shows the
-    /// drive too instead of the raw "{0}" placeholder.</summary>
+    /// <summary>The area's name in the current language; the record stores the key. A per-drive defragmentation area also stores its drive display name as a formatting argument (<see cref="CleanupHistoryArea.TitleArguments"/>), so a history row shows the drive instead of a raw "{0}".</summary>
     public string Title => FormatTitle(_area.TitleKey, _area.TitleArguments);
 
     /// <summary>The name for a key plus its formatting arguments in the current language; shared with the
@@ -70,18 +66,13 @@ public sealed class CleanupHistoryAreaViewModel : ObservableObject
     }
 }
 
-/// <summary>
-/// One past cleanup, collapsed to a line and expandable to what every area gave up. A cleanup cannot be
-/// undone, so this is the only record of what left the machine, deleting the RECORD does not
-/// touch the files it describes, only the memory of the run.
-/// </summary>
+/// <summary>One past cleanup, collapsed to a line and expandable to what every area gave up. A cleanup cannot be undone, so this is the only record of what left the machine; deleting the record does not touch the files it describes.</summary>
 public sealed partial class CleanupHistoryRowViewModel : ObservableObject
 {
     private readonly CleanupHistoryEntry _entry;
     private readonly Action<CleanupHistoryRowViewModel>? _onDelete;
 
-    /// <param name="onDelete">Null in render/test setups that never touch <see cref="DeleteCommand"/>, the
-    /// real callers (CleanupViewModel's constructor and RecordRun) always pass one.</param>
+    /// <param name="onDelete">Null in render and test setups that never use <see cref="DeleteCommand"/>; real callers always pass one.</param>
     public CleanupHistoryRowViewModel(CleanupHistoryEntry entry, Action<CleanupHistoryRowViewModel>? onDelete = null)
     {
         _entry = entry;
@@ -95,8 +86,7 @@ public sealed partial class CleanupHistoryRowViewModel : ObservableObject
 
     public IReadOnlyList<CleanupHistoryAreaViewModel> Areas { get; }
 
-    /// <summary>Whether the row shows its areas. Bound two-way to the history window's expander; the view
-    /// model owns it so the window that opens from the cleanup report can start with the newest run open.</summary>
+    /// <summary>Whether the row shows its areas. Bound two-way to the history window's expander; the view model owns it so the window opened from the cleanup report can start with the newest run open.</summary>
     [ObservableProperty]
     private bool isExpanded;
 
@@ -112,9 +102,7 @@ public sealed partial class CleanupHistoryRowViewModel : ObservableObject
     /// figure <see cref="FreedText"/> already formats.</summary>
     public long FreedBytes => _entry.FreedBytes;
 
-    /// <summary>Local time, to the minute, a cleanup is not a sub-second event. The date follows the
-    /// chosen UI language's own short-date order;
-    /// the 24h time stays fixed either way.</summary>
+    /// <summary>Local time, to the minute. The date follows the chosen UI language's short-date order; the 24h time stays fixed.</summary>
     public string WhenText => FormatWhen(_entry.Timestamp);
 
     public static string FormatWhen(DateTimeOffset timestamp) => timestamp.LocalDateTime.ToString(
@@ -155,8 +143,7 @@ public sealed partial class CleanupHistoryRowViewModel : ObservableObject
             area.RefreshLocalizedText();
     }
 
-    /// <summary>A small per-row remove, no confirmation, losing one line of a bounded, 50-entry
-    /// log is a much lighter action than the "clear everything" button, which does confirm.</summary>
+    /// <summary>A small per-row remove without confirmation: losing one line of a bounded 50-entry log is lighter than the "clear everything" button, which does confirm.</summary>
     [RelayCommand]
     private void Delete() => _onDelete?.Invoke(this);
 }

@@ -5,16 +5,7 @@ using UltimateUpdater.Services;
 
 namespace UltimateUpdater.ViewModels;
 
-/// <summary>
-/// Backs the ignore-list management dialog: every <see cref="Models.Settings.AppSettings.Excludes"/>
-/// entry, optionally resolved to a display name from a caller-supplied lookup keyed the same "source:id"
-/// way <c>MainViewModel.PackageKey</c> builds its own keys. A key with no matching name (nothing was
-/// supplied, or the package is not in whatever snapshot the caller took) is still listed, per the item's
-/// own spec, just with <see cref="IgnoreListEntryViewModel.IsKnownPackage"/> false so the view can style
-/// it as muted rather than silently dropping it. No dedicated copy key exists for a "not installed right
-/// now" sentence (the item's Copy section names only four keys, none of them this), so the distinction is
-/// visual only, not textual.
-/// </summary>
+/// <summary>Backs the ignore-list dialog: every <see cref="Models.Settings.AppSettings.Excludes"/> entry, resolved to a display name from a caller-supplied lookup keyed like <c>MainViewModel.PackageKey</c>. A key with no matching name is still listed, with <see cref="IgnoreListEntryViewModel.IsKnownPackage"/> false so the view can mute it.</summary>
 public sealed partial class IgnoreListViewModel : ObservableObject
 {
     private readonly SettingsService _settings;
@@ -39,8 +30,7 @@ public sealed partial class IgnoreListViewModel : ObservableObject
         Rebuild();
     }
 
-    /// <summary>Rebuilt from the live settings list every time it changes, same "read the source of truth
-    /// back" discipline <see cref="SettingsViewModel.RebuildExcludedPaths"/> already uses for its own list.</summary>
+    /// <summary>Rebuilt from the live settings list every time it changes.</summary>
     internal void Refresh() => Rebuild();
 
     private void Rebuild()

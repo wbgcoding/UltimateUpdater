@@ -14,8 +14,7 @@ public partial class ProviderStatusViewModel : ObservableObject
     [ObservableProperty]
     private int foundCount;
 
-    /// <summary>The number on the pill's chip: this source's rows that still offer an update, so rows that
-    /// finished installing stop counting. <see cref="FoundCount"/> stays what the scan found.</summary>
+    /// <summary>The number on the pill's chip: this source's rows that still offer an update, so rows that finished installing stop counting. <see cref="FoundCount"/> stays what the scan found.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasOpenUpdates))]
     private int openCount;
@@ -23,8 +22,7 @@ public partial class ProviderStatusViewModel : ObservableObject
     [ObservableProperty]
     private string? errorMessage;
 
-    /// <summary>Raw, unlocalized reason behind <see cref="ErrorMessage"/>, the pill's hover tooltip only.
-    /// Never shown inline next to the pill itself.</summary>
+    /// <summary>Raw, unlocalized reason behind <see cref="ErrorMessage"/>, for the pill's hover tooltip only.</summary>
     [ObservableProperty]
     private string? detail;
 
@@ -32,8 +30,7 @@ public partial class ProviderStatusViewModel : ObservableObject
     [ObservableProperty]
     private string? note;
 
-    /// <summary>Percent of a setup download running for this source (winget being installed), null when
-    /// there is none. While set, the pill says so in its state text and stays visible.</summary>
+    /// <summary>Percent of a setup download running for this source (winget being installed), null when none. While set, the pill says so and stays visible.</summary>
     [ObservableProperty]
     private int? setupPercent;
 
@@ -44,11 +41,7 @@ public partial class ProviderStatusViewModel : ObservableObject
         OnPropertyChanged(nameof(IsNoteworthy));
     }
 
-    /// <summary>
-    /// Whether the user has this source switched on. Clicking its pill flips it: a switched-off source
-    /// is filtered out of the table at once and skipped on the next scan. The pill stays (dimmed) so it
-    /// can be switched back on.
-    /// </summary>
+    /// <summary>Whether the user has this source switched on. Clicking its pill flips it: a switched-off source is filtered out of the table and skipped on the next scan. The pill stays, dimmed, so it can be switched back on.</summary>
     [ObservableProperty]
     private bool isEnabled = true;
 
@@ -57,11 +50,7 @@ public partial class ProviderStatusViewModel : ObservableObject
     /// <summary>Source ids are lowercase technical names; every surface shows the readable form.</summary>
     public string DisplayName => Services.SourceNames.Display(SourceId);
 
-    /// <summary>
-    /// The pill's category group and its order, mirroring the table so the pills at the bottom read the
-    /// same way: Software, Store, System &amp; drivers, Developer tools, Games, then the "open it
-    /// yourself" store and launcher rows. Fixed at construction from the source's category and tier.
-    /// </summary>
+    /// <summary>The pill's category group and order, mirroring the table: Software, Store, System and drivers, Developer tools, Games, then the "open it yourself" store and launcher rows. Fixed at construction.</summary>
     public int GroupOrder { get; }
 
     /// <summary>Read live, so a language change is reflected the next time the pills are regrouped.</summary>
@@ -69,7 +58,7 @@ public partial class ProviderStatusViewModel : ObservableObject
 
     private static (int Order, string Key) ComputeGroup(UpdateCategory category, SourceTier tier)
     {
-        // A Tier C store or launcher is grouped by what it IS, not merely by its raw category.
+        // A Tier C store or launcher is grouped by what it is, not by its raw category.
         if (tier == SourceTier.C && category == UpdateCategory.Store)
             return (6, "CategoryOpenStore");
         if (tier == SourceTier.C && category == UpdateCategory.Games)
@@ -92,9 +81,7 @@ public partial class ProviderStatusViewModel : ObservableObject
 
     public bool HasError => State == ProviderScanState.Error;
 
-    /// <summary>What the pill's tooltip shows: the translated one-liner, plus the raw reason underneath
-    /// it where one is known, the hover IS the deliberate "tell me more" the app otherwise gates raw
-    /// tool output behind (SECURITY.md). A copy hint is appended whenever there is a raw reason to copy.</summary>
+    /// <summary>The tooltip: the translated one-liner plus the raw reason underneath where one is known (the hover is the deliberate "tell me more" that raw tool output is gated behind), and a copy hint when there is a raw reason to copy.</summary>
     public string? TooltipText
     {
         get
@@ -110,32 +97,23 @@ public partial class ProviderStatusViewModel : ObservableObject
         }
     }
 
-    /// <summary>What right-clicking the pill copies to the clipboard, the raw reason alone, not the
-    /// translated summary or the copy hint text.</summary>
+    /// <summary>What right-clicking the pill copies: the raw reason alone, without the summary or the hint.</summary>
     public string? CopyableErrorText => Detail is { Length: > 0 } ? Detail : ErrorMessage;
 
     /// <summary>Dimmed when switched off, so a pill reads as a toggle rather than plain status.</summary>
     public double PillOpacity => IsEnabled ? 1.0 : 0.4;
 
-    /// <summary>A pill is worth showing if it found something, failed, is working, was deliberately
-    /// stopped by its own cancel button (that outcome should stay visible, the same as an
-    /// error would), or is switched off. Waiting pills are NOT included: every source has left Waiting
-    /// by the time a scan ends, so that state only ever matters while <see cref="MainViewModel.IsScanning"/>
-    /// is doing the rest of the showing, in the PillView filter itself.</summary>
+    /// <summary>A pill is worth showing if it found something, failed, is working, was stopped by its own cancel button, or is switched off. Waiting pills are not included: every source has left Waiting when a scan ends, and while scanning the PillView filter shows them.</summary>
     public bool IsNoteworthy =>
         HasFindings || HasError || State is ProviderScanState.Scanning or ProviderScanState.Cancelled || !IsEnabled
         || Note is { Length: > 0 } || SetupPercent is not null;
 
     public bool IsCancellable => State == ProviderScanState.Scanning;
 
-    /// <summary>First sort key while scanning: running pills float to the top. Once nothing is
-    /// scanning any more this is the same value for everyone and the category order underneath it is all
-    /// that is left, so the view settles back to its quiet state on its own.</summary>
+    /// <summary>First sort key while scanning: running pills float to the top. Once nothing is scanning it is equal for everyone and the category order remains.</summary>
     public int RunningRank => State == ProviderScanState.Scanning ? 0 : 1;
 
-    /// <summary>The short state word next to a pill's name while it has no result yet (waiting for its
-    /// turn, actively scanning), after a deliberate single-source cancel, or once it failed. A finished
-    /// pill already says so with its badge and needs no extra word.</summary>
+    /// <summary>The short state word beside the name while the pill has no result yet, after a single-source cancel, or once it failed. A finished pill needs no extra word.</summary>
     public string? StateText
     {
         get
@@ -160,15 +138,10 @@ public partial class ProviderStatusViewModel : ObservableObject
 
     private static readonly TimeSpan SlowThreshold = TimeSpan.FromSeconds(30);
 
-    /// <summary>Marked "slow" after <see cref="SlowThreshold"/>, long enough that a normal source is
-    /// nowhere near it, short enough to still mean something while the scan is running.</summary>
+    /// <summary>Marked "slow" after <see cref="SlowThreshold"/>: long enough that a normal source is nowhere near it, short enough to mean something during a scan.</summary>
     public bool IsSlow { get; private set; }
 
-    /// <summary>
-    /// Called on MainViewModel's existing 200ms flush tick for every currently-scanning pill, cheap
-    /// (one subtraction and a comparison), and reuses a timer that already runs during every scan instead
-    /// of adding a second one just for this.
-    /// </summary>
+    /// <summary>Called on the existing 200 ms flush tick for every scanning pill; cheap, and reuses a running timer instead of adding one.</summary>
     public void RefreshSlowState(DateTimeOffset now)
     {
         var isSlowNow = State == ProviderScanState.Scanning
@@ -193,14 +166,13 @@ public partial class ProviderStatusViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(DisplayName));
         OnPropertyChanged(nameof(GroupName));
-        // TooltipText carries a translated "copy hint" suffix too, so it must be re-raised here as
-        // well or a pill's error tooltip stays half in the old language after a language switch.
+        // TooltipText carries a translated copy-hint suffix, so it is re-raised too.
         OnPropertyChanged(nameof(TooltipText));
-        // An Error or Cancelled pill keeps its state word after the scan, so it has to follow too.
+        // An Error or Cancelled pill keeps its state word after the scan, so it follows too.
         OnPropertyChanged(nameof(StateText));
     }
 
-    /// <summary>What a screen reader announces for the pill, without it, the class name is read out.</summary>
+    /// <summary>What a screen reader announces for the pill; without it the class name is read.</summary>
     public override string ToString() => DisplayName;
 
     public ProviderStatusViewModel(
@@ -212,10 +184,7 @@ public partial class ProviderStatusViewModel : ObservableObject
         _groupKey = key;
     }
 
-    /// <summary>Tracks when this pill last became <see cref="ProviderScanState.Scanning"/>, for
-    /// <see cref="RefreshSlowState"/>, reset on every OTHER state so a source that finishes and starts
-    /// scanning again (a second source sharing its category aggregate) is timed fresh, not against
-    /// whenever it first started.</summary>
+    /// <summary>Tracks when the pill last became <see cref="ProviderScanState.Scanning"/>, for <see cref="RefreshSlowState"/>. Reset on every other state, so a source that scans again is timed fresh.</summary>
     partial void OnStateChanged(ProviderScanState value)
     {
         if (value == ProviderScanState.Scanning)

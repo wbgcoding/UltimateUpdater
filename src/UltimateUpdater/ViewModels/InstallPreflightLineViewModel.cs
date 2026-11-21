@@ -4,16 +4,7 @@ using UltimateUpdater.Services;
 
 namespace UltimateUpdater.ViewModels;
 
-/// <summary>
-/// One line in <see cref="InstallPreflightViewModel"/>. Two independent shapes share this class rather
-/// than splitting into two view models, because a preflight batch can mix both kinds and the window
-/// renders them from a single list:
-/// - a plain warning (disk space, metered connection, battery) with an optional SIDE action that fires
-///   immediately and does not gate the window's own buttons (e.g. "Open cleanup");
-/// - a blocker line (one per group of rows blocked by the same running program, see
-///   <see cref="FromBlockedGroups"/>). It carries no buttons of its own: the window asks once, at the
-///   bottom, how to handle every blocked group together.
-/// </summary>
+/// <summary>One line in <see cref="InstallPreflightViewModel"/>, in two shapes sharing one class because a batch can mix both and the window renders them from one list: a plain warning (disk space, metered connection, battery) with an optional side action that fires at once, and a blocker line (one per group of rows blocked by the same running program, see <see cref="FromBlockedGroups"/>) that carries no buttons, since the window asks once, at the bottom, how to handle every blocked group.</summary>
 public sealed partial class InstallPreflightLineViewModel : ObservableObject
 {
     public string Text { get; }
@@ -62,13 +53,7 @@ public sealed partial class InstallPreflightLineViewModel : ObservableObject
     [RelayCommand]
     private void Act() => _action?.Invoke();
 
-    /// <summary>
-    /// One line per group of rows blocked by the SAME running program (never per row, see
-    /// <see cref="Services.Install.InstallBlockers.GroupBlockedRows{TRow}"/>: a batch of five blocked
-    /// packages, two of them held up by the identical program, reads as four lines, not five), each
-    /// answered together by the window's own buttons. Pure with respect to WPF (no window involved), so a test
-    /// can call this directly with hand-built rows and blockers.
-    /// </summary>
+    /// <summary>One line per group of rows blocked by the same running program (see <see cref="Services.Install.InstallBlockers.GroupBlockedRows{TRow}"/>), each answered together by the window's buttons. Pure with respect to WPF, so a test can call it with hand-built rows.</summary>
     public static IReadOnlyList<InstallPreflightLineViewModel> FromBlockedGroups(
         IEnumerable<(UpdateRowViewModel Row, Services.Install.BlockedInstall Blocker)> blocked)
     {
@@ -77,9 +62,7 @@ public sealed partial class InstallPreflightLineViewModel : ObservableObject
         return Services.Install.InstallBlockers.GroupBlockedRows(blocked)
             .Select(group =>
             {
-                // The final one-line shape: every package the group stands for, then the program
-                // blocking them, so a batch of several blocked packages reads as one line per group
-                // instead of one dialog per group.
+                // Every package the group stands for, then the program blocking them: one line per group, not one dialog.
                 var packageNames = string.Join(", ", group.Rows.Select(r => r.Name).Distinct());
                 var text = string.Format(loc["InstallBlockersLine"], packageNames, group.Blocker.DisplayProgramName);
 

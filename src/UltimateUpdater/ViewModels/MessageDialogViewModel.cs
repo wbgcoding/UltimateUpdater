@@ -14,11 +14,7 @@ public enum DialogKind
     Success,
 }
 
-/// <summary>
-/// Backs the one themed message/confirmation window the whole app uses instead of the system MessageBox,
-/// so every notice and every "are you sure" matches the app's own look. Optional details
-/// (a stack trace, a full tool log) fold out into a read-only, copyable panel.
-/// </summary>
+/// <summary>Backs the themed message and confirmation window the whole app uses instead of the system MessageBox. Optional details (a stack trace, a tool log) fold out into a read-only, copyable panel.</summary>
 public partial class MessageDialogViewModel : ObservableObject
 {
     public LocalizationService Loc => LocalizationService.Instance;
@@ -46,11 +42,7 @@ public partial class MessageDialogViewModel : ObservableObject
 
     public bool HasSecondary => !string.IsNullOrEmpty(SecondaryText);
 
-    /// <summary>
-    /// A third button (a blocker dialog needing close-and-continue / skip / try-anyway needs
-    /// three, not two); a minimal extension of the existing two-button shape rather than a second dialog
-    /// system, see <see cref="Dialogs.ConfirmThreeWay"/>.
-    /// </summary>
+    /// <summary>A third button, for a blocker dialog that needs close-and-continue, skip and try-anyway; see <see cref="Dialogs.ConfirmThreeWay"/>.</summary>
     public string? TertiaryText { get; }
 
     public bool HasTertiary => !string.IsNullOrEmpty(TertiaryText);
