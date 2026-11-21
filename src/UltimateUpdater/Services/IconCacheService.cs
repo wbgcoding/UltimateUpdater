@@ -6,9 +6,9 @@ using System.Windows.Media.Imaging;
 namespace UltimateUpdater.Services;
 
 /// <summary>
-/// Finds the icon an update should be shown with. The app's OWN icon always wins:
-/// the package logo of a Store app, then the Uninstall entry's DisplayIcon, then the main executable in its install directory, then
-/// whatever the source itself keeps (Steam stores an icon per game). Only when none of that exists
+/// Finds the icon an update should be shown with. The app's own icon always wins: the package logo of a
+/// Store app, then the Uninstall entry's DisplayIcon, then the main executable in its install directory,
+/// then whatever the source itself keeps (Steam stores an icon per game). Only when none of that exists
 /// does the row fall back to a lettered tile.
 /// </summary>
 public sealed class IconCacheService
@@ -17,9 +17,8 @@ public sealed class IconCacheService
     private const long MaxCacheBytes = 50 * 1024 * 1024;
 
     /// <summary>
-    /// The in-memory cache (unlike the on-disk one above) had no cap at all, including for negative
-    /// (null) results, so it grew for the life of the process. A few hundred is comfortably above one
-    /// scan's row count, so a hit rate is kept without an unbounded cache.
+    /// Caps the in-memory cache, negative (null) results included. A few hundred is comfortably above one
+    /// scan's row count, so the hit rate stays without an unbounded cache.
     /// </summary>
     private const int MaxMemoryCacheEntries = 300;
 
@@ -27,10 +26,8 @@ public sealed class IconCacheService
     private const int MinimumPartialMatchLength = 4;
 
     /// <summary>
-    /// CleanupCache only ran once, from the constructor: so a single long-running session could write
-    /// past the 50 MB/30-day cap and not be trimmed back until the next app start. Re-running it every
-    /// this many disk writes keeps the cap enforced within a session too, without paying its directory
-    /// enumeration cost on every single icon write.
+    /// CleanupCache re-runs every this many disk writes, so a long session stays within the 50 MB/30-day cap
+    /// without paying the directory enumeration on every icon write.
     /// </summary>
     private const int CleanupEveryNWrites = 100;
 
@@ -57,8 +54,8 @@ public sealed class IconCacheService
     private readonly ConcurrentQueue<string> _memoryCacheOrder = new();
 
     /// <summary>
-    /// The Uninstall keys are read once rather than per row. Walking both hives for every one of a
-    /// few hundred rows was tens of thousands of registry opens per scan.
+    /// The Uninstall keys are read once rather than per row: walking both hives for a few hundred rows would
+    /// be tens of thousands of registry opens per scan.
     /// </summary>
     private readonly Lazy<IReadOnlyList<InstalledApp>> _installedApps;
 
@@ -78,7 +75,8 @@ public sealed class IconCacheService
     {
     }
 
-    /// <summary>The places an icon can come from beyond the registry are injectable so tests never depend on this PC's Start menu, PATH or driver tools.</summary>
+    /// <summary>The places an icon can come from beyond the registry are injectable so tests never depend on
+    /// this PC's Start menu, PATH or driver tools.</summary>
     internal IconCacheService(
         LoggingService logging,
         StartMenuShortcuts? startMenu,
@@ -143,10 +141,9 @@ public sealed class IconCacheService
         {
             SaveToDisk(bitmap, diskPath);
 
-            // A separate test-then-reset let two threads crossing the threshold at once (e.g. 100 and
-            // 101) both pass and both run CleanupCache concurrently over the same folder. The modulo is
-            // exact and atomic in one step: only the single increment that lands exactly on a multiple of
-            // CleanupEveryNWrites triggers a cleanup, no separate reset needed.
+            // Test-then-reset would let two threads crossing the threshold at once both pass and run CleanupCache
+            // concurrently over the same folder. The modulo is exact and atomic: only the increment landing on a
+            // multiple of CleanupEveryNWrites triggers a cleanup.
             if (System.Threading.Interlocked.Increment(ref _writesSinceCleanup) % CleanupEveryNWrites == 0)
                 CleanupCache();
         }
@@ -159,10 +156,10 @@ public sealed class IconCacheService
     }
 
     /// <summary>
-    /// The app's own icon first: its Uninstall entry, then its Start-menu shortcut, then its main
-    /// executable, then (for command-line tools) the executable on PATH, and the source's own store last.
-    /// A file only counts when it really carries an icon: an executable without one would show Windows'
-    /// generic program icon and hide the brand mark the row would otherwise get.
+    /// The app's own icon first: its Uninstall entry, then its Start-menu shortcut, then its main executable,
+    /// then (for command-line tools) the executable on PATH, and the source's own store last. A file only
+    /// counts when it really carries an icon: an executable without one would show Windows' generic program
+    /// icon and hide the brand mark the row would otherwise get.
     /// </summary>
     private IconSource? FindIconSource(string sourceId, string itemId, string displayName, string? executableHint)
     {
@@ -170,8 +167,8 @@ public sealed class IconCacheService
         if (DriverVendorTools.IsDriverSource(sourceId) && FindDriverToolIcon(sourceId, displayName) is { } driverIcon)
             return driverIcon;
 
-        // A Store app is named exactly by its package, which is stricter than any name match below, and it
-        // has neither an Uninstall entry nor a shortcut file for those to find.
+        // A Store app is named exactly by its package, which is stricter than any name match below, and it has
+        // neither an Uninstall entry nor a shortcut file for those to find.
         if (_packages.Find(displayName) is { } packaged)
             return new IconSource(packaged.Path, 0, IsImageFile: !packaged.IsExecutable, packaged.Plate);
 
@@ -196,8 +193,7 @@ public sealed class IconCacheService
         if (CommandLineSources.Contains(sourceId) && FromPath(itemId, displayName) is { } toolIcon)
             return toolIcon;
 
-        // A launcher row's open target is the client executable itself; its icon is exactly the row's
-        // and beats the flat brand-mark tile the row would otherwise fall back to.
+        // A launcher row's open target is the client executable itself; its icon beats the flat brand-mark tile.
         return IconSourceFromExecutable(executableHint);
     }
 
@@ -212,8 +208,8 @@ public sealed class IconCacheService
     };
 
     /// <summary>
-    /// An executable directly inside a folder named Scripts is a generated launcher stub (pip and
-    /// setuptools write one per console script, all carrying the same Python icon), never the program.
+    /// An executable directly inside a folder named Scripts is a generated launcher stub (pip and setuptools
+    /// write one per console script, all with the same Python icon), never the program.
     /// </summary>
     internal static bool IsScriptsLauncher(string? path)
     {
@@ -505,9 +501,8 @@ public sealed class IconCacheService
         var apps = new List<InstalledApp>();
         var registry = Sources.WindowsRegistryView.Instance;
 
-        // The shared list of uninstall roots, so the icon lookup sees exactly the programs every other
-        // registry walk in the app sees. The view never throws: a hive we may not read is simply one
-        // fewer source of icons.
+        // The shared list of uninstall roots, so the icon lookup sees the same programs as every other registry
+        // walk in the app. An unreadable hive is one fewer source of icons, never an exception.
         foreach (var root in WindowsRegistryRoots.Uninstall)
         {
             foreach (var subKeyName in registry.SubKeyNames(root))
@@ -533,8 +528,8 @@ public sealed class IconCacheService
     private static extern bool DestroyIcon(IntPtr icon);
 
     /// <summary>
-    /// ExtractIconEx rather than ExtractAssociatedIcon: it honours the index in "app.exe,3", and it
-    /// reads .ico and .dll files, which DisplayIcon points at just as often as it points at an .exe.
+    /// ExtractIconEx rather than ExtractAssociatedIcon: it honours the index in "app.exe,3" and reads icon and
+    /// library files, which DisplayIcon points at as often as at an executable.
     /// </summary>
     private static BitmapSource? ExtractIconBitmap(IconSource source)
     {
@@ -621,8 +616,8 @@ public sealed class IconCacheService
         }
         catch (Exception ex) when (ex is NotSupportedException or FormatException)
         {
-            // Our own cache file, but not a decodable image (truncated write, disk damage). Dropping it
-            // lets the next lookup re-resolve the icon instead of failing on the same bytes forever.
+            // Our own cache file, but not a decodable image (truncated write, disk damage). Dropping it lets the
+            // next lookup re-resolve the icon instead of failing on the same bytes forever.
             FileDeletion.TryDelete(path);
             return null;
         }
@@ -646,10 +641,10 @@ public sealed class IconCacheService
     }
 
     /// <summary>
-    /// Written beside the target and moved into place: encoding a PNG straight into the cache
-    /// path leaves a partially written file for as long as it takes, and another row asking for the same
-    /// icon at that moment loaded exactly that: a truncated image, cached in memory for the rest of the
-    /// session. A move is atomic enough that a reader sees either the old file or the complete new one.
+    /// Written beside the target and moved into place: encoding a PNG straight into the cache path would
+    /// leave a partial file that another row asking for the same icon could load and cache in memory for the
+    /// rest of the session. A move is atomic enough that a reader sees either the old file or the complete
+    /// new one.
     /// </summary>
     private static void SaveToDisk(BitmapSource bitmap, string path)
     {
@@ -660,9 +655,8 @@ public sealed class IconCacheService
     }
 
     /// <summary>Runs from the constructor and periodically from a write (see
-    /// <see cref="CleanupEveryNWrites"/>), so it must not throw whatever the cache directory looks
-    /// like, and must tolerate running concurrently with itself (TryDelete already swallows a file
-    /// that is already gone).</summary>
+    /// <see cref="CleanupEveryNWrites"/>), so it must not throw whatever the cache directory looks like, and
+    /// must tolerate running concurrently with itself (TryDelete swallows an already-gone file).</summary>
     private void CleanupCache()
     {
         try
