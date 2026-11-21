@@ -47,8 +47,20 @@ for /f "usebackq delims=" %%A in (`powershell -NoProfile -ExecutionPolicy Remote
 if defined BSFRESH goto :bs_uptodate
 :bs_start
 
+rem The icon comes first, so the build below already compiles the final one. The script rewrites a file
+rem only when its bytes change: a fresh timestamp alone made the publish compile the whole app again.
+echo === icon === [%time:~0,8%]
+rem The py launcher picks the newest installed Python; plain python is whatever PATH finds first.
+where py >nul 2>nul
+if errorlevel 1 (
+    python "%ROOT%tools\make-icon.py"
+) else (
+    py -3 "%ROOT%tools\make-icon.py"
+)
+if errorlevel 1 goto :error
 
-echo === build ===
+echo.
+echo === build === [%time:~0,8%]
 dotnet build "%ROOT%UltimateUpdater.slnx" -c %CONFIG%
 if errorlevel 1 goto :error
 
@@ -63,14 +75,14 @@ set "SNAP=%ROOT%build\snapshots"
 if not exist "%ROOT%build" mkdir "%ROOT%build"
 del /q "%SNAP%-1.rc" "%SNAP%-2.rc" >nul 2>nul
 echo.
-echo === ui snapshots + live style checks (not a gate, in the background) ===
+echo === ui snapshots + live style checks (not a gate, in the background) === [%time:~0,8%]
 start "" /b cmd /c ""%ROOT%tools\run-snapshots.cmd" "%ROOT%tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj" %CONFIG% "%SNAP%-1.log" "%SNAP%-1.rc" 1"
 start "" /b cmd /c ""%ROOT%tools\run-snapshots.cmd" "%ROOT%tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj" %CONFIG% "%SNAP%-2.log" "%SNAP%-2.rc" 2"
 set "SNAPSTARTED=1"
 set "SNAPWAITS=0"
 
 echo.
-echo === test ===
+echo === test === [%time:~0,8%]
 rem Delayed expansion eats the "!" in the filter, and the whole suite ran instead of the gate - so this
 rem one command runs with it switched off. endlocal keeps the errorlevel, which is all that is needed here.
 rem LiveButtonContrastTests is excluded alongside WindowLayoutTests: it renders through the SAME WpfHarness
@@ -82,49 +94,6 @@ rem --no-build: the solution build above already built the test project.
 setlocal disabledelayedexpansion
 dotnet test "%ROOT%tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj" -c %CONFIG% --no-build --blame-hang --blame-hang-timeout 2min --blame-hang-dump-type none --filter "FullyQualifiedName!~WindowLayoutTests&FullyQualifiedName!~LiveButtonContrastTests&FullyQualifiedName!~PressedPixelTests"
 endlocal
-if errorlevel 1 goto :error
-
-rem No parenthesised if-block here: one of those swallowed the whole icon/version/dist-reset section that
-rem follows and the build silently produced a Setup with an empty version in its name. GOTO instead - the
-rem same reason this file avoids CALL throughout: a called label runs in its own scope, and an errorlevel
-rem set inside it does not reliably reach the caller. ping is the wait because timeout.exe refuses to run
-rem with redirected input, which every automated run has.
-echo.
-echo === waiting for the ui snapshots ===
-:snapshots_wait
-if not exist "%SNAP%-1.rc" goto :snapshots_sleep
-if exist "%SNAP%-2.rc" goto :snapshots_read
-:snapshots_sleep
-rem Bounded (about 15 minutes): a job that died without writing its .rc must not hang the build.
-set /a SNAPWAITS+=1
-if !SNAPWAITS! gtr 450 goto :snapshots_warn
-ping -n 3 127.0.0.1 >nul
-goto :snapshots_wait
-:snapshots_read
-type "%SNAP%-1.log"
-type "%SNAP%-2.log"
-findstr /x /c:"ok" "%SNAP%-1.rc" >nul
-if errorlevel 1 goto :snapshots_warn
-findstr /x /c:"ok" "%SNAP%-2.rc" >nul
-if not errorlevel 1 goto :snapshots_done
-:snapshots_warn
-echo.
-echo WARNING: the UI snapshot/live-style renders did not pass - that part was NOT verified this run.
-echo          The build continues; look at tests\...\ui-snapshots\ or re-run to check the UI.
-:snapshots_done
-rem errorlevel survives until something else sets it, so a failed snapshot run would make the NEXT
-rem "if errorlevel 1 goto :error" fire and abort a perfectly good build. Clear it deliberately.
-ver > nul
-
-echo.
-echo === icon ===
-rem The py launcher picks the newest installed Python; plain python is whatever PATH finds first.
-where py >nul 2>nul
-if errorlevel 1 (
-    python "%ROOT%tools\make-icon.py"
-) else (
-    py -3 "%ROOT%tools\make-icon.py"
-)
 if errorlevel 1 goto :error
 
 rem Version comes from the csproj alone, so it is read back rather than repeated.
@@ -162,7 +131,7 @@ for %%d in ("%STAGE%" "%DIST%") do (
 
 for %%a in (x64 arm64) do (
     echo.
-    echo === publish win-%%a ===
+    echo === publish win-%%a === [!time:~0,8!]
     rem Self-contained single file: no runtime prerequisite on the target machine.
     rem PublishTrimmed is deliberately NOT used - WPF does not support it.
     rem IncludeNativeLibrariesForSelfExtract is REQUIRED for the portable exe: without it WPF's native DLLs stay next to
@@ -171,6 +140,10 @@ for %%a in (x64 arm64) do (
     rem PublishReadyToRun precompiles the app's own code: without it every window's code is compiled on
     rem first use, which froze the UI for up to a second the first time a larger window (cleanup, history)
     rem opened.
+    rem
+    rem PublishReadyToRunComposite=false keeps the runtime's own assemblies as Microsoft ships them, already
+    rem precompiled. The self-contained default recompiles the whole runtime into one composite image on
+    rem every publish: about 35 seconds more per architecture and about 20 MB more per exe.
     rem
     rem EnableCompressionInSingleFile is deliberately NOT used, so the exe is never mistaken for malware.
     rem It deflate-compresses the whole payload into the exe, which leaves a
@@ -182,7 +155,7 @@ for %%a in (x64 arm64) do (
     dotnet publish "%ROOT%src\UltimateUpdater\UltimateUpdater.csproj" ^
         -c %CONFIG% -r win-%%a --self-contained ^
         -p:PublishSingleFile=true ^
-        -p:PublishReadyToRun=true ^
+        -p:PublishReadyToRun=true -p:PublishReadyToRunComposite=false ^
         -p:IncludeNativeLibrariesForSelfExtract=true ^
         -p:DebugType=pdbonly ^
         -o "%STAGE%\win-%%a"
@@ -200,7 +173,7 @@ for %%a in (x64 arm64) do (
     dotnet publish "%ROOT%src\UltimateUpdater\UltimateUpdater.csproj" ^
         -c %CONFIG% -r win-%%a --self-contained ^
         -p:PublishSingleFile=true ^
-        -p:PublishReadyToRun=true ^
+        -p:PublishReadyToRun=true -p:PublishReadyToRunComposite=false ^
         -p:IncludeNativeLibrariesForSelfExtract=false ^
         -p:DebugType=pdbonly ^
         -o "%STAGE%\installer-win-%%a"
@@ -231,7 +204,7 @@ for %%a in (x64 arm64) do (
 )
 
 echo.
-echo === signing ===
+echo === signing === [%time:~0,8%]
 rem Signing is what actually stops a scanner from treating this as an unknown binary, and it is the one
 rem measure that works for every user rather than only for the ones who click through the warning. It is
 rem opt-in because it needs a certificate: set WU_SIGN_THUMBPRINT to the SHA1 thumbprint of a code signing
@@ -274,7 +247,7 @@ echo No WU_SIGN_THUMBPRINT set - artifacts stay unsigned.
 :signdone
 
 echo.
-echo === installer ===
+echo === installer === [%time:~0,8%]
 rem winget installs Inno Setup per USER by default, which puts it nowhere near PATH. Looking only at
 rem PATH meant a release quietly shipped without its installer on a machine that has the tool.
 set "PF86=%ProgramFiles(x86)%"
@@ -314,7 +287,7 @@ if errorlevel 1 goto :error
 :nosignsetup
 
 echo.
-echo === checksums ===
+echo === checksums === [%time:~0,8%]
 rem One SHA256SUMS.txt over every shipped artifact; the self-updater verifies against it.
 rem Get-FileHash is used rather than certutil, whose output is localized and would break parsing.
 rem The first line names the version. The file is signed, so the app can tell this release's digests from an
@@ -328,7 +301,7 @@ if not exist "%DIST%\SHA256SUMS.txt" (
 )
 
 echo.
-echo === release signatures ===
+echo === release signatures === [%time:~0,8%]
 rem Every exe and SHA256SUMS.txt gets a <name>.sig made with the release key (ECDSA P-256), which the app
 rem checks before it installs an update. The private key sits in the gitignored .signing folder; UU_SIGNING_KEY
 rem points at another key file (used to try this step with a throwaway key). No key: the build goes on, unsigned,
@@ -359,6 +332,40 @@ if errorlevel 1 (
     goto :error
 )
 :releasesigndone
+
+rem The snapshot runs only read the test project's output, so publishing and the installer go ahead while
+rem they render; they are collected here, at the end.
+rem No parenthesised if-block here: one of those once swallowed the section after it and the build
+rem silently produced a Setup with an empty version in its name. GOTO instead - the same reason this file
+rem avoids CALL throughout: a called label runs in its own scope, and an errorlevel set inside it does not
+rem reliably reach the caller. ping is the wait because timeout.exe refuses to run with redirected input,
+rem which every automated run has.
+echo.
+echo === waiting for the ui snapshots === [%time:~0,8%]
+:snapshots_wait
+if not exist "%SNAP%-1.rc" goto :snapshots_sleep
+if exist "%SNAP%-2.rc" goto :snapshots_read
+:snapshots_sleep
+rem Bounded (about 15 minutes): a job that died without writing its .rc must not hang the build.
+set /a SNAPWAITS+=1
+if !SNAPWAITS! gtr 450 goto :snapshots_warn
+ping -n 3 127.0.0.1 >nul
+goto :snapshots_wait
+:snapshots_read
+type "%SNAP%-1.log"
+type "%SNAP%-2.log"
+findstr /x /c:"ok" "%SNAP%-1.rc" >nul
+if errorlevel 1 goto :snapshots_warn
+findstr /x /c:"ok" "%SNAP%-2.rc" >nul
+if not errorlevel 1 goto :snapshots_done
+:snapshots_warn
+echo.
+echo WARNING: the UI snapshot/live-style renders did not pass - that part was NOT verified this run.
+echo          The build continues; look at tests\...\ui-snapshots\ or re-run to check the UI.
+:snapshots_done
+rem errorlevel survives until something else sets it, so a failed snapshot run would make the NEXT
+rem "if errorlevel 1 goto :error" fire and abort a perfectly good build. Clear it deliberately.
+ver > nul
 
 echo.
 echo Artifacts in %DIST%

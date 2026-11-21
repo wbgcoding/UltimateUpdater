@@ -13,6 +13,7 @@ uses); the UI itself still follows the Windows system accent rather than a fixed
 Run:  python tools/make-icon.py
 """
 
+import io
 import math
 from pathlib import Path
 
@@ -204,6 +205,21 @@ def draw_icon(small: bool = False) -> Image.Image:
 SIMPLIFY_AT_OR_BELOW = 20
 
 
+def write_if_changed(path: Path, data: bytes) -> bool:
+    """Writes only when the bytes differ. The build runs this every time, and a rewritten icon with a new
+    timestamp made the publish step compile the whole app a second time for an identical file."""
+    if path.exists() and path.read_bytes() == data:
+        return False
+    path.write_bytes(data)
+    return True
+
+
+def encode(image: Image.Image, **options) -> bytes:
+    buffer = io.BytesIO()
+    image.save(buffer, **options)
+    return buffer.getvalue()
+
+
 def main() -> None:
     ASSETS.mkdir(parents=True, exist_ok=True)
 
@@ -211,7 +227,7 @@ def main() -> None:
     small = draw_icon(small=True)
 
     png_path = ASSETS / "icon.png"
-    full.save(png_path)
+    png_written = write_if_changed(png_path, encode(full, format="PNG"))
 
     frames = [
         (small if size <= SIMPLIFY_AT_OR_BELOW else full).resize((size, size), Image.LANCZOS)
@@ -224,10 +240,12 @@ def main() -> None:
     # frames[0] is 16x16, which produced a single-image .ico with everything above 16px missing.
     # append_images supplies the rest; each is matched to its requested size by exact pixel
     # dimensions, so our own pre-rendered, per-size-simplified frames are used verbatim.
-    frames[-1].save(ico_path, format="ICO", sizes=[(s, s) for s in ICO_SIZES], append_images=frames[:-1])
+    ico_written = write_if_changed(ico_path, encode(
+        frames[-1], format="ICO", sizes=[(s, s) for s in ICO_SIZES], append_images=frames[:-1]))
 
-    print(f"wrote {png_path}")
-    print(f"wrote {ico_path} ({', '.join(str(s) for s in ICO_SIZES)}; simplified at/below {SIMPLIFY_AT_OR_BELOW}px)")
+    print(f"{'wrote' if png_written else 'unchanged'} {png_path}")
+    print(f"{'wrote' if ico_written else 'unchanged'} {ico_path} "
+          f"({', '.join(str(s) for s in ICO_SIZES)}; simplified at/below {SIMPLIFY_AT_OR_BELOW}px)")
 
 
 if __name__ == "__main__":
