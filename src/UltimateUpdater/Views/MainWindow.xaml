@@ -16,11 +16,10 @@
          effects are off, and without an opaque themed fallback the surface would not match the
          theme's text colour. -->
 
-    <!-- Every window-level shortcut in one place, driven by the SAME table (Views/KeyboardShortcuts.cs)
-         its tooltips and the F1 overview window both read: a KeyBinding for a command the view model
-         already exposes binds straight to it, and the two shortcuts with no view model command of their
-         own (focusing the search box, opening the overview itself) go through a small RoutedCommand each,
-         routed here rather than in the view model since both act on THIS window, not on application state. -->
+    <!-- Every window-level shortcut in one place, from the same table (Views/KeyboardShortcuts.cs) the tooltips
+         and the F1 overview read. A KeyBinding binds straight to a view model command where one exists; the two
+         shortcuts without one (focus the search box, open the overview) use a small RoutedCommand each, since
+         both act on this window, not on application state. -->
     <ui:FluentWindow.CommandBindings>
         <CommandBinding Command="{x:Static views:MainWindow.FocusSearchCommand}" Executed="OnFocusSearchExecuted"/>
         <CommandBinding Command="{x:Static views:MainWindow.ShowShortcutsCommand}" Executed="OnShowShortcutsExecuted"/>
@@ -37,27 +36,24 @@
     </ui:FluentWindow.InputBindings>
 
     <ui:FluentWindow.Resources>
-        <!-- One spacing rhythm for the whole window: 8 / 16 / 24. -->
         <Thickness x:Key="PagePadding">24,0,24,0</Thickness>
 
-        <!-- The "hide sources without a tool" toggle above the pill strip. -->
         <views:ShortcutTooltipConverter x:Key="ShortcutTooltip"/>
         <views:UpperCaseConverter x:Key="UpperCase"/>
 
-        <!-- The table's row buttons: outline only, no grey fill, so a column of them reads as quiet
-             controls on the table surface instead of a stack of filled chips. Hover and pressed fills
-             still come from the stock template. -->
+        <!-- The table's row buttons: outline only, no grey fill, so a column of them reads as quiet controls on
+             the table surface. Hover and pressed fills come from the stock template. -->
         <Style x:Key="RowOutlineButton" TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
-        <!-- The toolbar's own filter chip: a full pill at the search box's height, so chips and search box share one
-             row line, with primary-colour text and the controls' own fills so it reads as part of the toolbar rather than
-             as a washed-out tag. It does not derive from the shared App.xaml FilterChip, whose smaller look the history and
-             settings lists keep. The label (FilterChipLabel) is a short word so all four fit at the default window width; it is
-             collapsed by MainWindow.UpdateFilterChipLabels only in a narrower window, where icon and tooltip (the long text) stay. -->
+        <!-- The toolbar's own filter chip: a full pill at the search box's height, with primary-colour text and
+             the controls' own fills. It does not derive from the shared App.xaml FilterChip, whose smaller look
+             the history and settings lists keep. FilterChipLabel is a short word so all four chips fit at the
+             default width; MainWindow.UpdateFilterChipLabels collapses it in a narrower window, leaving icon and
+             tooltip. -->
         <Style x:Key="ToolbarFilterChip" TargetType="ToggleButton">
             <Setter Property="Height" Value="34"/>
             <Setter Property="Margin" Value="0,0,8,4"/>
@@ -142,8 +138,8 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <!-- The sort mark beside a sortable column title: only the active direction, in the accent. Fixed width so the mark appearing or
-             changing never nudges the label. -->
+        <!-- The sort mark beside a sortable column title: only the active direction, in the accent. Fixed width
+             so the mark never nudges the label. -->
         <Style x:Key="SortGlyphText" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="Width" Value="14"/>
@@ -152,14 +148,13 @@
             <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
         </Style>
 
-        <!-- Same tone as the app-wide "PanelSurfaceBorder" (App.xaml): the updates table sits directly
-             under the hint banner above it (both plain Border elements using that shared style, or this
-             one derived from it), so the two must always match. -->
+        <!-- Same tone as the app-wide "PanelSurfaceBorder" (App.xaml): the updates table sits directly under the
+             hint banner, which uses that style, so the two must match. -->
         <Style x:Key="SectionCard" TargetType="Border" BasedOn="{StaticResource PanelSurfaceBorder}"/>
 
-        <!-- The available version as a link: accent text, underlined on hover and keyboard focus. The label
-             lives in the template (not in the Content) so the triggers below can underline it. Used where a
-             row has a changelog to open. -->
+        <!-- The available version as a link: accent text, underlined on hover and keyboard focus. The label lives
+             in the template (not in Content) so the triggers can underline it. Used where a row has a changelog
+             to open. -->
         <Style x:Key="VersionLinkButton" TargetType="Button">
             <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -193,11 +188,10 @@
         <!-- Source pill: a contained chip that is also a toggle. Clicking it switches the source off
              (dimmed) and back on. The bottom margin keeps wrapped rows of pills from touching. -->
         <DataTemplate x:Key="SourcePillTemplate">
-            <!-- Error pills open their tooltip fast (150ms vs WPF's ~1000ms default): a "!" pill is
-                 exactly when someone wants to know why right now, not after a deliberate pause.
-                 Right-click copies the raw reason through a MouseRightButtonUp handler rather than a
-                 MouseBinding (RightClick exists, but the copy needs the clipboard guard in code-behind);
-                 Ctrl+C on the focused pill does the same. -->
+            <!-- Error pills open their tooltip fast (150 ms vs WPF's ~1000 ms default): a "!" pill is exactly
+                 when someone wants the reason right now. Right-click copies the raw reason through a
+                 MouseRightButtonUp handler (the copy needs the clipboard guard in code-behind); Ctrl+C on the
+                 focused pill does the same. -->
             <Border x:Name="PillBorder" Background="{DynamicResource ControlFillColorSecondaryBrush}"
                     BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
                     BorderThickness="1"
@@ -266,10 +260,10 @@
                 </StackPanel>
             </Border>
         </DataTemplate>
-        <!-- Shared by every row that gets the full action set (main table rows and manual-open rows),
-             a ContextMenu is outside the visual tree, so it takes its DataContext from whichever row
-             opened it (PlacementTarget.DataContext below), same as the per-Style copies this replaced.
-             The Steam sub-row's smaller 3-item menu is deliberately its own, separate ContextMenu. -->
+        <!-- Shared by every row with the full action set (main table rows and manual-open rows). A ContextMenu is
+             outside the visual tree, so it takes its DataContext from the row that opened it
+             (PlacementTarget.DataContext below). The Steam sub-row's smaller 3-item menu is deliberately its own
+             ContextMenu. -->
         <ContextMenu x:Key="RowActionsMenu" Style="{StaticResource RowContextMenu}"
                      DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
             <MenuItem Style="{StaticResource RowMenuItem}"
@@ -361,12 +355,9 @@
                 <ui:ImageIcon Style="{StaticResource TitleBarAppIcon}" Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
             </ui:TitleBar.Icon>
             <ui:TitleBar.Header>
-                <!-- WPF-UI's TitleBar draws its own Title text only when Header is null; setting ANY
-                     Header content silently drops the title text, since the Header replaces the whole
-                     title area rather than sitting beside it. Confirmed by walking the rendered visual
-                     tree: no TextBlock anywhere carried the app name. This TextBlock is the actual name
-                     next to the icon; the Title property above is kept only for whatever else might still
-                     read it (e.g. an OS-level fallback), not for what is drawn. -->
+                <!-- WPF-UI's TitleBar draws its own Title text only when Header is null; any Header content
+                     replaces the whole title area. This TextBlock is the app name next to the icon; the Title
+                     property is kept only for readers like an OS-level fallback. -->
                 <StackPanel Orientation="Horizontal">
                     <TextBlock x:Name="AppTitleText" Text="{Binding Loc[AppTitle]}" FontSize="16" FontWeight="SemiBold"
                                VerticalAlignment="Center"
@@ -377,9 +368,8 @@
         </ui:TitleBar>
 
         <StackPanel Grid.Row="1">
-        <!-- Self-update offer: a quiet banner, never a modal.
-             Built by hand rather than with ui:InfoBar, whose template never presented its Content,
-             the banner appeared with its title and its close button, and no way to accept the update. -->
+        <!-- Self-update offer: a quiet banner, never a modal. Built by hand because ui:InfoBar's template does
+             not present its Content here, which would leave no way to accept the update. -->
         <Border Margin="24,0,24,8" Padding="14,10"
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
@@ -399,9 +389,9 @@
                 <ui:SymbolIcon Grid.Column="0" Symbol="ArrowDownload24" FontSize="18" VerticalAlignment="Center"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
 
-                <!-- A Grid, not a horizontal StackPanel: that panel hands its children unlimited width, so
-                     the ellipsis below could never appear and a long title simply pushed the version out of
-                     view. Here the title takes what is left over and trims; the version always fits. -->
+                <!-- A Grid, not a horizontal StackPanel: that panel gives its children unlimited width, so the
+                     ellipsis could never appear and a long title would push the version out of view. Here the
+                     title takes what is left and trims; the version always fits. -->
                 <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -685,20 +675,19 @@
              full natural size; only the WrapPanel below (the fill child) gives way, wrapping search/switches
              onto a second line on a narrow window instead of anything clipping. Same technique as the
              install strip's Pause/Cancel block below (Grid.Row="4", "InstallStrip"). -->
-        <!-- No divider line above the toolbar: the header, the toolbar and the table read as one surface,
-             and the extra rule only cut the window in half. Cards keep their own glass highlight. -->
+        <!-- No divider line above the toolbar: the header, toolbar and table read as one surface. Cards keep
+             their own glass highlight. -->
         <Grid Grid.Row="3" Margin="24,0,24,12">
             <DockPanel LastChildFill="True">
                 <!-- Bigger secondary buttons with larger icons, one block so they move together. Docked,
                      so they never give way, the search box and switches do instead. -->
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-                    <!-- The button shows the cleaning disk (same body/platter/hub/arm geometry as
-                         the cleanup dialog's own centre animation, CleaningDiskGeometries.xaml, minus its
-                         sparkles: the disk keeps its animation, no stars) while a cleanup is running
-                         in the background: the dialog can be closed mid-run now, and this is what says the
-                         run is still going. A plain broom glyph shows otherwise. Both are RenderTransforms,
-                         so neither costs a layout pass, and the storyboard only exists while the trigger
-                         holds; it respects "reduce motion" (SystemParameters.MinimizeAnimation). -->
+                    <!-- While a cleanup runs in the background the button shows the cleaning disk (same
+                         body/platter/hub/arm geometry as the cleanup dialog's centre animation,
+                         CleaningDiskGeometries.xaml, without the sparkles), so a closed dialog still signals the
+                         run. A plain broom glyph shows otherwise. Both are RenderTransforms (no layout pass), the
+                         storyboard exists only while the trigger holds, and it respects "reduce motion"
+                         (SystemParameters.MinimizeAnimation). -->
                     <ui:Button x:Name="ToolbarCleanupButton" Command="{Binding ShowCleanupCommand}" Appearance="Secondary" Padding="11,8" Margin="0,0,8,0"
                                ToolTip="{Binding Loc[ToolbarCleanupLabel], Converter={StaticResource ShortcutTooltip}, ConverterParameter=CleanupTitle}"
                                AutomationProperties.Name="{Binding Loc[ToolbarCleanupLabel]}">
@@ -713,30 +702,25 @@
                             <Grid Width="20" Height="20" VerticalAlignment="Center">
                                 <ui:SymbolIcon x:Name="ToolbarCleaningBroom" Symbol="Broom24" FontSize="20"
                                                Visibility="{Binding IsCleanupRunning, Converter={StaticResource ToolbarInverseBoolToVisibility}}"/>
-                                <!-- The disk's own drawing (CleaningDiskGeometries's body silhouette) only fills
-                                     about three quarters of its 24x24 canvas, so scaled down to the 20x20 icon
-                                     slot like the broom it looked smaller than every other toolbar glyph. Drawn
-                                     at 30x30 instead, centered, with a negative margin so it spills over the
-                                     fixed 20x20 slot into the button's own 11,8 padding while the slot (and so
-                                     the button's own outer size) never changes. It stays still: only the light
-                                     travels, a size pulse had no room inside the button. -->
+                                <!-- The disk's drawing only fills about three quarters of its 24x24 canvas, so
+                                     scaled to the 20x20 icon slot it looks smaller than the other toolbar glyphs.
+                                     Drawn at 30x30 instead, centred, with a negative margin that spills into the
+                                     button's 11,8 padding while the slot (and the button's outer size) stays
+                                     fixed. It stays still: only the light travels. -->
                                 <Grid x:Name="ToolbarCleaningDisk"
                                       HorizontalAlignment="Center" VerticalAlignment="Center"
                                       Visibility="{Binding IsCleanupRunning, Converter={StaticResource BoolToVisibility}}">
-                                    <!-- Same 24x24 geometry as CleaningDiskGeometries.xaml (shared with the
-                                         cleanup dialog's own centre drawing), inlined here rather than
-                                         merged as a resource: this file's own Resources section is edited
-                                         by another lane at the same time, so this block stays entirely
-                                         self-contained instead of touching it. -->
+                                    <!-- Same 24x24 geometry as CleaningDiskGeometries.xaml, inlined rather than
+                                         merged as a resource so this block stays self-contained. -->
                                     <Viewbox Width="30" Height="30" Margin="-5" Stretch="Uniform">
                                         <Canvas Width="24" Height="24">
                                             <Path Data="M4.8 2 L19.2 2 A1.8,1.8 0 0 1 21 3.8 L21 20.2 A1.8,1.8 0 0 1 19.2 22 L4.8 22 A1.8,1.8 0 0 1 3 20.2 L3 3.8 A1.8,1.8 0 0 1 4.8 2 Z"
                                                   Fill="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                                                   Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" StrokeThickness="0.35"/>
-                                            <!-- The travelling light: same body silhouette, shown only through a moving
-                                                 gradient mask, exactly the technique the cleanup dialog's own centre
-                                                 animation uses (CleanupWindow.xaml, SurfaceLight) so the light can never
-                                                 spill past the body's own edge. -->
+                                            <!-- The travelling light: the same body silhouette shown only through
+                                                 a moving gradient mask, as in the cleanup dialog's centre
+                                                 animation (CleanupWindow.xaml, SurfaceLight), so the light cannot
+                                                 spill past the body's edge. -->
                                             <Path x:Name="ToolbarCleaningLight"
                                                   Data="M4.8 2 L19.2 2 A1.8,1.8 0 0 1 21 3.8 L21 20.2 A1.8,1.8 0 0 1 19.2 22 L4.8 22 A1.8,1.8 0 0 1 3 20.2 L3 3.8 A1.8,1.8 0 0 1 4.8 2 Z"
                                                   Opacity="0.5" Fill="{DynamicResource AccentFillColorDefaultBrush}">
@@ -751,16 +735,11 @@
                                                     </LinearGradientBrush>
                                                 </Path.OpacityMask>
                                             </Path>
-                                            <!-- The sweep itself is driven from MainWindow.xaml.cs
-                                                 (UpdateCleanupIconSweep), not from a Style trigger here: a
-                                                 Storyboard animating a path through a Brush's own
-                                                 RelativeTransform (OpacityMask.RelativeTransform.X, two hops
-                                                 deep) applied via a Style's implicit target is what a WPF-UI
-                                                 render-harness regression traced back to (WindowLayoutTests
-                                                 started failing on unrelated windows afterwards); a plain
-                                                 BeginAnimation call straight on ToolbarLightSlide, the same
-                                                 technique the install bar's own glide already uses, does not
-                                                 have that problem. -->
+                                            <!-- Driven from MainWindow.xaml.cs (UpdateCleanupIconSweep) with
+                                                 BeginAnimation straight on ToolbarLightSlide, not from a Style
+                                                 trigger: a Storyboard animating through a Brush's
+                                                 RelativeTransform (two hops deep) via a Style's implicit target
+                                                 breaks WPF-UI's render harness for unrelated windows. -->
                                             <Path Data="M18.8 10.2 A6.8,6.8 0 1 1 5.2 10.2 A6.8,6.8 0 1 1 18.8 10.2 Z"
                                                   Fill="{DynamicResource ControlFillColorSecondaryBrush}"/>
                                             <Path Data="M18.8 10.2 A6.8,6.8 0 1 1 5.2 10.2 A6.8,6.8 0 1 1 18.8 10.2 Z"
@@ -900,10 +879,9 @@
                             <!-- Star, not Auto: at the window's 860px minimum the item name is what gives way
                                  first (it trims to an ellipsis), instead of the whole strip clipping. -->
                             <ColumnDefinition Width="*" MinWidth="72" MaxWidth="300"/>
-                            <!-- The bar's column: 204 is what the old fixed bar plus its figure needed, so
-                                 the minimum width fits exactly as before; any room beyond that goes to the
-                                 bar, up to a length that still reads as one glance. The spacer column only
-                                 takes what both of these have turned down. -->
+                            <!-- The bar's column: 204 fits the minimum window width exactly; any room beyond that
+                                 goes to the bar, up to a length that still reads as one glance. The spacer column
+                                 takes only what both turn down. -->
                             <ColumnDefinition Width="1.5*" MinWidth="204" MaxWidth="400"/>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="0.001*"/>
@@ -915,16 +893,12 @@
                                        TextTrimming="CharacterEllipsis"
                                        ToolTip="{Binding CurrentInstallRow.Name}"
                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                            <!-- What this one item is actually doing: its source, its exact %, and its own
-                                 download figure when the tool reports bytes.
-                                 Grid, not a horizontal StackPanel, same StackPanel-measures-
-                                 with-infinite-width bug as MainWindow's row-name column / the two dialog
-                                 windows: TransferText's own MaxWidth was never enough, because the StackPanel
-                                 still laid every child out at its unconstrained desired size and only the
-                                 OUTER column clipped the overflow raw, mid-digit, with no ellipsis
-                                 ("28,6 / 5" instead of "28,6 / 51,9 MB"). The Auto columns give Source/Percent
-                                 their natural width; the trailing * column is what finally hands TransferText
-                                 a real bounded width to trim against. -->
+                            <!-- What this one item is doing: its source, its exact %, and its download figure
+                                 when the tool reports bytes. A Grid, not a horizontal StackPanel: a StackPanel
+                                 lays children out at their unconstrained width, so only the outer column clipped
+                                 the overflow mid-digit, without an ellipsis. The Auto columns give Source/Percent
+                                 their natural width; the trailing * column gives TransferText a bounded width to
+                                 trim against. -->
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -963,12 +937,10 @@
                                 <views:PillProgressBar.Style>
                                     <Style TargetType="views:PillProgressBar">
                                         <Style.Triggers>
-                                            <!-- Both conditions, not just InstallHasRealProgress: that one alone
-                                                 is also False whenever the batch is empty, i.e. whenever nothing
-                                                 is installing at all, which used to leave this storyboard running
-                                                 forever in the background (a data trigger inside a Collapsed
-                                                 strip still fires; the sweep kept animating at 60fps with the
-                                                 window just sitting idle). -->
+                                            <!-- Both conditions, not just InstallHasRealProgress: that alone is
+                                                 also False when nothing is installing, which would leave the
+                                                 storyboard running at 60 fps while idle (a data trigger inside a
+                                                 Collapsed strip still fires). -->
                                             <MultiDataTrigger>
                                                 <MultiDataTrigger.Conditions>
                                                     <Condition Binding="{Binding InstallHasRealProgress}" Value="False"/>
@@ -1018,8 +990,8 @@
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                         </Grid>
 
-                        <!-- The version being installed TO, and its release date where the source knows one
-                            , shown even for a single queued item, never gated on batch size. -->
+                        <!-- The version being installed to, and its release date where the source knows one;
+                             shown even for a single queued item, never gated on batch size. -->
                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0"
                                     Visibility="{Binding CurrentInstallRow.HasVersions, Converter={StaticResource BoolToVisibility}}">
                             <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" MaxWidth="140"
@@ -1130,10 +1102,10 @@
                           Background="Transparent" BorderThickness="0" Padding="0" Margin="0,10,0,0"
                           HorizontalContentAlignment="Stretch"
                           Visibility="{Binding HasQueuedRows, Converter={StaticResource BoolToVisibility}}">
-                    <!-- Own template instead of the stock one: the stock expander paints a header band, a
-                         content block and borders of its own, which showed as a second, darker panel inside
-                         the strip. Here the header and the rows sit directly on the strip's surface; only
-                         the header's hover highlight and the row cards carry a fill. -->
+                    <!-- Own template instead of the stock one: the stock expander paints a header band, content
+                         block and borders that show as a second, darker panel inside the strip. Here the header
+                         and rows sit directly on the strip's surface; only the header's hover highlight and the
+                         row cards carry a fill. -->
                     <Expander.Template>
                         <ControlTemplate TargetType="Expander">
                             <StackPanel>
@@ -1166,8 +1138,8 @@
                         </ControlTemplate>
                     </Expander.Template>
                     <Expander.Header>
-                        <!-- The whole header row is the hoverable/clickable area, not just the icon+text,
-                             a bare StackPanel gave no feedback that this was interactive at all. -->
+                        <!-- The whole header row is the hoverable/clickable area, not just icon and text, so it
+                             gives feedback that it is interactive. -->
                         <Border x:Name="QueueHeaderHover" HorizontalAlignment="Stretch" CornerRadius="6" Padding="8,6">
                             <Border.Style>
                                 <Style TargetType="Border">
@@ -1196,8 +1168,8 @@
                                            Margin="12,0,0,0"
                                            Visibility="{Binding HasQueueTotalSize, Converter={StaticResource BoolToVisibility}}"
                                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-                                <!-- The fold cue the own template no longer draws: points down while shut,
-                                     up while open. -->
+                                <!-- The fold cue the own template does not draw: points down while shut, up while
+                                     open. -->
                                 <ui:SymbolIcon Grid.Column="3" FontSize="12" Margin="12,0,0,0" VerticalAlignment="Center"
                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}">
                                     <ui:SymbolIcon.Style>
@@ -1214,13 +1186,10 @@
                             </Grid>
                         </Border>
                     </Expander.Header>
-                    <!-- Scrolls past a handful of rows instead of pushing the table below it further down,
-                         an unbounded queue would otherwise grow the strip without limit. A later change tightened
-                         the row card (Margin 0,2 / Padding 12,8), measured in the rendered snapshot at
-                         47.3px card height + 4px margin ≈ 51px per row, so 240 now fits 4 full rows (plus
-                         a partial 5th) instead of the previous 3; keep this in step if the row template's
-                         height changes again. Auto visibility, not a permanent bar, so a short queue shows
-                         no scrollbar at all. -->
+                    <!-- Scrolls past a handful of rows instead of growing the strip without limit. 240 fits 4
+                         full rows (plus a partial 5th) at about 51 px per row (47.3 px card + 4 px margin); keep
+                         this in step if the row template's height changes. Auto visibility, so a short queue
+                         shows no scrollbar. -->
                     <ScrollViewer x:Name="QueueRowsScroll" VerticalScrollBarVisibility="Auto" MaxHeight="240" Margin="0,6,0,0">
                         <!-- 18px right margin (14px track + 4px air) keeps the auto scrollbar from overlaying
                              the row content, same defect and same fix as EntriesScroll in CleanupWindow.xaml. -->
@@ -1228,11 +1197,10 @@
                                       Grid.IsSharedSizeScope="True">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <!-- The whole card is the drag source/drop target, reordering and removing
-                                     from the queue panel actually changes InstallQueue's own install order,
-                                     not just this list. Rounded hover card, same language
-                                     as every other row surface in this app (e.g. the Steam child rows),
-                                     rather than a flat strip. -->
+                                <!-- The whole card is the drag source/drop target; reordering and removing here
+                                     changes InstallQueue's real install order, not just this list. A rounded
+                                     hover card, like every other row surface in the app (e.g. the Steam child
+                                     rows). -->
                                 <Border x:Name="QueueRowCard" CornerRadius="10" Margin="0,2" Padding="12,8"
                                         BorderThickness="1" AllowDrop="True"
                                         Focusable="True"
@@ -1302,8 +1270,8 @@
                                         </ui:SymbolIcon>
 
                                         <!-- Same tile language as the main table (brand mark / letter / category
-                                             glyph), just smaller, a name alone was hard to place at a glance
-                                             in a fast-moving queue. -->
+                                             glyph), just smaller, so a name is easy to place at a glance in a
+                                             fast-moving queue. -->
                                         <Grid Grid.Column="1" Width="22" Height="22" Margin="0,0,10,0" VerticalAlignment="Center">
                                             <Border CornerRadius="4" Background="{Binding TileBackground}"
                                                     Visibility="{Binding UsesTile, Converter={StaticResource BoolToVisibility}}">
@@ -1436,14 +1404,13 @@
                                                         <DataTrigger Binding="{Binding IsMouseOver, ElementName=QueueRowCard}" Value="True">
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                         </DataTrigger>
-                                                        <!-- Also on keyboard focus anywhere inside the card (the card itself
-                                                             or this button): keying on the card's own focus would hide the
-                                                             button the moment Tab moves focus onto it. Hidden-until-hover alone
-                                                             would leave a keyboard user unable to ever reach
-                                                             this button, nothing to Tab to until the row that
-                                                             reveals it can itself take focus. Entf on the card
+                                                        <!-- Also on keyboard focus anywhere inside the card (the
+                                                             card or this button): keying on the card's own focus
+                                                             alone would hide the button the moment Tab moves onto
+                                                             it, and hidden-until-hover alone would leave keyboard
+                                                             users nothing to Tab to. Entf on the card
                                                              (OnQueueRowKeyDown) reaches the same command without
-                                                             needing a second Tab into the now-visible button. -->
+                                                             a second Tab. -->
                                                         <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=QueueRowCard}" Value="True">
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                         </DataTrigger>
@@ -1680,29 +1647,23 @@
                     </ui:Button>
                 </Grid>
 
-                <!-- Edge to edge, like the row lines below it: an inset line read as broken off. -->
+                <!-- Edge to edge, like the row lines below it: an inset line reads as broken off. -->
                 <Border x:Name="ColumnHeaderLine" Grid.Row="0" Height="1" VerticalAlignment="Bottom" Margin="0"
                         Background="{DynamicResource CardStrokeColorDefaultBrush}"/>
 
-                <!-- Rows and the manual-open block below share this ONE reserved-lane ScrollViewer
-                     (14px classic bar, themed by the app-wide ScrollBar style, same Style="{x:Null}"
-                     trick the table's own template used to apply locally) instead of each having its
-                     own scroll area. Pixel scrolling (CanContentScroll=False), not item scrolling: the
-                     bar glides smoothly over every row instead of jumping a whole category at a time.
-                     The table's own ListBox loses virtualization here (every row is realized, not just
-                     the visible ones), measured at 300 rows, steady-state window build time: ~2920 ms
-                     before vs. ~2923 ms after, well under the 150 ms budget, so left as is. -->
+                <!-- Rows and the manual-open block below share this ONE reserved-lane ScrollViewer (14px classic
+                     bar, themed by the app-wide ScrollBar style, Style="{x:Null}") instead of each having its own
+                     scroll area. Pixel scrolling (CanContentScroll=False), so the bar glides over every row
+                     instead of jumping a whole category. The ListBox loses its own virtualization here (every row
+                     is realized); that cost is negligible for the dozens of rows a real update list has. -->
                 <ScrollViewer x:Name="ResultsScrollViewer" Grid.Row="1" Style="{x:Null}" Focusable="False"
                               CanContentScroll="False" PanningMode="VerticalOnly"
                               HorizontalScrollBarVisibility="Disabled"
                               VerticalScrollBarVisibility="Visible">
                 <StackPanel>
-                <!-- Grouped virtualization is deliberately OFF: WPF's virtualizing panel drops or blanks
-                     rows when groups are expanded/collapsed (rows "disappeared" after a fold), so the
-                     grouped list renders in full. Update lists are dozens of rows in normal use, so the
-                     cost is negligible next to a correct table. Losing the ListBox's own virtualization
-                     to the shared outer ScrollViewer costs nothing extra on top of that, measured
-                     at 300 rows. -->
+                <!-- Grouped virtualization is deliberately OFF: WPF's virtualizing panel drops or blanks rows
+                     when groups are expanded or collapsed, so the grouped list renders in full. Update lists are
+                     dozens of rows, so the cost is negligible next to a correct table. -->
                 <ListBox x:Name="UpdatesListBox" ItemsSource="{Binding UpdatesView}"
                          Background="Transparent" BorderThickness="0"
                          Padding="0,0,0,8"
@@ -1710,12 +1671,11 @@
                          VirtualizingPanel.IsVirtualizingWhenGrouping="False"
                          PreviewKeyDown="OnUpdatesListPreviewKeyDown">
 
-                    <!-- The ListBox's own class command binding answers Ctrl+A itself (selecting list
-                         items, not our rows' IsSelected checkboxes) once focus moves inside it, so the
-                         window-level KeyBinding above never sees the key. An instance CommandBinding on
-                         the SAME element is checked before that class one, so this one wins and forwards
-                         to the identical SelectAllCommand the window binding already uses - one command,
-                         reachable from both places. -->
+                    <!-- The ListBox's class command binding answers Ctrl+A itself (selecting list items, not the
+                         rows' IsSelected checkboxes) once focus is inside it, so the window-level KeyBinding
+                         never sees the key. An instance CommandBinding on the same element is checked before the
+                         class one, so this one wins and forwards to the same SelectAllCommand the window binding
+                         uses. -->
                     <ListBox.CommandBindings>
                         <CommandBinding Command="ApplicationCommands.SelectAll"
                                          Executed="OnUpdatesListSelectAllExecuted"
@@ -2044,14 +2004,12 @@
                                 </Grid>
 
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="10,0,12,0">
-                                    <!-- Grid, not a horizontal StackPanel: a StackPanel measures its
-                                         children with infinite width, so TextTrimming never engaged
-                                         and a long name was simply cut off mid-letter. -->
-                                    <!-- HorizontalAlignment=Left is what makes the badges HUG the name.
-                                         Left-aligned, the Grid arranges at its desired width, so
-                                         the star column shrinks to the text instead of pushing the badges
-                                         out to the far edge of the cell. Measure still passes the real
-                                         available width, so a long name trims exactly as before. -->
+                                    <!-- Grid, not a horizontal StackPanel: a StackPanel measures its children
+                                         with infinite width, so TextTrimming never engages and a long name is cut
+                                         off mid-letter. -->
+                                    <!-- HorizontalAlignment=Left makes the badges hug the name: the Grid arranges
+                                         at its desired width, so the star column shrinks to the text. Measure
+                                         still gets the real available width, so a long name trims. -->
                                     <Grid HorizontalAlignment="Left">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -2157,26 +2115,21 @@
                                                Visibility="{Binding ShowPersistentFailureHint, Converter={StaticResource BoolToVisibility}}"/>
                                 </StackPanel>
 
-                                <!-- Date lane: its own fixed column so every row's date lines up. Filled
-                                     up front where the source dates, or later by the background enrichment
-                                     pass (a package's own registry). Centred within its lane, matching the
-                                     header. -->
+                                <!-- Date lane: its own fixed column so every row's date lines up. Filled up front
+                                     where the source dates, or later by the background enrichment pass (a
+                                     package's own registry). Centred in its lane, like the header. -->
                                 <TextBlock Grid.Column="4" Text="{Binding PublishDateText}" FontSize="12"
                                            VerticalAlignment="Center" HorizontalAlignment="Center"
                                            Style="{StaticResource TabularNumberText}"
                                            Visibility="{Binding HasPublishDate, Converter={StaticResource BoolToVisibility}}"
                                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
 
-                                <!-- Version lane. Sources that cannot report what is installed show only
-                                     the new version, rather than an arrow pointing away from nothing.
-                                     Column order Datum/Version/Größe, centred like the header. A fixed
-                                     4-column Grid (62/14/62/20 = 158px, 10px to spare in the 168px lane)
-                                     instead of a centred StackPanel: a StackPanel's width varies with which
-                                     children are visible per row (no installed version, a changelog
-                                     link), so the arrow landed in a different X position on every row and,
-                                     since only the arrow had VerticalAlignment="Center" while the stretched
-                                     text blocks paint at their box's TOP, sat visibly lower than the text.
-                                     The old fourth column (20px) now holds the changelog spinner. -->
+                                <!-- Version lane. Sources that cannot report what is installed show only the new
+                                     version, not an arrow pointing away from nothing. Order Datum/Version/Größe,
+                                     centred like the header. A fixed 4-column Grid (62/14/62/20 = 158px in the
+                                     168px lane) instead of a centred StackPanel, whose width varies with which
+                                     children are visible, so the arrow would land at a different X on every row.
+                                     The fourth column (20px) holds the changelog spinner. -->
                                 <!-- One tooltip for the whole lane (Background="Transparent"
                                      makes the gaps and the arrow hit-testable too), instead of one on
                                      each of the two version TextBlocks. -->
@@ -2388,8 +2341,8 @@
                                                    ToolTip="{Binding RebootMarkerText}"
                                                    Visibility="{Binding NeedsReboot, Converter={StaticResource BoolToVisibility}}"
                                                    Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
-                                        <!-- installed, but the re-check found the same version as
-                                             before; a quiet note, not a warning, so no caution colour here -->
+                                        <!-- Installed, but the re-check found the same version as before: a quiet
+                                             note, not a warning, so no caution colour. -->
                                         <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12"
                                                    TextTrimming="CharacterEllipsis"
                                                    Text="{Binding VersionUnchangedText}"
@@ -2415,10 +2368,10 @@
                                                    Visibility="{Binding ShowResetAndRetryButton, Converter={StaticResource BoolToVisibility}}"/>
                                     </DockPanel>
 
-                                    <!-- Ignored rows offer an inline "show again" where their Install
-                                         button would otherwise be. A subtle accent-coloured text button
-                                         rather than a solid secondary one, whose black text looked out of
-                                         place on the dimmed row. -->
+                                    <!-- Ignored rows offer an inline "show again" where their Install button
+                                         would otherwise be. A subtle accent-coloured text button rather than a
+                                         solid secondary one, whose black text looks out of place on the dimmed
+                                         row. -->
                                     <ui:Button Content="{Binding UnignoreHeader}" Command="{Binding IgnoreCommand}"
                                                Appearance="Transparent" Padding="8,3" FontSize="12"
                                                Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
@@ -2656,26 +2609,23 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <!-- Manual-open rows (a store, a launcher, no install this app can do, and per
-                     HideManualNumbers no real values to show anyway): gathered here instead of sitting
-                     full-height inside their category group with blank cells. A second, independent
-                     ListCollectionView over the SAME _visible collection (MainViewModel.ManualOnlyView)
-                     with its own Filter/SortDescriptions, set ONCE at construction, NOT a
-                     GroupStyleSelector (WPF calls one with group=null in this configuration), and
-                     the main ListBox/UpdatesView's own grouping, sorting and the diff-preserving
-                     _visible/SyncVisible mechanics above are untouched by this. -->
+                <!-- Manual-open rows (a store, a launcher: no install this app can do, and per HideManualNumbers
+                     no real values to show): gathered here instead of sitting full-height in their category group
+                     with blank cells. A second, independent ListCollectionView over the same _visible collection
+                     (MainViewModel.ManualOnlyView) with its own Filter/SortDescriptions, set once at
+                     construction, not a GroupStyleSelector (WPF calls one with group=null in this configuration).
+                     The main ListBox's grouping, sorting and the _visible/SyncVisible mechanics are untouched. -->
                 <StackPanel Margin="12,10,26,4"
                             Visibility="{Binding HasManualOnlyResults, Converter={StaticResource BoolToVisibility}}">
                     <Border Height="1" Margin="0,0,0,10" Background="{DynamicResource CardStrokeColorDefaultBrush}"/>
                     <TextBlock Text="{Binding Loc[ManualUpdatesSectionTitle]}" FontSize="12" Margin="0,0,0,8"
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
 
-                    <!-- No own capped ScrollViewer any more, this rolls with the table
-                         in the ONE shared outer ScrollViewer above. ScrollViewer.HorizontalScrollBarVisibility
-                         "Disabled" is what makes the WrapPanel below wrap at all: a ListBox's own template
-                         ScrollViewer defaults to Auto, which measures its content at infinite width and
-                         never wraps, VerticalScrollBarVisibility is disabled the same way so this ListBox's
-                         own template does not open a second, nested scroll area. -->
+                    <!-- No own capped ScrollViewer: this rolls with the table in the one shared outer
+                         ScrollViewer above. ScrollViewer.HorizontalScrollBarVisibility="Disabled" is what makes
+                         the WrapPanel below wrap (the default Auto measures at infinite width), and
+                         VerticalScrollBarVisibility is disabled so this ListBox does not open a nested scroll
+                         area. -->
                     <ListBox x:Name="ManualOpenListBox" ItemsSource="{Binding ManualOnlyView}"
                              Background="Transparent" BorderThickness="0" Padding="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -2792,20 +2742,15 @@
             </Border>
         </Grid>
 
-        <!-- Action bar: sources checked on the left, what happens next on the right.
-             Not a Grid with Column 1 (the buttons) at Width="Auto", a Grid measures an Auto
-             column at effectively infinite width to find its natural size, so a long selection summary
-             plus all three buttons just overflowed past the window at 200% text scale + minimum width
-             ("Auswahl aktualisieren" cut off mid-word), with nothing wrapping. Fixed the same way as the
-             toolbar above: DockPanel, with the INHERENTLY BOUNDED side (the fixed small set of buttons)
-             docked, and the side that can genuinely vary in width (the pill list, anywhere from zero to
-             a dozen sources) as LastChildFill, so IT wraps against the real remaining width instead of
-             the buttons doing so against an unbounded one. -->
+        <!-- Action bar: sources checked on the left, what happens next on the right. A DockPanel, not a Grid with
+             an Auto button column: a Grid measures an Auto column at infinite width, so a long selection summary
+             plus three buttons overflowed the window at 200% text scale and minimum width. The bounded side (the
+             fixed set of buttons) is docked and the variable side (the pill list, zero to a dozen sources) fills,
+             so it wraps against the real remaining width. -->
         <Border Grid.Row="7" Margin="24,16,24,20">
             <DockPanel LastChildFill="True">
                 <WrapPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Only the "x selected · N MB" part remains; the "nothing selected" words are gone
-                         and the text hides entirely when nothing is picked. -->
+                    <!-- Only the "x selected · N MB" part; the text hides entirely when nothing is picked. -->
                     <TextBlock Text="{Binding SelectionSummary}" VerticalAlignment="Center"
                                Margin="0,0,16,0"
                                Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}"
