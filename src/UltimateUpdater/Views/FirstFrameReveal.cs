@@ -5,12 +5,10 @@ using System.Windows.Interop;
 namespace UltimateUpdater.Views;
 
 /// <summary>
-/// Keeps a freshly opened window invisible until WPF has drawn its first real frame. Without this the
-/// window's frame appears the moment it is shown, while its content is still being built and laid out,
-/// so the user sees an empty (light or dark) rectangle flash up before the dialog fills in. DWM cloaking
-/// hides the window from the screen without changing its size, position, activation or anything WPF
-/// itself sees, so layout and the first render run exactly as before; the window is uncloaked just after
-/// <see cref="Window.ContentRendered"/>, the first frame WPF has actually presented.
+/// Keeps a freshly opened window invisible until WPF has drawn its first real frame, so no empty rectangle
+/// flashes up before the dialog fills in. DWM cloaking hides the window without changing its size, position,
+/// activation or anything WPF sees, so layout and the first render run as usual; it is uncloaked just after
+/// <see cref="Window.ContentRendered"/>, the first frame WPF has presented.
 /// </summary>
 internal static class FirstFrameReveal
 {

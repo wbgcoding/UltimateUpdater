@@ -25,14 +25,10 @@ public sealed record ColumnDescriptor(string Id, Func<string> DisplayName, bool 
 public static class ColumnChooser
 {
     /// <summary>
-    /// WPF's ContextMenu light-dismiss closes the menu on the mouse-DOWN that lands outside
-    /// it (including back on the anchor button itself), but that same mouse-down/up pair still finishes
-    /// as an ordinary Click on the button afterwards, which reopens the menu the light-dismiss just
-    /// closed. A second click on the header button looked like it did nothing, when it actually closed
-    /// and immediately reopened the popup. Two earlier fixes (a fixed timer window, then a one-shot
-    /// "swallow the next click" flag cleared on the window's own mouse-up) both missed a real click's
-    /// exact timing on the actual hardware. Tracked per anchor only for the still-open menu, so a second
-    /// call while it is open toggles it shut (see <see cref="ShowFor"/>).
+    /// WPF's ContextMenu light-dismiss closes the menu on the mouse-DOWN outside it (the anchor button included), but
+    /// that press still finishes as a Click on the button, which reopens the menu. A second click would then look
+    /// like it did nothing. Tracked per anchor only for the still-open menu, so a second call while it is open
+    /// toggles it shut (see <see cref="ShowFor"/>).
     /// </summary>
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<FrameworkElement, Tracker> Trackers = new();
 
@@ -41,14 +37,10 @@ public static class ColumnChooser
         public ContextMenu? Menu;
     }
 
-    /// <summary>Opens the chooser as a context menu anchored on <paramref name="anchor"/> (typically the
-    /// button that was clicked). A second call while the menu from a previous call is still open toggles
-    /// it shut instead of reopening it. The reopen that a real mouse click causes on its own (the same
-    /// mouse-down that light-dismisses the menu still completing as a Click on the anchor once the mouse
-    /// comes back up) never reaches here at all: for as long as the menu is open the anchor is taken out
-    /// of hit-testing, so that mouse-down passes straight through it and there is no press left to
-    /// complete into a Click. Returns the menu that ended up open, or null when this call closed instead
-    /// of opening one (a caller does not need the return value; tests use it to see what happened).</summary>
+    /// <summary>Opens the chooser as a context menu anchored on <paramref name="anchor"/> (typically the clicked
+    /// button). A second call while the menu is still open toggles it shut. While the menu is open the anchor is
+    /// taken out of hit-testing, so the light-dismissing mouse-down passes through it and cannot complete into a
+    /// Click. Returns the menu that ended up open, or null when this call closed instead (tests use it).</summary>
     public static ContextMenu? ShowFor(
         FrameworkElement anchor,
         IReadOnlyList<ColumnDescriptor> columns,

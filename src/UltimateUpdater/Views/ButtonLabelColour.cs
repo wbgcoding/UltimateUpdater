@@ -24,11 +24,9 @@ public static class ButtonLabelColour
 
     public static bool GetKeep(DependencyObject element) => (bool)element.GetValue(KeepProperty);
 
-    /// <summary>A private mirror of the button's own Appearance, bound to it, so an appearance change
-    /// re-applies the label colour through an ordinary property callback. A
-    /// DependencyPropertyDescriptor.AddValueChanged subscription did the same, but its static tracker held
-    /// a strong reference to every button (and through it the whole window) for the life of the process,
-    /// since nothing ever removed it.</summary>
+    /// <summary>A private mirror of the button's own Appearance, bound to it, so an appearance change re-applies
+    /// the label colour through an ordinary property callback. (A DependencyPropertyDescriptor subscription would
+    /// leak every button through its static tracker.)</summary>
     private static readonly DependencyProperty TrackedAppearanceProperty = DependencyProperty.RegisterAttached(
         "TrackedAppearance", typeof(ControlAppearance), typeof(ButtonLabelColour),
         new PropertyMetadata(ControlAppearance.Primary, OnTrackedAppearanceChanged));
@@ -55,12 +53,9 @@ public static class ButtonLabelColour
             Mode = System.Windows.Data.BindingMode.OneWay,
         });
 
-        // Same local-value-outranks-a-template-trigger reasoning as the press fix above, for a second
-        // template trigger: disabling a Primary button fades its FILL to a near-white grey (WPF-UI's own
-        // generic disabled brush) but this Keep mechanism was still pinning the label to
-        // AccentButtonForeground, the colour picked for a saturated accent fill, not a pale disabled one,
-        // measured at about 1.1:1 against it. IsEnabled changing needs the same re-apply the appearance does.
-        // An instance event on the button itself, so it holds no reference beyond the button's own lifetime.
+        // Same local-value reasoning for a second template trigger: disabling a Primary button fades its fill to a
+        // near-white grey, and AccentButtonForeground (picked for a saturated fill) would read at about 1.1:1 on it.
+        // IsEnabled changing needs the same re-apply. An instance event, so it holds no reference beyond the button.
         button.IsEnabledChanged += OnIsEnabledChanged;
     }
 

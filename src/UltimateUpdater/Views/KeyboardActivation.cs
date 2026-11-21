@@ -6,12 +6,10 @@ namespace UltimateUpdater.Views;
 
 /// <summary>
 /// Makes a MouseBinding-only click target (a sortable column header, the source pill's click-to-toggle)
-/// keyboard-operable: Enter/Space runs the same Command the mouse click already binds, read straight off
-/// the element's own InputBindings: no second command wiring to keep in sync. These
-/// elements are a Border/StackPanel, not a real ButtonBase, so WPF gives them no keyboard handling for
-/// free the way a Button gets Enter/Space from ButtonBase; Focusable="True" plus this handler is what a
-/// FrameworkElement needs to close that gap. Requires Focusable="True" on the same element: this handler
-/// only ever runs once that is already true, but does not set it itself.
+/// keyboard-operable: Enter/Space runs the Command the mouse click already binds, read off the element's own
+/// InputBindings, so there is no second wiring to keep in sync. These elements are a Border/StackPanel, not a
+/// ButtonBase, so WPF gives them no key handling. Requires Focusable="True" on the same element; this handler
+/// does not set it.
 /// </summary>
 internal static class KeyboardActivation
 {
@@ -24,9 +22,8 @@ internal static class KeyboardActivation
         if (Keyboard.Modifiers != ModifierKeys.None)
             return;
 
-        // A real ButtonBase fires Click once per press (on release), never once per OS key-repeat tick;
-        // without this check, holding Enter/Space re-executed the bound command dozens of times a second
-        // (re-sorting the table, or re-toggling a source, on every repeat).
+        // A real ButtonBase fires Click once per press, never once per OS key-repeat tick; without this check, holding
+        // Enter/Space would re-run the bound command (re-sorting, re-toggling) on every repeat.
         if (e.IsRepeat)
             return;
 

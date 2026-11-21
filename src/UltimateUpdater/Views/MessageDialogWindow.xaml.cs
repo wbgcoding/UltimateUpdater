@@ -26,9 +26,8 @@ public partial class MessageDialogWindow
 
         ApplyKind(viewModel.Kind);
 
-        // Enter must never fire a destructive action by default, only a safe primary gets to be
-        // the window's default button (same reasoning that kept CleanupWindow's Clean button and
-        // CleanupHistoryWindow's ClearAll out of IsDefault entirely).
+        // Enter must never fire a destructive action by default: only a safe primary becomes the window's default
+        // button (CleanupWindow's Clean and CleanupHistoryWindow's ClearAll stay out of IsDefault for the same reason).
         if (viewModel.PrimaryIsDestructive)
         {
             PrimaryButton.Appearance = ControlAppearance.Danger;

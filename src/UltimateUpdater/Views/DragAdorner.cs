@@ -7,9 +7,8 @@ using Size = System.Windows.Size;
 namespace UltimateUpdater.Views;
 
 /// <summary>
-/// A translucent snapshot of the row being dragged, following the cursor, WPF's own DoDragDrop shows
-/// none by default, just a plain move cursor. Rendered as a VisualBrush of the actual dragged element rather than a copy,
-/// so it always matches whatever that row currently looks like (theme, hover state included).
+/// A translucent snapshot of the row being dragged, following the cursor (DoDragDrop shows only a plain move
+/// cursor). A VisualBrush of the dragged element rather than a copy, so it always matches the row's current look.
 /// </summary>
 internal sealed class DragAdorner : Adorner
 {

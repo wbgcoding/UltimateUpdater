@@ -5,12 +5,11 @@ using UltimateUpdater.ViewModels;
 namespace UltimateUpdater.Views;
 
 /// <summary>
-/// The tri-state for a category group's own checkbox: every installable row in the group ticked (true),
-/// none (false), some (null → indeterminate).
+/// The tri-state for a category group's own checkbox: every installable row ticked (true), none (false), some
+/// (null, indeterminate).
 /// A <see cref="CollectionViewGroup"/> raises nothing when a row inside it is selected, so the binding is a
-/// MultiBinding over the group AND MainViewModel.SelectionVersion; a counter that changes on every
-/// selection change. The second value is not read; it exists so WPF re-evaluates this converter, which is
-/// what makes "select all" visibly tick the category boxes too.
+/// MultiBinding over the group AND MainViewModel.SelectionVersion, a counter bumped on every selection change.
+/// The second value is never read; it only makes WPF re-evaluate this converter.
 /// </summary>
 public sealed class GroupSelectionConverter : IMultiValueConverter
 {

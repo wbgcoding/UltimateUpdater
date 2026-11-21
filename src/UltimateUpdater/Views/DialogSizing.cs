@@ -3,21 +3,15 @@ using System.Windows;
 namespace UltimateUpdater.Views;
 
 /// <summary>
-/// WPF's SizeToContent still measures a window as if it had a normal, non-client caption bar even when
-/// ExtendsContentIntoTitleBar moves that bar into the content itself, so every dialog using SizeToContent
-/// (MessageDialogWindow and the small sub-windows) ends up roughly one caption's height taller than its
-/// own content - which showed up as a big empty band under the button row, seen on the uninstall warning
-/// and many other dialogs. Reducing margins cannot fix this: the extra space comes from the window's own
-/// auto-sizing, not from anything in the XAML. Measured live (a diagnostic build logging
-/// window.ActualHeight against the root element's own Measure-time DesiredSize): the window's client area
-/// really is bigger than its content by a constant amount regardless of what the content is, confirming
-/// this is exactly that phantom caption, not a slack/stretch issue inside the content's own layout.
+/// WPF's SizeToContent still measures a window as if it had a normal caption bar even when
+/// ExtendsContentIntoTitleBar moves that bar into the content, so every SizeToContent dialog ends up about one
+/// caption's height taller than its content (a big empty band under the button row). Margins cannot fix it: the
+/// extra space comes from the window's own auto-sizing.
 ///
-/// Rather than guess at the exact non-client chrome involved (it differs by DPI, by whether the window is
-/// resizable, and reportedly even by which Windows version is running), this cancels the bug directly: it
-/// pins the window's height to the root element's own honest Measure-time DesiredSize, clamped to
-/// whatever Min/MaxHeight the window already declares. No chrome constant to get wrong, and it self-
-/// corrects if a later layout pass changes the desired size again (an expander opening, a longer message).
+/// The exact non-client chrome differs by DPI, resizability and Windows version, so instead of guessing it this
+/// pins the window's height to the root element's Measure-time DesiredSize, clamped to the window's own
+/// Min/MaxHeight. No chrome constant to get wrong, and it re-fits when the desired size changes (an expander
+/// opening, a longer message).
 /// </summary>
 internal static class DialogSizing
 {
@@ -45,16 +39,11 @@ internal static class DialogSizing
             refitting = true;
             try
             {
-                // Re-measure against the width the window has actually settled on, so this reflects the
-                // SAME wrapping the window is currently showing, not an unconstrained guess. Height is
-                // unbounded only when the window itself declares no MaxHeight: a virtualizing list (the
-                // history window's table) answers an infinite height constraint by fully realizing every
-                // row to compute its true extent, which defeats its own virtualization on EVERY
-                // LayoutUpdated this handler runs on, including one raised by ordinary scrolling - measured
-                // at over a second for just 20 scroll steps against 500 rows, versus 0 ms bounded. A finite
-                // MaxHeight already clamps the result below (ComputeFittedHeight), so measuring against it
-                // directly changes nothing for content that fits within it, and lets a virtualizing panel
-                // stay bounded to what the window could ever show anyway.
+                // Re-measure against the width the window has settled on, so the wrapping matches what is shown. Height is
+                // unbounded only when the window declares no MaxHeight: a virtualizing list (the history table) answers an
+                // infinite height by realizing every row, which would defeat its virtualization on every LayoutUpdated,
+                // scrolling included. A finite MaxHeight clamps the result anyway (ComputeFittedHeight), so measuring against
+                // it changes nothing for content that fits.
                 var width = root.ActualWidth > 0 ? root.ActualWidth : double.PositiveInfinity;
                 var height = ComputeMeasureHeight(window.MaxHeight);
                 root.Measure(new System.Windows.Size(width, height));
@@ -78,12 +67,10 @@ internal static class DialogSizing
     }
 
     /// <summary>
-    /// The height constraint <see cref="FitHeightToContent"/>'s own re-measure uses, pulled out so it can be
-    /// unit tested without a real window. A finite MaxHeight is used directly rather than PositiveInfinity:
-    /// the result gets clamped to it anyway (<see cref="ComputeFittedHeight"/>), and measuring a
-    /// virtualizing list against an unbounded height forces it to realize every item to answer "how tall
-    /// would this be", which is exactly what defeated the history window's own virtualization on every
-    /// scroll-driven LayoutUpdated.
+    /// The height constraint <see cref="FitHeightToContent"/>'s re-measure uses, pulled out so it can be unit tested
+    /// without a window. A finite MaxHeight is used directly rather than PositiveInfinity: the result is clamped to
+    /// it anyway (<see cref="ComputeFittedHeight"/>), and an unbounded measure forces a virtualizing list to realize
+    /// every item.
     /// </summary>
     internal static double ComputeMeasureHeight(double maxHeight) =>
         double.IsNaN(maxHeight) || maxHeight >= double.PositiveInfinity ? double.PositiveInfinity : maxHeight;

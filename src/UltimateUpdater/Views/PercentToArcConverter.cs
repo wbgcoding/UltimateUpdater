@@ -59,9 +59,8 @@ public sealed class PercentToArcConverter : IValueConverter
             return full;
         }
 
-        // A sliver of an arc renders as a dot or, with rounded caps, as a blob bigger than the arc itself .
-        // which is what made a small figure look broken. Below the threshold the ring is
-        // simply drawn empty; the number in the middle still states the real value.
+        // A sliver of an arc renders as a dot or, with rounded caps, a blob bigger than the arc, which looks broken.
+        // Below the threshold the ring is drawn empty; the number in the middle still states the real value.
         const double SmallestVisibleArc = 0.8;
         if (percent < SmallestVisibleArc)
         {

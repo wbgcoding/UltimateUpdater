@@ -4,13 +4,11 @@ using System.Windows.Controls;
 namespace UltimateUpdater.Views;
 
 /// <summary>
-/// The dark theme's one-pixel top highlight (ThemeService.ApplyDarkPaletteOverrides sets
-/// "GlassTopHighlightBrush" to white at 6 percent there, and to transparent in every other theme): a
-/// single hairline just inside a card's own border, which is what reads as glass without a single
-/// gradient image. Attached rather than a Style setter on purpose - a Style setter can share one Brush
-/// instance across every element that uses the style, but never a Visual, so putting the highlight ITSELF
-/// in a style would just hand the same Border to whichever card asked for it last. Each opted-in Border
-/// gets its own line, added once.
+/// The dark theme's one-pixel top highlight (ThemeService.ApplyDarkPaletteOverrides sets "GlassTopHighlightBrush"
+/// to white at 6 percent there, transparent in every other theme): a hairline just inside a card's border, which
+/// reads as glass without a gradient image. Attached rather than a Style setter: a style can share a Brush across
+/// elements but never a Visual, so every card would get the same Border. Each opted-in Border gets its own line,
+/// added once.
 /// </summary>
 public static class GlassCardHighlight
 {
@@ -26,25 +24,18 @@ public static class GlassCardHighlight
         if (d is not Border border || !Equals(e.NewValue, true))
             return;
 
-        // The style/content order a XAML parser applies properties in is not something to depend on: a
-        // Style setter (how every card actually opts in) resolves before the nested XAML content becomes
-        // the border's Child, so Child is usually still null right here. Loaded looked like the obvious
-        // fallback and is what ThemeService.AttachWindow itself waits on for a window that is not up yet,
-        // but Loaded needs the element on a real PresentationSource - the render harness never shows its
-        // windows (WpfHarness.RenderWindow renders the DETACHED content), so it never fires there, and a
-        // card built for a test snapshot would silently never get its highlight. LayoutUpdated has no such
-        // requirement: it comes straight from the layout system, on-screen or off, so it is what both the
-        // real app and the harness can rely on alike.
+        // A Style setter (how every card opts in) resolves before the nested XAML content becomes the border's Child,
+        // so Child is usually still null here. Loaded needs a real PresentationSource, and the render harness renders
+        // detached content that never gets one, so a test snapshot would never get its highlight. LayoutUpdated comes
+        // straight from the layout system, on-screen or off.
         if (border.Child is not null)
         {
             Attach(border);
             return;
         }
 
-        // LayoutUpdated is really a layout-manager-wide event - every subscriber anywhere in the tree is
-        // notified after any layout pass, and "sender" is not reliably this particular element - so the
-        // handler below closes over "border" instead of trusting the sender argument, and removes itself
-        // by the same captured reference once it has done its one job.
+        // LayoutUpdated is a layout-manager-wide event and "sender" is not reliably this element, so the handler
+        // below closes over "border" and removes itself by that same reference after its one job.
         EventHandler? onLayoutUpdated = null;
         onLayoutUpdated = (_, _) =>
         {
@@ -58,13 +49,10 @@ public static class GlassCardHighlight
     }
 
     /// <summary>
-    /// Wraps whatever the border already shows in a Grid and adds the highlight as a second,
-    /// hit-test-invisible child on top of it. A card's own Padding would otherwise push the line down
-    /// with the rest of the content, so the highlight cancels it out with a negative margin and reaches
-    /// back to a 1px inset on every side: the border's own stroke already occupies that outermost pixel,
-    /// and rounds it further through the card's own CornerRadius, so landing the highlight exactly on
-    /// that edge (a 0px inset) let its 6 percent white get lost in the stroke's own anti-aliasing instead
-    /// of reading as a second, separate line. One pixel further in sits on the card's flat fill.
+    /// Wraps whatever the border already shows in a Grid and adds the highlight as a second, hit-test-invisible child.
+    /// The card's Padding would push the line down with the content, so a negative margin cancels it and reaches
+    /// back to a 1px inset on every side: the border's own stroke occupies the outermost pixel, and a 0px inset lost
+    /// the 6 percent white in the stroke's anti-aliasing. One pixel further in sits on the card's flat fill.
     /// </summary>
     private static void Attach(Border border)
     {

@@ -3,16 +3,13 @@ using System.Windows.Input;
 namespace UltimateUpdater.Views;
 
 /// <summary>
-/// The one static table every keyboard shortcut this app defines comes from, beyond a row's own local
-/// ones (Alt+Up/Down reorder, Space/Enter/Delete on a focused row, both already documented at their own
-/// handlers in MainWindow.xaml.cs). MainWindow's own tooltips (<see cref="ShortcutTooltipConverter"/>) and
-/// the F1 overview window (<see cref="ShortcutsWindow"/>) both read these SAME entries rather than each
-/// keeping a separately hand-typed copy of a gesture, which is what keeps a tooltip's mention and the
-/// overview list from ever drifting out of step with what the actual key binding fires.
+/// The one static table every keyboard shortcut comes from, beyond a row's own local ones (Alt+Up/Down reorder,
+/// Space/Enter/Delete on a focused row, documented at their handlers in MainWindow.xaml.cs). The tooltips
+/// (<see cref="ShortcutTooltipConverter"/>) and the F1 overview (<see cref="ShortcutsWindow"/>) read these same
+/// entries, so they cannot drift from what the key binding fires.
 ///
-/// Gesture text is plain key names (Ctrl, Enter, F1, a raw comma) rather than each language's own word
-/// for a modifier key: a keyboard shortcut names a physical key combination, not prose, and this app
-/// localizes no other raw key name anywhere else either.
+/// Gesture text is plain key names (Ctrl, Enter, F1, a raw comma) rather than each language's word for a
+/// modifier: a shortcut names a physical key combination, not prose.
 /// </summary>
 public static class KeyboardShortcuts
 {

@@ -44,10 +44,9 @@ public partial class ErrorDetailWindow : FluentWindow
     }
 
     /// <summary>
-    /// One segment, one inline. An exit code becomes a small capsule (background + rounded corners)
-    /// instead of just coloured bold text: fatal (red) and retryable (amber) sitting next to each other
-    /// as plain coloured text gives no explanation of what the colour means, while a capsule reads as
-    /// "this is a marked code" on its own, without needing a legend the window has no room for.
+    /// One segment, one inline. An exit code becomes a small capsule rather than coloured bold text: fatal (red) and
+    /// retryable (amber) side by side as plain text explain nothing, while a capsule reads as a marked code without
+    /// a legend the window has no room for.
     /// </summary>
     private static Inline BuildInline(ErrorDetailFormatter.Segment segment)
     {
@@ -71,9 +70,8 @@ public partial class ErrorDetailWindow : FluentWindow
     }
 
     /// <summary>
-    /// Same Border+TextBlock capsule shape the table's own critical badge already uses (MainWindow.xaml)
-    ///, kept visually consistent rather than inventing a second "marked" look. Tabular figures
-    /// so an exit code's digits line up the same way every other number field in the app now does.
+    /// The same Border+TextBlock capsule shape the table's critical badge uses (MainWindow.xaml), for a consistent
+    /// "marked" look. Tabular figures, so exit-code digits line up like every other number in the app.
     /// </summary>
     private static InlineUIContainer ExitCodeCapsule(string text, string backgroundKey, string foregroundKey)
     {
@@ -95,15 +93,15 @@ public partial class ErrorDetailWindow : FluentWindow
         };
         capsule.SetResourceReference(Border.BackgroundProperty, backgroundKey);
 
-        // BaselineAlignment keeps the capsule sitting on the surrounding prose's text baseline instead
-        // of its own box's bottom edge, otherwise every capsule floated a few pixels low.
+        // BaselineAlignment keeps the capsule on the surrounding prose's text baseline instead of its own box's
+        // bottom edge.
         return new InlineUIContainer(capsule) { BaselineAlignment = BaselineAlignment.Center };
     }
 
     private void OnCloseClicked(object sender, RoutedEventArgs e) => Close();
 
-    /// <summary>The click starts the row's confirmed reinstall flow (the bound command); this window has
-    /// nothing left to show once it does, the progress is in the main window.</summary>
+    /// <summary>The click starts the row's confirmed reinstall flow (the bound command); this window has nothing
+    /// left to show once it does, as the progress is in the main window.</summary>
     private void OnReinstallClicked(object sender, RoutedEventArgs e) =>
         Dispatcher.BeginInvoke(new Action(Close), System.Windows.Threading.DispatcherPriority.Background);
 }
