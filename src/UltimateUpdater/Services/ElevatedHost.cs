@@ -6,19 +6,19 @@ using System.Text.Json;
 namespace UltimateUpdater.Services;
 
 /// <summary>
-/// A grip on one job that is already with the elevated helper, so the caller can hold or stop it while it
-/// runs. Handed to <see cref="ElevatedHost.RunAsync"/>, which fills it in once the job is sent; every
-/// method is safe to call before that (a hold or a stop is remembered and applied then) and after the job
-/// has finished (it then simply does nothing).
+/// A grip on one job already with the elevated helper, so the caller can hold or stop it while it runs.
+/// Handed to <see cref="ElevatedHost.RunAsync"/>, which fills it in once the job is sent. Every method is
+/// safe to call before that (a hold or a stop is remembered and applied then) and after the job has
+/// finished (it does nothing).
 /// </summary>
 public sealed class ElevatedJobHandle
 {
     private readonly object _lock = new();
 
     /// <summary>Held across "decide the hold state, then send it" for pause, resume and the replay in
-    /// <see cref="Attach(ElevatedHost, string)"/>, so the order the worker receives them in is the order the
-    /// state was decided in. Without it a resume could overtake the pause replayed after the attach and
-    /// leave the worker paused while the UI shows the run as going.</summary>
+    /// <see cref="Attach(ElevatedHost, string)"/>, so the worker receives them in the order the state was
+    /// decided. Otherwise a resume could overtake the replayed pause and leave the worker paused while the
+    /// UI shows the run as going.</summary>
     private readonly SemaphoreSlim _controlOrder = new(1, 1);
 
     private Func<string, string, string?, string?, Task>? _send;
@@ -29,9 +29,9 @@ public sealed class ElevatedJobHandle
     private List<(string SourceId, string ItemId)>? _pendingItemCancels;
 
     /// <summary>
-    /// Called by the host once the job has an id. Whatever was asked BEFORE that (the user paused while the
-    /// previous target was still finishing, or stopped a row while the elevation prompt was still open) is
-    /// applied now, because a control naming an id the worker has never seen is simply dropped.
+    /// Called by the host once the job has an id. Whatever was asked before that (a pause while the previous
+    /// target was still finishing, a stop while the elevation prompt was open) is applied now, because a
+    /// control naming an id the worker has never seen is dropped.
     /// </summary>
     internal void Attach(ElevatedHost host, string id) =>
         Attach((jobId, action, sourceId, itemId) => host.SendControlAsync(jobId, action, sourceId, itemId), id);
@@ -42,9 +42,9 @@ public sealed class ElevatedJobHandle
         bool cancel;
         (string SourceId, string ItemId)[] itemCancels;
 
-        // Taken before the id is published and released only after the pause went out: a resume asked in
-        // between waits here, so it is sent after the pause, not before it. When another control holds the
-        // gate right now, the replay queues behind it instead and re-reads the state when its turn comes.
+        // Taken before the id is published and released after the pause went out, so a resume asked in between
+        // is sent after the pause. When another control holds the gate, the replay queues behind it and
+        // re-reads the state when its turn comes.
         var ordered = _controlOrder.Wait(0);
         lock (_lock)
         {
@@ -58,7 +58,7 @@ public sealed class ElevatedJobHandle
         _ = ReplayAsync(send, id, ordered, cancel, itemCancels);
     }
 
-    /// <summary>The pause first (so a stop never arrives before the hold it belongs after), then the item
+    /// <summary>The pause first (a stop must not arrive before the hold it belongs after), then the item
     /// stops, then the whole-job stop, all inside the gate.</summary>
     private async Task ReplayAsync(
         Func<string, string, string?, string?, Task> send, string id, bool alreadyOrdered, bool cancel,
@@ -146,10 +146,10 @@ public sealed class ElevatedJobHandle
         }
     }
 
-    /// <summary>Stops just ONE item inside this job; the worker keeps working through the
-    /// rest, and an item that already finished (or was never part of this job) is simply ignored, the
-    /// same "unknown key, not an error" rule <see cref="ElevatedWorker.Control"/> already applies to a
-    /// whole-job id it has never seen. Asked before the job is out, it is remembered and sent right after.</summary>
+    /// <summary>Stops just one item inside this job; the worker keeps working through the rest. An item that
+    /// already finished or was never part of this job is ignored, the same "unknown key, not an error" rule
+    /// as <see cref="ElevatedWorker.Control"/>. Asked before the job is out, it is remembered and sent right
+    /// after.</summary>
     public Task CancelItemAsync(string sourceId, string itemId)
     {
         Func<string, string, string?, string?, Task> send;
@@ -187,16 +187,15 @@ public sealed class ElevatedJobHandle
 }
 
 /// <summary>
-/// The app's one and only administrator prompt. The first job that needs admin rights starts an elevated
-/// copy of this exe; it then stays connected for the rest of the session and every later admin job, an
-/// install batch, a cleanup measurement, a cleanup run, is handed to that same process.
-/// The trade is deliberate: an administrator process lives as long as the app instead of a few seconds.
-/// What protects it is unchanged and matters more for it, the pipe is authenticated in BOTH directions
-/// (the app checks the client's process id, the worker checks the server's), the pipe carries the job so
-/// nothing lands in a file another process could swap, and the worker only ever does work this app knows
-/// how to describe.
-/// A declined prompt is remembered for the session: the user said no once, and being asked again on the
-/// next click would be worse than the feature simply not being available.
+/// The app's one administrator prompt. The first job that needs admin rights starts an elevated copy of
+/// this exe; it stays connected for the rest of the session and every later admin job (an install batch,
+/// a cleanup measurement, a cleanup run) is handed to that same process.
+/// The trade is deliberate: an administrator process lives as long as the app. What protects it: the pipe
+/// is authenticated in both directions (the app checks the client's process id, the worker the server's),
+/// the pipe carries the job so nothing lands in a file another process could swap, and the worker only
+/// does work this app knows how to describe.
+/// A declined prompt is remembered for the session, since asking again on the next click would be worse
+/// than the feature being unavailable.
 /// </summary>
 public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
 {
@@ -204,13 +203,13 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
 
     private readonly SemaphoreSlim _startGate = new(1, 1);
 
-    /// <summary>Serialises the WRITE of a job line; the replies come back on their own, tagged.</summary>
+    /// <summary>Serialises the write of a job line; the replies come back on their own, tagged.</summary>
     private readonly SemaphoreSlim _sendGate = new(1, 1);
 
     /// <summary>
-    /// The conversations currently in flight, by job id. One reader loop owns the pipe and hands each
-    /// reply to the job it belongs to, which is what lets a cleanup measurement run alongside an install,
-    /// and what stops an abandoned conversation's leftovers being read as the next job's answers.
+    /// The conversations in flight, by job id. One reader loop owns the pipe and hands each reply to its job,
+    /// which lets a cleanup measurement run alongside an install and keeps an abandoned conversation's
+    /// leftovers from being read as the next job's answers.
     /// </summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, Conversation> _inFlight = new();
 
@@ -225,22 +224,19 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
     private Task? _pump;
 
     /// <summary>
-    /// Bumped for every helper session. A pump from a session that has already ended must not clear the
-    /// state of the one that replaced it, nor fail its conversations, which is exactly what happens when
-    /// the old pipe faults a moment after a restart.
+    /// Bumped for every helper session. A pump from an ended session must not clear the state of the one that
+    /// replaced it, nor fail its conversations, which happens when the old pipe faults just after a restart.
     /// </summary>
     private int _generation;
 
     /// <summary>
-    /// Completed exactly once, the moment THIS session truly ends, by <see cref="PumpAsync"/> noticing
-    /// the pipe died, or by <see cref="ReleaseAsync"/> tearing it down explicitly. <see cref="RunAsync"/>
-    /// waits on it as well as on its own <c>Conversation.Finished</c>: that one is only completed by
-    /// <see cref="PumpAsync"/>'s <c>finally</c> iterating <see cref="_inFlight"/>, so a session that died
-    /// between <see cref="EnsureStartedAsync"/> returning and the conversation being added to
-    /// <see cref="_inFlight"/> would leave the conversation waiting forever. Captured into a
-    /// local by both <see cref="RunAsync"/> and <see cref="PumpAsync"/> at the moment their own session
-    /// starts, never read from this field again afterward, a later restart replaces this field with a
-    /// fresh instance for the NEW session, and a stale reader must keep waiting on the OLD one.
+    /// Completed exactly once, when this session truly ends: <see cref="PumpAsync"/> noticing the pipe died,
+    /// or <see cref="ReleaseAsync"/> tearing it down. <see cref="RunAsync"/> waits on it as well as on its
+    /// <c>Conversation.Finished</c>, which only <see cref="PumpAsync"/>'s <c>finally</c> completes by
+    /// iterating <see cref="_inFlight"/>: a session that died after <see cref="EnsureStartedAsync"/> returned
+    /// but before the conversation was added would leave it waiting forever. Both methods capture it into a
+    /// local when their session starts and never read the field again, because a restart replaces it with a
+    /// fresh instance and a stale reader must keep waiting on the old one.
     /// </summary>
     private TaskCompletionSource<bool> _sessionEnded = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -253,10 +249,9 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
     public bool IsRunning { get; private set; }
 
     /// <summary>
-    /// Raised whenever <see cref="IsRunning"/> flips, on whatever thread noticed it (the pump's reader
-    /// thread for a drop, the caller's own thread for a successful start). A listener that touches a bound
-    /// property must marshal to its own dispatcher itself, the same rule every other elevated callback in
-    /// this class already follows.
+    /// Raised whenever <see cref="IsRunning"/> flips, on whatever thread noticed it (the pump's reader thread
+    /// for a drop, the caller's thread for a start). A listener that touches a bound property must marshal to
+    /// its own dispatcher.
     /// </summary>
     public event Action? StateChanged;
 
@@ -267,8 +262,8 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
 
         IsRunning = value;
 
-        // A throwing listener must never escape: this runs inside the pump's cleanup, and an exception
-        // there would skip completing the open conversations and the session, leaving their callers waiting.
+        // A throwing listener must not escape: this runs inside the pump's cleanup, and an exception would skip
+        // completing the open conversations and the session.
         try
         {
             StateChanged?.Invoke();
@@ -280,12 +275,11 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
     }
 
     /// <summary>Test-only seam: flips <see cref="IsRunning"/> and raises <see cref="StateChanged"/> without
-    /// starting a real elevated process. Tests must never raise a real UAC prompt, so this is how a
-    /// "helper already running" scenario is simulated.</summary>
+    /// starting a real elevated process (tests must never raise a UAC prompt).</summary>
     internal void SetRunningForTest(bool value) => SetRunning(value);
 
-    /// <summary>Test-only seam: adopts a ready-made pair of streams as the live session, exactly as the end
-    /// of a real start does, so the pump and its cleanup can be driven without a real elevated process.</summary>
+    /// <summary>Test-only seam: adopts a ready-made pair of streams as the live session, as the end of a real
+    /// start does, so the pump and its cleanup can be driven without an elevated process.</summary>
     internal void AttachSessionForTest(StreamReader reader, StreamWriter writer)
     {
         _reader = reader;
@@ -297,22 +291,20 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
         _pump = Task.Run(() => PumpAsync(generation, sessionEnded));
     }
 
-    /// <summary>Test-only seam: replaces the whole start sequence so a launch failure can be simulated
-    /// without a real elevated process or prompt.</summary>
+    /// <summary>Test-only seam: replaces the whole start sequence so a launch failure can be simulated.</summary>
     internal Func<CancellationToken, Task<bool>>? EnsureStartedOverrideForTest { get; set; }
 
     /// <summary>True once the user has turned down the prompt in this session.</summary>
     public bool WasDeclined { get; private set; }
 
     /// <summary>
-    /// Makes sure the elevated worker is running, raising the prompt only the first time. Returns false
-    /// when the user declined or the worker could not be started, both are normal outcomes the caller
-    /// continues without.
+    /// Makes sure the elevated worker is running, raising the prompt only the first time. Returns false when
+    /// the user declined or the worker could not be started; both are normal outcomes the caller continues
+    /// without.
     /// </summary>
     /// <param name="force">
-    /// Ask again even though the user turned the prompt down earlier. Only for a deliberate, user-initiated
-    /// action that needs admin, without it a single accidental "no" would silently degrade the rest of the
-    /// session with no way back short of restarting the app.
+    /// Ask again even though the user declined earlier. Only for a deliberate, user-initiated action that
+    /// needs admin; otherwise one accidental "no" would degrade the rest of the session with no way back.
     /// </param>
     public async Task<bool> EnsureStartedAsync(CancellationToken cancellationToken, bool force = false)
     {
@@ -328,7 +320,7 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
         await _startGate.WaitAsync(cancellationToken);
         try
         {
-            // Two actions can ask at the same moment; the second one must not raise a second prompt.
+            // Two actions can ask at the same moment; the second must not raise a second prompt.
             if (IsRunning)
                 return true;
 
@@ -346,9 +338,8 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
 
     private async Task<bool> StartAsync(CancellationToken cancellationToken)
     {
-        // A previous helper may have died (the machine slept, the process was killed). Its pipe, streams
-        // and Process object are still here, and overwriting the fields without letting go of them leaks a
-        // handle set per restart.
+        // A previous helper may have died (the machine slept, the process was killed). Overwriting its pipe,
+        // streams and Process object without releasing them leaks a handle set per restart.
         await ReleaseAsync();
 
         var pipeName = $"UltimateUpdater-elevated-{Guid.NewGuid():N}";
@@ -361,8 +352,7 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
 
         try
         {
-            // Off the UI thread: Process.Start with Verb=runas blocks until the prompt is answered, and
-            // the window would be frozen white for exactly that long.
+            // Off the UI thread: Process.Start with Verb=runas blocks until the prompt is answered.
             try
             {
                 worker = await Task.Run(
@@ -371,9 +361,9 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
             }
             catch (System.ComponentModel.Win32Exception)
             {
-                // Anything but a declined prompt (elevation blocked by policy, the image missing): already
-                // logged by StartWorker. The contract is "false when the worker could not be started"; a
-                // throw here ended a whole install batch through its generic catch.
+                // Anything but a declined prompt (elevation blocked by policy, the image missing) is already logged by
+                // StartWorker. The contract is "false when the worker could not be started"; a throw would end a whole
+                // install batch through its generic catch.
                 return false;
             }
 
@@ -386,8 +376,7 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
             connected = server.WaitForConnectionAsync(cancellationToken);
             exited = worker.WaitForExitAsync(CancellationToken.None);
 
-            // A worker that dies during startup never calls back, and WaitForConnectionAsync has no
-            // timeout of its own.
+            // A worker that dies during startup never calls back, and WaitForConnectionAsync has no timeout.
             if (await Task.WhenAny(connected, exited) != connected)
             {
                 logging.Error("The elevated worker exited before it connected back.");
@@ -396,8 +385,8 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
 
             await connected;
 
-            // Pipe names are enumerable by any process running as this user, so the name is not a secret.
-            // This is what stops a stranger connecting first and being handed an elevated job list.
+            // Pipe names are enumerable by any process running as this user, so the name is not a secret. This check
+            // stops a stranger connecting first and being handed an elevated job list.
             if (!IsWorkerConnection(server, worker))
             {
                 logging.Error("Refusing the pipe: the process that connected is not the elevated worker.");
@@ -434,9 +423,9 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
     }
 
     /// <summary>
-    /// The single reader. Every reply carries the id of the job it belongs to, so this hands each line to
-    /// the right conversation, and a line for a job nobody is waiting for any more is simply dropped
-    /// rather than being read as the next job's answer, which is what left the queue stuck after a stop.
+    /// The single reader. Every reply carries the id of its job, so each line goes to the right
+    /// conversation, and a line for a job nobody waits for any more is dropped instead of being read as the
+    /// next job's answer.
     /// </summary>
     private async Task PumpAsync(int generation, TaskCompletionSource<bool> sessionEnded)
     {
@@ -473,8 +462,8 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
                 }
                 catch (Exception ex)
                 {
-                    // A handler raises events into the UI. If one of them throws, the reader must not die
-                    // with it, that would strand every other conversation on this pipe.
+                    // A handler raises events into the UI. If one throws, the reader must not die with it, which would
+                    // strand every other conversation on this pipe.
                     logging.Error("An elevated reply could not be handled", ex);
                     finished = true;
                 }
@@ -485,7 +474,7 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
         }
         catch (Exception ex) when (ex is IOException or ObjectDisposedException or InvalidOperationException)
         {
-            // the pipe went away; every waiter is released below
+            // The pipe went away; every waiter is released below.
         }
         finally
         {
@@ -504,9 +493,8 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
                         conversation.Finished.TrySetResult(false);
                 }
 
-                // Unconditional, unlike the block above: THIS session ended regardless of whether a newer one
-                // has already replaced it in `_generation`, a caller in RunAsync captured this exact instance
-                // and is waiting on it, not on the field, so a stale pump must still release it.
+                // Unconditional, unlike the block above: this session ended whether or not a newer one replaced it in
+                // _generation, and a caller in RunAsync waits on this exact instance, not on the field.
                 sessionEnded.TrySetResult(false);
             }
         }
@@ -518,20 +506,20 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
     /// unelevated instead of hanging.
     /// </summary>
     /// <param name="exclusive">
-    /// False for read-only work (measuring), which then runs alongside whatever else is in flight. True for
+    /// False for read-only work (measuring), which runs alongside whatever else is in flight. True for
     /// anything that changes the machine: the worker runs those strictly one at a time.
     /// </param>
     /// <param name="allowStart">
-    /// False for a job that must never be the reason for an elevation prompt (the startup prescan): when
-    /// the helper is not running by now, the job is refused rather than the helper launched.
+    /// False for a job that must never be the reason for an elevation prompt (the startup prescan): when the
+    /// helper is not running, the job is refused rather than the helper launched.
     /// </param>
     public async Task<bool> RunAsync(
         string kind, object payload, Func<string, bool> onLine, CancellationToken cancellationToken,
         bool exclusive = true, ElevatedJobHandle? handle = null, bool allowStart = true)
     {
-        // A job that may not start the helper never enters the start sequence: if the helper ended right
-        // after the check, that sequence would launch it and raise the prompt this flag exists to prevent.
-        // A drop after the check is caught by the session capture below.
+        // A job that may not start the helper never enters the start sequence: if the helper ended right after
+        // the check, that sequence would launch it and raise the prompt this flag prevents. A drop after the
+        // check is caught by the session capture below.
         if (!allowStart)
         {
             if (!IsRunning)
@@ -542,8 +530,8 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
             return false;
         }
 
-        // Captured NOW, not read again later: a restart mid-wait replaces the field with a fresh instance
-        // for the NEW session, and this conversation belongs to the one that was actually just ensured.
+        // Captured now, not read again: a restart mid-wait replaces the field for the new session, and this
+        // conversation belongs to the session just ensured.
         var sessionEnded = _sessionEnded;
         var generation = _generation;
 
@@ -551,9 +539,8 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
         var conversation = new Conversation(onLine);
         _inFlight[id] = conversation;
 
-        // Fast path: the session could have died in the instant between EnsureStartedAsync returning and
-        // the line above, the wait below covers this regardless, but there is no reason to wait for it
-        // when it already happened.
+        // The session could have died between EnsureStartedAsync returning and this line. The wait below covers
+        // it, but there is no reason to wait when it already happened.
         if (!IsRunning)
             conversation.Finished.TrySetResult(false);
 
@@ -562,22 +549,20 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
             await _sendGate.WaitAsync(cancellationToken);
             try
             {
-                // The generation check is what stops this conversation being sent into a DIFFERENT
-                // session than the one `sessionEnded` above is tracking: without it, a restart landing
-                // between capturing `sessionEnded` and this write would pass `IsRunning`/`_writer` (both
-                // now the NEW session's) and hand the job to the new worker anyway, while this call still
-                // waits on the OLD, already-completed `sessionEnded`, returns a false "failed" the instant
-                // `Task.WhenAny` sees it, and removes the conversation before the new worker's real reply
-                // ever arrives (silently dropped by PumpAsync, since nothing is waiting on `id` any more).
+                // The generation check stops this conversation being sent into a different session than the one
+                // sessionEnded tracks. Without it, a restart between capturing sessionEnded and this write would pass
+                // IsRunning and _writer (now the new session's), hand the job to the new worker, and still wait on the
+                // old, already-completed sessionEnded: the call would return a false "failed" and remove the
+                // conversation before the new worker's reply arrives.
                 if (!IsRunning || _writer is null || _generation != generation)
                     return false;
 
                 var envelope = JsonSerializer.Serialize(new { id, kind, exclusive, payload }, JsonOptions);
 
-                // Checked BEFORE the write and never passed into it: a cancel that lands mid-write would
-                // leave half a line on the pipe, and the worker ends the whole session on a line it cannot
-                // parse. Once the line is out, the cancel registered below is what tells the worker; a
-                // token that fired during the write runs that callback the moment it is registered.
+                // Checked before the write and never passed into it: a cancel landing mid-write would leave half a line
+                // on the pipe, and the worker ends the session on a line it cannot parse. Once the line is out, the
+                // cancel registered below tells the worker; a token that fired during the write runs that callback as
+                // soon as it is registered.
                 cancellationToken.ThrowIfCancellationRequested();
                 await _writer.WriteLineAsync(envelope.AsMemory(), CancellationToken.None);
             }
@@ -586,20 +571,16 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
                 _sendGate.Release();
             }
 
-            // Both of these are wired up AFTER the job went out, and deliberately so: a control message that
-            // overtook its own job would name an id the worker has never heard of, be discarded, and the
-            // batch would then run to the end anyway, a stop that does not stop, a hold that does not hold.
-            // Attaching the handle can send a "pause" straight away (the user held the run while the
-            // previous target was still finishing), so it carries exactly the same risk as the stop below.
+            // Wired up after the job went out: a control message that overtook its job would name an id the worker
+            // has not heard of and be discarded, so a stop would not stop and a hold would not hold. Attaching the
+            // handle can send a "pause" straight away, so it carries the same risk as the stop below.
             handle?.Attach(this, id);
             using var stopOnCancel = cancellationToken.Register(() => _ = Background.Run(SendControlAsync(id, "cancel"), logging, "cancel control send"));
 
-            // The wait itself stays un-cancellable. The worker owns what it was handed and always answers,
-            // walking away would leave its replies arriving with nobody to read them, which is what left the
-            // queue stuck. Stopping means TELLING it to stop, above, and then waiting for it to say it did.
-            // `sessionEnded` is the backstop: if the session dies before this conversation's own Finished
-            // is ever completed by PumpAsync (the race described on `_sessionEnded`'s own doc comment),
-            // nothing else would ever unblock this wait.
+            // The wait itself stays un-cancellable. The worker owns what it was handed and always answers; walking
+            // away would leave its replies with nobody to read them. Stopping means telling it to stop, above, and
+            // waiting for it to say so. sessionEnded is the backstop if the session dies before the conversation's
+            // own Finished is completed (see _sessionEnded).
             await Task.WhenAny(conversation.Finished.Task, sessionEnded.Task);
             return conversation.Finished.Task.IsCompleted && await conversation.Finished.Task;
         }
@@ -616,11 +597,11 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
     }
 
     /// <summary>
-    /// Tells the helper to stop or hold a job it is already running, or to stop just ONE item
-    /// inside it (<paramref name="itemSourceId"/>/<paramref name="itemId"/> given for "cancel-item" only).
-    /// Sent on the same pipe as the job, but as a non-exclusive line the worker answers on its read loop,
-    /// queueing it behind the exclusive slot would mean waiting for the very job it is meant to stop.
-    /// Never throws: this runs from a cancellation callback, where an exception has nowhere to go.
+    /// Tells the helper to stop or hold a job it is already running, or to stop just one item inside it
+    /// (<paramref name="itemSourceId"/>/<paramref name="itemId"/> given for "cancel-item" only). Sent on the
+    /// same pipe as the job, but as a non-exclusive line the worker answers on its read loop: queueing it
+    /// behind the exclusive slot would mean waiting for the very job it is meant to stop. Never throws: this
+    /// runs from a cancellation callback, where an exception has nowhere to go.
     /// </summary>
     internal async Task SendControlAsync(string jobId, string action, string? itemSourceId = null, string? itemId = null)
     {
@@ -677,30 +658,28 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
 
     /// <summary>
     /// Closing the pipe is the whole shutdown protocol: the worker's next read returns end-of-stream and it
-    /// exits. That also covers the case a farewell message never could, the app being killed. The
-    /// semaphores, in turn, are deliberately NOT disposed here: shutdown can land while a job is still
-    /// waiting on one, and disposing it out from under that wait throws where the wait happens. Neither
-    /// holds an unmanaged handle (no AvailableWaitHandle is ever touched), so there is nothing to release.
+    /// exits, which also covers the app being killed. The semaphores are deliberately not disposed: shutdown
+    /// can land while a job waits on one, and disposing it would throw there. Neither holds an unmanaged
+    /// handle (no AvailableWaitHandle is touched), so there is nothing to release.
     /// </summary>
     public ValueTask DisposeAsync() => new(ReleaseAsync());
 
     /// <summary>
-    /// Lets go of one helper session. Never throws, it runs on shutdown and on restart alike.
-    /// Disposing a stream against a pipe a dead worker already broke can throw, so every disposal
-    /// is guarded on its own and the fields are cleared in <c>finally</c>: an unguarded failure here
-    /// would leave stale, half-torn-down state that fails the NEXT restart attempt too.
+    /// Lets go of one helper session. Never throws, since it runs on shutdown and restart alike. Disposing a
+    /// stream against a pipe a dead worker already broke can throw, so every disposal is guarded on its own
+    /// and the fields are cleared in <c>finally</c>; otherwise stale state would fail the next restart too.
     /// </summary>
     private async Task ReleaseAsync()
     {
         SetRunning(false);
 
-        // An explicit release (shutdown, restart) can land before PumpAsync's own read even notices the
-        // pipe is gone, a caller waiting in RunAsync must not depend on that race resolving in time.
+        // An explicit release can land before PumpAsync's read notices the pipe is gone; a caller waiting in
+        // RunAsync must not depend on that race.
         _sessionEnded.TrySetResult(false);
 
         // Taken before the writer goes away: a control line being written right now must finish (or the pipe
         // must break) rather than meet a disposed writer. Bounded, because a write stuck on a pipe nobody reads
-        // is exactly what disposing the pipe below ends.
+        // is what disposing the pipe below ends.
         var gateHeld = await _sendGate.WaitAsync(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
         try
         {
