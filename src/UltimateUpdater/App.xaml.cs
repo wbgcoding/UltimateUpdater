@@ -603,7 +603,7 @@ public partial class App : Application
         if (_isExiting)
             return;
 
-        if (mainViewModel.WorkIsRunning || DefragRunState.IsRunning)
+        if (mainViewModel.WorkIsRunning)
         {
             LogRefusedCloseRequest();
             return;
