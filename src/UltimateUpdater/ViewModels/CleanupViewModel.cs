@@ -488,8 +488,7 @@ public partial class CleanupViewModel : ObservableObject
             return;
         }
 
-        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "rstrui.exe");
-        UriLauncher.LaunchDetached(path, _logging);
+        RestorePointService.OpenWindowsDialog(_logging);
     }
 
     /// <summary>Called once by the window's own first-rendered-frame event; logs how long the whole open

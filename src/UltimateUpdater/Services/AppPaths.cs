@@ -400,7 +400,7 @@ public static class AppPaths
 
     private static void CloseMigrationMarker(string marker)
     {
-        TryDeleteFile(marker);
+        FileDeletion.TryDelete(marker);
         if (!File.Exists(marker))
             return;
 
@@ -412,17 +412,6 @@ public static class AppPaths
         {
             LegacyDataFolderMigrationFailure =
                 $"The migration marker '{marker}' could not be removed ({ex.Message}); delete it so the next start does not copy the old data again.";
-        }
-    }
-
-    private static void TryDeleteFile(string path)
-    {
-        try
-        {
-            File.Delete(path);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
         }
     }
 

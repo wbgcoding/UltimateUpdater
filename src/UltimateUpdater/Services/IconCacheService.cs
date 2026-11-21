@@ -623,7 +623,7 @@ public sealed class IconCacheService
         {
             // Our own cache file, but not a decodable image (truncated write, disk damage). Dropping it
             // lets the next lookup re-resolve the icon instead of failing on the same bytes forever.
-            TryDeletePath(path);
+            FileDeletion.TryDelete(path);
             return null;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -657,18 +657,6 @@ public sealed class IconCacheService
         encoder.Frames.Add(BitmapFrame.Create(bitmap));
 
         AtomicFile.Write(path, encoder.Save);
-    }
-
-    private static void TryDeletePath(string path)
-    {
-        try
-        {
-            File.Delete(path);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // Best-effort housekeeping only.
-        }
     }
 
     /// <summary>Runs from the constructor and periodically from a write (see

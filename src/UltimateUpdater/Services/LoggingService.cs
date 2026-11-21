@@ -731,7 +731,7 @@ public sealed class LoggingService
             }
             catch
             {
-                TryDelete(temporaryPath);
+                FileDeletion.TryDelete(temporaryPath);
                 throw;
             }
 
@@ -742,7 +742,7 @@ public sealed class LoggingService
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 // The original stays, so the archive just made would be a duplicate of the next attempt's.
-                TryDelete(zipPath);
+                FileDeletion.TryDelete(zipPath);
                 return false;
             }
 
@@ -753,17 +753,6 @@ public sealed class LoggingService
             // Best-effort: the source file is left in place and simply tried again later,
             // never worth losing the log entry, or the app itself, over a failed archive.
             return false;
-        }
-    }
-
-    private static void TryDelete(string path)
-    {
-        try
-        {
-            File.Delete(path);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
         }
     }
 }

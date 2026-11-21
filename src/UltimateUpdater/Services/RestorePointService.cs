@@ -48,4 +48,9 @@ public static class RestorePointService
             return false;
         }
     }
+
+    /// <summary>Opens Windows' own restore point dialog by its full System32 path, never through %PATH%.</summary>
+    public static void OpenWindowsDialog(LoggingService logging) =>
+        UriLauncher.LaunchDetached(
+            System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "rstrui.exe"), logging);
 }

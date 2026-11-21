@@ -2,10 +2,8 @@ using System.IO;
 
 namespace UltimateUpdater.Services;
 
-/// <summary>Shared by every "delete this file, one locked/missing file must not abort the caller" site
-/// (<c>IconCacheService</c>, <c>SelfUpdateService</c>, <c>RegistryBackupService</c> and
-/// <c>DriverSources</c> all had byte-identical copies of this before). <paramref name="onFailed"/> lets a
-/// caller log with its own context; the other three stay silent, matching their prior behavior.</summary>
+/// <summary>Best-effort file deletes: a locked or missing file never aborts the caller.
+/// <c>onFailed</c> lets a caller log the failure with its own context.</summary>
 internal static class FileDeletion
 {
     internal static void TryDelete(string path, Action<Exception>? onFailed = null)

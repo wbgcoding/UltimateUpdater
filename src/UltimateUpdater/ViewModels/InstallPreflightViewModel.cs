@@ -100,7 +100,6 @@ public sealed partial class InstallPreflightViewModel : ObservableObject
             return;
         }
 
-        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "rstrui.exe");
-        UriLauncher.LaunchDetached(path, _logging);
+        RestorePointService.OpenWindowsDialog(_logging);
     }
 }
