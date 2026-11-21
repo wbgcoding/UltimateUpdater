@@ -870,7 +870,10 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
     /// <summary>Returns null when the module path is unusable, so the caller can fall back.</summary>
     private async Task<IReadOnlyList<WingetUpgradeEntry>?> ScanViaModuleAsync(CancellationToken cancellationToken)
     {
+        // Windows PowerShell writes to a redirected pipe in the OEM code page, which would garble any
+        // non-ASCII package name before it reaches the UTF-8 reader.
         const string script =
+            "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; " +
             "$ErrorActionPreference='Stop'; " +
             "Import-Module Microsoft.WinGet.Client; " +
             "Get-WinGetPackage | Where-Object { $_.IsUpdateAvailable } | " +
