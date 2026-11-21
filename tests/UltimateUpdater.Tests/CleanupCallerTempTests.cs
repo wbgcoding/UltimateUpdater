@@ -123,6 +123,21 @@ public class CleanupCallerTempTests : IDisposable
         Assert.Empty(directories);
     }
 
+    [Fact]
+    public void A_profile_temp_that_is_a_junction_is_never_offered()
+    {
+        var otherTemp = ProfileTemp("someoneelse");
+        var elsewhere = Path.Combine(_usersRoot, "elsewhere");
+        Directory.CreateDirectory(elsewhere);
+        var linkedLocal = Path.Combine(_usersRoot, "linked", "AppData", "Local");
+        Directory.CreateDirectory(linkedLocal);
+        CreateJunction(Path.Combine(linkedLocal, "Temp"), elsewhere);
+
+        var directories = AllUsersTemp(new CleanupCommand(), null, _usersRoot);
+
+        Assert.Equal([otherTemp], directories);
+    }
+
     [Theory]
     [InlineData(@"\\fileserver.invalid\share\Users\someone")]
     [InlineData(@"\\?\C:\Users")]
