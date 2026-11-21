@@ -103,10 +103,57 @@ public class CleanupWorkerBackupFolderTests : IDisposable
         Assert.Equal(fallback, chosen);
     }
 
+    [Fact]
+    public void A_folder_behind_a_junction_falls_back()
+    {
+        var real = Path.Combine(_root, "real");
+        Directory.CreateDirectory(real);
+        var link = Path.Combine(_root, "link");
+        using (var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{real}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+        })!)
+        {
+            Assert.True(mklink.WaitForExit(60_000));
+            Assert.Equal(0, mklink.ExitCode);
+        }
+
+        var fallback = Path.Combine(_root, "default");
+
+        try
+        {
+            var chosen = CleanupWorker.ChooseRegistryBackupFolder(
+                Path.Combine(link, "backups"), fallback, new LoggingService(), _ => false);
+
+            Assert.Equal(fallback, chosen);
+        }
+        finally
+        {
+            Directory.Delete(link);
+        }
+    }
+
+    [Fact]
+    public void A_folder_outside_the_profile_falls_back()
+    {
+        var outside = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "wu-test-" + Guid.NewGuid());
+        var fallback = Path.Combine(_root, "default");
+
+        var chosen = CleanupWorker.ChooseRegistryBackupFolder(outside, fallback, new LoggingService(), _ => false);
+
+        Assert.Equal(fallback, chosen);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("relative\\backups")]
     [InlineData("\\\\server\\share\\backups")]
+    [InlineData("//server/share/backups")]
     public void An_empty_relative_or_unreachable_folder_falls_back(string requested)
     {
         var fallback = Path.Combine(_root, "default");

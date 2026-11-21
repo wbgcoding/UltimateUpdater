@@ -401,8 +401,10 @@ public static class CleanupWorker
 
         try
         {
-            // Drive-letter paths only: a UNC or device path is not a local folder to probe as admin.
-            if (!Path.IsPathFullyQualified(requested) || requested.StartsWith(@"\\", StringComparison.Ordinal))
+            // A local, link-free folder inside this account's profile only: a share, a link or a spot outside
+            // the profile is not somewhere the backup may be written to or pruned in, and the backup refuses
+            // it later anyway. Rejected here it falls back to the default instead of failing the run.
+            if (!CleanupSafety.IsLocalPathWithoutLinks(requested) || !RegistryBackupService.IsWithinUserProfile(requested))
                 return RejectBackupFolder(requested, workerDefault, logging);
 
             var full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(requested));
