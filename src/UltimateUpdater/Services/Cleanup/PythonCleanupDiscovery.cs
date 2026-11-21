@@ -55,8 +55,11 @@ public static class PythonCleanupDiscovery
             if (sitePackages is null)
                 continue;
 
-            foreach (var directory in PythonInterpreters.FindBrokenInstallLeftovers(sitePackages, logSkip: logSkip))
+            foreach (var directory in PythonInterpreters.FindBrokenInstallLeftovers(sitePackages, utcNow, logSkip))
             {
+                if (IsLink(directory))
+                    continue;
+
                 var size = measure
                     ? DirectorySizeWalker.Measure(directory, DirectorySizeWalker.DefaultMaxDepth, MaxFilesScannedPerCandidate)
                     : 0;

@@ -661,6 +661,25 @@ public class PythonCleanupDiscoveryTests : IDisposable
     }
 
     [Fact]
+    public void A_tilde_folder_that_is_a_junction_in_a_registered_interpreter_is_not_offered()
+    {
+        var interpreterRoot = CreateInterpreter("Python313");
+        var sitePackages = Path.Combine(interpreterRoot, "Lib", "site-packages");
+        var target = Path.Combine(_root, "elsewhere-interpreter");
+        Directory.CreateDirectory(target);
+        File.WriteAllText(Path.Combine(target, "keep.txt"), "x");
+        MakeStale(target);
+        CreateJunction(Path.Combine(sitePackages, "~ip"), target);
+
+        var registry = new FakeRegistry().AddTag(HkcuRoot, "3.13", Path.Combine(interpreterRoot, "python.exe"));
+
+        // A clock three days ahead makes the junction itself old enough, so only the link rule can keep it.
+        var later = DateTime.UtcNow.AddDays(3);
+        Assert.Empty(PythonCleanupDiscovery.DiscoverPipLeftovers(registry, utcNow: later));
+        Assert.True(File.Exists(Path.Combine(target, "keep.txt")));
+    }
+
+    [Fact]
     public void A_version_folder_that_is_a_junction_is_not_searched()
     {
         var roaming = Path.Combine(_root, "Roaming");
