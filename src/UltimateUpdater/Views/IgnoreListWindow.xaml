@@ -53,10 +53,9 @@
                                                TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
                                                ToolTip="{Binding Name}"
                                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                                    <!-- IsKnownPackage false = the package is not in the current scan;
-                                         the item asked for a note here, but the Copy section gives no
-                                         string for it, so this is styled muted/italic instead of adding
-                                         invented text (see IgnoreListViewModel's own doc comment). -->
+                                    <!-- IsKnownPackage false = the package is not in the current scan. The Copy
+                                         section has no string for it, so it is styled muted and italic instead of
+                                         inventing text (see IgnoreListViewModel's doc comment). -->
                                     <TextBlock Text="{Binding VersionText}" FontSize="12">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">

@@ -231,9 +231,9 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <!-- Empty state: the header button that opens this window only shows once HasHistory is true, so
-             this is unreachable through normal use today, kept anyway (same convention HistoryWindow
-             uses for its own empty state) for whatever later opens this window some other way. -->
+        <!-- Empty state: the header button that opens this window only shows once HasHistory is true, so this is
+             not reachable today. Kept for any other way of opening the window, like HistoryWindow's own empty
+             state. -->
         <StackPanel x:Name="CleanupHistoryEmptyState" Grid.Row="3" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="320"
                     Visibility="{Binding HasNoHistory, Converter={StaticResource BoolToVisibility}}">
             <ui:SymbolIcon Symbol="History24" FontSize="40" HorizontalAlignment="Center"

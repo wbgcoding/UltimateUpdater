@@ -68,9 +68,8 @@
         <!-- Search plus filters that read as buttons: time range, failed-only, and one per source. -->
         <StackPanel Grid.Row="1" Margin="24,4,24,12"
                     Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
-            <!-- Search and the range chips share one line: the row beside the search box was empty while
-                 the filters sat underneath it, so the panel was two lines tall for one line of content.
-                 The chips WRAP, so a narrow window still gets its second line rather than clipping them. -->
+            <!-- Search and the range chips share one line. The chips wrap, so a narrow window gets a second line
+                 instead of clipping them. -->
             <DockPanel LastChildFill="True">
                 <ui:TextBox DockPanel.Dock="Left" Width="280" Margin="0,0,12,0"
                             VerticalAlignment="Center"
@@ -155,16 +154,13 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Header columns must stay in step with the row template below, both pull from the
-                         same App.xaml GridLength resources, so the two can never drift apart again. The
-                         five fixed ones (When/Source/Version/Size/Result: 130+110+170+90+110) add up to
-                         610, plus the trailing 28px details column, 638; that is why the window's MinWidth
-                         is 838 and not 638: 152 is the star Name column's own minimum, 48 the card's side
-                         insets, and at 638
-                         it was squeezed to nothing with the right-hand cells clipped, horizontal scrollbar
-                         disabled, leaving no way to read them. The trailing details column carries no
-                         header content of its own; it exists only so the row template's details-button
-                         column doesn't shift columns 0-5 out of step with the header above them. -->
+                    <!-- Header columns must stay in step with the row template below, so both pull from the same
+                         App.xaml GridLength resources. The five fixed ones (When/Source/Version/Size/Result:
+                         130+110+170+90+110) add up to 610, plus the trailing 28px details column, 638. The
+                         window's MinWidth is 838 because the star Name column needs 152 and the card's side
+                         insets take 48; below that the right-hand cells clip with no horizontal scrollbar. The
+                         trailing details column has no header content; it only keeps the row's details-button
+                         column from shifting columns 0-5 out of step with the header. -->
                     <Grid x:Name="HistoryHeaderRow" Grid.Row="0" Margin="16,12,16,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{DynamicResource HistoryColWidthWhen}"/>
@@ -293,12 +289,11 @@
 
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <!-- Columns 0-5 mirror the header grid's own widths exactly (same
-                                     StaticResource keys) so their offsets never drift apart. The details
-                                     button sits in its own trailing column instead of sharing the Result
-                                     cell with the text, a shared StackPanel used to recentre the whole
-                                     group whenever the button appeared, so the text itself moved between
-                                     a failed row and a successful one. -->
+                                <!-- Columns 0-5 mirror the header grid's widths exactly (same StaticResource
+                                     keys). The details button sits in its own trailing column instead of sharing
+                                     the Result cell, because a shared StackPanel would recentre the whole group
+                                     when the button appears and move the text between a failed and a successful
+                                     row. -->
                                 <Grid x:Name="HistoryRow" Margin="0,7,0,7">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="{DynamicResource HistoryColWidthWhen}"/>
@@ -317,13 +312,11 @@
                                     <TextBlock Grid.Column="2" Style="{StaticResource HistoryCellCentered}" Text="{Binding SourceDisplay}"
                                                ToolTip="{Binding SourceDisplay}"
                                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-                                    <!-- Three-column lane mirroring the main table's own version lane:
-                                         from version right aligned, a fixed-width arrow cell, to version
-                                         left aligned, so the arrow sits at the same x position whatever
-                                         either version string looks like. Sized to the sum of the three
-                                         inner columns (62+14+62=138) and centred within the wider 170px
-                                         outer lane, same overall placement the single combined string
-                                         used to have. -->
+                                    <!-- Three-column lane mirroring the main table's version lane: from version
+                                         right aligned, a fixed-width arrow cell, to version left aligned, so the
+                                         arrow sits at the same x position whatever the version strings look like.
+                                         Sized to the sum of the three inner columns (62+14+62=138) and centred
+                                         within the wider 170px outer lane. -->
                                     <Grid Grid.Column="3" x:Name="HistoryVersionLane" Width="138" HorizontalAlignment="Center">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="{StaticResource HistoryVersionColWidthNumber}"/>

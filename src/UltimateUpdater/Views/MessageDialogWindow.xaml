@@ -49,12 +49,10 @@
                 <TextBlock Text="{Binding Headline}" FontSize="16" FontWeight="SemiBold"
                            TextWrapping="Wrap"
                            Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                <!-- A long body (e.g. the cleanup confirmation listing every selected
-                     item) used to have no height limit of its own, so it just kept growing the window
-                     past its MaxHeight="640", WPF then clips whatever does not fit rather than reflowing
-                     it, and since the button row is the LAST thing in the Grid, the window's own Abbrechen/
-                     Bereinigen buttons were what got clipped off. Scrolling the body instead of the whole
-                     window keeps the header and buttons always on screen and visible. -->
+                <!-- The body scrolls on its own: a long body (e.g. the cleanup confirmation listing every
+                     selected item) would otherwise grow the window past its MaxHeight="640", and WPF clips the
+                     overflow, which would cut off the button row as the last thing in the Grid. Scrolling the
+                     body keeps the header and buttons on screen. -->
                 <ScrollViewer MaxHeight="320" Margin="0,8,0,0"
                               VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                               Visibility="{Binding HasBody, Converter={StaticResource BoolToVisibility}}">

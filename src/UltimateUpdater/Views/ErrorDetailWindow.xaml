@@ -101,17 +101,13 @@
                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
         </StackPanel>
 
-        <!-- The raw tool output, selectable and read-only. Full width so its scrollbar sits flush
-             against the window's right edge; the text is padded in so it never sits under the bar.
-             A RichTextBox, not a plain TextBox: rung labels, exit codes and tool names are coloured
-             at render time (ErrorDetailFormatter) because plain output was hard to read, the
-             underlying string itself stays plain, unformatted, for the Copy button and for
-             history/log. Its FlowDocument is built once in code-behind from Detail, which never
-             changes after the window is constructed.
-
-             The app's own proportional font, not Consolas: every other number field (sizes, dates,
-             percentages) runs proportional, and the exit-code capsule carries its own tabular-figure
-             setting instead of leaning on a monospace font for the whole box. -->
+        <!-- The raw tool output, selectable and read-only. Full width so its scrollbar sits flush against the
+             window's right edge; the text is padded in so it never sits under the bar. A RichTextBox, not a plain
+             TextBox: rung labels, exit codes and tool names are coloured at render time (ErrorDetailFormatter),
+             while the underlying string stays plain for the Copy button and for history and log. Its FlowDocument
+             is built once in code-behind from Detail, which never changes after construction. The app's
+             proportional font, not Consolas: every other number field runs proportional, and the exit-code
+             capsule carries its own tabular-figure setting. -->
         <Border x:Name="OutputBoxBorder" Grid.Row="2" MinHeight="140" BorderThickness="0,1,0,1"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 Background="{DynamicResource ControlFillColorDefaultBrush}">
@@ -121,17 +117,12 @@
                  content, MinHeight below gives it a sensible floor so a one-line failure still shows a real
                  box rather than a sliver, and the RichTextBox's own MaxHeight below is the cap that makes a
                  long output scroll internally instead of growing the row without limit. -->
-            <!-- Same as ChangelogWindow: Visible, not Auto, so the scrollbar is not invisible until the first mouse move. Visible
-                 ALONE was not enough and measurably so: WPF-UI applies its own implicit Style to every
-                 plain (non ui:-prefixed) TextBox/RichTextBox app-wide, and that style's ControlTemplate
-                 hosts an overlay-style scrollbar that stayed invisible regardless of
-                 VerticalScrollBarVisibility, a render-harness screenshot with real overflowing content
-                 (ExtentHeight > ViewportHeight) showed a fully uniform-colour right edge, pixel-sampled,
-                 no track at all. Style="{x:Null}" reverts the WHOLE control to the framework's own default
-                 TextBox/RichTextBox style+template (Template="{x:Null}" alone left the Style's other
-                 setters fighting a template they no longer match, which blanked the text entirely), same
-                 idea as MainWindow's Style="{x:Null}" on an explicit ScrollViewer, just at the control
-                 level since there is no ScrollViewer element to target directly here. -->
+            <!-- Visible, not Auto, so the scrollbar is shown from the start. WPF-UI's implicit TextBox style
+                 hosts an overlay scrollbar that stays invisible whatever VerticalScrollBarVisibility says.
+                 Style="{x:Null}" reverts the whole control to the framework's default style and template
+                 together; clearing only the Template leaves the style's other setters fighting a template they no
+                 longer match and blanks the text. Same idea as MainWindow's Style="{x:Null}" on a ScrollViewer,
+                 applied at the control level because there is no ScrollViewer element here. -->
             <RichTextBox x:Name="OutputBox" Style="{x:Null}" MaxHeight="300"
                          IsReadOnly="True" IsReadOnlyCaretVisible="False"
                          FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12"
@@ -148,9 +139,9 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <!-- Retrying interactively is offered only from the row's own context menu now (one
-                 visible place per action); shown only for a failure this app's own explainer
-                 classified as interactively maybe fixable, see InstallErrorExplainer.AllowsInteractiveRetry. -->
+            <!-- Retrying interactively is offered only from the row's context menu (one visible place per
+                 action); shown only for a failure the app's explainer classified as possibly fixable
+                 interactively, see InstallErrorExplainer.AllowsInteractiveRetry. -->
             <TextBlock Grid.Row="0" HorizontalAlignment="Right" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="11"
                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                        Text="{Binding Loc[ErrorDetailRetryInMenu]}"
@@ -171,9 +162,8 @@
                            Icon="{ui:SymbolIcon FolderOpen24}"
                            ToolTip="{Binding LogFolder}"
                            Content="{Binding Loc[ErrorDetailOpenLogFolder]}"/>
-                <!-- Relabeled from the generic ErrorDetailCopy (still used by
-                     MessageDialogWindow's own copy button) since this one now copies a whole formatted
-                     report, not just the raw output text. -->
+                <!-- Copies a whole formatted report, not just the raw output text, so it has its own label
+                     instead of the generic ErrorDetailCopy. -->
                 <ui:Button Command="{Binding CopyCommand}" Margin="0,0,8,0"
                            Icon="{ui:SymbolIcon Copy24}"
                            Content="{Binding Loc[ErrorCopyReport]}"/>

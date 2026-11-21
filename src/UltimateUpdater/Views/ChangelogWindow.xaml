@@ -53,25 +53,18 @@
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
         </StackPanel>
 
-        <!-- The changelog text, selectable and read-only, same surface treatment as the error-detail
-             dialog. This window is only ever opened when there IS text (a link with no text gets the
-             small confirmation dialog instead), so HasText is always true here; the Visibility binding
-             is kept as a defensive fallback rather than an assumed guarantee. -->
+        <!-- The changelog text, selectable and read-only, same surface treatment as the error-detail dialog. The
+             window only opens when there is text, so the Visibility binding is a defensive fallback. -->
         <Border Grid.Row="2" BorderThickness="0,1,0,1"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 Background="{DynamicResource ControlFillColorDefaultBrush}"
                 Visibility="{Binding HasText, Converter={StaticResource BoolToVisibility}}">
-            <!-- Visible, not Auto, a scrollbar invisible until the first mouse move
-                 gave no hint the text kept going. Visible ALONE measurably did not work: WPF-UI applies
-                 its own implicit Style to every plain TextBox app-wide, whose ControlTemplate hosts an
-                 overlay-style scrollbar that stayed invisible regardless of VerticalScrollBarVisibility,
-                 a render-harness screenshot with real overflowing content (ExtentHeight > ViewportHeight)
-                 came back with a fully uniform-colour right edge, pixel-sampled, no track at all.
-                 Style="{x:Null}" reverts the WHOLE control to the framework's own default TextBox style
-                 and template together (Template="{x:Null}" alone left the Style's other setters fighting
-                 a template they no longer match, which blanked the text entirely), same idea as
-                 MainWindow's Style="{x:Null}" on an explicit ScrollViewer, just at the control level since
-                 there is no ScrollViewer element to target directly here. -->
+            <!-- Visible, not Auto, so the scrollbar is shown from the start. WPF-UI's implicit TextBox style
+                 hosts an overlay scrollbar that stays invisible whatever VerticalScrollBarVisibility says.
+                 Style="{x:Null}" reverts the whole control to the framework's default style and template
+                 together; clearing only the Template leaves the style's other setters fighting a template they no
+                 longer match and blanks the text. Same idea as MainWindow's Style="{x:Null}" on a ScrollViewer,
+                 applied at the control level because there is no ScrollViewer element here. -->
             <TextBox x:Name="ChangelogTextBox" Style="{x:Null}" Text="{Binding Text, Mode=OneWay}"
                      IsReadOnly="True" IsReadOnlyCaretVisible="False"
                      FontSize="13" TextWrapping="Wrap" MaxHeight="373"

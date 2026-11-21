@@ -44,9 +44,9 @@
                             <StopStoryboard BeginStoryboardName="Spin"/>
                         </MultiDataTrigger.ExitActions>
                     </MultiDataTrigger>
-                    <!-- IsVisible stays True while the window is minimized, so pause the spin there too. Without
-                         a window ancestor (a popup, an offscreen render) the binding simply never matches and the
-                         spinner behaves as before. Pausing a spin that has not begun is a no-op. -->
+                    <!-- IsVisible stays True while the window is minimized, so the spin pauses there too. Without
+                         a window ancestor (a popup, an offscreen render) the binding never matches and the
+                         spinner just keeps running. Pausing a spin that has not begun is a no-op. -->
                     <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Minimized">
                         <DataTrigger.EnterActions>
                             <PauseStoryboard BeginStoryboardName="Spin"/>
