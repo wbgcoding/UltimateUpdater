@@ -680,6 +680,15 @@ public partial class MainViewModel
         // chosen column.
         UpdatesView.SortDescriptions.Add(
             new SortDescription(nameof(UpdateRowViewModel.IsIgnored), ListSortDirection.Ascending));
+        var hasValue = SortColumn switch
+        {
+            "date" => nameof(UpdateRowViewModel.HasPublishDate),
+            "size" => nameof(UpdateRowViewModel.HasDownloadSize),
+            "version" => nameof(UpdateRowViewModel.HasVersions),
+            _ => null,
+        };
+        if (hasValue is not null)
+            UpdatesView.SortDescriptions.Add(new SortDescription(hasValue, ListSortDirection.Descending));
         UpdatesView.SortDescriptions.Add(new SortDescription(key, direction));
     }
 

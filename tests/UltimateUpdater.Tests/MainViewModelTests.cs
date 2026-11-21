@@ -42,6 +42,46 @@ public partial class MainViewModelTests
     }
 
     [Fact]
+    public void Version_sort_is_numeric_and_keeps_rows_without_a_version_last_in_both_directions()
+    {
+        WpfHarness.OnUiThread(() =>
+        {
+            var viewModel = Create();
+            UpdateItem Row(string id, string? version) => new()
+            {
+                Id = id, SourceId = "winget", Category = UpdateCategory.Software, Name = id,
+                InstalledVersion = "1.0", AvailableVersion = version,
+            };
+            viewModel.Updates.AddRange(new[]
+            {
+                new UpdateRowViewModel(Row("NoVersion", null)),
+                new UpdateRowViewModel(Row("Ten", "10.0")),
+                new UpdateRowViewModel(Row("Nine", "9.1")),
+            });
+
+            string Order() => string.Join(",", viewModel.UpdatesView.Cast<UpdateRowViewModel>()
+                .Where(row => row.Item.Id is "NoVersion" or "Ten" or "Nine").Select(row => row.Item.Id));
+
+            viewModel.SortByCommand.Execute("version");
+            Assert.False(viewModel.SortDescending);
+            Assert.Equal("Nine,Ten,NoVersion", Order());
+
+            viewModel.SortByCommand.Execute("version");
+            Assert.Equal("Ten,Nine,NoVersion", Order());
+        });
+    }
+
+    [Theory]
+    [InlineData("9.1", "10.0")]
+    [InlineData("1.2", "1.10")]
+    [InlineData("1.0", "1.0.1")]
+    [InlineData("v2", "v10")]
+    public void VersionSortKey_orders_versions_by_their_numbers(string lower, string higher)
+    {
+        Assert.True(string.CompareOrdinal(VersionSortKey.For(lower), VersionSortKey.For(higher)) < 0);
+    }
+
+    [Fact]
     public void GlyphFor_shows_nothing_for_an_inactive_sortable_column()
     {
         WpfHarness.OnUiThread(() =>

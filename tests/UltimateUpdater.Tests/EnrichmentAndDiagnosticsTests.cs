@@ -486,6 +486,30 @@ public class EnrichmentAndDiagnosticsTests
         Assert.Equal(1, publishDate!.Value.Month);
     }
 
+    /// <summary>A patch release of the same core ("1.2.0-patch1") is a different release than "1.2.0", even
+    /// when Packagist lists it first.</summary>
+    [Fact]
+    public void Packagist_version_does_not_match_a_pre_release_or_patch_of_a_stable_target()
+    {
+        const string json = """
+            {
+              "packages": {
+                "vendor/pkg": [
+                  { "version": "v1.2.0-patch1", "version_normalized": "1.2.0.0-patch1",
+                    "time": "2026-07-01T00:00:00+00:00", "dist": { "url": "https://example/patch.zip" } },
+                  { "version": "v1.2.0", "version_normalized": "1.2.0.0",
+                    "time": "2026-01-01T00:00:00+00:00", "dist": { "url": "https://example/stable.zip" } }
+                ]
+              }
+            }
+            """;
+
+        var (publishDate, downloadUrl) = PackageMetadataParsers.ParsePackagistVersion(json, "vendor/pkg", "1.2.0");
+
+        Assert.Equal("https://example/stable.zip", downloadUrl);
+        Assert.Equal(1, publishDate!.Value.Month);
+    }
+
     // Real manifest fetched live from ScoopInstaller/Main (raw.githubusercontent.com/.../bucket/7zip.json,
     // 2026-07-31), verifies the parser against scoop's actual schema, not a guessed shape.
     private const string ScoopSevenZipManifest = """
@@ -1015,7 +1039,10 @@ public class EnrichmentAndDiagnosticsTests
 
         Assert.True(dated.SortDate > undated.SortDate);
         Assert.Equal(0L, undated.SortSize);
-        Assert.Equal("1.1", dated.SortVersion);
+        Assert.Equal(VersionSortKey.For("1.1"), dated.SortVersion);
+        Assert.True(dated.HasPublishDate);
+        Assert.False(undated.HasPublishDate);
+        Assert.False(undated.HasDownloadSize);
     }
 
     [Fact]

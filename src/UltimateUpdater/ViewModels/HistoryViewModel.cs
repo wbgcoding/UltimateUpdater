@@ -55,6 +55,12 @@ public sealed partial class HistoryRowViewModel(
     /// alphabetic on the formatted text (which would put "1.2 GB" before "500 MB").</summary>
     public long SortSize => entry.SizeBytes ?? 0;
 
+    public bool HasSize => entry.SizeBytes is not null;
+
+    public string SortVersion => VersionSortKey.For(entry.ToVersion);
+
+    public bool HasToVersion => !string.IsNullOrWhiteSpace(entry.ToVersion);
+
     /// <summary>Same helper and culture the main table's own size column uses, so German shows a comma;
     /// a missing value (no size reported, or an entry from before this column existed) is a plain hyphen.</summary>
     public string SizeText => entry.SizeBytes is { } bytes ? ByteSize.Format(bytes) : "-";
@@ -488,13 +494,21 @@ public partial class HistoryViewModel : ObservableObject
         {
             "name" => nameof(HistoryRowViewModel.Name),
             "source" => nameof(HistoryRowViewModel.SourceDisplay),
-            "version" => nameof(HistoryRowViewModel.ToVersionText),
+            "version" => nameof(HistoryRowViewModel.SortVersion),
             "size" => nameof(HistoryRowViewModel.SortSize),
             "result" => nameof(HistoryRowViewModel.Result),
             _ => nameof(HistoryRowViewModel.SortWhen),
         };
+        var hasValue = SortColumn switch
+        {
+            "version" => nameof(HistoryRowViewModel.HasToVersion),
+            "size" => nameof(HistoryRowViewModel.HasSize),
+            _ => null,
+        };
 
         EntriesView.SortDescriptions.Clear();
+        if (hasValue is not null)
+            EntriesView.SortDescriptions.Add(new SortDescription(hasValue, ListSortDirection.Descending));
         EntriesView.SortDescriptions.Add(new SortDescription(
             key, SortDescending ? ListSortDirection.Descending : ListSortDirection.Ascending));
     }
