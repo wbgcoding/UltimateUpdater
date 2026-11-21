@@ -1081,12 +1081,27 @@ public static partial class RegistryBackupService
             return Path.Combine(backupFolder, $"{FilePrefix}{date} {time} ({n}).reg");
         }
 
+        // The plain name sorts first, so reusing it after a prune freed it would hand the newest backup of the
+        // day to the next prune. It is only used while the day has no backup at all.
         var basePath = Path.Combine(backupFolder, $"{FilePrefix}{date}.reg");
-        if (!File.Exists(basePath))
+        if (!File.Exists(basePath) && !HasBackupForDate(backupFolder, date))
             return basePath;
 
         var timeOnly = moment.ToString("HH-mm", CultureInfo.InvariantCulture);
         return Path.Combine(backupFolder, $"{FilePrefix}{date} {timeOnly}.reg");
+    }
+
+    private static bool HasBackupForDate(string backupFolder, string date)
+    {
+        try
+        {
+            return Directory.Exists(backupFolder)
+                && Directory.EnumerateFiles(backupFolder, $"{FilePrefix}{date}*.reg").Any();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return true;
+        }
     }
 
     /// <summary>The moment a backup file name stands for: its date, the time when the name carries one

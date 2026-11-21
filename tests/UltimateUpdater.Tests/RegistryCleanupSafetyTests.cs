@@ -285,6 +285,32 @@ public class RegistryBackupServiceTests
         }
     }
 
+    /// <summary>After retention pruned the day's plain-named first backup, a later backup of the same day
+    /// must not reuse that plain name: it sorts as the day's oldest and the prune would delete the file
+    /// that was just written.</summary>
+    [Fact]
+    public void A_pruned_plain_name_is_not_reused_while_timestamped_backups_of_that_day_remain()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), $"wu-regbackup-test-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(folder);
+        try
+        {
+            foreach (var time in new[] { "09-00", "10-00", "11-00" })
+                File.WriteAllText(Path.Combine(folder, $"ultimate updater registry backup 31.07.2026 {time}.reg"), "x");
+
+            var path = RegistryBackupService.BuildBackupPath(folder, new DateTime(2026, 7, 31, 12, 0, 0));
+            File.WriteAllText(path, "new");
+            RegistryBackupService.PruneOldBackups(folder, 3, new UltimateUpdater.Services.LoggingService());
+
+            Assert.EndsWith("ultimate updater registry backup 31.07.2026 12-00.reg", path);
+            Assert.True(File.Exists(path));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     /// <summary>
     /// two categories backed up in the same minute both built the same
     /// "date HH-mm.reg" name and the second silently overwrote the first. The collision suffix is what
