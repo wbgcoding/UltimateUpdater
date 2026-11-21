@@ -213,6 +213,15 @@ public class RegistryCleanupSafetyTests
         Assert.Equal(@"C:\Windows\System32\mscoree.dll",
             RegistryCleanupSafety.ExtractFilePath("\"C:\\Windows\\System32\\mscoree.dll\"", _ => true));
 
+    [Fact]
+    public void A_quoted_icon_index_is_stripped_unless_a_file_of_that_full_name_exists()
+    {
+        Assert.Equal(@"C:\Tools\app.exe",
+            RegistryCleanupSafety.ExtractFilePath("\"C:\\Tools\\app.exe,0\"", _ => false));
+        Assert.Equal(@"C:\Tools\build,2",
+            RegistryCleanupSafety.ExtractFilePath("\"C:\\Tools\\build,2\"", path => path == @"C:\Tools\build,2"));
+    }
+
     // ---- MSI product-code references (item 8.3) ----
 
     [Theory]

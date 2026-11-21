@@ -56,8 +56,12 @@ public static partial class RegistryCleanupSafety
             if (closing <= 1)
                 return null; // an unterminated quote is not a value we understand
 
-            // Windows reads a ",<index>" inside the quotes as an icon index too.
-            var quoted = UninstallEntryPaths.StripIconIndex(value[1..closing]);
+            // Windows reads a ",<index>" inside the quotes as an icon index too. A file whose own name ends that
+            // way is only kept when the stripped path is missing and the full one exists: existence keeps the entry.
+            var inQuotes = value[1..closing];
+            var quoted = UninstallEntryPaths.StripIconIndex(inQuotes);
+            if (quoted != inQuotes && IsConfidentlyQualified(inQuotes) && !fileExists(quoted) && fileExists(inQuotes))
+                quoted = inQuotes;
             return quoted.Length > 0 && IsConfidentlyQualified(quoted) ? quoted : null;
         }
 
