@@ -802,6 +802,9 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
   <data name="ScanFailed" xml:space="preserve">
     <value>Această sursă nu a putut fi verificată. Deschideți detaliile pentru motiv.</value>
   </data>
+  <data name="ScanSourceStillBusy" xml:space="preserve">
+    <value>Încă ocupată cu verificarea anterioară.</value>
+  </data>
   <data name="ScanStateWaiting" xml:space="preserve">
     <value>Se așteaptă…</value>
   </data>

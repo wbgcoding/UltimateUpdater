@@ -802,6 +802,9 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
   <data name="ScanFailed" xml:space="preserve">
     <value>Nie można było sprawdzić tego źródła. Otwórz szczegóły, aby poznać przyczynę.</value>
   </data>
+  <data name="ScanSourceStillBusy" xml:space="preserve">
+    <value>Nadal trwa poprzednie sprawdzanie.</value>
+  </data>
   <data name="ScanStateWaiting" xml:space="preserve">
     <value>Oczekiwanie…</value>
   </data>

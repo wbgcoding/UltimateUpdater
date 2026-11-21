@@ -802,6 +802,9 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
   <data name="ScanFailed" xml:space="preserve">
     <value>Deze bron kon niet worden gecontroleerd. Open de details voor de oorzaak.</value>
   </data>
+  <data name="ScanSourceStillBusy" xml:space="preserve">
+    <value>Nog bezig met de vorige controle.</value>
+  </data>
   <data name="ScanStateWaiting" xml:space="preserve">
     <value>Wachten…</value>
   </data>

@@ -802,6 +802,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="ScanFailed" xml:space="preserve">
     <value>无法检查此来源。打开详情查看原因。</value>
   </data>
+  <data name="ScanSourceStillBusy" xml:space="preserve">
+    <value>仍在处理上一次检查。</value>
+  </data>
   <data name="ScanStateWaiting" xml:space="preserve">
     <value>等待中…</value>
   </data>

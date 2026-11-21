@@ -802,6 +802,9 @@ This cannot be undone by Ultimate Updater.</value>
   <data name="ScanFailed" xml:space="preserve">
     <value>This source could not be checked. Open the details for the reason.</value>
   </data>
+  <data name="ScanSourceStillBusy" xml:space="preserve">
+    <value>Still busy with the previous scan.</value>
+  </data>
   <data name="ScanStateWaiting" xml:space="preserve">
     <value>Waiting…</value>
   </data>

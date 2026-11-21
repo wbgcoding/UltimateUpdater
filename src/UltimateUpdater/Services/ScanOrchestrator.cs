@@ -391,7 +391,6 @@ public sealed class ScanOrchestrator
         {
             status.State = ProviderScanState.Error;
             status.ErrorMessage = LocalizationService.Instance["ScanOfflineSource"];
-            status.Detail = "No internet connection.";
             Report(status, generation);
             return;
         }
@@ -419,8 +418,7 @@ public sealed class ScanOrchestrator
                 {
                     _logging.Warn($"Scan of '{source.Id}' skipped: its previous run has still not finished.");
                     status.State = ProviderScanState.Error;
-                    status.ErrorMessage = LocalizationService.Instance["ScanFailed"];
-                    status.Detail = "The previous scan of this source had not finished yet.";
+                    status.ErrorMessage = LocalizationService.Instance["ScanSourceStillBusy"];
                     Report(status, generation);
                     return;
                 }

@@ -802,6 +802,9 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
   <data name="ScanFailed" xml:space="preserve">
     <value>Não foi possível verificar esta fonte. Abra os detalhes para saber o motivo.</value>
   </data>
+  <data name="ScanSourceStillBusy" xml:space="preserve">
+    <value>Ainda ocupada com a verificação anterior.</value>
+  </data>
   <data name="ScanStateWaiting" xml:space="preserve">
     <value>Aguardando…</value>
   </data>

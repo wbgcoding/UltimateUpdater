@@ -802,6 +802,9 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
   <data name="ScanFailed" xml:space="preserve">
     <value>Impossibile controllare questa fonte. Apri i dettagli per conoscere il motivo.</value>
   </data>
+  <data name="ScanSourceStillBusy" xml:space="preserve">
+    <value>Ancora occupata con il controllo precedente.</value>
+  </data>
   <data name="ScanStateWaiting" xml:space="preserve">
     <value>In attesa…</value>
   </data>

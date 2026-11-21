@@ -802,6 +802,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="ScanFailed" xml:space="preserve">
     <value>このソースを確認できませんでした。詳細を開いて原因を確認してください。</value>
   </data>
+  <data name="ScanSourceStillBusy" xml:space="preserve">
+    <value>前回の確認がまだ終わっていません。</value>
+  </data>
   <data name="ScanStateWaiting" xml:space="preserve">
     <value>待機中…</value>
   </data>

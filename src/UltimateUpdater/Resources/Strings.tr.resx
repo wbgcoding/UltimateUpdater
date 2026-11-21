@@ -802,6 +802,9 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
   <data name="ScanFailed" xml:space="preserve">
     <value>Bu kaynak kontrol edilemedi. Nedeni için ayrıntıları açın.</value>
   </data>
+  <data name="ScanSourceStillBusy" xml:space="preserve">
+    <value>Önceki kontrol hâlâ sürüyor.</value>
+  </data>
   <data name="ScanStateWaiting" xml:space="preserve">
     <value>Bekleniyor…</value>
   </data>

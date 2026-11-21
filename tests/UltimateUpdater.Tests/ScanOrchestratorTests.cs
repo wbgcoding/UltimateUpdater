@@ -559,6 +559,8 @@ public class ScanOrchestratorTests
         Assert.Contains(found, i => i.SourceId == "wsl");
         var wingetStatus = statuses.Last(s => s.SourceId == "winget");
         Assert.Equal(ProviderScanState.Error, wingetStatus.State);
+        Assert.False(string.IsNullOrEmpty(wingetStatus.ErrorMessage));
+        Assert.True(string.IsNullOrEmpty(wingetStatus.Detail), "the localized message says it all; an English detail line must not follow it");
         Assert.Contains(statuses, s => s.SourceId == "wsl" && s.State == ProviderScanState.Done);
     }
 

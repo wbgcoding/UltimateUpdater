@@ -802,6 +802,9 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
   <data name="ScanFailed" xml:space="preserve">
     <value>Diese Quelle konnte nicht geprüft werden. Die Details zeigen den Grund.</value>
   </data>
+  <data name="ScanSourceStillBusy" xml:space="preserve">
+    <value>Noch mit der vorherigen Prüfung beschäftigt.</value>
+  </data>
   <data name="ScanStateWaiting" xml:space="preserve">
     <value>Wartet…</value>
   </data>
