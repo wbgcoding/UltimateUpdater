@@ -172,6 +172,14 @@ public class NvidiaCertificateSubjectTests
         Assert.False(NvidiaDriverSource.IsNvidiaOrganization(subject));
     }
 
+    /// <summary>A multi-valued component ahead of the organization must not hide it from the check.</summary>
+    [Fact]
+    public void A_multi_valued_component_ahead_of_the_organization_does_not_hide_it()
+    {
+        const string subject = "CN=NVIDIA Corporation+OU=Graphics, O=NVIDIA Corporation, L=Santa Clara, C=US";
+        Assert.True(NvidiaDriverSource.IsNvidiaOrganization(subject));
+    }
+
     [Fact]
     public void Malformed_subject_text_is_refused_rather_than_throwing()
     {

@@ -419,7 +419,7 @@ public sealed class NvidiaDriverSource : IUpdateSource
             // Authenticode signer, and it is used here purely to read the subject: no crypto operation
             // that its replacement guards against. Validity is already proven by TrustedBinary.IsSigned.
 #pragma warning disable SYSLIB0057
-            var certificate = X509Certificate.CreateFromSignedFile(path);
+            using var certificate = X509Certificate.CreateFromSignedFile(path);
 #pragma warning restore SYSLIB0057
             return IsNvidiaOrganization(certificate.Subject);
         }
@@ -437,7 +437,8 @@ public sealed class NvidiaDriverSource : IUpdateSource
         {
             var subjectName = new X500DistinguishedName(subject);
             return subjectName.EnumerateRelativeDistinguishedNames().Any(rdn =>
-                rdn.GetSingleElementType().Value == OrganizationNameOid
+                !rdn.HasMultipleElements
+                && rdn.GetSingleElementType().Value == OrganizationNameOid
                 && string.Equals(rdn.GetSingleElementValue(), NvidiaOrganizationName, StringComparison.Ordinal));
         }
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException
