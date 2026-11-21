@@ -91,7 +91,7 @@ public static class WingetUpgradeParser
         if (string.IsNullOrWhiteSpace(stdout))
             return results;
 
-        var lines = stdout.Replace("\r\n", "\n").Split('\n');
+        var lines = SplitTableLines(stdout);
         int[]? columnStarts = null;
         string? previousLine = null;
 
@@ -130,7 +130,7 @@ public static class WingetUpgradeParser
 
             // A real Id is one word: Publisher.Package, or a Microsoft Store product id with no dot at all.
             // This also filters the trailing summary lines.
-            if (!IsPackageId(id) || available.Length == 0)
+            if (!(IsPackageId(id) || IsShortenedId(id)) || available.Length == 0)
                 continue;
 
             // winget shortens a column that does not fit with '…', the Id too; a shortened Id names no
@@ -158,7 +158,7 @@ public static class WingetUpgradeParser
         if (string.IsNullOrWhiteSpace(stdout))
             return null;
 
-        var lines = stdout.Replace("\r\n", "\n").Split('\n');
+        var lines = SplitTableLines(stdout);
         int[]? columnStarts = null;
         string? previousLine = null;
         string? found = null;
@@ -212,7 +212,7 @@ public static class WingetUpgradeParser
         if (string.IsNullOrWhiteSpace(stdout))
             return null;
 
-        var lines = stdout.Replace("\r\n", "\n").Split('\n');
+        var lines = SplitTableLines(stdout);
         int[]? columnStarts = null;
         string? previousLine = null;
 
@@ -247,6 +247,19 @@ public static class WingetUpgradeParser
 
         return null;
     }
+
+    /// <summary>
+    /// The lines of a winget table. winget redraws its progress spinner with a bare carriage return, so
+    /// whatever precedes the last one on a line is a spinner frame, not table text.
+    /// </summary>
+    private static string[] SplitTableLines(string stdout) =>
+        stdout.Replace("\r\n", "\n").Split('\n')
+            .Select(line => line.LastIndexOf('\r') is var cr and >= 0 ? line[(cr + 1)..] : line)
+            .ToArray();
+
+    /// <summary>An Id winget cut short with '…' before it ever reached a dot: still one word, so not a summary line.</summary>
+    private static bool IsShortenedId(string id) =>
+        id.Contains('…') && !id.Any(char.IsWhiteSpace);
 
     private static bool IsPackageId(string id) =>
         id.Length > 0
@@ -486,7 +499,7 @@ public static class WingetUpgradeParser
             {
                 if (trimmed.StartsWith(label, StringComparison.OrdinalIgnoreCase))
                 {
-                    url = trimmed[label.Length..].Trim();
+                    url = UrlSafety.SafeHttpUrl(trimmed[label.Length..].Trim());
                     break;
                 }
             }

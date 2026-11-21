@@ -147,6 +147,56 @@ public class WingetUpgradeParserTests
         Assert.Equal("Microsoft.VisualStudio…", Assert.Single(reported));
     }
 
+    /// <summary>An Id shortened before its first dot (the publisher alone is already too long) carries no dot
+    /// either, yet it must still be reported so the full Id can be looked up.</summary>
+    [Fact]
+    public void ParseCliTable_reports_a_row_whose_id_was_shortened_before_its_first_dot()
+    {
+        const string table = """
+            Name             Id                  Version  Available  Source
+            ---------------------------------------------------------------
+            LibreOffice      TheDocumentFounda…  7.6.4    24.2.0     winget
+            Git              Git.Git             2.54.0   2.55.0     winget
+            """;
+        var reported = new List<string>();
+        var rows = new List<WingetUpgradeEntry>();
+
+        var entries = WingetUpgradeParser.ParseCliTable(table, reported.Add, rows.Add);
+
+        Assert.Equal("Git.Git", Assert.Single(entries).Id);
+        Assert.Equal("TheDocumentFounda…", Assert.Single(reported));
+        Assert.Equal("LibreOffice", Assert.Single(rows).Name);
+    }
+
+    /// <summary>Redirected winget writes its spinner frames separated by bare carriage returns, on the same
+    /// line the table header then starts on.</summary>
+    [Fact]
+    public void ParseCliTable_ignores_spinner_frames_ahead_of_the_header()
+    {
+        var table = "   - \r   \\ \r   | \r   / \r"
+            + "Name             Id                  Version  Available  Source\n"
+            + "---------------------------------------------------------------\n"
+            + "Git              Git.Git             2.54.0   2.55.0     winget\n"
+            + "Discord          Discord.Discord     1.0.9240 1.0.9248   winget\n";
+
+        var entries = WingetUpgradeParser.ParseCliTable(table);
+
+        Assert.Equal(["Git.Git", "Discord.Discord"], entries.Select(e => e.Id));
+        Assert.Equal("2.55.0", entries[0].AvailableVersion);
+        Assert.Equal("Git", entries[0].Name);
+    }
+
+    [Fact]
+    public void ParseListVersion_ignores_spinner_frames_ahead_of_the_header()
+    {
+        var list = "   - \r   \\ \r   | \r"
+            + "Name   Id        Version  Source\n"
+            + "------------------------------------\n"
+            + "Git    Git.Git   2.54.0   winget\n";
+
+        Assert.Equal("2.54.0", WingetUpgradeParser.ParseListVersion(list, "Git.Git"));
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -213,6 +263,19 @@ public class WingetUpgradeParserTests
 
         Assert.Equal("First line of the notes.\nSecond line.", body);
         Assert.Equal("https://example.com/releases/1.2.3", url);
+    }
+
+    /// <summary>The URL comes from a manifest anyone can submit; only http(s) may reach the row.</summary>
+    [Theory]
+    [InlineData("file:///C:/Windows/System32/calc.exe")]
+    [InlineData("ms-msdt:/id PCWDiagnostic")]
+    public void ParseShowReleaseNotes_drops_a_url_that_is_not_http(string url)
+    {
+        var show = "Found Sample [Sample.Sample]\nVersion: 1.2.3\nRelease Notes Url: " + url + "\nTags:\n  sample\n";
+
+        var (_, parsed) = WingetUpgradeParser.ParseShowReleaseNotes(show);
+
+        Assert.Null(parsed);
     }
 
     /// <summary>Most packages' manifests carry neither field, a real "nothing to show" answer.</summary>
