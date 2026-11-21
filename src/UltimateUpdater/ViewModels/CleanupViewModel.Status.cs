@@ -13,10 +13,7 @@ public partial class CleanupViewModel
     /// <summary>The areas finished so far in this run, oldest first; the last one feeds the "last done" line.</summary>
     private readonly List<CleanupItemViewModel> _doneOrder = [];
 
-    /// <summary>
-    /// The areas of the current or last run, in list order. Unlike the run's own working list it survives
-    /// the end of the run, so the finished summary still counts what the run got through.
-    /// </summary>
+    /// <summary>The areas of the current or last run, in list order; unlike the run's working list it survives the run, so the summary still counts what was done.</summary>
     public IReadOnlyList<CleanupItemViewModel> StepItems
     {
         get => _stepItems;
@@ -43,8 +40,7 @@ public partial class CleanupViewModel
         ? string.Format(Loc["CleanupLastDone"], _doneOrder[^1].Title, ByteSize.Format(_doneOrder[^1].FreedBytes))
         : string.Empty;
 
-    /// <summary>The path or command at work, cut in the middle to fit one line of the card: the start (drive,
-    /// program) and the end (file name) are the parts that tell it apart. The full text is the tooltip.</summary>
+    /// <summary>The path or command at work, cut in the middle to fit one line: the start (drive, program) and end (file name) tell it apart. The full text is the tooltip.</summary>
     public string CurrentPathText => TrimMiddle(CurrentDetailText, PathLineChars);
 
     // The card is 236 px wide and the line is monospace 11 px, about 6 px a character.

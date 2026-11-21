@@ -4,16 +4,13 @@ using UltimateUpdater.Services.Cleanup;
 
 namespace UltimateUpdater.ViewModels;
 
-// A read-only card showing what DISM's own AnalyzeComponentStore reports about the WinSxS
-// component store. No detail list, no selection, nothing this dialog deletes from here; the existing
-// Windows Disk Cleanup entry stays the only way to act on what it says.
+// A read-only card showing what DISM's AnalyzeComponentStore reports about the WinSxS component store. Nothing is deleted from here; Windows Disk Cleanup stays the only way to act on it.
 public partial class CleanupViewModel
 {
     [ObservableProperty]
     private bool isAnalyzingComponentStore;
 
-    /// <summary>Null before the first analysis of this session; every field of the record is
-    /// independently null after one that ran but could not read (or understand) a given line.</summary>
+    /// <summary>Null before the first analysis of this session; each field is null when an analysis ran but a line could not be read.</summary>
     [ObservableProperty]
     private ComponentStoreAnalysis? componentStoreResult;
 
@@ -31,15 +28,10 @@ public partial class CleanupViewModel
 
     public string ComponentStoreRecommendedText => Loc["CleanupComponentStoreRecommended"];
 
-    /// <summary>Whether a result (however incomplete) has come back at least once; the lines below the
-    /// description depend on this. An analysis DISM never finished in time counts as no result yet: a
-    /// slow Windows is no failure of this app, so the card stays as if nothing had been measured.</summary>
+    /// <summary>Whether a result (however incomplete) has come back; an analysis DISM never finished in time counts as none, since a slow Windows is no failure of this app.</summary>
     public bool HasComponentStoreResult => ComponentStoreResult is { TimedOut: false };
 
-    /// <summary>"{0} on disk, {1} shared with Windows"; either half falls back to a dash when DISM's own
-    /// output did not carry that one field, never a guess. When NEITHER carried, a run that
-    /// genuinely reported no sizes at all (rather than one this parser merely failed to read), the whole
-    /// line becomes a sentence instead of two dashes, which would read like a parsing failure.</summary>
+    /// <summary>"{0} on disk, {1} shared with Windows". A half DISM did not report falls back to a dash, never a guess; when neither was reported the line becomes a sentence instead of two dashes, which would read like a parse failure.</summary>
     public string ComponentStoreSizeText =>
         ComponentStoreResult is { ActualSizeBytes: null, SharedWithWindowsBytes: null }
             ? Loc["CleanupComponentStoreNoNumbers"]
@@ -50,12 +42,7 @@ public partial class CleanupViewModel
 
     public bool ShowComponentStoreRecommended => ComponentStoreResult?.CleanupRecommended == true;
 
-    /// <summary>
-    /// Starts the analysis on its own, but only where it costs nothing to ask: the process is elevated or
-    /// the app-wide helper already runs. Never raises a prompt and never starts the helper (a helper that
-    /// dropped out a moment ago just means no analysis now). A result already present is not measured
-    /// again, and one in flight is not doubled.
-    /// </summary>
+    /// <summary>Starts the analysis only where it costs nothing to ask: the process is elevated or the helper already runs. Never prompts and never starts the helper. A present result is not measured again and one in flight is not doubled.</summary>
     private void StartQuietComponentStoreAnalysis()
     {
         if (ComponentStoreResult is not null || IsAnalyzingComponentStore || !HasElevationAvailable())
@@ -64,14 +51,7 @@ public partial class CleanupViewModel
         _ = AnalyzeComponentStoreAsync();
     }
 
-    /// <summary>
-    /// Runs DISM's own AnalyzeComponentStore inside the elevated cleanup job: a "cleanup" job on the pipe
-    /// exactly like a scan or a clean, carrying no delete targets at all, so the worker path, its
-    /// validation and the one-lane-per-job-kind rule never see anything new. Quiet: no prompt, no helper
-    /// launch, and a failure is only logged. Non-exclusive on the elevated pipe (see
-    /// <see cref="RunElevatedAsync"/>'s own "analyze" case): this only ever reads, so a running
-    /// file/registry cleanup must never make it queue silently behind it.
-    /// </summary>
+    /// <summary>Runs DISM's AnalyzeComponentStore inside the elevated cleanup job: a "cleanup" job carrying no delete targets, so the worker path and its validation see nothing new. Quiet: no prompt, a failure is only logged. Non-exclusive on the pipe (see <see cref="RunElevatedAsync"/>'s "analyze" case) so a running cleanup never queues it silently.</summary>
     private async Task AnalyzeComponentStoreAsync()
     {
         IsAnalyzingComponentStore = true;
@@ -92,9 +72,7 @@ public partial class CleanupViewModel
                 CancellationToken.None,
                 allowStart: MayStartHelperQuietly(ElevationService.IsElevated));
 
-            // The worker session itself could not be reached at all (never started, or died mid-call): a
-            // silent fallback to Unknown here would show the same quiet dashes a genuinely empty DISM run
-            // shows, with no way to tell the two apart.
+            // The worker session could not be reached (never started, or died mid-call): a silent fallback to Unknown would show the same dashes as a genuinely empty DISM run.
             if (!completed)
             {
                 _logging.Info("Component store analysis skipped: the elevated helper was not reachable.");
@@ -114,11 +92,7 @@ public partial class CleanupViewModel
         }
     }
 
-    /// <summary>
-    /// Pure mapping from one "componentStore" worker message to the analysis it carries; kept
-    /// apart from <see cref="AnalyzeComponentStoreAsync"/> so the mapping is directly testable with a
-    /// fabricated message, no pipe or running worker needed.
-    /// </summary>
+    /// <summary>Pure mapping from one "componentStore" worker message to the analysis it carries; separate from <see cref="AnalyzeComponentStoreAsync"/> so it is testable with a fabricated message.</summary>
     internal static ComponentStoreAnalysis ApplyComponentStoreMessage(CleanupWorkerMessage message) => new(
         message.ComponentStoreActualSizeBytes,
         message.ComponentStoreSharedWithWindowsBytes,
@@ -126,12 +100,10 @@ public partial class CleanupViewModel
         message.ComponentStoreCleanupRecommended,
         message.ComponentStoreTimedOut);
 
-    /// <summary>An app started with administrator rights still measures through the helper, and starting
-    /// it from there raises no prompt; refusing to start it left the card empty for good.</summary>
+    /// <summary>An app started with administrator rights still measures through the helper, and starting it raises no prompt.</summary>
     internal static bool MayStartHelperQuietly(bool processElevated) => processElevated;
 
-    /// <summary>Whether the analysis can reach an elevated session without asking anything: the process
-    /// itself is elevated, or the app-wide helper already runs.</summary>
+    /// <summary>Whether the analysis can reach an elevated session without asking: the process is elevated or the helper already runs.</summary>
     private bool HasElevatedHelperForComponentStore() =>
         _elevated is not null && (ElevationService.IsElevated || _elevated.IsRunning);
 }

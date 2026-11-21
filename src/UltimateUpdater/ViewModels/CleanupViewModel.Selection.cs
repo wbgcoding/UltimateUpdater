@@ -12,9 +12,7 @@ namespace UltimateUpdater.ViewModels;
 // and count figure the dialog shows before a run.
 public partial class CleanupViewModel
 {
-    /// <summary>The write half of "permanently exclude". called from a
-    /// <see cref="CleanupItemViewModel"/> whose own entry the user right-clicked. Case-insensitive so a
-    /// re-scan matches even if Windows returns the path with different casing next time.</summary>
+    /// <summary>The write half of "permanently exclude", called from the entry the user right-clicked. Case-insensitive so a rescan matches a different path casing.</summary>
     private void PermanentlyExcludePath(string path)
     {
         if (_settings.Current.CleanupPermanentlyExcludedPaths.Contains(path, StringComparer.OrdinalIgnoreCase))
@@ -32,13 +30,7 @@ public partial class CleanupViewModel
         }
     }
 
-    /// <summary>
-    /// What a run must leave alone for this row: its unticked entries PLUS every permanent exclusion. The
-    /// unticked entries alone are not enough: a permanently excluded folder has no row (and so no untick)
-    /// when it fell into the "...and N more" tail past the detail list's cap, or when Clean was pressed
-    /// before this row's scan had produced its list at all, and it would then simply be emptied. Not for the
-    /// recycle bin, whose $R paths are never permanent exclusions and whose plan any exclusion changes.
-    /// </summary>
+    /// <summary>What a run must leave alone for this row: its unticked entries plus every permanent exclusion. The unticked entries alone are not enough: an excluded folder may have no row (past the detail list's cap, or Clean pressed before the list existed) and would be emptied. Not for the recycle bin, whose $R paths are never permanent exclusions.</summary>
     internal IReadOnlyCollection<string> ExcludedPathsForRun(CleanupItemViewModel item) =>
         item.Target.Kind == CleanupKind.RecycleBin || _settings.Current.CleanupPermanentlyExcludedPaths.Count == 0
             ? item.ExcludedEntryPaths
@@ -47,11 +39,7 @@ public partial class CleanupViewModel
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-    /// <summary>The read half: after every <c>SetEntries</c> call (a fresh scan, or an elevated reply),
-    /// uncheck any entry whose path was permanently excluded: same "unchecked, still visible" shape
-    /// unchecking one by hand already has, just remembered across scans instead of only this run.
-    /// Internal (not private) so a test can call it directly after its own <c>SetEntries</c>, the same
-    /// two-call sequence the real scan paths use.</summary>
+    /// <summary>The read half: after every <c>SetEntries</c> call, unchecks any entry whose path was permanently excluded. Internal so a test can call it directly after its own <c>SetEntries</c>.</summary>
     internal void ApplyPermanentExclusions(CleanupItemViewModel item)
     {
         if (_settings.Current.CleanupPermanentlyExcludedPaths.Count == 0)
@@ -60,8 +48,7 @@ public partial class CleanupViewModel
         var excludedPaths = new HashSet<string>(
             _settings.Current.CleanupPermanentlyExcludedPaths, StringComparer.OrdinalIgnoreCase);
 
-        // A registry row path is key plus value name. An exclusion stored before that, a bare key path, still
-        // covers every value finding under that key.
+        // A registry row path is key plus value name; an exclusion stored as a bare key path still covers every value under that key.
         var legacyRegistryRows = item.IsRegistryCleanup
             ? item.RegistryFindings
                 .Where(f => CleanupService.IsRegistryFindingExcluded(f, excludedPaths))
@@ -76,20 +63,10 @@ public partial class CleanupViewModel
         }
     }
 
-    /// <summary>The in-flight rescan started by the most recent spin-box change, if any: cancelled the
-    /// moment a newer one starts, and checked again after the await, so a slow scan for an OLDER value can
-    /// never overwrite the row with stale figures after a newer, faster one already finished (see
-    /// <see cref="RescanRecycleBinAsync"/>).</summary>
+    /// <summary>The in-flight rescan from the latest spin-box change: cancelled when a newer one starts and checked again after the await, so a slow older scan can never overwrite newer figures (see <see cref="RescanRecycleBinAsync"/>).</summary>
     private CancellationTokenSource? _recycleBinRescanCts;
 
-    /// <summary>The recycle bin card's own sub-row: saved deferred (like every other settings write off the
-    /// UI thread, see <see cref="SettingsService.SaveDeferred"/>), never the blocking <see
-    /// cref="SettingsService.Save"/> a spin box's repeat-click burst would otherwise call once per click, and
-    /// the row alone is re-measured against the new value, a full rescan of every target (and a possible new
-    /// elevation prompt) would be a disproportionate reaction to one number box. Only ever invoked for the
-    /// recycle bin row (see its own constructor wiring in the main constructor above); the value itself lives
-    /// on that row's own <see cref="CleanupItemViewModel"/>, not here, since exactly one row ever shows it.
-    /// </summary>
+    /// <summary>The recycle bin card's sub-row: saved deferred (see <see cref="SettingsService.SaveDeferred"/>) so a spin box's repeat-click burst does not block, and only that row is re-measured, since a full rescan would be disproportionate. The value lives on that row's <see cref="CleanupItemViewModel"/>.</summary>
     private void OnRecycleBinMinAgeDaysChanged(int value)
     {
         _settings.Current.CleanupRecycleBinMinAgeDays = value;
@@ -98,9 +75,7 @@ public partial class CleanupViewModel
         StartRecycleBinRescan(value);
     }
 
-    /// <summary>Set when an age change arrived while a scan or a run owned the row: the new value is already
-    /// saved, but the list on screen still answers the old one. Settled once the scan ends (see
-    /// <see cref="RunPendingRecycleBinRescan"/>).</summary>
+    /// <summary>Set when an age change arrived while a scan or run owned the row: the value is saved but the list on screen answers the old one. Settled once the scan ends (see <see cref="RunPendingRecycleBinRescan"/>).</summary>
     private bool _recycleBinRescanPending;
 
     private void StartRecycleBinRescan(int minAgeDays)
@@ -111,8 +86,7 @@ public partial class CleanupViewModel
         _ = RescanRecycleBinAsync(minAgeDays, cts);
     }
 
-    /// <summary>Re-measures the bin row for an age change that was swallowed by a running scan. Called
-    /// when a scan has ended; waits further while a run holds the rows.</summary>
+    /// <summary>Re-measures the bin row for an age change swallowed by a running scan; waits while a run holds the rows.</summary>
     private void RunPendingRecycleBinRescan()
     {
         if (!_recycleBinRescanPending || IsScanning || IsCleaning || _runClaimed || Phase != CleanupPhase.Choosing)
@@ -123,16 +97,10 @@ public partial class CleanupViewModel
             StartRecycleBinRescan(bin.RecycleBinMinAgeDays);
     }
 
-    /// <summary>Re-measures only the recycle bin row, unelevated (it never needs admin), so the sub-row's
-    /// effect is visible right away without touching any other target's already-measured figure.
-    /// <paramref name="cts"/> is the one <see cref="_recycleBinRescanCts"/> held when this call started: a
-    /// later spin-box change cancels it and replaces the field with its own, so both the cancellation itself
-    /// and the reference check right after the await stop a superseded call from ever applying its (possibly
-    /// later-arriving) result over a newer one's.</summary>
+    /// <summary>Re-measures only the recycle bin row, unelevated, so the sub-row's effect is visible at once. <paramref name="cts"/> is the <see cref="_recycleBinRescanCts"/> held at call start: cancellation and the reference check after the await stop a superseded call from applying its result over a newer one's.</summary>
     private async Task RescanRecycleBinAsync(int minAgeDays, CancellationTokenSource cts)
     {
-        // Not IsBusy: the component store analysis (DISM, up to minutes) touches no row, and blocking on it
-        // left the row showing the old filter's list and size while the next run used the new value.
+        // Not IsBusy: the component store analysis (DISM, up to minutes) touches no row and must not block this.
         if (IsScanning || IsCleaning || _runClaimed)
         {
             _recycleBinRescanPending = true;
@@ -160,7 +128,6 @@ public partial class CleanupViewModel
         }
         catch (OperationCanceledException)
         {
-            // Superseded by a newer spin-box value; that call owns applying its own result.
         }
         catch (Exception ex)
         {
@@ -168,9 +135,7 @@ public partial class CleanupViewModel
         }
         finally
         {
-            // Only the still-current call clears the row's spinner and refreshes totals - otherwise a
-            // superseded call's finally, running after a newer one already started, could flip the spinner
-            // off (or refresh stale totals) out from under the rescan that is actually still running.
+            // Only the still-current call clears the spinner and refreshes totals; a superseded call's finally must not flip the spinner off under the running rescan.
             if (ReferenceEquals(_recycleBinRescanCts, cts))
             {
                 item.IsScanning = false;
@@ -179,30 +144,20 @@ public partial class CleanupViewModel
         }
     }
 
-    /// <summary>What the ticked targets would really free right now. A row an unelevated run skips for
-    /// missing admin rights frees nothing, so it adds nothing here, the same as in the group headers and
-    /// the confirmation.</summary>
+    /// <summary>What the ticked targets would really free now. A row an unelevated run skips for missing admin rights adds nothing, as in the group headers and the confirmation.</summary>
     public long SelectedBytes => Items.Where(CountsAsSelected).Sum(i => i.SelectedEntryBytes);
 
-    /// <summary>What the scan found in every target together: the ring's 100 %. Independent of the detail
-    /// ticks.</summary>
+    /// <summary>What the scan found in every target together: the ring's 100 %. Independent of the detail ticks.</summary>
     public long TotalBytes => Items.Sum(i => i.Bytes);
 
     public string SelectedText => ByteSize.Format(SelectedBytes);
 
-    /// <summary>
-    /// True when a run started now cannot clean this row: it is a folder only an administrator can delete
-    /// from and neither this process nor a running elevated helper has admin rights. The row is then
-    /// skipped and flagged, so the confirmation must not promise its figure.
-    /// </summary>
+    /// <summary>True when a run started now cannot clean this row: only an administrator can delete from it and neither this process nor a running helper has admin rights. The row is skipped, so the confirmation must not promise its figure.</summary>
     internal bool WillSkipForMissingAdmin(CleanupItemViewModel item) =>
         CleanupService.SkipsWithoutAdmin(item.Target, ElevationService.IsElevated || _elevated is { IsRunning: true });
 
-    /// <summary>Ticked, and a run started now would really clean it: what every selection figure of the
-    /// window counts (size, area count, files, ring, top areas).</summary>
+    /// <summary>Ticked, and a run started now would really clean it: what every selection figure of the window counts.</summary>
     private bool CountsAsSelected(CleanupItemViewModel item) => item.IsSelected && !WillSkipForMissingAdmin(item);
-
-    // ---- the facts either side of the ring, so the top of the dialog is not empty space ----
 
     /// <summary>"3 of 10 areas": how much of the list is actually going to be touched.</summary>
     public string SelectedCountText =>
@@ -224,11 +179,7 @@ public partial class CleanupViewModel
 
     private const double TopAreaMaxBarWidth = 110;
 
-    /// <summary>
-    /// The three biggest selected areas, as a small bar list, with the width scaled against the largest
-    /// of the three, not the grand total, so a modest selection still shows visibly different bars instead
-    /// of three slivers.
-    /// </summary>
+    /// <summary>The three biggest selected areas as a small bar list, scaled against the largest of the three so a modest selection still shows different bars.</summary>
     public IReadOnlyList<CleanupTopAreaViewModel> TopAreas
     {
         get
@@ -251,11 +202,7 @@ public partial class CleanupViewModel
 
     public bool HasTopAreas => TopAreas.Count > 0;
 
-    /// <summary>
-    /// How much of the list turned out to be empty. Worth its own line: a run that frees little is usually
-    /// a machine that is already tidy, and saying so is more use than leaving the reader to count grey
-    /// "nothing found" cells.
-    /// </summary>
+    /// <summary>How much of the list turned out to be empty: a run that frees little is usually a machine that is already tidy.</summary>
     public string EmptyCountText
     {
         get
@@ -272,9 +219,7 @@ public partial class CleanupViewModel
     private static string SystemDriveName() =>
         Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) ?? "C:\\";
 
-    /// <summary>The caption above the right-hand header block ("Drive C:"): the free-space line, the last
-    /// cleanup and the restore point below it all describe that drive. The root's trailing separator is
-    /// dropped, people name a drive "C:", not "C:\".</summary>
+    /// <summary>The caption above the right-hand header block ("Drive C:"); the root's trailing separator is dropped.</summary>
     public string DriveCaptionText =>
         string.Format(Loc["CleanupHeaderDrive"], SystemDriveName().TrimEnd(Path.DirectorySeparatorChar));
 
@@ -291,16 +236,12 @@ public partial class CleanupViewModel
         }
     }
 
-    /// <summary>
-    /// What the drive has free right now, read once at open: good enough for a figure that just
-    /// sits beside the ring while the user ticks boxes, and avoids a disk query on every click.
-    /// </summary>
+    /// <summary>What the drive has free, read once at open: good enough beside the ring while the user ticks boxes, and avoids a disk query per click.</summary>
     private readonly long? _freeSpaceNow = FreeSpaceOnSystemDrive();
 
     public bool HasFreeSpaceNow => IsChoosing && _freeSpaceNow is not null;
 
-    /// <summary>"216,5 GB frei, +156,8 MB nach Bereinigung": the free space now and what the selection would
-    /// add to it. The drive itself is named by <see cref="DriveCaptionText"/> above the line.</summary>
+    /// <summary>"216,5 GB frei, +156,8 MB nach Bereinigung": free space now and what the selection would add. The drive is named by <see cref="DriveCaptionText"/>.</summary>
     public string FreeSpaceNowText => _freeSpaceNow is null
         ? string.Empty
         : BuildFreeSpaceNowText(_freeSpaceNow.Value, SelectedBytes);
@@ -326,11 +267,7 @@ public partial class CleanupViewModel
         OnPropertyChanged(nameof(HasEmpty));
     }
 
-    /// <summary>Resets every row to exactly the state a fresh scan would give it: <see
-    /// cref="CleanupTarget.DefaultEnabled"/>, the same field <see cref="CleanupItemViewModel"/>'s own
-    /// constructor already reads it from, reused rather than duplicated as a second rule. A risky or
-    /// otherwise default-off target (the recycle bin, leftover installs, drive optimisation, ...) is never
-    /// turned on by this, because its own DefaultEnabled is false to begin with.</summary>
+    /// <summary>Resets every row to the state a fresh scan gives it (<see cref="CleanupTarget.DefaultEnabled"/>). A default-off target such as the recycle bin is never turned on by this.</summary>
     [RelayCommand]
     private void RestoreDefaultSelection()
     {
@@ -340,12 +277,7 @@ public partial class CleanupViewModel
         RefreshTotals();
     }
 
-    /// <summary>
-    /// Headline and warning of the second confirmation. The recycle wording is only true when every
-    /// selected file deletion actually lands in the recycle bin: the setting reaches non-elevated
-    /// directory and app cache targets only, so an elevated target, the recycle bin row itself and the
-    /// kinds that always delete permanently keep the permanent wording for the whole selection.
-    /// </summary>
+    /// <summary>Headline and warning of the second confirmation. The recycle wording is true only when every selected file deletion lands in the recycle bin; elevated targets, the recycle bin row and kinds that always delete permanently keep the permanent wording for the whole selection.</summary>
     public (string Headline, string Warning) BuildConfirmationTexts()
     {
         var recycle = _settings.Current.CleanupRecycleInsteadOfDelete && Items.Where(i => i.IsSelected).All(i =>
@@ -362,14 +294,7 @@ public partial class CleanupViewModel
             : (string.Format(Loc["CleanupConfirmHeadline"], ByteSize.Format(SelectedBytes)), Loc["CleanupConfirmWarning"]);
     }
 
-    /// <summary>
-    /// The text of the second, red confirmation: every target that will be emptied with its own figure,
-    /// and the total. Grouped, with the areas that are hardest to undo named
-    /// FIRST regardless of where they sit in the dialog's own browsing order: the recycle bin (bypasses
-    /// the one safety net an ordinary Explorer delete already has) and the registry (backed up, but
-    /// still a live edit to something Windows itself depends on), followed by driver and Python removals,
-    /// which uninstall rather than delete. Built here so the window only has to show it.
-    /// </summary>
+    /// <summary>The text of the second, red confirmation: every target to be emptied with its figure, and the total. The hardest to undo are named first: the recycle bin, then the registry (backed up, but a live edit), then driver and Python removals, which uninstall rather than delete.</summary>
     public string BuildConfirmationDetail()
     {
         CleanupGroupKey[] confirmationOrder =

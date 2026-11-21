@@ -22,29 +22,18 @@ public partial class CleanupViewModel
         NotifyRescanCanExecuteChanged();
     }
 
-    /// <summary>
-    /// Asks for administrator rights BEFORE measuring. Without them sfc, the DISM
-    /// sequence and Disk Cleanup's unattended profile do nothing at all, and Windows' own temp folders can
-    /// be neither measured nor emptied in full, so the dialog would quietly under-report and under-deliver.
-    /// Declining is a normal answer, not an error: the run continues unelevated and the affected rows are
-    /// marked as skipped rather than the whole run failing. Returns true when the user said no (or the
-    /// helper could not be started), so the caller asks for nothing else that needs those rights.
-    /// </summary>
+    /// <summary>Asks for administrator rights before measuring: without them sfc, the DISM sequence and Disk Cleanup do nothing and Windows' temp folders cannot be measured or emptied in full. Declining is a normal answer: the run continues unelevated and the affected rows are marked skipped. Returns true when the user said no (or the helper could not be started).</summary>
     private async Task<bool> EnsureElevationAsync(
         CancellationToken cancellationToken, IReadOnlyCollection<CleanupItemViewModel>? scope = null)
     {
         var needsAdmin = (scope ?? Items).Any(i => i.IsSelected && i.NeedsElevation);
         if (!needsAdmin || ElevationService.IsElevated || _elevated is null)
         {
-            // Already an administrator (or nothing needs one): every target runs in-process as before.
             SetElevationHints(show: false);
             return false;
         }
 
-        // If the helper is already running from an earlier install there is nothing to ask about. Otherwise
-        // this asks, even if the user said no before: opening this dialog is a deliberate act, and an
-        // accidental "no" would otherwise leave the feature half-working for the rest of the session with
-        // no way back. Nothing asks on its own; it takes a click to get here.
+        // If the helper already runs there is nothing to ask. Otherwise this asks even after an earlier "no": opening this dialog is a deliberate click, and an accidental "no" would leave the feature half-working for the session.
         var force = false;
         if (!_elevated.IsRunning)
         {
@@ -82,8 +71,7 @@ public partial class CleanupViewModel
         RefreshTotals();
     }
 
-    /// <summary>Which targets this run hands to the elevated helper, none when there is no helper. Reads
-    /// the helper's state as it is now: the scan's answer can be stale by the time a run starts.</summary>
+    /// <summary>Which targets this run hands to the elevated helper, none when there is no helper. Reads the helper's state now, since the scan's answer can be stale.</summary>
     private List<CleanupItemViewModel> ElevatedItems(IEnumerable<CleanupItemViewModel> items) =>
         !ElevationService.IsElevated && _elevated is { IsRunning: true }
             ? items.Where(i => i.Target.NeedsElevation).ToList()
@@ -96,34 +84,23 @@ public partial class CleanupViewModel
         dto.Path, dto.DisplayName, dto.Bytes, dto.Files, dto.OldestWriteTime, dto.NewestWriteTime, dto.Type,
         dto.OriginalPath);
 
-    /// <summary>
-    /// Measures everything again on demand. The figures are a snapshot of a machine that keeps working,
-    /// a browser or a build fills a temp folder while the dialog is open, so the user needs a way to ask
-    /// for a fresh one without closing and reopening.
-    /// </summary>
+    /// <summary>Measures everything again on demand: the figures are a snapshot of a machine that keeps working.</summary>
     [RelayCommand(CanExecute = nameof(CanRescan))]
     private Task RescanAsync() => StartScanAsync();
 
     private bool CanRescan() => Phase is CleanupPhase.Choosing or CleanupPhase.Finished && !IsScanning && !_runClaimed;
 
-    /// <summary>
-    /// The right-click "Rescan" of one sub-category: measures just that row again, through the same pass
-    /// the full rescan runs (same gate, same elevation path, same per-row measuring state, same totals
-    /// afterwards), leaving every other row's figures, entries and ticks as they are.
-    /// </summary>
+    /// <summary>The right-click "Rescan" of one sub-category: measures just that row through the same pass as the full rescan, leaving every other row as it is.</summary>
     [RelayCommand(CanExecute = nameof(CanRescan))]
     private Task RescanItemAsync(CleanupItemViewModel? item) =>
         item is not null && Items.Contains(item) ? StartSubsetScanAsync([item]) : Task.CompletedTask;
 
-    /// <summary>The right-click "Rescan" of a whole category: its rows only, otherwise as
-    /// <see cref="RescanItemAsync"/>.</summary>
+    /// <summary>The right-click "Rescan" of a whole category: its rows only, otherwise as <see cref="RescanItemAsync"/>.</summary>
     [RelayCommand(CanExecute = nameof(CanRescan))]
     private Task RescanGroupAsync(CleanupGroupViewModel? group) =>
         group is not null && Groups.Contains(group) ? StartSubsetScanAsync(group.Items) : Task.CompletedTask;
 
-    /// <summary>After a finished run every row goes back to choosing, so a partial pass would leave the
-    /// just-cleaned rows with their old sizes, entries and ticks, counting space that is already freed.
-    /// There the rescan covers every row.</summary>
+    /// <summary>After a finished run every row goes back to choosing, so a partial pass would leave just-cleaned rows with old sizes and ticks. There the rescan covers every row.</summary>
     private Task StartSubsetScanAsync(IReadOnlyList<CleanupItemViewModel> subset)
     {
         if (subset.Count == 0 || !CanRescan())
@@ -139,13 +116,7 @@ public partial class CleanupViewModel
         RescanGroupCommand.NotifyCanExecuteChanged();
     }
 
-    /// <summary>How far one measuring pass reaches. Full is the pass a window runs (and a rescan): every
-    /// target, asking for administrator rights first. Prescan is the quiet one at startup: user-scope
-    /// targets only, no question, no elevation. Remaining finishes a prescan on open: just the targets it
-    /// left out. Late is Remaining done quietly with nobody asking: the elevated helper started after the
-    /// prescan, so the targets it left out are measured now, at low priority while no window is open, with
-    /// no question and no elevation of its own. Subset is a rescan the user asked for on one category or
-    /// sub-category: the full pass, asking for rights first, but over the chosen rows only.</summary>
+    /// <summary>How far one measuring pass reaches. Full: every target, asking for rights first. Prescan: the quiet startup pass, user-scope targets only. Remaining: finishes a prescan on open. Late: Remaining done quietly after the elevated helper started, at low priority. Subset: a user-requested rescan of chosen rows, otherwise Full.</summary>
     private enum ScanMode
     {
         Full,
@@ -163,8 +134,7 @@ public partial class CleanupViewModel
     /// <summary>Where "now" comes from for the measurement stamp; a test replaces it.</summary>
     internal Func<DateTime> Clock { get; set; } = () => DateTime.Now;
 
-    /// <summary>When the startup prescan finished measuring, or null when none did or the user has
-    /// rescanned since. Decides whether a reopened dialog may reuse this result.</summary>
+    /// <summary>When the startup prescan finished, or null when none did or the user rescanned since. Decides whether a reopened dialog may reuse the result.</summary>
     public DateTime? PrescanFinishedAt { get; private set; }
 
     /// <summary>True while the startup prescan is still measuring.</summary>
@@ -188,11 +158,7 @@ public partial class CleanupViewModel
         OnPropertyChanged(nameof(HasMeasuredAt));
     }
 
-    /// <summary>
-    /// Measures in the background at startup, before any window exists. Waits for the catalogue, then walks
-    /// the user-scope targets (plus the admin ones only when the elevated helper is already running) and
-    /// never asks for anything. Already measuring or busy: nothing to do.
-    /// </summary>
+    /// <summary>Measures in the background at startup, before any window exists: the user-scope targets (plus admin ones only when the helper already runs), never asking for anything.</summary>
     internal Task PrescanAsync()
     {
         if (IsBusy || _prescanTask is { IsCompleted: false })
@@ -219,8 +185,7 @@ public partial class CleanupViewModel
         }
     }
 
-    /// <summary>What a freshly opened window starts: the rest of a prescan when one is fresh here, else
-    /// the full measuring pass. A prescan still going is waited for first, so the two never overlap.</summary>
+    /// <summary>What a freshly opened window starts: the rest of a fresh prescan, else the full pass. A prescan still going is waited for first.</summary>
     public async Task StartOpenScanAsync()
     {
         if (_prescanTask is { IsCompleted: false } running)
@@ -232,11 +197,7 @@ public partial class CleanupViewModel
         await (PrescanFinishedAt is not null ? StartScanTrackedAsync(ScanMode.Remaining) : StartScanAsync());
     }
 
-    /// <summary>
-    /// Measures, quietly, the admin targets a prescan left out, once the elevated helper runs. Only for a
-    /// prescanned view model that is idle and has no window open (an open window runs its own pass).
-    /// Never asks for anything.
-    /// </summary>
+    /// <summary>Measures, quietly, the admin targets a prescan left out once the elevated helper runs. Only for an idle prescanned view model with no window open.</summary>
     private void StartLateMeasuring()
     {
         if (_windowAttached || IsCleaning || _runClaimed || IsScanning || _prescanSkipped.Count == 0
@@ -255,18 +216,13 @@ public partial class CleanupViewModel
         return task;
     }
 
-    /// <summary>
-    /// Measures every target in the background as soon as the window opens, one row at a time so figures
-    /// appear progressively rather than all at the end.
-    /// </summary>
+    /// <summary>Measures every target in the background when the window opens, one row at a time so figures appear progressively.</summary>
     public Task StartScanAsync() => StartScanTrackedAsync(ScanMode.Full);
 
-    /// <summary>The scan's own body, pulled out so <see cref="StartScanAsync"/> can capture the running
-    /// task into <see cref="_scanTask"/> before returning it, letting a later run wait for THIS scan to
-    /// actually finish rather than only cancelling it (see <see cref="CleanupViewModel.AwaitScanUnwindAsync"/>).</summary>
+    /// <summary>The scan's body, so <see cref="StartScanAsync"/> can capture the task into <see cref="_scanTask"/> and a later run can wait for it to finish (see <see cref="CleanupViewModel.AwaitScanUnwindAsync"/>).</summary>
     private async Task StartScanCoreAsync(ScanMode mode, IReadOnlyList<CleanupItemViewModel>? subset = null)
     {
-        // A rescan the user asked for replaces the prescan's figures for good: the stamp goes with them.
+        // A rescan the user asked for replaces the prescan's figures; the stamp goes with them.
         if (mode == ScanMode.Full)
         {
             SetPrescanFinishedAt(null);
@@ -283,15 +239,13 @@ public partial class CleanupViewModel
         if (mode is ScanMode.Remaining or ScanMode.Late)
             _prescanSkipped = [];
 
-        // A row measured now is no longer one the prescan left out.
         if (mode == ScanMode.Subset)
             _prescanSkipped = _prescanSkipped.Except(scope).ToList();
 
         // The two quiet passes (startup prescan, late catch-up) never ask and never start the helper.
         var quietMode = mode is ScanMode.Prescan or ScanMode.Late;
 
-        // A fresh measurement after a finished run is a new choice: back to choosing, without the old
-        // run's capsules and figures on the rows.
+        // A fresh measurement after a finished run is a new choice: back to choosing, without the old run's capsules and figures.
         if (Phase == CleanupPhase.Finished)
         {
             foreach (var item in Items)
@@ -307,42 +261,32 @@ public partial class CleanupViewModel
             Phase = CleanupPhase.Choosing;
         }
 
-        // Cancelled, not disposed: the previous scan is still unwinding and still holds tokens from it,
-        // and disposing a source out from under a live token throws where the token is used.
+        // Cancelled, not disposed: the previous scan still holds tokens from it, and disposing a source under a live token throws.
         _scanCts?.Cancel();
         var cts = new CancellationTokenSource();
         _scanCts = cts;
 
-        // A scan that measures the bin starts from the age as it stands now; only a change after this point
-        // needs a rescan of its own.
+        // A scan that measures the bin starts from the age as it stands now; only a later change needs its own rescan.
         if (scope.Any(item => item.IsRecycleBin))
             _recycleBinRescanPending = false;
 
-        // A newer scan replaces _scanCts; from then on this one is stale and must not write a number or reset
-        // any state the newer scan owns (its cancelled loop can still be mid-await and deliver a late result).
+        // A newer scan replaces _scanCts; this one is then stale and must not write a number or reset state the newer scan owns.
         bool IsCurrentScan() => ReferenceEquals(_scanCts, cts);
 
-        // Every row is being measured again: shown as such (not with the old figure as if it were current),
-        // and its "nothing found" states are re-raised when its own result arrives.
+        // Every row is being measured again: shown as such, not with the old figure as if current.
         foreach (var item in scope)
             item.IsScanning = true;
 
         IsScanning = true;
         try
         {
-            // StartScanAsync is always started fire-and-forget (the window's Loaded handler,
-            // RescanCommand), so an exception escaping EnsureElevationAsync or RunElevatedAsync would only
-            // reach the process-wide unobserved-task handler, leaving the dialog's "…" spinners running and
-            // the rescan button disabled. A failure here degrades to "scan the unelevated targets only",
-            // the same fail-closed shape EnsureElevationAsync documents for a declined prompt.
+            // StartScanAsync runs fire-and-forget, so an exception escaping here would only reach the unobserved-task handler and leave spinners running. A failure degrades to scanning the unelevated targets only.
             var elevated = new List<CleanupItemViewModel>();
 
-            // Admin rows a quiet pass handed to the helper but never got a figure for (it was gone by the
-            // time the job went out, or dropped mid-scan): they must not be stamped as measured.
+            // Admin rows a quiet pass handed to the helper but never got a figure for must not be stamped as measured.
             var helperMissed = new List<CleanupItemViewModel>();
 
-            // An open scan has no later pass to catch these up, and their previous figures are not a
-            // measurement of now: cleared like a row whose scan failed, with the admin capsule saying why.
+            // An open scan has no later pass to catch these up, and their previous figures are not a measurement of now: cleared with the admin capsule saying why.
             void MarkUnmeasured(IEnumerable<CleanupItemViewModel> rows)
             {
                 if (!IsCurrentScan())
@@ -366,10 +310,7 @@ public partial class CleanupViewModel
 
             try
             {
-                // Asked before anything is measured: without admin the elevated targets report a floor
-                // rather than a total, and three of them do nothing whatsoever.
-                // The prescan asks nothing: it takes what the app can read as it is. Finishing a prescan
-                // asks only when something it left out really needs the rights.
+                // Asked before anything is measured: without admin the elevated targets report a floor rather than a total. The prescan asks nothing; finishing it asks only when a left-out target really needs the rights.
                 if (mode == ScanMode.Full || (mode == ScanMode.Remaining && scope.Any(i => i.Target.NeedsElevation)))
                     await EnsureElevationAsync(cts.Token);
                 else if (mode == ScanMode.Subset && scope.Any(i => i.IsSelected && i.NeedsElevation))
@@ -377,8 +318,7 @@ public partial class CleanupViewModel
 
                 elevated = ElevatedItems(scope);
 
-                // As soon as administrator rights exist, not after the whole walk: the analysis is the
-                // longest single measurement and needs nothing from the scan. Asks nothing itself.
+                // As soon as admin rights exist, not after the whole walk: the analysis is the longest single measurement and needs nothing from the scan.
                 if (!cts.IsCancellationRequested)
                     StartQuietComponentStoreAnalysis();
 
@@ -444,12 +384,7 @@ public partial class CleanupViewModel
                 }
             }
 
-            // These targets run with bounded parallelism instead of one after another, since a serial
-            // walk would make the dialog's total scan time the SUM of every target's own scan (mostly
-            // independent directory/registry walks, each waiting on disk or the registry rather than the
-            // CPU). Bounded to min(4, core count): unbounded would have every temp/cache folder and the
-            // registry scan fight over the same disk and the same few registry hives at once.
-            // A prescan leaves out the targets that need rights it does not have; they are measured on open.
+            // Bounded parallelism, min(4, core count): a serial walk would take the sum of every target's scan, while unbounded would make every folder and registry scan fight over the same disk and hives. A prescan leaves out targets needing rights it lacks; they are measured on open.
             var skipped = quietMode && !ElevationService.IsElevated
                 ? scope.Where(item => item.Target.NeedsElevation && !elevated.Contains(item)).ToList()
                 : [];
@@ -472,17 +407,14 @@ public partial class CleanupViewModel
                     var measured = false;
                     try
                     {
-                        // Background thread mode only while nobody has the window open: it is chosen as each target
-                        // starts, so a window that attaches mid-prescan gets normal priority for every target
-                        // not yet begun.
+                        // Background thread mode only while no window is open; chosen as each target starts, so a window attaching mid-prescan gets normal priority for the rest.
                         var result = await _service.ScanAsync(
                             item.Target, cts.Token, item.RecycleBinMinAgeDays, quietMode && !_windowAttached);
                         measured = true;
                         if (!IsCurrentScan())
                             return;
 
-                        // The same mapping the elevated helper sends, so the driver and Python rows get their
-                        // candidates when the app itself is elevated or the helper was declined.
+                        // The same mapping the elevated helper sends, so the driver and Python rows get their candidates when the app itself is elevated or the helper was declined.
                         var message = CleanupWorker.ScanMessage(item.Target.Id, result);
                         item.Bytes = result.Bytes;
                         item.Files = result.Files;
@@ -496,12 +428,10 @@ public partial class CleanupViewModel
                     }
                     catch (OperationCanceledException)
                     {
-                        // The whole scan was cancelled; nothing more to do for this one target either.
                     }
                     catch (Exception ex)
                     {
-                        // A target that cannot be measured is shown as empty; it must not break the dialog. Its
-                        // previous figures and lists are cleared too: they are what the next clean would act on.
+                        // A target that cannot be measured is shown as empty and must not break the dialog; its previous figures are cleared, since the next clean would act on them.
                         _logging.Warn($"Cleanup scan failed for '{item.Target.Id}': {ex.Message}");
                         if (IsCurrentScan())
                         {
@@ -512,9 +442,7 @@ public partial class CleanupViewModel
                                 item.Files = 0;
                             }
 
-                            // The failure may have come from one of these very setters (the row's own list
-                            // refusing the update): thrown again from here it would escape the scan and leave
-                            // every other row spinning.
+                            // The failure may have come from one of these setters; thrown again it would escape the scan and leave every other row spinning.
                             try
                             {
                                 item.SetEntries(null);
@@ -552,8 +480,6 @@ public partial class CleanupViewModel
             }
             catch (OperationCanceledException)
             {
-                // Cancelled while queued behind the throttle (never having started its own scan yet); the
-                // targets that did start already handled their own cancellation above.
             }
         }
         finally
@@ -563,8 +489,7 @@ public partial class CleanupViewModel
             {
                 IsScanning = false;
 
-                // A pass that returned early (cancelled, or the helper dropping out) leaves every target it
-                // never reached showing the measuring "…" for ever.
+                // A pass that returned early (cancelled, or the helper dropping out) would leave unreached targets showing the measuring "..." forever.
                 foreach (var item in Items)
                     item.IsScanning = false;
 
@@ -573,12 +498,11 @@ public partial class CleanupViewModel
                 if (quietMode && !cts.IsCancellationRequested)
                     SetPrescanFinishedAt(Clock());
 
-                // The helper may have started while the prescan was still walking: the admin targets it left
-                // out are measured now rather than waiting for the window.
+                // The helper may have started during the prescan: the admin targets it left out are measured now.
                 if (mode == ScanMode.Prescan && !cts.IsCancellationRequested)
                     StartLateMeasuring();
 
-                // An age change the scan swallowed (the row was being measured with the old one).
+                // An age change the scan swallowed.
                 if (!cts.IsCancellationRequested)
                     RunPendingRecycleBinRescan();
             }
