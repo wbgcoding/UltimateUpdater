@@ -183,8 +183,8 @@
             </Setter>
         </Style>
 
-        <!-- One dropdown item: a comfortable 38px-tall row with a rounded hover highlight and a checkmark
-             on the current value, rather than a coloured block. Reworked to look like a modern Fluent menu. -->
+        <!-- One dropdown item: a comfortable 38px-tall row with a rounded hover highlight and a checkmark on the
+             current value, rather than a coloured block. -->
         <Style x:Key="CardComboItem" TargetType="ComboBoxItem">
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
             <Setter Property="FontSize" Value="14"/>
@@ -227,19 +227,17 @@
             </Setter>
         </Style>
 
-        <!-- A fully hand-built ComboBox template so the control is unambiguously themed, the WPF-UI
-             ComboBox kept coming out flat light-grey. Closed box: themed fill + stroke + card rounding,
-             a chevron, and a hover state. Open popup: one solid themed panel whose items (CardComboItem)
-             tile it edge to edge. No dependency on WPF-UI's own ComboBox chrome. -->
+        <!-- A fully hand-built ComboBox template so the control is unambiguously themed (WPF-UI's came out flat
+             light-grey). Closed box: themed fill + stroke + card rounding, a chevron, and a hover state. Open
+             popup: one solid themed panel whose items (CardComboItem) tile it edge to edge. No dependency on
+             WPF-UI's own ComboBox chrome. -->
         <Style x:Key="CardCombo" TargetType="ComboBox">
-            <!-- A ComboBox cannot size itself to its widest ITEM, its closed box only ever measures the
-                 SELECTED one, so with no Width set at all it visibly resizes as the value changes. A fixed
-                 Width would line every dropdown up in one right-hand column but clip the language names wider
-                 than 120px; MinWidth keeps a 120px floor (still lining most rows up) while letting a
-                 genuinely long selected option grow the box rather than being cut, accepting the occasional
-                 resize-on-selection as the lesser problem. Setting only MinWidth locally on each ComboBox below is NOT enough by itself: this
-                 Style's own Width Setter would still win over an unset local Width and pin every box back
-                 to exactly 120px regardless of the local MinWidth, so the Setter itself has to change too. -->
+            <!-- A ComboBox cannot size itself to its widest ITEM, its closed box only measures the SELECTED one,
+                 so with no Width set it resizes as the value changes. A fixed Width would line every dropdown up
+                 in one column but clip language names wider than 120px; MinWidth keeps a 120px floor while
+                 letting a long selected option grow the box. Setting only MinWidth locally on each ComboBox below
+                 is not enough: this Style's own Width Setter would still pin every box to 120px, so the Setter
+                 itself has to change too. -->
             <Setter Property="MinWidth" Value="120"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="Height" Value="42"/>
@@ -251,11 +249,10 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
-                            <!-- Style={x:Null} drops WPF-UI's implicit ToggleButton style. Only the Template
-                                 was being replaced, so its Padding/MinWidth/Margin still applied and the
-                                 visible box came out narrower than its slot, which is why the opening
-                                 button sat short of the window's right edge instead of on it.
-                                 Same trick the results ScrollViewer already uses. -->
+                            <!-- Style={x:Null} drops WPF-UI's implicit ToggleButton style. Replacing only the
+                                 Template would leave its Padding/MinWidth/Margin applied, so the visible box
+                                 would be narrower than its slot and the button would sit short of the window's
+                                 right edge. Same trick the results ScrollViewer uses. -->
                             <!-- Foreground from the ComboBox: dropping WPF-UI's implicit style (below) also
                                  dropped its themed text colour, so the selected value was drawn in the
                                  default near-black instead of the page's text colour. -->
@@ -271,9 +268,8 @@
                                                 Background="{DynamicResource ControlFillColorDefaultBrush}"
                                                 BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
                                                 BorderThickness="1" CornerRadius="8" SnapsToDevicePixels="True">
-                                            <!-- The whole box is the button. The chevron segment and its
-                                                 divider are gone, what marks the control
-                                                 as openable is its hover and open state, not a glyph. -->
+                                            <!-- The whole box is the button; what marks it as openable is its
+                                                 hover and open state, not a glyph. -->
                                             <ContentPresenter Margin="13,0,13,0"
                                                               VerticalAlignment="Center"
                                                               Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
@@ -325,8 +321,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <!-- The section list takes its own column from 760 px of width and collapses below that, where
-             the page is one scrolling column as before. -->
+        <!-- The section list takes its own column from 760 px of width and collapses below that, where the page
+             is one scrolling column. -->
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
@@ -497,10 +493,10 @@
                                           Command="{Binding ToggleAllSourcesCommand}"
                                           FontWeight="SemiBold" VerticalAlignment="Center"
                                           AutomationProperties.Name="{Binding Loc[SettingsSourcesSelectAll]}"/>
-                                <!-- Over 100 sources planned, a plain scroll-and-scan list stopped being
-                                     usable, so a live search narrows the chips below as it is typed,
-                                     same delayed-binding pattern as the main table's own
-                                     search box so filtering never stutters mid-word. -->
+                                <!-- With over 100 sources planned, a plain scroll-and-scan list is unusable, so a
+                                     live search narrows the chips below as it is typed, with the same
+                                     delayed-binding pattern as the main table's search box so filtering never
+                                     stutters mid-word. -->
                                 <ui:TextBox Grid.Column="1" Width="200"
                                             PlaceholderText="{Binding Loc[SettingsSourcesSearchPlaceholder]}"
                                             Text="{Binding SourceSearchText, UpdateSourceTrigger=PropertyChanged, Delay=150}"
@@ -584,8 +580,6 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
-                            <!-- Now explains the at-most-once-per-24-hours rule, so the toggle no
-                                 longer needs to say the whole thing on its own. -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsRestorePointDesc]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsRestorePoint]}"/>
                                 <WrapPanel>
@@ -678,9 +672,9 @@
                                 </WrapPanel>
                             </StackPanel>
                             <StackPanel x:Name="CleanupBackupFolderLane" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                <!-- Committed on LostFocus and again when the window closes (SettingsWindow.xaml.cs):
-                                     Escape or a click on the main window closes this window without any
-                                     LostFocus, which used to drop a typed folder silently. -->
+                                <!-- Committed on LostFocus and again when the window closes
+                                     (SettingsWindow.xaml.cs): Escape or a click on the main window closes this
+                                     window without any LostFocus, which would drop a typed folder silently. -->
                                 <ui:TextBox x:Name="CleanupBackupFolderBox" VerticalAlignment="Center" Width="220"
                                             Text="{Binding RegistryBackupFolder, UpdateSourceTrigger=LostFocus}"
                                             LostFocus="OnBackupFolderBoxLostFocus"
@@ -838,12 +832,10 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Data and logs: where they are, how long each is kept, sharing one header, a log
-                     card with no header of its own would visually fall under the registry-backup
-                     group above it. The log folder, the error reports folder and the log's own
-                     retention now live together in ONE card (moved out of the data card below, which used
-                     to carry the log folder row); the error window keeps only a pointer to this card
-                     instead of a second copy of the same button (one visible place per action). -->
+                <!-- Data and logs: where they are and how long each is kept, sharing one header (a log card
+                     without its own header would fall visually under the registry-backup group above it). The log
+                     folder, the error reports folder and the log's retention live together in ONE card; the error
+                     window keeps only a pointer to it (one visible place per action). -->
                 <TextBlock x:Name="DataHeader" Text="{Binding Loc[SettingsDataGroup]}" Style="{StaticResource SectionHeader}"/>
 
                 <Border Style="{StaticResource Card}">
@@ -957,10 +949,9 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Install history's own retention is a separate concern from the diagnostic
-                     log above (the retention MECHANIC is the same shape, DayOption/nearest-offered-value
-                     snapping, but the DATA they govern is not), now its own card, no longer sharing one
-                     with the log folder row. -->
+                <!-- Install history's retention is separate from the diagnostic log above: the mechanic is the
+                     same shape (DayOption, nearest-offered-value snapping) but the data they govern is not, so it
+                     has its own card. -->
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -1190,12 +1181,10 @@
                 <!-- Advanced -->
                 <TextBlock x:Name="AdvancedHeader" Text="{Binding Loc[SettingsAdvancedGroup]}" Style="{StaticResource SectionHeader}"/>
 
-                <!-- Factory reset: back to defaults, or defaults plus every cached file wiped.
-                     Both confirm first; deleting data warns in red. The card reads as dangerous at a
-                     glance now (icon, description and a filled danger button), not only once someone
-                     already has a hand on the button; the card's own background stays the normal one, so
-                     the page does not turn into a red block. The red confirmation dialog is still what
-                     actually guards it. -->
+                <!-- Factory reset: back to defaults, or defaults plus every cached file wiped. Both confirm
+                     first; deleting data warns in red. The card reads as dangerous at a glance (icon, description
+                     and a filled danger button) while its own background stays normal, so the page does not turn
+                     into a red block. The red confirmation dialog is what actually guards it. -->
                 <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -1210,18 +1199,15 @@
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsResetDesc]}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
                         </StackPanel>
-                        <!-- WPF-UI's own Danger fill is a fixed #F44336 in both themes, and its own
-                             ControlTemplate flips the CONTENT to near-black in the light theme regardless
-                             of a Button.Foreground override (the same "buttons go black" template
-                             behaviour seen elsewhere); measured white-on-#F44336 at only 3.7:1 in dark
-                             besides. The Background is pinned to the same fixed, saturated red Fluent's
-                             own light-theme critical colour uses (measured 5.7:1 for white text against
-                             it), and the label is its own TextBlock with its own Foreground, so it reads
-                             white in both themes. Both colours are style setters rather than local values
-                             because a style trigger loses to a local value: under Windows high contrast
-                             the triggers hand both back to the system button colours. The binding goes
-                             through the property path so a live switch of the scheme is picked up (an
-                             x:Static reference is read once). -->
+                        <!-- WPF-UI's own Danger fill is a fixed #F44336 in both themes (white on it is only 3.7:1
+                             in dark), and its ControlTemplate flips the CONTENT to near-black in the light theme
+                             regardless of a Button.Foreground override. The Background is pinned to the saturated
+                             red Fluent's light-theme critical colour uses (5.7:1 for white text), and the label
+                             is its own TextBlock with its own Foreground, so it reads white in both themes. Both
+                             colours are style setters rather than local values because a style trigger loses to a
+                             local value: under Windows high contrast the triggers hand both back to the system
+                             button colours. The binding goes through the property path so a live scheme switch is
+                             picked up (an x:Static reference is read once). -->
                         <ui:Button x:Name="ResetEverythingButton" Grid.Column="2" VerticalAlignment="Center"
                                    Command="{Binding ResetEverythingCommand}">
                             <ui:Button.Style>
