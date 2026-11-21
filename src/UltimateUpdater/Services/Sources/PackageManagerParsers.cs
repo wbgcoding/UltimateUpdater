@@ -604,10 +604,11 @@ public static class PackageManagerParsers
 
         var lines = SplitLines(stdout).ToList();
 
-        // The classic layout ALSO prints an "Installed packages:" section ahead of its "Available
-        // Updates:" table, so that header alone cannot tell the two apart; "Available packages:" only
-        // ever appears in the newer layout, which has no updates table at all.
-        if (lines.Any(l => string.Equals(l.Trim(), "Available packages:", StringComparison.OrdinalIgnoreCase)))
+        // The classic layout prints "Installed packages:", "Available Packages:" and "Available
+        // Updates:" sections, so the packages header alone cannot tell the two apart; the newer layout
+        // has no updates table at all, so an "Available Updates" line means classic.
+        if (lines.Any(l => string.Equals(l.Trim(), "Available packages:", StringComparison.OrdinalIgnoreCase))
+            && !lines.Any(l => l.Contains("Available Updates", StringComparison.OrdinalIgnoreCase)))
         {
             recognized = true;
             return ParseSdkManagerNewLayout(lines);
@@ -790,7 +791,7 @@ public static class PackageManagerParsers
                 continue;
 
             var repo = rest.FirstOrDefault(f => f.Contains('/'));
-            var version = rest.LastOrDefault(f => f.Length > 0 && (f[0] == 'v' || char.IsDigit(f[0])));
+            var version = rest.LastOrDefault(f => f.Length > 0 && !f.Contains('/') && (f[0] == 'v' || char.IsDigit(f[0])));
             if (repo is null || version is null)
                 continue;
 

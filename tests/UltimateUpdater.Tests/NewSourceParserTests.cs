@@ -213,6 +213,38 @@ public class NewSourceParserTests
             });
     }
 
+    /// <summary>The classic layout lists an "Available Packages:" section too, ahead of its "Available
+    /// Updates:" table; that section must not send the output down the new-layout path.</summary>
+    [Fact]
+    public void SdkManagerList_classic_layout_with_an_available_packages_section_still_reads_the_updates_table()
+    {
+        const string output = """
+            Installed packages:
+              Path                 | Version | Description                | Location
+              -------              | ------- | -------                    | -------
+              build-tools;34.0.0   | 34.0.0  | Android SDK Build-Tools 34 | build-tools/34.0.0
+              platform-tools       | 34.0.4  | Android SDK Platform-Tools | platform-tools
+
+            Available Packages:
+              Path                 | Version | Description
+              -------              | ------- | -------
+              build-tools;34.0.1   | 34.0.1  | Android SDK Build-Tools 34.0.1
+              platform-tools       | 35.0.0  | Android SDK Platform-Tools
+
+            Available Updates:
+              ID                   | Installed | Available
+              -------              | --------- | ---------
+              build-tools;34.0.0   | 34.0.0    | 34.0.1
+              platform-tools       | 34.0.4    | 35.0.0
+            """;
+
+        var packages = PackageManagerParsers.ParseSdkManagerList(output, out var recognized);
+
+        Assert.True(recognized);
+        Assert.Equal(["build-tools;34.0.0", "platform-tools"], packages.Select(p => p.Id));
+        Assert.Equal(["34.0.1", "35.0.0"], packages.Select(p => p.Available));
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("Installed packages:\n  build-tools;34.0.0 | 34.0.0\n")]
@@ -283,6 +315,16 @@ public class NewSourceParserTests
         Assert.Equal("dlvhdr/gh-dash", only.Id);
         Assert.Equal("v4.2.0", only.Installed);
         Assert.Null(only.Available);
+    }
+
+    /// <summary>An extension tracked by commit hash shows a short sha as its version; a repo whose owner starts
+    /// with "v" must not be read as that version.</summary>
+    [Fact]
+    public void GhExtensionList_never_takes_the_repo_for_a_version()
+    {
+        const string output = "*\tgh screensaver\tvilmibm/gh-screensaver\tabc1234\n";
+
+        Assert.Empty(PackageManagerParsers.ParseGhExtensionList(output));
     }
 
     [Theory]
