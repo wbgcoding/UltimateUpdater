@@ -702,6 +702,15 @@ begin
   Result := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
 end;
 
+{ Setup runs elevated, but PSModulePath starts with the user's own Documents modules folder, so a module
+  planted there would shadow CimCmdlets or Management and run as admin. The scripts load only the
+  modules that ship with Windows. }
+function PowerShellArgs(const Script: String): String;
+begin
+  Result := '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' +
+    '$env:PSModulePath = $PSHOME + ''\Modules''; ' + Script + '"';
+end;
+
 { The copies that would hold Setup's files: by PATH, so a portable copy running from somewhere else
   is never touched (same reasoning as InitializeUninstall). $hidden are the processes named like the app
   whose path this process may not read (an elevated copy); Running is true while an exe of the install
@@ -748,7 +757,7 @@ begin
     '{ $m.Dispose(); $busy = $true } } catch { $busy = $true } }; ' +
     'if ($busy) { exit ' + IntToStr(BusyExitCode) + ' } else { exit 0 }';
   Started := Exec(PowerShellPath,
-       '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
+       PowerShellArgs(Script), '',
        SW_HIDE, ewWaitUntilTerminated, ResultCode);
   Result := (not Started) or (ResultCode <> 0);
 end;
@@ -881,7 +890,7 @@ begin
     'for ($i = 0; $i -lt 3 -and (Running); $i++) { Start-Sleep -Seconds 1 }; ' +
     'if (Running) { exit ' + IntToStr(StillRunningExitCode) + ' } else { exit 0 }';
   Started := Exec(PowerShellPath,
-       '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' + Script + '"', '',
+       PowerShellArgs(Script), '',
        SW_HIDE, ewWaitUntilTerminated, ResultCode);
   { Only the script's own verdict (closed, or still running) is taken at its word. A PowerShell that did not
     start or failed some other way proves nothing about the copies, and calling that "closed" let a silent

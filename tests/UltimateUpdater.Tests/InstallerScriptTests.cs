@@ -50,6 +50,22 @@ public class InstallerScriptTests
     }
 
     /// <summary>
+    /// Setup and the uninstaller run PowerShell elevated. Its module path starts with the user's own
+    /// Documents folder, so every call has to go through the helper that limits it to the Windows modules.
+    /// </summary>
+    [Fact]
+    public void Elevated_PowerShell_loads_only_the_modules_that_ship_with_Windows()
+    {
+        var script = Script();
+
+        Assert.Contains("'$env:PSModulePath = $PSHOME + ''\\Modules''; ' + Script", script);
+        var calls = Regex.Matches(script, @"Exec\(PowerShellPath,\s*(\S+)");
+        Assert.NotEmpty(calls);
+        Assert.All(calls, call => Assert.Equal("PowerShellArgs(Script),", call.Groups[1].Value));
+        Assert.DoesNotContain("-Command \"' + Script", script);
+    }
+
+    /// <summary>
     /// A silent upgrade reuses the previous task choice, which switched autostart back on for a user who had
     /// turned it off in the app. Whether this is an upgrade is read once, before Setup writes anything.
     /// </summary>
