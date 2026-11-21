@@ -21,8 +21,7 @@ public partial class MainWindow : FluentWindow
     private readonly ThemeService _themeService;
     private readonly LoggingService? _logging;
 
-    /// <summary>Only activations AFTER the first are logged, the first is the start-up paint, a separate
-    /// concern.</summary>
+    /// <summary>Only activations after the first are logged; the first is the start-up paint.</summary>
     private bool _hadFirstActivation;
 
     public MainWindow(
@@ -38,13 +37,10 @@ public partial class MainWindow : FluentWindow
         DataContext = viewModel;
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
-        // Sets the starting fill directly, no glide: a window that opens mid-batch should show the real
-        // percentage at once, not animate up from zero the way a live change does.
+        // Sets the starting fill directly, without a glide: a window that opens mid-batch should show the real percentage at once.
         UpdateInstallBarFill(animate: false);
 
-        // The toolbar cleanup sweep is ambient motion nobody can see while this window is minimised or
-        // hidden behind another (e.g. close-to-tray), same reasoning as CleanupWindow.xaml.cs's own
-        // ApplySweepVisibility; kept separate from the run's own IsCleanupRunning check.
+        // The toolbar cleanup sweep is ambient motion nobody sees while the window is minimised or hidden behind another (e.g. close-to-tray); kept apart from the run's own IsCleanupRunning check.
         IsVisibleChanged += (_, _) => ApplyToolbarSweepVisibility(IsVisible && WindowState != WindowState.Minimized);
         StateChanged += (_, _) =>
         {
@@ -60,8 +56,7 @@ public partial class MainWindow : FluentWindow
 
         Activated += OnMainWindowActivated;
 
-        // The main window falling behind while the cleanup window is open is the case this line helps tell
-        // apart from a close or a hide.
+        // Tells a main window falling behind the cleanup window apart from a close or a hide.
         Deactivated += (_, _) =>
         {
             if (_logging is not null && Application.Current?.Windows.OfType<CleanupWindow>().Any() == true)
@@ -70,10 +65,7 @@ public partial class MainWindow : FluentWindow
 
         Closing += (_, args) =>
         {
-            // RestoreBounds, not Left/Width: a maximized window reports the maximized frame and a
-            // minimized one reports -32000, either of which would throw the user's actual window size
-            // away if saved directly.
-            // Minimized from maximized still counts as maximized: saving false reopened it un-maximized.
+            // RestoreBounds, not Left/Width: a maximized window reports the maximized frame and a minimized one -32000, which would discard the user's real size. Minimized from maximized still counts as maximized.
             var maximized = WindowState == WindowState.Maximized
                             || (WindowState == WindowState.Minimized && _restoreState == WindowState.Maximized);
             var bounds = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
@@ -83,10 +75,7 @@ public partial class MainWindow : FluentWindow
             if (Application.Current is not App app || app.IsExiting)
                 return;
 
-            // Closing the window during an install would end the process, and the elevated worker
-            // stops as soon as the app is gone: so a batch the user approved would be abandoned
-            // halfway through by closing a window, which is a natural thing to do while it runs.
-            // Close-to-tray keeps the interval scanner alive; a real exit comes from the tray menu.
+            // Closing the window during an install would end the process, and the elevated worker stops with the app, abandoning an approved batch. Close-to-tray keeps the interval scanner alive; a real exit comes from the tray menu.
             if (viewModel.IsInstalling || _settings.Current.Ui.CloseToTray || app.StartedInTray)
             {
                 args.Cancel = true;
@@ -98,21 +87,16 @@ public partial class MainWindow : FluentWindow
 
             _logging?.Info("Main window closing: exiting the app");
 
-            // ShutdownMode is OnExplicitShutdown, so that a --tray start survives this window being
-            // opened and closed again. That makes ending the app this window's job when it really closes.
+            // ShutdownMode is OnExplicitShutdown so a --tray start survives this window being opened and closed, which makes ending the app this window's job when it really closes.
             app.ExitApplication();
 
-            // "Keep it running" in the quit confirmation: the app stays, so must its window. Closed anyway,
-            // the process lived on with only the tray icon, and tray Open then called Show() on a closed
-            // window, which threw into the crash handler and ended the very work the user chose to keep.
+            // "Keep it running" in the quit confirmation: the window must stay too, or tray Open would call Show() on a closed window and throw into the crash handler.
             if (!app.IsExiting)
                 args.Cancel = true;
         };
     }
 
-    /// <summary>Test seam: the real hook waits for the next composited frame via
-    /// <see cref="System.Windows.Media.CompositionTarget.Rendering"/>, which a headless render test never
-    /// gets, so a test sets this to run its callback synchronously instead.</summary>
+    /// <summary>Test seam: the real hook waits for the next composited frame via <see cref="System.Windows.Media.CompositionTarget.Rendering"/>, which a headless render test never gets, so a test runs its callback synchronously instead.</summary>
     internal Action<Action>? NextRenderFrameOverride { get; set; }
 
     private void ScheduleNextRenderFrame(Action callback)
@@ -132,13 +116,7 @@ public partial class MainWindow : FluentWindow
         System.Windows.Media.CompositionTarget.Rendering += OnRendering;
     }
 
-    /// <summary>
-    /// Measures the short stall some users see after tabbing away and back, since nothing else on the
-    /// activation path is blocking. Starts a Stopwatch on Activated and writes one Info line on the NEXT
-    /// composited frame after that, which is the number that matters, not how long the event handler
-    /// itself took. Only activations after the first are logged; the first is the start-up paint, a
-    /// separate concern.
-    /// </summary>
+    /// <summary>Measures the short stall after tabbing away and back: starts a Stopwatch on Activated and writes one Info line on the next composited frame, the number that matters. Only activations after the first are logged.</summary>
     private void OnMainWindowActivated(object? sender, EventArgs e)
     {
         if (!_hadFirstActivation)
@@ -162,9 +140,7 @@ public partial class MainWindow : FluentWindow
         });
     }
 
-    /// <summary>The main table's ListBox has grouped virtualization off, so every generated container is
-    /// a realized row; counted straight off the generator rather than the item count, which would also
-    /// include rows that have not been realized yet.</summary>
+    /// <summary>The table's ListBox has grouped virtualization off, so every generated container is a realized row; counted off the generator, since the item count would include unrealized rows.</summary>
     private int CountRealizedTableRows()
     {
         if (UpdatesListBox.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated)
@@ -180,17 +156,14 @@ public partial class MainWindow : FluentWindow
         return count;
     }
 
-    /// <summary>The stable, language-independent identity of a group; see
-    /// <see cref="UpdateRowViewModel.CategoryKey"/>. The view still groups by the
-    /// translated CategoryDisplay text (group.Name), which is what a language switch changes; every row
-    /// in one group shares the same CategoryKey, so the first one answers for the whole group.</summary>
+    /// <summary>The language-independent identity of a group; see <see cref="UpdateRowViewModel.CategoryKey"/>. The view groups by the translated CategoryDisplay text, so the first row's key answers for the whole group.</summary>
     private static string? StableGroupKey(CollectionViewGroup group) =>
         group.Items.Count > 0 && group.Items[0] is UpdateRowViewModel row ? row.CategoryKey : group.Name as string;
 
     /// <summary>Applies the remembered collapse state to a group header as it is (re)built.</summary>
     private void OnGroupExpanderLoaded(object sender, RoutedEventArgs e)
     {
-        // the un-prefixed <Expander> in XAML is the standard WPF control, not WPF-UI's own
+        // The un-prefixed Expander in XAML is the standard WPF control, not WPF-UI's own.
         if (sender is System.Windows.Controls.Expander { DataContext: CollectionViewGroup group } expander
             && DataContext is MainViewModel viewModel)
         {
@@ -198,7 +171,7 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    /// <summary>Remembers a group's collapse state so the next rebuild (e.g. a scan finding more rows) keeps it.</summary>
+    /// <summary>Remembers a group's collapse state so the next rebuild keeps it.</summary>
     private void OnGroupExpanderToggled(object sender, RoutedEventArgs e)
     {
         if (sender is System.Windows.Controls.Expander { DataContext: CollectionViewGroup group } expander
@@ -208,8 +181,7 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    /// <summary>The main table's own column chooser, built from MainViewModel's static column
-    /// list; the shared builder lives in Views/ColumnChooser.cs.</summary>
+    /// <summary>The main table's column chooser, built from MainViewModel's static column list by the shared builder in Views/ColumnChooser.cs.</summary>
     private void OnColumnsButtonClick(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement anchor)
@@ -223,31 +195,24 @@ public partial class MainWindow : FluentWindow
             _viewModel.ResetMainColumns);
     }
 
-    /// <summary>
-    /// Double-clicking a row runs its Open action where it has one: the store and launcher rows exist
-    /// only to be opened manually, and they carry no checkbox, so the whole row is the target.
-    /// </summary>
+    /// <summary>Double-clicking a row runs its Open action where it has one: store and launcher rows exist only to be opened and carry no checkbox.</summary>
     private void OnRowDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: UpdateRowViewModel { CanOpen: true } row })
             row.OpenCommand.Execute(null);
     }
 
-    /// <summary>Routes Ctrl+F (see the window's own InputBindings in XAML). Focusing a control lives in the
-    /// view, so this has no view model command; a RoutedCommand keeps it in the same InputBindings list
-    /// <see cref="KeyboardShortcuts"/>'s table drives for every other shortcut.</summary>
+    /// <summary>Routes Ctrl+F (see the window's InputBindings in XAML). Focusing is a view concern, so a RoutedCommand serves it in the same InputBindings list as <see cref="KeyboardShortcuts"/>.</summary>
     public static readonly RoutedCommand FocusSearchCommand = new(nameof(FocusSearchCommand), typeof(MainWindow));
 
-    /// <summary>Opens the F1 overview (see <see cref="ShowShortcutsWindow"/>); the other command with no
-    /// view model command of its own, for the same reason as <see cref="FocusSearchCommand"/> above.</summary>
+    /// <summary>Opens the F1 overview (see <see cref="ShowShortcutsWindow"/>); a view-only command like <see cref="FocusSearchCommand"/>.</summary>
     public static readonly RoutedCommand ShowShortcutsCommand = new(nameof(ShowShortcutsCommand), typeof(MainWindow));
 
     private void OnFocusSearchExecuted(object sender, ExecutedRoutedEventArgs e) => TryFocusSearch();
 
     private void OnShowShortcutsExecuted(object sender, ExecutedRoutedEventArgs e) => ShowShortcutsWindow();
 
-    /// <summary>Its own outcome, whether the search box actually took focus, is directly testable without
-    /// depending on live global keyboard modifier state, which a headless test cannot fake.</summary>
+    /// <summary>Returns whether the search box took focus, so it is testable without live keyboard modifier state.</summary>
     internal bool TryFocusSearch()
     {
         if (!SearchBox.Focus())
@@ -257,8 +222,7 @@ public partial class MainWindow : FluentWindow
         return true;
     }
 
-    /// <summary>One window per app instance, non-modal, closing on the next click elsewhere in the app
-    /// (<see cref="DismissOnDeactivate"/>, wired inside the window's own constructor).</summary>
+    /// <summary>One window per app instance, non-modal, closing on the next click elsewhere (<see cref="DismissOnDeactivate"/>).</summary>
     internal void ShowShortcutsWindow()
     {
         var existing = Application.Current?.Windows.OfType<ShortcutsWindow>().FirstOrDefault(w => w.IsLoaded);
@@ -271,9 +235,7 @@ public partial class MainWindow : FluentWindow
         new ShortcutsWindow { Owner = this }.Show();
     }
 
-    /// <summary>Keeps the install band's hand-drawn fill in step with the view model, gliding on a live
-    /// change instead of jumping: a plain XAML Binding on Value would fight this animation on every tick,
-    /// so the bar carries no Binding of its own.</summary>
+    /// <summary>Keeps the install band's hand-drawn fill in step with the view model, gliding on a live change; a plain XAML Binding on Value would fight the animation, so the bar has none.</summary>
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(MainViewModel.ShowPersistentFailureFilter)
@@ -292,8 +254,7 @@ public partial class MainWindow : FluentWindow
 
     private bool _chipLabelUpdateQueued;
 
-    /// <summary>The chips' texts change after the property notification that triggers this, so the
-    /// measurement waits until the bindings have settled.</summary>
+    /// <summary>The chips' texts change after the notification that triggers this, so measuring waits until the bindings settle.</summary>
     private void ScheduleFilterChipLabelUpdate()
     {
         if (_chipLabelUpdateQueued)
@@ -307,12 +268,7 @@ public partial class MainWindow : FluentWindow
         });
     }
 
-    /// <summary>
-    /// Whether the chips can keep their text: the width the search box and every shown chip need WITH text,
-    /// worked out from the text itself (never from the chips' current size, which changes when the text is
-    /// off), against the width the toolbar actually has. The toolbar's width does not depend on its
-    /// children, so switching the text off cannot flip the answer back.
-    /// </summary>
+    /// <summary>Whether the chips can keep their text: the width the search box and every shown chip need with text, worked out from the text itself (not the chips' current size), against the toolbar's width. The toolbar's width does not depend on its children, so switching the text off cannot flip the answer back.</summary>
     private void UpdateFilterChipLabels()
     {
         var available = ToolbarWrapPanel.ActualWidth;
@@ -337,7 +293,7 @@ public partial class MainWindow : FluentWindow
                 new Typeface(label.FontFamily, label.FontStyle, label.FontWeight, label.FontStretch),
                 label.FontSize, System.Windows.Media.Brushes.Black, pixelsPerDip);
 
-            // 2 = the chip's border, the icon is as wide as its font size, 4 = rounding slack
+            // 2 = the chip's border, the icon is as wide as its font size, 4 = rounding slack.
             var iconWidth = content.Children.OfType<Wpf.Ui.Controls.SymbolIcon>().FirstOrDefault()?.FontSize ?? 16;
             needed += chip.Margin.Left + chip.Margin.Right + chip.Padding.Left + chip.Padding.Right + 2 + iconWidth
                 + label.Margin.Left + text.WidthIncludingTrailingWhitespace + 4;
@@ -348,24 +304,13 @@ public partial class MainWindow : FluentWindow
             label.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    /// <summary>The travelling light's own clock, kept so <see cref="ApplyToolbarSweepVisibility"/> can
-    /// pause and resume it without tearing it down; a plain BeginAnimation call hands back no handle of
-    /// its own, so this one is built with <c>CreateClock(hasControllableRoot: true)</c> instead.</summary>
+    /// <summary>The travelling light's clock, kept so <see cref="ApplyToolbarSweepVisibility"/> can pause and resume it; BeginAnimation returns no handle, so it is built with <c>CreateClock(hasControllableRoot: true)</c>.</summary>
     private AnimationClock? _toolbarSweepClock;
 
-    /// <summary>True while the sweep is paused because the window itself is minimised or hidden behind
-    /// another, as distinct from the run's own state: kept apart so a window restored while nothing is
-    /// cleaning never resumes a clock that was already removed.</summary>
+    /// <summary>True while the sweep is paused because the window is minimised or hidden, apart from the run's own state, so a window restored while nothing is cleaning never resumes a removed clock.</summary>
     private bool _toolbarSweepPausedForVisibility;
 
-    /// <summary>
-    /// The travelling light on the toolbar cleanup button's disk (ToolbarCleaningLight in the XAML), the
-    /// smaller-scale mirror of the cleanup dialog's own centre animation. A plain BeginAnimation call
-    /// straight on the transform it owns, not a Storyboard hung off a Style trigger: a Storyboard animating
-    /// a path through a Brush's own RelativeTransform via a Style's implicit target corrupted later renders
-    /// of unrelated windows in the render harness. Gated on ClientAreaAnimation, the actual "animations on"
-    /// system setting, like the disk's own breathe.
-    /// </summary>
+    /// <summary>The travelling light on the toolbar cleanup button's disk (ToolbarCleaningLight in the XAML), a smaller mirror of the cleanup dialog's centre animation. A plain BeginAnimation on the transform it owns, not a Storyboard on a Style trigger: animating a Brush's RelativeTransform that way corrupted later renders of other windows in the render harness. Gated on ClientAreaAnimation, the system "animations on" setting.</summary>
     private void UpdateCleanupIconSweep()
     {
         if (_viewModel.IsCleanupRunning && MotionPreference.AnimationsEnabled)
@@ -384,9 +329,7 @@ public partial class MainWindow : FluentWindow
             _toolbarSweepClock = clock;
             ToolbarLightSlide.ApplyAnimationClock(TranslateTransform.XProperty, clock);
 
-            // Started while already minimised or hidden (e.g. a window restored straight into a
-            // cleanup already running): match the paused state ApplyToolbarSweepVisibility set, or the
-            // fresh clock would animate unseen until the next visibility change.
+            // Started while already minimised or hidden: match the paused state, or the fresh clock would animate unseen until the next visibility change.
             if (_toolbarSweepPausedForVisibility)
                 clock.Controller?.Pause();
         }
@@ -398,8 +341,7 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    /// <summary>Pausing here never fights the run's own state, and restoring the window never starts a
-    /// sweep the run itself already ended.</summary>
+    /// <summary>Pausing never fights the run's own state, and restoring never starts a sweep the run already ended.</summary>
     private void ApplyToolbarSweepVisibility(bool visible)
     {
         if (visible)
@@ -431,8 +373,7 @@ public partial class MainWindow : FluentWindow
             return;
         }
 
-        // Short and eased: long enough to read as motion,
-        // short enough that a fast-moving batch does not lag behind the numbers beside it.
+        // Short and eased: long enough to read as motion, short enough not to lag behind the numbers beside it.
         var glide = new DoubleAnimation(target, TimeSpan.FromMilliseconds(200))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
@@ -441,15 +382,7 @@ public partial class MainWindow : FluentWindow
         InstallBar.BeginAnimation(PillProgressBar.ValueProperty, glide);
     }
 
-    /// <summary>
-    /// Row-level keyboard shortcuts. Space toggles the checkbox, Enter runs the row's primary action, Entf
-    /// ignores. Fires ONLY when the row itself (the ListBoxItem, or a Steam child's own line) has focus, not
-    /// one of its buttons or its checkbox: those handle Space/Enter themselves, and re-handling here would
-    /// fire twice. Attached once at the ListBox: PreviewKeyDown tunnels from there to whichever element has
-    /// focus, nested Steam children included. Arrow-key/Tab movement between rows and their children needs
-    /// no code here: it is ordinary WPF Selector/KeyboardNavigation behaviour once every focusable element
-    /// exists.
-    /// </summary>
+    /// <summary>Row-level keyboard shortcuts: Space toggles the checkbox, Enter runs the primary action, Entf ignores. Fires only when the row itself has focus, not its buttons or checkbox, which handle Space and Enter themselves. Attached once at the ListBox, since PreviewKeyDown tunnels to whichever element has focus. Arrow and Tab movement needs no code.</summary>
     private void OnUpdatesListPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (Keyboard.FocusedElement is not FrameworkElement { DataContext: UpdateRowViewModel row } focused)
@@ -458,8 +391,7 @@ public partial class MainWindow : FluentWindow
         if (focused is not (System.Windows.Controls.ListBoxItem or System.Windows.Controls.Border))
             return;
 
-        // Chorded keys belong to the window's KeyBindings: handling Ctrl+Enter here ran the focused row's own
-        // action instead of "install selected", the shortcut the tooltip and the F1 window promise.
+        // Chorded keys belong to the window's KeyBindings; handling Ctrl+Enter here would run the row's own action instead of "install selected".
         if (Keyboard.Modifiers != ModifierKeys.None)
             return;
 
@@ -483,10 +415,7 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    /// <summary>Reachable from inside the table (see the CommandBinding beside <c>UpdatesListBox</c> in
-    /// XAML): forwards to the SAME SelectAllCommand the window-level Ctrl+A KeyBinding already runs when
-    /// focus sits somewhere the ListBox does not intercept the key first - no second copy of the selection
-    /// logic.</summary>
+    /// <summary>Reachable from inside the table (CommandBinding beside <c>UpdatesListBox</c>): forwards to the SelectAllCommand the window-level Ctrl+A binding runs, so the selection logic exists once.</summary>
     private void OnUpdatesListSelectAllExecuted(object sender, System.Windows.Input.ExecutedRoutedEventArgs e)
     {
         _viewModel.SelectAllCommand.Execute(null);
@@ -499,15 +428,13 @@ public partial class MainWindow : FluentWindow
         e.Handled = true;
     }
 
-    // WinForms carries same-named Point/MouseEventArgs/DragEventArgs types (GlobalUsings.cs), so all
-    // three are qualified at their use site here rather than added to that project-wide alias list.
+    // WinForms has same-named Point, MouseEventArgs and DragEventArgs types (GlobalUsings.cs), so these are qualified at their use site.
     private System.Windows.Point? _queueDragStart;
     private UpdateRowViewModel? _queueDragRow;
     private System.Windows.Documents.AdornerLayer? _queueDragAdornerLayer;
     private DragAdorner? _queueDragAdorner;
 
-    /// <summary>Remembers the row and pointer position a drag might start from. Set on every press,
-    /// consumed only if the pointer actually moves far enough while still held (see <see cref="OnQueueRowMouseMove"/>).</summary>
+    /// <summary>Remembers the row and pointer position a drag might start from; consumed only if the pointer moves far enough while held (see <see cref="OnQueueRowMouseMove"/>).</summary>
     private void OnQueueRowMouseDown(object sender, MouseButtonEventArgs e)
     {
         _queueDragStart = e.GetPosition(null);
@@ -518,9 +445,7 @@ public partial class MainWindow : FluentWindow
     {
         if (e.LeftButton != MouseButtonState.Pressed)
         {
-            // A press that ended without a drag: it must not arm a drag for a LATER press that this card's
-            // MouseDown never saw (the remove button handles its own press, but its MouseMove still bubbles
-            // here), which dragged the previously clicked card instead and swallowed the removal.
+            // A press that ended without a drag must not arm a drag for a later press this card's MouseDown never saw (the remove button handles its own press, but its MouseMove still bubbles here).
             _queueDragRow = null;
             _queueDragStart = null;
             return;
@@ -559,11 +484,7 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    /// <summary>
-    /// Moves the drag preview to follow the cursor. GiveFeedback carries no screen point of its own, so
-    /// the actual position comes from WinForms' Cursor (already referenced in this project for the tray
-    /// icon), converted into the adorned element's own coordinate space.
-    /// </summary>
+    /// <summary>Moves the drag preview with the cursor. GiveFeedback carries no screen point, so the position comes from WinForms' Cursor, converted into the adorned element's coordinates.</summary>
     private void OnQueueRowGiveFeedback(object sender, System.Windows.GiveFeedbackEventArgs e)
     {
         if (_queueDragAdorner is not null && sender is UIElement element)
@@ -583,9 +504,7 @@ public partial class MainWindow : FluentWindow
         e.Handled = true;
     }
 
-    /// <summary>Reorders the queue panel's own list AND pushes the new order down into whatever is
-    /// actually holding those rows back. <see cref="MainViewModel.MoveQueueRow"/> does the latter, so a
-    /// drag-and-drop here changes real install order, not just this visual list.</summary>
+    /// <summary>Reorders the queue panel's list and pushes the order down through <see cref="MainViewModel.MoveQueueRow"/>, so a drop changes the real install order.</summary>
     private void OnQueueRowDrop(object sender, System.Windows.DragEventArgs e)
     {
         if (e.Data.GetData(typeof(UpdateRowViewModel)) is not UpdateRowViewModel dragged
@@ -607,11 +526,7 @@ public partial class MainWindow : FluentWindow
         e.Handled = true;
     }
 
-    /// <summary>Entf removes the focused queue row (the same command its own reveal-on-focus/hover
-    /// button already carries, found by name within the row's own DataTemplate rather than re-deriving
-    /// the ItemsControl's DataContext by hand); Alt+Up/Down moves it one place, since drag is otherwise
-    /// the only way to reorder the queue. Alt survives only as <see cref="System.Windows.Input.KeyEventArgs.SystemKey"/>
-    /// while held, e.Key itself reports <see cref="Key.System"/> for any key chorded with it.</summary>
+    /// <summary>Entf removes the focused queue row (the command its hover button carries, found by name in the row's DataTemplate); Alt+Up and Alt+Down move it one place, since drag is otherwise the only way to reorder. A key chorded with Alt reports <see cref="Key.System"/> in e.Key, the key itself in <see cref="System.Windows.Input.KeyEventArgs.SystemKey"/>.</summary>
     private void OnQueueRowKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (sender is not FrameworkElement card)
@@ -651,9 +566,7 @@ public partial class MainWindow : FluentWindow
         e.Handled = true;
     }
 
-    /// <summary>The row card's own accessible name at the moment it is created; the reorder handlers
-    /// above then refresh every already-generated row afterward (see
-    /// <see cref="RefreshQueueRowAutomationNames"/> for why a move needs its own explicit pass).</summary>
+    /// <summary>The row card's accessible name when it is created; the reorder handlers refresh the others (see <see cref="RefreshQueueRowAutomationNames"/>).</summary>
     private void OnQueueRowCardLoaded(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement card && DataContext is MainViewModel viewModel)
@@ -673,13 +586,7 @@ public partial class MainWindow : FluentWindow
             string.Format(viewModel.Loc["QueueRowPositionAutomation"], row.Name, index + 1, viewModel.QueueRows.Count));
     }
 
-    /// <summary>
-    /// Re-stamps every currently generated queue row's accessible name after a reorder. WPF assigns a
-    /// container's <c>AlternationIndex</c> only when that container is generated and never recomputes it
-    /// for the OTHER rows a Move shifted, so a binding on it would leave every row but the one just
-    /// (re)generated announcing a stale position; setting the name by hand for the whole visible set after
-    /// every move avoids that.
-    /// </summary>
+    /// <summary>Re-stamps every generated queue row's accessible name after a reorder. WPF assigns <c>AlternationIndex</c> only when a container is generated and never recomputes it for rows a Move shifted, so a binding would leave stale positions.</summary>
     private void RefreshQueueRowAutomationNames(MainViewModel viewModel)
     {
         if (QueueItemsControl.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated)
@@ -707,9 +614,7 @@ public partial class MainWindow : FluentWindow
         return null;
     }
 
-    /// <summary>Enter/Space on a sortable column header or the source pill; see
-    /// <see cref="KeyboardActivation"/>. Ctrl+C on an error pill copies its reason, the keyboard twin of
-    /// the right-click.</summary>
+    /// <summary>Enter and Space on a sortable column header or the source pill (see <see cref="KeyboardActivation"/>); Ctrl+C on an error pill copies its reason, as the right-click does.</summary>
     private void OnClickTargetKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control)
@@ -723,8 +628,7 @@ public partial class MainWindow : FluentWindow
         KeyboardActivation.ActivateOnEnterOrSpace(sender, e);
     }
 
-    /// <summary>Right-click a source pill to copy its raw error reason: the tooltip says so.
-    /// Silent no-op for a pill with nothing to copy.</summary>
+    /// <summary>Right-click a source pill to copy its raw error reason, as the tooltip says. No-op for a pill with nothing to copy.</summary>
     private void OnErrorPillRightClick(object sender, MouseButtonEventArgs e) => CopyErrorReason(sender);
 
     /// <summary>True when the element is a pill with a reason and that reason was put on the clipboard.</summary>
@@ -745,8 +649,7 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    /// <summary>The last state that was not minimized, so tray Open and a second launch restore a
-    /// maximized window maximized instead of forcing it to Normal.</summary>
+    /// <summary>The last state that was not minimized, so tray Open and a second launch restore a maximized window as maximized.</summary>
     private WindowState _restoreState = WindowState.Normal;
 
     public void BringToFront()
@@ -769,9 +672,7 @@ public partial class MainWindow : FluentWindow
         var (bounds, onMonitor) = ResolveRestoreBounds(
             saved, saved is { } rect ? MonitorFor(rect) : null, PrimaryMonitorArea(), new System.Windows.Size(Width, Height));
 
-        // Any other startup location re-centres on the monitor under the mouse and throws these bounds away,
-        // and a minimum larger than the work area makes WPF grow the window past the clamp; either one put the
-        // title bar above the top edge of a smaller or more scaled monitor.
+        // Any other startup location re-centres on the monitor under the mouse and discards these bounds, and a minimum larger than the work area makes WPF grow the window past the clamp, which can put the title bar above the top edge.
         WindowStartupLocation = WindowStartupLocation.Manual;
         MinWidth = Math.Min(MinWidth, bounds.Width);
         MinHeight = Math.Min(MinHeight, bounds.Height);
@@ -786,11 +687,7 @@ public partial class MainWindow : FluentWindow
     /// <summary>A monitor's full rectangle and its work area (without the taskbar), both in DIPs.</summary>
     internal readonly record struct MonitorArea(Rect Bounds, Rect WorkArea);
 
-    /// <summary>
-    /// The monitor the OS picks for a rect in DIPs: the one it overlaps most, the nearest when it overlaps
-    /// none. The scale is the primary display's, which is what <see cref="SystemParameters"/> (and so every
-    /// coordinate saved before) is expressed in.
-    /// </summary>
+    /// <summary>The monitor the OS picks for a rect in DIPs: the one it overlaps most, the nearest when none. The scale is the primary display's, which <see cref="SystemParameters"/> and all saved coordinates use.</summary>
     private static MonitorArea MonitorFor(Rect dips)
     {
         var pixelsPerDip = System.Windows.Forms.SystemInformation.PrimaryMonitorSize.Width / SystemParameters.PrimaryScreenWidth;
@@ -808,21 +705,14 @@ public partial class MainWindow : FluentWindow
     private static MonitorArea PrimaryMonitorArea() =>
         new(new Rect(0, 0, SystemParameters.PrimaryScreenWidth, SystemParameters.PrimaryScreenHeight), SystemParameters.WorkArea);
 
-    /// <summary>
-    /// Where the window opens. A saved rect that overlaps its monitor (<paramref name="monitorForSaved"/>,
-    /// as the OS resolves it) is fitted to that monitor's work area, not to the bounding box of all
-    /// monitors, which has dead corners and ignores a secondary taskbar. Nothing saved, or a rect that
-    /// overlaps no monitor any more, centres the default size on the primary work area.
-    /// <c>OnMonitor</c> is true only for the first case.
-    /// </summary>
+    /// <summary>Where the window opens. A saved rect that overlaps its monitor (<paramref name="monitorForSaved"/>) is fitted to that monitor's work area, not the bounding box of all monitors, which has dead corners and ignores a secondary taskbar. Nothing saved, or a rect that overlaps no monitor, centres the default size on the primary work area. <c>OnMonitor</c> is true only for the first case.</summary>
     internal static (Rect Bounds, bool OnMonitor) ResolveRestoreBounds(
         Rect? saved, MonitorArea? monitorForSaved, MonitorArea primary, System.Windows.Size defaultSize)
     {
         if (saved is { } rect && monitorForSaved is { } monitor && rect.IntersectsWith(monitor.Bounds))
             return (ClampToVisible(rect, monitor.WorkArea), true);
 
-        // Nothing usable saved: the XAML size centred on the primary display can be taller than the work area
-        // (1024x768), which pushed the title bar above the edge.
+        // Nothing usable saved: the XAML size centred on the primary display can be taller than the work area (1024x768) and push the title bar above the edge.
         var workArea = primary.WorkArea;
         var centred = new Rect(
             workArea.Left + (workArea.Width - defaultSize.Width) / 2,
@@ -839,13 +729,7 @@ public partial class MainWindow : FluentWindow
         Height = bounds.Height;
     }
 
-    /// <summary>
-    /// A saved rect that merely INTERSECTS the current virtual screen can still be almost entirely off it
-    /// (e.g. a second monitor removed since, leaving only a sliver on the primary one), so the caller's
-    /// intersect check alone does not guarantee a visible window. Pulls the rect fully onto the screen:
-    /// shrinks it first if it is wider/taller than the screen, then slides it so no edge falls outside.
-    /// Pure geometry (no WPF dependency beyond <see cref="Rect"/>), unit-tested directly.
-    /// </summary>
+    /// <summary>A saved rect that merely intersects the virtual screen can still be almost entirely off it (a removed second monitor leaving a sliver), so this pulls it fully onto the screen: shrinks it if larger, then slides it so no edge falls outside. Pure geometry, unit-tested directly.</summary>
     internal static Rect ClampToVisible(Rect saved, Rect virtualScreen)
     {
         var width = Math.Min(saved.Width, virtualScreen.Width);

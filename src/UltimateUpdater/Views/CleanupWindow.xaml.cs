@@ -10,28 +10,18 @@ public partial class CleanupWindow
     private readonly CleanupViewModel _viewModel;
     private Storyboard? _sweep;
 
-    /// <summary>The closing pulse and count-up. Its own storyboard because it is a one-shot that begins
-    /// exactly where the sweep ends, so it cannot be a child of it. It is held and let go with the run just
-    /// like the sweep, ends itself, and is taken off for good when the dialog closes.</summary>
+    /// <summary>The closing pulse and count-up. Its own storyboard because it is a one-shot that begins where the sweep ends. Held and let go with the run like the sweep, and taken off when the dialog closes.</summary>
     private Storyboard? _finish;
 
-    /// <summary>
-    /// Set the moment this window closes; checked right after the one <c>await</c> in the <c>Loaded</c>
-    /// handler below, on the same UI thread, so a window closed while its catalogue was still loading never
-    /// goes on to start (or re-trigger elevation for) a scan nobody can see, and never races a fresh window
-    /// opened onto the same, reused view model.
-    /// </summary>
+    /// <summary>Set the moment this window closes; checked after the one <c>await</c> in the <c>Loaded</c> handler, so a window closed while its catalogue loaded never starts (or re-triggers elevation for) a scan nobody can see, nor races a fresh window opened onto the same, reused view model.</summary>
     private bool _closed;
 
-    /// <summary>
-    /// What the ring actually draws. The view model's figure jumps whenever a box is ticked or a target
-    /// finishes, and an arc that jumps looks broken, so this follows it on a short animation instead.
-    /// </summary>
+    /// <summary>What the ring draws. The view model's figure jumps on every tick or finished target, so this follows it on a short animation.</summary>
     public static readonly DependencyProperty DisplayPercentProperty = DependencyProperty.Register(
         nameof(DisplayPercent), typeof(double), typeof(CleanupWindow),
         new PropertyMetadata(0d, OnDisplayPercentChanged));
 
-    /// <summary>The ring's radius, and the same number the track and the Path's box are built from.</summary>
+    /// <summary>The ring's radius, shared by the track and the Path's box.</summary>
     private const double RingRadius = 105;
 
     private static void OnDisplayPercentChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
@@ -42,10 +32,7 @@ public partial class CleanupWindow
         window.DrawRing(percent);
     }
 
-    /// <summary>
-    /// The arc the ring draws. Called for the starting value as well, or the ring would show a bare track
-    /// until the first change came along.
-    /// </summary>
+    /// <summary>The arc the ring draws. Also called for the starting value, or the ring would show a bare track until the first change.</summary>
     private void DrawRing(double percent)
     {
         if (RingFill is { } ring)
@@ -58,11 +45,7 @@ public partial class CleanupWindow
         set => SetValue(DisplayPercentProperty, value);
     }
 
-    /// <summary>
-    /// The freed figure the finished ring shows, in bytes. Its own property because the number counts up to
-    /// the result over a moment instead of appearing at full size: an animation needs something animatable
-    /// to run on, and the view model's own string is not that.
-    /// </summary>
+    /// <summary>The freed figure the finished ring shows, in bytes. Its own property so the count-up has something animatable to run on.</summary>
     public static readonly DependencyProperty DisplayFreedProperty = DependencyProperty.Register(
         nameof(DisplayFreed), typeof(double), typeof(CleanupWindow),
         new PropertyMetadata(0d, OnDisplayFreedChanged));
@@ -79,13 +62,7 @@ public partial class CleanupWindow
         set => SetValue(DisplayFreedProperty, value);
     }
 
-    /// <summary>
-    /// Puts a figure on the ring. The text is written here as well as through the property's changed
-    /// callback, because a DependencyProperty raises nothing when handed the value it already holds and
-    /// this one defaults to 0: a run that freed NOTHING (a repair-only run always does, as does a run
-    /// stopped at once or one where every target was already empty) would otherwise leave the empty XAML
-    /// default instead of showing the real result.
-    /// </summary>
+    /// <summary>Puts a figure on the ring. Written here as well as in the changed callback: a DependencyProperty raises nothing for a value it already holds and this one defaults to 0, so a run that freed nothing (a repair-only run, one stopped at once, one where every target was empty) would otherwise leave the empty XAML default.</summary>
     private void ShowFreed(long bytes)
     {
         DisplayFreed = bytes;
@@ -104,14 +81,10 @@ public partial class CleanupWindow
 
         DrawRing(DisplayPercent);
 
-        // The result figure is written, not bound, so it needs its starting value here: a window opened
-        // onto a run that is already over shows what it ended on rather than nothing at all. From then on
-        // the run's own notifications keep it in step, and the closing count-up takes it over.
+        // The result figure is written, not bound, so it needs its starting value here: a window opened onto a finished run shows what it ended on. After that the run's notifications keep it in step and the closing count-up takes over.
         ShowFreed(viewModel.FreedBytes);
 
-        // The window itself shows at once (IsCatalogLoading gates the detail list's loading
-        // state in XAML); the scan must still wait for the catalogue to actually exist before it can
-        // measure anything.
+        // The window shows at once (IsCatalogLoading gates the detail list's loading state in XAML); the scan waits until the catalogue exists.
         Loaded += async (_, _) =>
         {
             try
@@ -120,15 +93,10 @@ public partial class CleanupWindow
             }
             catch (Exception ex)
             {
-                // CleanupViewModel.LoadCatalogAsync already catches everything and never leaves this task
-                // faulted; this is the second line of defence, because an async void continuation is the
-                // one place an exception has nowhere else to go and takes the whole app down with it. A
-                // future gap in that guard degrades to a logged, closed catalogue state instead of a crash.
+                // CleanupViewModel.LoadCatalogAsync already catches everything; this is the second line of defence, since an exception in an async void continuation takes the whole app down. A gap in that guard degrades to a logged, closed catalogue state.
                 viewModel.Logging.Error("Cleanup: the catalogue task faulted unexpectedly.", ex);
 
-                // A window already closed by the time this runs may be sitting on a view model a fresh
-                // window reuses (see _closed's own remark below); that next window must not inherit an
-                // error state from a run it never saw.
+                // A window already closed by now may sit on a view model a fresh window reuses (see _closed); that window must not inherit an error state from a run it never saw.
                 if (!_closed)
                     viewModel.CatalogLoadFailed = true;
 
@@ -138,7 +106,7 @@ public partial class CleanupWindow
             OnCatalogReady();
         };
 
-        // The window's very first painted frame, catalogue load included; logged once.
+        // The window's first painted frame, catalogue load included; logged once.
         var firstFrameLogged = false;
         ContentRendered += (_, _) =>
         {
@@ -149,9 +117,7 @@ public partial class CleanupWindow
             viewModel.LogFirstFrame();
         };
 
-        // Whether the per-entry marking in the open detail lists is worth doing at all. Minimized counts as
-        // gone: IsVisible stays true for a minimized window, and a list nobody can look at is a list nobody
-        // is watching walk. WindowClosed says the same thing for good.
+        // Whether per-entry marking in the open detail lists is worth doing. Minimized counts as gone: IsVisible stays true for a minimized window. WindowClosed says the same for good.
         IsVisibleChanged += (_, _) => ReportVisibility();
         StateChanged += (_, _) => ReportVisibility();
 
@@ -166,34 +132,20 @@ public partial class CleanupWindow
         viewModel.PropertyChanged += OnViewModelPropertyChanged;
         Closed += (_, _) => viewModel.PropertyChanged -= OnViewModelPropertyChanged;
 
-        // Deliberately no DismissOnDeactivate: this is a window of its own beside the main one, not a popup
-        // over it (see MainViewModel.ShowCleanup), so working in the main window, a new scan included,
-        // leaves it open.
+        // Deliberately no DismissOnDeactivate: this is a window of its own beside the main one (see MainViewModel.ShowCleanup), so working in the main window, a new scan included, leaves it open.
         DialogKeyboard.CloseOnEscape(this);
     }
 
-    /// <summary>
-    /// Runs once the catalogue is ready, EXCEPT when the window has already closed by then
-    /// (<see cref="_closed"/>): closing the dialog cancels nothing already cleaning, but starting a scan, or
-    /// a scan's own elevation prompt, for a window nobody can see is not "nothing", and a fresh window
-    /// opened onto the same, reused view model must never race this stale continuation. Split out of
-    /// the <c>Loaded</c> handler so a test can drive it directly instead of racing a real background
-    /// catalogue build.
-    /// </summary>
+    /// <summary>Runs once the catalogue is ready, except when the window has already closed (<see cref="_closed"/>): starting a scan, or its elevation prompt, for a window nobody can see is not harmless, and a fresh window on the same reused view model must not race this stale continuation. Split out of <c>Loaded</c> so a test can drive it directly.</summary>
     private void OnCatalogReady()
     {
         if (_closed)
             return;
 
-        // The ring starts where the work already is. DisplayPercent begins at 0 and only ever GLIDES on
-        // a change, so without this a window opened onto a run in progress would draw a bare track
-        // until the next progress tick.
+        // The ring starts where the work already is: DisplayPercent begins at 0 and only glides on a change, so a window opened onto a run in progress would show a bare track.
         DisplayPercent = _viewModel.RingPercent;
 
-        // The scan starts once the catalogue is ready, so the figures fill in while the user reads the
-        // list, but NOT when this window was re-opened onto work that is already going: re-measuring
-        // would fight the deletion for the same files, and a second measuring pass would fight the
-        // first one.
+        // The scan starts once the catalogue is ready, so figures fill in while the user reads, but not when the window was re-opened onto work already going: re-measuring would fight the deletion for the same files.
         if (_viewModel.IsCleaning)
             StartSweep();
         else if (_viewModel.IsPrescanRunning)
@@ -202,8 +154,7 @@ public partial class CleanupWindow
             _ = _viewModel.StartOpenScanAsync();
     }
 
-    /// <summary>The window opened while the startup prescan was still measuring: the prescan is left to
-    /// finish (a second pass would fight it over the same folders), then the rest is measured as usual.</summary>
+    /// <summary>The window opened while the startup prescan was still measuring: it is left to finish (a second pass would fight it over the same folders), then the rest is measured.</summary>
     private async Task FinishAfterPrescanAsync()
     {
         await _viewModel.WaitForPrescanAsync();
@@ -222,20 +173,10 @@ public partial class CleanupWindow
         ApplySweepVisibility(visible);
     }
 
-    /// <summary>True while the sweep/finish storyboards are paused because the window itself is minimised
-    /// or hidden behind another window, as distinct from the run's own pause (<see
-    /// cref="CleanupViewModel.IsPaused"/>): kept apart so restoring the window never resumes an animation
-    /// the user paused on purpose, and the run's own resume never restarts one nobody can even see yet.
-    /// </summary>
+    /// <summary>True while the sweep and finish storyboards are paused because the window is minimised or hidden, apart from the run's own pause (<see cref="CleanupViewModel.IsPaused"/>), so restoring never resumes an animation the user paused on purpose.</summary>
     private bool _pausedForVisibility;
 
-    /// <summary>
-    /// The sweep is ambient motion nobody can see while this dialog is minimised or hidden; running it at
-    /// 30 fps regardless costs battery and CPU for nothing. Pausing here never fights the run's own pause:
-    /// hiding a window whose run is already paused changes nothing, and restoring one never resumes a run
-    /// the user paused on purpose (checked again in <see cref="OnViewModelPropertyChanged"/>'s IsPaused
-    /// branch, which likewise never resumes one still hidden). Reduce-motion is untouched by any of this.
-    /// </summary>
+    /// <summary>The sweep is ambient motion nobody sees while the dialog is minimised or hidden; running it at 30 fps then costs battery and CPU for nothing. Pausing never fights the run's own pause, and restoring never resumes a run the user paused (see the IsPaused branch of <see cref="OnViewModelPropertyChanged"/>). Reduce-motion is untouched.</summary>
     private void ApplySweepVisibility(bool visible)
     {
         if (visible)
@@ -264,8 +205,7 @@ public partial class CleanupWindow
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        // A held run holds its animation too: a light that keeps travelling while nothing is being deleted
-        // says the opposite of what the dialog says.
+        // A held run holds its animation too: a light that keeps travelling while nothing is deleted says the opposite of the dialog.
         if (e.PropertyName == nameof(CleanupViewModel.IsPaused))
         {
             if (_viewModel.IsPaused)
@@ -275,8 +215,7 @@ public partial class CleanupWindow
             }
             else if (!_pausedForVisibility)
             {
-                // Still minimised or hidden: ApplySweepVisibility resumes this pair itself once the window
-                // is visible again, and must find the run's own pause already lifted rather than fighting it.
+                // Still minimised or hidden: ApplySweepVisibility resumes this pair once the window is visible, and must find the run's pause already lifted.
                 _sweep?.Resume(this);
                 _finish?.Resume(this);
             }
@@ -284,17 +223,14 @@ public partial class CleanupWindow
             return;
         }
 
-        // The pace of the work, on the clock that is already running, never a rebuilt storyboard, which
-        // would restart the stroke from the beginning every time the rate changed.
+        // The pace of the work, on the running clock, never a rebuilt storyboard, which would restart the stroke on every rate change.
         if (e.PropertyName == nameof(CleanupViewModel.Activity))
         {
             ApplySweepSpeed();
             return;
         }
 
-        // The run's own end, which is not the same event as this dialog being closed on it: a window
-        // re-opened onto a run in progress never goes through the handler that started the sweep, so this
-        // is what stops it and plays the closing flourish.
+        // The run's own end, which is not the dialog closing: a window re-opened onto a run in progress never went through the handler that started the sweep, so this stops it and plays the closing flourish.
         if (e.PropertyName == nameof(CleanupViewModel.Phase))
         {
             if (!_viewModel.IsCleaning)
@@ -305,7 +241,7 @@ public partial class CleanupWindow
 
         if (e.PropertyName is nameof(CleanupViewModel.FreedText) or "")
         {
-            // The count-up owns the figure while it runs; otherwise it simply follows the run.
+            // The count-up owns the figure while it runs; otherwise it follows the run.
             if (_finish is null)
                 ShowFreed(_viewModel.FreedBytes);
         }
@@ -318,8 +254,7 @@ public partial class CleanupWindow
         if (Math.Abs(target - DisplayPercent) < 0.01)
             return;
 
-        // Short and eased: long enough to read as motion, short enough that a fast run does not lag
-        // behind the numbers beside it. Capped at 60 fps like every other animation here.
+        // Short and eased: long enough to read as motion, short enough that a fast run does not lag behind the numbers. Capped at 60 fps like every other animation here.
         var glide = new DoubleAnimation(target, TimeSpan.FromMilliseconds(260))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
@@ -328,10 +263,7 @@ public partial class CleanupWindow
         BeginAnimation(DisplayPercentProperty, glide);
     }
 
-    /// <summary>
-    /// The dialog moves by dragging its header, not just the few pixels of title bar.
-    /// Guarded: DragMove throws if the button is already up by the time it runs.
-    /// </summary>
+    /// <summary>The dialog moves by dragging its header, not just the title bar. Guarded: DragMove throws if the button is already up.</summary>
     private void OnHeaderDrag(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         if (e.ButtonState != System.Windows.Input.MouseButtonState.Pressed)
@@ -346,14 +278,11 @@ public partial class CleanupWindow
             _viewModel.Logging.Info("Cleanup dialog header drag: DragMove ignored, the button was already up.");
         }
 
-        // The header band and the root both route here: without this, the same press bubbled on to the root
-        // and started a second DragMove after the first had ended, which always threw.
+        // The header band and the root both route here; without this the press bubbled to the root and started a second DragMove after the first ended, which throws.
         e.Handled = true;
     }
 
-    /// <summary>
-    /// The second confirmation. A cleanup NEVER runs without it: that is the whole safety model.
-    /// </summary>
+    /// <summary>The second confirmation. A cleanup never runs without it.</summary>
     private async void OnClean(object sender, RoutedEventArgs e)
     {
         var loc = LocalizationService.Instance;
@@ -368,24 +297,19 @@ public partial class CleanupWindow
         if (!confirmed)
             return;
 
-        // A rotational-disk optimisation can run for hours; said BEFORE it starts, beside the
-        // existing red confirmation rather than folded into it, since it only ever applies to some runs.
+        // A rotational-disk optimisation can run for hours; said before it starts, beside the red confirmation, since it applies only to some runs.
         if (_viewModel.HasSelectedHddDefragTarget)
             Dialogs.Warn(loc["DefragWarningTitle"], loc["DefragWarningBody"]);
 
         StartSweep();
         try
         {
-            // Deliberately not awaited through the window's lifetime: the run belongs to the view model, and
-            // the view model outlives this window so the cleaning can carry on in the background.
+            // Not awaited through the window's lifetime: the run belongs to the view model, which outlives this window so cleaning can carry on.
             await _viewModel.RunCleanupAsync();
         }
         catch (Exception ex)
         {
-            // An async void handler is the one place an exception has nowhere to go: it is raised on the
-            // dispatcher and takes the process with it. The run itself already survives a single target
-            // failing and logs that, so anything arriving here is unexpected and belongs in front of the
-            // user rather than in a crash. Logged first, so the stack is on record too.
+            // An exception in an async void handler would take the process down. The run already survives a single target failing, so anything arriving here is unexpected and belongs in front of the user; logged first so the stack is on record.
             _viewModel.Logging.Error("Cleanup run failed", ex);
             Dialogs.Error(loc["CleanupFailedHeadline"], details: ex.Message);
         }
@@ -395,37 +319,23 @@ public partial class CleanupWindow
         }
     }
 
-    /// <summary>
-    /// One full pass of the light, out and back. Everything in the animation repeats on exactly this
-    /// period: a part with a period of its own drifts out of phase over a long cleanup. Never below
-    /// 2.4 s: this is calm ambient motion, not something meant to be watched frame by frame.
-    /// </summary>
+    /// <summary>One full pass of the light, out and back. Everything in the animation repeats on this period, since a part with its own period drifts out of phase over a long cleanup. Never below 2.4 s: calm ambient motion.</summary>
     private const int AmbientPeriodMs = 2600;
 
-    /// <summary>
-    /// The calm cleaning animation: a light glides across the surface and back and the surface itself
-    /// breathes very slightly. Opacity, a Brush's own
-    /// RelativeTransform and RenderTransforms only (nothing triggers a layout pass or rotates the ring),
-    /// capped at 30 fps: ambient background motion, not something the eye tracks. One storyboard for all
-    /// of it, so pausing, stopping and removing cover every part at once.
-    /// </summary>
+    /// <summary>The calm cleaning animation: a light glides across the surface and back while the surface breathes slightly. Opacity, a Brush's RelativeTransform and RenderTransforms only (no layout pass, no ring rotation), capped at 30 fps. One storyboard, so pausing, stopping and removing cover every part.</summary>
     private void StartSweep()
     {
-        // ClientAreaAnimation is the system's "animations on" setting, the same gate the main window's
-        // toolbar sweep uses. Also covers the closing flourish, which only plays for a sweep that actually ran.
+        // ClientAreaAnimation is the system "animations on" setting, the gate the main window's toolbar sweep uses; it also covers the closing flourish, which plays only for a sweep that ran.
         if (_sweep is not null || !MotionPreference.AnimationsEnabled)
             return;
 
         var sweep = new Storyboard();
         Timeline.SetDesiredFrameRate(sweep, 30);
 
-        // Half the period each way, auto-reversed: one full out-and-back per period. Addressed through
-        // SurfaceLight (the element that owns the mask), never straight at LightSlide itself: a Storyboard
-        // target set to a Freezable is accepted without complaint and then never applied.
+        // Half the period each way, auto-reversed. Addressed through SurfaceLight (the element that owns the mask), never at LightSlide itself: a Storyboard target set to a Freezable is accepted and then never applied.
         sweep.Children.Add(Motion(SurfaceLight, "OpacityMask.RelativeTransform.X", -0.75, 0.75, AmbientPeriodMs / 2));
 
-        // A very slight breathe, well under the 1.06 ceiling, so the surface reads as alive without ever
-        // reading as motion in its own right. Addressed through CenterScene, which owns the transform.
+        // A slight breathe, well under the 1.06 ceiling, so the surface reads as alive without reading as motion. Addressed through CenterScene, which owns the transform.
         sweep.Children.Add(Motion(CenterScene, "RenderTransform.ScaleX", 1.0, 1.05, AmbientPeriodMs / 2));
         sweep.Children.Add(Motion(CenterScene, "RenderTransform.ScaleY", 1.0, 1.05, AmbientPeriodMs / 2));
 
@@ -433,25 +343,16 @@ public partial class CleanupWindow
         _sweep.Begin(this, isControllable: true);
         ApplySweepSpeed();
 
-        // Started while the window is minimised or hidden, or while the run is held: the storyboard begins
-        // running like any other, so the pause has to be applied to it at once.
+        // Started while minimised, hidden or held: the storyboard begins running like any other, so the pause is applied at once.
         if (_pausedForVisibility || _viewModel.IsPaused)
             _sweep.Pause(this);
     }
 
-    /// <summary>
-    /// The motion runs at the pace of the work: a run deleting file after file looks busy, a repair step
-    /// that has gone quiet slows down with it. A speed ratio on the clock that is already running, because
-    /// rebuilding the storyboard would jerk the light back to the start of its pass on every change.
-    /// </summary>
+    /// <summary>The motion runs at the pace of the work: a run deleting file after file looks busy, a quiet repair step slows down. A speed ratio on the running clock, since rebuilding the storyboard would jerk the light back to the start.</summary>
     private void ApplySweepSpeed() =>
         _sweep?.SetSpeedRatio(this, 0.75 + 0.75 * Math.Clamp(_viewModel.Activity, 0, 1));
 
-    /// <summary>
-    /// Every animation here addresses its transform through the ELEMENT that owns it. A Storyboard target
-    /// set to a Freezable itself is accepted without complaint and then never applied: which is exactly
-    /// the kind of failure that leaves a part of an animation silently standing still.
-    /// </summary>
+    /// <summary>Every animation addresses its transform through the element that owns it: a Storyboard target set to a Freezable is accepted and then never applied, leaving a part silently standing still.</summary>
     private static DoubleAnimation Motion(
         System.Windows.DependencyObject target, string path, double from, double to, int durationMs)
     {
@@ -471,17 +372,13 @@ public partial class CleanupWindow
 
     private void StopSweep()
     {
-        // Stop AND remove: a stopped storyboard leaves its animated values in place, so the light would
-        // freeze mid-pass at whatever position it happened to be at. Every moving part is a child of this
-        // one storyboard, so this covers the surface breathe as well.
+        // Stop and remove: a stopped storyboard leaves its animated values in place, so the light would freeze mid-pass. Every moving part is a child of this storyboard, including the surface breathe.
         var wasSweeping = _sweep is not null;
         _sweep?.Stop(this);
         _sweep?.Remove(this);
         _sweep = null;
 
-        // The closing flourish belongs to a run that actually ended here, and it has to outlive this call:
-        // the handler that awaited the run calls this again the moment the run returns, a breath after the
-        // phase change already did. It is taken off when the dialog closes, and by itself when it is over.
+        // The closing flourish belongs to a run that ended here and must outlive this call: the awaiting handler calls this again right after the phase change did. It is taken off when the dialog closes, and by itself when over.
         if (wasSweeping && _viewModel.IsFinished)
             PlayFinish();
     }
@@ -493,21 +390,15 @@ public partial class CleanupWindow
         _finish = null;
     }
 
-    /// <summary>
-    /// The one closing flourish: the freed figure counting up to its result instead of appearing at full
-    /// size. No opacity pulse on the ring: a flash
-    /// at the end would contradict the calm the rest of the animation is built for. One shot, and it takes itself
-    /// off the moment it is over, so nothing is left holding an animated value.
-    /// </summary>
+    /// <summary>The closing flourish: the freed figure counting up to its result. One shot, taken off the moment it is over so nothing keeps an animated value.</summary>
     private void PlayFinish()
     {
         const int FinishMs = 600;
 
-        // Never two at once: a second run finishing while the first flourish still ran would leave the
-        // first one's clock on the count.
+        // Never two at once: a second run finishing mid-flourish would leave the first clock on the count.
         StopFinish();
 
-        // Where the count-up ends, and the value left behind once the animation is removed.
+        // Where the count-up ends, and the value left once the animation is removed.
         ShowFreed(_viewModel.FreedBytes);
 
         var finish = new Storyboard();
@@ -526,14 +417,12 @@ public partial class CleanupWindow
         _finish = finish;
         _finish.Begin(this, isControllable: true);
 
-        // Same reasoning as the equivalent check at the end of StartSweep: a run finishing while the
-        // window is minimised or hidden must not start its closing flourish animating unseen.
+        // As at the end of StartSweep: a run finishing while the window is minimised or hidden must not start its flourish unseen.
         if (_pausedForVisibility)
             _finish.Pause(this);
     }
 
-    /// <summary>The detail list's own column chooser (Size only; see the doc comment on
-    /// CleanupViewModel.DetailListColumns for why there is no sort here).</summary>
+    /// <summary>The detail list's own column chooser (Size only, no sort; see CleanupViewModel.DetailListColumns).</summary>
     private void OnColumnsButtonClick(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement anchor)
@@ -547,13 +436,7 @@ public partial class CleanupWindow
             _viewModel.ResetDetailColumns);
     }
 
-    /// <summary>
-    /// A detail-row's right-click "open folder". Goes through <see cref="UriLauncher.LaunchDetached"/> like
-    /// everything else this app opens from the UI: ShellExecute does not return until the shell has taken
-    /// the target over, and with a cold Explorer that held this dialog frozen for seconds. The helper also
-    /// refuses anything that is not an existing path, and records a folder that vanished between the scan
-    /// and the click rather than letting the exception escape.
-    /// </summary>
+    /// <summary>A detail row's right-click "open folder". Goes through <see cref="UriLauncher.LaunchDetached"/>: ShellExecute blocks until the shell takes over, which froze this dialog for seconds with a cold Explorer. The helper also refuses a path that does not exist.</summary>
     private void OnEntryOpenFolderClick(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not CleanupEntryViewModel { OpenPath.Length: > 0 } entry)
@@ -562,11 +445,10 @@ public partial class CleanupWindow
         UriLauncher.LaunchDetached(entry.OpenPath, _viewModel.Logging);
     }
 
-    /// <summary>Same clipboard pattern as <see cref="MainWindow.OnErrorPillRightClick"/>: a locked
-    /// clipboard is a transient, harmless failure, never worth surfacing.</summary>
+    /// <summary>Same clipboard pattern as <see cref="MainWindow.OnErrorPillRightClick"/>: a locked clipboard is transient and not worth surfacing.</summary>
     private void OnEntryCopyPathClick(object sender, RoutedEventArgs e)
     {
-        // A recycled file's ORIGINAL path: the $R name inside the bin is of no use to anyone.
+        // A recycled file's original path: the $R name inside the bin is of no use to anyone.
         if ((sender as FrameworkElement)?.DataContext is not CleanupEntryViewModel { PathText.Length: > 0 } entry)
             return;
 
@@ -580,18 +462,13 @@ public partial class CleanupWindow
         }
     }
 
-    /// <summary>
-    /// Opens the earlier-cleanups window, sharing this dialog's own view model rather than
-    /// building a second one: the history it shows already lives there. Not modal: the cleanup dialog
-    /// stays usable while it is open, same as HistoryWindow beside the main window.
-    /// </summary>
+    /// <summary>Opens the earlier-cleanups window on this dialog's own view model, which already holds the history. Non-modal, like HistoryWindow beside the main window.</summary>
     private void OnShowHistory(object sender, RoutedEventArgs e) => ShowHistoryWindow(expandNewest: false);
 
     /// <summary>The report of the run that just ended: the same window, with the newest entry unfolded.</summary>
     private void OnShowReport(object sender, RoutedEventArgs e) => ShowHistoryWindow(expandNewest: true);
 
-    /// <summary>One history window per cleanup window: a second request (keyboard, or the report button
-    /// after the history button) brings the open one forward instead of stacking another on top of it.</summary>
+    /// <summary>One history window per cleanup window: a second request brings the open one forward instead of stacking another.</summary>
     internal void ShowHistoryWindow(bool expandNewest)
     {
         var existing = OwnedWindows.OfType<CleanupHistoryWindow>().FirstOrDefault();
