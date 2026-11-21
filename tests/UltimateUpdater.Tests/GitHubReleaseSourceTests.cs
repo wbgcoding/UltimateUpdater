@@ -129,6 +129,34 @@ public class GitHubReleaseSourceTests
         Assert.False(handler.WasCalled, "a winget-owned install location must be filtered out before any HTTP call is made");
     }
 
+    /// <summary>An entry with an empty DisplayIcon and its real location only in UninstallString must still be
+    /// recognised as package-manager owned.</summary>
+    [Fact]
+    public async Task An_empty_display_icon_falls_back_to_the_uninstall_string_for_the_ownership_check()
+    {
+        var wingetExe = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WinGet", "Packages", "jdx.mise_x64", "mise.exe");
+
+        var key = @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\mise";
+        var registry = new FakeRegistry()
+            .Set(key, "DisplayName", "mise-en-place")
+            .Set(key, "DisplayVersion", "2026.7.12")
+            .Set(key, "URLInfoAbout", "https://github.com/jdx/mise")
+            .Set(key, "DisplayIcon", "")
+            .Set(key, "UninstallString", "\"" + wingetExe + "\" uninstall");
+
+        var handler = new ThrowingHandler();
+        using var httpClient = new HttpClient(handler);
+        var source = new GitHubReleaseSource(new LoggingService(), httpClient, registry, []);
+
+        var items = new List<UpdateItem>();
+        await foreach (var item in source.ScanAsync(CancellationToken.None))
+            items.Add(item);
+
+        Assert.Empty(items);
+        Assert.False(handler.WasCalled, "the uninstall string places this under winget's store, so no lookup may happen");
+    }
+
     private sealed class ThrowingHandler : HttpMessageHandler
     {
         public bool WasCalled { get; private set; }

@@ -132,8 +132,8 @@ public sealed class GitHubReleaseSource(
                 // `SelfUpdatingToolSource` applies to itself.
                 var installPath = registry.Value(entry, "InstallLocation") is { Length: > 0 } location
                     ? location
-                    : RegistryCleanupSafety.ExtractFilePath(
-                        registry.Value(entry, "DisplayIcon") ?? registry.Value(entry, "UninstallString"), File.Exists);
+                    : RegistryCleanupSafety.ExtractFilePath(registry.Value(entry, "DisplayIcon"), File.Exists)
+                      ?? RegistryCleanupSafety.ExtractFilePath(registry.Value(entry, "UninstallString"), File.Exists);
 
                 if (installPath is not null && PackageManagerOwnership.IsManagedElsewhere(installPath))
                     continue;
