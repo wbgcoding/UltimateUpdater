@@ -16,10 +16,7 @@ namespace UltimateUpdater.ViewModels;
 // The child windows this view model opens: history, cleanup, settings, error detail and changelog.
 public partial class MainViewModel
 {
-    /// <summary>
-    /// The history window's view model, kept only so a language switch can reach its rows while it is open;
-    /// they read their result word from the resources in code.
-    /// </summary>
+    /// <summary>The history window's view model, kept so a language switch can reach its rows while it is open; they read their result word from the resources in code.</summary>
     private HistoryViewModel? _historyViewModel;
 
     /// <summary>Set while the history file is being read, so a second click does not open a second window.</summary>
@@ -31,8 +28,7 @@ public partial class MainViewModel
         if (IsOpen<Views.HistoryWindow>() || _historyOpening)
             return;
 
-        // Which sources can even pin an exact version, so the history window's own rollback
-        // button uses the exact same capability check the live row's button already applies.
+        // Which sources can pin an exact version: the history window's rollback button uses the same capability check as the live row's.
         var pinningCapableSourceIds = _sources
             .Where(s => s.SupportsVersionPinning)
             .Select(s => s.Id)
@@ -53,18 +49,11 @@ public partial class MainViewModel
             _historyOpening = false;
         }
 
-        // Released with its window: it holds every parsed history row, for the rest of the session otherwise.
+        // Released with its window: it holds every parsed history row.
         ShowOwned(new Views.HistoryWindow(_historyViewModel, _logging), onClosed: () => _historyViewModel = null, openStarted);
     }
 
-    /// <summary>
-    /// The cleanup dialog. It measures on open and only ever deletes after its own
-    /// second, red confirmation: nothing here starts a cleanup, and there is deliberately no automatic one.
-    /// The view model OUTLIVES the window on purpose: closing the dialog mid-run leaves the cleaning going in
-    /// the background, the toolbar broom shows that, and opening the dialog again picks the
-    /// same run back up. A run that has finished (or none at all) starts fresh, so the dialog never opens
-    /// on a stale result.
-    /// </summary>
+    /// <summary>The cleanup dialog. It measures on open and deletes only after its own second, red confirmation; nothing here starts a cleanup and there is no automatic one. The view model outlives the window on purpose: closing the dialog mid-run leaves the cleaning going (the toolbar broom shows it) and reopening picks the run back up. A finished run, or none, starts fresh so the dialog never opens on a stale result.</summary>
     [RelayCommand]
     private void ShowCleanup()
     {
@@ -74,25 +63,14 @@ public partial class MainViewModel
         var openStarted = System.Diagnostics.Stopwatch.GetTimestamp();
         var cleanupViewModel = EnsureCleanupViewModel();
 
-        // Covers a fresh instance (already subscribed once by its own constructor) and a reused one whose
-        // earlier window close left it subscribed anyway; either way this is the one place a window
-        // actually attaches.
+        // Covers a fresh instance (subscribed once by its constructor) and a reused one whose earlier window close left it subscribed; this is the one place a window attaches.
         cleanupViewModel.WindowAttached();
 
-        // Independent, not owned: an owned window always floats above the main one, minimises with it and
-        // closed whenever the main window was clicked, so starting a scan there took the cleanup away.
-        // Unowned, both windows can be used side by side and each has its own taskbar button.
+        // Independent, not owned: an owned window floats above the main one, minimises with it and closes on a click in the main window, so starting a scan there would take the cleanup away. Unowned, both windows work side by side with their own taskbar buttons.
         ShowOwned(new Views.CleanupWindow(cleanupViewModel), openStarted: openStarted, independent: true);
     }
 
-    /// <summary>
-    /// The view model the dialog opens on. Busy, not merely cleaning: a dialog re-opened while still
-    /// MEASURING must reuse that view model rather than get a fresh one, or its scan would race the old one
-    /// over the same folders. Whatever is still going is picked back up; only a finished dialog (or none at
-    /// all) starts fresh. A prescanned one is kept too, while its result is fresh and nothing has touched it
-    /// since: opening it then costs no new measuring (the admin targets the prescan left out are measured
-    /// on open).
-    /// </summary>
+    /// <summary>The view model the dialog opens on. Busy, not merely cleaning: a dialog reopened while still measuring must reuse it, or its scan would race the old one over the same folders. Whatever is still going is picked back up; only a finished dialog, or none, starts fresh. A prescanned one is kept while its result is fresh and untouched, so opening it costs no new measuring (the admin targets the prescan left out are measured on open).</summary>
     internal CleanupViewModel EnsureCleanupViewModel()
     {
         if (_cleanupViewModel is null || (!_cleanupViewModel.IsBusy && !IsPrescanReusable(_cleanupViewModel)))
@@ -110,8 +88,7 @@ public partial class MainViewModel
     /// <summary>How long a startup prescan's figures stay good for an opening dialog.</summary>
     internal static readonly TimeSpan CleanupPrescanFreshness = TimeSpan.FromMinutes(30);
 
-    /// <summary>Set by the app once the session is a real, attended one. Off by default so a view model
-    /// built in a test never measures the machine it runs on.</summary>
+    /// <summary>Set by the app once the session is a real, attended one. Off by default so a view model built in a test never measures the machine it runs on.</summary>
     internal bool CleanupPrescanAllowed { get; set; }
 
     /// <summary>"Now" for the prescan's freshness and stamp; a test replaces it.</summary>
@@ -138,12 +115,7 @@ public partial class MainViewModel
             && CleanupClock() - at < CleanupPrescanFreshness;
     }
 
-    /// <summary>
-    /// After the first finished update scan, starts measuring what a cleanup could free, so the dialog opens
-    /// with figures instead of a spinner. Quiet by design: only on mains power, only when the setting is on,
-    /// user-scope targets (plus the admin ones if the elevated helper already runs), never an elevation or
-    /// UAC prompt, and never a cleanup. Once per session.
-    /// </summary>
+    /// <summary>After the first finished update scan, starts measuring what a cleanup could free, so the dialog opens with figures instead of a spinner. Quiet: only on mains power, only with the setting on, user-scope targets (plus admin ones if the elevated helper already runs), never an elevation prompt and never a cleanup. Once per session.</summary>
     private void StartCleanupPrescanIfWanted()
     {
         if (_cleanupPrescanStarted)
@@ -177,7 +149,7 @@ public partial class MainViewModel
 
     private int _cleanupRunPercent;
 
-    /// <summary>The cleanup run's progress in whole percent, the same figure the ring in its window carries.</summary>
+    /// <summary>The cleanup run's progress in whole percent, the same figure as the ring in its window.</summary>
     internal int CleanupRunPercent
     {
         get => _cleanupRunPercent;
@@ -191,10 +163,7 @@ public partial class MainViewModel
         }
     }
 
-    /// <summary>
-    /// The toolbar button's word: "Bereinigen" at rest, "Bereinigen 47 %" while a cleanup runs, also with
-    /// its window closed, so the run is never out of sight.
-    /// </summary>
+    /// <summary>The toolbar button's word: "Bereinigen" at rest, "Bereinigen 47 %" while a cleanup runs, also with its window closed.</summary>
     public string ToolbarCleanupText => IsCleanupRunning
         ? string.Format(Loc["ToolbarCleanupRunning"], CleanupRunPercent)
         : Loc["ToolbarCleanupLabel"];
@@ -221,7 +190,7 @@ public partial class MainViewModel
         return viewModel;
     }
 
-    /// <summary>Is a window of this kind already up? Asked before a dialog's state is replaced.</summary>
+    /// <summary>Whether a window of this kind is already up; asked before a dialog's state is replaced.</summary>
     private static bool IsOpen<TWindow>()
         where TWindow : Window
     {
@@ -233,10 +202,7 @@ public partial class MainViewModel
         return true;
     }
 
-    /// <summary>
-    /// Opens the raw output behind a failed row on deliberate request. The row raises this; the window
-    /// is owned here so the row view model stays free of view types (and testable without one).
-    /// </summary>
+    /// <summary>Opens the raw output behind a failed row on request. The row raises this and the window is owned here, so the row view model stays free of view types and testable without one.</summary>
     private void ShowErrorDetail(UpdateRowViewModel row)
     {
         if (string.IsNullOrWhiteSpace(row.InstallErrorDetail))
@@ -256,21 +222,13 @@ public partial class MainViewModel
                 reinstall: row.ShowReinstallButton ? () => row.ReinstallCommand.Execute(null) : null)));
     }
 
-    /// <summary>
-    /// Opens the real changelog text a source found for this row. Where only a release LINK is known and
-    /// that link is a GitHub/GitLab release page, a click-triggered fetch of the release body is tried
-    /// first. Text still missing after that (wrong host, not a release URL, or the fetch itself
-    /// found nothing) falls back to a small "open the vendor's page" confirmation instead of the big window.
-    /// </summary>
+    /// <summary>Opens the changelog text a source found for this row. Where only a release link is known and it is a GitHub or GitLab release page, a click-triggered fetch of the release body is tried first. Text still missing after that falls back to a small "open the vendor's page" confirmation instead of the big window.</summary>
     internal async Task ShowChangelogAsync(UpdateRowViewModel row)
     {
         if (!row.HasChangelog)
             return;
 
-        // An npm row's button exists purely on the strength of CanFetchChangelogOnClick (its own
-        // registry enrichment never fills these fields, see NpmChangelogLookup's doc comment), so this is
-        // the one place the click-triggered `npm view` itself runs, never during a scan or the background
-        // enrichment pass.
+        // An npm row's button exists only on the strength of CanFetchChangelogOnClick (its registry enrichment never fills these fields, see NpmChangelogLookup), so this is the one place the click-triggered `npm view` runs, never during a scan or background enrichment.
         if (row.CanFetchChangelogOnClick
             && string.IsNullOrWhiteSpace(row.ChangelogText)
             && string.IsNullOrWhiteSpace(row.ChangelogUrl))
@@ -293,9 +251,7 @@ public partial class MainViewModel
             || !Uri.TryCreate(linkUrl, UriKind.Absolute, out var linkUri)
             || (linkUri.Scheme != Uri.UriSchemeHttp && linkUri.Scheme != Uri.UriSchemeHttps))
         {
-            // A row whose button exists only because it MIGHT have had something to fetch (npm)
-            // is told so explicitly when the click truly found neither text nor even a link, rather than
-            // the loading spinner just stopping with no result at all.
+            // A row whose button exists only because it might have something to fetch (npm) is told explicitly when the click found neither text nor a link, rather than the spinner just stopping.
             if (row.CanFetchChangelogOnClick)
             {
                 var versionText = row.HasVersions ? row.AvailableVersion : null;
@@ -316,17 +272,7 @@ public partial class MainViewModel
             UriLauncher.LaunchDetached(linkUrl, _logging);
     }
 
-    /// <summary>
-    /// The npm lookup half. `npm view &lt;package&gt; homepage repository --json` names the package's
-    /// repository and homepage; a GitHub repository is turned into that repo's release-page URL and
-    /// handed onward to the SAME github/gitlab release-link enrichment above (unchanged), so the real
-    /// release-notes text still comes from exactly one fetch path. A non-GitHub (or absent) repository
-    /// falls back to the plain homepage link, matching the item's "otherwise show the homepage link
-    /// without inventing text". Cached under the same EnrichmentCache key and idiom as
-    /// <see cref="TryEnrichChangelogFromLinkAsync"/> (an empty, non-null cached ChangelogUrl means "tried
-    /// this version, found nothing", not "never tried"), so a repeat click on the same version never
-    /// shells out to npm again.
-    /// </summary>
+    /// <summary>The npm lookup half. `npm view &lt;package&gt; homepage repository --json` names the repository and homepage; a GitHub repository becomes that repo's release-page URL and goes to the same release-link enrichment as above, so the notes come from one fetch path. A non-GitHub or absent repository falls back to the plain homepage link, without inventing text. Cached under the same EnrichmentCache key as <see cref="TryEnrichChangelogFromLinkAsync"/> (an empty, non-null cached ChangelogUrl means "tried this version, found nothing"), so a repeat click never shells out to npm again.</summary>
     private async Task TryFetchNpmChangelogAsync(UpdateRowViewModel row)
     {
         await _enrichmentCache.LoadAsync();
@@ -356,15 +302,14 @@ public partial class MainViewModel
             row.ApplyEnrichment(null, null, changelogUrl: url);
     }
 
-    /// <summary>A homepage npm reports is free-form text, not a validated link; only an absolute http(s)
-    /// URL is ever handed to the row (same defense-in-depth as <see cref="ChangelogViewModel.OpenRelease"/>).</summary>
+    /// <summary>A homepage npm reports is free-form text, not a validated link: only an absolute http(s) URL reaches the row (as in <see cref="ChangelogViewModel.OpenRelease"/>).</summary>
     private static string? UsableHomepage(string? homepage) =>
         Uri.TryCreate(homepage, UriKind.Absolute, out var uri)
             && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
             ? homepage
             : null;
 
-    /// <summary>The real, default implementation behind <see cref="_npmChangelogLookup"/>.</summary>
+    /// <summary>The default implementation behind <see cref="_npmChangelogLookup"/>.</summary>
     private Task<NpmChangelogLookup.NpmChangelogSource> LookupNpmChangelogAsync(
         string packageName, CancellationToken cancellationToken) =>
         NpmChangelogLookup.LookupAsync(packageName, _logging, cancellationToken);
@@ -372,13 +317,11 @@ public partial class MainViewModel
     [RelayCommand]
     private void ShowSettings()
     {
-        // An open settings window is only raised: a second view model would subscribe to the main window for
-        // nothing, and its window would be thrown away by ShowOwned.
+        // An open settings window is only raised: a second view model would subscribe to the main window for nothing and its window would be thrown away by ShowOwned.
         if (IsOpen<Views.SettingsWindow>())
             return;
 
-        // Non-modal, so the follow-up work belongs in the Closed callback: the line after ShowOwned
-        // returns does NOT mean "the window is gone".
+        // Non-modal, so the follow-up work belongs in the Closed callback: the line after ShowOwned does not mean the window is gone.
         var openStarted = System.Diagnostics.Stopwatch.GetTimestamp();
         ShowOwned(new Views.SettingsWindow(CreateSettingsViewModel()), onClosed: OnSettingsClosed, openStarted);
     }
@@ -389,18 +332,14 @@ public partial class MainViewModel
             _settings, _logging, _themeService, _autostart, _scanOrchestrator.SourceIds,
             CheckForUpdatesInteractiveAsync, IgnoredPackageNames(), _scanOrchestrator.IsKnownNotInstalled);
 
-        // The language is normally switched in THAT window, and the main window's computed text, its rows and
-        // its other dialogs are reached by no binding, so they are re-raised as soon as it changes, not when
-        // the window is eventually closed.
+        // The language is switched in that window, and the main window's computed text, rows and other dialogs have no binding to it, so they are re-raised as soon as it changes, not when the window closes.
         settingsViewModel.LanguageChanged += RefreshLocalizedText;
 
         // Removing an entry in the ignore list dialog takes effect in the table at once.
         settingsViewModel.IgnoreListChanged += ResyncIgnoreState;
         settingsViewModel.DataReset += OnDataReset;
 
-        // An ignore made in the table while the ignore list dialog is open shows up there at once. The
-        // forwarder is removed again when the settings window closes, so this view model never keeps a
-        // dead settings view model alive.
+        // An ignore made in the table while the ignore list dialog is open shows up there at once. The forwarder is removed when the settings window closes, so this view model never keeps a dead settings view model alive.
         if (_forwardIgnoreMarks is not null)
             IgnoreMarksChanged -= _forwardIgnoreMarks;
         _forwardIgnoreMarks = settingsViewModel.RefreshOpenIgnoreList;
@@ -408,10 +347,7 @@ public partial class MainViewModel
         return settingsViewModel;
     }
 
-    /// <summary>A factory reset deleted the files and reset settings.json, but this view model still held the
-    /// old state in memory: the enrichment cache would have written itself straight back on the next save,
-    /// rollbacks stayed offered for deleted history, and the table's view state and column layout (written
-    /// back on exit) would have undone the reset.</summary>
+    /// <summary>A factory reset deletes the files and resets settings.json, but this view model still holds the old state in memory: the enrichment cache would write itself back, rollbacks would stay offered for deleted history, and the view state and column layout written on exit would undo the reset.</summary>
     private void OnDataReset()
     {
         _enrichmentCache.Clear();
@@ -421,8 +357,7 @@ public partial class MainViewModel
         ResetMainTableLayout();
     }
 
-    /// <summary>Package key to display name for every row and child row, so the ignore list can show names
-    /// instead of its raw settings keys.</summary>
+    /// <summary>Package key to display name for every row and child row, so the ignore list can show names instead of raw settings keys.</summary>
     internal IReadOnlyDictionary<string, string> IgnoredPackageNames()
     {
         var names = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -446,18 +381,18 @@ public partial class MainViewModel
             _forwardIgnoreMarks = null;
         }
 
-        // the settings window can change theme/language, so mirror them back into the main window's own pickers
+        // The settings window can change theme and language, so mirror them into the main window's own pickers.
         SelectedTheme = _settings.Current.Ui.Theme;
         SelectedLanguage = _settings.Current.Ui.Language;
 
-        // sources are switched from the settings window too, and the pills read their state only at creation
+        // Sources are switched from the settings window too, and the pills read their state only at creation.
         foreach (var (sourceId, pill) in _providerStatusById)
             pill.IsEnabled = IsSourceEnabled(sourceId);
 
         ResyncIgnoreState();
     }
 
-    /// <summary>Re-syncs the rows' ignore and snooze marks to the (maybe changed) settings lists.</summary>
+    /// <summary>Re-syncs the rows' ignore and snooze marks to the possibly changed settings lists.</summary>
     private void ResyncIgnoreState()
     {
         foreach (var row in Updates)
@@ -469,7 +404,7 @@ public partial class MainViewModel
 
         ApplyFilter();
 
-        // it also changes what the headline counts
+        // It also changes what the headline counts.
         RefreshHeader();
     }
 
@@ -486,16 +421,11 @@ public partial class MainViewModel
             row.RefreshThemeBrushes();
     }
 
-    /// <summary>The owner is raised again when an owned window closes only if it is shown, not minimised and
-    /// the app is not on its way out.</summary>
+    /// <summary>The owner is raised again when an owned window closes only if it is shown, not minimised and the app is not on its way out.</summary>
     internal static bool ShouldActivateOwnerOnClose(bool ownerVisible, WindowState ownerState, bool appExiting) =>
         ownerVisible && ownerState != WindowState.Minimized && !appExiting;
 
-    /// <summary>
-    /// Opens an unowned window centred over <paramref name="anchor"/> while that one sits in its normal
-    /// state; a maximised, minimised or hidden anchor has no useful frame to centre on, so the screen is
-    /// used then. DialogSizing.FitToWorkArea still pulls the result fully onto the monitor afterwards.
-    /// </summary>
+    /// <summary>Opens an unowned window centred over <paramref name="anchor"/> while that one is in its normal state; a maximised, minimised or hidden anchor has no useful frame, so the screen is used. DialogSizing.FitToWorkArea still pulls the result onto the monitor.</summary>
     private static void PlaceOver(Window window, Window? anchor)
     {
         if (anchor is null || !anchor.IsVisible || anchor.WindowState != WindowState.Normal)
@@ -515,14 +445,7 @@ public partial class MainViewModel
     internal static System.Windows.Point CenterOver(System.Windows.Rect anchor, System.Windows.Size size) =>
         new(anchor.Left + (anchor.Width - size.Width) / 2, anchor.Top + (anchor.Height - size.Height) / 2);
 
-    /// <summary>
-    /// Shows an owned dialog NON-modally, so a click in the main window can close it: that is what
-    /// "beside the popup" means; a modal dialog disables its owner and there is no such click.
-    /// One window per kind: a second click on the same toolbar button raises the one already open instead of
-    /// stacking another copy, which non-modal windows would otherwise allow.
-    /// <paramref name="independent"/> opens it as a window of its own instead: no owner, centred over the
-    /// main window, so neither one hides, closes or minimises the other.
-    /// </summary>
+    /// <summary>Shows an owned dialog non-modally, so a click in the main window can close it (a modal dialog disables its owner and there would be no such click). One window per kind: a second click on the same toolbar button raises the open one instead of stacking another. <paramref name="independent"/> opens it as a window of its own, with no owner and centred over the main window, so neither hides, closes or minimises the other.</summary>
     private void ShowOwned(Window window, Action? onClosed = null, long? openStarted = null, bool independent = false)
     {
         var existing = Application.Current?.Windows.OfType<Window>()
@@ -530,8 +453,7 @@ public partial class MainViewModel
 
         if (existing is not null)
         {
-            // These two show the content of one particular row: raising the old window would keep
-            // showing the previous row's text under the click that asked for another.
+            // These two show one particular row's content: raising the old window would keep showing the previous row's text under the click that asked for another.
             if (window is not (Views.ErrorDetailWindow or Views.ChangelogWindow))
             {
                 existing.Activate();
@@ -550,9 +472,7 @@ public partial class MainViewModel
         {
             window.Owner = owner;
 
-            // When an owned window closes while it is not the active one (after a UAC prompt or a confirm
-            // dialog, say), Windows hands activation to the next window in z-order, and the owner can fall
-            // behind another application. Raising it while the closing window still exists keeps it in front.
+            // When an owned window closes while not active (after a UAC prompt or a confirm dialog), Windows hands activation to the next window in z-order and the owner can fall behind another application. Raising it while the closing window still exists keeps it in front.
             window.Closing += (_, args) =>
             {
                 if (args.Cancel || owner is null)
@@ -573,11 +493,7 @@ public partial class MainViewModel
         window.Show();
     }
 
-    /// <summary>
-    /// Keeps the window hidden until its first frame is drawn (no empty frame flashing up), and logs how
-    /// long opening took: up to here (data read and window built) and up to that first frame, so a slow
-    /// open shows up in the log split by phase rather than only as a feeling.
-    /// </summary>
+    /// <summary>Keeps the window hidden until its first frame is drawn (no empty frame flashing up) and logs how long opening took, split into data read and window built versus first frame.</summary>
     private void FirstFrameRevealFor(Window window, long? openStarted)
     {
         Views.FirstFrameReveal.Attach(window, message => _logging.Info(message));

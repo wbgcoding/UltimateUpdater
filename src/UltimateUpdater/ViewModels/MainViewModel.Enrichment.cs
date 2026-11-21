@@ -16,32 +16,17 @@ namespace UltimateUpdater.ViewModels;
 // Background enrichment: install locations, sizes and dates, and the changelog fetched from a release link.
 public partial class MainViewModel
 {
-    /// <summary>
-    /// A dedicated, small HttpClient for the changelog re-fetch; never the shared source
-    /// client: this one must never follow a redirect (a compromised or renamed repo could otherwise send
-    /// it anywhere) and is used from nowhere but a deliberate click. Static so the process keeps one
-    /// socket pool for it; <see cref="_changelogTrafficHandler"/>'s Logging is wired in the constructor,
-    /// same idiom as SourceRegistry's own shared client.
-    /// </summary>
+    /// <summary>A small HttpClient of its own for the changelog re-fetch, never the shared source client: it must not follow a redirect (a compromised or renamed repo could send it anywhere) and is used only from a deliberate click. Static so the process keeps one socket pool for it.</summary>
     private static readonly Services.Security.TrafficLoggingHandler _changelogTrafficHandler =
         new(new HttpClientHandler { AllowAutoRedirect = false });
 
     private static readonly HttpClient _changelogHttpClient =
         new(_changelogTrafficHandler) { Timeout = TimeSpan.FromSeconds(5) };
 
-    /// <summary>Read cap for a changelog API response; the same idea as RecycleBinScanner's MaxIndexFileBytes,
-    /// applied to a network response instead of a file: past this many bytes the response is abandoned rather
-    /// than read in full.</summary>
+    /// <summary>Read cap for a changelog API response; past this many bytes the response is abandoned rather than read in full.</summary>
     private const int MaxChangelogResponseBytes = 256 * 1024;
 
-    /// <summary>
-    /// Only reached when the row's own text is empty and its link is a GitHub/GitLab release page. Checks
-    /// the shared EnrichmentCache under the same key the background enrichment pass already uses before
-    /// touching the network at all; including a cached EMPTY result, so a repeat click on the same
-    /// version never refetches and never spends more of GitHub's per-IP hourly quota. The cache entry is
-    /// merged, not replaced: whatever date/size/project-url the earlier background pass already learned
-    /// for this key is preserved.
-    /// </summary>
+    /// <summary>Only reached when the row's own text is empty and its link is a GitHub or GitLab release page. Checks the shared enrichment cache first, including a cached empty result, so a repeat click never refetches or spends more of GitHub's per-IP hourly quota. The entry is merged, not replaced, so the date, size and project URL learned earlier are kept.</summary>
     private async Task TryEnrichChangelogFromLinkAsync(UpdateRowViewModel row, string releaseUrl)
     {
         var isGitHub = ChangelogUrlParsers.TryParseGitHubReleaseUrl(releaseUrl) is not null;
@@ -53,17 +38,14 @@ public partial class MainViewModel
         var cacheKey = EnrichmentCache.Key(row.Item.SourceId, row.Item.Id, row.Item.AvailableVersion);
         var hasCached = _enrichmentCache.TryGet(cacheKey, out var cached);
 
-        // A previous click already produced a definitive answer for this exact key (real text, or the
-        // deliberate "" meaning "tried, found nothing"); reuse it rather than asking again.
+        // An earlier click already produced a definitive answer (real text, or "" for "tried, found nothing"); reuse it.
         string? body = hasCached && cached.ChangelogBody is not null ? cached.ChangelogBody : null;
 
         if (body is null)
         {
             body = await _changelogFetcher(releaseUrl, CancellationToken.None);
 
-            // Only a definitive answer is remembered (text, or "" for "this release has none"). A null is a
-            // failure (offline, timeout, GitHub's rate limit): cached as "", it suppressed every retry of
-            // this version for the cache's full seven days.
+            // Only a definitive answer is remembered. A null is a failure (offline, timeout, rate limit) and must not suppress retries for the cache's seven days.
             if (body is not null)
             {
                 _enrichmentCache.Set(cacheKey, new UpdateEnrichment(
@@ -82,12 +64,7 @@ public partial class MainViewModel
             row.ApplyEnrichment(null, null, changelogBody: body);
     }
 
-    /// <summary>
-    /// The actual network call. Every failure (a network error, a timeout, a non-2xx answer such as the
-    /// 403/429 from GitHub's unauthenticated rate limit, an oversized response) degrades to null, which is
-    /// not cached.
-    /// A release that was read but has no text is "", which is. Never throws into the caller.
-    /// </summary>
+    /// <summary>The network call. Every failure (network error, timeout, a non-2xx answer such as GitHub's 403/429, an oversized response) degrades to null, which is not cached; a release with no text is "", which is. Never throws into the caller.</summary>
     private async Task<string?> FetchReleaseBodyAsync(string releaseUrl, CancellationToken cancellationToken)
     {
         try
@@ -126,8 +103,7 @@ public partial class MainViewModel
         }
     }
 
-    /// <summary>5 s per request, response capped at <see cref="MaxChangelogResponseBytes"/>; null on anything
-    /// but a clean small 2xx body.</summary>
+    /// <summary>5 s per request, response capped at <see cref="MaxChangelogResponseBytes"/>; null on anything but a clean small 2xx body.</summary>
     private static async Task<string?> SendCappedAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -157,21 +133,13 @@ public partial class MainViewModel
 
     private CancellationTokenSource? _enrichCts;
 
-    /// <summary>The installed Store (MSIX) packages: names the app to start and the folder whose running
-    /// processes block an update. Shared with the pre-install check.</summary>
+    /// <summary>The installed Store (MSIX) packages: names the app to start and the folder whose running processes block an update. Shared with the pre-install check.</summary>
     private readonly PackagedApps _packagedApps = new(Services.Sources.WindowsRegistryView.Instance);
 
-    /// <summary>Sources already handed to <see cref="EnrichAllAsync"/> this scan, so a source lingering in
-    /// its Done state across several timer ticks is not re-enriched every tick.</summary>
+    /// <summary>Sources already enriched this scan, so one lingering in its Done state across several timer ticks is not enriched every tick.</summary>
     private readonly HashSet<string> _enrichedSourcesThisScan = [];
 
-    /// <summary>
-    /// Fires the moment THIS source's own scan drains; not batched behind the whole scan finishing (a slow
-    /// source, e.g. the Android SDK, held back enrichment for sources that had already finished scanning
-    /// minutes earlier). Every row is handed to its source's EnrichAsync, which fills in
-    /// a release date and download size the outdated listing never carried. Sources without an enrichment
-    /// simply no-op. Called from <see cref="FlushProviderStatuses"/> the first time a source reports Done.
-    /// </summary>
+    /// <summary>Fires the moment this source's own scan drains, so a slow source does not hold back enrichment for the ones already finished. Every row goes to its source's EnrichAsync, which fills in a release date and download size; sources without one no-op.</summary>
     private void EnrichSource(string sourceId)
     {
         var cts = _enrichCts;
@@ -188,14 +156,7 @@ public partial class MainViewModel
         _ = Task.Run(() => EnrichAllAsync(rows, cts.Token), cts.Token);
     }
 
-    /// <summary>
-    /// The install directory (for "open folder") and the program's own executable (for "Start"), for every
-    /// row. Registry and disk only, no network; and sequential on purpose: resolving a launch exe probes
-    /// up to three directories, so firing every row at once turned a quiet background pass into a burst of
-    /// disk I/O. Fail-closed: a row that resolves to nothing simply offers neither action.
-    /// Each row is published the moment it is known, rather than all of them at the end. Collecting them
-    /// first is what made the table sit still and then change everywhere at once.
-    /// </summary>
+    /// <summary>The install directory (for "open folder") and the program's own executable (for "Start"), for every row. Registry and disk only, no network, and sequential on purpose: resolving a launch exe probes up to three directories, so all rows at once would be a burst of disk I/O. Each row is published as soon as it is known. A row that resolves to nothing offers neither action.</summary>
     private async Task ResolveInstallLocationsAsync(
         IReadOnlyList<UpdateRowViewModel> rows, CancellationToken cancellationToken)
     {
@@ -212,13 +173,10 @@ public partial class MainViewModel
             {
                 folder = _installLocations.Resolve(row.Item);
 
-                // The folder is handed on rather than resolved a second time; the launch lookup falls
-                // back to searching it, and repeating the registry and existence checks per row was pure
-                // duplicate work.
+                // The folder is handed on rather than resolved again; the launch lookup falls back to searching it.
                 launchExe = _installLocations.ResolveLaunchExe(row.Item, folder);
 
-                // A Store app installed through winget has no Uninstall entry to find an exe by; its package
-                // names the application to start.
+                // A Store app installed through winget has no Uninstall entry to find an exe by; its package names the application to start.
                 if (row.Item.SourceId == "winget" && _packagedApps.FindForWingetRow(row.Item.Id, row.Item.Name) is { } package)
                 {
                     packagedApp = true;
@@ -227,8 +185,7 @@ public partial class MainViewModel
             }
             catch (Exception ex)
             {
-                // One row's lookup failing must not stop the rest of the table from being resolved; it
-                // simply keeps neither the folder nor the launch target, per the fail-closed contract above.
+                // One row's lookup failing must not stop the rest; it keeps neither folder nor launch target.
                 _logging.Warn($"Install-location lookup failed for '{row.Item.SourceId}:{row.Item.Id}': {ex.Message}");
                 continue;
             }
@@ -250,8 +207,7 @@ public partial class MainViewModel
         }
     }
 
-    /// <summary>Enrichment is part of the scan, just started from here instead of the orchestrator, so its
-    /// tool processes also yield to the user's own programs.</summary>
+    /// <summary>Enrichment is part of the scan, just started from here, so its tool processes also yield to the user's own programs.</summary>
     private static async Task<UpdateEnrichment?> EnrichAtScanPriorityAsync(
         IUpdateSource source, UpdateItem item, CancellationToken cancellationToken)
     {
@@ -261,16 +217,12 @@ public partial class MainViewModel
 
     private async Task EnrichAllAsync(IReadOnlyList<UpdateRowViewModel> rows, CancellationToken cancellationToken)
     {
-        // A handful at a time: enough to fill the table quickly without opening dozens of sockets to
-        // the registries at once.
+        // A handful at a time: fills the table quickly without opening dozens of sockets to the registries at once.
         using var gate = new SemaphoreSlim(6);
 
         await _enrichmentCache.LoadAsync();
 
-        // Alongside the network lookups, not before them. Awaiting the whole registry-and-disk pass first
-        // meant nothing at all appeared until it had walked every row, and then the network results; which
-        // had not even been started; arrived together a moment later. One is disk-bound and one is
-        // network-bound, so they have no reason to queue behind each other.
+        // Runs alongside the network lookups, not before them: one is disk-bound and one network-bound, so neither should queue behind the other.
         var locations = ResolveInstallLocationsAsync(rows, cancellationToken);
 
         var tasks = rows.Select(async row =>
@@ -311,8 +263,7 @@ public partial class MainViewModel
             }
             catch (Exception ex)
             {
-                // One row's network lookup failing must not fault the Task.WhenAll below and take down
-                // enrichment for every other row still in flight.
+                // One row's failing lookup must not fault the Task.WhenAll below and stop enrichment for the rest.
                 _logging.Warn($"Enrichment failed for '{row.Item.SourceId}:{row.Item.Id}': {ex.Message}");
             }
             finally
@@ -330,21 +281,17 @@ public partial class MainViewModel
         }
         catch (Exception ex)
         {
-            // Every per-row task above already catches its own failure; this is a defence-in-
-            // depth net for the method itself, called only through EnrichSource's fire-and-forget
-            // Task.Run, so anything escaping Task.WhenAll here would only reach the
-            // process-wide unobserved-task handler.
+            // Safety net for the method itself: it only runs through a fire-and-forget Task.Run, so anything escaping here would reach only the unobserved-task handler.
             _logging.Warn($"Enrichment pass failed: {ex.Message}");
         }
         finally
         {
             if (!cancellationToken.IsCancellationRequested)
             {
-                // Persist whatever was learned this pass, so the next scan starts warm.
+                // Persist what was learned so the next scan starts warm.
                 _enrichmentCache.Save();
 
-                // Only when the table is actually sorted by a column enrichment just filled in does it
-                // need re-ordering; a one-off refresh at the end of the pass, not per row.
+                // Only a table sorted by a column enrichment just filled in needs re-ordering; once at the end of the pass, not per row.
                 if (SortColumn is "date" or "size" or "version")
                     await _dispatcher.InvokeAsync(() => RefreshViewSafely(UpdatesView, nameof(UpdatesView)), DispatcherPriority.Background);
             }

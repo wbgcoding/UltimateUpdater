@@ -44,18 +44,14 @@ public partial class MainViewModel
         OnPropertyChanged(nameof(SelfUpdateDismissLabel));
     }
 
-    /// <summary>True while the banner's close button stops the update instead of only hiding the banner:
-    /// a download in progress or a verified update waiting for running work. Once applying has begun the
-    /// process is about to end and there is nothing left to take back.</summary>
+    /// <summary>True while the close button stops the update instead of only hiding the banner: a download in progress or a verified update waiting for running work. Once applying has begun there is nothing left to take back.</summary>
     public bool SelfUpdateDismissCancels => (SelfUpdateInProgress || SelfUpdateWaitingForWork) && !_selfUpdateApplying;
 
-    /// <summary>Tooltip and screen-reader name of the banner's close button: "Cancel update" while it stops
-    /// the update, "Dismiss" otherwise.</summary>
+    /// <summary>Tooltip and screen-reader name of the close button: "Cancel update" while it stops the update, "Dismiss" otherwise.</summary>
     public string SelfUpdateDismissLabel =>
         LocalizationService.Instance[SelfUpdateDismissCancels ? "SelfUpdateCancelUpdate" : "SelfUpdateDismiss"];
 
-    /// <summary>What the banner says while the update runs: downloading with a percentage, verifying or
-    /// installing. Empty when nothing is running.</summary>
+    /// <summary>What the banner says while the update runs; empty when nothing is running.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelfUpdateShowsProgress))]
     private string selfUpdatePhaseText = string.Empty;
@@ -72,8 +68,7 @@ public partial class MainViewModel
     [ObservableProperty]
     private string selfUpdateDetail = string.Empty;
 
-    /// <summary>Cancelling is possible while bytes are still arriving; once the file is being checked or
-    /// started it is too late to take back.</summary>
+    /// <summary>Cancelling is possible while bytes are still arriving; once the file is checked or started it is too late.</summary>
     [ObservableProperty]
     private bool selfUpdateCanCancel;
 
@@ -98,8 +93,7 @@ public partial class MainViewModel
         SelfUpdateCanCancel = false;
     }
 
-    /// <summary>Shows one reading in the banner. The percentage only ever rises within a run, so a late or
-    /// repeated reading never makes the bar step back.</summary>
+    /// <summary>Shows one reading in the banner. The percentage only rises within a run, so a late or repeated reading never makes the bar step back.</summary>
     internal void ShowSelfUpdateProgress(Services.SelfUpdate.SelfUpdateProgress reading)
     {
         switch (reading.Phase)
@@ -142,8 +136,7 @@ public partial class MainViewModel
         SelfUpdatePhaseText = Loc["SelfUpdatePhaseInstalling"];
     }
 
-    /// <summary>Applying the update ends the process; an install batch or a cleanup run still in flight would
-    /// be killed half way, so the command waits until neither is running.</summary>
+    /// <summary>Applying ends the process, so the command waits until no install batch or cleanup run is in flight.</summary>
     private bool CanInstallSelfUpdate => !IsInstalling && !IsCleanupRunning && !SelfUpdateInProgress;
 
     private Services.SelfUpdate.AvailableUpdate? _pendingSelfUpdate;
@@ -160,24 +153,16 @@ public partial class MainViewModel
     /// <summary>The interval scan also asks about a new app version, so a long-running copy keeps current.</summary>
     public async Task CheckForSelfUpdatePeriodicAsync(CancellationToken cancellationToken)
     {
-        // already offering one, or the user switched self-update off: nothing to do
         if (!_settings.Current.SelfUpdate.Enabled || SelfUpdateAvailable)
             return;
 
         await RunSelfUpdateCheckAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// The settings window's "Check now": the user asked, so it runs regardless of the on-start/interval
-    /// preferences and reports back whether anything was found, nothing was, or the check could not be
-    /// completed. A found update still surfaces as the banner on the main window.
-    /// </summary>
+    /// <summary>The settings window's "Check now": runs regardless of the on-start and interval preferences and reports whether anything was found, nothing was, or the check could not complete. A found update still surfaces as the banner.</summary>
     public async Task<Services.SelfUpdate.SelfUpdateCheckOutcome> CheckForUpdatesInteractiveAsync()
     {
-        // Its own token rather than None: pressing "check now" again supersedes a check that is
-        // still waiting on the network instead of leaving it running with nothing able to stop it.
-        // A token of its own, not the download's: sharing one meant "Check now" in Settings silently cancelled
-        // an update download already running from the banner, and the update never installed.
+        // A token of its own, not the download's: a repeat "Check now" supersedes a check still waiting on the network, and must not cancel a download already running from the banner.
         _selfUpdateCheckCts?.Cancel();
         _selfUpdateCheckCts?.Dispose();
         _selfUpdateCheckCts = new CancellationTokenSource();
@@ -195,14 +180,11 @@ public partial class MainViewModel
     {
         try
         {
-            // Only a Found result replaces the offer: a check that found nothing or could not finish (a
-            // timed-out request, a channel that briefly went unreachable) must never wipe an update already
-            // on offer, which would leave the banner up with nothing for Install or the changelog link.
+            // Only a Found result replaces the offer: a check that found nothing or could not finish must not wipe an update already on offer.
             var result = await _selfUpdate.CheckAsync(cancellationToken);
             if (result.Update is { } update)
             {
-                // A newer release makes a held verified file of an older one useless; one already being
-                // applied (or waiting for running work) is left alone.
+                // A newer release makes a held verified file of an older one useless; one already being applied or waiting for running work is left alone.
                 if (!SelfUpdateInProgress && !_selfUpdateApplying)
                     _selfUpdate.DiscardVerifiedExcept(update.Version);
 
@@ -240,17 +222,13 @@ public partial class MainViewModel
             _selfUpdateCts = new CancellationTokenSource();
             var token = _selfUpdateCts.Token;
 
-            // Created here on the dispatcher, so readings from the download thread are posted back to it
-            // and the window never waits on the network.
-            // A fresh meter with the fresh clock: the old one would hold the last run's readings and
-            // report a stale or zero speed until the new clock passed the old run's time.
+            // Created on the dispatcher, so readings from the download thread are posted back to it. A fresh meter, or a stale reading from the last run would show a wrong speed.
             _selfUpdateRate = new Services.SelfUpdate.DownloadRateMeter();
             _selfUpdateClock = System.Diagnostics.Stopwatch.StartNew();
             ShowSelfUpdateProgress(new Services.SelfUpdate.SelfUpdateProgress(Services.SelfUpdate.SelfUpdatePhase.Downloading));
             var progress = new Progress<Services.SelfUpdate.SelfUpdateProgress>(ShowSelfUpdateProgress);
 
-            // A verified file that survived a declined elevation prompt is applied again as it is: downloading
-            // it a second time would cost the whole transfer for nothing.
+            // A verified file that survived a declined elevation prompt is applied as it is, without a second download.
             var held = SelfUpdateHeldPathForTest is { } heldForTest
                 ? heldForTest(_pendingSelfUpdate.Version)
                 : _selfUpdate.VerifiedPathFor(_pendingSelfUpdate.Version);
@@ -259,8 +237,7 @@ public partial class MainViewModel
                 : await (SelfUpdateDownloadForTest?.Invoke(_pendingSelfUpdate, token)
                     ?? _selfUpdate.DownloadVerifiedAsync(_pendingSelfUpdate, token, progress));
 
-            // The user cancelled while the last bytes arrived: whatever the download reports, nothing is
-            // applied and no failure is shown for a stop they asked for.
+            // The user cancelled while the last bytes arrived: nothing is applied and no failure is shown for a stop they asked for.
             token.ThrowIfCancellationRequested();
             if (download.Path is not { } verifiedPath)
             {
@@ -270,8 +247,7 @@ public partial class MainViewModel
                     return;
                 }
 
-                // Network and verification failures read differently: one is worth a retry, the other says
-                // the file was refused.
+                // A network failure is worth a retry; a verification failure means the file was refused.
                 var message = download.Outcome == Services.SelfUpdate.SelfUpdateDownloadOutcome.NetworkFailed
                     ? Loc["SelfUpdateDownloadFailed"]
                     : Loc["SelfUpdateFailed"];
@@ -279,9 +255,7 @@ public partial class MainViewModel
                 return;
             }
 
-            // Applying ends the process, so an install, a cleanup or a drive optimisation that is still
-            // running would be killed half way. The verified file is kept and applied by itself the moment
-            // the last of them ends; the update stays "in progress" meanwhile so it cannot be started twice.
+            // Applying ends the process, so a running install, cleanup or drive optimisation would be killed half way. The verified file is applied once the last of them ends; the update stays "in progress" meanwhile so it cannot start twice.
             if (WorkIsRunning)
             {
                 _verifiedSelfUpdatePath = verifiedPath;
@@ -298,12 +272,10 @@ public partial class MainViewModel
         }
         catch (OperationCanceledException)
         {
-            // the user started something that replaced this download (a new check): nothing to report
         }
         catch (Exception ex)
         {
-            // A failure must not escape the command: it would reach the dispatcher and the crash handler
-            // would end the app, while this action has to fail closed and quietly.
+            // A failure must not escape the command: the crash handler would end the app, while this action has to fail closed and quietly.
             _logging.Error("Self-update failed", ex);
             Dialogs.Warn(Loc["SelfUpdateApplyFailed"]);
         }
@@ -320,8 +292,7 @@ public partial class MainViewModel
     /// <summary>Test-only: replaces the dialog that tells the user the update was not validly signed.</summary>
     internal Func<bool>? SignatureRefusedPromptForTest { get; set; }
 
-    /// <summary>Nothing was installed. The user can still fetch the release by hand, so the notice offers
-    /// the release page next to its plain close button.</summary>
+    /// <summary>Nothing was installed. The notice offers the release page next to its close button.</summary>
     private void OfferReleasePageAfterBadSignature()
     {
         var open = SignatureRefusedPromptForTest?.Invoke()
@@ -330,30 +301,23 @@ public partial class MainViewModel
             UriLauncher.LaunchDetached(ReleasePageUrl, _logging);
     }
 
-    /// <summary>Install work counts from the moment it owns the install machinery or has rows waiting for
-    /// it, not only while <see cref="IsInstalling"/> is set: a solo activity clears that flag a moment before
-    /// it hands rows queued meanwhile to a new batch.</summary>
+    /// <summary>Install work counts from the moment it owns the install machinery or has rows waiting for it, not only while <see cref="IsInstalling"/> is set: a solo activity clears that flag just before it hands queued rows to a new batch.</summary>
     internal bool WorkIsRunning =>
         IsInstalling || _installActivityRunning || _installPending.Count > 0 || _installPreflightsOpen > 0
         || IsCleanupRunning || DefragRunState.IsRunning;
 
-    /// <summary>How many pre-flight dialogs of an install request are open right now. The rows are not in
-    /// the queue yet while one is up, but the request is already work that applying would cut off.</summary>
+    /// <summary>How many pre-flight dialogs are open. The rows are not queued yet, but the request is already work that applying would cut off.</summary>
     private int _installPreflightsOpen;
 
     private string? _verifiedSelfUpdatePath;
 
-    /// <summary>Set from the moment a verified update starts being applied until applying failed. Applying
-    /// ends the process (the installer closes it, or the portable swap starts the new copy), so no install
-    /// may start meanwhile; see <see cref="RefusedWhileSelfUpdateApplies"/>.</summary>
+    /// <summary>Set from the moment a verified update starts being applied until applying failed. Applying ends the process, so no install may start meanwhile; see <see cref="RefusedWhileSelfUpdateApplies"/>.</summary>
     private bool _selfUpdateApplying;
 
-    // Off the UI thread: applying a portable update re-hashes a ~100 MB file through the handle it
-    // pinned, and doing that on the dispatcher froze the window for as long as the disk took.
+    // Off the UI thread: a portable update re-hashes a ~100 MB file through its pinned handle, which would freeze the window.
     private async Task ApplyVerifiedSelfUpdateAsync(string verifiedPath)
     {
-        // Set on the UI thread in the same step as the caller's own "no work running" check, so no install
-        // can start between that check and the process ending.
+        // Set on the UI thread together with the caller's "no work running" check, so no install can start between that check and the process ending.
         _selfUpdateApplying = true;
         RaiseSelfUpdateDismissChanged();
         var result = Services.SelfUpdate.SelfUpdateApplyResult.Failed;
@@ -373,16 +337,14 @@ public partial class MainViewModel
             }
         }
 
-        // A declined elevation prompt is the user's own answer: no failure dialog, the banner just offers
-        // the install again.
+        // A declined elevation prompt is the user's own answer: no failure dialog, the banner offers the install again.
         if (result == Services.SelfUpdate.SelfUpdateApplyResult.Started)
             (SelfUpdateExitForTest ?? ExitForSelfUpdate)();
         else if (result == Services.SelfUpdate.SelfUpdateApplyResult.Failed)
             Dialogs.Warn(Loc["SelfUpdateApplyFailed"]);
     }
 
-    /// <summary>True, with a log line, when an install, uninstall, retry or rollback must not start because
-    /// the app is applying its own update and about to end.</summary>
+    /// <summary>True, with a log line, when an install, uninstall, retry or rollback must not start because the app is applying its own update.</summary>
     private bool RefusedWhileSelfUpdateApplies(string what, bool tellUser = false)
     {
         if (!_selfUpdateApplying)
@@ -395,8 +357,7 @@ public partial class MainViewModel
         return true;
     }
 
-    /// <summary>Called whenever one of the three kinds of running work ends: applies the waiting update once
-    /// none of them is left. Driven by change notifications, never by polling.</summary>
+    /// <summary>Called whenever one of the three kinds of running work ends: applies the waiting update once none is left. Driven by change notifications, not polling.</summary>
     private void ApplyWaitingSelfUpdateWhenIdle()
     {
         if (!SelfUpdateWaitingForWork || WorkIsRunning || _verifiedSelfUpdatePath is not { } path)
@@ -429,12 +390,10 @@ public partial class MainViewModel
     // A drive optimisation ends on a pool thread; the view model state is touched on the dispatcher only.
     private void OnDefragRunEnded() => _dispatcher.InvokeAsync(ApplyWaitingSelfUpdateWhenIdle);
 
-    // Through the shared exit path, not a bare Shutdown, so the tray and window close handling agree
-    // that this is a real exit and not a close to the tray.
+    // Through the shared exit path, not a bare Shutdown, so tray and window close handling agree this is a real exit.
     private static void ExitForSelfUpdate() => (Application.Current as App)?.ExitApplication();
 
-    /// <summary>At app exit: a verified download the user never started (a declined elevation prompt kept it)
-    /// is removed instead of waiting for the next start's sweep.</summary>
+    /// <summary>At app exit: a verified download the user never started is removed instead of waiting for the next start's sweep.</summary>
     internal void DiscardUnstartedSelfUpdate()
     {
         if (!_selfUpdateApplying && !SelfUpdateWaitingForWork)
@@ -457,9 +416,7 @@ public partial class MainViewModel
         SelfUpdateAvailable = true;
     }
 
-    /// <summary>The banner's close button. While the update is downloading or waiting for running work it
-    /// also cancels it: hiding the banner alone would leave an update that still applies later and
-    /// restarts the app with no warning.</summary>
+    /// <summary>The banner's close button. While the update downloads or waits for running work it also cancels it, since hiding the banner alone would leave an update that restarts the app later without warning.</summary>
     [RelayCommand]
     private void DismissSelfUpdate()
     {
@@ -475,11 +432,7 @@ public partial class MainViewModel
         SelfUpdateAvailable = false;
     }
 
-    /// <summary>
-    /// The banner's third button: shows the release notes of the offered version through the existing
-    /// changelog window, reusing the release the check already resolved. Never touches the install path;
-    /// installing stays its own separate, deliberate click.
-    /// </summary>
+    /// <summary>The banner's third button: shows the release notes of the offered version in the changelog window, using the release the check already resolved. Never touches the install path.</summary>
     [RelayCommand]
     private void ShowSelfUpdateChangelog()
     {
