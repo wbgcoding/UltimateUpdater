@@ -66,6 +66,34 @@ public class InstallerScriptTests
     }
 
     /// <summary>
+    /// The elevated PowerShell inherits Setup's environment. A command planted in a user PATH folder or a
+    /// .NET profiler variable would run as admin, so Setup resets both before every PowerShell call.
+    /// </summary>
+    [Fact]
+    public void Elevated_PowerShell_starts_with_a_Windows_only_environment()
+    {
+        var script = Script();
+
+        var args = Regex.Match(script, @"function PowerShellArgs.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(args.Success, "PowerShellArgs is gone");
+        Assert.Contains("PrepareElevatedPowerShell;", args.Value);
+
+        var prepare = Regex.Match(script, @"procedure PrepareElevatedPowerShell;.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(prepare.Success, "PrepareElevatedPowerShell is gone");
+        Assert.Contains("SetEnvironmentVariable('Path', Sys + ';' + Sys + '\\Wbem;' + Sys + '\\WindowsPowerShell\\v1.0');", prepare.Value);
+        Assert.Contains("SetEnvironmentVariable('PSModulePath', Sys + '\\WindowsPowerShell\\v1.0\\Modules');", prepare.Value);
+        Assert.Contains("ClearCodeLoadingVariablesFrom('Environment');", prepare.Value);
+        Assert.Contains("ClearCodeLoadingVariablesFrom('Volatile Environment');", prepare.Value);
+        foreach (var name in new[] { "COR_ENABLE_PROFILING", "COR_PROFILER", "COR_PROFILER_PATH" })
+            Assert.Contains($"ClearEnvironmentVariable('{name}', 0);", prepare.Value);
+
+        var prefixes = Regex.Match(script, @"function IsCodeLoadingVariable.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(prefixes.Success, "IsCodeLoadingVariable is gone");
+        foreach (var prefix in new[] { "COR_", "CORECLR_", "COMPLUS_", "DOTNET_" })
+            Assert.Contains($"Pos('{prefix}', Upper) = 1", prefixes.Value);
+    }
+
+    /// <summary>
     /// A silent upgrade reuses the previous task choice, which switched autostart back on for a user who had
     /// turned it off in the app. Whether this is an upgrade is read once, before Setup writes anything.
     /// </summary>

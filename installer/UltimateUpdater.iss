@@ -695,11 +695,57 @@ begin
   Result := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
 end;
 
-{ Setup runs elevated, but PSModulePath starts with the user's own Documents modules folder, so a module
-  planted there would shadow CimCmdlets or Management and run as admin. The scripts load only the
-  modules that ship with Windows. }
+function SetEnvironmentVariable(Name: String; Value: String): Boolean;
+  external 'SetEnvironmentVariableW@kernel32.dll stdcall';
+function ClearEnvironmentVariable(Name: String; Value: Cardinal): Boolean;
+  external 'SetEnvironmentVariableW@kernel32.dll stdcall';
+
+function IsCodeLoadingVariable(const Name: String): Boolean;
+var
+  Upper: String;
+begin
+  Upper := Uppercase(Name);
+  Result := (Pos('COR_', Upper) = 1) or (Pos('CORECLR_', Upper) = 1) or
+    (Pos('COMPLUS_', Upper) = 1) or (Pos('DOTNET_', Upper) = 1);
+end;
+
+procedure ClearCodeLoadingVariablesFrom(const Key: String);
+var
+  Names: TArrayOfString;
+  I: Integer;
+begin
+  if RegGetValueNames(HKEY_CURRENT_USER, Key, Names) then
+    for I := 0 to GetArrayLength(Names) - 1 do
+      if IsCodeLoadingVariable(Names[I]) then
+        ClearEnvironmentVariable(Names[I], 0);
+end;
+
+{ PowerShell runs elevated here but starts with the user's environment, which any program of that user can
+  change: a command planted in a PATH folder wins over the Windows cmdlets, a module in the Documents folder
+  shadows CimCmdlets, and the .NET profiler variables load a DLL before the script starts. Setup's own
+  environment is therefore reduced to Windows folders before every PowerShell call, and the script pins its
+  module path once more. }
+procedure PrepareElevatedPowerShell;
+var
+  Sys: String;
+begin
+  Sys := ExpandConstant('{sys}');
+  SetEnvironmentVariable('Path', Sys + ';' + Sys + '\Wbem;' + Sys + '\WindowsPowerShell\v1.0');
+  SetEnvironmentVariable('PSModulePath', Sys + '\WindowsPowerShell\v1.0\Modules');
+  ClearCodeLoadingVariablesFrom('Environment');
+  ClearCodeLoadingVariablesFrom('Volatile Environment');
+  ClearEnvironmentVariable('COR_ENABLE_PROFILING', 0);
+  ClearEnvironmentVariable('COR_PROFILER', 0);
+  ClearEnvironmentVariable('COR_PROFILER_PATH', 0);
+  ClearEnvironmentVariable('COR_PROFILER_PATH_32', 0);
+  ClearEnvironmentVariable('COR_PROFILER_PATH_64', 0);
+  ClearEnvironmentVariable('COMPlus_InstallRoot', 0);
+  ClearEnvironmentVariable('COMPlus_Version', 0);
+end;
+
 function PowerShellArgs(const Script: String): String;
 begin
+  PrepareElevatedPowerShell;
   Result := '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' +
     '$env:PSModulePath = $PSHOME + ''\Modules''; ' + Script + '"';
 end;
