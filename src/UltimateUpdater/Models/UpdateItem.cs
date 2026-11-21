@@ -81,10 +81,8 @@ public sealed class UpdateItem
     public bool IsRollback { get; init; }
 
     /// <summary>
-    /// A rollback's own copy: every field this run needs carried over, plus the target OLDER version pinned
-    /// both as the install target and as what the history entry should show as "installed to". A plain
-    /// class, not a record, so this is the one place that copy is written rather than a `with` expression
-    /// at every call site.
+    /// A rollback's own copy: every field carried over, plus the older target version pinned as both the install
+    /// target and the history entry's "installed to". A plain class, so this is the one place the copy is written.
     /// </summary>
     public UpdateItem WithPinnedVersion(string version) => new()
     {

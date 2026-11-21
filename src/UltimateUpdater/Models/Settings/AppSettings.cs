@@ -27,11 +27,9 @@ public sealed class AppSettings
     /// on load too (<see cref="UltimateUpdater.Services.SettingsService"/>) so a very long-idle install never resurrects it.</summary>
     public Dictionary<string, DateTimeOffset> Snoozed { get; set; } = new();
 
-    /// <summary>Counts a package's repeated same-cause install failures so a row that can never succeed
-    /// (a crashing vendor setup, a version winget has no build for) reads as "needs manual work" instead
-    /// of staying red forever. Key is <c>PackageKey</c> (never the version key; the whole point is that
-    /// retrying the same package keeps failing the same way, whatever version is on offer this time).
-    /// A success removes its entry immediately and completely.</summary>
+    /// <summary>Counts a package's repeated same-cause install failures so a row that can never succeed reads as
+    /// "needs manual work" instead of staying red forever. Key is <c>PackageKey</c>, never the version key: the same
+    /// package keeps failing the same way whatever version is on offer. A success removes its entry.</summary>
     public Dictionary<string, PersistentFailureRecord> PersistentFailures { get; set; } = new();
 
     public LogSettings Logs { get; set; } = new();
@@ -43,9 +41,8 @@ public sealed class AppSettings
     /// never come back pre-checked.</summary>
     public Dictionary<string, bool> CleanupSelection { get; set; } = new();
 
-    /// <summary>One-shot marker: the saved choice of the two system repair targets was reset once, when
-    /// they changed from default-on to default-off. True from then on (and on a fresh install), so a tick
-    /// the user sets later is kept.</summary>
+    /// <summary>One-shot marker: the saved choice of the two system repair targets was reset once when they became
+    /// default-off. True on a fresh install and afterwards, so a tick the user sets later is kept.</summary>
     public bool CleanupRepairDefaultsApplied { get; set; }
 
     /// <summary>Moves file-target cleanup to the recycle bin instead of deleting outright.
@@ -64,13 +61,10 @@ public sealed class AppSettings
     /// want back.</summary>
     public int CleanupRecycleBinMinAgeDays { get; set; } = 30;
 
-    /// <summary>Right-click "permanently exclude": a detail-list entry the user
-    /// explicitly never wants shown again; full path, case-insensitive match, same identity a real scan
-    /// re-finds each time (a registry finding's own key path counts too). Applied by unchecking a matching
-    /// entry every time <c>SetEntries</c> runs (<c>CleanupViewModel.ApplyPermanentExclusions</c>); this
-    /// list changes what starts checked, never what the scan itself reports or measures, so a stale entry
-    /// (the thing it pointed at is long gone) is simply never matched again rather than needing cleanup of
-    /// its own.</summary>
+    /// <summary>Right-click "permanently exclude": detail-list entries the user never wants shown again. Full path,
+    /// case-insensitive (a registry finding's key path counts too). Applied by unchecking a matching entry whenever
+    /// <c>SetEntries</c> runs (<c>CleanupViewModel.ApplyPermanentExclusions</c>); it changes what starts checked, never
+    /// what the scan reports, so a stale entry is simply never matched.</summary>
     public List<string> CleanupPermanentlyExcludedPaths { get; set; } = [];
 
     /// <summary>How many days may pass since the last cleanup (or since the app was set up, if
@@ -82,20 +76,15 @@ public sealed class AppSettings
     public bool CleanupReminderOff { get; set; }
 
     /// <summary>
-    /// False until either parallelism slider (<see cref="ScanSettings.MaxParallelSources"/>,
-    /// <see cref="InstallSettings.MaxParallelInstalls"/>) has been moved by hand. While false, the
-    /// once-only hardware auto-tune at startup is free to keep rewriting both values for this machine;
-    /// the moment it flips true, nothing ever re-tunes them again, not even a later version. A factory
-    /// reset clears it, so the machine can be auto-tuned again.
+    /// False until a parallelism slider (<see cref="ScanSettings.MaxParallelSources"/>,
+    /// <see cref="InstallSettings.MaxParallelInstalls"/>) is moved by hand. While false, the startup hardware
+    /// auto-tune may keep rewriting both values; once true nothing re-tunes them. A factory reset clears it.
     /// </summary>
     public bool ParallelismChosenByUser { get; set; }
 
     /// <summary>
-    /// How long an install-history row is kept. Same contract as <see cref="LogSettings.RetentionDays"/>
-    /// (housekeeping runs at start-up, so a shorter value takes effect on the next launch); its own field
-    /// rather than folded into LogSettings, since the log and the install history are pruned independently
-    /// and a settings.json from before this existed must not suddenly start deleting logs by a different
-    /// rule.
+    /// How long an install-history row is kept; same contract as <see cref="LogSettings.RetentionDays"/> (housekeeping
+    /// runs at start-up). A separate field so the log and the history are pruned independently.
     /// </summary>
     public int HistoryRetentionDays { get; set; } = 30;
 }
@@ -112,11 +101,9 @@ public sealed class ScanSettings
     public bool RespectMetered { get; set; } = true;
 
     /// <summary>
-    /// Caps how many sources' scans run at once (<see cref="Services.ScanOrchestrator"/>'s own gate,
-    /// separate from the per-source lane that already stops one source from scanning itself twice at
-    /// once). 1 to 16; the hardware auto-tune at startup picks the initial value for this machine once,
-    /// see <see cref="AppSettings.ParallelismChosenByUser"/>. The default here only matters before that
-    /// first tune has ever run (or for a settings object built without going through it, as in tests).
+    /// Caps how many sources scan at once (<see cref="Services.ScanOrchestrator"/>'s gate). 1 to 16; the startup
+    /// hardware auto-tune sets the initial value, see <see cref="AppSettings.ParallelismChosenByUser"/>. The default
+    /// only matters before that tune has run or for a settings object built without it (tests).
     /// </summary>
     public int MaxParallelSources { get; set; } = 8;
 }
@@ -151,8 +138,8 @@ public sealed class UiSettings
     public string Language { get; set; } = "system";
     public WindowPlacement? WindowPlacement { get; set; }
     /// <summary>
-    /// Off by default: with it on, closing the window leaves the app running invisibly, and the
-    /// next launch appears to do nothing at all. Opt in from settings once that is understood.
+    /// Off by default: with it on, closing the window leaves the app running invisibly, so the next launch seems to
+    /// do nothing.
     /// </summary>
     public bool CloseToTray { get; set; }
 

@@ -10,11 +10,9 @@ namespace UltimateUpdater.Models.Settings;
 public sealed class RegistryCleanupSettings
 {
     /// <summary>
-    /// <c>%APPDATA%\UltimateUpdater\registry-backups</c>, ALWAYS, portable mode included. Deliberately not
-    /// the app's own data-directory resolver (<c>AppPaths.DataDirectory</c>): in portable mode that resolves
-    /// to a <c>data</c> folder beside the exe, which sits OUTSIDE the user profile, and
-    /// <c>RegistryBackupService.IsWithinUserProfile</c> would then refuse every backup, silently stopping
-    /// registry cleanup from ever backing anything up. Created on demand, never up front.
+    /// <c>%APPDATA%\UltimateUpdater\registry-backups</c>, ALWAYS, portable mode included. Not <c>AppPaths.DataDirectory</c>:
+    /// portable mode resolves that beside the exe, outside the user profile, and
+    /// <c>RegistryBackupService.IsWithinUserProfile</c> would then refuse every backup. Created on demand.
     /// </summary>
     public string BackupFolder { get; set; } = DefaultBackupFolder;
 
@@ -23,9 +21,8 @@ public sealed class RegistryCleanupSettings
     internal static string DefaultBackupFolder { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UltimateUpdater", "registry-backups");
 
-    /// <summary>Where this default lived before the app was renamed from Windows Updater. A settings file
-    /// saved before the rename still carries this path, and it needs to migrate to
-    /// <see cref="DefaultBackupFolder"/> the same way the profile-root default already does.</summary>
+    /// <summary>The default location under the app's former name. A settings file that still carries it migrates to
+    /// <see cref="DefaultBackupFolder"/>, like the profile-root default.</summary>
     internal static string LegacyDefaultBackupFolder { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WindowsUpdater", "registry-backups");
 
