@@ -54,20 +54,17 @@ public sealed class ScanOrchestrator
     public event Action<ProviderStatus>? ProviderStatusChanged;
 
     /// <param name="isEnabled">
-    /// Which sources the user still wants scanned. A source switched off is skipped entirely: no
-    /// probe, no pill, no results, so switching one off also stops paying for it.
+    /// Which sources the user still wants scanned. A source switched off is skipped entirely: no probe, no
+    /// pill, no results.
     /// </param>
     /// <param name="isOnline">
-    /// Testing seam for <see cref="NetworkAvailability.IsOnline"/>, the real default: a test can inject
-    /// a fixed answer instead of depending on whatever the machine running it is actually connected to.
+    /// Testing seam for <see cref="NetworkAvailability.IsOnline"/>, so a test can inject a fixed answer.
     /// </param>
     /// <param name="maxParallelSources">
-    /// How many sources may scan at once, read fresh at the start of every
-    /// <see cref="RunAsync"/> call rather than fixed at construction, so a slider moved in the settings
-    /// window takes effect on the NEXT scan without needing a restart. Left null (the default, and every
-    /// existing caller before this item) means unbounded, exactly the prior behaviour; the real caller
-    /// passes <c>() => settings.Current.Scan.MaxParallelSources</c>. Never trusted blindly: clamped to
-    /// 1 to 16 here regardless of what it returns.
+    /// How many sources may scan at once, read at the start of every <see cref="RunAsync"/> so a slider moved
+    /// in the settings window takes effect on the next scan. Null means unbounded; the real caller passes
+    /// <c>() => settings.Current.Scan.MaxParallelSources</c>. Clamped to 1 to 16 here regardless of what it
+    /// returns.
     /// </param>
     public ScanOrchestrator(
         IReadOnlyList<IUpdateSource> sources, LoggingService logging,
@@ -86,22 +83,19 @@ public sealed class ScanOrchestrator
     public IReadOnlyList<string> SourceIds { get; }
 
     /// <summary>
-    /// Whether the most recent <see cref="RunAsync"/> found no internet connection at all. Read after
-    /// that call finishes; every network source (<see cref="SourceRegistry.NeedsNetwork"/>) was skipped
-    /// rather than scanned, so this is what tells the caller to show one banner instead of one pill's
-    /// worth of "no connection" per source.
+    /// Whether the most recent <see cref="RunAsync"/> found no internet connection at all. Every network
+    /// source (<see cref="SourceRegistry.NeedsNetwork"/>) was skipped rather than scanned, so this tells the
+    /// caller to show one banner instead of one "no connection" pill per source.
     /// </summary>
     public bool WasOffline { get; private set; }
 
     /// <summary>
-    /// Set AFTER the most recent <see cref="RunAsync"/>: true when at least one source that
-    /// <see cref="SourceRegistry.NeedsNetwork"/> actually ran (was not skipped for <see cref="WasOffline"/>
-    /// or found not installed) and EVERY such source failed with a connection error specifically - a proxy
-    /// refusal or a bare <see cref="HttpRequestException"/> reaching its target, tracked in
-    /// <see cref="_connectionFailuresThisRun"/> by <see cref="ScanOneAsync"/>'s own catches. Distinct from
-    /// <see cref="WasOffline"/>, which only means the SYSTEM reported no connection at all: a firewall rule
-    /// blocking just this app leaves the system "online" while every network source still fails the same
-    /// way.
+    /// Set after the most recent <see cref="RunAsync"/>: true when at least one network source actually ran
+    /// (not skipped for <see cref="WasOffline"/>, not found absent) and every such source failed with a
+    /// connection error specifically (a proxy refusal or a bare <see cref="HttpRequestException"/>), tracked
+    /// in <see cref="_connectionFailuresThisRun"/> by <see cref="ScanOneAsync"/>. Distinct from
+    /// <see cref="WasOffline"/>, which means the system reported no connection: a firewall rule blocking just
+    /// this app leaves the system "online" while every network source still fails.
     /// </summary>
     public bool AllOnlineSourcesFailed { get; private set; }
 
@@ -110,35 +104,32 @@ public sealed class ScanOrchestrator
     private readonly HashSet<string> _knownPresent = [];
 
     /// <summary>
-    /// Which sources have already had a full stack trace written to the log this session. A source stuck
-    /// failing the same way writes the same seven-line trace on every scan otherwise; only the FIRST
-    /// failure earns the full trace, every later one gets the exception type and message alone.
+    /// Which sources have already had a full stack trace written to the log this session. Only the first
+    /// failure earns the full trace; later ones get the exception type and message alone.
     /// </summary>
     private readonly HashSet<string> _stackTraceLoggedFor = [];
 
     /// <summary>
-    /// The last state actually reported for each source, kept across scans so a caller that
-    /// was not there to see the live event (the settings window, opened long after the last scan finished)
-    /// can still ask "was this one not installed". Updated in <see cref="Report"/>, from the SAME status
-    /// object every pill already reacts to, so this can never disagree with what is on screen. Concurrent:
-    /// several sources report from their own parallel tasks at once.
+    /// The last state reported for each source, kept across scans so a caller that did not see the live
+    /// event (the settings window, opened long after the last scan) can still ask "was this one not
+    /// installed". Updated in <see cref="Report"/> from the same status object every pill reacts to.
+    /// Concurrent: sources report from their own parallel tasks.
     /// </summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, ProviderScanState> _lastKnownStates = new();
 
     /// <summary>
-    /// Whether the most recent report for this source (across any scan so far this session, not just the
-    /// current one) was <see cref="ProviderScanState.NotInstalled"/>. False for a source never scanned yet,
-    /// same "unknown counts as available" fail-open rule the rest of this class uses elsewhere.
+    /// Whether the most recent report for this source (across any scan this session) was
+    /// <see cref="ProviderScanState.NotInstalled"/>. False for a source never scanned: unknown counts as
+    /// available.
     /// </summary>
     public bool IsKnownNotInstalled(string sourceId) =>
         _lastKnownStates.TryGetValue(sourceId, out var state) && state == ProviderScanState.NotInstalled;
 
     /// <summary>
-    /// Which scan is the current one. A cancelled scan is ABANDONED rather than waited for (see RunAsync),
-    /// so its providers are still running while the next scan is already filling the table, and their late
-    /// finds and status events landed in it. That is what put a second copy of a Windows Update row on
-    /// screen after a quick rescan, and what let a stale "done" overwrite a source that was scanning again.
-    /// Every event is tagged with the scan it belongs to; anything from an older one is dropped.
+    /// Which scan is the current one. A cancelled scan is abandoned rather than waited for (see RunAsync), so
+    /// its providers keep running while the next scan fills the table; their late finds and status events
+    /// would show a duplicate row or let a stale "done" overwrite a source that is scanning again. Every
+    /// event is tagged with its scan, and anything from an older one is dropped.
     /// </summary>
     private int _generation;
 
@@ -157,26 +148,24 @@ public sealed class ScanOrchestrator
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> _connectionFailuresThisRun = new();
 
     /// <summary>
-    /// One permit per source, so the SAME source is never scanned twice at once. Windows Update's COM search
-    /// takes no cancellation token and runs for another quarter of a minute regardless, so a rescan started
-    /// straight after a stop began a second search on the same instance while the first was still going.
-    /// The new scan's provider waits for the old run to end instead: a late start, not a parallel one.
+    /// One permit per source, so the same source is never scanned twice at once. Windows Update's COM search
+    /// takes no cancellation token and keeps running after a stop, so a quick rescan would start a second
+    /// search on the same instance. The new scan's provider waits for the old run to end instead.
     /// </summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> _perSourceLanes = new();
 
     /// <summary>
-    /// One linked token source per source, alive only while that source is actually scanning this
-    /// generation. Keyed by source id, not by generation: a stale entry from an earlier run
-    /// simply gets overwritten when that source scans again, and <see cref="CancelSource"/> only ever
-    /// acts on whatever is in here right now. Cancelling a source nobody is currently running is a no-op.
+    /// One linked token source per source, alive only while that source is scanning. Keyed by source id, not
+    /// generation: a stale entry is overwritten when the source scans again, and <see cref="CancelSource"/>
+    /// acts only on what is in here now. Cancelling a source nobody is running is a no-op.
     /// </summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, CancellationTokenSource> _perSourceCts = new();
 
     /// <summary>
-    /// Stops exactly ONE source without touching the rest of the scan: the button on its pill.
-    /// Unlike the overall Stop button, this is a real, observable cancellation: the source's own token
-    /// trips, <see cref="ScanOneAsync"/> reports it as <see cref="ProviderScanState.Cancelled"/>, and every
-    /// other source keeps running and keeps contributing to the still-valid overall result.
+    /// Stops exactly one source without touching the rest of the scan: the button on its pill. Unlike the
+    /// overall Stop, the source's own token trips, <see cref="ScanOneAsync"/> reports
+    /// <see cref="ProviderScanState.Cancelled"/>, and every other source keeps contributing to the still-valid
+    /// result.
     /// </summary>
     public bool CancelSource(string sourceId)
     {
@@ -196,10 +185,9 @@ public sealed class ScanOrchestrator
     }
 
     /// <summary>
-    /// How long a new scan waits for the previous run of the same source, so a merely slow provider is
-    /// never reported as failed for being slow. Has to clear the SLOWEST source, not the typical one:
-    /// winget's own scan timeout is five minutes and it runs twice per scan (its own list, then the Store),
-    /// so a shorter limit would give up on a source that is still perfectly healthy.
+    /// How long a new scan waits for the previous run of the same source, so a merely slow provider is not
+    /// reported as failed. It has to clear the slowest source: winget's scan timeout is five minutes and it
+    /// runs twice per scan (its own list, then the Store).
     /// </summary>
     private static readonly TimeSpan SourceLaneTimeout = TimeSpan.FromMinutes(12);
 
@@ -211,12 +199,10 @@ public sealed class ScanOrchestrator
     private bool IsCurrent(int generation) => Volatile.Read(ref _generation) == generation;
 
     /// <summary>
-    /// Guards the generation bump in <see cref="RunAsync"/> against the check-then-invoke in the
-    /// ItemFound path below: without a shared lock, an abandoned provider could pass its own
-    /// <see cref="IsCurrent"/> check the instant before a new run bumps <see cref="_generation"/>, then
-    /// publish a stale item into the table the new scan is filling (the exact bug that put a duplicate
-    /// row on screen after a quick rescan). Held only for the bump itself and for one item's worth of
-    /// check-and-invoke, never for a whole source's scan.
+    /// Guards the generation bump in <see cref="RunAsync"/> against the check-then-invoke in the ItemFound
+    /// path: without a shared lock an abandoned provider could pass its <see cref="IsCurrent"/> check just
+    /// before a new run bumps <see cref="_generation"/>, then publish a stale item into the new scan's table.
+    /// Held only for the bump and for one item's check-and-invoke, never for a whole source's scan.
     /// </summary>
     private readonly object _generationLock = new();
 
@@ -238,10 +224,9 @@ public sealed class ScanOrchestrator
     }
 
     /// <summary>
-    /// Every provider runs on a background thread. Without Task.Run each provider would execute
-    /// synchronously on the calling (UI) thread until its first real await, and availability
-    /// probing alone hits the registry and the file system for every source, which visibly froze
-    /// the window at the start of a scan.
+    /// Every provider runs on a background thread. Without Task.Run each would execute synchronously on the
+    /// calling (UI) thread until its first real await, and availability probing alone hits the registry and
+    /// file system for every source.
     /// </summary>
     public async Task RunAsync(CancellationToken cancellationToken)
     {
@@ -256,22 +241,19 @@ public sealed class ScanOrchestrator
         _networkSourcesRanThisRun.Clear();
         _connectionFailuresThisRun.Clear();
 
-        // Only a run that finishes assigns this, so a cancelled one would otherwise keep the previous
-        // run's verdict and show a "no connection" banner that no longer describes anything.
+        // Only a run that finishes assigns this, so a cancelled one does not keep the previous verdict.
         AllOnlineSourcesFailed = false;
 
-        // Checked once per scan, off the calling thread (a COM activation, however quick, has no place
-        // blocking a caller that may be the UI thread): every network source fails the same obvious way
-        // instead of each one separately timing out against a connection that is already known to be
-        // dead.
+        // Checked once per scan, off the calling thread (a COM activation has no place blocking a caller that
+        // may be the UI thread), so every network source fails the same obvious way instead of each timing out
+        // against a connection already known to be dead.
         WasOffline = !await Task.Run(_isOnline, cancellationToken);
 
         var enabled = _sources.Where(source => _isEnabled?.Invoke(source.Id) ?? true).ToList();
 
-        // A fresh gate per run, never disposed: an abandoned scan's stragglers (see below) may still be
-        // waiting on or releasing this after RunAsync itself has returned, and disposing out from under
-        // them would turn a harmless late finish into an ObjectDisposedException. Same reasoning as
-        // _perSourceLanes never being disposed either.
+        // A fresh gate per run, never disposed: an abandoned scan's stragglers may still be waiting on or
+        // releasing it after RunAsync returned, and disposing it would turn a harmless late finish into an
+        // ObjectDisposedException. Same for _perSourceLanes.
         var maxParallel = _maxParallelSources is null ? (int?)null : Math.Clamp(_maxParallelSources(), 1, 16);
         var gate = maxParallel is int cap ? new SemaphoreSlim(cap, cap) : null;
 
@@ -290,8 +272,7 @@ public sealed class ScanOrchestrator
         {
             await running;      // surfaces anything that faulted in a normal run
 
-            // One line for the whole run: how much was asked, how much came back, how long it took. That
-            // is what answers "was this machine actually checked, and when" months later.
+            // One line for the whole run: how much was asked, how much came back, how long it took.
             _logging.Event(
                 ActivityLog.Scan,
                 ActivityLog.ScanFinished(enabled.Count, _foundThisRun, _failedThisRun, started.Elapsed));
@@ -311,15 +292,14 @@ public sealed class ScanOrchestrator
     }
 
     /// <summary>
-    /// Raises a status event only while this scan is still the current one. A provider abandoned by a
-    /// cancelled scan keeps running and keeps reaching its own end, and its "done" then landed on top of
-    /// the NEW scan's state for that source, count and all.
+    /// Raises a status event only while this scan is still the current one: a provider abandoned by a
+    /// cancelled scan keeps running, and its "done" must not land on the new scan's state for that source.
     /// </summary>
     internal void Report(ProviderStatus status, int generation)
     {
-        // The check and the state write are ONE step under the same lock the generation bump takes: with
-        // the check outside, a straggler could pass it, a new run could bump and report its own state for
-        // this source, and the straggler's older state would then land on top of it.
+        // The check and the state write are one step under the lock the generation bump takes: with the check
+        // outside, a straggler could pass it, a new run bump and report its own state, and the straggler's older
+        // state would land on top.
         lock (_generationLock)
         {
             if (!IsCurrent(generation))
@@ -331,8 +311,8 @@ public sealed class ScanOrchestrator
 
         ReportSeamForTest?.Invoke("released");
 
-        // The event itself is raised outside the lock (a subscriber must never run under it), so the
-        // generation is checked once more right before: a run that started in the gap supersedes this one.
+        // Raised outside the lock (a subscriber must never run under it), so the generation is checked once
+        // more right before: a run that started in the gap supersedes this one.
         if (!IsCurrent(generation))
             return;
 
@@ -342,9 +322,8 @@ public sealed class ScanOrchestrator
         }
         catch (Exception ex)
         {
-            // A subscriber's own defect must not end the scan. The very first report happens outside
-            // ScanOneAsync's try block and the last ones happen inside its catch, so an exception
-            // thrown here would fault Task.WhenAll and take every other source down with it.
+            // A subscriber's defect must not end the scan. The first report happens outside ScanOneAsync's try and
+            // the last inside its catch, so an exception here would fault Task.WhenAll and take every source down.
             _logging.Error($"A status subscriber threw while reporting '{status.SourceId}'", ex);
         }
     }
@@ -360,12 +339,11 @@ public sealed class ScanOrchestrator
         _lastKnownStates.TryGetValue(sourceId, out var state) ? state : null;
 
     /// <summary>
-    /// Scans exactly one source, outside of any full run, used when an install just discovered that a
-    /// row it was handed is genuinely gone (WindowsUpdateSource: "no longer offered") and the stale row
-    /// needs to disappear without waiting for the user's next manual rescan. Reports under whatever
-    /// generation is CURRENT right now rather than starting a new one: bumping <see cref="_generation"/>
-    /// here would make every OTHER source's still-running reports in a real scan look stale and get
-    /// silently dropped by <see cref="Report"/>, which is a far worse bug than the one this fixes.
+    /// Scans exactly one source outside a full run, for when an install found that a row it was handed is
+    /// gone (WindowsUpdateSource: "no longer offered") and the stale row should disappear without waiting for
+    /// the next manual rescan. Reports under the current generation instead of starting a new one: bumping
+    /// <see cref="_generation"/> would make every other source's running reports look stale and get dropped
+    /// by <see cref="Report"/>.
     /// </summary>
     public Task RescanSourceAsync(string sourceId, CancellationToken cancellationToken)
     {
@@ -384,9 +362,8 @@ public sealed class ScanOrchestrator
         var status = new ProviderStatus { SourceId = source.Id, State = ProviderScanState.Waiting };
         Report(status, generation);
 
-        // Skipped before even touching its lane or availability probe: there is no point waiting on, or
-        // eventually timing out, a source that can only ever fail with no connection at all. Local
-        // sources are unaffected.
+        // Skipped before touching its lane or availability probe: no point waiting on a source that can only
+        // fail with no connection. Local sources are unaffected.
         if (offline && SourceRegistry.NeedsNetwork(source.Id))
         {
             status.State = ProviderScanState.Error;
@@ -395,9 +372,8 @@ public sealed class ScanOrchestrator
             return;
         }
 
-        // Linked, not the raw token: cancelling THIS source must trip only its own token, never the
-        // overall one every other source is still awaiting. Registered under the source id so
-        // CancelSource can find it; removed again in the finally below regardless of how this ends.
+        // Linked, not the raw token: cancelling this source must trip only its own token. Registered under the
+        // source id so CancelSource can find it; removed in the finally below.
         using var sourceCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _perSourceCts[source.Id] = sourceCts;
         var token = sourceCts.Token;
@@ -408,9 +384,8 @@ public sealed class ScanOrchestrator
 
         try
         {
-            // Never two runs of one source at once: the previous scan's run of it may still be going. Bounded,
-            // and generously: a source that is genuinely still busy after this has failed, and saying so is
-            // better than a scan that never returns because one provider will not end.
+            // Never two runs of one source at once: the previous scan's run may still be going. Bounded, and
+            // generously: a source still busy after this has failed, which beats a scan that never returns.
             var lane = _perSourceLanes.GetOrAdd(source.Id, _ => new SemaphoreSlim(1, 1));
             try
             {
@@ -425,18 +400,16 @@ public sealed class ScanOrchestrator
             }
             catch (OperationCanceledException)
             {
-                // This scan was stopped while the previous run of this source was still finishing. The state
-                // has to be reported here, or the pill stays on Waiting for ever. Same distinction as the
-                // cancellation catch further down: the OVERALL token decides this is Done (the whole scan
-                // stopped), this source's own token alone decides it is Cancelled.
+                // This scan was stopped while the previous run of this source was still finishing. The state must be
+                // reported here or the pill stays on Waiting. Same distinction as the cancellation catch below: the
+                // overall token means Done, this source's own token means Cancelled.
                 status.State = CancelState(cancellationToken);
                 Report(status, generation);
                 return;
             }
 
-            // The overall "how many sources at once" cap, on top of the per-source lane just above (that
-            // one only ever stops the SAME source overlapping itself). Waited for while already holding
-            // the lane, so a source parked here still counts as "using its own slot" and cannot be
+            // The overall "how many sources at once" cap, on top of the per-source lane (which only stops the same
+            // source overlapping itself). Waited for while holding the lane, so a source parked here cannot be
             // scanned again from a second concurrent call.
             if (globalGate is not null)
             {
@@ -465,31 +438,23 @@ public sealed class ScanOrchestrator
                 status.State = ProviderScanState.Scanning;
                 Report(status, generation);
 
-                // Marked the moment a network source genuinely starts scanning (never for a skipped-offline
-                // or not-installed one): the denominator AllOnlineSourcesFailed needs. Same generation
-                // guard as the found/failed counters below, so an abandoned scan's straggler can never add
-                // itself into a NEWER run's set.
+                // Marked when a network source genuinely starts scanning (never for a skipped or not-installed one):
+                // the denominator AllOnlineSourcesFailed needs. Generation-guarded like the counters below.
                 if (IsCurrent(generation) && SourceRegistry.NeedsNetwork(source.Id))
                     _networkSourcesRanThisRun[source.Id] = 0;
 
-                // Started here, not at the very top of the try: waiting on the lane/global gate is queue
-                // time, not scan time, and would otherwise inflate the duration of a source that itself
-                // ran quickly but had to wait its turn.
+                // Started here, not at the top of the try: time spent waiting on the lane or global gate is queue time,
+                // not scan time.
                 var scanStopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-                // FoundCount is mutated in place and read by the UI on its own schedule, so a source with
-                // hundreds of results does not raise hundreds of status events.
                 await foreach (var item in source.ScanAsync(token))
                 {
                     if (token.IsCancellationRequested)
                         break;
 
-                    // A cancelled scan is abandoned by RunAsync, so this provider may still be running while
-                    // the NEXT scan is already filling the table. Nothing it finds from here on may reach it.
-                    // The check and the publish must happen as ONE step under _generationLock: a plain
-                    // "check IsCurrent, then invoke" left a window between the two where a new run's
-                    // generation bump (also under this lock) could land, and the stale item still reached
-                    // the new scan's table anyway.
+                    // A cancelled scan is abandoned by RunAsync, so this provider may still be running while the next scan
+                    // fills the table. The check and the publish are one step under _generationLock, so a generation bump
+                    // cannot land between them.
                     bool stillCurrent;
                     lock (_generationLock)
                     {
@@ -505,9 +470,8 @@ public sealed class ScanOrchestrator
                         break;
                 }
 
-                // The pill's cancel can trip between the source's last check and its end, so the loop above
-                // ends quietly with a partial result. That must not read as done, count as found, or
-                // stand in for a complete scan of this source.
+                // The pill's cancel can trip between the source's last check and its end, leaving a partial result. That
+                // must not read as done or count as found.
                 if (token.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
                 {
                     status.State = ProviderScanState.Cancelled;
@@ -521,35 +485,29 @@ public sealed class ScanOrchestrator
                 status.State = ProviderScanState.Done;
                 Report(status, generation);
 
-                // What each source actually produced, and how long it took: without the count a source
-                // that quietly returns nothing is indistinguishable in the log from one that was never
-                // asked, and without the duration a slow source leaves no trace of how long it actually ran.
-                // Same generation guard as Report() above: an abandoned source reaching here after a newer
-                // scan has already reset the counters must not add to the NEW scan's total.
+                // Logged so a source that quietly returns nothing is distinguishable from one never asked. Generation
+                // guarded like Report(): an abandoned source must not add to a newer scan's total.
                 if (IsCurrent(generation))
                     Interlocked.Add(ref _foundThisRun, status.FoundCount);
                 _logging.Event(ActivityLog.Scan, $"{source.Id} {status.FoundCount} {scanStopwatch.ElapsedMilliseconds}ms");
             }
             catch (OperationCanceledException)
             {
-                // A source-only cancel (its own token tripped, but the overall run did not) is reported
-                // distinctly: the user asked for exactly this one to stop, which is not the same thing as
-                // the whole scan being stopped, and must not read like either a failure or a plain "done".
+                // A source-only cancel (its own token, not the overall run) is reported distinctly from a failure and
+                // from a plain "done".
                 status.State = CancelState(cancellationToken);
                 Report(status, generation);
             }
             catch (Exception ex) when (token.IsCancellationRequested)
             {
-                // Stopping kills the tool, which exits non-zero and would otherwise read as a failed scan:
-                // a cancellation reports no source errors.
+                // Stopping kills the tool, which exits non-zero; a cancellation reports no source errors.
                 _logging.Info($"Scan of '{source.Id}' ended with the cancellation: {ex.Message}");
                 status.State = CancelState(cancellationToken);
                 Report(status, generation);
             }
             catch (ProxyConnectionFailedException ex)
             {
-                // Still the ordinary error state, just with its own wording naming the proxy instead of
-                // whatever bare socket error the failed direct retry itself produced.
+                // The ordinary error state, worded to name the proxy instead of the bare socket error of the direct retry.
                 if (IsCurrent(generation))
                 {
                     Interlocked.Increment(ref _failedThisRun);
@@ -563,10 +521,8 @@ public sealed class ScanOrchestrator
             }
             catch (System.Net.Http.HttpRequestException ex)
             {
-                // A connection error that never involved a proxy at all (no proxy configured, or the direct
-                // path itself never reached the host). It gets the same error state and user-facing text as
-                // the generic catch below, and is tracked separately only so AllOnlineSourcesFailed can tell
-                // a connection problem apart from an unrelated parse/tool failure.
+                // A connection error with no proxy involved. Same error state and text as the generic catch below,
+                // tracked separately so AllOnlineSourcesFailed can tell it from a parse or tool failure.
                 if (IsCurrent(generation))
                 {
                     Interlocked.Increment(ref _failedThisRun);
@@ -580,8 +536,7 @@ public sealed class ScanOrchestrator
             }
             catch (RegistryRateLimitedException ex)
             {
-                // Still the ordinary error state (rows already shown stay, as for any failed source), but the
-                // pill says when the limit lifts instead of the generic text.
+                // The ordinary error state, but the pill says when the limit lifts.
                 if (IsCurrent(generation))
                     Interlocked.Increment(ref _failedThisRun);
                 _logging.Info($"Scan of '{source.Id}' hit the rate limit until {ex.ResetAt:u}.");
@@ -593,8 +548,7 @@ public sealed class ScanOrchestrator
             }
             catch (ProcessIdleTimeoutException ex)
             {
-                // Judged by silence, not total runtime: this is still the ordinary error state, just with
-                // its own wording naming the idle span instead of the generic scan-failed text.
+                // Judged by silence, not total runtime; the ordinary error state with wording naming the idle span.
                 if (IsCurrent(generation))
                     Interlocked.Increment(ref _failedThisRun);
                 _logging.Info($"Scan of '{source.Id}' gave up after {ex.IdleTimeout.TotalSeconds:0}s of silence.");
@@ -606,15 +560,13 @@ public sealed class ScanOrchestrator
             }
             catch (Exception ex)
             {
-                // Intentionally broad: an unexpected fault in one provider (COM, parsing, I/O) must never
-                // kill the overall scan. The exception text is raw tool output. English, and often
-                // containing the user's own paths: so it goes to the log and the pill gets a translated
-                // line instead (SECURITY.md).
+                // Intentionally broad: a fault in one provider (COM, parsing, I/O) must never kill the overall scan. The
+                // exception text is raw English tool output that often contains the user's paths, so it goes to the log
+                // and the pill gets a translated line instead.
                 if (IsCurrent(generation))
                     Interlocked.Increment(ref _failedThisRun);
 
-                // A source stuck failing the same way every scan otherwise writes the same seven-line
-                // stack trace over and over; only the first failure this session earns the full trace.
+                // Only the first failure of a source this session earns the full stack trace.
                 bool firstFailure;
                 lock (_stackTraceLoggedFor)
                     firstFailure = _stackTraceLoggedFor.Add(source.Id);
@@ -637,8 +589,8 @@ public sealed class ScanOrchestrator
         }
         finally
         {
-            // Only if it is still OUR token: a newer scan of the same source has already published its
-            // own by the time a stale one gets here, and removing that would leave IT uncancellable.
+            // Only if it is still our token: a newer scan of the same source has published its own, and removing
+            // that would leave it uncancellable.
             _perSourceCts.TryRemove(new KeyValuePair<string, CancellationTokenSource>(source.Id, sourceCts));
         }
     }

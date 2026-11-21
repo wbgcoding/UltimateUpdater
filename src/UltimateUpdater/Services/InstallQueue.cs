@@ -6,10 +6,9 @@ using UltimateUpdater.Services.Sources;
 namespace UltimateUpdater.Services;
 
 /// <summary>
-/// The source is part of the identity, not decoration: item ids are unique per source only, and
-/// chocolatey, scoop, pip and npm all offer packages under the same bare names (git, python, 7zip).
-/// Keyed on the id alone, two such rows cross-wire; both installs report onto one row and the other
-/// stays "queued" for good.
+/// The source is part of the identity: item ids are unique per source only, and chocolatey, scoop, pip and
+/// npm all offer packages under the same bare names (git, python, 7zip). Keyed on the id alone, two such
+/// rows would cross-wire.
 /// </summary>
 public sealed record InstallItemStatus(string SourceId, string ItemId, double Percent, string? Status, bool? Success, string? Error)
 {
@@ -28,9 +27,9 @@ public sealed record InstallItemStatus(string SourceId, string ItemId, double Pe
     public bool RebootRequired { get; init; }
 
     /// <summary>
-    /// The source could only open a vendor's own confirmation dialog and cannot see what happened next
-    /// (see <see cref="Sources.ManualHandoffException"/>). Neither success nor failure, <see cref="Success"/>
-    /// is meaningless when this is true and should not be read.
+    /// The source could only open a vendor's own confirmation dialog and cannot see what happened next (see
+    /// <see cref="Sources.ManualHandoffException"/>). Neither success nor failure: <see cref="Success"/> is
+    /// meaningless when this is true.
     /// </summary>
     public bool IsManualHandoff { get; init; }
 
@@ -40,28 +39,28 @@ public sealed record InstallItemStatus(string SourceId, string ItemId, double Pe
 
     /// <summary>
     /// The package manager offers no version that fits this installation (see
-    /// <see cref="Sources.NotApplicableException"/>). Terminal, but not a failure, like
+    /// <see cref="Sources.NotApplicableException"/>). Terminal but not a failure: like
     /// <see cref="IsManualHandoff"/>, it makes <see cref="Success"/> meaningless.
     /// </summary>
     public bool IsNotApplicable { get; init; }
 
     /// <summary>
-    /// The user stopped just this one row with its own stop button; the rest of the queue kept
-    /// running. A third terminal non-failure, same rule as <see cref="IsManualHandoff"/> and
-    /// <see cref="IsNotApplicable"/>: <see cref="Success"/> is meaningless when this is true.
+    /// The user stopped just this row with its own stop button; the rest of the queue keeps running. A
+    /// terminal non-failure like <see cref="IsManualHandoff"/> and <see cref="IsNotApplicable"/>:
+    /// <see cref="Success"/> is meaningless when this is true.
     /// </summary>
     public bool IsCancelled { get; init; }
 
     /// <summary>
-    /// The source's post-install re-check found the same version that was installed before this
-    /// run, on an otherwise successful item. Not a failure, a quiet note; <see cref="Success"/> keeps
-    /// its normal meaning when this is true, unlike the three terminal non-failures above.
+    /// The source's post-install re-check found the version that was installed before this run, on an
+    /// otherwise successful item. A quiet note, not a failure; <see cref="Success"/> keeps its meaning,
+    /// unlike the three terminal non-failures above.
     /// </summary>
     public bool VersionUnchanged { get; init; }
 
-    /// <summary>With <see cref="VersionUnchanged"/>: how many times this item has now ended unchanged for
-    /// the same versions, this one included (read from the history before this result is recorded). 0 when
-    /// not unchanged; 1 for a first time.</summary>
+    /// <summary>With <see cref="VersionUnchanged"/>: how many times this item has ended unchanged for the same
+    /// versions, this one included (read from the history before this result is recorded). 0 when not
+    /// unchanged.</summary>
     public int VersionUnchangedCount { get; init; }
 
     /// <summary>The item's outcome is decided: a result was reported, or it ended as a handoff, as not
@@ -72,17 +71,16 @@ public sealed record InstallItemStatus(string SourceId, string ItemId, double Pe
 
 /// <summary>
 /// Items are split by whether their source needs admin; the user-scope batch runs in-process, the admin
-/// batch is handed to a single elevated worker so the user sees ONE UAC prompt for the whole batch.
-/// Within the user-scope batch, different lanes run CONCURRENTLY; only two installs from the SAME
-/// lane serialize against each other, since that is where a package manager's own global state could
-/// collide (see <see cref="InstallLaneSequentiallyAsync"/>). A lane is a source id, except pip, which has
-/// one lane per Python interpreter (<see cref="LaneKey(string, string, IReadOnlyDictionary{string, string}?)"/>).
-/// The one exception: winget may run several
-/// of its own items at once, bounded like everything else by
+/// batch goes to a single elevated worker so the user sees ONE UAC prompt for the whole batch.
+/// Within the user-scope batch, different lanes run concurrently; two installs from the same lane
+/// serialize, since that is where a package manager's global state could collide (see
+/// <see cref="InstallLaneSequentiallyAsync"/>). A lane is a source id, except pip, which has one lane per
+/// Python interpreter (<see cref="LaneKey(string, string, IReadOnlyDictionary{string, string}?)"/>).
+/// The exception: winget may run several of its own items at once, bounded by
 /// <see cref="Models.Settings.InstallSettings.MaxParallelInstalls"/>.
-/// The admin batch itself always stays one connection, one job, one UAC prompt; the items
-/// inside that job run the same grouped/bounded way (<see cref="InstallWorker"/>). The pipe-auth and
-/// no-job-file invariants matter more than speed.
+/// The admin batch always stays one connection, one job, one UAC prompt; its items run the same
+/// grouped/bounded way (<see cref="InstallWorker"/>). The pipe-auth and no-job-file invariants matter
+/// more than speed.
 /// </summary>
 public sealed class InstallQueue
 {
@@ -96,17 +94,15 @@ public sealed class InstallQueue
     private readonly bool _isMockSession;
 
     /// <summary>
-    /// Read-only access to the same per-session flag <see cref="RequiresElevation"/> already
-    /// uses, so a caller that has no queue-routing decision of its own to make (the winget bootstrap
-    /// offer, which must never probe or touch the real winget in a mock session) can still ask "is this
-    /// session real" without duplicating the session's own knowledge of how it was started.
+    /// Read-only access to the per-session flag <see cref="RequiresElevation"/> uses, so a caller with no
+    /// routing decision of its own (the winget bootstrap offer, which must never touch the real winget in a
+    /// mock session) can ask whether this session is real.
     /// </summary>
     public bool IsMockSession => _isMockSession;
 
     public event Action<InstallItemStatus>? StatusChanged;
 
-    /// <summary>The reference the elevated worker gets for one item: never a live object, only what it needs
-    /// to rebuild the item itself.</summary>
+    /// <summary>The reference the elevated worker gets for one item: only what it needs to rebuild the item.</summary>
     internal static InstallJobItem ToJobItem(UpdateItem item, InstallAction action) => new()
     {
         SourceId = item.SourceId,
@@ -120,21 +116,17 @@ public sealed class InstallQueue
     };
 
     /// <summary>
-    /// Fires once, right before the batch's own automatic second attempt actually starts (there
-    /// is something eligible to retry). Purely a UI cue, so the queue panel can show the retry round as
-    /// its own visibly separate section. Install runs only.
+    /// Fires once, right before the batch's automatic second attempt starts (when something is eligible to
+    /// retry). Purely a UI cue so the queue panel can show the retry round as its own section. Install runs only.
     /// </summary>
     public event Action? SecondAttemptStarted;
 
     /// <param name="isMockSession">
-    /// True only for a session started with --mock-sources, set once by App.xaml.cs where it decides
-    /// whether to build <see cref="Sources.MockUpdateSource.CreateAll"/> instead of the real registry.
-    /// Decided per SESSION rather than per source id: a mock row carries the SAME real ids
-    /// <see cref="NeedsElevation"/> recognises (winget, chocolatey, windowsupdate), so nothing about a
-    /// single item tells a mock row from a real one. While set, every item is routed through the
-    /// in-process, user-scope half (see <see cref="RequiresElevation"/>) and the real elevated worker,
-    /// which builds its OWN provider set from <see cref="Sources.SourceRegistry"/> and knows nothing of
-    /// mock mode, is never started.
+    /// True only for a session started with --mock-sources, set once by App.xaml.cs. Decided per session
+    /// rather than per source id: a mock row carries the same real ids <see cref="NeedsElevation"/>
+    /// recognises (winget, chocolatey, windowsupdate), so nothing about an item tells mock from real. While
+    /// set, every item goes through the in-process, user-scope half (see <see cref="RequiresElevation"/>) and
+    /// the elevated worker, which builds its own provider set and knows nothing of mock mode, is never started.
     /// </param>
     public InstallQueue(
         IReadOnlyList<IUpdateSource> sources,
@@ -153,15 +145,14 @@ public sealed class InstallQueue
     }
 
     /// <summary>
-    /// Guards what the parallel source groups share: the reported set and the history file. Everything
-    /// else they touch is per-item.
+    /// Guards what the parallel source groups share: the reported set and the history file.
     /// </summary>
     private readonly object _reportLock = new();
 
     /// <summary>
-    /// Guards every <see cref="RunState"/> in <see cref="_activeRuns"/>: the queue panel's drag-and-drop
-    /// reorder, and the per-run pending/removed bookkeeping every concurrent <see cref="RunAsync"/> call
-    /// owns one of. Not <see cref="_reportLock"/>: reordering must never wait behind a history write.
+    /// Guards every <see cref="RunState"/> in <see cref="_activeRuns"/>: the queue panel's reorder and the
+    /// per-run pending/removed bookkeeping. Not <see cref="_reportLock"/>: reordering must never wait behind
+    /// a history write.
     /// </summary>
     private readonly object _queueLock = new();
 
@@ -194,13 +185,11 @@ public sealed class InstallQueue
     internal bool HoldsReportLock => Monitor.IsEntered(_reportLock);
 
     /// <summary>
-    /// One <see cref="RunState"/> per IN-FLIGHT <see cref="RunAsync"/> call. The app makes one call per
-    /// batch, but nothing in this class requires that: with a single shared "pending list" field, a second
-    /// concurrent call's <c>items.ToList()</c> would clobber the first's, and then dereference a field the
-    /// first call's <c>finally</c> had nulled out.
-    /// <see cref="Reorder"/> and <see cref="Remove"/> search every active run for the row they were asked
-    /// about and act on whichever holds it; a row belongs to exactly one run, since item ids are unique
-    /// per source and a source's items never split across two calls.
+    /// One <see cref="RunState"/> per in-flight <see cref="RunAsync"/> call. A single shared pending-list
+    /// field would let a second concurrent call clobber the first's.
+    /// <see cref="Reorder"/> and <see cref="Remove"/> search every active run for the row and act on whichever
+    /// holds it; a row belongs to exactly one run, since item ids are unique per source and a source's items
+    /// never split across two calls.
     /// </summary>
     private readonly List<RunState> _activeRuns = [];
 
@@ -212,9 +201,8 @@ public sealed class InstallQueue
         public readonly HashSet<string> RemovedFromQueue = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        /// The per-item stop, in-process half: one linked <see cref="CancellationTokenSource"/> per
-        /// currently-running user-scope item, keyed the same way <see cref="Key(UpdateItem)"/> already
-        /// does. Only ever holds items actually in flight; an entry is removed the moment the item's own
+        /// The per-item stop, in-process half: one linked <see cref="CancellationTokenSource"/> per running
+        /// user-scope item, keyed like <see cref="Key(UpdateItem)"/>. An entry is removed as soon as the item's
         /// try/finally in <see cref="InstallInProcessAsync"/> is done with it.
         /// </summary>
         public readonly System.Collections.Concurrent.ConcurrentDictionary<string, CancellationTokenSource> ItemCancellations = new();
@@ -224,10 +212,9 @@ public sealed class InstallQueue
         public ElevatedJobHandle? ElevatedHandle;
 
         /// <summary>
-        /// Items whose FIRST-round failure the explainer table marks safe to retry blindly,
-        /// keyed the same way every other per-run lookup here is. Populated only during the first round
-        /// (both InstallInProcessCoreAsync and HandleWorkerLine take an isRetryRound flag for exactly
-        /// this), so a SECOND failure is never queued for a third pass.
+        /// Items whose first-round failure the explainer table marks safe to retry blindly. Populated only
+        /// during the first round (InstallInProcessCoreAsync and HandleWorkerLine take an isRetryRound flag for
+        /// this), so a second failure is never queued for a third pass.
         /// </summary>
         public readonly System.Collections.Concurrent.ConcurrentDictionary<string, UpdateItem> AutomaticRetryCandidates =
             new(StringComparer.OrdinalIgnoreCase);
@@ -274,10 +261,9 @@ public sealed class InstallQueue
     internal int VersionRecheckAttempts { get; set; } = 6;
 
     /// <summary>
-    /// Moves not-yet-started items into the given order, within whichever active run currently holds them.
-    /// Items already installing, already finished, or not part of any run at all are left exactly where
-    /// they are; this only ever reshuffles what is still sitting in that run's own pending list, so a
-    /// stale or partial order from the UI can never drop or duplicate an item.
+    /// Moves not-yet-started items into the given order, within whichever active run holds them. Items
+    /// already installing or finished, or not in any run, stay where they are, so a stale or partial order
+    /// from the UI can never drop or duplicate an item.
     /// </summary>
     public void Reorder(IReadOnlyList<(string SourceId, string ItemId)> order)
     {
@@ -290,8 +276,7 @@ public sealed class InstallQueue
 
                 var byKey = run.Pending.ToDictionary(Key, StringComparer.OrdinalIgnoreCase);
 
-                // Only the slice of the caller's order that belongs to THIS run, in the order given;
-                // rows belonging to a different run are simply not found here and left untouched.
+                // Only the slice of the caller's order that belongs to this run; other runs' rows are not found here.
                 var reordered = new List<UpdateItem>(run.Pending.Count);
                 foreach (var (sourceId, itemId) in order)
                 {
@@ -299,9 +284,7 @@ public sealed class InstallQueue
                         reordered.Add(item);
                 }
 
-                // Anything this run holds that the caller's order did not mention (should not happen, the
-                // panel always sends every queued row, but a stale snapshot must not silently lose items)
-                // keeps its old spot.
+                // Anything the caller's order did not mention (a stale snapshot) keeps its old spot.
                 reordered.AddRange(byKey.Values);
                 run.Pending = reordered;
             }
@@ -309,9 +292,8 @@ public sealed class InstallQueue
     }
 
     /// <summary>
-    /// Drops a not-yet-started item from the queue entirely, the "remove" (X) button on the queue panel.
-    /// Silently a no-op if the item already started or was never queued in any active run; the row is the
-    /// caller's own source of truth for whether removal makes sense.
+    /// Drops a not-yet-started item from the queue, the "remove" (X) button on the queue panel. A no-op if the
+    /// item already started or was never queued in any active run.
     /// </summary>
     public bool Remove(string sourceId, string itemId)
     {
@@ -335,11 +317,10 @@ public sealed class InstallQueue
     }
 
     /// <summary>
-    /// Stops just this one row, the "stop single" button; the rest of the queue, and the rest of an
-    /// admin batch the item might be part of, keeps running. Tried in-process first (this queue's own
-    /// user-scope half), then forwarded to whichever active run's elevated job actually holds the item; a
-    /// row that already finished, or was never running, is simply ignored, not an error, the item may have
-    /// finished between the user's click and this call arriving.
+    /// Stops just this one row; the rest of the queue, and the rest of an admin batch it is part of, keeps
+    /// running. Tried in-process first, then forwarded to whichever active run's elevated job holds the
+    /// item; a row that already finished or never ran is ignored, since it may have finished between the
+    /// click and this call.
     /// </summary>
     public void CancelItem(string sourceId, string itemId)
     {
@@ -362,8 +343,7 @@ public sealed class InstallQueue
                     }
                     catch (ObjectDisposedException)
                     {
-                        // The row finished and released its source between the lookup and this call:
-                        // nothing is left to stop, which is the "already finished" no-op.
+                        // The row finished and released its source between the lookup and this call: nothing left to stop.
                     }
 
                     return;
@@ -384,9 +364,8 @@ public sealed class InstallQueue
                 break;
             }
 
-            // A row waiting for the automatic retry is in neither handle: it is only a candidate. Taking it
-            // out of the candidates (and out of the retry round's pending list, if that already started)
-            // is what stops the second attempt.
+            // A row waiting for the automatic retry is in neither handle, only a candidate. Taking it out of the
+            // candidates (and out of the retry round's pending list, if that started) stops the second attempt.
             foreach (var run in retryRun is null ? _activeRuns : Enumerable.Empty<RunState>())
             {
                 if (!run.AutomaticRetryCandidates.ContainsKey(key))
@@ -395,8 +374,8 @@ public sealed class InstallQueue
                 var pendingIndex = run.Pending.FindIndex(i => string.Equals(Key(i), key, StringComparison.OrdinalIgnoreCase));
 
                 // Already handed to a source group or the elevated job for its second attempt: settling it as
-                // cancelled here would not stop it (it would report its real result, and a second history
-                // entry, afterwards). It falls through to the elevated handles below instead.
+                // cancelled here would not stop it, and it would report its real result afterwards. It falls through
+                // to the elevated handles below instead.
                 if (run.RetryRoundStarted && pendingIndex < 0)
                     continue;
 
@@ -454,9 +433,8 @@ public sealed class InstallQueue
         sourceId is "winget" or "chocolatey" or "windowsupdate";
 
     /// <summary>
-    /// Installs sharing a lane key run strictly one after another. It is the source id, except pip: each
-    /// Python interpreter has its own packages, so pip is one lane per interpreter (path compared without
-    /// regard to case).
+    /// Installs sharing a lane key run strictly one after another. It is the source id, except pip, which has
+    /// one lane per Python interpreter (path compared without regard to case).
     /// </summary>
     internal static string LaneKey(string sourceId, string itemId, IReadOnlyDictionary<string, string>? meta = null) =>
         string.Equals(sourceId, "pip", StringComparison.OrdinalIgnoreCase)
@@ -466,17 +444,17 @@ public sealed class InstallQueue
     internal static string LaneKey(UpdateItem item) => LaneKey(item.SourceId, item.Id, item.Meta);
 
     /// <summary>
-    /// What THIS queue does with a source id, as opposed to what <see cref="NeedsElevation"/> says about
-    /// the id in the abstract. Identical outside a mock session; a mock session never elevates (see the
-    /// constructor's note on <c>isMockSession</c>). Every internal split goes through this, never the bare
-    /// static check, which stays for its other callers (the queue panel's admin badge,
-    /// <c>InstallWorker</c>'s allowlist, the row's elevation icon) that have no session of their own to ask.
+    /// What this queue does with a source id, as opposed to what <see cref="NeedsElevation"/> says about the
+    /// id in the abstract. Identical outside a mock session; a mock session never elevates (see the
+    /// constructor's note on <c>isMockSession</c>). Every internal split goes through this; the bare static
+    /// check stays for callers with no session of their own (the admin badge, <c>InstallWorker</c>'s
+    /// allowlist, the row's elevation icon).
     /// </summary>
     private bool RequiresElevation(string sourceId) => !_isMockSession && NeedsElevation(sourceId);
 
     /// <summary>The same for one item of a run of <paramref name="action"/>. A fresh install into the USER
-    /// scope stays in this process: the elevated copy would put it in the administrator's own profile (and
-    /// winget refuses a user-scope package to an administrator anyway).</summary>
+    /// scope stays in this process: the elevated copy would use the administrator's profile (and winget
+    /// refuses a user-scope package to an administrator anyway).</summary>
     internal bool RequiresElevation(UpdateItem item, InstallAction action) =>
         RequiresElevation(item.SourceId)
         && !(action == InstallAction.FreshInstall && item.InstallScope == InstallScopes.User);
@@ -489,27 +467,24 @@ public sealed class InstallQueue
         var userScope = items.Where(i => !RequiresElevation(i, action)).ToList();
         var adminScope = items.Where(i => RequiresElevation(i, action)).ToList();
 
-        // What has been accounted for, either way. Anything still missing at the end never ran, and
-        // must be reported as such; a cancelled row must never be left showing "installing" forever.
+        // What has been accounted for. Anything still missing at the end never ran and is reported as such,
+        // so a cancelled row is never left showing "installing".
         var reported = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // Each call's own not-yet-started items live in its OWN RunState rather than one field shared
-        // (and clobbered) across concurrent calls on this queue instance.
+        // Each call's own not-yet-started items live in its own RunState, not one field shared across calls.
         var run = new RunState { Pending = items.ToList(), Reported = reported, Action = action };
         lock (_queueLock)
             _activeRuns.Add(run);
 
         try
         {
-            // Different package managers do not share state, so npm, pip, scoop and the rest can run at the
-            // same time; on a batch that spans several of them this is most of the wall clock.
-            // Within ONE manager it stays strictly sequential: npm, pip and scoop each keep a single global
-            // install state, and two of their own installs at once corrupt it. Each group pulls its next
-            // item from this run's own pending list rather than a fixed snapshot, so a drag-and-drop
-            // reorder on the queue panel changes what runs next.
-            // One shared semaphore, sized by the same setting as the elevated worker's budget, bounds the
-            // TOTAL across every source group here too; the two halves are separate PROCESSES, so the
-            // worker keeps its own budget rather than sharing this one.
+            // Different package managers do not share state, so npm, pip, scoop and the rest run at the same
+            // time. Within one manager it stays sequential: each keeps a single global install state that two of
+            // its own installs would corrupt. Each group pulls its next item from this run's own pending list, so
+            // a reorder on the queue panel changes what runs next.
+            // One shared semaphore, sized by the same setting as the elevated worker's budget, bounds the total
+            // across every source group here; the two halves are separate processes, so the worker keeps its own
+            // budget.
             var maxParallel = Math.Clamp(_settings.Current.Install.MaxParallelInstalls, 1, 5);
             using var throttle = new SemaphoreSlim(maxParallel, maxParallel);
 
@@ -518,23 +493,22 @@ public sealed class InstallQueue
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Select(laneKey => InstallLaneSequentiallyAsync(laneKey, action, reported, throttle, run, cancellationToken)));
 
-            // Started together and awaited together: a slow user-scope package must never delay
-            // an admin batch that cannot possibly collide with it, the two halves only ever share a
-            // package manager's global state WITHIN one manager, never across the elevation boundary.
+            // Started together and awaited together: a slow user-scope package must not delay an admin batch, and
+            // the two only share a package manager's global state within one manager, never across the elevation
+            // boundary.
             var adminScopeTask = adminScope.Count > 0
                 ? RunElevatedBatchAsync(adminScope, action, reported, throttle, run, cancellationToken)
                 : Task.CompletedTask;
 
             await Task.WhenAll(userScopeTask, adminScopeTask);
 
-            // One automatic retry round, still inside this run's own throttle: the batch is
-            // "done" from the caller's own point of view only once this has had its chance too. Skipped
-            // outright once the whole run was stopped: a cancellation is already unwinding every row the
-            // same way, retrying into that would just fight the shutdown.
+            // One automatic retry round, still inside this run's throttle: the batch is done only once this has
+            // had its chance. Skipped once the whole run was stopped, since a cancellation is already unwinding
+            // every row.
             if (!cancellationToken.IsCancellationRequested)
             {
-                // A result still waiting on its delayed look-up is not settled yet; the retry round must not
-                // start next to an install whose outcome (and lane) is still open.
+                // A result still waiting on its delayed look-up is not settled; the retry round must not start next
+                // to an install whose outcome (and lane) is open.
                 await AwaitInProcessRechecksAsync(run);
                 await RunAutomaticRetryRoundAsync(action, reported, throttle, run, cancellationToken);
             }
@@ -553,11 +527,10 @@ public sealed class InstallQueue
                 ? LocalizationService.Instance["InstallCancelled"]
                 : LocalizationService.Instance["InstallWorkerStopped"];
 
-            // A cancelled batch says nothing about what actually happened: the package that was running is
-            // killed mid-install, and whether it got far enough to count is not ours to guess. Writing
-            // "failed" into the history, the only record there is, would be a claim we cannot make, so
-            // the rows are closed out without one. An item the user removed from the queue is neither: it
-            // never ran because it was deliberately taken out, not because the batch stopped.
+            // A cancelled batch says nothing about what happened: the running package is killed mid-install and
+            // whether it counted is not ours to guess. Writing "failed" into the history, the only record, would be
+            // a claim we cannot make, so the rows are closed out without one. An item the user removed from the
+            // queue is neither: it never ran because it was deliberately taken out.
             FailRemaining(items, action, reported, reason, cancelled, run);
         }
     }
@@ -584,10 +557,9 @@ public sealed class InstallQueue
     }
 
     /// <summary>
-    /// The automatic retry's own second pass: everything <see cref="RunState.AutomaticRetryCandidates"/> collected
-    /// during the FIRST round, minus anything the user removed from the queue in the meantime, run once
-    /// more through the exact same in-process/elevated split - reusing THIS run's own throttle and
-    /// pending list, so a drag-and-drop reorder or a stop mid-retry behaves exactly like the first round.
+    /// The automatic retry's second pass: everything <see cref="RunState.AutomaticRetryCandidates"/> collected
+    /// in the first round, minus anything the user removed meanwhile, through the same in-process/elevated
+    /// split, reusing this run's throttle and pending list so a reorder or stop behaves as in the first round.
     /// </summary>
     private async Task RunAutomaticRetryRoundAsync(
         InstallAction action, HashSet<string> reported, SemaphoreSlim throttle, RunState run, CancellationToken cancellationToken)
@@ -598,8 +570,8 @@ public sealed class InstallQueue
             var removed = run.RemovedFromQueue;
             retryItems = run.AutomaticRetryCandidates.Values.Where(i => !removed.Contains(Key(i))).ToList();
 
-            // Snapshot, flag and enqueue in ONE lock, so CancelItem never sees a started round whose items
-            // are not in Pending yet.
+            // Snapshot, flag and enqueue in one lock, so CancelItem never sees a started round whose items are
+            // not in Pending yet.
             if (retryItems.Count > 0)
             {
                 run.RetryRoundStarted = true;
@@ -647,17 +619,14 @@ public sealed class InstallQueue
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // The slot first, THEN the item: an item taken out of Pending before waiting for a slot sat in
-            // neither Pending nor ItemCancellations while it waited (four or more sources against the default
-            // of three slots), so its row could not be removed, reordered or stopped, and installed anyway.
-            // InstallInProcessAsync registers its stop token before its first await, so from here on the
-            // item is always reachable.
-            // The lane before the slot: the lane is queue-wide, so another run (a batch started a moment
-            // earlier, an uninstall beside it) may hold it for minutes. Waiting for it here keeps the item in
-            // Pending, where Remove, reorder and Stop still reach it, and holds none of this run's slots, so
-            // the run's other lanes keep going meanwhile. Always lane, then slot: no cycle between the two.
-            // Checked again while waiting: an item removed or stopped while it waited must not keep this run
-            // open until the other run lets go of the lane.
+            // The lane before the slot: the lane is queue-wide, so another run (a batch started earlier, an
+            // uninstall beside it) may hold it for minutes. Waiting here keeps the item in Pending, where Remove,
+            // reorder and Stop still reach it, and holds none of this run's slots. Always lane, then slot: no cycle.
+            // Then the slot, then the item: an item taken out of Pending before waiting for a slot would be in
+            // neither Pending nor ItemCancellations and could not be removed, reordered or stopped.
+            // InstallInProcessAsync registers its stop token before its first await, so from here on the item is
+            // reachable. Checked again while waiting: an item removed or stopped while it waited must not keep
+            // this run open until the other run lets go of the lane.
             var lane = _laneGates.GetOrAdd(laneKey, _ => new SemaphoreSlim(1, 1));
             if (!HasPendingOnLane(run, laneKey))
                 return;
@@ -680,8 +649,8 @@ public sealed class InstallQueue
                         item = run.Pending[index];
                         run.Pending.RemoveAt(index);
 
-                        // Registered in the block that takes the row out of Pending: a stop between the two
-                        // would otherwise find the row in neither place and the install would start anyway.
+                        // Registered in the block that takes the row out of Pending: a stop between the two would find the row
+                        // in neither place and the install would start anyway.
                         itemCts = RegisterItemCancellation(run, item, cancellationToken);
                     }
 
@@ -713,10 +682,9 @@ public sealed class InstallQueue
         UpdateItem item, InstallAction action, RunState run, CancellationToken cancellationToken, bool isRetryRound = false,
         bool laneHeld = false, CancellationTokenSource? registeredCts = null)
     {
-        // This item's own stop button, layered on top of the run's whole-batch token via a linked
-        // CTS, so either one ends the same await; registered under the same key CancelItem looks up, and
-        // deregistered in every exit path via the outer try/finally. A caller that took the row out of its
-        // list under the queue lock registers the source there already and hands it in.
+        // This item's own stop button, linked to the run's whole-batch token so either ends the same await;
+        // registered under the key CancelItem looks up and deregistered on every exit path. A caller that took
+        // the row out of its list under the queue lock registers the source there and hands it in.
         var key = Key(item);
         var itemCts = registeredCts ?? RegisterItemCancellation(run, item, cancellationToken);
         var itemToken = itemCts.Token;
@@ -803,27 +771,26 @@ public sealed class InstallQueue
         UpdateItem item, InstallAction action, CancellationToken batchToken, CancellationToken cancellationToken,
         RunState run, bool isRetryRound = false, bool callerHoldsLane = false)
     {
-        // A fresh attempt of this item (the retry round, the user-scope retry after the admin
-        // side refuses it) must not inherit a transfer entry an earlier attempt already marked finished.
+        // A fresh attempt (the retry round, the user-scope retry after the admin side refuses it) must not
+        // inherit a transfer entry an earlier attempt marked finished.
         ResetTransfer(item);
 
         // A Progress<T> without a captured context delivers through the thread pool, so a callback from an
-        // earlier attempt of this row can still be in flight when this one starts. It carries its attempt
-        // number and is dropped once the row has moved on to a later one.
+        // earlier attempt can still be in flight when this one starts. It carries its attempt number and is
+        // dropped once the row has moved on.
         var attemptKey = ActivityLog.Item(item.SourceId, item.Id);
         var attempt = _attempts.AddOrUpdate(attemptKey, 1, (_, previous) => previous + 1);
 
         var source = _sources.FirstOrDefault(s => s.Id == item.SourceId);
         if (source is null)
         {
-            // Recorded like any other outcome: the elevated path already does, and the history is the only
-            // place the user can go back and see that this row was attempted at all.
+            // Recorded like any other outcome: the history is the only place the user can see this row was attempted.
             var unknown = $"Unknown source '{item.SourceId}'.";
             var unknownDetail = $"{item.SourceId}/{item.Id}: {action} failed; no source named '{item.SourceId}' is registered.";
             Report(new InstallItemStatus(item.SourceId, item.Id, 0, null, false, unknown)
             {
-                // Same rule as a real tool failure: an error state without a usable Detail leaves the row's
-                // error-detail button opening on nothing.
+                // Same rule as a real tool failure: an error state without a usable Detail leaves the error-detail
+                // button opening on nothing.
                 Detail = unknownDetail,
             });
             RecordHistory(item, action, success: false, error: unknown, detail: unknownDetail);
@@ -850,12 +817,11 @@ public sealed class InstallQueue
 
         try
         {
-            // The lane is queue-wide, not per run: a side run (an uninstall started beside a batch) shares
-            // the package manager's global state with the batch, so it waits here for the batch's item on
-            // the same lane. Waited for inside this try, on the item's own stop token, so a row waiting for
-            // its lane still reads queued and Stop / its stop button end it like any other cancellation.
-            // The batch path takes the lane itself before it takes the item (InstallLaneSequentiallyAsync).
-            // (The elevated half needs no gate: the worker runs its jobs one at a time, an exclusive slot.)
+            // The lane is queue-wide, not per run: a side run (an uninstall started beside a batch) shares the
+            // package manager's global state with the batch, so it waits here on the same lane. Waited for inside
+            // this try, on the item's own stop token, so a waiting row still reads queued and Stop ends it. The batch
+            // path takes the lane itself before the item (InstallLaneSequentiallyAsync). The elevated half needs no
+            // gate: the worker runs its install jobs one at a time.
             if (!callerHoldsLane)
             {
                 await laneGate.WaitAsync(cancellationToken);
@@ -872,8 +838,7 @@ public sealed class InstallQueue
                 await source.UninstallAsync(item, progress, cancellationToken);
             else if (action == InstallAction.FreshInstall)
             {
-                // Only a source that says it can do a plain install without the upgrade ladder; anything
-                // else fails closed instead of quietly running a normal install.
+                // Only a source that can do a plain install without the upgrade ladder; anything else fails closed.
                 if (source is not Sources.IFreshInstallSource fresh)
                     throw new InvalidOperationException($"Source '{item.SourceId}' does not support a fresh install.");
                 await fresh.FreshInstallAsync(item, progress, cancellationToken);
@@ -881,12 +846,11 @@ public sealed class InstallQueue
             else
                 await source.InstallAsync(item, progress, cancellationToken);
 
-            // Only meaningful for an install (there is no "installed version" to re-check after
-            // a removal), and only a quiet note that never turns a real success into anything else.
-            // A source that cannot answer (null) says nothing at all, exactly like the interface default.
-            // A value that still reads old right after the installer exits is looked up again for a while
-            // before the note stays; that wait runs after this item let go of its slot and lane, and the
-            // row keeps showing the install (and its running time) until it is over.
+            // Only for an install (a removal has no installed version to re-check), and only a quiet note that
+            // never turns a real success into anything else. A source that cannot answer (null) says nothing.
+            // A value that still reads old right after the installer exits is looked up again for a while; that
+            // wait runs after this item let go of its slot and lane, and the row keeps showing the install until
+            // it is over.
             var unchangedNow = action == InstallAction.Install
                 && await IsVersionUnchangedAsync(source, item, item.InstalledVersion, _logging, cancellationToken);
             var installTime = started.Elapsed;
@@ -901,36 +865,31 @@ public sealed class InstallQueue
         }
         catch (OperationCanceledException) when (batchToken.IsCancellationRequested)
         {
-            // Only the USER's whole-queue cancellation propagates and ends the batch. A package manager's
-            // own HTTP timeout also surfaces as a cancellation (TaskCanceledException) with our tokens
-            // untouched, rethrowing that would abandon every remaining package because one download ran
-            // long.
+            // Only the user's whole-queue cancellation propagates and ends the batch. A package manager's own
+            // HTTP timeout also surfaces as a cancellation (TaskCanceledException) with our tokens untouched;
+            // rethrowing that would abandon every remaining package.
             throw;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // This item's own stop button; the rest of the queue keeps running. A terminal
-            // non-failure like the two below, not a real failure, the user just chose to stop this one.
+            // This item's own stop button; the rest of the queue keeps running. A terminal non-failure.
             _logging.Info($"{action} for '{item.Id}' was stopped by its own stop button.");
             Report(new InstallItemStatus(item.SourceId, item.Id, 100, null, null, null) { IsCancelled = true });
             RecordHistory(item, action, success: false, error: null, isCancelled: true);
         }
         catch (Sources.ManualHandoffException ex)
         {
-            // Genuinely unknown, not a guess in either direction: the source opened a vendor dialog that
-            // reports nothing back. Recorded and shown as its own outcome, never folded into success
-            // (that already happened once, and reported a cancelled Steam removal as completed) or into
-            // failure (nothing is actually known to have gone wrong).
+            // Genuinely unknown: the source opened a vendor dialog that reports nothing back. Recorded and shown as
+            // its own outcome, never folded into success or into failure.
             _logging.EventFailed(ActivityLog.Install, ActivityLog.InstallStuck(item, "handed off"));
             Report(new InstallItemStatus(item.SourceId, item.Id, 100, ex.Message, null, null) { IsManualHandoff = true });
             RecordHistory(item, action, success: false, error: ex.Message, isManualHandoff: true);
         }
         catch (Sources.NotApplicableException ex)
         {
-            // Nothing was changed and nothing went wrong: the manager simply has no version that fits this
-            // installation. Its own outcome for the same reason as the handoff above. The source's text is
-            // English diagnostic output, so the user gets the translated line and the raw text stays the
-            // Detail, as for a failure.
+            // Nothing was changed and nothing went wrong: the manager has no version that fits this installation.
+            // The source's text is English diagnostic output, so the user gets the translated line and the raw
+            // text stays the Detail, as for a failure.
             _logging.EventFailed(ActivityLog.Install, ActivityLog.InstallStuck(item, "no applicable version"));
             var stuck = LocalizationService.Instance["RowStuckDetail"];
             Report(new InstallItemStatus(item.SourceId, item.Id, 100, null, null, stuck) { IsNotApplicable = true, Detail = ex.Message });
@@ -938,18 +897,18 @@ public sealed class InstallQueue
         }
         catch (Exception ex)
         {
-            // One failing package must never abort the rest of the queue. The exception text is raw
-            // tool output; it is English and routinely contains the user's own paths, so it goes to
-            // the log and the user gets a translated line instead, plus the raw detail for the row's
-            // "Details" affordance, which the user opens deliberately (SECURITY.md).
+            // One failing package must never abort the rest of the queue. The exception text is raw tool output,
+            // English and routinely containing the user's own paths, so it goes to the log and the user gets a
+            // translated line plus the raw detail for the row's "Details" affordance, which the user opens
+            // deliberately (SECURITY.md).
             _logging.EventFailed(ActivityLog.Install, ActivityLog.InstallFailed(item, action, started.Elapsed, ex.Message));
             _logging.Error($"{action} failed for '{item.Id}'", ex);
             var message = InstallErrorExplainer.RowText(item.SourceId, ex.Message, key => LocalizationService.Instance[key])
                 ?? LocalizationService.Instance[action == InstallAction.Uninstall ? "UninstallFailed" : "InstallFailed"];
 
-            // Only from the FIRST round (a second failure is final, no third pass), and only for
-            // a cause the explainer table itself marks safe to retry blindly. Such a failure is not the
-            // row's final outcome yet, so it is not reported as one.
+            // Only from the first round (a second failure is final), and only for a cause the explainer table
+            // marks safe to retry blindly. Such a failure is not the row's final outcome, so it is not reported
+            // as one.
             if (!isRetryRound && InstallErrorExplainer.Explain(item.SourceId, ex.Message)?.AllowsAutomaticRetry == true)
             {
                 run.AutomaticRetryCandidates[Key(item)] = item;
@@ -970,10 +929,9 @@ public sealed class InstallQueue
     }
 
     /// <summary>
-    /// The job travels over the pipe rather than through a file in %TEMP%. A file would sit there
-    /// between being written and being read by the ELEVATED copy, where any other process running as
-    /// this user could rewrite it and have its own choice of packages installed with admin rights on
-    /// the back of a UAC prompt the user granted to this app.
+    /// The job travels over the pipe rather than through a file in %TEMP%: a file would sit there between
+    /// being written and being read by the elevated copy, where any other process running as this user could
+    /// rewrite it and have its own packages installed with admin rights on the back of the user's UAC prompt.
     /// </summary>
     private async Task RunElevatedBatchAsync(
         IReadOnlyList<UpdateItem> items,
@@ -984,12 +942,10 @@ public sealed class InstallQueue
         CancellationToken cancellationToken,
         bool isRetryRound = false)
     {
-        // Re-read the current order (and drop anything the user removed from the queue in the meantime)
-        // right before this batch is built: this now starts alongside the user-scope call rather than
-        // after it, but a queue-panel reorder or removal can still land in the brief window
-        // between this run being registered and this line running.
-        // The handle is registered in the same step that takes the rows out of Pending: from here until the
-        // job is out, a stop on one of them can only be remembered by this handle and replayed once it is.
+        // Re-read the current order (dropping anything the user removed) right before the batch is built: a
+        // queue-panel reorder or removal can land between this run being registered and this line.
+        // The handle is registered in the same step that takes the rows out of Pending: until the job is out,
+        // a stop on one of them can only be remembered by this handle and replayed once it is.
         var jobHandle = new ElevatedJobHandle();
         lock (_queueLock)
         {
@@ -1005,21 +961,19 @@ public sealed class InstallQueue
 
         AfterAdminRowsTakenForTest?.Invoke(items);
 
-        // Same reset as the in-process path, per item, at the start of this batch (which is
-        // also where a retry round's own batch begins).
+        // Same reset as the in-process path, per item (a retry round's batch starts here too).
         foreach (var item in items)
             ResetTransfer(item);
 
         _logging.Event(ActivityLog.Install, ActivityLog.BatchStarted(items.Count, elevated: true));
 
-        // The DECISION is made here, before the job goes out, and travels as a plain flag; the
-        // worker obeys it and never reads the timestamp file itself: it does no file I/O of its own at all.
-        // "The toggle is on, but one was already made today" is not a failure, just nothing left to say to
-        // the user beyond the one calm log line below.
+        // The decision is made here, before the job goes out, and travels as a plain flag; the worker obeys it
+        // and never reads the timestamp file itself (it does no file I/O). "Toggle on, but one was already made
+        // today" is not a failure, only the one calm log line below.
         var wantsRestorePoint = action == InstallAction.Install && _settings.Current.Install.CreateRestorePoint;
-        // Decided AND reserved in one step: a second batch deciding while this one's restore point is still
-        // being created must not read the old timestamp and ask for another. The lease lasts for the whole
-        // batch and is handed back however it ends (a job that never went out, a declined prompt, a failure).
+        // Decided and reserved in one step: a second batch deciding while this restore point is being created
+        // must not read the old timestamp and ask for another. The lease lasts for the whole batch and is handed
+        // back however it ends (a job that never went out, a declined prompt, a failure).
         using var restorePointLease = wantsRestorePoint
             ? RestorePointReservation.Shared.TryReserve(() => RestorePointThrottle.TryReadLastCreated(_logging), DateTimeOffset.UtcNow)
             : null;
@@ -1037,10 +991,8 @@ public sealed class InstallQueue
             CreateRestorePoint = shouldCreateRestorePoint,
             // the worker is a separate process and would otherwise report in the OS language
             Language = _settings.Current.Ui.Language,
-            // The worker keeps its OWN budget rather than sharing the user-scope half's semaphore, the two
-            // are separate processes running side by side, so the worker gets the FULL setting value here,
-            // not reduced by anything this half is running at the same time; it clamps this itself
-            // regardless of what is sent.
+            // The worker keeps its own budget, not reduced by what this half runs, since the two are separate
+            // processes; it clamps the value itself regardless of what is sent.
             MaxParallelInstalls = _settings.Current.Install.MaxParallelInstalls,
             Items = items.Select(i => ToJobItem(i, action)).ToList(),
         };
@@ -1048,8 +1000,7 @@ public sealed class InstallQueue
         // Flushed so the file on disk is current for the next app start.
         _settings.Flush();
 
-        // The prompt, if this is the first admin job of the session. After that the same elevated helper
-        // takes every later batch without asking again.
+        // The prompt, if this is the first admin job of the session; later batches go to the same helper.
         bool started;
         try
         {
@@ -1085,15 +1036,14 @@ public sealed class InstallQueue
             return;
         }
 
-        // Per call, not a field: the reply handler runs on the pipe's reader thread, and one batch's
-        // retries must never be visible to another's.
+        // Per call, not a field: the reply handler runs on the pipe's reader thread, and one batch's retries
+        // must not be visible to another's.
         var userScopeRetries = new List<UpdateItem>();
         lock (_queueLock)
             run.UserScopeRetries = userScopeRetries;
 
-        // This run's own stop-single button forwards here once nothing in its in-process
-        // ItemCancellations dictionary matches; cleared again once the batch is over so a stale handle
-        // from a finished job is never mistaken for a live one.
+        // This run's stop-single button forwards here once nothing in its in-process ItemCancellations
+        // matches; cleared when the batch is over so a stale handle is never mistaken for a live one.
         run.CancellationToken = cancellationToken;
         try
         {
@@ -1105,8 +1055,8 @@ public sealed class InstallQueue
         {
             run.ElevatedHandle = null;
 
-            // Results waiting on their delayed version look-up are settled before this batch is over (a stop
-            // ends each wait at once), so the caller's "anything left unreported" pass never sees them open.
+            // Results waiting on their delayed version look-up are settled before this batch is over (a stop ends
+            // each wait), so the caller's "anything left unreported" pass never sees them open.
             Task[] rechecks;
             lock (_queueLock)
             {
@@ -1124,9 +1074,8 @@ public sealed class InstallQueue
             }
         }
 
-        // Jobs the elevated helper had to refuse because the package belongs to this user rather than to
-        // the machine. Retried here, unelevated, which is the one thing that can actually work, and only
-        // once: if the in-process attempt fails too, that is the answer.
+        // Jobs the elevated helper refused because the package belongs to this user rather than the machine.
+        // Retried here, unelevated, once: if the in-process attempt fails too, that is the answer.
         await RetryUserScopeInProcessAsync(userScopeRetries, action, reported, throttle, run, cancellationToken);
     }
 
@@ -1138,10 +1087,9 @@ public sealed class InstallQueue
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // An in-process install like any other, so it takes a slot of the same budget the user-scope
-            // source groups share; otherwise it would run on top of a full set of them. The slot first, THEN
-            // the item (same order as the source groups): taken out of the list before waiting, a row stopped
-            // during the wait was in neither the list nor ItemCancellations, and installed anyway.
+            // An in-process install like any other, so it takes a slot of the same budget the user-scope groups
+            // share. The slot first, then the item (same order as the source groups): taken out of the list before
+            // waiting, a row stopped during the wait would be in neither the list nor ItemCancellations.
             await throttle.WaitAsync(cancellationToken);
             UpdateItem item;
             try
@@ -1165,8 +1113,8 @@ public sealed class InstallQueue
                 AfterItemTakenForTest?.Invoke(item);
                 _logging.Info($"Retrying '{item.Id}' ({action}) without administrator rights.");
 
-                // Flagged as a retry round: this is already the item's second attempt, so a failure here is
-                // final and must not enrol it in the automatic retry pass for a third one.
+                // Flagged as a retry round: this is already the second attempt, so a failure is final and must not
+                // enrol the item in the automatic retry pass again.
                 await InstallInProcessAsync(item, action, run, cancellationToken, isRetryRound: true, registeredCts: itemCts);
             }
             finally
@@ -1180,8 +1128,8 @@ public sealed class InstallQueue
     }
 
     /// <summary>
-    /// One line back from the elevated worker. Returns false once the batch is finished, which is what
-    /// tells the host this conversation is over.
+    /// One line back from the elevated worker. Returns false once the batch is finished, which tells the
+    /// host this conversation is over.
     /// </summary>
     private bool HandleWorkerLine(
         string line, IReadOnlyList<UpdateItem> items, InstallAction action, ISet<string> reported,
@@ -1203,16 +1151,15 @@ public sealed class InstallQueue
         if (message.Type == "done")
             return false;
 
-        // The elevated worker writes no files of its own (it would be writing into directories the
-        // unelevated user controls), so its log lines come back here and land in the app's log.
+        // The elevated worker writes no files of its own (its directories are controlled by the unelevated
+        // user), so its log lines come back here and land in the app's log.
         if (message.Type == "log")
         {
             _logging.Info($"worker: {message.Status}");
             return true;
         }
 
-        // The worker only ever REPORTS this, it never decides or writes anything from it; this
-        // side owns every file the app ever writes.
+        // The worker only reports this; this side owns every file the app writes.
         if (message.Type == "restorePointCreated")
         {
             RestorePointThrottle.TryWriteCreated(_logging, message.RestorePointCreatedAt ?? DateTimeOffset.UtcNow);
@@ -1223,14 +1170,11 @@ public sealed class InstallQueue
         // arrive as null on this side however the wire spells it.
         var terminalNonFailure = message.IsManualHandoff || message.IsNotApplicable || message.IsCancelled;
 
-        // A package installed per-user refuses to be touched by an administrator, and the whole
-        // point of the elevated helper is that it IS one. Rather than leaving the user with a
-        // message they can do nothing about, the job is retried in this process, once. Decided
-        // BEFORE the result is reported: reported first, the row would flash Failed, count as done and
-        // feed the three-strike record with a refusal that is not the final answer.
-        // Installs as well as removals: winget's error for this says "the
-        // requested operation", and an upgrade of a user-scope package fails exactly the same way,
-        // which is why Bitcoin Core never updated.
+        // A package installed per-user refuses to be touched by an administrator, which the elevated helper is.
+        // The job is retried in this process, once, for installs as well as removals (winget's error says
+        // "the requested operation" for an upgrade of a user-scope package too). Decided before the result is
+        // reported: reported first, the row would flash Failed, count as done and feed the three-strike record
+        // with a refusal that is not the final answer.
         if (message.Type == "result" && message.Success == false && WingetSource.NeedsUserScopeRetry(message.Detail)
             && items.FirstOrDefault(i => i.Id == message.ItemId && i.SourceId == message.SourceId) is { } retryItem)
         {
@@ -1243,22 +1187,21 @@ public sealed class InstallQueue
             ? items.FirstOrDefault(i => i.Id == message.ItemId && i.SourceId == message.SourceId)
             : null;
 
-        // A genuine failure only (not the handed-off/not-applicable/cancelled outcomes above), only from
-        // the FIRST round, and only for a cause the explainer table itself marks safe to retry blindly.
-        // Decided before anything is reported, for the same reason as the user-scope refusal above: the
-        // retry round, not this attempt, gives the final answer.
+        // A genuine failure only (not the handed-off/not-applicable/cancelled outcomes), only from the first
+        // round, and only for a cause the explainer table marks safe to retry blindly. Decided before anything
+        // is reported, as for the user-scope refusal above: the retry round gives the final answer.
         var awaitsRetry = item is not null && message.Success == false && !terminalNonFailure && !isRetryRound
             && InstallErrorExplainer.Explain(item.SourceId, message.Detail)?.AllowsAutomaticRetry == true;
 
-        // Installed fine but the version still reads old right away: look again for a while before the note
-        // stays. Done here, in the app, never in the elevated worker, which holds its exclusive slot until the
-        // job ends. The result is reported once the lookups are over (RunElevatedBatchAsync awaits them).
+        // Installed fine but the version still reads old: look again for a while before the note stays. Done
+        // here, never in the elevated worker, which holds its exclusive slot until the job ends. The result is
+        // reported once the lookups are over (RunElevatedBatchAsync awaits them).
         if (item is not null && action == InstallAction.Install && message.Type == "result" && message.Success
             && !terminalNonFailure && message.VersionUnchanged
             && _sources.FirstOrDefault(s => s.Id == item.SourceId) is { } recheckSource)
         {
-            // Registered here, before the task starts, so a row stop that lands at any moment of the wait reaches
-            // it through CancelItem's per-row lookup.
+            // Registered before the task starts, so a row stop at any moment of the wait reaches it through
+            // CancelItem's per-row lookup.
             var recheckKey = Key(item);
             var recheckCts = CancellationTokenSource.CreateLinkedTokenSource(run.CancellationToken);
             lock (_queueLock)
@@ -1366,10 +1309,9 @@ public sealed class InstallQueue
                     message.IsManualHandoff, message.IsNotApplicable, detail: message.Detail,
                     isCancelled: message.IsCancelled, versionUnchanged: message.VersionUnchanged);
 
-                // This callback runs on the elevated pipe's own reader thread (ElevatedHost's pump task),
-                // while the in-process source groups mutate the SAME reported set from their own Task
-                // threads at the same time (RunAsync starts both halves together). reported is a plain
-                // HashSet, not thread-safe, so every write to it needs this same lock.
+                // This callback runs on the elevated pipe's reader thread (ElevatedHost's pump task) while the
+                // in-process source groups mutate the same reported set from their own threads. reported is a plain
+                // HashSet, so every write needs this lock.
                 lock (_reportLock)
                     reported.Add(Key(item));
             }
@@ -1380,10 +1322,9 @@ public sealed class InstallQueue
         IReadOnlyList<UpdateItem> items, InstallAction action, ISet<string> reported, string reason,
         bool cancelled, RunState run)
     {
-        // An item the user removed from the queue is not "remaining", it was taken out on purpose, so it
-        // gets neither a status report nor a history line, exactly as if it had never been selected.
-        // A row a stop is settling itself is skipped too: its key reaches the reported set only a moment
-        // after it left the queue, and reporting it here in that moment would count it twice.
+        // An item the user removed from the queue was taken out on purpose: no status report and no history
+        // line, as if it had never been selected. A row a stop is settling itself is skipped too: its key
+        // reaches the reported set a moment after it left the queue, and reporting it here would count it twice.
         HashSet<string> removedFromQueue, removed;
         lock (_queueLock)
         {
@@ -1403,16 +1344,16 @@ public sealed class InstallQueue
 
         foreach (var item in items.Where(i => !accountedFor.Contains(Key(i)) && !removed.Contains(Key(i))))
         {
-            // A cancelled batch never ran these rows, so they end as stopped (neither success nor failure),
-            // the same terminal state a row stopped with its own button gets.
+            // A cancelled batch never ran these rows, so they end as stopped (neither success nor failure), like a
+            // row stopped with its own button.
             Report(new InstallItemStatus(item.SourceId, item.Id, cancelled ? 100 : 0, null, cancelled ? null : false, reason)
             {
                 Detail = $"{item.SourceId}/{item.Id}: {action} did not run; {reason}",
                 IsCancelled = cancelled,
             });
 
-            // The real failure of a first attempt that never got its retry beats the generic reason, and is
-            // a fact even in a stopped batch.
+            // The real failure of a first attempt that never got its retry beats the generic reason, and is a fact
+            // even in a stopped batch.
             if (!FlushDeferredFailure(item, action) && !cancelled)
                 RecordHistory(item, action, success: false, error: reason);
         }
@@ -1433,14 +1374,14 @@ public sealed class InstallQueue
         catch (OperationCanceledException)
         {
             // The install itself already finished: a stop during this optional re-check only skips the note.
-            // Thrown on, it turned a completed upgrade into "Cancelled" (or into no history entry at all),
-            // and that success is what a later rollback is built from.
+            // Thrown on, it would turn a completed upgrade into "Cancelled", and that success is what a later
+            // rollback is built from.
             return false;
         }
         catch (Exception ex)
         {
-            // Same reasoning for a lookup that fails afterwards (a refused tool path, a timeout): the
-            // install is done, the re-check only decides whether a note is added.
+            // Same for a lookup that fails afterwards (a refused tool path, a timeout): the re-check only decides
+            // whether a note is added.
             logging.Warn($"Version re-check for '{item.Id}' failed: {ex.Message}");
             return false;
         }
@@ -1492,9 +1433,9 @@ public sealed class InstallQueue
     }
 
     /// <summary>
-    /// The re-check comparison, shared with <see cref="InstallWorker"/> (the elevated path) so both read the
-    /// same answer to the same question. Null from the source means "no statement", never "unchanged":
-    /// only an ACTUAL match against the pre-install value counts.
+    /// The re-check comparison, shared with <see cref="InstallWorker"/> (the elevated path). Null from the
+    /// source means "no statement", never "unchanged": only an actual match against the pre-install value
+    /// counts.
     /// </summary>
     internal static bool IsVersionUnchanged(string? previousInstalledVersion, string? recheckedVersion) =>
         recheckedVersion is not null && string.Equals(recheckedVersion, previousInstalledVersion, StringComparison.OrdinalIgnoreCase);
@@ -1548,14 +1489,12 @@ public sealed class InstallQueue
     }
 
     /// <summary>
-    /// What a download of this item has cost so far, and whether it is already finished. Every status
-    /// report, in-process and from the elevated worker alike, passes through <see cref="Report"/>, the one
-    /// place that can see a transfer begin, progress and end without each source reporting it separately.
-    /// Kept, marked finished, rather than removed once a transfer ends: a stray progress report for the
-    /// SAME item can still arrive afterward (Progress&lt;T&gt; with no captured synchronization context
-    /// posts through the thread pool, so a callback queued before the item's own result can be delivered
-    /// after it), and only a still-present, marked entry lets that report be recognised as stale rather
-    /// than read as a brand new transfer.
+    /// What a download of this item has cost so far, and whether it is finished. Every status report,
+    /// in-process and from the elevated worker, passes through <see cref="Report"/>, the one place that can
+    /// see a transfer begin, progress and end without each source reporting it separately. An entry is kept,
+    /// marked finished, once the transfer ends: Progress&lt;T&gt; without a captured synchronization context
+    /// posts through the thread pool, so a progress report queued before the item's result can arrive after
+    /// it, and only a marked entry lets that report be recognised as stale.
     /// </summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, TransferState> _transfers = new();
 
@@ -1566,10 +1505,9 @@ public sealed class InstallQueue
     private sealed record TransferState(DateTime Started, long Total, bool Finished, long Received = 0);
 
     /// <summary>
-    /// Clears any tracked transfer for this item before a new attempt of it starts (the in-process path,
-    /// and each item of a fresh elevated batch, including a retry round). Otherwise a retry of the same
-    /// item would find its old entry still marked <c>Finished</c> and read every progress report as
-    /// stale, so the row would show no percentage or byte count the second time around.
+    /// Clears any tracked transfer for this item before a new attempt starts (in-process, and each item of a
+    /// fresh elevated batch, including a retry round). Otherwise the old entry, still marked Finished, would
+    /// make every progress report of the retry read as stale.
     /// </summary>
     private void ResetTransfer(UpdateItem item) => _transfers.TryRemove(ActivityLog.Item(item.SourceId, item.Id), out _);
 
@@ -1584,19 +1522,17 @@ public sealed class InstallQueue
         }
         else if (_transfers.TryGetValue(key, out var tracked) && tracked.Finished)
         {
-            // This item's own result already went out; a progress line that still arrives after
-            // that is stale by construction. Applying it would drag a row that already reads "done" back
-            // to a part-filled bar, and logging it would print a later download line for a transfer that
-            // already has its "dl done" line. Dropped outright: neither reported to the row nor logged.
+            // This item's own result already went out; a progress line arriving after that is stale. Applying it
+            // would drag a row that reads "done" back to a part-filled bar, and logging it would print a download
+            // line after the "dl done" line. Dropped: neither reported nor logged.
             return;
         }
         else if (status.BytesTotal is > 0)
         {
-            // The first report that carries a real size is the start of a download; later ones keep the
-            // same started time but still update the received count, so a download failing partway
-            // through has a real, non-zero byte count to fall back on in CloseTransfer below.
-            // One lookup: a second one after ContainsKey could miss an entry ResetTransfer removed in
-            // between on another thread, and the throw would end the process from a Progress callback.
+            // The first report with a real size starts a download; later ones keep the start time but update the
+            // received count, so a download failing partway has a real byte count to fall back on in CloseTransfer.
+            // One lookup: a second one after ContainsKey could miss an entry ResetTransfer removed on another
+            // thread, and the throw would end the process from a Progress callback.
             var isNewTransfer = !_transfers.TryGetValue(key, out var existing);
             _transfers[key] = new TransferState(
                 isNewTransfer ? DateTime.UtcNow : existing!.Started,
@@ -1612,11 +1548,11 @@ public sealed class InstallQueue
     }
 
     /// <summary>
-    /// A first-round failure the automatic retry round will run again. Reported as still in progress,
-    /// never as Failed: a row that read as finished here could be retried by hand while the queue retries
-    /// it too, be replaced by a rescan before the second attempt reports, and count its failure twice
-    /// toward the three-strikes tally. The attempt's transfer is closed as a failure would close it, so a
-    /// late progress line from it is still recognised as stale.
+    /// A first-round failure the automatic retry round will run again. Reported as still in progress, never
+    /// as Failed: a row that read as finished could be retried by hand while the queue retries it too, be
+    /// replaced by a rescan before the second attempt reports, and count its failure twice toward the
+    /// three-strikes tally. The attempt's transfer is closed as a failure would close it, so a late progress
+    /// line from it is still recognised as stale.
     /// </summary>
     private void ReportAwaitingRetry(UpdateItem item)
     {
@@ -1630,15 +1566,13 @@ public sealed class InstallQueue
     }
 
     /// <summary>
-    /// Closes a tracked transfer in the SAME step as the item's own completion, logging its "dl done" line
-    /// and, when the terminal status carries no bytes of its own (a plain success never does, see the
-    /// in-process callers of <see cref="Report"/>), filling in BytesReceived/BytesTotal so the row's bar
-    /// reaches full together with the row reporting finished, rather than waiting on a progress line a
-    /// successful install never sends. An item with nothing tracked (it never reported a size, or its
-    /// transfer already closed) is returned unchanged.
-    /// The fill-in only claims the FULL size for a genuine success. A failed/cancelled/handed-off status
-    /// without bytes keeps the last real byte count, so a download that failed at 50 % still reads
-    /// roughly 50 %, and the batch total only counts bytes actually received.
+    /// Closes a tracked transfer in the same step as the item's own completion, logging its "dl done" line
+    /// and, when the terminal status carries no bytes of its own (a plain success never does), filling in
+    /// BytesReceived/BytesTotal so the row's bar reaches full together with the row reporting finished. An
+    /// item with nothing tracked is returned unchanged.
+    /// The fill-in claims the full size only for a genuine success. A failed/cancelled/handed-off status
+    /// without bytes keeps the last real byte count, so a download that failed at 50 % still reads roughly
+    /// 50 %, and the batch total only counts bytes actually received.
     /// </summary>
     private InstallItemStatus CloseTransfer(InstallItemStatus status, string key)
     {

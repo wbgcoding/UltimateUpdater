@@ -19,33 +19,31 @@ public static class AppPaths
     private const string MigrationReplacedSuffix = ".before-migration";
 
     /// <summary>
-    /// The roaming folder name used before the app was renamed to Ultimate Updater. Kept only so the
-    /// one-time migration below can find data left there; never written to again.
+    /// The roaming folder name from before the rename to Ultimate Updater. Kept only so the one-time
+    /// migration can find data left there; never written to.
     /// </summary>
     private const string LegacyProductFolderName = "WindowsUpdater";
 
     /// <summary>
-    /// The name of the small file that says "the data folder actually lives somewhere else".
-    /// Never inside <see cref="DataDirectory"/> itself, that folder is exactly what this points away from,
-    /// and a pointer that moved with its own target could never be found again.
+    /// The small file that says "the data folder lives somewhere else". Never inside
+    /// <see cref="DataDirectory"/> itself: that folder is what it points away from, and a pointer that moved
+    /// with its target could not be found again.
     /// </summary>
     private const string PointerFileName = "datapath.txt";
 
     /// <summary>
-    /// An explicit static constructor, so this type's whole static initializer (this field plus
-    /// every other one below) runs exactly once, at the first genuine touch of ANY member, and reports
-    /// that touch to <see cref="AppPathsTouchTracker"/>, a witness a test can read without itself causing
-    /// the very touch it is trying to observe (see that type's own remarks).
+    /// An explicit static constructor, so the whole static initializer runs once, at the first touch of any
+    /// member, and reports it to <see cref="AppPathsTouchTracker"/>, a witness a test can read without
+    /// causing the touch it observes.
     /// </summary>
     static AppPaths() => AppPathsTouchTracker.MarkTouched();
 
     private static readonly bool IsInstalledValue =
         File.Exists(Path.Combine(AppContext.BaseDirectory, InstalledMarkerFileName));
 
-    /// <summary>Every read of any resolved path or flag on this type is marked here, on every call, not
-    /// just the first: this is the seam the elevated-worker audit test uses to prove that constructing the
-    /// worker's own <see cref="LoggingService"/> touches nothing on this type. Reading it does not
-    /// itself count as a touch.</summary>
+    /// <summary>Every read of a resolved path or flag on this type is counted here: the seam the
+    /// elevated-worker audit test uses to prove that constructing the worker's <see cref="LoggingService"/>
+    /// touches nothing on this type. Reading it is not itself a touch.</summary>
     internal static int AccessCount { get; private set; }
 
     public static bool IsInstalled
@@ -53,9 +51,8 @@ public static class AppPaths
         get { AccessCount++; return IsInstalledValue; }
     }
 
-    /// <summary>The title bar's own "Portable" badge reads this directly (an <c>x:Static</c> binding,
-    /// never re-evaluated after the window loads, which matches <see cref="IsInstalled"/> itself: both
-    /// are decided once, at process start, and never change for the life of the run).</summary>
+    /// <summary>The title bar's "Portable" badge reads this directly (an <c>x:Static</c> binding). Like
+    /// <see cref="IsInstalled"/>, it is decided once at process start.</summary>
     public static bool IsPortable => !IsInstalled;
 
     private static readonly string DataDirectoryValue = ResolveDataDirectory();
@@ -81,26 +78,22 @@ public static class AppPaths
     }
 
     /// <summary>
-    /// Where the "moved elsewhere" pointer lives, itself always in a FIXED location so it can be
-    /// found before anything knows where the real data folder is. Portable: beside the executable, the one
-    /// part of a portable install that never moves on its own. Installed: the roaming folder this app
-    /// would use by default anyway, kept as the one stable address even after the real folder moves out of
-    /// it.
+    /// Where the "moved elsewhere" pointer lives, always in a fixed location so it can be found before
+    /// anything knows where the real data folder is. Portable: beside the executable. Installed: the default
+    /// roaming folder, kept as the stable address even after the real folder moves out of it.
     /// </summary>
     private static string PointerFilePath => IsInstalled
         ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UltimateUpdater", PointerFileName)
         : Path.Combine(AppContext.BaseDirectory, PointerFileName);
 
     /// <summary>
-    /// Set at most once, when a saved pointer no longer resolves to somewhere usable: nothing here can log
-    /// yet (this runs in a static initializer, see <see cref="TryPrepare"/>'s own remark), so the first
-    /// caller that owns a <see cref="LoggingService"/> reads and clears this through <see
-    /// cref="ConsumePointerFallbackReason"/> instead.
+    /// Set at most once, when a saved pointer no longer resolves to somewhere usable. Nothing can log yet
+    /// (this runs in a static initializer), so the first caller that owns a <see cref="LoggingService"/> reads
+    /// and clears it through <see cref="ConsumePointerFallbackReason"/>.
     /// </summary>
     public static string? PointerFallbackReason { get; private set; }
 
-    /// <summary>Reads and clears <see cref="PointerFallbackReason"/> in one step, so the one line it
-    /// describes is logged exactly once no matter how many windows ask.</summary>
+    /// <summary>Reads and clears <see cref="PointerFallbackReason"/> in one step, so its line is logged once.</summary>
     public static string? ConsumePointerFallbackReason()
     {
         var reason = PointerFallbackReason;
@@ -109,10 +102,8 @@ public static class AppPaths
     }
 
     /// <summary>
-    /// Set at most once, the first time this build's roaming folder is resolved and the legacy
-    /// pre-rename folder was copied into it. Same deferred-logging shape as
-    /// <see cref="PointerFallbackReason"/>, for the same reason: this runs in a static initializer,
-    /// before any logger exists.
+    /// Set at most once, when the legacy pre-rename folder was copied into this build's roaming folder.
+    /// Deferred logging like <see cref="PointerFallbackReason"/>, for the same reason.
     /// </summary>
     public static string? LegacyDataFolderMigrationMessage { get; private set; }
 
@@ -137,10 +128,10 @@ public static class AppPaths
     }
 
     /// <summary>
-    /// Picks the first location that is actually writable. This runs in a static initializer, so a
-    /// throw here would surface as a TypeInitializationException before any logging or crash handler
-    /// exists, the process would simply vanish. A portable exe dropped into Program Files or onto a
-    /// read-only share is a perfectly normal thing for a user to do, so it falls back instead.
+    /// Picks the first location that is actually writable. This runs in a static initializer, so a throw
+    /// would surface as a TypeInitializationException before any logging or crash handler exists and the
+    /// process would vanish. A portable exe in Program Files or on a read-only share is normal, so it
+    /// falls back instead.
     /// </summary>
     private static string ResolveDataDirectory()
     {
@@ -155,21 +146,17 @@ public static class AppPaths
         var roaming = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UltimateUpdater");
 
-        // Deliberate, one-time exception to the "this app never migrates data on its own" rule above:
-        // the rename to Ultimate Updater changed only the FOLDER NAME under %AppData%, never the
-        // format of anything inside it, so a plain copy is safe here in a way an ordinary format
-        // migration would not be. Runs before the pointer check below; an old installation that had moved
-        // its data elsewhere has that folder copied instead of its default one.
+        // A deliberate one-time exception to "this app never migrates data on its own": the rename changed
+        // only the folder name under %AppData%, never the format inside, so a plain copy is safe. Runs before
+        // the pointer check; an old installation that had moved its data has that folder copied instead.
         TryMigrateLegacyDataFolder(roaming);
 
-        // A folder the user moved data to on purpose wins over every ordinary candidate below,
-        // but only while it still resolves; a fallback here logs one line once LoggingService exists
-        // rather than silently using the wrong folder or throwing this process away outright.
+        // A folder the user moved data to on purpose wins over every ordinary candidate, but only while it
+        // still resolves; a fallback logs one line once LoggingService exists.
         if (TryReadPointer(PointerFilePath) is { } pointedTo)
         {
-            // Only a dedicated subfolder is ever adopted: "delete my data" removes logs, cache and reports
-            // beneath the data folder, which on a pointer to a folder the user already owns (hand-written,
-            // restored from a backup, left by an older build) would hit their own folders.
+            // Only a dedicated subfolder is adopted: "delete my data" removes logs, cache and reports beneath the
+            // data folder, which on a pointer to a folder the user already owns would hit their own folders.
             if (!IsDedicatedDataFolder(pointedTo))
             {
                 PointerFallbackReason =
@@ -177,9 +164,8 @@ public static class AppPaths
             }
             else
             {
-                // Must still EXIST: TryPrepare creates a missing folder, so a data folder renamed away, or a USB
-                // stick back under another letter, silently started the app on an empty folder with default
-                // settings and no history, and without the fallback line in the log.
+                // Must still exist: TryPrepare creates a missing folder, so a renamed-away folder or a USB stick under
+                // another letter would start the app on an empty folder with default settings and no fallback line.
                 if (Directory.Exists(pointedTo) && TryPrepare(pointedTo))
                     return pointedTo;
 
@@ -198,9 +184,8 @@ public static class AppPaths
                 return candidate;
         }
 
-        // Last resort. If even this fails there is nowhere to write at all, and returning the path
-        // anyway keeps the promise that this method does not throw, the logger already tolerates a
-        // directory it cannot write to.
+        // Last resort. Returning the path anyway keeps the promise that this method does not throw; the logger
+        // tolerates a directory it cannot write to.
         var fallback = Path.Combine(Path.GetTempPath(), "UltimateUpdater");
         TryPrepare(fallback);
         return fallback;
@@ -208,10 +193,9 @@ public static class AppPaths
 
     /// <summary>
     /// Copies an old <c>%AppData%\WindowsUpdater</c> folder into the new <c>%AppData%\UltimateUpdater</c>
-    /// one, exactly once: only when the new folder does not exist yet and the old one does. The old
-    /// folder is left untouched (a copy, never a move), so a problem with the new folder never loses the
-    /// user's actual data. Public overload uses the real, fixed roaming path; the internal one takes
-    /// explicit paths so a test can prove this without touching the real <c>%AppData%</c>.
+    /// one, exactly once: only when the new folder does not exist yet and the old one does. The old folder is
+    /// left untouched (a copy, never a move), so a problem with the new folder never loses the user's data.
+    /// The internal overload takes explicit paths so a test does not touch the real <c>%AppData%</c>.
     /// </summary>
     private static void TryMigrateLegacyDataFolder(string roaming) =>
         TryMigrateLegacyDataFolder(
@@ -229,18 +213,16 @@ public static class AppPaths
         if (!Directory.Exists(legacy))
             return;
 
-        // The legacy folder can itself carry a "moved elsewhere" pointer, written by a
-        // pre-rename build whose user had already moved their data folder; that pointer, not the legacy
-        // default folder, is where the real data actually lives. An unusable pointer target falls back to
-        // the legacy folder itself, logged so the fallback is visible rather than silently wrong.
+        // The legacy folder can itself carry a "moved elsewhere" pointer from a pre-rename build; that pointer,
+        // not the legacy default folder, is where the data lives. An unusable target falls back to the legacy
+        // folder itself, logged.
         var source = legacy;
         string? fallbackReason = null;
 
         if (TryReadPointer(Path.Combine(legacy, PointerFileName)) is { } pointedTo)
         {
-            // The whole target gets copied, so only a dedicated app folder qualifies: a pointer at a
-            // user's own folder (or a relative one, resolved against the working directory) must not make
-            // the first start copy arbitrary data.
+            // The whole target gets copied, so only a dedicated app folder qualifies: a pointer at a user's own
+            // folder (or a relative one) must not make the first start copy arbitrary data.
             if (!IsDedicatedLegacyDataFolder(pointedTo))
             {
                 fallbackReason =
@@ -296,11 +278,10 @@ public static class AppPaths
     }
 
     /// <summary>
-    /// Copies <paramref name="source"/> into a temp sibling of <paramref name="destination"/> and renames
-    /// it into place only once the copy actually succeeded: a copy that fails midway (a locked
-    /// file, a vanished source) never leaves <paramref name="destination"/> existing, so the caller's own
-    /// "does the new folder already exist" check keeps seeing nothing there and the next launch retries
-    /// from scratch instead of being stuck on a half-migrated folder forever.
+    /// Copies <paramref name="source"/> into a temp sibling of <paramref name="destination"/> and renames it
+    /// into place only once the copy succeeded. A copy that fails midway never leaves
+    /// <paramref name="destination"/> existing, so the next launch retries instead of being stuck on a
+    /// half-migrated folder.
     /// </summary>
     internal static bool TryMigrateInto(string source, string destination) =>
         TryMigrateInto(source, destination, out _);
@@ -418,8 +399,8 @@ public static class AppPaths
     /// <summary>A 32,767-character long path still fits, even at 3 bytes per character in UTF-8.</summary>
     internal const long MaxPointerFileBytes = 128 * 1024;
 
-    /// <summary>internal rather than private so a test can prove the round trip through an arbitrary temp
-    /// path, never through the real, fixed <see cref="PointerFilePath"/> a test run must not touch.</summary>
+    /// <summary>Internal so a test can prove the round trip through an arbitrary temp path, never through
+    /// the real <see cref="PointerFilePath"/>.</summary>
     internal static string? TryReadPointer(string pointerPath)
     {
         try
@@ -427,8 +408,8 @@ public static class AppPaths
             if (!File.Exists(pointerPath))
                 return null;
 
-            // Runs during static initialisation: an unbounded read of a corrupt or huge file would
-            // crash every start, so an oversized pointer reads like a missing one.
+            // Runs during static initialisation: an unbounded read of a corrupt or huge file would crash every
+            // start, so an oversized pointer reads like a missing one.
             var text = AtomicFile.TryReadAllText(pointerPath, MaxPointerFileBytes)?.Trim();
             return string.IsNullOrEmpty(text) ? null : text;
         }
@@ -438,9 +419,8 @@ public static class AppPaths
         }
     }
 
-    /// <summary>Records the new location so the NEXT launch resolves <see cref="DataDirectory"/>
-    /// there; this run keeps using the folder it already started with (moving a folder out from under a
-    /// running process is what the restart is for).</summary>
+    /// <summary>Records the new location so the next launch resolves <see cref="DataDirectory"/> there; this
+    /// run keeps using the folder it started with.</summary>
     public static bool WriteDataFolderPointer(string newPath)
     {
         var written = WriteDataFolderPointer(newPath, PointerFilePath);
@@ -464,8 +444,8 @@ public static class AppPaths
 
     /// <summary>Brings the live-written entries (history, cleanup history, reports, driver backups, the
     /// restore point, the pip block list, the last scan and the enrichment cache) in the new data folder up
-    /// to date with the folder this run writes to. Called right before the pointer is written, so the copy made earlier does not
-    /// miss what happened meanwhile.</summary>
+    /// to date with the folder this run writes to. Called right before the pointer is written, so the earlier
+    /// copy does not miss what happened meanwhile.</summary>
     public static bool SyncLiveDataTo(string destination) => SyncLiveData(DataDirectory, destination, includeSettings: false);
 
     /// <summary>At exit, once the delayed settings write has landed: everything written after the pointer was
@@ -612,7 +592,7 @@ public static class AppPaths
             if (!string.IsNullOrEmpty(pointerDirectory))
                 Directory.CreateDirectory(pointerDirectory);
 
-            // Atomic: a crash mid-write left a truncated path ("D:\Da") that the next start then used.
+            // Atomic, so a crash mid-write cannot leave a truncated path.
             AtomicFile.WriteAllText(pointerFilePath, newPath);
             return true;
         }
@@ -640,10 +620,10 @@ public static class AppPaths
     }
 
     /// <summary>
-    /// The move never lands directly in the folder the user picked, always in a dedicated
-    /// subfolder of it, so a folder that already holds the user's OWN unrelated files (a foreign
-    /// <c>settings.json</c>, a <c>logs</c> subtree) is never overwritten or later swept up by
-    /// <see cref="AppDataCleaner"/>, which only ever touches paths under this app's own data directory.
+    /// The move never lands directly in the folder the user picked, always in a dedicated subfolder, so a
+    /// folder that holds the user's own unrelated files (a foreign <c>settings.json</c>, a <c>logs</c>
+    /// subtree) is never overwritten or swept up by <see cref="AppDataCleaner"/>, which only touches paths
+    /// under this app's own data directory.
     /// </summary>
     public const string DedicatedSubfolderName = "UltimateUpdater";
 
@@ -683,12 +663,11 @@ public static class AppPaths
     ];
 
     /// <summary>
-    /// The rules for a new data folder: no reparse point on the way (reusing the cleanup dialog's own
-    /// walk, <see cref="Cleanup.CleanupSafety.AncestryLeadsThroughLink"/>, rather than a second copy of the
-    /// same check, so a junction is judged exactly the same way there and here), not a Windows system
-    /// folder, not inside the program's own folder unless this build is portable (where that is already
-    /// the normal place for data to live), and finally the dedicated <see cref="EffectiveDataFolderTarget"/>
-    /// subfolder must not already exist with content in it and must be writable.
+    /// The rules for a new data folder: no reparse point on the way (the cleanup dialog's own walk,
+    /// <see cref="Cleanup.CleanupSafety.AncestryLeadsThroughLink"/>, so a junction is judged the same way
+    /// there and here), not a Windows system folder, not inside the program's own folder unless this build
+    /// is portable, and the dedicated <see cref="EffectiveDataFolderTarget"/> subfolder must not already exist
+    /// with content in it and must be writable.
     /// </summary>
     public static DataFolderRejection ValidateNewDataFolder(string path) =>
         ValidateNewDataFolder(path, IsInstalled, AppContext.BaseDirectory, DataDirectory, Path.GetTempPath());
@@ -715,17 +694,16 @@ public static class AppPaths
         if (isInstalled && IsUnder(full, baseDirectory))
             return DataFolderRejection.InsideProgramFolder;
 
-        // A target this app's own cleanup could later empty (CleanupSafety's own name-based
-        // heuristic, reused rather than duplicated) is refused outright, same as %TEMP% itself.
+        // A target this app's own cleanup could later empty (CleanupSafety's name-based heuristic) is refused,
+        // like %TEMP% itself.
         if (IsUnder(full, tempPath) || Cleanup.CleanupSafety.LooksLikeTempOrCacheLocation(full))
             return DataFolderRejection.TempOrCache;
 
-        // The copy/pointer destination is always a dedicated subfolder, never the picked
-        // folder itself, so a folder holding the user's own unrelated files is never touched.
+        // The destination is always a dedicated subfolder, never the picked folder itself.
         var effective = EffectiveDataFolderTarget(full);
 
-        // Equal to, inside, or an ancestor of the CURRENT data folder would otherwise let
-        // CopyRecursive copy the folder into itself (or write a pointer that points at itself).
+        // Equal to, inside, or an ancestor of the current data folder would let CopyRecursive copy the folder
+        // into itself (or write a pointer that points at itself).
         if (RelatesToCurrentDataFolder(effective, currentDataDirectory))
             return DataFolderRejection.InsideCurrentDataFolder;
 
@@ -834,16 +812,11 @@ public static class AppPaths
     }
 
     /// <summary>
-    /// Copies everything under <see cref="DataDirectory"/> (settings, history, caches, logs and
-    /// reports all live somewhere under here, so one walk carries all of them) into
-    /// <paramref name="destination"/>, and reports whether the result is safe to switch to.
-    /// A skipped file that is NOT under <see cref="LogsDirectory"/> means something real
-    /// (settings, history, a cache entry) was silently left behind, so that fails the whole move: the
-    /// partial copy at <paramref name="destination"/> is removed and nothing is switched, the same
-    /// "nothing changed" contract a hard copy failure already had. A skipped file that IS a log (the file
-    /// currently being written, by definition open right now) is fine to leave behind; its own copy simply
-    /// starts fresh at the new location on the next launch, same as every other log rotation already
-    /// works.
+    /// Copies everything under <see cref="DataDirectory"/> into <paramref name="destination"/>, and reports
+    /// whether the result is safe to switch to. A skipped file that is not under <see cref="LogsDirectory"/>
+    /// means something real (settings, history, a cache entry) was left behind, so the whole move fails: the
+    /// partial copy is removed and nothing is switched. A skipped log (the file currently being written)
+    /// is fine to leave behind; its copy starts fresh at the new location on the next launch.
     /// </summary>
     public static bool TryMoveDataFolder(string destination, out IReadOnlyList<string> blockingSkippedFiles) =>
         TryMoveDataFolder(DataDirectory, LogsDirectory, destination, out blockingSkippedFiles);
@@ -922,9 +895,8 @@ public static class AppPaths
     /// A junction or symlink inside the folder being moved would make the copy read from wherever it points
     /// (another user's folder, a system directory) and write that into the new data folder. Every reparse
     /// point, file or directory, is therefore skipped and reported in <paramref name="skipped"/>, which fails
-    /// the move like any other left-behind file. A "still under the source root" comparison of full paths was
-    /// dropped here: <c>Path.GetFullPath</c> never resolves a link, and every folder entered is a child of the
-    /// previous one by construction, so it was always true and could not catch a swapped folder.
+    /// the move like any other left-behind file. No "still under the source root" comparison of full paths:
+    /// <c>Path.GetFullPath</c> never resolves a link, so it could not catch a swapped folder.
     /// </summary>
     private static void CopyRecursive(
         string source, string destination, List<string> skipped, Action<string>? afterEnumerated)
@@ -934,8 +906,8 @@ public static class AppPaths
             // Test seam for the window between listing an entry and using it, where the running app can delete it.
             afterEnumerated?.Invoke(file);
             var name = Path.GetFileName(file);
-            // Neither belongs in a copy of the data itself: the pointer names a location (copying it would
-            // point the new folder at itself), the write probe and the migration marker are transient housekeeping.
+            // Neither belongs in a copy of the data: the pointer names a location (copying it would point the new
+            // folder at itself), the write probe and the migration marker are transient.
             if (string.Equals(name, PointerFileName, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(name, ProbeFileName, StringComparison.OrdinalIgnoreCase)
                 || string.Equals(name, MigrationPendingFileName, StringComparison.OrdinalIgnoreCase))
@@ -1032,9 +1004,8 @@ public static class AppPaths
             return false;
         }
 
-        // The write is the proof. Deleting it is housekeeping, and a scanner holding the file for a
-        // moment must not make a perfectly good directory look unusable, that would move the user's
-        // settings and history somewhere else behind their back.
+        // The write is the proof. A scanner holding the file for a moment must not make a good directory look
+        // unusable and move the user's settings and history somewhere else.
         try
         {
             File.Delete(probe);
@@ -1065,9 +1036,9 @@ public static class AppPaths
 }
 
 /// <summary>
-/// Where the test suite redirects the data folder. A separate type, not a member of <see cref="AppPaths"/>:
-/// setting a static member of that class would run its initializer first, which is the very moment the
-/// folder gets resolved. Production never sets it.
+/// Where the test suite redirects the data folder. A separate type: setting a static member of
+/// <see cref="AppPaths"/> would run its initializer first, which resolves the folder. Production never
+/// sets it.
 /// </summary>
 internal static class AppPathsTestOverride
 {
