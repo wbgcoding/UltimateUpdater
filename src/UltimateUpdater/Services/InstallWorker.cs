@@ -35,59 +35,49 @@ public static class InstallWorker
             : new Dictionary<string, string>();
 
     /// <summary>
-    /// How often the buffer is flushed purely on a clock, on top of the explicit drains around each step
-    /// below. Those explicit calls cover the boundary between steps; this covers the inside of one, a
-    /// single slow step (the restore point, one long install) would otherwise sit on its own log lines for
-    /// its entire duration, exactly the gap a fixed set of drain points produced.
+    /// How often the log buffer is flushed on a clock, on top of the explicit drains around each step, so a
+    /// single slow step (the restore point, one long install) does not sit on its own log lines until it ends.
     /// </summary>
     private static readonly TimeSpan LogFlushInterval = TimeSpan.FromSeconds(1);
 
     /// <summary>
-    /// The one source allowed to run several of its own items at once, a deliberate exception: every other
-    /// source keeps a single global install state (npm, pip, scoop, ...) and two of its own installs at once
-    /// would corrupt it, exactly the reason <see cref="InstallQueue"/>'s class doc gives for the
-    /// user-scope half.
+    /// The one source allowed to run several of its own items at once. Every other source keeps a single
+    /// global install state (npm, pip, scoop, ...) that two installs at once would corrupt, see
+    /// <see cref="InstallQueue"/>'s class doc.
     /// </summary>
     private const string ConcurrentSourceId = "winget";
 
     /// <summary>
-    /// Runs one batch. Returns false once the app has stopped listening, installing the rest with admin
-    /// rights where nobody can see it is exactly what this worker must not do.
+    /// Runs one batch. Returns false once the app has stopped listening: installing the rest with admin
+    /// rights where nobody can see it is what this worker must not do.
     /// </summary>
     /// <param name="sources">
-    /// Test seam only; production always resolves the full registry. Without this the winget-only
-    /// concurrency case (an elevation source, so it can never be driven through
-    /// <see cref="InstallQueue"/>) would be unreachable from a test.
+    /// Test seam only; production always resolves the full registry. It makes the winget-only concurrency
+    /// case reachable from a test.
     /// </param>
     /// <param name="itemCancellations">
-    /// The per-item stop: keyed by <c>"sourceId:itemId"</c>, filled in by this method while an item
-    /// runs and read by <see cref="ElevatedWorker"/>'s "cancel-item" control message. Null (the production
-    /// default from a copy of this worker not yet asked to cancel a single item) simply means per-item stop
-    /// is not wired up; the whole-job token still works exactly as before.
+    /// The per-item stop: keyed by <c>"sourceId:itemId"</c>, filled in while an item runs and read by
+    /// <see cref="ElevatedWorker"/>'s "cancel-item" control message. Null means per-item stop is not wired
+    /// up; the whole-job token still works.
     /// </param>
     public static async Task<bool> RunJobAsync(
         InstallJobFile? job, StreamWriter writer, string jobId, LoggingService logging,
         CancellationToken cancellationToken, IReadOnlyList<IUpdateSource>? sources = null,
         ConcurrentDictionary<string, CancellationTokenSource>? itemCancellations = null)
     {
-        // A payload deserialized with an explicit "items": null (not merely an empty list) still
-        // has to end this job cleanly - Items has a default initializer, but System.Text.Json overwrites it
-        // with the literal null the wire carried, so job.Items.Count alone would throw a
-        // NullReferenceException and drop the whole job with no reply, leaving the app waiting forever.
+        // An explicit "items": null overwrites the default initializer, so Items.Count alone would throw.
         if (job is null || job.Items is null || job.Items.Count == 0)
         {
             Send(writer, jobId, new InstallProgressMessage { Type = "done" });
             return true;
         }
 
-        // The unelevated app is the only thing that ever sends a job, but the pipe is authenticated by
-        // process identity, not by trusting its contents: after ONE approved UAC prompt this
-        // worker stays alive for the whole session, so a job that slipped an unexpected source id or action
-        // through, bug or a compromised medium-integrity parent, must never reach a package manager with
-        // admin rights. Action and batch size are checked once, up front, because neither makes sense per
-        // item; each ITEM is checked individually, in the main loop below, and a bad one is answered with
-        // its own failed "result" (same shape as "unknown source" already was) rather than losing the whole
-        // batch over one entry.
+        // The unelevated app is the only sender, but the pipe is authenticated by process identity, not by
+        // trusting its contents: after one approved UAC prompt this worker stays alive for the whole session,
+        // so a job with an unexpected source id or action (bug or compromised medium-integrity parent) must
+        // never reach a package manager with admin rights. Action and batch size are checked once up front;
+        // each item is checked individually in the main loop, and a bad one gets its own failed "result"
+        // instead of losing the batch.
         if (!Enum.IsDefined(job.Action))
         {
             logging.Error($"Elevated worker: rejecting job with unknown action '{job.Action}'.");
@@ -113,8 +103,7 @@ public static class InstallWorker
             return true;
         }
 
-        // An explicit JSON null element deserializes to a null entry; one of those must not take the
-        // whole batch down with a NullReferenceException further below.
+        // An explicit JSON null element deserializes to a null entry.
         if (job.Items.Any(i => i is null))
         {
             logging.Error("Elevated worker: rejecting job with a null item.");
@@ -125,23 +114,19 @@ public static class InstallWorker
         // this process never went through App.StartUi, so it has no language of its own yet
         LocalizationService.Instance.Apply(job.Language);
 
-        // Runs for the rest of this method (disposed on every exit path, including an exception): the
-        // explicit DrainLog calls below still fire immediately at each step's own boundary, this only
-        // covers the time spent INSIDE one, so a slow step's own lines do not sit unseen for its whole
-        // duration.
+        // Disposed on every exit path. The explicit DrainLog calls still fire at each step's boundary; this
+        // covers the time spent inside one step.
         using var logFlushTimer = new System.Threading.Timer(
             _ => DrainLog(writer, jobId), null, LogFlushInterval, LogFlushInterval);
 
         if (job.CreateRestorePoint)
         {
-            // Flushed before the step starts, not only after: this is the slow step (measured ~22 s
-            // below), so its own lines are not held back until it finishes.
+            // Flushed before the slow step starts, so its own lines are not held back until it finishes.
             DrainLog(writer, jobId);
             logging.Info("Creating a restore point before installing.");
 
-            // Said out loud, and BEFORE it starts: measured at 22 seconds in practice, during which
-            // the strip showed the first package at 0 % and the app looked hung. Reported against the
-            // first item of the batch, because that is the row the strip is already showing.
+            // Said out loud before it starts: the step takes about 20 seconds, and the strip would show the first
+            // package at 0 % and look hung. Reported against the first item, the row the strip already shows.
             var first = job.Items[0];
             Send(writer, jobId, new InstallProgressMessage
             {
@@ -167,9 +152,8 @@ public static class InstallWorker
             }
             catch (Exception ex)
             {
-                // Best effort means best effort: a damaged WMI repository or an unregistered
-                // SystemRestore provider throws past TryCreate's own catch, and losing the whole batch
-                // the user just approved over a missing restore point is the wrong trade.
+                // A damaged WMI repository or an unregistered SystemRestore provider throws past TryCreate's own
+                // catch; losing the approved batch over a missing restore point is the wrong trade.
                 logging.Warn($"Restore point could not be created, installing anyway: {ex.Message}");
             }
         }
@@ -186,11 +170,9 @@ public static class InstallWorker
 
         using (var throttle = new SemaphoreSlim(maxParallel, maxParallel))
         {
-            // Same-source items stay sequential (a package manager's own global state, see the class doc
-            // above), except winget, which may run up to the budget of its own items at once. Different
-            // source groups always run concurrently with each other; ONE semaphore, shared by every group,
-            // is what keeps the TOTAL in flight at any moment within the budget, whichever groups it comes
-            // from.
+            // Same-source items stay sequential (a package manager's global state, see the class doc), except
+            // winget, which may run up to the budget of its own items at once. Different source groups run
+            // concurrently; ONE semaphore shared by every group keeps the total in flight within the budget.
             var groupTasks = job.Items
                 .GroupBy(i => InstallQueue.LaneKey(i.SourceId ?? string.Empty, i.ItemId ?? string.Empty), StringComparer.Ordinal)
                 .Select(group => RunGroupAsync(group.First().SourceId ?? string.Empty, group.ToList(), state, throttle))
@@ -199,10 +181,9 @@ public static class InstallWorker
             await Task.WhenAll(groupTasks);
         }
 
-        // Windows Installer allows only one classic MSI transaction at a time; with several installs now
-        // able to run at once, a refusal for that reason is an expected side effect of THIS batch's own
-        // concurrency, not a real failure, so every item that hit it gets one retry, alone, after every
-        // concurrent group has already finished (the cap is effectively 1 here, on purpose).
+        // Windows Installer allows one classic MSI transaction at a time. A refusal for that reason is an
+        // expected side effect of this batch's own concurrency, so each such item gets one retry, alone, after
+        // every concurrent group has finished.
         foreach (var retryItem in state.DrainSerialRetries())
         {
             if (state.LostApp || cancellationToken.IsCancellationRequested)
@@ -217,8 +198,6 @@ public static class InstallWorker
         return !state.LostApp;
     }
 
-    /// <summary>Shared, read-only view of one job plus the one piece of mutable cross-group state: whether
-    /// the connection to the app was lost, checked before every new item starts.</summary>
     private sealed class JobRunState(
         StreamWriter writer, string jobId, IReadOnlyList<IUpdateSource> sources, InstallJobFile job,
         LoggingService logging, CancellationToken cancellationToken,
@@ -234,8 +213,6 @@ public static class InstallWorker
 
         public volatile bool LostApp;
 
-        /// <summary>Items refused because another (classic MSI) installation was already running,
-        /// collected from every group and worked through serially once every group has finished.</summary>
         private readonly ConcurrentQueue<InstallJobItem> _serialRetries = new();
 
         public void EnqueueSerialRetry(InstallJobItem item) => _serialRetries.Enqueue(item);
@@ -247,9 +224,8 @@ public static class InstallWorker
         }
     }
 
-    /// <summary>Runs one source's share of the batch. Sequential for every source but the one named in
-    /// <see cref="ConcurrentSourceId"/>, which is allowed to have several of its own items in flight, still
-    /// bounded by the shared <paramref name="throttle"/>.</summary>
+    /// <summary>Runs one source's share of the batch. Sequential for every source but
+    /// <see cref="ConcurrentSourceId"/>, bounded by the shared <paramref name="throttle"/>.</summary>
     private static async Task RunGroupAsync(
         string sourceId, List<InstallJobItem> items, JobRunState state, SemaphoreSlim throttle)
     {
@@ -303,26 +279,23 @@ public static class InstallWorker
     }
 
     /// <summary>
-    /// Validates, resolves and runs exactly one item, reporting its outcome. Callable once per item from several
-    /// groups at once.
+    /// Validates, resolves and runs exactly one item, reporting its outcome.
     /// </summary>
     /// <param name="isRetry">
-    /// True for the one serial retry that gives an "another installation was already running" refusal;
-    /// on that pass a second such refusal is a real failure and is reported normally, never queued again.
+    /// True for the one serial retry after an "another installation was already running" refusal; a second
+    /// such refusal on that pass is a real failure and is never queued again.
     /// </param>
     private static async Task RunOneItemAsync(InstallJobItem jobItem, JobRunState state, bool isRetry = false)
     {
         var (writer, jobId, job, logging) = (state.Writer, state.JobId, state.Job, state.Logging);
 
-        // This item's own stop button, layered on top of the whole-job token via a linked CTS,
-        // so either one ends the same await. Registered under "sourceId:itemId" for the whole item,
-        // deregistered in every exit path below (including the ones that never look at the token again).
+        // This item's own stop button, linked to the whole-job token so either one ends the same await.
+        // Registered under "sourceId:itemId" and deregistered on every exit path.
         var itemKey = ItemCancellationKey(jobItem.SourceId, jobItem.ItemId);
         using var itemCts = CancellationTokenSource.CreateLinkedTokenSource(state.CancellationToken);
 
-        // A stop that arrived before this item started (ElevatedWorker remembers it as a cancelled entry)
-        // applies now, instead of being lost and the item installing anyway. One atomic swap, so a stop that
-        // lands between a separate look-up and the registration cannot be overwritten unseen.
+        // A stop that arrived before this item started applies now. One atomic swap, so a stop landing
+        // between a separate look-up and the registration cannot be overwritten unseen.
         state.ItemCancellations?.AddOrUpdate(itemKey, itemCts, (_, earlier) =>
         {
             if (earlier.IsCancellationRequested)
@@ -350,9 +323,7 @@ public static class InstallWorker
         InstallJobItem jobItem, JobRunState state, StreamWriter writer, string jobId, InstallJobFile job,
         LoggingService logging, CancellationToken cancellationToken, bool isRetry)
     {
-        // Flushed before this item's own work starts, not only after it finishes below: with several
-        // groups running at once an earlier item can still be mid-install when this one begins, and
-        // without this its lines waited behind whichever item happened to still be running.
+        // Flushed before this item starts: an earlier item can still be mid-install when this one begins.
         DrainLog(writer, jobId);
 
         // "required" does not stop an explicit JSON null from reaching these properties; a missing field
@@ -367,9 +338,8 @@ public static class InstallWorker
             return;
         }
 
-        // Never resolved into a real source until it passes the allowlist, a source that does not
-        // need elevation (or does not exist at all) must never reach InstallAsync/UninstallAsync with
-        // admin rights, whatever the unelevated app claims about it.
+        // Never resolved into a real source until it passes the allowlist: a source that does not need
+        // elevation (or does not exist) must never reach InstallAsync/UninstallAsync with admin rights.
         if (!InstallQueue.NeedsElevation(jobItem.SourceId))
         {
             logging.Error($"Elevated worker: rejecting item '{jobItem.ItemId}', source '{jobItem.SourceId}' does not need elevation and must never reach this worker.");
@@ -393,8 +363,8 @@ public static class InstallWorker
             return;
         }
 
-        // The scope lands on a winget command line: only the machine scope (or none) is ever sent here. The
-        // user scope runs in the app's own process, an elevated copy of it would be the wrong account.
+        // The scope lands on a winget command line: only the machine scope (or none) is sent here. The user
+        // scope runs in the app's own process; an elevated copy would be the wrong account.
         if (jobItem.Scope is not null
             && (job.Action != InstallAction.FreshInstall || jobItem.Scope != InstallScopes.Machine))
         {
@@ -422,20 +392,15 @@ public static class InstallWorker
             Name = jobItem.Name,
             InstalledVersion = jobItem.InstalledVersion,
             AvailableVersion = jobItem.AvailableVersion,
-            // A rollback's exact target version, so the source can honour it the same way it
-            // would in-process (WingetSource.InstallAsync).
             PinnedVersion = jobItem.PinnedVersion,
             InstallScope = InstallScopes.Normalize(jobItem.Scope),
             Meta = PackageSourceMeta(jobItem.PackageSource),
         };
 
-        // NOT System.Progress<T>: it posts its callback to the captured
-        // SynchronizationContext rather than calling it inline, so a progress report made just before
-        // InstallAsync/UninstallAsync returns could still be QUEUED when the "result" message below is
-        // sent right after, a late progress post landing after the result flipped an already-finished
-        // row back to "running" on the app side. This worker has no UI thread of its own to marshal to
-        // anyway; a plain synchronous IProgress<T> guarantees every report is sent, in order, strictly
-        // before the result that follows it.
+        // Not System.Progress<T>: it posts to the captured SynchronizationContext, so a report made just
+        // before InstallAsync returns could still be queued when the "result" message is sent, and a late
+        // post would flip a finished row back to "running". A synchronous IProgress<T> sends every report
+        // in order, before the result that follows it.
         var progress = new SyncProgress<Models.InstallProgress>(p =>
             Send(writer, jobId, new InstallProgressMessage
             {
@@ -465,10 +430,9 @@ public static class InstallWorker
             else
                 await source.InstallAsync(item, progress, cancellationToken);
 
-            // Only meaningful for an install, and only a quiet note added to a real success,
-            // the same shared re-check the in-process path uses (InstallQueue.IsVersionUnchangedAsync). Only the
-            // immediate look-up happens here: the worker holds its exclusive slot until the job ends, so the
-            // delayed look-ups for a value that still reads old are done by the app after this result arrives.
+            // Only for an install, and only a quiet note on a real success, via the same re-check the in-process
+            // path uses (InstallQueue.IsVersionUnchangedAsync). Only the immediate look-up happens here: the
+            // worker holds its exclusive slot until the job ends, so the delayed look-ups are done by the app.
             var versionUnchanged = job.Action == InstallAction.Install
                 && await InstallQueue.IsVersionUnchangedAsync(source, item, jobItem.InstalledVersion, logging, cancellationToken);
 
@@ -476,42 +440,36 @@ public static class InstallWorker
         }
         catch (OperationCanceledException) when (state.CancellationToken.IsCancellationRequested)
         {
-            // The whole job was stopped, not just this item; every other row is unwinding the same
-            // way right now, so there is nothing useful left to report for this one.
+            // The whole job was stopped; every other row is unwinding too, so there is nothing to report.
             logging.Info($"Worker {job.Action} for '{item.Id}' was stopped.");
             return;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // This item's own stop button, the job otherwise keeps running. ProcessRunner has
-            // already killed the tool's process tree; reporting a plain failure would show it as
-            // something having gone wrong, when the user just chose to stop it.
+            // This item's own stop button; the job keeps running. ProcessRunner already killed the tool's
+            // process tree, and a plain failure would show a deliberate stop as an error.
             logging.Info($"Worker {job.Action} for '{item.Id}' was stopped by its own stop button.");
             delivered = Send(writer, jobId, Result(item.SourceId, item.Id, false, null, cancelled: true));
         }
         catch (ManualHandoffException ex)
         {
-            // An admin-side source handed off to a vendor's own installer dialog; this is not a
-            // failure. The handoff flag travels with the result, Success is false on the wire, but
-            // the app ignores that when the flag is set.
+            // A handoff to a vendor's installer dialog is not a failure. The flag travels with the result;
+            // Success is false on the wire, and the app ignores that when the flag is set.
             logging.Info($"Worker {job.Action} for '{item.Id}' was handed off to an external program.");
             delivered = Send(writer, jobId, Result(item.SourceId, item.Id, false, ex.Message, ex.Message, handoff: true));
         }
         catch (NotApplicableException ex)
         {
-            // The package manager knows a newer version but refuses it for this installation. Nothing
-            // was changed and nothing went wrong, the row says so instead of red. The source's text is
-            // English diagnostic output, so it travels as Detail behind the translated line.
+            // The package manager knows a newer version but refuses it for this installation; nothing went wrong.
+            // The source's text is English diagnostic output, so it travels as Detail behind the translated line.
             logging.Info($"Worker {job.Action} for '{item.Id}': no applicable version.");
             delivered = Send(writer, jobId, Result(
                 item.SourceId, item.Id, false, LocalizationService.Instance["RowStuckDetail"], ex.Message, notApplicable: true));
         }
         catch (Exception ex)
         {
-            // Windows Installer allows only one classic MSI transaction at a time; a first attempt
-            // refused for that reason is not a real failure, it is an expected side effect of running
-            // several installs at once, so it gets one serial retry instead of being reported now. A
-            // SECOND such refusal (isRetry already true) falls through and is a genuine failure.
+            // A first attempt refused because another classic MSI transaction is running is an expected side
+            // effect of concurrent installs and gets one serial retry. A second refusal (isRetry) is a failure.
             if (!isRetry && string.Equals(jobItem.SourceId, "winget", StringComparison.Ordinal)
                 && WingetSource.IsAnotherInstallationRunning(ex.Message))
             {
@@ -521,9 +479,8 @@ public static class InstallWorker
                 return;
             }
 
-            // The localized summary crosses to the user; the raw tool output, English, often with
-            // the user's own paths, goes to the log and travels back as Detail for the row's
-            // "Details" affordance, which the user opens on purpose (SECURITY.md).
+            // The localized summary crosses to the user; the raw tool output (English, often with the user's own
+            // paths) goes to the log and travels back as Detail, which the user opens on purpose (SECURITY.md).
             logging.Error($"Worker {job.Action} failed for '{item.Id}'", ex);
             var summary = InstallErrorExplainer.RowText(item.SourceId, ex.Message, key => LocalizationService.Instance[key])
                 ?? LocalizationService.Instance[job.Action == InstallAction.Uninstall ? "UninstallFailed" : "InstallFailed"];
@@ -543,9 +500,9 @@ public static class InstallWorker
     }
 
     /// <summary>
-    /// Same as <c>SemaphoreSlim.WaitAsync</c>, except a stop during the wait ends the group quietly
-    /// (false) instead of throwing out of it: the caller's own foreach already checks the token before
-    /// every item, this only covers the moment BETWEEN that check and actually getting a slot.
+    /// Like <c>SemaphoreSlim.WaitAsync</c>, except a stop during the wait ends the group quietly (false)
+    /// instead of throwing. The caller's foreach checks the token before every item; this covers the moment
+    /// between that check and getting a slot.
     /// </summary>
     private static async Task<bool> TryEnterAsync(SemaphoreSlim throttle, CancellationToken cancellationToken)
     {
@@ -568,7 +525,6 @@ public static class InstallWorker
             Type = "result",
             SourceId = sourceId,
             ItemId = itemId,
-            // A terminal non-failure has run its course, so the row's bar belongs at the end, not at zero.
             Percent = success || handoff || notApplicable || cancelled ? 100 : 0,
             Success = success,
             Error = error,
@@ -589,12 +545,10 @@ public static class InstallWorker
         }
     }
 
-    /// <summary>Every reply goes through the worker's single write lock, jobs run concurrently.</summary>
     private static bool Send(StreamWriter writer, string jobId, InstallProgressMessage message) =>
         ElevatedWorker.Send(writer, jobId, message);
 
-    /// <summary>Calls back synchronously, unlike <see cref="Progress{T}"/>, see the comment where this is
-    /// constructed.</summary>
+    /// <summary>Calls back synchronously, unlike <see cref="Progress{T}"/>; see where it is constructed.</summary>
     private sealed class SyncProgress<T>(Action<T> callback) : IProgress<T>
     {
         public void Report(T value) => callback(value);

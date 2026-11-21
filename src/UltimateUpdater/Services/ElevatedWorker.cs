@@ -11,7 +11,6 @@ namespace UltimateUpdater.Services;
 /// <summary>One instruction from the app, naming which handler should read the payload.</summary>
 public sealed class ElevatedJob
 {
-    /// <summary>Correlates every reply with this job, so several can be in flight at once.</summary>
     public string Id { get; set; } = string.Empty;
 
     /// <summary>"install", "cleanup" (and its per-lane variants "cleanup-repair", "cleanup-diskcleanup",
@@ -19,15 +18,12 @@ public sealed class ElevatedJob
     public string Kind { get; set; } = string.Empty;
 
     /// <summary>
-    /// Carried on the wire for the sender's own bookkeeping, but the worker never reads it to decide
-    /// exclusivity: a message naming its own serialisation would let an elevated install and an elevated
-    /// cleanup run at the same time, so the worker derives the answer itself (see
-    /// <see cref="ElevatedWorker.IsExclusiveJob"/>). Left on the type, accepted and ignored on purpose,
-    /// so nobody re-wires it into that decision.
+    /// Sent for the sender's own bookkeeping only. The worker never reads it to decide exclusivity (a message
+    /// naming its own serialisation could run an elevated install and cleanup together); see
+    /// <see cref="ElevatedWorker.IsExclusiveJob"/>.
     /// </summary>
     public bool Exclusive { get; set; } = true;
 
-    /// <summary>The job itself, still as JSON, only the matching handler knows its shape.</summary>
     public JsonElement Payload { get; set; }
 }
 
@@ -41,14 +37,13 @@ public sealed class ElevatedReply
 
 /// <summary>
 /// The ELEVATED half of the app (started with --elevated-worker). It connects back to the unelevated main
-/// app and then serves jobs on that one pipe until the app closes it: install and uninstall batches,
-/// cleanup measurements, cleanup runs.
-/// One long-lived worker rather than one per job: a single UAC prompt for the whole session instead of one
-/// per admin action. The cost is an administrator process living as long as the app, so the things that
-/// keep it honest matter: the pipe is authenticated in both directions, every job is validated against
-/// what this app knows how to do, and the worker writes no files of its own (its log lines go back over
-/// the pipe). Jobs are answered CONCURRENTLY and every reply carries its job's id, so a slow measurement
-/// never blocks an install behind it. Only jobs that change the machine take the exclusive slot.
+/// app and serves jobs on that one pipe until the app closes it: install and uninstall batches, cleanup
+/// measurements, cleanup runs.
+/// One long-lived worker means a single UAC prompt per session. The cost is an administrator process living
+/// as long as the app, so the pipe is authenticated in both directions, every job is validated against what
+/// this app knows how to do, and the worker writes no files of its own (its log lines go back over the
+/// pipe). Jobs are answered concurrently and every reply carries its job's id; only jobs that change the
+/// machine take the exclusive slot.
 /// </summary>
 public static class ElevatedWorker
 {
@@ -61,13 +56,11 @@ public static class ElevatedWorker
     private static readonly object WriteLock = new();
 
     /// <summary>
-    /// One lane per kind of machine-changing work, NOT one lane for all of it. Installing serialises
-    /// against installing and cleaning against cleaning (two winget batches, or two passes over the same
-    /// folders, would fight), but an install and a cleanup run side by side. Measurements take no lane.
-    /// The accepted trade: an installer and a cleanup can touch the same temp folder. That stays survivable
-    /// because the cleanup skips (and counts) every file another process holds open, and CleanupSafety
-    /// protects the extraction roots of running single-file apps. A file the installer has not created yet
-    /// is the residual risk, accepted deliberately.
+    /// One lane per kind of machine-changing work. Installing serialises against installing and cleaning
+    /// against cleaning, but an install and a cleanup run side by side. Measurements take no lane.
+    /// The accepted trade: an installer and a cleanup can touch the same temp folder. The cleanup skips (and
+    /// counts) every file another process holds open, and CleanupSafety protects the extraction roots of
+    /// running single-file apps. A file the installer has not created yet is the residual risk.
     /// </summary>
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> Lanes = new();
 
@@ -75,12 +68,9 @@ public static class ElevatedWorker
         Lanes.GetOrAdd(kind, _ => new SemaphoreSlim(1, 1));
 
     /// <summary>
-    /// The cross-category exclusion, on top of the per-kind lane above: an elevated install only waits on
-    /// the two cleanup kinds that touch the temp files an install unpacks
-    /// (<see cref="ContendingCleanupKinds"/>), the app's own file deletion and Windows disk cleanup.
-    /// System repair and drive optimisation never touch that area, so they take NO cross-category slot and
-    /// only keep their own per-kind lane (an install once waited 15 minutes behind a DISM repair that could
-    /// never have collided with it).
+    /// The cross-category exclusion on top of the per-kind lane: an elevated install only waits on the two
+    /// cleanup kinds that touch the temp files an install unpacks (<see cref="ContendingCleanupKinds"/>).
+    /// System repair and drive optimisation never touch that area and keep only their own lane.
     /// Modelled as a single-writer/many-readers lock: install is the sole writer
     /// (<see cref="InstallVsCleanupWriterLock"/> held outright), each contending cleanup kind is a reader
     /// (they contend for that lock as ONE group, via <see cref="_activeCleanupReaders"/>, guarded by its
@@ -106,11 +96,9 @@ public static class ElevatedWorker
     };
 
     /// <summary>
-    /// Acquires the cross-category slot for one exclusive job: the writer lock outright for
-    /// "install", a shared reader slot for a contending cleanup kind, or no slot at all (a no-op disposable)
-    /// for every other exclusive kind. Independent of <see cref="LaneFor"/> and of any real install/cleanup
-    /// work, so it is directly testable by racing fabricated jobs against each other with no pipe, no real
-    /// install, and no real cleanup target.
+    /// Acquires the cross-category slot for one exclusive job: the writer lock for "install", a shared reader
+    /// slot for a contending cleanup kind, or a no-op disposable for every other exclusive kind. Independent
+    /// of <see cref="LaneFor"/> and of any real work, so it is testable by racing fabricated jobs.
     /// </summary>
     internal static async Task<IAsyncDisposable> AcquireMachineChangeSlotAsync(string kind, CancellationToken token)
     {
@@ -132,10 +120,9 @@ public static class ElevatedWorker
         await CleanupReaderGate.WaitAsync(token);
         try
         {
-            // Only the FIRST reader actually waits on the writer lock; every later reader just joins the
-            // group already holding it. Doing this while holding CleanupReaderGate is what stops a second
-            // reader from reading "a reader is already active" before the first one has genuinely finished
-            // acquiring the writer lock.
+            // Only the FIRST reader waits on the writer lock; later readers join the group already holding it.
+            // Doing this under CleanupReaderGate stops a second reader from seeing "a reader is active" before the
+            // first has finished acquiring the writer lock.
             if (_activeCleanupReaders == 0)
                 await InstallVsCleanupWriterLock.WaitAsync(token);
 
@@ -175,7 +162,6 @@ public static class ElevatedWorker
         public async ValueTask DisposeAsync() => await ExitCleanupReaderAsync();
     }
 
-    /// <summary>The cross-category slot for a kind that contends with nothing.</summary>
     private sealed class NoOpSlot : IAsyncDisposable
     {
         public static readonly NoOpSlot Instance = new();
@@ -184,15 +170,11 @@ public static class ElevatedWorker
     }
 
     /// <summary>
-    /// The ONE extra exclusion beyond the install/cleanup pairing above. "cleanup-repair" (DISM
-    /// /RestoreHealth, component cleanup, sfc) takes no cross-category slot, so it runs freely beside an
-    /// install (an install once waited 15 minutes behind a repair that could never have collided with it),
-    /// except the one pairing that genuinely CAN collide: a repair and an elevated install that contains a
-    /// Windows Update item, both of which use the servicing stack and can fail busy running together.
-    /// A plain mutual-exclusion lock rather than a reader/writer shape, because exactly two kinds ever take
-    /// it and neither is a "many readers" group: whichever side gets there first holds it, the other
-    /// waits. Every other pairing (repair alongside a non-Windows-Update install, repair alongside any
-    /// cleanup) takes no slot here at all.
+    /// The one extra exclusion beyond the install/cleanup pairing: "cleanup-repair" (DISM /RestoreHealth,
+    /// component cleanup, sfc) runs freely beside an install, except an elevated install that contains a
+    /// Windows Update item. Both use the servicing stack and can fail busy when run together.
+    /// A plain mutual-exclusion lock, because exactly two kinds take it and neither is a "many readers"
+    /// group: whichever gets there first holds it.
     /// </summary>
     private static readonly SemaphoreSlim RepairVsWindowsUpdateLock = new(1, 1);
 
@@ -221,9 +203,8 @@ public static class ElevatedWorker
             return;
         }
 
-        // The callback is still running and signals this handle when it ends. Disposing it now would make
-        // that signal throw on a thread-pool thread and take the whole worker down, so the handle is left
-        // for the finalizer.
+        // The callback is still running and signals this handle when it ends. Disposing it now would make that
+        // signal throw on a thread-pool thread and take the worker down, so the handle is left for the finalizer.
     }
 
     internal static readonly TimeSpan LogFlushStopWait = TimeSpan.FromSeconds(2);
@@ -264,7 +245,6 @@ public static class ElevatedWorker
         }
     }
 
-    /// <summary>Releases the first slot, then the second.</summary>
     private sealed class CompositeSlot(IAsyncDisposable first, IAsyncDisposable second) : IAsyncDisposable
     {
         public async ValueTask DisposeAsync()
@@ -284,11 +264,8 @@ public static class ElevatedWorker
     }
 
     /// <summary>
-    /// Whether an "install" job's own payload names the Windows Update source (the source id
-    /// string itself, never trusted from anywhere else: this is the worker reading the SAME job it is
-    /// about to run, not a claim from a separate field). A payload that fails to deserialize, or any job
-    /// that is not "install" at all, answers false, and the caller falls through to "no slot needed"
-    /// exactly like every other non-matching kind.
+    /// Whether an "install" job's own payload names the Windows Update source. Read from the job about to
+    /// run, never from a separate field. A payload that fails to deserialize, or any other kind, answers false.
     /// </summary>
     private static bool ContainsWindowsUpdateItem(ElevatedJob job)
     {
@@ -309,11 +286,10 @@ public static class ElevatedWorker
     }
 
     /// <summary>
-    /// Whether <paramref name="job"/> changes the machine and therefore needs the exclusion above, derived
-    /// purely from the job's own KIND and, for a cleanup job, whether its payload's own "command" is
-    /// "scan" (read-only, never takes any lane) or "clean" (the wire's <see cref="ElevatedJob.
-    /// Exclusive"/> is deliberately never read here). Internal and pure so a fabricated job whose wire
-    /// field lies about this is directly testable.
+    /// Whether <paramref name="job"/> changes the machine and so needs the exclusion above. Derived purely
+    /// from the job's kind and, for a cleanup job, whether its payload's "command" is "scan" or "analyze"
+    /// (read-only); the wire's <see cref="ElevatedJob.Exclusive"/> is deliberately never read. Internal and
+    /// pure so a fabricated job whose wire field lies is testable.
     /// </summary>
     internal static bool IsExclusiveJob(ElevatedJob job) => job.Kind switch
     {
@@ -323,12 +299,10 @@ public static class ElevatedWorker
         _ => true,
     };
 
-    /// <summary>Neither "scan" (measuring what could be freed) nor "analyze" (DISM's own read-only
-    /// AnalyzeComponentStore) ever deletes anything, so both run alongside whatever else the worker is doing
-    /// rather than taking the exclusive per-kind lane. Every other "cleanup"-kind command reaches this
-    /// worker on the "cleanup" job kind ONLY through a "clean" command (see
-    /// CleanupViewModel.RunElevatedAsync), which does change the machine and must stay exclusive. Otherwise
-    /// "analyze" would queue behind a running cleanup with no visible reason.</summary>
+    /// <summary>"scan" (measuring what could be freed) and "analyze" (DISM's read-only AnalyzeComponentStore)
+    /// never delete anything, so they run alongside other work instead of taking the exclusive lane. Every
+    /// other command arrives on the "cleanup" kind only as "clean" (see CleanupViewModel.RunElevatedAsync),
+    /// which changes the machine and stays exclusive.</summary>
     private static bool IsReadOnlyCleanupCommand(JsonElement payload) =>
         payload.ValueKind == JsonValueKind.Object
         && payload.TryGetProperty("command", out var commandValue)
@@ -336,21 +310,18 @@ public static class ElevatedWorker
         && commandValue.GetString() is "scan" or "analyze";
 
     /// <summary>
-    /// Every job kind this worker will accept; anything else ends the session rather than being guessed at.
-    /// "cleanup-repair", "cleanup-diskcleanup", "cleanup-defrag" and "cleanup-registry" exist ONLY so each
-    /// gets its own lane above, keeping cleanup's five lanes (file targets, registry, repair, Disk Cleanup,
-    /// drive optimisation) from serialising against each other the way five same-kind "cleanup" jobs
-    /// otherwise would; all four are still handled by <see cref="RunCleanupAsync"/>, exactly like plain
-    /// "cleanup". Extracted so an unrecognised kind can be proven to end the session without a live pipe.
+    /// Every job kind this worker accepts; anything else ends the session rather than being guessed at.
+    /// The "cleanup-*" variants exist only so each gets its own lane above, keeping cleanup's five lanes from
+    /// serialising against each other; all are handled by <see cref="RunCleanupAsync"/> like plain "cleanup".
+    /// Extracted so an unrecognised kind can be tested without a live pipe.
     /// </summary>
     internal static bool IsRecognizedKind(string kind) =>
         kind is "install" or "cleanup" or "cleanup-repair" or "cleanup-diskcleanup" or "cleanup-defrag"
             or "cleanup-registry" or "control";
 
     /// <summary>
-    /// The stop switch and the hold of a running job. Without this the app could only ever stop queueing
-    /// MORE work: a stop during an elevated batch waited for every remaining package, which is exactly how
-    /// long "stopping takes for ever" lasted.
+    /// The stop switch and the hold of a running job, so a stop does not have to wait for every remaining
+    /// package of an elevated batch.
     /// </summary>
     private sealed class JobControl
     {
@@ -359,11 +330,10 @@ public static class ElevatedWorker
         public PauseGate Pause { get; } = new();
 
         /// <summary>
-        /// Per-item cancellation sources for THIS job, keyed <c>"sourceId:itemId"</c>: lets one
-        /// item be stopped without touching <see cref="Cancellation"/>, the whole-job switch. Populated by
-        /// <see cref="InstallWorker"/> for the span of one item's install/uninstall call and removed again
-        /// in its own finally; a key this dictionary does not have is simply ignored by <see cref="Control"/>,
-        /// the item may already have finished, which is a race, not an error.
+        /// Per-item cancellation sources for this job, keyed <c>"sourceId:itemId"</c>: stops one item without
+        /// touching <see cref="Cancellation"/>, the whole-job switch. Populated by <see cref="InstallWorker"/>
+        /// for the span of one item's install/uninstall call. A key this dictionary does not have is ignored by
+        /// <see cref="Control"/>: the item may already have finished, which is a race, not an error.
         /// </summary>
         public System.Collections.Concurrent.ConcurrentDictionary<string, CancellationTokenSource> ItemCancellations { get; } = new();
     }
@@ -371,10 +341,9 @@ public static class ElevatedWorker
     private static readonly ConcurrentDictionary<string, JobControl> Active = new();
 
     /// <summary>
-    /// Log lines waiting to go back to the app. This process must not write files, every directory it
-    /// could write to belongs to the unelevated user, so the lines are held here and drained by the job
-    /// that logged them, in that handler's own message shape. Lines logged outside any job (the read loop)
-    /// wait in <see cref="PendingLog"/> for whichever job drains next.
+    /// Log lines waiting to go back to the app. This process must not write files (every directory it could
+    /// write to belongs to the unelevated user), so lines are held here and drained by the job that logged
+    /// them. Lines logged outside any job (the read loop) wait for whichever job drains next.
     /// </summary>
     private static readonly ConcurrentQueue<string> PendingLog = new();
 
@@ -431,9 +400,8 @@ public static class ElevatedWorker
     {
         // Anonymous impersonation: with the default the pipe SERVER may impersonate its client, and this
         // client holds an administrator token.
-        // Asynchronous is not optional here. The read loop now waits for the next job WHILE a running job
-        // writes its replies, and on a pipe handle opened without overlapped I/O the write blocks behind
-        // the pending read, the worker accepted the job and then never answered it.
+        // Asynchronous is required: the read loop waits for the next job while a running job writes its replies,
+        // and on a pipe handle opened without overlapped I/O the write blocks behind the pending read.
         await using var pipe = new NamedPipeClientStream(
             ".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous,
             System.Security.Principal.TokenImpersonationLevel.Anonymous);
@@ -479,10 +447,8 @@ public static class ElevatedWorker
         }
         finally
         {
-            // A repeat count still pending (the same warning logged over and over near the very end)
-            // would otherwise never make it into PendingLog: this is the last line of the worker's own
-            // life, nothing after it calls Info/Warn/Error again to flush it out incidentally. Sink mode
-            // has no disk write to wait for, so this never blocks on anything.
+            // A pending repeat count would otherwise never reach PendingLog: this is the last line of the worker's
+            // life and nothing after it logs again. Sink mode has no disk write, so this never blocks.
             logging.Flush();
 
             // The session ends BECAUSE the app closed the pipe, so the last flush has nowhere to go.
@@ -506,16 +472,15 @@ public static class ElevatedWorker
 
     /// <summary>
     /// The largest a single job line may be. A batch is capped at 500 items with 512 characters per field
-    /// (see <see cref="InstallWorker"/>), so a legitimate job stays far below this, but those limits are
-    /// applied AFTER deserialisation, and reading an unbounded line would let a compromised parent make an
-    /// administrator process allocate as much memory as it likes before any of them are checked.
+    /// (see <see cref="InstallWorker"/>), but those limits apply after deserialisation, and an unbounded line
+    /// would let a compromised parent make this administrator process allocate without limit first.
     /// </summary>
     private const int MaxJobLineChars = 2 * 1024 * 1024;
 
     /// <summary>
     /// Reads job lines in blocks of 4 KB instead of one character per call. Characters read past the end
-    /// of a line stay in this reader for the next call, so nothing is lost between lines. A line that runs
-    /// past <see cref="MaxJobLineChars"/> ends the session exactly as before.
+    /// of a line stay in this reader for the next call. A line that runs past <see cref="MaxJobLineChars"/>
+    /// ends the session.
     /// </summary>
     internal sealed class BoundedLineReader(StreamReader reader)
     {
@@ -582,25 +547,22 @@ public static class ElevatedWorker
 
             // Anything unrecognised ends the session rather than being guessed at: an elevated process
             // should do nothing at all before it does the wrong thing.
-            // IsNullOrEmpty: a line with "id": null deserialises to a null Id, and .Length on it threw outside
-            // every catch here, ending the helper uncleanly instead of by this rule.
+            // IsNullOrEmpty: a line with "id": null deserialises to a null Id.
             if (job is null || !IsRecognizedKind(job.Kind) || string.IsNullOrEmpty(job.Id))
             {
                 logging.Warn($"Elevated worker received an unusable job ('{job?.Kind}'); ending the session.");
                 break;
             }
 
-            // Stopping and holding are answered on the read loop itself, never queued behind the job they
-            // are aimed at, waiting for the exclusive slot to stop the thing that holds it is a deadlock.
+            // Stopping and holding are answered on the read loop itself, never queued behind the job they are
+            // aimed at: waiting for the exclusive slot to stop the thing that holds it is a deadlock.
             if (job.Kind == "control")
             {
                 Control(job, logging);
                 continue;
             }
 
-            // Logged from the DERIVED answer, not the wire field: the field is never read for
-            // the actual decision, so logging it instead would tell an admin something the worker did not
-            // actually act on.
+            // Logged from the derived answer, not the wire field, which is never read for the decision.
             logging.Info($"Elevated job '{job.Kind}' accepted (exclusive: {IsExclusiveJob(job)}).");
 
             // Registered here rather than inside the task: the pipe is ordered, so a control line that
@@ -614,9 +576,8 @@ public static class ElevatedWorker
             _ = task.ContinueWith(t => running.TryRemove(t, out _), TaskScheduler.Default);
         }
 
-        // The pipe is gone, so nothing is watching this process any more. Waiting alone let an install or a
-        // cleanup keep running unobserved for the whole bound below, long after the app had closed, so
-        // every job in flight is stopped first, then what is left is waited out.
+        // The pipe is gone, so nothing is watching this process. Every job in flight is stopped first, then
+        // what is left is waited out.
         CancelAll(logging);
 
         // Never leave an elevated job half-done because the app went away mid-write: a stopped job still
@@ -710,10 +671,7 @@ public static class ElevatedWorker
                     break;
 
                 case "cancel-item":
-                    // Looks up the job as above, then the per-item source INSIDE that job. A key this job
-                    // never registered (already finished, or never existed) is ignored, not an error: an
-                    // unknown key is trusted as nothing beyond "nothing to do", the same rule the elevated
-                    // worker applies everywhere else.
+                    // A key this job never registered (already finished, or never existed) is ignored, not an error.
                     if (itemSourceId is not null && itemId is not null
                         && control.ItemCancellations.TryGetValue($"{itemSourceId}:{itemId}", out var itemCts))
                     {
@@ -747,10 +705,8 @@ public static class ElevatedWorker
         }
         catch (ObjectDisposedException)
         {
-            // Same race CancelAll already guards against: the job finished and disposed the switch
-            // between the TryGetValue above and this call. The job is over either way, so there is
-            // nothing left to cancel/pause/resume, letting this escape would take the whole elevated
-            // worker down instead of just failing this one control message.
+            // Same race CancelAll guards against: the job finished and disposed the switch between the
+            // TryGetValue above and this call. Letting this escape would take the whole worker down.
         }
     }
 
@@ -768,10 +724,9 @@ public static class ElevatedWorker
         {
             if (isExclusive)
             {
-                // The slots first, the per-kind lane second, always in that order: two different job
-                // kinds acquiring these in the same sequence can never wait on each other in opposite
-                // directions. The waiting line goes to the app BEFORE the wait, not after: a row sitting
-                // at 0% with no explanation looks hung.
+                // Slots first, per-kind lane second, always in that order, so two job kinds can never wait on each
+                // other in opposite directions. The waiting line goes to the app BEFORE the wait: a row sitting at 0%
+                // with no explanation looks hung.
                 slots = await AcquireJobSlotsAsync(job, () => NotifyWaitingForCleanup(job, writer), control.Cancellation.Token);
 
                 // With the token: a job still queued behind another one of its own kind must be stoppable
@@ -843,10 +798,9 @@ public static class ElevatedWorker
     }
 
     /// <summary>
-    /// Tells the app that this install job is about to wait for a contending cleanup lane to
-    /// release its slot, one progress line per item so every row in the batch (and the queue behind it)
-    /// says so instead of sitting at an unexplained 0%. Best-effort: a payload that will not deserialize
-    /// just means no message goes out, the wait still happens either way.
+    /// Tells the app that this install job is about to wait for a contending cleanup lane, one progress
+    /// line per item so every row in the batch says why it sits at 0%. Best-effort: a payload that will
+    /// not deserialize means no message goes out.
     /// </summary>
     private static void NotifyWaitingForCleanup(ElevatedJob job, StreamWriter writer)
     {

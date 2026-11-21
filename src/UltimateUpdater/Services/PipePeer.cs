@@ -3,11 +3,10 @@ using System.IO.Pipes;
 namespace UltimateUpdater.Services;
 
 /// <summary>
-/// Who is on the other end of a worker pipe. Both elevated workers (install, cleanup) authenticate their
-/// server the same way, so the check lives in one place rather than being copied per worker.
+/// Who is on the other end of a worker pipe. The elevated worker authenticates its server here.
 /// Pipe names are enumerable by any process running as this user, and when the app gives up on a name it
-/// becomes free again while the elevated worker is still connecting: so "I connected to the name I was
-/// given" proves nothing on its own.
+/// becomes free again while the worker is still connecting, so "I connected to the name I was given"
+/// proves nothing on its own.
 /// </summary>
 internal static class PipePeer
 {

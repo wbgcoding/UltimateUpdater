@@ -166,9 +166,9 @@ internal sealed class SuspendedChildProcess : IChildProcess
 
     public void Kill()
     {
-        // The job misses whatever broke away from it, and winget starts its installers that way: a timed-out
-        // Git setup kept spinning at full CPU after its winget was gone. So the tree goes first, walked by
-        // parent while that parent is still alive; the handle held here keeps its id from being reused.
+        // The job misses whatever broke away from it, and winget starts its installers that way. So the tree
+        // goes first, walked by parent while that parent is still alive; the handle held here keeps its id
+        // from being reused.
         KillDescendants(GetProcessId(_process));
 
         // Failure means the process or job is already gone, which is the state wanted.

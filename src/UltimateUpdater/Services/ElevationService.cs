@@ -20,22 +20,17 @@ public static class ElevationService
     public static readonly string[] WorkerArguments = [WorkerArgument];
 
     /// <summary>
-    /// True only for the dedicated elevated worker process: the one signal <see cref="ProcessRunner"/>'s
-    /// untrusted-binary gate must key off. NOT the same as <see cref="IsElevated"/>: that reflects the
-    /// current process's OS token, which is also true for the ordinary, never-worker main process on a
-    /// machine where UAC is off or the account is the built-in Administrator: a real, observed case (a
-    /// scan on such a machine hit "Refusing to run an unsigned executable with administrator rights" for
-    /// every profile-local CLI tool: pnpm, mise, npm, gcloud, pyenv-win, none of which ever touch the
-    /// elevated worker). Computed once, before <c>OnStartup</c>, the same way <c>App.RunningAsWorker</c>
-    /// always has: this is that same check, now centralized so <c>ProcessRunner</c> can reach it too.
+    /// True only for the dedicated elevated worker process: the signal <see cref="ProcessRunner"/>'s
+    /// untrusted-binary gate keys off. Not the same as <see cref="IsElevated"/>, which reflects the OS token
+    /// and is also true for the ordinary main process when UAC is off or the account is the built-in
+    /// Administrator. Computed once, before <c>OnStartup</c>.
     /// </summary>
     public static readonly bool IsElevatedWorkerProcess = IsWorkerInvocation(Environment.GetCommandLineArgs().Skip(1));
 
     /// <summary>
-    /// True when the FIRST argument (the executable path already removed) is a worker flag. Only the first:
-    /// the app starts its worker with the flag leading, and a flag further along is just data, for example
-    /// a path that happens to be spelled the same, which must never put a normal start into headless mode.
-    /// The one place both the early process-wide decision and <c>OnStartup</c> take it from.
+    /// True when the first argument (the executable path already removed) is a worker flag. Only the first:
+    /// the app starts its worker with the flag leading, and a flag further along is data, for example a path
+    /// spelled the same, which must never put a normal start into headless mode.
     /// </summary>
     internal static bool IsWorkerInvocation(IEnumerable<string> argumentsWithoutExecutable) =>
         argumentsWithoutExecutable.FirstOrDefault() is { } first && WorkerArguments.Contains(first, StringComparer.Ordinal);
@@ -57,14 +52,12 @@ public static class ElevationService
     internal static readonly AsyncLocal<bool?> IsElevatedForTest = new();
 
     /// <summary>
-    /// Held for the app's entire lifetime once <see cref="LockSelfImage"/> runs. <see cref="StartWorker"/>
-    /// re-resolves <c>Environment.ProcessPath</c> by NAME every time it launches the elevated worker:
-    /// a running exe can be renamed out from under itself, and a portable/per-user install sits in a
-    /// location the same user can write to, so another process running as this user could swap the file,
-    /// and the next admin job would launch the swap-in WITH admin rights on the back of an already-approved
-    /// UAC prompt. <see cref="FileShare.Read"/> (no <see cref="FileShare.Delete"/>) makes Windows itself
-    /// refuse any rename or delete of this exact file for as long as the handle stays open; prevention,
-    /// not detection, so there is nothing left to check before <see cref="Process.Start"/>.
+    /// Held for the app's lifetime once <see cref="LockSelfImage"/> runs. <see cref="StartWorker"/> resolves
+    /// <c>Environment.ProcessPath</c> by name on every launch, and a portable/per-user install sits where the
+    /// same user can write, so another process could swap the file and have the next admin job launch it with
+    /// admin rights on the back of an approved UAC prompt. <see cref="FileShare.Read"/> (no
+    /// <see cref="FileShare.Delete"/>) makes Windows refuse any rename or delete of this file while the handle
+    /// is open: prevention, not detection.
     /// </summary>
     private static FileStream? _selfImageLock;
 
@@ -220,11 +213,11 @@ public static class ElevationService
     internal static void ResetElevationRefusalForTests() => _elevationRefused = false;
 
     /// <summary>
-    /// Releases the lock above. <see cref="SelfUpdateService"/>'s portable path renames THIS SAME FILE on
+    /// Releases the lock above. <see cref="SelfUpdateService"/>'s portable path renames this same file on
     /// purpose (moves the running exe aside, copies the verified update into its place) and must call this
-    /// first, or that rename fails with the very sharing violation the lock exists to cause for everyone
-    /// else. Safe to call even if the lock was never taken. Returns the identity of the file that was locked
-    /// (null when none was held or it cannot be read), for <see cref="RelockSelfImage"/>.
+    /// first, or the rename fails with the sharing violation the lock exists to cause. Safe to call if the
+    /// lock was never taken. Returns the identity of the file that was locked (null when none was held or it
+    /// cannot be read), for <see cref="RelockSelfImage"/>.
     /// </summary>
     public static (uint VolumeSerial, ulong FileIndex)? ReleaseSelfImageLock()
     {
@@ -257,10 +250,8 @@ public static class ElevationService
         StartWorker(WorkerArgument, pipeName, logging);
 
     /// <summary>
-    /// Set true ONLY by the test assembly's module initializer, never by product code. A test
-    /// host that reaches this far despite every seam meant to stop it first would otherwise raise a real
-    /// UAC prompt on whoever's machine is running the suite; this makes that outcome impossible instead
-    /// of merely unlikely.
+    /// Set true only by the test assembly's module initializer. It makes a real UAC prompt on a developer's
+    /// machine impossible if a test reaches this far despite every other seam.
     /// </summary>
     internal static bool BlockRealLaunchForTests { get; set; }
 
