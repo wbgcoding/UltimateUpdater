@@ -5,6 +5,16 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+### Updates
+- The cleanup window is a window of its own: starting a scan or working in the main window no longer
+  closes it, and both can sit side by side with their own taskbar buttons.
+- Setup is about a fifth smaller and the portable program file about a third: it no longer carries a
+  second, recompiled copy of the .NET runtime.
+- A Windows Update install stopped because the update service shut down now says so in plain words
+  instead of showing a bare error number.
+- A failed install's details no longer repeat the same "waiting for another installation" line dozens of
+  times, so the actual error stays visible.
+
 ## [1.2.0] - 2026-11-15
 
 ### Updates
