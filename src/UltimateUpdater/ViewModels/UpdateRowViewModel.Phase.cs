@@ -3,18 +3,13 @@ using UltimateUpdater.Services;
 
 namespace UltimateUpdater.ViewModels;
 
-/// <summary>
-/// The honest download/install split of a running row. A figure is shown only while the tool really
-/// reports a download; once the download is over, or the tool never reported anything measurable, the
-/// row says "Installing…" with the time that run has taken instead of a percentage nobody measured.
-/// </summary>
+/// <summary>The download/install split of a running row: a figure is shown only while the tool really reports a download, otherwise the row says "Installing..." with the elapsed time.</summary>
 public partial class UpdateRowViewModel
 {
-    /// <summary>How long a finished download reading may stand without a new transfer starting before the
-    /// row calls the rest "installing". Long enough for pip to open the next file's bar.</summary>
+    /// <summary>How long a finished download reading may stand before the row calls the rest "installing"; long enough for pip to open the next file's bar.</summary>
     internal static readonly TimeSpan DownloadDoneGrace = TimeSpan.FromSeconds(1.5);
 
-    /// <summary>The row's clock; swapped in tests so the grace period and the elapsed text are exact.</summary>
+    /// <summary>The row's clock; swapped in tests so the grace period and elapsed text are exact.</summary>
     internal Func<DateTimeOffset> Clock { get; set; } = () => DateTimeOffset.UtcNow;
 
     private InstallPhase _phase;
@@ -120,11 +115,7 @@ public partial class UpdateRowViewModel
         OnPropertyChanged(nameof(RunningProgressText));
     }
 
-    /// <summary>
-    /// Reads the phase out of one status and returns it with the figures the row should show. A download
-    /// reading keeps the row in Downloading; an install line from the tool, or a finished reading that
-    /// nothing followed (see <see cref="Tick"/>), moves it to Installing.
-    /// </summary>
+    /// <summary>Reads the phase out of one status and returns it with the figures the row should show; see <see cref="Tick"/> for the inferred Installing.</summary>
     private InstallItemStatus TrackPhase(InstallItemStatus status)
     {
         if (status.IsTerminal)

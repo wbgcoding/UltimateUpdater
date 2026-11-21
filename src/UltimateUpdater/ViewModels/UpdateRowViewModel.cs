@@ -25,8 +25,7 @@ public partial class UpdateRowViewModel : ObservableObject
     [ObservableProperty]
     private bool isSelected;
 
-    /// <summary>Space-key equivalent of clicking the row's own checkbox, a no-op where the checkbox
-    /// itself is not shown (<see cref="CanInstall"/> false), same as clicking empty space would be.</summary>
+    /// <summary>Space-key equivalent of clicking the row's checkbox; a no-op where the checkbox is not shown.</summary>
     [RelayCommand]
     private void ToggleSelect()
     {
@@ -40,10 +39,7 @@ public partial class UpdateRowViewModel : ObservableObject
     [ObservableProperty]
     private RowInstallState installState;
 
-    /// <summary>How many times in a row the same classified failure has now happened, the exact
-    /// count <c>PersistentFailureRecord.Count</c> carries in settings; kept here purely for the hint text
-    /// below, since only MainViewModel.Filtering.cs (which owns this sync) can see the settings record
-    /// itself.</summary>
+    /// <summary>How many times in a row the same classified failure has happened (mirrors <c>PersistentFailureRecord.Count</c>), kept for the hint text.</summary>
     [ObservableProperty]
     private int persistentFailureAttempts;
 
@@ -84,14 +80,11 @@ public partial class UpdateRowViewModel : ObservableObject
     /// <summary>The source as a person writes it: "Windows Update", not "windowsupdate".</summary>
     public string SourceDisplay => SourceNames.Display(Item.SourceId);
 
-    /// <summary>The vendor part of a winget-shaped id ("Mozilla" from "Mozilla.Firefox"), read only for
-    /// winget rows since only winget ids carry that "Publisher.Product" shape (a pip id such as
-    /// "anyio#C:\...\python.exe" has a dot too, but in the interpreter path). Windows Update rows report
-    /// "Microsoft" instead (its product name, never translated), except a driver update, whose real
-    /// manufacturer WindowsUpdateSource captures from WUA when it can; with none captured it shows none
-    /// rather than the wrong vendor. A pip row has no prefix to read: its publisher comes from PyPI's
-    /// author/maintainer facts, fetched by the background enrichment pass that also looks up its release
-    /// date and size (<see cref="EnrichedPublisher"/>), so it stays blank until that pass reaches the row.</summary>
+    /// <summary>
+    /// The vendor part of a winget-shaped id ("Mozilla" from "Mozilla.Firefox"), read only for winget rows.
+    /// Windows Update rows report "Microsoft", except a driver update with a captured manufacturer. A pip
+    /// row's publisher comes from the background enrichment pass (<see cref="EnrichedPublisher"/>).
+    /// </summary>
     public string? Publisher => Item.SourceId switch
     {
         "winget" => Services.Sources.PublisherFromId.Derive(Item.Id),
@@ -100,9 +93,7 @@ public partial class UpdateRowViewModel : ObservableObject
         _ => null,
     };
 
-    /// <summary>The same fact as <see cref="Publisher"/>, shortened for the narrow table column
-    /// (<see cref="Services.PublisherShortener"/>); the tooltip on that column, and every other place a
-    /// publisher is shown, keeps the full <see cref="Publisher"/> text.</summary>
+    /// <summary>The same fact as <see cref="Publisher"/>, shortened for the narrow table column (<see cref="Services.PublisherShortener"/>).</summary>
     public string? PublisherDisplay => Publisher is { } publisher ? Services.PublisherShortener.Shorten(publisher) : null;
 
     private string? WindowsUpdatePublisher =>
@@ -112,19 +103,14 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public bool HasPublisher => Publisher is not null;
 
-    /// <summary>The id as a person should read it: pip's composite "package#python.exe path" form
-    /// (see <see cref="Services.Sources.PackageManagers.PipSource"/>) collapses to the plain package name,
-    /// since the interpreter path is not an identifier the user asked for, it is plumbing that lets two
-    /// interpreters keep separate rows.</summary>
+    /// <summary>The id as a person should read it: pip's composite "package#python.exe path" form collapses to the package name.</summary>
     private string DisplayId => Item.SourceId == "pip"
         ? Services.Sources.PackageManagers.PipSource.PackageName(Item)
         : Item.Id;
 
     /// <summary>
-    /// The row's own hover text, one fact per line, each shown only where known: the full name (for a name
-    /// the row trims to an ellipsis), the package id, the source and, where the id carries one, the
-    /// publisher; a pip row adds the interpreter it was found on, since two interpreters can offer the
-    /// exact same package name with no other way to tell the rows apart.
+    /// The row's hover text, one fact per line where known: full name, package id, source and publisher;
+    /// a pip row adds its interpreter, since two interpreters can offer the same package name.
     /// </summary>
     public string NameTooltip
     {
@@ -141,9 +127,7 @@ public partial class UpdateRowViewModel : ObservableObject
         }
     }
 
-    /// <summary>Whether this row's install goes through the elevated worker (one shared UAC prompt for
-    /// the whole admin batch), shown as a small badge on the queue row so waiting for that prompt is not
-    /// a surprise.</summary>
+    /// <summary>Whether this row's install goes through the elevated worker (one shared UAC prompt for the admin batch).</summary>
     public bool NeedsElevation => InstallQueue.NeedsElevation(Item.SourceId);
 
     /// <summary>
@@ -153,10 +137,8 @@ public partial class UpdateRowViewModel : ObservableObject
     private IReadOnlyList<string> _alternateSources = [];
 
     /// <summary>
-    /// The rows this one stands in for. They are REAL, separate installations, uv's isolated tool venv and
-    /// pip's site-packages both had graphify at the same version, so updating only the
-    /// best-ranked one leaves the other behind and the row comes straight back on the next scan, from the
-    /// source that was skipped. Installing this row therefore installs all of them, best first.
+    /// The rows this one stands in for. They are real, separate installations (for example uv's tool venv and
+    /// pip's site-packages), so installing this row installs all of them, best first.
     /// </summary>
     public IReadOnlyList<UpdateRowViewModel> MergedPartners { get; private set; } = [];
 
@@ -175,10 +157,7 @@ public partial class UpdateRowViewModel : ObservableObject
             : string.Format(LocalizationService.Instance["RowAlsoInSources"], SourceDisplay,
                 string.Join(", ", _alternateSources.Select(SourceNames.Display)));
 
-    /// <summary>
-    /// Called by the table when it works out which rows are the same update. Silent when nothing changed,
-    /// so re-running the filter does not repaint rows that did not move.
-    /// </summary>
+    /// <summary>Called by the table when it groups the same update. Silent when nothing changed.</summary>
     public void SetAlternateSources(IReadOnlyList<UpdateRowViewModel> partners)
     {
         MergedPartners = partners;
@@ -194,25 +173,16 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(AllSourcesTooltip));
     }
 
-    /// <summary>
-    /// Order of the groups in the table: what is worth seeing first. Applications and the store
-    /// before the system, developer tooling after that, games last; they are the least urgent and
-    /// the most numerous.
-    /// </summary>
+    /// <summary>Order of the groups in the table: applications and store first, then system, developer tooling, games last.</summary>
     public int CategoryOrder
     {
         get
         {
-            // A GitHub-release row gets its OWN group, directly above the generic one,
-            // unlike a store/launcher/driver-page row it carries a REAL installed/available version
-            // comparison and a real download size (see HideManualNumbers below), so lumping it in with
-            // rows that have nothing to compare buried the one manual-update kind worth reading closely.
+            // A GitHub-release row gets its own group above the generic one: it carries a real version comparison and size.
             if (IsGitHubManual)
                 return 98;
 
-            // Every other "you open it yourself" row, a store, a game launcher, Steam, a vendor driver
-            // page, is collected into ONE "Manual update" category that always sits at the very bottom,
-            // whatever else is present.
+            // Every other "open it yourself" row (store, launcher, Steam, vendor driver page) goes into one "Manual update" category at the very bottom.
             if (IsManualOnly)
                 return 99;
 
@@ -229,66 +199,48 @@ public partial class UpdateRowViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Rows this program cannot install: a store or a launcher that only hands the job to its own client.
-    /// They are grouped at the bottom rather than mixed in with the ones a click actually updates, since
-    /// "I can do this for you" versus "you have to do this" is the most important thing about the row.
-    /// Public so the row's context menu (updates only, not stores/launchers) can be suppressed for these.
+    /// Rows this program cannot install: a store or launcher that only hands the job to its own client.
+    /// Public so the row's context menu can be suppressed for these.
     /// </summary>
     public bool IsManualOnly => !Item.CanInstall && !string.IsNullOrEmpty(Item.OpenTarget);
 
     /// <summary>
-    /// True for a row <see cref="GitHubReleaseSource"/> found, an installed program whose Add/Remove
-    /// Programs entry names a GitHub repository with a newer release, in its own category.
-    /// It carries a real installed/available version and often a real size, unlike a bare store or
-    /// launcher row, which is exactly why it gets its own group instead of sharing "Manual update".
+    /// True for a row <see cref="GitHubReleaseSource"/> found: an installed program whose Add/Remove Programs
+    /// entry names a GitHub repository with a newer release. It has a real version and often a size, so it
+    /// gets its own group.
     /// </summary>
     public bool IsGitHubManual => IsManualOnly && Item.SourceId == "github-release";
 
     /// <summary>
-    /// Date, version and size are blanked on a manual-only row, except Steam (whose games carry real build
-    /// ids and a real download size) and a GitHub-release row (whose point is a real version comparison
-    /// against the repo's latest release), and except any row with children (an aggregate like the Steam
-    /// launcher row has no numbers of its own). Internal, not private: also the exact membership test for
-    /// the compact block at the table's end (<see cref="BelongsInCompactBlock"/>), since the "no real
-    /// values" rows are the rows a category group has nothing useful to show for.
+    /// Date, version and size are blanked on a manual-only row, except Steam (real build ids and size), a
+    /// GitHub-release row (a real version comparison) and any row with children. Internal because it is also
+    /// the membership test for <see cref="BelongsInCompactBlock"/>.
     /// </summary>
     internal bool HideManualNumbers => IsManualOnly && Item.SourceId is not ("steam" or "github-release") && !HasChildren;
 
     /// <summary>
-    /// True for the rows MainViewModel.ManualOnlyView collects into the compact block below the table
-    /// instead of leaving them full-height inside their category group. Steam and any row with children
-    /// (Steam's own launcher row) are excluded because they either carry real values or have their own
-    /// nested child list, neither fits a flat row of compact chips.
+    /// True for the rows MainViewModel.ManualOnlyView collects into the compact block below the table.
+    /// Steam and rows with children are excluded: they carry real values or a nested list.
     /// </summary>
     internal bool BelongsInCompactBlock => HideManualNumbers;
 
-    /// <summary>
-    /// The small source line under the name is shown for real update rows but dropped for manual-open
-    /// rows (a launcher/store), where it just repeats the name, the name then centres on its own.
-    /// </summary>
+    /// <summary>The source line under the name is dropped for manual-open rows, where it would repeat the name.</summary>
     public bool ShowSourceLine => !IsManualOnly;
 
     /// <summary>
-    /// The user asked not to be told about this update. It stays on screen but marked, is not counted,
-    /// cannot be ticked or installed, and can be un-ignored from its context menu or its inline button.
-    /// Set by the main view model from the persisted exclude list.
+    /// The user asked not to be told about this update. It stays on screen but marked, is not counted and
+    /// cannot be ticked or installed. Set from the persisted exclude list.
     /// </summary>
     [ObservableProperty]
     private bool isIgnored;
 
-    /// <summary>
-    /// True when the whole package is ignored rather than just the version on screen. The two read
-    /// differently to the user ("Alle ignoriert" vs "Ignoriert") and offer different menu entries, so the
-    /// row has to know which one it is.
-    /// </summary>
+    /// <summary>True when the whole package is ignored rather than just the version on screen (different label and menu entries).</summary>
     [ObservableProperty]
     private bool isIgnoredAllVersions;
 
     /// <summary>
-    /// "Not now", the row leaves the default view until <see cref="SnoozedUntil"/>, without the
-    /// permanence of Ignore. Mutually exclusive with <see cref="IsIgnored"/>: the main view model clears
-    /// whichever one already applied before setting the other. Set from the persisted <c>Snoozed</c>
-    /// dictionary, same as <see cref="IsIgnored"/> is from <c>Excludes</c>.
+    /// "Not now": the row leaves the default view until <see cref="SnoozedUntil"/>. Mutually exclusive with
+    /// <see cref="IsIgnored"/>; set from the persisted <c>Snoozed</c> dictionary.
     /// </summary>
     [ObservableProperty]
     private bool isSnoozed;
@@ -297,42 +249,31 @@ public partial class UpdateRowViewModel : ObservableObject
     private DateTimeOffset? snoozedUntil;
 
     /// <summary>
-    /// The operation this row is running (or last ran) is a REMOVAL, not an update, so its result reads
-    /// "Uninstalled", in red, and a Retry repeats the removal instead of installing the thing the user
-    /// just asked to have taken off the machine. Cleared by <see cref="BeginInstall"/>.
+    /// The operation this row runs (or last ran) is a removal: its result reads "Uninstalled" and a Retry
+    /// repeats the removal. Cleared by <see cref="BeginInstall"/>.
     /// </summary>
     [ObservableProperty]
     private bool wasUninstalled;
 
     public bool IsCritical => Item.IsCritical;
 
-    /// <summary>
-    /// Already done in this session. The row keeps its result on screen so the user can see what
-    /// happened, but it must not be installable a second time; the next scan is what removes it.
-    /// </summary>
+    /// <summary>Already done in this session: the row keeps its result on screen but cannot be installed again.</summary>
     public bool IsInstalled => InstallState == RowInstallState.Succeeded;
 
-    /// <summary>
-    /// Installable RIGHT NOW. A row that is queued or already running is not: a mid-install row must drop
-    /// out of the select-all totals, or "select all" would offer to install what is already installing.
-    /// </summary>
+    /// <summary>Installable right now. A queued or running row is not, so it drops out of the select-all totals.</summary>
     public bool CanInstall =>
         Item.CanInstall && !IsIgnored && !IsSnoozed
         && InstallState is RowInstallState.Idle or RowInstallState.Failed or RowInstallState.Cancelled;
 
     public bool CanOpen => !string.IsNullOrEmpty(Item.OpenTarget);
 
-    /// <summary>The "Ignored" pill next to the name, it says whether ONE version or the package is ignored.</summary>
+    /// <summary>The "Ignored" pill next to the name: whether one version or the package is ignored.</summary>
     public string IgnoredBadgeLabel =>
         LocalizationService.Instance[IsIgnoredAllVersions ? "IgnoredAllBadge" : "IgnoredBadge"];
 
     public string UnignoreHeader => LocalizationService.Instance["UnignoreButton"];
 
-    /// <summary>
-    /// Rows shown as a collapsible sub-list ON this row instead of as rows of their own, Steam's
-    /// pending game updates under the Steam launcher row. Each child keeps its own context menu, so a
-    /// game can still be started or removed from here.
-    /// </summary>
+    /// <summary>Rows shown as a collapsible sub-list on this row (Steam's game updates under the launcher row), each with its own context menu.</summary>
     public IReadOnlyList<UpdateRowViewModel> Children { get; }
 
     public bool HasChildren => Children.Count > 0;
@@ -340,11 +281,7 @@ public partial class UpdateRowViewModel : ObservableObject
     public string ChildCountText => string.Format(
         LocalizationService.Instance[Children.Count == 1 ? "SubListCountOne" : "SubListCount"], Children.Count);
 
-    /// <summary>
-    /// The expanded state lives in the main view model, the same store the category groups use,
-    /// because the row object itself is rebuilt every time a scan streams new results into the table,
-    /// and a state kept on the row would silently reopen whatever the user had just collapsed.
-    /// </summary>
+    /// <summary>The expanded state lives in the main view model: the row object is rebuilt on every scan result, so state kept here would reopen what the user collapsed.</summary>
     private string SubListKey => $"sublist:{Item.SourceId}:{Item.Id}";
 
     public bool AreChildrenExpanded
@@ -361,9 +298,8 @@ public partial class UpdateRowViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Filled in after the scan by the background enrichment pass (a package's own registry), for the
-    /// many sources whose outdated listing carries neither a date nor a size. Prefer these over the
-    /// snapshot values on the immutable <see cref="Item"/>; both start null.
+    /// Filled in after the scan by the background enrichment pass for sources whose listing carries no date
+    /// or size. Preferred over the snapshot values on the immutable <see cref="Item"/>.
     /// </summary>
     [ObservableProperty]
     private DateTimeOffset? enrichedPublishDate;
@@ -375,13 +311,11 @@ public partial class UpdateRowViewModel : ObservableObject
 
     private long? EffectiveDownloadSize => EnrichedDownloadSize ?? Item.DownloadSize;
 
-    /// <summary>Download size, where the source or the later enrichment pass knew it. Blank on a
-    /// manual-only row besides Steam (<see cref="HideManualNumbers"/>).</summary>
+    /// <summary>Download size, where the source or the enrichment pass knew it. Blank on a manual-only row besides Steam.</summary>
     public string? DownloadSizeText =>
         !HideManualNumbers && EffectiveDownloadSize is > 0 ? ByteSize.Format(EffectiveDownloadSize.Value) : null;
 
-    /// <summary>Publish/deployment date, where known. Local, date only, in the chosen UI language's own
-    /// short-date order. Blank on a manual-only row besides Steam (<see cref="HideManualNumbers"/>).</summary>
+    /// <summary>Publish date, local, date only, in the UI language's short-date order. Blank on a manual-only row besides Steam.</summary>
     public string? PublishDateText =>
         !HideManualNumbers && EffectivePublishDate is { } date
             ? date.ToLocalTime().ToString("d", CultureInfo.CurrentUICulture)
@@ -391,10 +325,7 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public bool HasPublishDate => PublishDateText is not null;
 
-    /// <summary>
-    /// Merges a background enrichment result onto the row. Only fills what is still unknown and never
-    /// overwrites a real figure the source already reported, so a good up-front value always wins.
-    /// </summary>
+    /// <summary>Merges a background enrichment result onto the row. Only fills what is unknown, never overwrites a reported figure.</summary>
     public void ApplyEnrichment(
         DateTimeOffset? date, long? size, string? projectUrl = null, string? availableVersion = null,
         string? changelogBody = null, string? changelogUrl = null, string? publisher = null)
@@ -408,9 +339,7 @@ public partial class UpdateRowViewModel : ObservableObject
         // only fills a gap: a version the source itself reported is never overwritten
         if (!string.IsNullOrEmpty(availableVersion) && string.IsNullOrEmpty(Item.AvailableVersion))
             EnrichedAvailableVersion = availableVersion;
-        // Item.Meta wins when a source already populated it at scan time (GitHubReleaseSource), this
-        // only fills the gap for sources whose changelog only shows up on the later enrichment pass
-        // (winget's `winget show`).
+        // Item.Meta wins when a source filled it at scan time; this only fills the gap for sources whose changelog arrives with the enrichment pass.
         if (!string.IsNullOrEmpty(changelogBody) && string.IsNullOrEmpty(ChangelogText))
             EnrichedChangelogBody = changelogBody;
         if (!string.IsNullOrEmpty(changelogUrl) && string.IsNullOrEmpty(ChangelogUrl))
@@ -435,8 +364,7 @@ public partial class UpdateRowViewModel : ObservableObject
     [ObservableProperty]
     private string? enrichedProjectUrl;
 
-    /// <summary>A pip row's publisher, found by the same background enrichment pass as the date/size
-    /// above (PyPI's own author/maintainer, or a linked repository's owner); see <see cref="Publisher"/>.</summary>
+    /// <summary>A pip row's publisher, found by the background enrichment pass; see <see cref="Publisher"/>.</summary>
     [ObservableProperty]
     private string? enrichedPublisher;
 
@@ -473,9 +401,8 @@ public partial class UpdateRowViewModel : ObservableObject
     }
 
     /// <summary>
-    /// The directory this update is installed in, resolved in the background after the scan (the
-    /// uninstall registry, Steam's game folder, or a launcher's own directory). Null until then, or
-    /// when none can be found, in which case the row offers no "open folder" action at all.
+    /// The install directory, resolved in the background after the scan. Null until then or when none is
+    /// found, in which case the row offers no "open folder" action.
     /// </summary>
     [ObservableProperty]
     private string? installLocationPath;
@@ -490,8 +417,7 @@ public partial class UpdateRowViewModel : ObservableObject
         OpenFolderCommand.NotifyCanExecuteChanged();
     }
 
-    /// <summary>Opens the install directory in Explorer. The path was confirmed to exist when resolved;
-    /// UriLauncher refuses anything that is not a real rooted path, so nothing user-typed reaches here.</summary>
+    /// <summary>Opens the install directory in Explorer. UriLauncher refuses anything that is not a real rooted path.</summary>
     [RelayCommand(CanExecute = nameof(CanOpenFolder))]
     private void OpenFolder()
     {
@@ -503,7 +429,6 @@ public partial class UpdateRowViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(PublishDateText));
         OnPropertyChanged(nameof(HasPublishDate));
-        // so the table's live sorting re-orders this row when the date arrives, no full refresh needed
         OnPropertyChanged(nameof(SortDate));
     }
 
@@ -512,9 +437,7 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(DownloadSizeText));
         OnPropertyChanged(nameof(HasDownloadSize));
         OnPropertyChanged(nameof(SortSize));
-        // DownloadSizeBytes itself never announced its own change, so nothing that sums it
-        // across selected rows (MainViewModel.SelectionSummary) had a signal to recompute when the size
-        // arrived after the fact via background enrichment rather than up front from the scan.
+        // DownloadSizeBytes announces no change of its own; selection sums need a signal when the size arrives from enrichment.
         OnPropertyChanged(nameof(DownloadSizeBytes));
     }
 
@@ -524,26 +447,20 @@ public partial class UpdateRowViewModel : ObservableObject
     /// <summary>Windows Update cannot say what is installed, so those rows show the new version alone.</summary>
     public bool HasInstalledVersion => !string.IsNullOrEmpty(Item.InstalledVersion);
 
-    /// <summary>One tooltip for the whole version lane (installed → available), rather than one
-    /// per text block, so the gaps and the arrow between the two numbers are hit-testable too. Installed
-    /// plus available when both exist, the single value otherwise.</summary>
+    /// <summary>One tooltip for the whole version lane (installed to available), so the gap and arrow are hit-testable too.</summary>
     public string? VersionChangeTooltip => HasInstalledVersion
         ? $"{InstalledVersion} → {AvailableVersion}"
         : AvailableVersion;
 
     /// <summary>
-    /// Open owns the action cell only on a row that has nothing to install: every button in that cell is
-    /// drawn in the SAME grid cell, so two visible at once means the later one covers the earlier (the
-    /// NVIDIA driver row, whose Open target is its release-notes page, had "Aktualisieren" painted over by
-    /// "Öffnen"). An installable row still reaches its link through the context menu.
+    /// Open owns the action cell only on a row with nothing to install: every button in that cell shares one
+    /// grid cell, so two visible at once would overlap. An installable row reaches its link via the context menu.
     /// </summary>
     public bool ShowOpenButton => IsManualOnly && !IsIgnored && InstallState == RowInstallState.Idle;
 
     /// <summary>
-    /// The inline "show again" on an ignored row, same cell as everything else, so it must not be drawn on
-    /// top of a state label or an Open button either. Shown for EVERY ignored row regardless of install
-    /// state, including one stuck in <see cref="RowInstallState.NeedsManualWork"/>.
-    /// <see cref="ShowStateLabel"/> excludes ignored rows for exactly this reason.
+    /// The inline "show again" on an ignored row. It shares the action cell, so it must not overlap a state
+    /// label or an Open button; <see cref="ShowStateLabel"/> excludes ignored rows for that reason.
     /// </summary>
     public bool ShowUnignoreButton => IsIgnored;
 
@@ -553,20 +470,15 @@ public partial class UpdateRowViewModel : ObservableObject
     public string InstallHeader => LocalizationService.Instance["InstallButton"];
 
     /// <summary>
-    /// The version a rollback would install: the FromVersion of this package's own last successful
-    /// "install" history entry (the version it upgraded FROM), so "back to it" undoes exactly the last real
-    /// change, not some older release. Null when the source cannot pin an exact version
-    /// (<see cref="Services.Sources.IUpdateSource.SupportsVersionPinning"/>), no successful install of this
-    /// package is on record, or that install did not know its own previous version. Set by
-    /// <see cref="MainViewModel"/> after every scan (like <see cref="IsIgnored"/>/<see cref="IsSnoozed"/>,
-    /// applied from the outside rather than computed on the row).
+    /// The version a rollback would install: the FromVersion of this package's last successful install
+    /// history entry. Null when the source cannot pin a version
+    /// (<see cref="Services.Sources.IUpdateSource.SupportsVersionPinning"/>), no such install is on record, or
+    /// it did not know its previous version. Set by <see cref="MainViewModel"/> after every scan.
     /// </summary>
     [ObservableProperty]
     private string? downgradeTargetVersion;
 
-    /// <summary>The row menu's "back to the previous version" entry: offered only while the row is
-    /// genuinely idle, same gate as <see cref="ShowInstallButton"/>, so a queued/running/finished row
-    /// never offers a second, conflicting action.</summary>
+    /// <summary>The row menu's "back to the previous version" entry: offered only while the row is idle.</summary>
     public bool ShowDowngradeButton =>
         DowngradeTargetVersion is { Length: > 0 } && !IsIgnored && InstallState == RowInstallState.Idle;
 
@@ -584,8 +496,7 @@ public partial class UpdateRowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(ShowDowngradeButton))]
     private void Downgrade() => _actions?.Downgrade(this);
 
-    /// <summary>A failed row offers a retry, which re-queues it through the same path as a fresh install;
-    /// a row the user stopped themselves offers the very same button, for the very same reason.</summary>
+    /// <summary>A failed or user-stopped row offers a retry, which re-queues it through the same path as a fresh install.</summary>
     public bool ShowRetryButton =>
         Item.CanInstall && !IsIgnored && !IsSnoozed
         && InstallState is RowInstallState.Failed or RowInstallState.Cancelled;
@@ -597,9 +508,7 @@ public partial class UpdateRowViewModel : ObservableObject
     public bool ShowRetryInteractiveButton =>
         InstallState == RowInstallState.Failed
         && !App.IsUnattended
-        // Only WingetSource implements the interactive retry itself (WingetSource.InstallInteractiveAsync);
-        // without this, a coincidental code match on another source's own text (a plain "1602" in some
-        // other tool's output) would offer a button that silently does nothing when clicked.
+        // Only WingetSource implements the interactive retry; without this a coincidental code match in another source's output would offer a dead button.
         && SourceId == "winget"
         && Services.Sources.InstallErrorExplainer.Explain(SourceId, InstallErrorDetail)?.AllowsInteractiveRetry == true;
 
@@ -610,9 +519,8 @@ public partial class UpdateRowViewModel : ObservableObject
 
     /// <summary>
     /// The "reinstall" entry: a winget update refused because the new version installs differently from the
-    /// old one (0x8A15008E), where removing the old version and installing the new one is the fix. Not while a
-    /// reinstall already removed the old version and only its install is left (that is <see cref="Retry"/>'s
-    /// job), and not in an unattended run.
+    /// old one (0x8A15008E), where removing the old version and installing the new one is the fix. Not while
+    /// only the fresh install is left (that is <see cref="Retry"/>'s job), and not in an unattended run.
     /// </summary>
     public bool ShowReinstallButton =>
         InstallState is RowInstallState.Failed or RowInstallState.NeedsManualWork
@@ -628,23 +536,14 @@ public partial class UpdateRowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(ShowReinstallButton))]
     private void Reinstall() => _actions?.Reinstall(this);
 
-    /// <summary>
-    /// Set by the reinstall flow once the old version is gone and only the fresh install is left. A retry
-    /// then repeats just that install (an upgrade of a package that no longer exists would fail), and the
-    /// failure line says what state the PC is in.
-    /// </summary>
+    /// <summary>Set once the old version of a reinstall is gone and only the fresh install is left, so a retry repeats just that install.</summary>
     [ObservableProperty]
     private bool pendingFreshInstall;
 
-    /// <summary>
-    /// Set when the removal step of a reinstall failed. The row then carries the removal's error, but the
-    /// user's goal is still the reinstall, so Retry reruns the whole flow (lookup, confirmation, removal,
-    /// install) rather than a plain removal that would leave the program gone. Cleared by every new run.
-    /// </summary>
+    /// <summary>Set when the removal step of a reinstall failed, so Retry reruns the whole flow rather than a plain removal. Cleared by every new run.</summary>
     internal bool ReinstallRemovalFailed { get; set; }
 
-    /// <summary>The scope ("user" or "machine") the program had before its reinstall removed it, which the
-    /// fresh install and its retry are made in; null = not known.</summary>
+    /// <summary>The scope ("user" or "machine") the program had before its reinstall removed it; null = not known.</summary>
     internal string? PendingFreshInstallScope { get; set; }
 
     partial void OnPendingFreshInstallChanged(bool value)
@@ -655,11 +554,7 @@ public partial class UpdateRowViewModel : ObservableObject
         ReinstallCommand.NotifyCanExecuteChanged();
     }
 
-    /// <summary>
-    /// Set by the main view model while the interactive retry is actually running this row, winget's own
-    /// UI is driving, so the percentage is meaningless; the row shows "läuft interaktiv…" instead of
-    /// the normal percent/bar pair rather than a number that cannot mean anything.
-    /// </summary>
+    /// <summary>Set while the interactive retry runs this row: winget's own UI drives, so the percentage is meaningless and the row shows a label instead.</summary>
     [ObservableProperty]
     private bool isRunningInteractively;
 
@@ -677,8 +572,7 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public bool IsInstallRunning => InstallState == RowInstallState.Running;
 
-    /// <summary>This row's own stop button, shown only while it is actually running; stopping it
-    /// leaves the rest of the queue, and the rest of an admin batch it might be part of, running.</summary>
+    /// <summary>This row's own stop button, shown only while it runs; the rest of the queue keeps going.</summary>
     public bool ShowStopSingleButton => IsInstallRunning;
 
     public string StopSingleTooltip => LocalizationService.Instance["StopSingleTooltip"];
@@ -695,30 +589,17 @@ public partial class UpdateRowViewModel : ObservableObject
     /// <summary>Fallback glyph so the icon gutter never looks ragged when no icon resolves.</summary>
     public string InitialLetter => string.IsNullOrWhiteSpace(Name) ? "?" : Name.Trim()[..1].ToUpperInvariant();
 
-    /// <summary>
-    /// A bundled brand mark, for rows whose own icon cannot be found: an npm or pip package has no
-    /// installed application on disk to take one from at all. Never preferred over the real icon,
-    /// the Image on top of the tile covers this whenever one was extracted.
-    /// </summary>
+    /// <summary>A bundled brand mark for rows whose own icon cannot be found (an npm or pip package has no application on disk). Never preferred over a real icon.</summary>
     public Geometry? BrandGeometry => _brandMark?.Geometry;
 
     private readonly BrandMark? _brandMark;
 
     public bool UsesBrandTile => _brandMark is not null;
 
-    /// <summary>
-    /// The mark in its brand's own colour, a deepened or lightened shade of it where the plain colour
-    /// would be too faint on the tile, or the theme's text colour where the brand has no hue to keep
-    /// (a black mark on the dark theme, a white one on the light theme). Resolved
-    /// by hand from the live theme, so <see cref="RefreshThemeBrushes"/> re-raises it on a theme switch.
-    /// </summary>
+    /// <summary>The mark in its brand colour (shaded where the plain colour would be too faint), or the theme's text colour where the brand has no hue. Resolved by hand, so <see cref="RefreshThemeBrushes"/> re-raises it on a theme switch.</summary>
     public Brush BrandBrush => BrandPaint().Mark;
 
-    /// <summary>
-    /// What the tile behind the icon is filled with. A brand mark gets a faint wash of its own colour, a
-    /// letter or category glyph a faint wash of the accent (the app's only hue besides the brands'), and a
-    /// mark that fell back to the text colour sits on the plain neutral tile.
-    /// </summary>
+    /// <summary>The tile behind the icon: a faint wash of the brand colour, of the accent for a letter or category glyph, or plain neutral.</summary>
     public Brush TileBackground => BrandPaint().Tile;
 
     /// <summary>Opacity of the colour wash on a tile: enough to read as tinted, little enough to stay a quiet backdrop.</summary>
@@ -764,10 +645,7 @@ public partial class UpdateRowViewModel : ObservableObject
     private static Color? ThemeColor(string resourceKey) =>
         (System.Windows.Application.Current?.TryFindResource(resourceKey) as SolidColorBrush)?.Color;
 
-    /// <summary>
-    /// The colour the tile sits on in the current theme: the card fill, laid over the page when the card
-    /// is translucent (the light theme), over white when even the page is not a plain colour.
-    /// </summary>
+    /// <summary>The colour the tile sits on in the current theme: the card fill laid over the page where the card is translucent.</summary>
     private static Color? SurfaceColor()
     {
         if (ThemeColor("CardBackgroundFillColorDefaultBrush") is not { } card)
@@ -777,17 +655,10 @@ public partial class UpdateRowViewModel : ObservableObject
         return BrandMark.Composite(card, page);
     }
 
-    /// <summary>
-    /// The coloured tile is a stand-in, so it must not sit behind a real icon: most application icons
-    /// are round or have transparent corners, and the square tile showed through them as a border.
-    /// </summary>
+    /// <summary>The coloured tile is a stand-in and must not sit behind a real icon: round or transparent-cornered icons would show the square tile as a border.</summary>
     public bool UsesTile => Icon is null;
 
-    /// <summary>
-    /// A letter identifies a named application, but it is meaningless for the rest: a Windows update
-    /// showed up as "2" for "2024-08 Kumulatives Update…". Those rows say what KIND of thing they are
-    /// instead. Nothing here is ever preferred over the application's real icon.
-    /// </summary>
+    /// <summary>A letter identifies a named application but means nothing for the rest (a Windows update would show "2"); those rows show what kind of thing they are instead.</summary>
     public bool UsesLetterTile => !UsesBrandTile && Item.Category is UpdateCategory.Software or UpdateCategory.Games;
 
     public bool UsesGlyphTile => !UsesBrandTile && !UsesLetterTile;
@@ -808,13 +679,12 @@ public partial class UpdateRowViewModel : ObservableObject
         }
     }
 
-    /// <summary>The same grouping <see cref="CategoryDisplay"/> reads, but the language-independent
-    /// identifier that remembers collapsed state.</summary>
+    /// <summary>The language-independent identifier behind <see cref="CategoryDisplay"/>, used to remember collapsed state.</summary>
     public string CategoryKey => IsGitHubManual ? "GitHubManual" : IsManualOnly ? "ManualUpdate" : Item.Category.ToString();
 
     public string CriticalLabel => LocalizationService.Instance["CriticalBadge"];
 
-    /// <summary>Toggles wording: ignore THIS version, or show an already-ignored one again.</summary>
+    /// <summary>Toggles wording: ignore this version, or show an already-ignored one again.</summary>
     public string IgnoreHeader =>
         LocalizationService.Instance[IsIgnored ? "UnignoreButton" : "IgnoreButton"];
 
@@ -825,11 +695,9 @@ public partial class UpdateRowViewModel : ObservableObject
         LocalizationService.Instance[IsIgnored ? "UnignoreButton" : "IgnoreSimpleButton"];
 
     /// <summary>
-    /// Which ignore entries the menu offers, by state, the two entries read as nonsense
-    /// once the whole package was already ignored:
-    /// nothing ignored → "ignore this version" + "ignore all versions";
-    /// this version ignored → "show again" + "ignore all versions";
-    /// the package ignored → "show again" alone.
+    /// Which ignore entries the menu offers: nothing ignored gives "ignore this version" and "ignore all
+    /// versions"; this version ignored gives "show again" and "ignore all versions"; the package ignored
+    /// gives "show again" alone.
     /// </summary>
     public bool ShowVersionIgnore => !IsManualOnly;
 
@@ -847,8 +715,7 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public string UnsnoozeHeader => LocalizationService.Instance["UnsnoozeButton"];
 
-    /// <summary>The "Remind me later" submenu offers nothing useful on a row already ignored or already
-    /// snoozed, the first has no snooze concept until un-ignored, the second already has one running.</summary>
+    /// <summary>The "Remind me later" submenu is offered only on a row that is neither ignored nor already snoozed.</summary>
     public bool ShowSnoozeMenu => !IsIgnored && !IsSnoozed;
 
     public bool ShowUnsnoozeEntry => IsSnoozed;
@@ -862,18 +729,15 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public string ResetPersistentFailureHeader => LocalizationService.Instance["TryNormallyAgainButton"];
 
-    /// <summary>Only offered once the row is actually flagged, the whole point is that the normal
-    /// Install/Retry buttons stop being offered until this explicit reset is used instead.</summary>
+    /// <summary>Offered once the row is flagged: the normal Install/Retry buttons stop until this explicit reset is used.</summary>
     public bool ShowResetPersistentFailureEntry => InstallState == RowInstallState.NeedsManualWork;
 
     public string OpenHeader => LocalizationService.Instance["OpenButton"];
 
     /// <summary>
-    /// The ROW MENU's wording for Open. "OpenButton" is shared with the tray menu and the folder action, so
-    /// it stays the bare word, but in a row's menu, between Start, Uninstall and "Open folder", a bare
-    /// "Open" says nothing about what would open. Where the target is a web page (a driver's release notes,
-    /// a vendor page) it says so; where it is a launcher or an application it stays the plain word,
-    /// because "open website" would be a lie.
+    /// The row menu's wording for Open. "OpenButton" is shared with the tray menu and the folder action, so
+    /// this one says "open website" where the target is a web page, and stays the plain word for a launcher
+    /// or an application.
     /// </summary>
     public string OpenTargetHeader =>
         LocalizationService.Instance[OpensAWebsite ? "ContextMenuOpenWebsite" : "OpenButton"];
@@ -888,7 +752,6 @@ public partial class UpdateRowViewModel : ObservableObject
     public string InstallStateText => InstallState switch
     {
         RowInstallState.Queued => LocalizationService.Instance["RowQueued"],
-        // A removal says so rather than "done", the difference matters when reading back what happened.
         RowInstallState.Succeeded when WasUninstalled => LocalizationService.Instance["RowUninstalled"],
         RowInstallState.Succeeded => LocalizationService.Instance["RowDone"],
         RowInstallState.Failed => LocalizationService.Instance["RowFailed"],
@@ -896,15 +759,13 @@ public partial class UpdateRowViewModel : ObservableObject
         RowInstallState.Stuck => LocalizationService.Instance["RowStuck"],
         RowInstallState.NeedsManualWork => LocalizationService.Instance["RowNeedsManualWork"],
         RowInstallState.Cancelled => LocalizationService.Instance["RowCancelled"],
-        // Running shows a real progress bar with the percentage BESIDE it (InstallPercentText),
-        // never the number written into the bar itself.
+        // Running shows a progress bar with the percentage beside it (InstallPercentText), never inside the bar.
         _ => string.Empty,
     };
 
     /// <summary>
-    /// Hover text for <see cref="InstallStateText"/>: for Stuck/HandedOff/NeedsManualWork (single-word in
-    /// the column) the explanatory sentence, with the source's own raw status line appended on its own
-    /// line where one came in. Every other state just shows the raw status line.
+    /// Hover text for <see cref="InstallStateText"/>: for Stuck, HandedOff and NeedsManualWork the explanatory
+    /// sentence plus the source's raw status line where there is one; every other state shows the raw status line.
     /// </summary>
     public string? InstallStateTooltip => InstallState switch
     {
@@ -916,13 +777,11 @@ public partial class UpdateRowViewModel : ObservableObject
         _ => InstallStatusText,
     };
 
-    // A status that already is the explanatory sentence (the queue reports a stuck row with exactly that
-    // line) is not repeated under itself.
+    // A status that already is the explanatory sentence is not repeated under itself.
     private string WithRawStatus(string detail) =>
         string.IsNullOrWhiteSpace(InstallStatusText) || InstallStatusText == detail ? detail : $"{detail}\n{InstallStatusText}";
 
-    /// <summary>The one-line nudge shown once the three-strikes tally flags this row, wired to
-    /// the same ignore action as the row's own context menu (<see cref="IgnoreCommand"/>).</summary>
+    /// <summary>The one-line nudge shown once the three-strikes tally flags this row; wired to <see cref="IgnoreCommand"/>.</summary>
     public bool ShowPersistentFailureHint => InstallState == RowInstallState.NeedsManualWork;
 
     public string PersistentFailureHintText =>
@@ -933,9 +792,7 @@ public partial class UpdateRowViewModel : ObservableObject
     /// <summary>The percentage shown next to a running row's bar.</summary>
     public string InstallPercentText => PercentFormat.Format(InstallPercent);
 
-    /// <summary>The state word shows only when there is no running bar to show in its place, and never on
-    /// an ignored row: that row shows "show again" instead (<see cref="ShowUnignoreButton"/>), whatever
-    /// its install state.</summary>
+    /// <summary>The state word shows only when no running bar takes its place, and never on an ignored row (that row shows "show again", <see cref="ShowUnignoreButton"/>).</summary>
     public bool ShowStateLabel =>
         !IsIgnored &&
         InstallState is RowInstallState.Queued or RowInstallState.Succeeded or RowInstallState.Failed
@@ -944,22 +801,16 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public bool IsInstallFailed => InstallState == RowInstallState.Failed;
 
-    /// <summary>Queued but not started, the row shows a turning ring beside the word.</summary>
+    /// <summary>Queued but not started: the row shows a turning ring beside the word.</summary>
     public bool IsInstallQueued => InstallState == RowInstallState.Queued;
 
     /// <summary>
-    /// The state word ("queued"/"done") is shown for those states; a failure shows a red warning icon
-    /// instead of the easily-missed "failed" text, since the retry/details buttons already sit beside it.
+    /// A failed row shows a warning icon instead of the word, and so does a row with the visible retry
+    /// (<see cref="ShowResetAndRetryButton"/>), where word, details button and retry would not fit together.
     /// </summary>
-    /// <summary>A failed row shows its icon instead of the word; so does a row with the visible retry
-    /// (<see cref="ShowResetAndRetryButton"/>), whose word, details button and retry would not fit together.</summary>
     public bool ShowStateWord => ShowStateLabel && !IsInstallFailed && !ShowResetAndRetryButton;
 
-    /// <summary>
-    /// Hover text for the failure icon: a plain-language line when a code was recognized in
-    /// <see cref="InstallErrorDetail"/>, falling back to the raw status line or the bare "failed" word
-    /// when nothing was recognized.
-    /// </summary>
+    /// <summary>Hover text for the failure icon: the plain-language line when a code was recognized in <see cref="InstallErrorDetail"/>, else the raw status line or the bare "failed" word.</summary>
     public string InstallFailedTooltip =>
         PendingFreshInstall ? LocalizationService.Instance["ReinstallInstallFailed"] :
         Services.Sources.InstallErrorExplainer.Describe(SourceId, InstallErrorDetail, key => LocalizationService.Instance[key])
@@ -967,18 +818,15 @@ public partial class UpdateRowViewModel : ObservableObject
         ?? LocalizationService.Instance["RowFailed"];
 
     /// <summary>
-    /// The one-line reason a failed row shows under its name instead of the source: only the translated
-    /// explainer text (or the bare "failed" word when no code was recognised), NEVER the raw tool output;
-    /// that stays behind the deliberate Details click. Deliberately not <see cref="InstallFailedTooltip"/>,
-    /// whose last fallback is the raw status line.
+    /// The one-line reason a failed row shows under its name: only the translated explainer text (or the bare
+    /// "failed" word), never the raw tool output, which stays behind the Details click.
     /// </summary>
     public string FailureLine =>
         PendingFreshInstall ? LocalizationService.Instance["ReinstallInstallFailed"] :
         Services.Sources.InstallErrorExplainer.Describe(SourceId, InstallErrorDetail, key => LocalizationService.Instance[key])
         ?? LocalizationService.Instance["RowFailed"];
 
-    /// <summary>The reason a cancelled row carries (a blocked row the user skipped), shown under the name
-    /// and as the state tooltip. Null for a row the user stopped himself: that one has no reason text.</summary>
+    /// <summary>The reason a cancelled row carries (a blocked row the user skipped), shown under the name and as the state tooltip. Null for a row the user stopped.</summary>
     public string? CancelledReasonLine =>
         InstallState == RowInstallState.Cancelled && !string.IsNullOrWhiteSpace(InstallStatusText)
             ? InstallStatusText
@@ -992,22 +840,19 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public Brush InstallStateBrush => InstallState switch
     {
-        // "Uninstalled" is red: something is gone from the machine, which is worth reading as such.
         RowInstallState.Succeeded when WasUninstalled => Brush("SystemFillColorCriticalBrush"),
         RowInstallState.Succeeded => Brush("SystemFillColorSuccessBrush"),
         RowInstallState.Failed => Brush("SystemFillColorCriticalBrush"),
-        // Neither green nor red: genuinely unknown, not a claim either way.
+        // Neither green nor red: genuinely unknown.
         RowInstallState.HandedOff or RowInstallState.Stuck => Brush("SystemFillColorCautionBrush"),
-        // Not red either, the same repeated failure has already been explained; red is reserved for
-        // "something just went wrong", which this row saying so for the fourth time is not.
+        // Not red: the same repeated failure was already explained, and red is for "something just went wrong".
         RowInstallState.NeedsManualWork => Brush("SystemFillColorCautionBrush"),
-        // Caution coloured like HandedOff/Stuck (by design): the user chose to stop it, so it is
-        // neither the green of a real success nor the red of a real failure.
+        // Caution coloured like HandedOff and Stuck: a user stop is neither a success nor a failure.
         RowInstallState.Cancelled => Brush("SystemFillColorCautionBrush"),
         _ => Brush("TextFillColorTertiaryBrush"),
     };
 
-    /// <summary>What a screen reader announces for the row, without it, the class name is read out.</summary>
+    /// <summary>What a screen reader announces for the row.</summary>
     public override string ToString() => Name;
 
     public UpdateRowViewModel(
@@ -1026,11 +871,7 @@ public partial class UpdateRowViewModel : ObservableObject
         _onShowChangelog = onShowChangelog;
         _brandMark = BrandIcons.Resolve(item.Name, item.SourceId, item.Id);
 
-        // Children are rows in their own right (same actions, so Start/Uninstall still work on a game),
-        // they are just presented inside their parent instead of in the table. The ignore callback is handed
-        // down too: without it a child's Ignore would flip nothing and persist nothing at all. So are the
-        // Details and changelog callbacks: the child template shows Details on a failed game, and without the
-        // callback that button did nothing.
+        // Children are rows in their own right with the same actions, presented inside their parent. The ignore, Details and changelog callbacks are handed down too, or a child's buttons would do nothing.
         Children = item.Children.Count == 0
             ? []
             : item.Children.Select(child => new UpdateRowViewModel(
@@ -1063,15 +904,11 @@ public partial class UpdateRowViewModel : ObservableObject
     [RelayCommand]
     private void ResetPersistentFailure() => _actions?.ResetPersistentFailure(this);
 
-    /// <summary>
-    /// Re-run whatever failed on this row: a failed REMOVAL must retry as a removal too, never as an
-    /// install, or the row would end up reporting "Uninstalled" for a package it just reinstalled.
-    /// </summary>
+    /// <summary>Re-runs whatever failed on this row; a failed removal retries as a removal, never as an install.</summary>
     [RelayCommand(CanExecute = nameof(ShowRetryButton))]
     private void Retry() => RunRetry();
 
-    /// <summary>The visible way out of <see cref="RowInstallState.NeedsManualWork"/>: the context menu's
-    /// "try normally again" alone left the row idle and needed a second click to install.</summary>
+    /// <summary>The visible way out of <see cref="RowInstallState.NeedsManualWork"/>: resets the flag and retries in one click.</summary>
     public bool ShowResetAndRetryButton => ShowResetPersistentFailureEntry && Item.CanInstall && !IsIgnored && !IsSnoozed;
 
     /// <summary>Clears the persistent-failure flag, then runs the same retry as a Failed row.</summary>
@@ -1096,15 +933,10 @@ public partial class UpdateRowViewModel : ObservableObject
             _actions?.InstallSingle(this);
     }
 
-    /// <summary>The version the last run on this row rolled back to, or null when it was an ordinary install;
-    /// set after <see cref="BeginInstall"/> by the rollback path, so Retry repeats what actually failed.</summary>
+    /// <summary>The version the last run rolled back to, or null for an ordinary install; set by the rollback path so Retry repeats what failed.</summary>
     internal string? LastDowngradeTarget { get; set; }
 
-    /// <summary>
-    /// The executable that starts this program, resolved in the background from the uninstall registry.
-    /// Ordinary winget and Chocolatey rows carry no launch URI, so without this they could not offer Start.
-    /// Null until resolved, or when nothing reliable was found.
-    /// </summary>
+    /// <summary>The executable that starts this program, resolved in the background from the uninstall registry. Null until resolved or when none is found.</summary>
     [ObservableProperty]
     private string? launchTargetPath;
 
@@ -1114,8 +946,7 @@ public partial class UpdateRowViewModel : ObservableObject
         StartCommand.NotifyCanExecuteChanged();
     }
 
-    /// <summary>Whether the row can launch the installed program, either the source knows how (a launcher
-    /// client, a Steam game) or an executable was resolved for it.</summary>
+    /// <summary>Whether the row can launch the installed program: the source knows how, or an executable was resolved.</summary>
     public bool CanStart => (_actions?.CanStart(Item) ?? false) || !string.IsNullOrEmpty(LaunchTargetPath);
 
     /// <summary>Whether the source can remove this item (every package manager, Steam, launcher clients).</summary>
@@ -1134,10 +965,7 @@ public partial class UpdateRowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanInstall))]
     private void Install() => _actions?.InstallSingle(this);
 
-    /// <summary>Enter-key equivalent of the row's own primary button, whichever ONE is actually
-    /// showing right now, in the same precedence the action column itself renders them (they are
-    /// mutually exclusive by row state). A Steam child game has no action button of its own at all, so
-    /// it falls through to <see cref="CanStart"/>, the same command its context menu's "Start" offers.</summary>
+    /// <summary>Enter-key equivalent of the row's primary button: whichever one is showing, in the action column's own precedence. A Steam child falls through to <see cref="CanStart"/>.</summary>
     public void ExecuteDefaultAction()
     {
         if (ShowInstallButton && InstallCommand.CanExecute(null))
@@ -1152,11 +980,7 @@ public partial class UpdateRowViewModel : ObservableObject
             StartCommand.Execute(null);
     }
 
-    /// <summary>
-    /// The theme changed. Brushes this row resolved from the resource dictionary by hand are not
-    /// DynamicResource references, so nothing would re-read them and the row would keep the old theme's
-    /// colour until its state changed. Re-raising is enough: no relayout, no flicker.
-    /// </summary>
+    /// <summary>The theme changed. Brushes resolved by hand are not DynamicResource references, so re-raise them; no relayout needed.</summary>
     public void RefreshThemeBrushes()
     {
         OnPropertyChanged(nameof(InstallStateBrush));
@@ -1167,11 +991,7 @@ public partial class UpdateRowViewModel : ObservableObject
             child.RefreshThemeBrushes();
     }
 
-    /// <summary>
-    /// The language changed. A <c>Loc[...]</c> binding refreshes through the localization singleton, but
-    /// every property below builds its text in code and nothing would re-read it, so a row kept the old
-    /// language until its state happened to change, and the window sat in two languages at once.
-    /// </summary>
+    /// <summary>The language changed. Properties that build their text in code are re-raised; <c>Loc[...]</c> bindings refresh on their own.</summary>
     public void RefreshLocalizedText()
     {
         OnPropertyChanged(nameof(PersistentFailureHintText));
@@ -1216,9 +1036,7 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(SourceDisplay));
         OnPropertyChanged(nameof(ChangelogHeader));
         OnPropertyChanged(nameof(DowngradeHeader));
-        // The category group header and a Steam-style parent row's "3 games" sub-list count both build
-        // their text in code like everything above, omitting either here leaves it in the old language
-        // until something else (a rescan, a filter change) happens to re-raise it.
+        // The category header and a parent row's sub-list count build their text in code too; re-raise them.
         OnPropertyChanged(nameof(CategoryDisplay));
         OnPropertyChanged(nameof(ChildCountText));
 
@@ -1235,8 +1053,7 @@ public partial class UpdateRowViewModel : ObservableObject
         InstallErrorDetail = null;
         _hasRealProgress = false;
         ResetPhase();
-        // A retry starts from nothing: the last attempt's byte counts and throughput sample must neither
-        // stay on the row nor feed the first speed reading of this attempt.
+        // A retry starts from nothing: stale byte counts and throughput must not feed the next speed reading.
         BytesReceived = null;
         BytesTotal = null;
         BytesPerSecond = 0;
@@ -1245,16 +1062,12 @@ public partial class UpdateRowViewModel : ObservableObject
         NeedsReboot = false;
         VersionUnchanged = false;
         VersionUnchangedCount = 0;
-        // An install claims the row: a failed removal that is now being installed must not still report
-        // itself as "Uninstalled" when it succeeds. The uninstall path sets the flag again right after.
+        // An install claims the row: a failed removal now being installed must not report "Uninstalled" on success.
         WasUninstalled = false;
         ReinstallRemovalFailed = false;
     }
 
-    /// <summary>
-    /// The row was queued but never got its turn; the batch was stopped first. Back to idle so it can be
-    /// picked again, with the reason on it rather than a progress bar that will never move.
-    /// </summary>
+    /// <summary>The row was queued but never got its turn (the batch was stopped): back to idle with the reason on it.</summary>
     public void MarkNotInstalled(string reason)
     {
         InstallState = RowInstallState.Idle;
@@ -1267,19 +1080,14 @@ public partial class UpdateRowViewModel : ObservableObject
     /// <summary>Download size in bytes (source or enrichment), for the pre-install batch preview.</summary>
     public long? DownloadSizeBytes => EnrichedDownloadSize ?? Item.DownloadSize;
 
-    // Sort keys for the column headers. The table sorts by HasPublishDate/HasDownloadSize/HasVersions
-    // first, so rows without a value stay at the bottom in either direction.
+    // Sort keys for the column headers. The table sorts by HasPublishDate/HasDownloadSize/HasVersions first, so rows without a value stay at the bottom.
     public DateTimeOffset SortDate => EffectivePublishDate ?? DateTimeOffset.MinValue;
 
     public long SortSize => EffectiveDownloadSize ?? 0L;
 
     public string SortVersion => VersionSortKey.For(AvailableVersion);
 
-    /// <summary>
-    /// Opens the raw failure text on request in the error-details window. The winget source in particular hands
-    /// back the underlying installer's message and code, which is the one thing that tells the user WHY
-    /// an update would not apply. The row raises it; the main view model owns showing the window.
-    /// </summary>
+    /// <summary>Opens the raw failure text in the error-details window on request. The row raises it; the main view model owns showing the window.</summary>
     [RelayCommand(CanExecute = nameof(HasInstallError))]
     private void ShowErrorDetail()
     {
@@ -1289,24 +1097,14 @@ public partial class UpdateRowViewModel : ObservableObject
         _onShowErrorDetail?.Invoke(this);
     }
 
-    /// <summary>
-    /// The real changelog text and/or release-page link, where a source actually found one, Item.Meta
-    /// when the source's own scan already knows it (<c>GitHubReleaseSource</c>), otherwise
-    /// whatever the later background enrichment pass found (winget's `winget show`). Never
-    /// fabricated: no icon shows when neither is present.
-    /// </summary>
+    /// <summary>The changelog text and/or release link, from Item.Meta when the scan knew it, else from the enrichment pass. Never fabricated.</summary>
     public string? ChangelogText => Item.Meta.GetValueOrDefault("changelogBody") ?? EnrichedChangelogBody;
 
     public string? ChangelogUrl => Item.Meta.GetValueOrDefault("changelogUrl") ?? EnrichedChangelogUrl;
 
     /// <summary>
-    /// True only for npm: its registry enrichment deliberately never fills the changelog fields (see
-    /// <c>NpmEnrichment</c>'s doc comment), so unlike every other source it needs the button to light up
-    /// BEFORE any text or link is known, so a click can go look one up
-    /// (<c>MainViewModel.TryFetchNpmChangelogAsync</c>). Winget needs no equivalent flag: its release notes
-    /// arrive automatically once the row's post-scan enrichment runs (the same `winget show` call that
-    /// fetches the release date also reads the release-notes fields), so <see cref="HasChangelog"/> is
-    /// already true there by the time the button would render.
+    /// True only for npm: its enrichment never fills the changelog fields, so the button must light up before
+    /// any text is known and a click goes to look one up (<c>MainViewModel.TryFetchNpmChangelogAsync</c>).
     /// </summary>
     public bool CanFetchChangelogOnClick => SourceId == "npm";
 
@@ -1315,11 +1113,7 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public string ChangelogHeader => LocalizationService.Instance["ChangelogButtonTooltip"];
 
-    /// <summary>
-    /// True only while a click-triggered GitHub/GitLab release fetch is in flight, the button
-    /// swaps its icon for the same waiting ring other per-row async actions use instead of doing nothing.
-    /// AsyncRelayCommand already refuses re-entry on its own, so this exists purely for the visual.
-    /// </summary>
+    /// <summary>True while a click-triggered release fetch is in flight; the button shows a waiting ring instead.</summary>
     [ObservableProperty]
     private bool isChangelogLoading;
 
@@ -1364,10 +1158,7 @@ public partial class UpdateRowViewModel : ObservableObject
         ShowChangelogCommand.NotifyCanExecuteChanged();
     }
 
-    /// <summary>
-    /// Throughput, measured rather than guessed: it only appears when the driving tool reports bytes,
-    /// and it is derived from the change between two of its own reports.
-    /// </summary>
+    /// <summary>Throughput, derived from the change between two byte reports; it only appears when the tool reports bytes.</summary>
     private DateTimeOffset _lastByteSampleAt;
     private long _lastByteSample;
 
@@ -1387,21 +1178,15 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public string SpeedText => BytesPerSecond > 0 ? $"{ByteSize.Format((long)BytesPerSecond)}/s" : string.Empty;
 
-    /// <summary>
-    /// True once the driving tool has reported a real figure, a non-zero percent or any byte count.
-    /// Until then the row shows an indeterminate bar, never an invented percentage.
-    /// </summary>
+    /// <summary>True once the driving tool reported a real figure (a non-zero percent or any byte count); until then the bar is indeterminate, never an invented percentage.</summary>
     private bool _hasRealProgress;
 
-    /// <summary>Public read of <see cref="_hasRealProgress"/>, the install band draws a wandering shine
-    /// instead of its normal fill while no running row has a real figure.</summary>
+    /// <summary>Public read of <see cref="_hasRealProgress"/>: the install band draws a wandering shine while no running row has a real figure.</summary>
     public bool HasRealProgress => _hasRealProgress;
 
     public void ApplyInstallStatus(InstallItemStatus status)
     {
-        // A second attempt starts from nothing: a bare 0 % line is otherwise ignored below, so the row (and
-        // the batch's overall percent) kept the failed attempt's figure, e.g. 100 % after a full download
-        // followed by an "installer busy" failure, with the indeterminate creep switched off.
+        // A new attempt starts from nothing: a bare 0 % line would otherwise be ignored and keep the failed attempt's figure.
         if (status.IsAwaitingRetry)
         {
             _hasRealProgress = false;
@@ -1420,14 +1205,12 @@ public partial class UpdateRowViewModel : ObservableObject
         InstallStatusText = status.Error ?? status.Status;
         if (status.Detail is not null)
             InstallErrorDetail = status.Detail;
-        // Stuck/HandedOff carry their explanation in Status, not Error/Detail (InstallQueue reports them
-        // with only a Status line), without this the row's error-detail button never had anything to show.
+        // Stuck and HandedOff carry their explanation in Status only; without this the error-detail button has nothing to show.
         else if (status.IsManualHandoff || status.IsNotApplicable)
             InstallErrorDetail = status.Error ?? status.Status;
         UpdateTransfer(status);
 
-        // A bare status line (percent 0, no bytes) must not stamp the row back to 0; only a real reading
-        // takes over the bar.
+        // A bare status line (percent 0, no bytes) must not reset the row to 0; only a real reading takes over the bar.
         if (status.Percent > 0 || status.BytesTotal is > 0 || status.BytesReceived is > 0)
         {
             _hasRealProgress = true;
@@ -1470,15 +1253,11 @@ public partial class UpdateRowViewModel : ObservableObject
 
     public string RebootMarkerText => LocalizationService.Instance["RebootRequiredBadge"];
 
-    /// <summary>
-    /// The source's own post-install re-check found the same version as before the run. Not a
-    /// failure, sticky like <see cref="NeedsReboot"/>: a later bare status line must not clear it.
-    /// </summary>
+    /// <summary>The source's post-install re-check found the same version as before the run. Not a failure; sticky like <see cref="NeedsReboot"/>.</summary>
     [ObservableProperty]
     private bool versionUnchanged;
 
-    /// <summary>How many times this item has ended unchanged for the same versions, this run included
-    /// (see <see cref="InstallItemStatus.VersionUnchangedCount"/>); 0 while not unchanged.</summary>
+    /// <summary>How many times this item ended unchanged for the same versions, this run included (<see cref="InstallItemStatus.VersionUnchangedCount"/>); 0 while not unchanged.</summary>
     [ObservableProperty]
     private int versionUnchangedCount;
 
@@ -1488,10 +1267,7 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(InstallStateTooltip));
     }
 
-    /// <summary>
-    /// The row is a Store (MSIX) app. winget registers such an update and Windows applies it only once the
-    /// app is closed, so "installed, version unchanged" is a wait for the user there, not a mystery.
-    /// </summary>
+    /// <summary>The row is a Store (MSIX) app: winget registers the update and Windows applies it once the app is closed, so "version unchanged" is a wait there.</summary>
     [ObservableProperty]
     private bool isPackagedApp;
 
@@ -1508,8 +1284,7 @@ public partial class UpdateRowViewModel : ObservableObject
         ? MsixDeferredText
         : LocalizationService.Instance["InstallVersionUnchanged"];
 
-    /// <summary>Why the version can stay the same and what to do; from the second identical result on, also
-    /// how often it already happened, which points at a vendor that numbers its versions differently.</summary>
+    /// <summary>Why the version can stay the same and what to do; from the second identical result on, how often it already happened.</summary>
     public string VersionUnchangedTooltip => IsPackagedApp ? MsixDeferredText : VersionUnchangedCount >= 2
         ? LocalizationService.Instance["InstallVersionUnchangedDetail"] + "\n"
             + string.Format(LocalizationService.Instance["InstallVersionUnchangedRepeat"], VersionUnchangedCount)
@@ -1657,8 +1432,7 @@ public partial class UpdateRowViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowStopSingleButton));
         StopSingleCommand.NotifyCanExecuteChanged();
 
-        // Untick what is already done (or handed off - it is not going to run again on its own either),
-        // or the selection count keeps claiming it is still pending.
+        // Untick what is done or handed off, or the selection count keeps claiming it is pending.
         if (value is RowInstallState.Succeeded or RowInstallState.HandedOff or RowInstallState.Stuck
             or RowInstallState.NeedsManualWork or RowInstallState.Cancelled)
         {
