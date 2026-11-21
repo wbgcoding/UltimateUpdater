@@ -313,6 +313,17 @@ public class InstallErrorExplainerTests
             InstallErrorExplainer.Describe("winget", ladder, key => key));
     }
 
+    /// <summary>The exit code an error report quotes must come from the rung the explanation follows.</summary>
+    [Fact]
+    public void The_extracted_code_of_a_winget_ladder_is_the_last_rungs()
+    {
+        var ladder = "[upgrade] winget install failed for 'Corsair.iCUE' (exit 0x8A15002B). No applicable upgrade found."
+                     + Environment.NewLine
+                     + "[install] winget install failed for 'Corsair.iCUE' (exit 0xC0000005). Access violation.";
+
+        Assert.Equal(unchecked((int)0xC0000005), InstallErrorExplainer.TryExtractCode(ladder));
+    }
+
     [Fact]
     public void A_vendor_installer_crash_is_recognized_from_the_ntstatus_range()
     {

@@ -547,8 +547,17 @@ public static class InstallErrorExplainer
     /// Used by <c>ErrorReportBuilder</c> as the report's own "exit code" field, so the report
     /// and the classification read the same number out of the same text rather than parsing it twice.
     /// </summary>
-    public static int? TryExtractCode(string? outputText) =>
-        string.IsNullOrWhiteSpace(outputText) ? null : ExtractVendorDecimalCode(outputText) ?? TryExtractHexCode(outputText);
+    public static int? TryExtractCode(string? outputText)
+    {
+        if (string.IsNullOrWhiteSpace(outputText))
+            return null;
+
+        // A winget ladder joins one block per rung; only the last rung is what stopped it.
+        if (WingetLadderRung.Match(outputText) is { Success: true, Index: > 0 } lastRung)
+            outputText = outputText[lastRung.Index..];
+
+        return ExtractVendorDecimalCode(outputText) ?? TryExtractHexCode(outputText);
+    }
 
     // ---- The broader extraction, deliberately separate from every phrase-anchored regex
     // above. By the time Explain() itself returns null, neither a vendor decimal wording nor an 8-digit
