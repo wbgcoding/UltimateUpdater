@@ -60,6 +60,8 @@ public static class SourceRegistry
     /// <list type="bullet">
     /// <item>wsl: detection only, never reports an update (see WslSource).</item>
     /// <item>android-studio: reads the local jdk.table.xml only, surfaces only when sdkmanager is absent.</item>
+    /// <item>steam: reads only local registry and appmanifest files; its news lookup is enrichment, never
+    /// part of the scan itself.</item>
     /// <item>msstore, epic, gog and every LauncherCatalog entry: Tier C, detect-and-open only; each one
     /// only checks whether the launcher's own executable/registry entry is present.</item>
     /// </list>
@@ -68,7 +70,7 @@ public static class SourceRegistry
 
     private static HashSet<string> BuildLocalOnlySourceIds()
     {
-        HashSet<string> ids = ["wsl", "android-studio", "msstore", "epic", "gog"];
+        HashSet<string> ids = ["wsl", "android-studio", "steam", "msstore", "epic", "gog"];
 
         foreach (var launcher in LauncherCatalog.Known())
             ids.Add(launcher.Id);

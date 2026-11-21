@@ -64,6 +64,7 @@ public class SourceRegistryKnownIdsTests
     [InlineData("msstore")]
     [InlineData("epic")]
     [InlineData("gog")]
+    [InlineData("steam")]
     public void NeedsNetwork_is_false_for_every_explicit_local_only_source(string sourceId)
     {
         Assert.False(SourceRegistry.NeedsNetwork(sourceId));
@@ -73,7 +74,6 @@ public class SourceRegistryKnownIdsTests
     [InlineData("winget")]
     [InlineData("windowsupdate")]
     [InlineData("pip")]
-    [InlineData("steam")]
     [InlineData("some-unknown-future-source")]
     public void NeedsNetwork_defaults_to_true_for_everything_else(string sourceId)
     {
