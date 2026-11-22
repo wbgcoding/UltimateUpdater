@@ -2687,7 +2687,7 @@ Doorgaan met beheerdersrechten?</value>
     <value>Back-up vóór het verwijderen</value>
   </data>
   <data name="SettingsUninstallBackupDesc" xml:space="preserve">
-    <value>Automatisch maakt een herstelpunt wanneer programma's worden verwijderd die beheerdersrechten nodig hebben.</value>
+    <value>Automatisch alleen voor programma's die beheerdersrechten nodig hebben.</value>
   </data>
   <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
     <value>Automatisch (aanbevolen)</value>

@@ -2687,7 +2687,7 @@ Kontynuować z uprawnieniami administratora?</value>
     <value>Kopia zapasowa przed odinstalowaniem</value>
   </data>
   <data name="SettingsUninstallBackupDesc" xml:space="preserve">
-    <value>Automatyczne tworzy punkt przywracania, gdy usuwane są programy wymagające uprawnień administratora.</value>
+    <value>Automatycznie tylko dla programów wymagających uprawnień administratora.</value>
   </data>
   <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
     <value>Automatycznie (zalecane)</value>

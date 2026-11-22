@@ -2687,7 +2687,7 @@ Ultimate Updater 无法撤销此操作。</value>
     <value>卸载前备份</value>
   </data>
   <data name="SettingsUninstallBackupDesc" xml:space="preserve">
-    <value>自动：删除需要管理员权限的程序时创建还原点。</value>
+    <value>自动：仅针对需要管理员权限的程序。</value>
   </data>
   <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
     <value>自动 (推荐)</value>

@@ -46,6 +46,9 @@ it in one go. A separate cleanup window frees disk space and runs Windows' own m
 - Comes with an uninstall window (Ctrl+U) that lists installed programs, Store apps, package manager
   entries, drivers and Windows updates with their size, how they would be removed and a risk level;
   entries that can affect Windows or other programs need an extra confirmation.
+  A restore point is made first when a removal needs administrator rights or is rated risky, and the
+  leftovers it removes can be restored from the history for 14 days. A row in the update table offers
+  Uninstall too when it maps to exactly one installed program.
 - Lets you undo: an optional restore point before the first admin batch, a registry backup before
   registry cleanup, a driver export before a driver package is removed, and a rollback to the previous
   version for winget packages.
@@ -146,7 +149,8 @@ No account, no ads. Nothing about you or your PC is sent to the author. The app 
 
 Each of these hosts sees your IP address, as with any download. When the Windows proxy fails, requests are
 retried without it and the log notes that. Settings, history and logs stay on your PC, and the log redacts
-user paths and anything shaped like a credential.
+user paths and anything shaped like a credential. Uninstalling programs adds no host: it only runs the programs' own uninstallers and reads the
+registry and the Windows package lists on your PC.
 
 ## Where it keeps things
 

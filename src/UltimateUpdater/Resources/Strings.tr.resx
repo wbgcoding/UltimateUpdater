@@ -2687,7 +2687,7 @@ Yönetici haklarıyla devam edilsin mi?</value>
     <value>Kaldırmadan önce yedekleme</value>
   </data>
   <data name="SettingsUninstallBackupDesc" xml:space="preserve">
-    <value>Otomatik, yönetici hakları gerektiren programlar kaldırılırken bir geri yükleme noktası oluşturur.</value>
+    <value>Otomatik yalnızca yönetici hakları gerektiren programlar için.</value>
   </data>
   <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
     <value>Otomatik (önerilen)</value>

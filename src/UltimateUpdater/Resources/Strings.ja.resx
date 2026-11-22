@@ -2687,7 +2687,7 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
     <value>アンインストール前のバックアップ</value>
   </data>
   <data name="SettingsUninstallBackupDesc" xml:space="preserve">
-    <value>自動では、管理者権限が必要なプログラムを削除するときに復元ポイントを作成します。</value>
+    <value>自動は、管理者権限が必要なプログラムの場合のみ作成します。</value>
   </data>
   <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
     <value>自動 (推奨)</value>

@@ -48,7 +48,7 @@ public sealed class RowUninstallInventory(IUninstallerBackend backend, LoggingSe
         IReadOnlyList<UninstallListing>? listings;
         try
         {
-            listings = await backend.ListAsync(CancellationToken.None);
+            listings = await Backend.ListAsync(CancellationToken.None);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {

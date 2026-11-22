@@ -2687,7 +2687,7 @@ Continuați cu drepturi de administrator?</value>
     <value>Copie de siguranță înainte de dezinstalare</value>
   </data>
   <data name="SettingsUninstallBackupDesc" xml:space="preserve">
-    <value>Automat creează un punct de restaurare când sunt eliminate programe care necesită drepturi de administrator.</value>
+    <value>Automat doar pentru programele care necesită drepturi de administrator.</value>
   </data>
   <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
     <value>Automat (recomandat)</value>

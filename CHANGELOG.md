@@ -17,6 +17,10 @@ versioning: [SemVer](https://semver.org).
 - Removed leftovers of a program are moved into a quarantine instead of deleted and can be restored for 14
   days from the history (button Restore leftovers). Nothing existing is overwritten; registry keys are exported
   first, and folders older than 14 days are deleted at the next removal.
+- A row in the update table offers Uninstall in its context menu when it maps to exactly one installed
+  program (a program found through its GitHub repository, a game launcher). Ambiguous matches, drivers,
+  Windows updates and games of a launcher never get it. The removal uses the uninstaller, including the
+  restore point and the history entry.
 - The cleanup window is a window of its own: starting a scan or working in the main window no longer
   closes it, and both can sit side by side with their own taskbar buttons.
 - Setup is about a fifth smaller and the portable program file about a third: it no longer carries a

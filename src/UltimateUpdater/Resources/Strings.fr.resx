@@ -2687,7 +2687,7 @@ Continuer avec les droits administrateur ?</value>
     <value>Sauvegarde avant la désinstallation</value>
   </data>
   <data name="SettingsUninstallBackupDesc" xml:space="preserve">
-    <value>Automatique crée un point de restauration lorsque des programmes nécessitant des droits d'administrateur sont supprimés.</value>
+    <value>Automatique uniquement pour les programmes qui nécessitent des droits d'administrateur.</value>
   </data>
   <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
     <value>Automatique (recommandé)</value>

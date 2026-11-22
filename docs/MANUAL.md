@@ -44,7 +44,7 @@ and one failed update never stops the rest.
 If a program that is about to be updated is still open, a short window lists it before the batch starts
 and asks once for all of them: close the programs and continue, skip those updates, or try anyway.
 
-## Uninstalling programs
+## Uninstalling
 
 The Uninstall button in the toolbar (Ctrl+U) opens a window of its own that lists what is installed:
 programs and Store apps, package manager entries, drivers and Windows updates. Every row shows its
@@ -80,6 +80,8 @@ has a Restore leftovers button for 14 days: it moves the items back and imports 
 that exists again is left alone and counted, never overwritten; restoring all-users items asks for administrator
 rights. Quarantine folders older than 14 days are deleted at the next removal. An item that cannot be moved
 (another drive, a locked file) goes to the recycle bin as before and is not restorable from the history.
+
+A row of the update table can be removed from its context menu too. Rows of sources that have an uninstall of their own (winget, Scoop, Chocolatey and similar) always offer it. A row found through its GitHub repository, or a game launcher itself, offers Uninstall only when it matches exactly one installed program by name (and publisher, where both are known). With two possible matches, or none, the entry is simply not there, so nothing is ever removed by a guess. Drivers, Windows updates and the games of a launcher never get it. The installed programs are read when you first open such a menu and kept until the next scan finishes. The removal asks first, makes the restore point the backup setting asks for, and lands in the history like a removal from the uninstall window.
 
 ## Cleanup categories
 

@@ -2687,7 +2687,7 @@ Esto no se puede deshacer.</value>
     <value>Copia de seguridad antes de desinstalar</value>
   </data>
   <data name="SettingsUninstallBackupDesc" xml:space="preserve">
-    <value>Automático crea un punto de restauración cuando se quitan programas que necesitan derechos de administrador.</value>
+    <value>Automático solo para programas que necesitan derechos de administrador.</value>
   </data>
   <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
     <value>Automático (recomendado)</value>

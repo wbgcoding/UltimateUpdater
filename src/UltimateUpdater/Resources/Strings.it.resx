@@ -2687,7 +2687,7 @@ Continuare con privilegi di amministratore?</value>
     <value>Backup prima della disinstallazione</value>
   </data>
   <data name="SettingsUninstallBackupDesc" xml:space="preserve">
-    <value>Automatico crea un punto di ripristino quando vengono rimossi programmi che richiedono i diritti di amministratore.</value>
+    <value>Automatico solo per i programmi che richiedono i diritti di amministratore.</value>
   </data>
   <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
     <value>Automatico (consigliato)</value>
