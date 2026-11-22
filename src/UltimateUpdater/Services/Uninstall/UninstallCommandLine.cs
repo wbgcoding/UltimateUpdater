@@ -20,6 +20,9 @@ public enum UninstallRefusal
     UntrustedLocation,
     MissingFile,
     InvalidId,
+
+    /// <summary>The entry is this app's own; its own setup removes it, never this run.</summary>
+    OwnEntry,
 }
 
 /// <summary>

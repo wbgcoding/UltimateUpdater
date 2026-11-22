@@ -162,7 +162,7 @@ public static class UninstallRiskClassifier
 
     private static UninstallRisk Considered(UninstallRiskReason reason) => new(CleanupRiskLevel.Considered, reason, true);
 
-    private static bool IsOwnEntry(string? keyName)
+    internal static bool IsOwnEntry(string? keyName)
     {
         if (string.IsNullOrWhiteSpace(keyName))
             return false;

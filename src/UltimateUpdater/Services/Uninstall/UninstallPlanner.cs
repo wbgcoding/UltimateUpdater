@@ -121,6 +121,9 @@ public static partial class UninstallPlanner
         if (entry.Kind != UninstallEntryKind.Program)
             return Refuse(UninstallRefusal.NoCommand);
 
+        if (UninstallRiskClassifier.IsOwnEntry(entry.Key))
+            return Refuse(UninstallRefusal.OwnEntry);
+
         var elevated = entry.Scope == UninstallScope.Machine;
 
         if (!string.IsNullOrWhiteSpace(entry.WingetId))
@@ -130,7 +133,7 @@ public static partial class UninstallPlanner
                 {
                     Method = UninstallMethod.Winget,
                     Executable = "winget",
-                    Arguments = WingetSource.UninstallArguments(entry.WingetId),
+                    Arguments = WingetSource.UninstallArguments(entry.WingetId, elevated ? "machine" : "user"),
                     Elevated = elevated,
                 }
                 : Refuse(UninstallRefusal.InvalidId);
@@ -179,7 +182,7 @@ public static partial class UninstallPlanner
 
         // A program that runs as administrator must live where only administrators can change it; a
         // user-scope entry runs as the user and crosses no boundary.
-        if (elevated && !probe.IsTrustedForElevation(parsed.Executable))
+        if (elevated && (IsDirectlyInWindowsFolder(parsed.Executable) || !probe.IsTrustedForElevation(parsed.Executable)))
             return Refuse(UninstallRefusal.UntrustedLocation);
 
         return new UninstallPlan
@@ -190,6 +193,21 @@ public static partial class UninstallPlanner
             Elevated = elevated,
             Interactive = interactive,
         };
+    }
+
+    /// <summary>A system tool (net, icacls, takeown and the like) is no uninstaller: the elevated run of a command
+    /// from the registry never starts a program that sits directly in the Windows folder, System32 or SysWOW64.
+    /// A list of tool names alone would always be one name short.</summary>
+    internal static bool IsDirectlyInWindowsFolder(string executable)
+    {
+        var folder = Path.GetDirectoryName(executable);
+        if (string.IsNullOrEmpty(folder))
+            return false;
+
+        folder = Path.TrimEndingDirectorySeparator(folder);
+        var windows = Path.TrimEndingDirectorySeparator(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Windows));
+        return new[] { windows, Path.Combine(windows, "System32"), Path.Combine(windows, "SysWOW64") }
+            .Any(system => string.Equals(folder, system, StringComparison.OrdinalIgnoreCase));
     }
 
     private static UninstallPlan PlanStoreApp(InstalledProgramEntry entry)

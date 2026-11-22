@@ -19,7 +19,8 @@ public sealed class UninstallProgramJob
     /// different answer.</summary>
     public string? Method { get; set; }
 
-    /// <summary>The winget id for method Winget (it is not stored in the registry); validated like any id.</summary>
+    /// <summary>The winget id the app found for method Winget (it is not stored in the registry). It is only compared
+    /// with the id the worker derives itself and never reaches a command line.</summary>
     public string? WingetId { get; set; }
 }
 
@@ -65,8 +66,14 @@ internal static class ProgramUninstallWorker
         return null;
     }
 
-    /// <summary>Re-resolves a job against the machine hive and the file system.</summary>
-    internal static Decision Resolve(UninstallProgramJob? job, IRegistryView registry, IUninstallFileProbe probe)
+    /// <summary>
+    /// Re-resolves a job against the machine hive and the file system. The key must be one only administrators
+    /// can write (<paramref name="keyGuard"/>), and the winget id is derived from <paramref name="wingetRows"/>
+    /// (the worker's own `winget list` run) for the re-read entry; the id on the wire only has to agree with it.
+    /// </summary>
+    internal static Decision Resolve(
+        UninstallProgramJob? job, IRegistryView registry, IUninstallFileProbe probe, IUninstallKeyGuard keyGuard,
+        IReadOnlyList<WingetListRow>? wingetRows = null)
     {
         if (job is null || MachineLeaf(job.Key) is not { } leaf)
             return Refuse("the entry key is not a machine uninstall key");
@@ -81,17 +88,27 @@ internal static class ProgramUninstallWorker
 
         // The registry's own spelling of the key, not the wire's.
         var key = $@"{root}\{registry.SubKeyNames(root).First(n => string.Equals(n, leaf, StringComparison.OrdinalIgnoreCase))}";
+        if (UninstallRiskClassifier.IsOwnEntry(key))
+            return Refuse("the entry is this app's own");
+
+        // Before a single value is read: the content of a key a user could write is not content to act on.
+        if (!keyGuard.IsAdminOnly(key))
+            return Refuse("the entry's registry key can be changed by users");
+
         var entry = InstalledProgramInventory.ReadEntry(registry, key, UninstallScope.Machine);
         if (entry is null)
             return Refuse("the entry is not a removable program");
 
         if (method == UninstallMethod.Winget)
         {
-            if (string.IsNullOrWhiteSpace(job.WingetId)
-                || !ProcessRunner.IsSafePositionalArgument(job.WingetId, allowCmdMetacharacters: true))
-                return Refuse("the winget id is not a plain package id");
+            var derived = WingetListParser.AttachIds([entry], wingetRows ?? [])[0].WingetId;
+            if (string.IsNullOrWhiteSpace(derived))
+                return Refuse("winget does not list this entry under exactly one id");
 
-            entry = entry with { WingetId = job.WingetId };
+            if (!string.Equals(job.WingetId, derived, StringComparison.OrdinalIgnoreCase))
+                return Refuse("the winget id asked for is not the one winget lists for this entry");
+
+            entry = entry with { WingetId = derived };
         }
 
         var plan = UninstallPlanner.Plan(entry, probe);
@@ -122,7 +139,13 @@ internal static class ProgramUninstallWorker
             job = null;
         }
 
-        var decision = Resolve(job, WindowsRegistryView.Instance, new FileSystemUninstallProbe());
+        IReadOnlyList<WingetListRow>? wingetRows = null;
+        if (job?.Method == nameof(UninstallMethod.Winget)
+            && await new WingetListReader().ListAsync(cancellationToken) is { } listing)
+            wingetRows = WingetListParser.Parse(listing);
+
+        var decision = Resolve(
+            job, WindowsRegistryView.Instance, new FileSystemUninstallProbe(), new RegistryUninstallKeyGuard(), wingetRows);
         if (decision.Plan is not { } plan)
         {
             logging.Warn($"Elevated uninstall refused: {decision.Refusal}");

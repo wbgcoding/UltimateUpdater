@@ -52,7 +52,7 @@ public class UninstallPlannerTests
 
         Assert.Equal(UninstallMethod.Winget, plan.Method);
         Assert.Equal("winget", plan.Executable);
-        Assert.Equal(["uninstall", "--id", "Foo.Editor", "--exact", "--silent", "--disable-interactivity", "--accept-source-agreements"],
+        Assert.Equal(["uninstall", "--id", "Foo.Editor", "--exact", "--silent", "--disable-interactivity", "--accept-source-agreements", "--scope", "machine"],
             plan.Arguments);
         Assert.True(plan.Elevated);
         Assert.False(plan.Interactive);
@@ -366,5 +366,59 @@ public class UninstallPlannerTests
     public void An_entry_with_no_command_at_all_is_refused()
     {
         Assert.Equal(UninstallRefusal.NoCommand, Plan(Entry()).Refusal);
+    }
+
+    [Fact]
+    public void A_winget_removal_is_pinned_to_the_scope_of_the_entry()
+    {
+        var machine = Plan(Entry(winget: "Foo.Editor"));
+        var user = Plan(Entry(winget: "Foo.Editor", scope: UninstallScope.User));
+
+        Assert.Equal(["--scope", "machine"], machine.Arguments.Skip(machine.Arguments.Count - 2));
+        Assert.Equal(["--scope", "user"], user.Arguments.Skip(user.Arguments.Count - 2));
+    }
+
+    [Theory]
+    [InlineData("System32", "net.exe")]
+    [InlineData("SysWOW64", "icacls.exe")]
+    [InlineData("", "takeown.exe")]
+    public void An_elevated_command_naming_a_program_directly_in_the_windows_folder_is_refused(string folder, string file)
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var program = folder.Length == 0 ? Path.Combine(windows, file) : Path.Combine(windows, folder, file);
+        var probe = new FakeProbe().With(program);
+
+        var plan = Plan(Entry(quiet: $@"""{program}"" localgroup administrators x /add"), probe);
+
+        Assert.Equal(UninstallMethod.Refused, plan.Method);
+        Assert.Equal(UninstallRefusal.UntrustedLocation, plan.Refusal);
+    }
+
+    [Fact]
+    public void The_windows_folder_rule_is_for_elevated_registry_commands_only()
+    {
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        var program = Path.Combine(windows, "System32", "someuninstall.exe");
+        var probe = new FakeProbe().With(program);
+
+        var user = Plan(Entry(quiet: $@"""{program}"" /S", scope: UninstallScope.User), probe);
+        var nested = Plan(Entry(quiet: $@"""{Path.Combine(windows, "Installer", "{GUID}", "setup.exe")}"" /S"),
+            new FakeProbe().With(Path.Combine(windows, "Installer", "{GUID}", "setup.exe")));
+        var msi = Plan(Entry(msi: Msi));
+
+        Assert.True(user.IsRunnable);
+        Assert.True(nested.IsRunnable);
+        Assert.Equal(UninstallMethod.Msi, msi.Method);
+    }
+
+    [Fact]
+    public void The_apps_own_uninstall_entry_is_refused_in_either_hive()
+    {
+        foreach (var root in new[] { @"HKLM\Uninstall", @"HKCU\Uninstall" })
+        {
+            var entry = Entry(uninstall: $@"""{Setup}""") with { Key = $@"{root}\{UninstallRiskClassifier.OwnUninstallKeyName}" };
+
+            Assert.Equal(UninstallRefusal.OwnEntry, Plan(entry).Refusal);
+        }
     }
 }

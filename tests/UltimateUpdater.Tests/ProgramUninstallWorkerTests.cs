@@ -1,3 +1,4 @@
+using System.IO;
 using UltimateUpdater.Services.Uninstall;
 
 namespace UltimateUpdater.Tests;
@@ -27,6 +28,8 @@ public class ProgramUninstallWorkerTests
 
         public bool IsTrustedForElevation(string path) => !Untrusted.Contains(path);
     }
+
+    private static readonly IUninstallKeyGuard Keys = new FakeKeys();
 
     private static UninstallProgramJob Job(string? key, string? method, string? wingetId = null) =>
         new() { Key = key, Method = method, WingetId = wingetId };
@@ -78,7 +81,7 @@ public class ProgramUninstallWorkerTests
     [Fact]
     public void A_listed_machine_program_plans_as_an_elevated_silent_msi_removal()
     {
-        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Msi", "Msi"), Registry(), new Probe());
+        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Msi", "Msi"), Registry(), new Probe(), Keys);
 
         Assert.Null(decision.Refusal);
         Assert.NotNull(decision.Plan);
@@ -90,7 +93,7 @@ public class ProgramUninstallWorkerTests
     [Fact]
     public void The_key_is_matched_case_insensitively_and_the_registrys_spelling_is_used()
     {
-        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\MSI", "Msi"), Registry(), new Probe());
+        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\MSI", "Msi"), Registry(), new Probe(), Keys);
 
         Assert.NotNull(decision.Plan);
     }
@@ -100,7 +103,7 @@ public class ProgramUninstallWorkerTests
     {
         var registry = Registry().Set($@"{Hklm64}\Foo", "QuietUninstallString", $@"""{Setup}"" /S");
 
-        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "QuietString"), registry, new Probe());
+        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "QuietString"), registry, new Probe(), Keys);
 
         Assert.NotNull(decision.Plan);
         Assert.Equal(UninstallMethod.QuietString, decision.Plan!.Method);
@@ -111,7 +114,7 @@ public class ProgramUninstallWorkerTests
     [Fact]
     public void A_per_user_key_is_refused_even_when_it_exists()
     {
-        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hkcu}\Mine", "Interactive"), Registry(), new Probe());
+        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hkcu}\Mine", "Interactive"), Registry(), new Probe(), Keys);
 
         Assert.Null(decision.Plan);
         Assert.NotNull(decision.Refusal);
@@ -126,7 +129,7 @@ public class ProgramUninstallWorkerTests
     [InlineData(null)]
     public void An_unknown_or_malformed_key_is_refused(string? key)
     {
-        var decision = ProgramUninstallWorker.Resolve(Job(key, "Interactive"), Registry(), new Probe());
+        var decision = ProgramUninstallWorker.Resolve(Job(key, "Interactive"), Registry(), new Probe(), Keys);
 
         Assert.Null(decision.Plan);
         Assert.NotNull(decision.Refusal);
@@ -135,7 +138,7 @@ public class ProgramUninstallWorkerTests
     [Fact]
     public void A_missing_job_is_refused()
     {
-        var decision = ProgramUninstallWorker.Resolve(null, Registry(), new Probe());
+        var decision = ProgramUninstallWorker.Resolve(null, Registry(), new Probe(), Keys);
 
         Assert.Null(decision.Plan);
     }
@@ -151,7 +154,7 @@ public class ProgramUninstallWorkerTests
     [InlineData(null)]
     public void A_method_the_worker_does_not_run_is_refused(string? method)
     {
-        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Msi", method), Registry(), new Probe());
+        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Msi", method), Registry(), new Probe(), Keys);
 
         Assert.Null(decision.Plan);
         Assert.NotNull(decision.Refusal);
@@ -161,45 +164,103 @@ public class ProgramUninstallWorkerTests
     public void A_method_that_differs_from_what_the_entry_plans_is_refused()
     {
         // The entry is an MSI program; asking for its (nonexistent) quiet command or a winget run must not work.
-        var asQuiet = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Msi", "QuietString"), Registry(), new Probe());
-        var asInteractive = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Msi", "Interactive"), Registry(), new Probe());
+        var asQuiet = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Msi", "QuietString"), Registry(), new Probe(), Keys);
+        var asInteractive = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Msi", "Interactive"), Registry(), new Probe(), Keys);
 
         Assert.Null(asQuiet.Plan);
         Assert.Null(asInteractive.Plan);
     }
 
+    private static FakeUninstallRegistry WingetRegistry() => Registry().Set($@"{Hklm64}\Foo", "DisplayVersion", "1.0");
+
+    private static readonly WingetListRow[] FooRow = [new("Foo", "Foo.Editor", "1.0")];
+
     [Fact]
-    public void A_winget_job_needs_a_safe_id_and_plans_a_winget_removal()
+    public void A_winget_job_plans_a_machine_scoped_winget_removal_with_the_id_the_worker_derived()
     {
-        var ok = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "Winget", "Foo.Editor"), Registry(), new Probe());
+        var ok = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "Winget", "Foo.Editor"), WingetRegistry(), new Probe(), Keys, FooRow);
 
         Assert.NotNull(ok.Plan);
         Assert.Equal("winget", ok.Plan!.Executable);
         Assert.Contains("Foo.Editor", ok.Plan.Arguments);
         Assert.True(ok.Plan.Elevated);
+        Assert.Equal(["--scope", "machine"], ok.Plan.Arguments.Skip(ok.Plan.Arguments.Count - 2));
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("  ")]
+    [InlineData("Other.Package")]
     [InlineData("-evil")]
-    [InlineData("/evil")]
     [InlineData("a b")]
-    [InlineData("a..b")]
-    [InlineData("a\"b")]
-    public void A_winget_job_without_a_plain_id_is_refused(string? id)
+    public void A_winget_job_whose_id_is_not_the_one_the_worker_derives_is_refused(string? id)
     {
-        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "Winget", id), Registry(), new Probe());
+        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "Winget", id), WingetRegistry(), new Probe(), Keys, FooRow);
 
         Assert.Null(decision.Plan);
         Assert.NotNull(decision.Refusal);
     }
 
     [Fact]
+    public void A_winget_job_is_refused_when_the_worker_finds_no_id_of_its_own()
+    {
+        var withoutRows = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "Winget", "Foo.Editor"), WingetRegistry(), new Probe(), Keys);
+        var otherRows = ProgramUninstallWorker.Resolve(
+            Job($@"{Hklm64}\Foo", "Winget", "Foo.Editor"), WingetRegistry(), new Probe(), Keys, [new("Foo", "Foo.Editor", "2.0")]);
+
+        Assert.Null(withoutRows.Plan);
+        Assert.Null(otherRows.Plan);
+    }
+
+    [Fact]
     public void A_winget_id_for_an_entry_that_is_not_installed_is_refused()
     {
-        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Gone", "Winget", "Foo.Editor"), Registry(), new Probe());
+        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Gone", "Winget", "Foo.Editor"), WingetRegistry(), new Probe(), Keys, FooRow);
+
+        Assert.Null(decision.Plan);
+    }
+
+    private sealed class FakeKeys(params string[] writableByUsers) : IUninstallKeyGuard
+    {
+        public bool IsAdminOnly(string keyPath) => !writableByUsers.Contains(keyPath, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void A_key_users_can_write_is_refused_before_its_content_is_used()
+    {
+        var registry = Registry().Set($@"{Hklm64}\Foo", "QuietUninstallString", $@"""{Setup}"" /S");
+
+        var writable = ProgramUninstallWorker.Resolve(
+            Job($@"{Hklm64}\Foo", "QuietString"), registry, new Probe(), new FakeKeys($@"{Hklm64}\Foo"));
+        var adminOnly = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "QuietString"), registry, new Probe(), new FakeKeys());
+
+        Assert.Null(writable.Plan);
+        Assert.Contains("users", writable.Refusal);
+        Assert.NotNull(adminOnly.Plan);
+    }
+
+    [Fact]
+    public void A_system_tool_named_by_a_machine_entry_is_refused()
+    {
+        var net = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "net.exe");
+        var probe = new Probe();
+        probe.Files.Add(net);
+        var registry = Registry().Set($@"{Hklm64}\Foo", "QuietUninstallString", $@"""{net}"" localgroup administrators x /add");
+
+        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "QuietString"), registry, probe, Keys);
+
+        Assert.Null(decision.Plan);
+        Assert.NotNull(decision.Refusal);
+    }
+
+    [Fact]
+    public void The_apps_own_entry_is_refused()
+    {
+        var registry = Registry().Program(Hklm64, UninstallRiskClassifier.OwnUninstallKeyName, "Ultimate Updater", $@"""{Setup}""");
+
+        var decision = ProgramUninstallWorker.Resolve(
+            Job($@"{Hklm64}\{UninstallRiskClassifier.OwnUninstallKeyName}", "Interactive"), registry, new Probe(), Keys);
 
         Assert.Null(decision.Plan);
     }
@@ -211,7 +272,7 @@ public class ProgramUninstallWorkerTests
         probe.Untrusted.Add(Setup);
         var registry = Registry().Set($@"{Hklm64}\Foo", "QuietUninstallString", $@"""{Setup}"" /S");
 
-        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "QuietString"), registry, probe);
+        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Foo", "QuietString"), registry, probe, Keys);
 
         Assert.Null(decision.Plan);
         Assert.NotNull(decision.Refusal);
@@ -225,7 +286,7 @@ public class ProgramUninstallWorkerTests
             .Set($@"{Hklm64}\Patch", "UninstallString", $@"""{Setup}""")
             .Set($@"{Hklm64}\Patch", "ParentKeyName", "OperatingSystem");
 
-        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Patch", "Interactive"), registry, new Probe());
+        var decision = ProgramUninstallWorker.Resolve(Job($@"{Hklm64}\Patch", "Interactive"), registry, new Probe(), Keys);
 
         Assert.Null(decision.Plan);
     }

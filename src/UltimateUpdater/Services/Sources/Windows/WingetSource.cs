@@ -693,11 +693,20 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
             || output.Contains("exit 0x80070652", StringComparison.OrdinalIgnoreCase)
             || output.Contains("Another installation is already in progress", StringComparison.OrdinalIgnoreCase));
 
-    internal static IReadOnlyList<string> UninstallArguments(string packageId) =>
-    [
-        "uninstall", "--id", packageId, "--exact",
-        "--silent", "--disable-interactivity", "--accept-source-agreements",
-    ];
+    /// <summary>The removal command. <paramref name="scope"/> ("machine" or "user") pins the removal to that
+    /// scope: an elevated run without it would also take a per-user install of the same id.</summary>
+    internal static IReadOnlyList<string> UninstallArguments(string packageId, string? scope = null)
+    {
+        List<string> arguments =
+        [
+            "uninstall", "--id", packageId, "--exact",
+            "--silent", "--disable-interactivity", "--accept-source-agreements",
+        ];
+        if (scope is not null)
+            arguments.AddRange(["--scope", scope]);
+
+        return arguments;
+    }
 
     private static void Report(IProgress<InstallProgress> progress, string name, string segment)
     {
