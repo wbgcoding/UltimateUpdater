@@ -3,8 +3,6 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using UltimateUpdater.Models;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 

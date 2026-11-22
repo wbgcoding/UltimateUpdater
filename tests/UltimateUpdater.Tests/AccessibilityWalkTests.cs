@@ -6,11 +6,8 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 using Xunit;
 
 namespace UltimateUpdater.Tests;
@@ -280,7 +277,7 @@ public class AccessibilityWalkTests
     /// This app's own controls only. WPF-UI's title bar buttons and every plain WPF ScrollBar/RepeatButton/
     /// Thumb come from a library control template, never declared in any file this batch owns, and WPF-UI
     /// already names its own chrome through its own localization, not through AutomationProperties.Name or
-    /// a literal ToolTip string, which is what this walk can actually see. Nothing in Views/*.xaml declares
+    /// a literal ToolTip string, which is what this walk can actually see. Nothing in Views/**/*.xaml declares
     /// a bare ScrollBar, RepeatButton or Thumb directly (every one on screen belongs to a ListBox/TextBox/
     /// DataGrid's own default template), so excluding the type is exact, not a guess.
     /// </summary>

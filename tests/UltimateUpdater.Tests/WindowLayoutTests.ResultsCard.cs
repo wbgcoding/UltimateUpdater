@@ -2,8 +2,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using UltimateUpdater.Models;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 

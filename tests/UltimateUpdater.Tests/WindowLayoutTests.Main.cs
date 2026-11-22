@@ -7,12 +7,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.SelfUpdate;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 
@@ -971,7 +968,7 @@ public partial class WindowLayoutTests
 
             var tableRow = FindAllByName<Grid>(content, "TableRow").First(g => g.DataContext == row);
             percentShown = FindByName<TextBlock>(tableRow, "RunningPercentText")!.Visibility == Visibility.Visible;
-            barShown = FindByName<UltimateUpdater.Views.IndeterminateBar>(tableRow, "RunningIndeterminateBar")!.Visibility == Visibility.Visible;
+            barShown = FindByName<IndeterminateBar>(tableRow, "RunningIndeterminateBar")!.Visibility == Visibility.Visible;
             var line = FindByName<TextBlock>(tableRow, "InstallingPhaseText")!;
             lineShown = line.Visibility == Visibility.Visible;
             lineText = line.Text;

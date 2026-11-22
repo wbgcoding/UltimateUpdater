@@ -251,7 +251,7 @@ public class RealVmCaptureTests
     private static byte[] RawBytes() =>
         Convert.FromBase64String(GermanVmCaptureBase64);
 
-    /// <summary>What <see cref="Services.ProcessRunner"/> now hands back for this one call: the real bytes,
+    /// <summary>What <see cref="ProcessRunner"/> now hands back for this one call: the real bytes,
     /// preserved 1:1 as chars by decoding with <see cref="Encoding.Latin1"/> instead of the UTF-8 every
     /// other tool gets.</summary>
     private static string Latin1PreservedCapture() =>
@@ -283,7 +283,7 @@ public class RealVmCaptureTests
     }
 
     /// <summary>What the app actually showed on the VM before this item: decoded as UTF-8 (the old,
-    /// still-default behaviour for every other <see cref="Services.ProcessRunner"/> caller), every accented
+    /// still-default behaviour for every other <see cref="ProcessRunner"/> caller), every accented
     /// label byte becomes an unrecoverable U+FFFD and no label matches at all - proves the "keine Größen
     /// gemeldet" finding was this bug, not a fluke of that one run.</summary>
     [Fact]

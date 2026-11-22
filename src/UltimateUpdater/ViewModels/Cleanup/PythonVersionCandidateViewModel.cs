@@ -1,0 +1,50 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using UltimateUpdater.Services.Cleanup;
+
+namespace UltimateUpdater.ViewModels.Cleanup;
+
+/// <summary>
+/// One "older Python version" row. Deliberately never pre-selected, same rule as
+/// <see cref="LeftoverCandidateViewModel"/>/<see cref="DriverPackageCandidateViewModel"/>: removing an
+/// installed interpreter something might still target by its exact version is not a decision this dialog
+/// makes on its own.
+/// </summary>
+public sealed partial class PythonVersionCandidateViewModel(PythonVersionCandidateDto candidate) : ObservableObject
+{
+    [ObservableProperty]
+    private bool isSelected;
+
+    public string PythonExe => candidate.PythonExe;
+
+    public string DisplayLabel => candidate.DisplayLabel;
+
+    public override string ToString() => DisplayLabel;
+
+    public string? SitePackages => candidate.SitePackages;
+
+    public long SizeBytes => candidate.SizeBytes;
+
+    public string SizeText => ByteSize.Format(candidate.SizeBytes);
+
+    public int PackageCount => candidate.PackageCount;
+
+    public int VenvUseCount => candidate.VenvUseCount;
+
+    public bool HasVenvUses => candidate.VenvUseCount > 0;
+
+    public string VenvUseText => string.Format(
+        LocalizationService.Instance["CleanupOldPythonVenvUses"], candidate.VenvUseCount);
+
+    /// <summary>Says the venv count is a lower bound (only the signed-in profile and the usual tool folders are searched).</summary>
+    public string VenvUseTip => LocalizationService.Instance["CleanupOldPythonVenvUsesTip"];
+
+    public string DetailText => string.Format(
+        LocalizationService.Instance[PackageCount == 1 ? "CleanupOldPythonVersionDetailOne" : "CleanupOldPythonVersionDetail"], PythonExe, PackageCount);
+
+    public void RefreshLocalizedText()
+    {
+        OnPropertyChanged(nameof(DetailText));
+        OnPropertyChanged(nameof(VenvUseText));
+        OnPropertyChanged(nameof(VenvUseTip));
+    }
+}

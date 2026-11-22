@@ -4,10 +4,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 using Wpf.Ui.Appearance;
 
 namespace UltimateUpdater.Tests;

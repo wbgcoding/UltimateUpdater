@@ -3,7 +3,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
 
 namespace UltimateUpdater.Tests;

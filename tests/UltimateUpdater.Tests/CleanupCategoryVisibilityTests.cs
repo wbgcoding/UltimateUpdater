@@ -1,9 +1,6 @@
 using System.Globalization;
 using System.Windows;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 

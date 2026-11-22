@@ -1,7 +1,6 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 
 namespace UltimateUpdater.Tests;

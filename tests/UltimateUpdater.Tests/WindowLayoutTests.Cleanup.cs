@@ -6,12 +6,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.SelfUpdate;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 using Wpf.Ui.Appearance;
 
 namespace UltimateUpdater.Tests;
@@ -1131,7 +1128,7 @@ public partial class WindowLayoutTests
             result = WpfHarness.RenderWindow(window, "cleanup-component-store-dots-de", (int)window.Width, 1400);
 
             buttons = FindAllByName<Wpf.Ui.Controls.Button>(content, "ComponentStoreAnalyzeButton").Count;
-            foreach (var dots in FindAllByName<UltimateUpdater.Views.MeasuringDots>(content, "ComponentStoreMeasuringDots"))
+            foreach (var dots in FindAllByName<MeasuringDots>(content, "ComponentStoreMeasuringDots"))
             {
                 if (dots.ActualWidth <= 0 || dots.ActualHeight <= 0)
                     continue;

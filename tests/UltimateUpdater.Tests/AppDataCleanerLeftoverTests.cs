@@ -1,6 +1,5 @@
 using System.IO;
 using Microsoft.Win32;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

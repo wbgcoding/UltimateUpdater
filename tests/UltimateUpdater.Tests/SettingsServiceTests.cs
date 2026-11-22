@@ -3,7 +3,6 @@ using System.Reflection;
 using System.Text.Json;
 using UltimateUpdater.Models;
 using UltimateUpdater.Models.Settings;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
 
 namespace UltimateUpdater.Tests;

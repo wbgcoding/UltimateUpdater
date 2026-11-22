@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 
 namespace UltimateUpdater.Tests;

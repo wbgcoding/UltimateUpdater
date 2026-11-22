@@ -350,7 +350,7 @@ public class RegistryBackupServiceTests
 
             var path = RegistryBackupService.BuildBackupPath(folder, new DateTime(2026, 7, 31, 12, 0, 0));
             File.WriteAllText(path, "new");
-            RegistryBackupService.PruneOldBackups(folder, 3, new UltimateUpdater.Services.LoggingService());
+            RegistryBackupService.PruneOldBackups(folder, 3, new LoggingService());
 
             Assert.EndsWith("ultimate updater registry backup 31.07.2026 12-00.reg", path);
             Assert.True(File.Exists(path));
@@ -430,7 +430,7 @@ public class RegistryBackupServiceTests
 
             var result = await RegistryBackupService.BackupBeforeWriteAsync(
                 ["HKEY_CURRENT_USER\\Software\\UltimateUpdaterTestDoesNotExist"],
-                backupFolder, 5, new UltimateUpdater.Services.LoggingService(), CancellationToken.None);
+                backupFolder, 5, new LoggingService(), CancellationToken.None);
 
             Assert.Null(result);
             // must never exist, the folder is checked before any create or write touches it
@@ -497,7 +497,7 @@ public class RegistryBackupServiceTests
             using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey($@"{appPathsRoot}\{name}", writable: true))
                 key!.SetValue(string.Empty, Environment.GetFolderPath(Environment.SpecialFolder.System) + @"\notepad.exe");
 
-            var deleted = RegistryCleanupScanner.Delete([finding], new UltimateUpdater.Services.LoggingService());
+            var deleted = RegistryCleanupScanner.Delete([finding], new LoggingService());
 
             Assert.Equal(0, deleted);
             Assert.True(RegistryCleanupScanner.KeyExists(keyPath));
@@ -523,7 +523,7 @@ public class RegistryBackupServiceTests
             var finding = new RegistryFinding(
                 RegistryCleanupCategory.AppPaths, keyPath, null, name, @"C:\this-path-does-not-exist-either.exe");
 
-            var deleted = RegistryCleanupScanner.Delete([finding], new UltimateUpdater.Services.LoggingService());
+            var deleted = RegistryCleanupScanner.Delete([finding], new LoggingService());
 
             Assert.Equal(1, deleted);
             Assert.False(RegistryCleanupScanner.KeyExists(keyPath));
@@ -551,7 +551,7 @@ public class RegistryBackupServiceTests
             using var cts = new CancellationTokenSource();
             cts.Cancel();
 
-            var deleted = RegistryCleanupScanner.Delete([finding], new UltimateUpdater.Services.LoggingService(), cts.Token);
+            var deleted = RegistryCleanupScanner.Delete([finding], new LoggingService(), cts.Token);
 
             Assert.Equal(0, deleted);
             Assert.True(RegistryCleanupScanner.KeyExists(keyPath));

@@ -1,7 +1,5 @@
 using System.IO;
 using System.Text.RegularExpressions;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

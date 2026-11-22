@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Windows.Media;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 

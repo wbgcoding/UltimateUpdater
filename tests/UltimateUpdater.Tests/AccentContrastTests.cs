@@ -1,4 +1,3 @@
-using UltimateUpdater.Services;
 using Color = System.Windows.Media.Color;
 
 namespace UltimateUpdater.Tests;

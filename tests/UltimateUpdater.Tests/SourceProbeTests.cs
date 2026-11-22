@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
 using Xunit.Abstractions;
 

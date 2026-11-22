@@ -1,7 +1,5 @@
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 
@@ -558,7 +556,7 @@ public class InstallPreflightTests
 
     /// <summary>
     /// The pre-flight window's own "last restore point" line, read back from the same timestamp
-    /// file <see cref="Services.InstallQueue"/> writes after actually creating one. The dialog seam proves
+    /// file <see cref="InstallQueue"/> writes after actually creating one. The dialog seam proves
     /// the button never has to pop a real system window for this to be testable.
     /// </summary>
     [Fact]

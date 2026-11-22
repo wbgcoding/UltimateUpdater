@@ -1,6 +1,4 @@
 using System.Runtime.InteropServices;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

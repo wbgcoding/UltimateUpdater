@@ -118,7 +118,7 @@ public class HardwiredTextTests
         // containing this literal (renamed, removed, converted to a binding), the exception is dead
         // weight that would silently hide a REAL new hardwired string added elsewhere in its place.
         var viewsDirectory = FindViewsDirectory();
-        var xaml = File.ReadAllText(Path.Combine(viewsDirectory, "SettingsWindow.xaml"));
+        var xaml = File.ReadAllText(ViewSources.Find(viewsDirectory, "SettingsWindow.xaml"));
         Assert.Contains($"Content=\"{expectedWord}\"", xaml, StringComparison.Ordinal);
     }
 

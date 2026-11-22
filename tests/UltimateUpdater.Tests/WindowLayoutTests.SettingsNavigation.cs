@@ -1,8 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 

@@ -1,4 +1,3 @@
-using UltimateUpdater.ViewModels;
 using Xunit;
 
 namespace UltimateUpdater.Tests;

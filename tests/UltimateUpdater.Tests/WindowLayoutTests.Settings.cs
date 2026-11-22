@@ -5,11 +5,8 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 

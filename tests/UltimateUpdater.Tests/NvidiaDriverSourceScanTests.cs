@@ -1,6 +1,5 @@
 using System.Net.Http;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
 
 namespace UltimateUpdater.Tests;

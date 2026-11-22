@@ -2,9 +2,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 using Color = System.Windows.Media.Color;
 
 namespace UltimateUpdater.Tests;

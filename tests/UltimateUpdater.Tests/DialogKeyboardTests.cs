@@ -1,9 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 
@@ -48,7 +45,7 @@ public class DialogKeyboardTests
             PressEscape(window);
 
             Assert.True(closed, "Escape must close the dialog, matching the title bar's own close behaviour.");
-            Assert.Equal(UltimateUpdater.Services.ThreeWayChoice.Dismissed, window.Choice);
+            Assert.Equal(ThreeWayChoice.Dismissed, window.Choice);
         });
     }
 

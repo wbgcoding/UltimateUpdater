@@ -1,10 +1,7 @@
 using System.Reflection;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 

@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using UltimateUpdater.Services;
 using Xunit;
 
 namespace UltimateUpdater.Tests;

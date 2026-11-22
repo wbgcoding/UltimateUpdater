@@ -1,7 +1,6 @@
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using UltimateUpdater.Services;
 using Xunit;
 
 namespace UltimateUpdater.Tests;

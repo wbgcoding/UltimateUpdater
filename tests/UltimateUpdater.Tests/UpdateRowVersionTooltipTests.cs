@@ -1,5 +1,4 @@
 using UltimateUpdater.Models;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

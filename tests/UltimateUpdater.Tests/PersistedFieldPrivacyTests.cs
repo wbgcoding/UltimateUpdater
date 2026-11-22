@@ -1,7 +1,6 @@
 using System.Reflection;
 using UltimateUpdater.Models;
 using UltimateUpdater.Models.Settings;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

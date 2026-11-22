@@ -1,11 +1,10 @@
 using System.Diagnostics;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 
 /// <summary>
 /// LoggingService writes through a background queue rather than an open/append/close per call
-/// (Services/LoggingService.cs: the per-line file-open cost, and rotation/compression running on
+/// (Services/App/LoggingService.cs: the per-line file-open cost, and rotation/compression running on
 /// whatever thread happened to log, both used to sit on the caller). These prove the two things that
 /// design change must still guarantee: nothing queued is ever lost, and <see cref="LoggingService.Flush"/>
 /// really does wait for the background writer rather than returning early.

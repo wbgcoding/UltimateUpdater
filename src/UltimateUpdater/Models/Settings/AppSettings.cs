@@ -24,7 +24,7 @@ public sealed class AppSettings
     /// <summary>"Remind me later"; key is the same <c>PackageKey</c>/<c>VersionKey</c> form as
     /// <see cref="Excludes"/>, value is the UTC due date. Mutually exclusive with Excludes for a given key:
     /// setting one clears the other. An expired entry is dropped lazily wherever it is looked up, and swept
-    /// on load too (<see cref="UltimateUpdater.Services.SettingsService"/>) so a very long-idle install never resurrects it.</summary>
+    /// on load too (<see cref="SettingsService"/>) so a very long-idle install never resurrects it.</summary>
     public Dictionary<string, DateTimeOffset> Snoozed { get; set; } = new();
 
     /// <summary>Counts a package's repeated same-cause install failures so a row that can never succeed reads as
@@ -101,7 +101,7 @@ public sealed class ScanSettings
     public bool RespectMetered { get; set; } = true;
 
     /// <summary>
-    /// Caps how many sources scan at once (<see cref="Services.ScanOrchestrator"/>'s gate). 1 to 16; the startup
+    /// Caps how many sources scan at once (<see cref="ScanOrchestrator"/>'s gate). 1 to 16; the startup
     /// hardware auto-tune sets the initial value, see <see cref="AppSettings.ParallelismChosenByUser"/>. The default
     /// only matters before that tune has run or for a settings object built without it (tests).
     /// </summary>

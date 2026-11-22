@@ -2,9 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 
@@ -78,7 +76,7 @@ public partial class WindowLayoutTests
             ApplyTheme("dark");
 
             var viewModel = NewMeasuredCleanupViewModel();
-            var window = new Views.CleanupWindow(viewModel) { DisplayPercent = 0 };
+            var window = new CleanupWindow(viewModel) { DisplayPercent = 0 };
             var content = (FrameworkElement)window.Content;
 
             if (face != "choosing")

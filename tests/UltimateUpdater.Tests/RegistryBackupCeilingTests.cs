@@ -1,6 +1,5 @@
 using System.IO;
 using Microsoft.Win32;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 
 namespace UltimateUpdater.Tests;

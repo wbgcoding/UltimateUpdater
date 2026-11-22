@@ -1,9 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 

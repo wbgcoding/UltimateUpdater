@@ -22,13 +22,13 @@ public class PanelSurfaceStyleTests
     private static readonly XNamespace X =
         "http://schemas.microsoft.com/winfx/2006/xaml";
 
-    private static readonly XNamespace Views =
-        "clr-namespace:UltimateUpdater.Views";
+    private static readonly XNamespace Behaviors =
+        "clr-namespace:UltimateUpdater.Views.Behaviors";
 
     private static string? Key(XElement element) => (string?)element.Attribute(X + "Key");
 
     private static string? GlassCardHighlightShow(XElement element) =>
-        (string?)element.Attribute(Views + "GlassCardHighlight.Show");
+        (string?)element.Attribute(Behaviors + "GlassCardHighlight.Show");
 
     private static XElement LoadXaml(string relativePath)
     {
@@ -63,7 +63,7 @@ public class PanelSurfaceStyleTests
         Assert.Equal("{DynamicResource CardBackgroundFillColorDefaultBrush}", SetterValue(style!, "Background"));
         Assert.Equal("{DynamicResource CardStrokeColorDefaultBrush}", SetterValue(style!, "BorderBrush"));
         Assert.Equal("8", SetterValue(style!, "CornerRadius"));
-        Assert.Equal("True", SetterValue(style!, "views:GlassCardHighlight.Show"));
+        Assert.Equal("True", SetterValue(style!, "behaviors:GlassCardHighlight.Show"));
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class PanelSurfaceStyleTests
     [Fact]
     public void Settings_window_card_derives_from_the_shared_panel_surface_style()
     {
-        var style = LoadXaml("Views/SettingsWindow.xaml").Descendants(Presentation + "Style")
+        var style = LoadXaml("Views/Settings/SettingsWindow.xaml").Descendants(Presentation + "Style")
             .FirstOrDefault(s => Key(s) == "Card");
 
         Assert.NotNull(style);
@@ -89,7 +89,7 @@ public class PanelSurfaceStyleTests
     [Fact]
     public void Cleanup_window_category_is_a_flat_section_of_the_card_that_carries_the_glass_highlight()
     {
-        var xaml = LoadXaml("Views/CleanupWindow.xaml");
+        var xaml = LoadXaml("Views/Cleanup/CleanupWindow.xaml");
         var templates = LoadXaml("Views/Cleanup/CleanupTemplates.xaml");
         var style = templates.Descendants(Presentation + "Style").FirstOrDefault(s => Key(s) == "CleanupGroupCard");
 

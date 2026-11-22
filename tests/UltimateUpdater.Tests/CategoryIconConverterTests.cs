@@ -1,8 +1,5 @@
 using System.Globalization;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 using Wpf.Ui.Controls;
 
 namespace UltimateUpdater.Tests;

@@ -1,5 +1,4 @@
 using System.IO;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
 
 namespace UltimateUpdater.Tests;

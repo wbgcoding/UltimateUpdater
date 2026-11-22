@@ -1,8 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using UltimateUpdater.Services;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 

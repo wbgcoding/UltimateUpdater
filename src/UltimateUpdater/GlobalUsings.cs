@@ -1,3 +1,35 @@
 // WinForms is referenced only for the tray NotifyIcon. Its types collide with WPF's by name, so the WPF ones win project-wide and the few WinForms types used are fully qualified.
 global using Application = System.Windows.Application;
 global using MessageBox = System.Windows.MessageBox;
+// Feature folders: every folder's namespace is project-wide, so a file never lists the neighbours it uses.
+global using UltimateUpdater.Services.App;
+global using UltimateUpdater.Services.Branding;
+global using UltimateUpdater.Services.Elevation;
+global using UltimateUpdater.Services.Formatting;
+global using UltimateUpdater.Services.Install;
+global using UltimateUpdater.Services.Platform;
+global using UltimateUpdater.Services.Processes;
+global using UltimateUpdater.Services.Scan;
+global using UltimateUpdater.Services.Security;
+global using UltimateUpdater.Services.Sources.DevTools;
+global using UltimateUpdater.Services.Sources.Drivers;
+global using UltimateUpdater.Services.Sources.Launchers;
+global using UltimateUpdater.Services.Sources.PackageManagers;
+global using UltimateUpdater.Services.Sources.Runtimes;
+global using UltimateUpdater.Services.Sources.Shared;
+global using UltimateUpdater.Services.Sources.Windows;
+global using UltimateUpdater.Services.Support;
+global using UltimateUpdater.ViewModels.Cleanup;
+global using UltimateUpdater.ViewModels.Common;
+global using UltimateUpdater.ViewModels.History;
+global using UltimateUpdater.ViewModels.Main;
+global using UltimateUpdater.ViewModels.Popups;
+global using UltimateUpdater.ViewModels.Settings;
+global using UltimateUpdater.Views.Behaviors;
+global using UltimateUpdater.Views.Cleanup;
+global using UltimateUpdater.Views.Controls;
+global using UltimateUpdater.Views.Converters;
+global using UltimateUpdater.Views.History;
+global using UltimateUpdater.Views.Main;
+global using UltimateUpdater.Views.Popups;
+global using UltimateUpdater.Views.Settings;

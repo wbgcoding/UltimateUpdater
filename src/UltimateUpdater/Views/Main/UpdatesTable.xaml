@@ -2,10 +2,12 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-             xmlns:views="clr-namespace:UltimateUpdater.Views">
+             xmlns:behaviors="clr-namespace:UltimateUpdater.Views.Behaviors"
+             xmlns:controls="clr-namespace:UltimateUpdater.Views.Controls"
+             xmlns:converters="clr-namespace:UltimateUpdater.Views.Converters">
     <UserControl.Resources>
-        <views:ShortcutTooltipConverter x:Key="ShortcutTooltip"/>
-        <views:UpperCaseConverter x:Key="UpperCase"/>
+        <converters:ShortcutTooltipConverter x:Key="ShortcutTooltip"/>
+        <converters:UpperCaseConverter x:Key="UpperCase"/>
         <!-- The table's row buttons: outline only, no grey fill, so a column of them reads as quiet controls on
              the table surface. Hover and pressed fills come from the stock template. -->
         <Style x:Key="RowOutlineButton" TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
@@ -190,7 +192,7 @@
                 Visibility="{Binding HasResults, Converter={StaticResource BoolToVisibility}}">
           <!-- RoundedClip: the scrollbar's square surface would otherwise paint over the card's rounded
                lower right corner (7 = the card's radius 8 minus its 1px stroke). -->
-          <Grid x:Name="ResultsCardContent" views:RoundedClip.Radius="7">
+          <Grid x:Name="ResultsCardContent" behaviors:RoundedClip.Radius="7">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>   <!-- clickable column headers -->
                 <!-- Rows + the manual-open block share ONE scroll area (below) so the compact block
@@ -876,7 +878,7 @@
                                     </Button>
 
                                     <!-- A click-triggered fetch in flight: a small ring right of the version. -->
-                                    <views:WaitSpinner Grid.Column="1" Width="12" Height="12" Margin="4,0,0,0"
+                                    <controls:WaitSpinner Grid.Column="1" Width="12" Height="12" Margin="4,0,0,0"
                                                        VerticalAlignment="Center"
                                                        Visibility="{Binding IsChangelogLoading, Converter={StaticResource BoolToVisibility}}"/>
                                 </Grid>
@@ -920,13 +922,13 @@
                                                    Margin="0,0,8,0" Style="{StaticResource TabularNumberText}"
                                                    Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}"
                                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                                        <views:PillProgressBar x:Name="RunningProgressBar" Width="96" Height="6" VerticalAlignment="Center"
+                                        <controls:PillProgressBar x:Name="RunningProgressBar" Width="96" Height="6" VerticalAlignment="Center"
                                                                Value="{Binding InstallPercent}"
                                                                Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
                                         <!-- No figure to show (installing, or nothing measurable reported):
                                              a moving bar and no number; the line under the name says what
                                              is going on and for how long. -->
-                                        <views:IndeterminateBar x:Name="RunningIndeterminateBar" Width="96" Height="6"
+                                        <controls:IndeterminateBar x:Name="RunningIndeterminateBar" Width="96" Height="6"
                                                                 VerticalAlignment="Center"
                                                                 Visibility="{Binding ShowIndeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
                                     </StackPanel>
@@ -961,7 +963,7 @@
                                            Visibility="{Binding ShowStateLabel, Converter={StaticResource BoolToVisibility}}">
                                     <!-- Queued: a turning ring in front of the word, so a waiting row
                                          reads as waiting rather than as stuck. -->
-                                    <views:WaitSpinner Margin="0,0,7,0" VerticalAlignment="Center"
+                                    <controls:WaitSpinner Margin="0,0,7,0" VerticalAlignment="Center"
                                                        Visibility="{Binding IsInstallQueued, Converter={StaticResource BoolToVisibility}}"/>
                                     <!-- RowStuck/RowHandedOff show a single word, the full sentence lives in the tooltip
                                          (InstallStateTooltip). MaxWidth is what makes TextTrimming engage
@@ -1159,7 +1161,7 @@
                                                         VerticalAlignment="Center" Margin="0,0,12,0">
                                                 <StackPanel x:Name="ChildRunningLane" Orientation="Horizontal" VerticalAlignment="Center"
                                                             Visibility="{Binding IsInstallRunning, Converter={StaticResource BoolToVisibility}}">
-                                                    <views:WaitSpinner Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                                    <controls:WaitSpinner Margin="0,0,7,0" VerticalAlignment="Center"/>
                                                     <TextBlock Text="{Binding RunningProgressText}" FontSize="12" VerticalAlignment="Center"
                                                                Style="{StaticResource TabularNumberText}"
                                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
@@ -1170,7 +1172,7 @@
                                                 </StackPanel>
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
                                                             Visibility="{Binding ShowStateLabel, Converter={StaticResource BoolToVisibility}}">
-                                                    <views:WaitSpinner Margin="0,0,7,0" VerticalAlignment="Center"
+                                                    <controls:WaitSpinner Margin="0,0,7,0" VerticalAlignment="Center"
                                                                        Visibility="{Binding IsInstallQueued, Converter={StaticResource BoolToVisibility}}"/>
                                                     <TextBlock x:Name="ChildStateWord" VerticalAlignment="Center" MaxWidth="140"
                                                                FontSize="12" TextTrimming="CharacterEllipsis"
@@ -1381,7 +1383,7 @@
                                     <Grid>
                                         <ui:SymbolIcon Symbol="Info24" FontSize="12"
                                                        Visibility="{Binding ShowChangelogIcon, Converter={StaticResource BoolToVisibility}}"/>
-                                        <views:WaitSpinner Visibility="{Binding IsChangelogLoading, Converter={StaticResource BoolToVisibility}}"/>
+                                        <controls:WaitSpinner Visibility="{Binding IsChangelogLoading, Converter={StaticResource BoolToVisibility}}"/>
                                     </Grid>
                                 </ui:Button>
 

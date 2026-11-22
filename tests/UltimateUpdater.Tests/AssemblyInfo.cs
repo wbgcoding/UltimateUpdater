@@ -25,7 +25,7 @@ internal static class TestDataFolder
 
             _path = Path.Combine(Path.GetTempPath(), "uu-tests-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_path);
-            UltimateUpdater.Services.AppPathsTestOverride.DataDirectory = _path;
+            AppPathsTestOverride.DataDirectory = _path;
 
             var folder = _path;
             AppDomain.CurrentDomain.ProcessExit += (_, _) =>
@@ -78,9 +78,9 @@ internal static class PackSchemeInitializer
 }
 
 /// <summary>
-/// A test that reaches <see cref="UltimateUpdater.Services.ElevationService.StartWorker"/>
+/// A test that reaches <see cref="ElevationService.StartWorker"/>
 /// despite every other seam meant to stop it first (a fake elevated host, <see
-/// cref="UltimateUpdater.Services.Dialogs.SuppressInteractiveDialogs"/>) must fail loudly instead of
+/// cref="Dialogs.SuppressInteractiveDialogs"/>) must fail loudly instead of
 /// popping a real UAC prompt on whoever's machine is running the suite. Runs before any test, the same
 /// way <see cref="PackSchemeInitializer"/> does.
 /// </summary>
@@ -90,6 +90,6 @@ internal static class ElevationGuardInitializer
     internal static void Register()
     {
         TestDataFolder.EnsureSet();
-        UltimateUpdater.Services.ElevationService.BlockRealLaunchForTests = true;
+        ElevationService.BlockRealLaunchForTests = true;
     }
 }

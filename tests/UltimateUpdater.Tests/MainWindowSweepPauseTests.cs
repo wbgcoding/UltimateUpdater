@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 

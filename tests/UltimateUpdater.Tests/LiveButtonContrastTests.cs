@@ -1,7 +1,5 @@
 using System.Windows.Documents;
 using System.Windows.Media;
-using UltimateUpdater.Services;
-using UltimateUpdater.Views;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
@@ -212,7 +210,7 @@ public class LiveButtonContrastTests
     /// ControlTemplate flips the CONTENT to near-black in the light theme regardless of a local
     /// Button.Foreground override (measured directly: setting Foreground="White" on the button itself
     /// still read back #E4000000 in the light theme once templated), and white-on-#F44336 is only 3.7:1
-    /// in dark besides. Views/SettingsWindow.xaml works around both problems the same way: a fixed
+    /// in dark besides. Views/Settings/SettingsWindow.xaml works around both problems the same way: a fixed
     /// Background (the same saturated red Fluent's own light-theme critical colour uses, measured 5.7:1
     /// for white text against it) and the label as its OWN TextBlock carrying its own local Foreground,
     /// which no trigger on the button above it can override through inheritance. This constructs that

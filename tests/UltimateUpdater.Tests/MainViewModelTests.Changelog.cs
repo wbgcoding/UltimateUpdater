@@ -1,10 +1,7 @@
 using System.Net.Http;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 
@@ -28,7 +25,7 @@ public partial class MainViewModelTests
             {
                 RunPumped(viewModel.ShowChangelogAsync(row));
 
-                Assert.DoesNotContain(System.Windows.Application.Current!.Windows.OfType<Views.ChangelogWindow>(), _ => true);
+                Assert.DoesNotContain(System.Windows.Application.Current!.Windows.OfType<ChangelogWindow>(), _ => true);
                 Assert.True(string.IsNullOrWhiteSpace(row.ChangelogText));
             }
             finally
@@ -53,7 +50,7 @@ public partial class MainViewModelTests
             {
                 RunPumped(viewModel.ShowChangelogAsync(row));
 
-                var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<Views.ChangelogWindow>());
+                var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<ChangelogWindow>());
                 opened.Close();
                 Assert.Equal("### Fixed\n- a bug", row.ChangelogText);
             }
@@ -89,7 +86,7 @@ public partial class MainViewModelTests
 
             viewModel.ShowSelfUpdateChangelogCommand.Execute(null);
 
-            var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<Views.ChangelogWindow>());
+            var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<ChangelogWindow>());
             try
             {
                 var changelogViewModel = Assert.IsType<ChangelogViewModel>(opened.DataContext);
@@ -137,7 +134,7 @@ public partial class MainViewModelTests
             Assert.True(viewModel.SelfUpdateAvailable);
 
             viewModel.ShowSelfUpdateChangelogCommand.Execute(null);
-            var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<Views.ChangelogWindow>());
+            var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<ChangelogWindow>());
             opened.Close();
         });
     }
@@ -174,7 +171,7 @@ public partial class MainViewModelTests
             const string id = "npm-github-repo-package";
             var viewModel = Create(
                 npmChangelogLookup: (_, _) => Task.FromResult(
-                    new Services.Sources.NpmChangelogLookup.NpmChangelogSource("git+https://github.com/some-owner/some-repo.git", "https://example.com")),
+                    new NpmChangelogLookup.NpmChangelogSource("git+https://github.com/some-owner/some-repo.git", "https://example.com")),
                 changelogFetcher: (_, _) => Task.FromResult<string?>("### Fixed\n- a bug"));
             var row = new UpdateRowViewModel(Item(id, "Some npm tool", "npm"));
 
@@ -184,7 +181,7 @@ public partial class MainViewModelTests
 
                 RunPumped(viewModel.ShowChangelogAsync(row));
 
-                var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<Views.ChangelogWindow>());
+                var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<ChangelogWindow>());
                 opened.Close();
                 Assert.Equal("### Fixed\n- a bug", row.ChangelogText);
             }
@@ -207,14 +204,14 @@ public partial class MainViewModelTests
         {
             const string id = "npm-nothing-found-package";
             var viewModel = Create(
-                npmChangelogLookup: (_, _) => Task.FromResult(new Services.Sources.NpmChangelogLookup.NpmChangelogSource(null, null)));
+                npmChangelogLookup: (_, _) => Task.FromResult(new NpmChangelogLookup.NpmChangelogSource(null, null)));
             var row = new UpdateRowViewModel(Item(id, "Some npm tool", "npm"));
 
             try
             {
                 RunPumped(viewModel.ShowChangelogAsync(row));
 
-                var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<Views.ChangelogWindow>());
+                var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<ChangelogWindow>());
                 opened.Close();
                 Assert.True(string.IsNullOrWhiteSpace(row.ChangelogUrl));
             }
@@ -243,7 +240,7 @@ public partial class MainViewModelTests
                 npmChangelogLookup: (_, _) =>
                 {
                     invoked = true;
-                    return Task.FromResult(new Services.Sources.NpmChangelogLookup.NpmChangelogSource(null, null));
+                    return Task.FromResult(new NpmChangelogLookup.NpmChangelogSource(null, null));
                 });
 
             Pump(viewModel.ScanCommand.ExecuteAsync(null));

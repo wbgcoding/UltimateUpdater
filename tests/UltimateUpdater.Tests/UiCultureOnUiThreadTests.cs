@@ -1,5 +1,4 @@
 using System.Globalization;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

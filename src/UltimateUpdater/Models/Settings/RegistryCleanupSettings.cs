@@ -16,7 +16,7 @@ public sealed class RegistryCleanupSettings
     /// </summary>
     public string BackupFolder { get; set; } = DefaultBackupFolder;
 
-    /// <summary>Exposed so <see cref="UltimateUpdater.Services.SettingsService"/> can compare a loaded value
+    /// <summary>Exposed so <see cref="SettingsService"/> can compare a loaded value
     /// against it (to migrate the old profile-root default) without duplicating the path.</summary>
     internal static string DefaultBackupFolder { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "UltimateUpdater", "registry-backups");

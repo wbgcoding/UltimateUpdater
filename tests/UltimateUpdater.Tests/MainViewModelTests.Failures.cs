@@ -1,11 +1,8 @@
 using System.Net.Http;
 using System.Reflection;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 
@@ -33,7 +30,7 @@ public partial class MainViewModelTests
             WpfHarness.OnUiThread(() =>
             {
                 var quickSource = new InstantSource();
-                var viewModel = Create([new Services.Sources.WingetSource(new LoggingService()), quickSource]);
+                var viewModel = Create([new WingetSource(new LoggingService()), quickSource]);
 
                 var failedRow = new UpdateRowViewModel(Item("Vs.Community", "Visual Studio", "winget"));
                 failedRow.ApplyInstallStatus(new InstallItemStatus("winget", failedRow.Item.Id, 0, "failed", false, "failed")
@@ -610,7 +607,7 @@ public partial class MainViewModelTests
         {
             WpfHarness.OnUiThread(() =>
             {
-                var viewModel = Create([new Services.Sources.WingetSource(new LoggingService())]);
+                var viewModel = Create([new WingetSource(new LoggingService())]);
                 var row = new UpdateRowViewModel(Item("Vs.Community", "Visual Studio", "winget"));
                 row.ApplyInstallStatus(new InstallItemStatus("winget", row.Item.Id, 0, "failed", false, "failed")
                 {

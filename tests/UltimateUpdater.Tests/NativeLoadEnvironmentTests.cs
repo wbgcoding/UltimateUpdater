@@ -1,6 +1,5 @@
 using System.IO;
 using System.Text;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

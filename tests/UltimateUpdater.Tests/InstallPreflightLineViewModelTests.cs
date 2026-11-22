@@ -1,6 +1,5 @@
 using UltimateUpdater.Models;
 using UltimateUpdater.Services.Install;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

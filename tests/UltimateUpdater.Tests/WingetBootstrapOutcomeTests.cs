@@ -3,8 +3,6 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
 using Xunit;
 
 namespace UltimateUpdater.Tests;

@@ -3,10 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 using Wpf.Ui.Appearance;
 
 namespace UltimateUpdater.Tests;

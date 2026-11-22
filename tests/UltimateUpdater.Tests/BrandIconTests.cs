@@ -1,7 +1,5 @@
 using System.Windows.Media;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
 using Wpf.Ui.Appearance;
 using Color = System.Windows.Media.Color;
 using Colors = System.Windows.Media.Colors;

@@ -3,14 +3,14 @@ using System.Diagnostics;
 namespace UltimateUpdater.Tests;
 
 /// <summary>
-/// This fix (follow-up of 176): the elevated worker must never touch <see cref="UltimateUpdater.Services.AppPaths"/>
+/// This fix (follow-up of 176): the elevated worker must never touch <see cref="AppPaths"/>
 /// during startup. The earlier test for this
 /// (<c>SecurityFixTests.Constructing_the_worker_log_sink_never_touches_AppPaths</c>) only proves that
 /// constructing the worker's <c>LoggingService</c> alone is clean, in a process where countless other
-/// tests already touched <see cref="UltimateUpdater.Services.AppPaths"/> long before this one runs, a
+/// tests already touched <see cref="AppPaths"/> long before this one runs, a
 /// before/after diff, not a "never touched" proof. Proving "never touched" needs a genuinely fresh
 /// process: the real app, launched exactly as the elevated worker is (<c>--elevated-worker</c>), reports
-/// through its own stdout whether <see cref="UltimateUpdater.Services.AppPathsTouchTracker"/> ever saw a
+/// through its own stdout whether <see cref="AppPathsTouchTracker"/> ever saw a
 /// touch by the time it exits. The worker args here name a pipe that cannot exist, so the run fails
 /// deterministically fast (an unparsable process id, in <c>App.OnStartup</c>'s own arg check) without
 /// needing a real elevated pipe partner.

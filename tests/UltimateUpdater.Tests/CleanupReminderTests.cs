@@ -1,8 +1,6 @@
 using UltimateUpdater.Models.Settings;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

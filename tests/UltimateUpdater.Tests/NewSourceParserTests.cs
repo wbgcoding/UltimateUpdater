@@ -1,6 +1,5 @@
 using System.Net.Http;
 using System.Reflection;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
 using UltimateUpdater.Services.Sources.PackageManagers;
 using Xunit;

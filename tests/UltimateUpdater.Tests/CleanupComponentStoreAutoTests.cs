@@ -3,9 +3,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

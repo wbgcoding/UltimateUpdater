@@ -1,6 +1,5 @@
 using System.Threading;
-using UltimateUpdater.Services;
-using static UltimateUpdater.Services.InstallerCloseRequest;
+using static UltimateUpdater.Services.Install.InstallerCloseRequest;
 
 namespace UltimateUpdater.Tests;
 

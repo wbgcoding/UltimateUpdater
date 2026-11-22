@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

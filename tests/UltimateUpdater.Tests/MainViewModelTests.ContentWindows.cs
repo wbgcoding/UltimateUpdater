@@ -1,5 +1,3 @@
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 
@@ -22,7 +20,7 @@ public partial class MainViewModelTests
                 RunPumped(viewModel.ShowChangelogAsync(LinkOnlyChangelogRow(firstId)));
                 RunPumped(viewModel.ShowChangelogAsync(LinkOnlyChangelogRow(secondId)));
 
-                var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<Views.ChangelogWindow>());
+                var opened = Assert.Single(System.Windows.Application.Current!.Windows.OfType<ChangelogWindow>());
                 try
                 {
                     Assert.Equal("second text", Assert.IsType<ChangelogViewModel>(opened.DataContext).Text);

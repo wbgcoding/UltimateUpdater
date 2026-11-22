@@ -1,6 +1,5 @@
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
 
 namespace UltimateUpdater.Tests;

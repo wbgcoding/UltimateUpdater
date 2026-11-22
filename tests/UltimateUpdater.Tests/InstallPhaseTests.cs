@@ -1,7 +1,5 @@
 using System.Text.Json;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
 using Xunit;
 
 namespace UltimateUpdater.Tests;

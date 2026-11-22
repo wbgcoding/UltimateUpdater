@@ -1,7 +1,5 @@
 using System.Reflection;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 
@@ -20,7 +18,7 @@ public partial class MainViewModelTests
         {
             WpfHarness.OnUiThread(() =>
             {
-                var viewModel = Create([new Services.Sources.WingetSource(new LoggingService()), new InstantSource()]);
+                var viewModel = Create([new WingetSource(new LoggingService()), new InstantSource()]);
 
                 var failedRow = new UpdateRowViewModel(Item("Vs.Community", "Visual Studio", "winget"));
                 failedRow.ApplyInstallStatus(new InstallItemStatus("winget", failedRow.Item.Id, 0, "failed", false, "failed")

@@ -1,5 +1,4 @@
 using System.Net.Http;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
 using Xunit;
 

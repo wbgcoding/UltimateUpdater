@@ -1,7 +1,6 @@
 using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

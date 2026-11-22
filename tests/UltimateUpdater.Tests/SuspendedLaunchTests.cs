@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

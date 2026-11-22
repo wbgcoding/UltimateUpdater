@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Globalization;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 
@@ -72,7 +71,7 @@ public class LocalizationServiceTests
     {
         LocalizationService.Instance.Apply("en");
 
-        var row = new UltimateUpdater.ViewModels.UpdateRowViewModel(new UltimateUpdater.Models.UpdateItem
+        var row = new UpdateRowViewModel(new UltimateUpdater.Models.UpdateItem
         {
             Id = "Contoso.App",
             SourceId = "winget",
@@ -83,7 +82,7 @@ public class LocalizationServiceTests
             IsCritical = true,
         })
         {
-            InstallState = UltimateUpdater.ViewModels.RowInstallState.Failed,
+            InstallState = RowInstallState.Failed,
         };
 
         var english = row.InstallStateText;
@@ -93,8 +92,8 @@ public class LocalizationServiceTests
         LocalizationService.Instance.Apply("de");
         row.RefreshLocalizedText();
 
-        Assert.Contains(nameof(UltimateUpdater.ViewModels.UpdateRowViewModel.InstallStateText), raised);
-        Assert.Contains(nameof(UltimateUpdater.ViewModels.UpdateRowViewModel.CriticalLabel), raised);
+        Assert.Contains(nameof(UpdateRowViewModel.InstallStateText), raised);
+        Assert.Contains(nameof(UpdateRowViewModel.CriticalLabel), raised);
         Assert.NotEqual(english, row.InstallStateText);
 
         LocalizationService.Instance.Apply("en");

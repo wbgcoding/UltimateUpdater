@@ -1,6 +1,4 @@
 using System.ComponentModel;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 
@@ -411,7 +409,7 @@ public class SettingsViewModelTests
     [Fact]
     public void Releasing_all_excluded_paths_is_declined_without_confirmation()
     {
-        Services.Dialogs.SuppressInteractiveDialogs = true;
+        Dialogs.SuppressInteractiveDialogs = true;
 
         var logging = new LoggingService();
         var path = Path.Combine(Directory.CreateTempSubdirectory("wu-excluded-releaseall-").FullName, "settings.json");
@@ -495,17 +493,17 @@ public class SettingsViewModelTests
         var (viewModel, settings) = CreateWithSettings();
         var before = settings.Current.RegistryCleanup.BackupFolder;
         var warnings = new List<string>();
-        var suppress = Services.Dialogs.SuppressInteractiveDialogs;
-        Services.Dialogs.SuppressInteractiveDialogs = true;
-        Services.Dialogs.WarnObserverForTests = warnings.Add;
+        var suppress = Dialogs.SuppressInteractiveDialogs;
+        Dialogs.SuppressInteractiveDialogs = true;
+        Dialogs.WarnObserverForTests = warnings.Add;
         try
         {
             viewModel.RegistryBackupFolder = @"Z:\Not\In\The\Profile";
         }
         finally
         {
-            Services.Dialogs.WarnObserverForTests = null;
-            Services.Dialogs.SuppressInteractiveDialogs = suppress;
+            Dialogs.WarnObserverForTests = null;
+            Dialogs.SuppressInteractiveDialogs = suppress;
         }
 
         Assert.Equal(before, viewModel.RegistryBackupFolder);
@@ -520,14 +518,14 @@ public class SettingsViewModelTests
         var folder = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents", "wu-test-registry-backups");
         var warnings = new List<string>();
-        Services.Dialogs.WarnObserverForTests = warnings.Add;
+        Dialogs.WarnObserverForTests = warnings.Add;
         try
         {
             viewModel.RegistryBackupFolder = folder;
         }
         finally
         {
-            Services.Dialogs.WarnObserverForTests = null;
+            Dialogs.WarnObserverForTests = null;
         }
 
         Assert.Equal(folder, settings.Current.RegistryCleanup.BackupFolder);
@@ -542,14 +540,14 @@ public class SettingsViewModelTests
         var (viewModel, settings) = CreateWithSettings();
         settings.Current.RegistryCleanup.BackupFolder = @"Z:\Edited\By\Hand";
         var warnings = new List<string>();
-        Services.Dialogs.WarnObserverForTests = warnings.Add;
+        Dialogs.WarnObserverForTests = warnings.Add;
         try
         {
             viewModel.ReloadFromSettings();
         }
         finally
         {
-            Services.Dialogs.WarnObserverForTests = null;
+            Dialogs.WarnObserverForTests = null;
         }
 
         Assert.Equal(@"Z:\Edited\By\Hand", viewModel.RegistryBackupFolder);

@@ -1,10 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 

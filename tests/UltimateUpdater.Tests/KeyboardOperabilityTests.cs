@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using UltimateUpdater.Models;
-using UltimateUpdater.ViewModels;
 using Xunit;
 
 namespace UltimateUpdater.Tests;
@@ -22,7 +21,7 @@ namespace UltimateUpdater.Tests;
 /// column headers and MainWindow's source pill), all fixed the same way: the missing ToolTip reuses the
 /// AutomationProperties.Name text already there, and every MouseBinding target gained
 /// <c>Focusable="True"</c> plus a KeyDown handler that runs the SAME Command+CommandParameter the
-/// MouseBinding already carries (<see cref="UltimateUpdater.Views.KeyboardActivation"/>), no second,
+/// MouseBinding already carries (<see cref="KeyboardActivation"/>), no second,
 /// divergeable command wiring.
 /// </summary>
 public class KeyboardOperabilityTests
@@ -382,7 +381,7 @@ public class KeyboardOperabilityTests
     [Fact]
     public void The_error_window_no_longer_has_its_own_retry_interactively_button()
     {
-        var xaml = File.ReadAllText(Path.Combine(ViewsDirectory, "ErrorDetailWindow.xaml"));
+        var xaml = File.ReadAllText(ViewSources.Find(ViewsDirectory, "ErrorDetailWindow.xaml"));
 
         Assert.DoesNotContain("RetryInteractiveCommand", xaml);
         Assert.Contains("ErrorDetailRetryInMenu", xaml);

@@ -1,4 +1,3 @@
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 
@@ -186,7 +185,9 @@ public class ArgumentSafetyTests
     {
         var views = FindViewsDirectory();
 
-        foreach (var file in Directory.GetFiles(views, "*.xaml.cs"))
+        var files = Directory.GetFiles(views, "*.xaml.cs", SearchOption.AllDirectories);
+        Assert.True(files.Length >= 10, $"Expected the window code-behind files below Views, found {files.Length}.");
+        foreach (var file in files)
         {
             var source = File.ReadAllText(file);
             Assert.False(

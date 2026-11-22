@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

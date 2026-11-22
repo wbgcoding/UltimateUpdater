@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

@@ -1,6 +1,4 @@
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 
@@ -26,7 +24,7 @@ public partial class MainViewModelTests
         {
             WpfHarness.OnUiThread(() =>
             {
-                var viewModel = Create([new Services.Sources.WingetSource(new LoggingService())]);
+                var viewModel = Create([new WingetSource(new LoggingService())]);
                 var row = FailedVisualStudioRow();
                 Assert.True(row.ShowRetryInteractiveButton);
                 viewModel.Updates.Add(row);
@@ -54,7 +52,7 @@ public partial class MainViewModelTests
         {
             WpfHarness.OnUiThread(() =>
             {
-                var viewModel = Create([new Services.Sources.WingetSource(new LoggingService())]);
+                var viewModel = Create([new WingetSource(new LoggingService())]);
                 var row = FailedVisualStudioRow();
                 viewModel.Updates.Add(row);
                 SetInstallActivityRunning(viewModel, true);

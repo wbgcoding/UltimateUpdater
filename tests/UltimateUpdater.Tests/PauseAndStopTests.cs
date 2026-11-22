@@ -3,7 +3,6 @@ using System.IO.Pipes;
 using System.Text;
 using System.Text.Json;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 
@@ -142,7 +141,7 @@ public class PauseAndStopTests
     [Fact]
     public void The_job_handle_is_attached_only_after_the_job_envelope_has_been_written()
     {
-        var source = File.ReadAllText(FindSourceFile("Services", "ElevatedHost.cs"));
+        var source = File.ReadAllText(FindSourceFile("Services", "Elevation", "ElevatedHost.cs"));
         var runAsync = source[source.IndexOf("public async Task<bool> RunAsync(", StringComparison.Ordinal)..];
 
         var write = runAsync.IndexOf("_writer.WriteLineAsync(envelope", StringComparison.Ordinal);
@@ -160,7 +159,7 @@ public class PauseAndStopTests
     [Fact]
     public void A_job_id_already_in_flight_never_replaces_its_stop_switch()
     {
-        var source = File.ReadAllText(FindSourceFile("Services", "ElevatedWorker.cs"));
+        var source = File.ReadAllText(FindSourceFile("Services", "Elevation", "ElevatedWorker.cs"));
 
         Assert.Contains("if (!Active.TryAdd(job.Id, control))", source);
         Assert.DoesNotContain("Active[job.Id] =", source);

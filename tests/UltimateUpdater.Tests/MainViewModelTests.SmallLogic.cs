@@ -1,4 +1,3 @@
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 
@@ -75,10 +74,10 @@ public partial class MainViewModelTests
         Assert.NotNull(root);
 
         var views = Path.Combine(root!.FullName, "src", "UltimateUpdater");
-        var window = File.ReadAllText(Path.Combine(views, "Views", "CleanupWindow.xaml.cs"));
-        var dialogs = File.ReadAllText(Path.Combine(views, "ViewModels", "MainViewModel.Dialogs.cs"));
+        var window = File.ReadAllText(Path.Combine(views, "Views", "Cleanup", "CleanupWindow.xaml.cs"));
+        var dialogs = File.ReadAllText(Path.Combine(views, "ViewModels", "Main", "MainViewModel.Dialogs.cs"));
 
         Assert.DoesNotContain("DismissOnDeactivate.Attach", window);
-        Assert.Contains("new Views.CleanupWindow(cleanupViewModel), openStarted: openStarted, independent: true", dialogs);
+        Assert.Contains("new CleanupWindow(cleanupViewModel), openStarted: openStarted, independent: true", dialogs);
     }
 }

@@ -131,7 +131,7 @@ public class RegistryBackupHandleVerificationTests
         {
             var result = await RegistryBackupService.BackupBeforeWriteAsync(
                 ["HKCU\\Control Panel\\Desktop"], folder, 5,
-                new UltimateUpdater.Services.LoggingService(),
+                new LoggingService(),
                 CancellationToken.None);
 
             Assert.NotNull(result);

@@ -2,7 +2,6 @@ using System.IO;
 using System.IO.Pipes;
 using System.Text;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
 
 namespace UltimateUpdater.Tests;

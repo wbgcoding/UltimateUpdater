@@ -1,0 +1,198 @@
+<ui:FluentWindow x:Class="UltimateUpdater.Views.Main.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:converters="clr-namespace:UltimateUpdater.Views.Converters"
+        xmlns:scan="clr-namespace:UltimateUpdater.Services.Scan"
+        xmlns:main="clr-namespace:UltimateUpdater.Views.Main"
+        mc:Ignorable="d"
+        Title="{Binding Loc[AppTitle]}"
+        Height="820" Width="1160"
+        MinHeight="640" MinWidth="860"
+        ExtendsContentIntoTitleBar="True"
+        Background="{DynamicResource ApplicationBackgroundBrush}">
+    <!-- Background is set explicitly: Mica is unavailable on Windows 10 and when transparency
+         effects are off, and without an opaque themed fallback the surface would not match the
+         theme's text colour. -->
+
+    <!-- Every window-level shortcut in one place, from the same table (Views/KeyboardShortcuts.cs) the tooltips
+         and the F1 overview read. A KeyBinding binds straight to a view model command where one exists; the two
+         shortcuts without one (focus the search box, open the overview) use a small RoutedCommand each, since
+         both act on this window, not on application state. -->
+    <ui:FluentWindow.CommandBindings>
+        <CommandBinding Command="{x:Static main:MainWindow.FocusSearchCommand}" Executed="OnFocusSearchExecuted"/>
+        <CommandBinding Command="{x:Static main:MainWindow.ShowShortcutsCommand}" Executed="OnShowShortcutsExecuted"/>
+    </ui:FluentWindow.CommandBindings>
+    <ui:FluentWindow.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding ScanCommand}"/>
+        <KeyBinding Key="A" Modifiers="Control" Command="{Binding SelectAllCommand}"/>
+        <KeyBinding Key="Enter" Modifiers="Control" Command="{Binding InstallSelectedCommand}"/>
+        <KeyBinding Key="F" Modifiers="Control" Command="{x:Static main:MainWindow.FocusSearchCommand}"/>
+        <KeyBinding Key="L" Modifiers="Control" Command="{Binding ShowCleanupCommand}"/>
+        <KeyBinding Key="H" Modifiers="Control" Command="{Binding ShowHistoryCommand}"/>
+        <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding ShowSettingsCommand}"/>
+        <KeyBinding Key="F1" Command="{x:Static main:MainWindow.ShowShortcutsCommand}"/>
+    </ui:FluentWindow.InputBindings>
+
+    <ui:FluentWindow.Resources>
+        <Thickness x:Key="PagePadding">24,0,24,0</Thickness>
+
+        <converters:ShortcutTooltipConverter x:Key="ShortcutTooltip"/>
+
+        <!-- Source pill: a contained chip that is also a toggle. Clicking it switches the source off
+             (dimmed) and back on. The bottom margin keeps wrapped rows of pills from touching. -->
+        <DataTemplate x:Key="SourcePillTemplate">
+            <!-- Error pills open their tooltip fast (150 ms vs WPF's ~1000 ms default): a "!" pill is exactly
+                 when someone wants the reason right now. Right-click copies the raw reason through a
+                 MouseRightButtonUp handler (the copy needs the clipboard guard in code-behind); Ctrl+C on the
+                 focused pill does the same. -->
+            <Border x:Name="PillBorder" Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12" Padding="10,3" Margin="0,0,6,6"
+                    HorizontalAlignment="Left" Cursor="Hand"
+                    Opacity="{Binding PillOpacity}"
+                    ToolTip="{Binding TooltipText}"
+                    ToolTipService.InitialShowDelay="150"
+                    ToolTipService.ShowDuration="60000"
+                    Focusable="True" KeyDown="OnClickTargetKeyDown"
+                    MouseRightButtonUp="OnErrorPillRightClick"
+                    AutomationProperties.Name="{Binding DisplayName}">
+                <!-- A pill whose tool is not on this machine is simply not there, rather than dimmed
+                     like a switched-off source; the settings list is where such sources can be revealed. -->
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding State}" Value="{x:Static scan:ProviderScanState.NotInstalled}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Border.InputBindings>
+                    <MouseBinding MouseAction="LeftClick"
+                                  Command="{Binding DataContext.ToggleSourceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                  CommandParameter="{Binding SourceId}"/>
+                </Border.InputBindings>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding DisplayName}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               FontSize="12" VerticalAlignment="Center"/>
+                    <!-- Wait/running/cancelled/error word; Done says enough with the badge, so this stays
+                         empty for it. The error word is red, like every other failure mark. -->
+                    <TextBlock Text="{Binding StateText}"
+                               FontSize="11" Margin="5,0,0,0" VerticalAlignment="Center"
+                               Visibility="{Binding HasStateText, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasError}" Value="True">
+                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <Border Margin="6,0,0,0" Padding="5,0" CornerRadius="7" MinWidth="18"
+                            Background="{DynamicResource AccentFillColorDefaultBrush}"
+                            Visibility="{Binding HasOpenUpdates, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding OpenCount}" FontSize="11" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
+                    </Border>
+                    <!-- Cancels only this one source; a ui:Button marks its own click Handled, so it
+                         never also fires the pill's own MouseBinding underneath. -->
+                    <ui:Button Margin="5,0,0,0" Padding="2" Appearance="Transparent"
+                               Command="{Binding DataContext.CancelSourceScanCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                               CommandParameter="{Binding SourceId}"
+                               ToolTip="{Binding DataContext.Loc[CancelSourceScanTooltip], RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                               AutomationProperties.Name="{Binding DataContext.Loc[CancelSourceScanTooltip], RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                               Visibility="{Binding IsCancellable, Converter={StaticResource BoolToVisibility}}">
+                        <ui:SymbolIcon Symbol="Dismiss16" FontSize="12"/>
+                    </ui:Button>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- title bar -->
+            <RowDefinition Height="Auto"/>   <!-- self-update banner -->
+            <RowDefinition Height="Auto"/>   <!-- header -->
+            <RowDefinition Height="Auto"/>   <!-- toolbar -->
+            <RowDefinition Height="Auto"/>   <!-- install/queue band -->
+            <RowDefinition Height="Auto"/>   <!-- cache/connection banner -->
+            <RowDefinition Height="*"/>      <!-- list -->
+            <RowDefinition Height="Auto"/>   <!-- action bar -->
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="{Binding Loc[AppTitle]}" FontSize="16" FontWeight="SemiBold">
+            <ui:TitleBar.Icon>
+                <!-- assembly-qualified so it resolves no matter which assembly is the entry point -->
+                <ui:ImageIcon Style="{StaticResource TitleBarAppIcon}" Source="pack://application:,,,/UltimateUpdater;component/Assets/icon.png"/>
+            </ui:TitleBar.Icon>
+            <ui:TitleBar.Header>
+                <!-- WPF-UI's TitleBar draws its own Title text only when Header is null; any Header content
+                     replaces the whole title area. This TextBlock is the app name next to the icon; the Title
+                     property is kept only for readers like an OS-level fallback. -->
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="AppTitleText" Text="{Binding Loc[AppTitle]}" FontSize="16" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+
+                </StackPanel>
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
+
+        <main:UpdateBanners Grid.Row="1"/>
+
+        <main:ScanHeader x:Name="Header" Grid.Row="2"/>
+
+        <main:MainToolbar x:Name="Toolbar" Grid.Row="3"/>
+
+        <main:InstallBand x:Name="InstallBand" Grid.Row="4"/>
+
+        <main:ScanStatusStrip Grid.Row="5"/>
+
+        <main:UpdatesTable x:Name="Table" Grid.Row="6"/>
+
+        <!-- Action bar: sources checked on the left, what happens next on the right. A DockPanel, not a Grid with
+             an Auto button column: a Grid measures an Auto column at infinite width, so a long selection summary
+             plus three buttons overflowed the window at 200% text scale and minimum width. The bounded side (the
+             fixed set of buttons) is docked and the variable side (the pill list, zero to a dozen sources) fills,
+             so it wraps against the real remaining width. -->
+        <Border Grid.Row="7" Margin="24,16,24,20">
+            <DockPanel LastChildFill="True">
+                <WrapPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Only the "x selected · N MB" part; the text hides entirely when nothing is picked. -->
+                    <TextBlock Text="{Binding SelectionSummary}" VerticalAlignment="Center"
+                               Margin="0,0,16,0"
+                               Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <ui:Button Content="{Binding Loc[InstallSelectedButton]}" Appearance="Primary"
+                               Padding="16,8"
+                               Command="{Binding InstallSelectedCommand}"
+                               ToolTip="{Binding Loc[InstallSelectedButton], Converter={StaticResource ShortcutTooltip}, ConverterParameter=InstallSelectedButton}"
+                               IsEnabled="{Binding CanInstallSelected}"/>
+                </WrapPanel>
+
+                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                    <!-- One flat wrapping row of pills, no category headers. Each pill
+                         sizes to its own content. -->
+                    <ItemsControl ItemsSource="{Binding PillView}"
+                                  ItemTemplate="{StaticResource SourcePillTemplate}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</ui:FluentWindow>

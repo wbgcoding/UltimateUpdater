@@ -1,7 +1,5 @@
 using System.Reflection;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 
@@ -149,7 +147,7 @@ public partial class MainViewModelTests
             var exited = new TaskCompletionSource();
             using var releaseApply = new ManualResetEventSlim();
             var notices = new List<string>();
-            UltimateUpdater.Services.Dialogs.InfoObserverForTests = notices.Add;
+            Dialogs.InfoObserverForTests = notices.Add;
             try
             {
                 viewModel.OfferSelfUpdateForTest(OfferedUpdate());
@@ -167,7 +165,7 @@ public partial class MainViewModelTests
                 viewModel.Updates.Add(row);
                 InvokeEnqueueInstall(viewModel, [row]);
 
-                Assert.Equal([UltimateUpdater.Services.LocalizationService.Instance["SelfUpdateApplyingNoInstall"]], notices);
+                Assert.Equal([LocalizationService.Instance["SelfUpdateApplyingNoInstall"]], notices);
 
                 releaseApply.Set();
                 Pump(applying);
@@ -175,7 +173,7 @@ public partial class MainViewModelTests
             }
             finally
             {
-                UltimateUpdater.Services.Dialogs.InfoObserverForTests = null;
+                Dialogs.InfoObserverForTests = null;
             }
         });
     }

@@ -1,6 +1,4 @@
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
 using Xunit;
 
 namespace UltimateUpdater.Tests;

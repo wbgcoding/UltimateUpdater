@@ -2,9 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
 using Wpf.Ui.Controls;
 using Color = System.Windows.Media.Color;
 
@@ -58,7 +56,7 @@ public partial class WindowLayoutTests
                 ApplyTheme(themeName);
 
                 var viewModel = NewMeasuredCleanupViewModel();
-                var window = new Views.CleanupWindow(viewModel) { DisplayPercent = 47 };
+                var window = new CleanupWindow(viewModel) { DisplayPercent = 47 };
                 var content = (FrameworkElement)window.Content;
 
                 var areas = viewModel.Items.Take(10).ToList();
@@ -134,7 +132,7 @@ public partial class WindowLayoutTests
                 ApplyTheme(themeName);
 
                 var viewModel = NewMeasuredCleanupViewModel();
-                var window = new Views.CleanupWindow(viewModel) { DisplayPercent = 0 };
+                var window = new CleanupWindow(viewModel) { DisplayPercent = 0 };
                 var content = (FrameworkElement)window.Content;
                 result = WpfHarness.RenderWindow(window, $"cleanup-group-icons-{themeName}", (int)window.Width, (int)window.Height);
 

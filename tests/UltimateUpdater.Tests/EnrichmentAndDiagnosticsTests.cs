@@ -2,9 +2,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
 using Xunit;
 
 namespace UltimateUpdater.Tests;
@@ -1048,15 +1046,15 @@ public class EnrichmentAndDiagnosticsTests
     [Fact]
     public void Winget_reboot_codes_are_recognised_but_still_count_as_success()
     {
-        Assert.True(UltimateUpdater.Services.Sources.WingetSource.IsRebootRequired(3010));
-        Assert.True(UltimateUpdater.Services.Sources.WingetSource.IsRebootRequired(1641));
-        Assert.True(UltimateUpdater.Services.Sources.WingetSource.IsRebootRequired(unchecked((int)0x8A150109u)));
+        Assert.True(WingetSource.IsRebootRequired(3010));
+        Assert.True(WingetSource.IsRebootRequired(1641));
+        Assert.True(WingetSource.IsRebootRequired(unchecked((int)0x8A150109u)));
 
-        Assert.False(UltimateUpdater.Services.Sources.WingetSource.IsRebootRequired(0));
-        Assert.False(UltimateUpdater.Services.Sources.WingetSource.IsRebootRequired(unchecked((int)0x8A15002Bu)));
+        Assert.False(WingetSource.IsRebootRequired(0));
+        Assert.False(WingetSource.IsRebootRequired(unchecked((int)0x8A15002Bu)));
 
         // reboot codes are still success, the update did install
-        Assert.True(UltimateUpdater.Services.Sources.WingetSource.IsInstallSuccess(3010));
+        Assert.True(WingetSource.IsInstallSuccess(3010));
     }
 
     [Fact]

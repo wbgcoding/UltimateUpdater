@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using UltimateUpdater.Services;
 using Wpf.Ui.Appearance;
 
 namespace UltimateUpdater.Tests;
@@ -44,7 +43,7 @@ public class ToolTipThemeTests
 
                     // Left open, these windows stay in Application.Windows and break later tests that
                     // count a window type. MainWindow stays: closing it ends the shared app.
-                    if (window is not Views.MainWindow)
+                    if (window is not MainWindow)
                         window.Close();
                 }
 

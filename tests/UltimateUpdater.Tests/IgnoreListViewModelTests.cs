@@ -1,5 +1,3 @@
-using UltimateUpdater.Services;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 
@@ -20,7 +18,7 @@ public class IgnoreListViewModelTests
     [Fact]
     public void A_scoped_npm_package_keeps_its_name_and_version_apart()
     {
-        Services.LocalizationService.Instance.Apply("en");
+        LocalizationService.Instance.Apply("en");
 
         var settings = CreateSettings("wu-ignorelist-scoped-", out _);
         settings.Current.Excludes.AddRange(["npm:@angular/cli", "npm:@vue/cli@5.0.8"]);
@@ -47,7 +45,7 @@ public class IgnoreListViewModelTests
     [Fact]
     public void The_list_is_built_from_settings_and_resolves_known_names()
     {
-        Services.LocalizationService.Instance.Apply("en");
+        LocalizationService.Instance.Apply("en");
 
         var settings = CreateSettings("wu-ignorelist-build-", out _);
         settings.Current.Excludes.AddRange(["winget:git", "npm:eslint@9.0.0", "scoop:ghost-tool"]);

@@ -5,11 +5,8 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using UltimateUpdater.Models.Settings;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater;
 
@@ -339,7 +336,7 @@ public partial class App : Application
         var updateTrafficHandler = new Services.Security.TrafficLoggingHandler { Logging = logging };
         var updateHttpClient = new System.Net.Http.HttpClient(updateTrafficHandler) { Timeout = Timeout.InfiniteTimeSpan };
         var selfUpdate = new Services.SelfUpdate.SelfUpdateService(updateHttpClient, logging, updateChannel);
-        var wingetBootstrap = new Services.WingetBootstrapService(updateHttpClient, logging);
+        var wingetBootstrap = new WingetBootstrapService(updateHttpClient, logging);
 
         var mainViewModel = new MainViewModel(
             settings, logging, themeService, scanOrchestrator, iconCache, installQueue, history, autostart,
@@ -439,7 +436,7 @@ public partial class App : Application
     /// <summary>Raises the window, or remembers to once there is one.</summary>
     private void RequestFocus() => Dispatcher.Invoke(() =>
     {
-        if (MainWindow is Views.MainWindow window)
+        if (MainWindow is MainWindow window)
             window.BringToFront();
         else
             _focusRequestedEarly = true;

@@ -435,7 +435,7 @@ public class PythonCleanupDiscoveryTests : IDisposable
         var candidate = Assert.Single(counted);
         Assert.Equal(1, candidate.VenvUseCount);
 
-        var row = new UltimateUpdater.ViewModels.PythonVersionCandidateViewModel(new PythonVersionCandidateDto
+        var row = new PythonVersionCandidateViewModel(new PythonVersionCandidateDto
         {
             PythonExe = candidate.PythonExe,
             DisplayLabel = candidate.DisplayLabel,

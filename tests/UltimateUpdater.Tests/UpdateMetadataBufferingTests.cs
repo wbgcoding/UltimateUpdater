@@ -2,7 +2,6 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
 
 namespace UltimateUpdater.Tests;

@@ -1,8 +1,6 @@
 using System.Windows.Threading;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

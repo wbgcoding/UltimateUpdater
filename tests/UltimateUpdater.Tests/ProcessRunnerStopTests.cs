@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

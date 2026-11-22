@@ -1,8 +1,6 @@
 using System.IO;
 using System.Reflection;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

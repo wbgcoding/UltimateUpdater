@@ -2,13 +2,16 @@
                     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-                    xmlns:views="clr-namespace:UltimateUpdater.Views">
+                    xmlns:behaviors="clr-namespace:UltimateUpdater.Views.Behaviors"
+                    xmlns:cleanup="clr-namespace:UltimateUpdater.Views.Cleanup"
+                    xmlns:controls="clr-namespace:UltimateUpdater.Views.Controls"
+                    xmlns:converters="clr-namespace:UltimateUpdater.Views.Converters">
     <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
-    <views:CleanupGroupIconConverter x:Key="GroupIcon"/>
-    <views:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
+    <cleanup:CleanupGroupIconConverter x:Key="GroupIcon"/>
+    <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
     <!-- The "show all categories" expander. -->
-    <views:CleanupCardVisibilityConverter x:Key="CleanupCardVisibility"/>
-    <views:CleanupGroupVisibilityConverter x:Key="CleanupGroupVisibility"/>
+    <cleanup:CleanupCardVisibilityConverter x:Key="CleanupCardVisibility"/>
+    <cleanup:CleanupGroupVisibilityConverter x:Key="CleanupGroupVisibility"/>
 
     <!-- Same shape as SettingsWindow's own ToolTip style: the multi-line driver detail tooltip below
          composes its lines with embedded "\n"s (WPF's TextBlock already breaks on those), this just
@@ -261,7 +264,7 @@
                                  in case a very long translation of the header needs it. BubbleScroll hands
                                  the wheel back to the outer target list once this one cannot scroll further. -->
                             <ScrollViewer x:Name="EntriesScroll" VerticalScrollBarVisibility="Auto"
-                                          views:BubbleScroll.Enabled="True">
+                                          behaviors:BubbleScroll.Enabled="True">
                                 <ContentPresenter/>
                             </ScrollViewer>
                         </Border>
@@ -482,17 +485,17 @@
                 <!-- Being measured: three dots breathing in turn, rather than a static
                      "…". Opacity only, so a list of a dozen rows costs no layout pass, and
                      capped at 60 fps like every other animation here. -->
-                <views:MeasuringDots HorizontalAlignment="Right" VerticalAlignment="Center"
+                <controls:MeasuringDots HorizontalAlignment="Right" VerticalAlignment="Center"
                                      Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}"/>
                 <!-- The component cleanup card's own analysis (DISM, started by itself): the same dots. -->
-                <views:MeasuringDots x:Name="ComponentStoreMeasuringDots" HorizontalAlignment="Right" VerticalAlignment="Center"
+                <controls:MeasuringDots x:Name="ComponentStoreMeasuringDots" HorizontalAlignment="Right" VerticalAlignment="Center"
                                      Visibility="{Binding IsAnalyzingComponentStore, Converter={StaticResource BoolToVisibility}}"/>
 
                 <!-- Picked for this run, still ahead of it: a turning ring says the row
                      is waiting its turn rather than sitting idle. It
                      replaces the figure while it is up, because the figure is what this
                      row is ABOUT to free and the ring already says so. -->
-                <views:WaitSpinner HorizontalAlignment="Right" VerticalAlignment="Center"
+                <controls:WaitSpinner HorizontalAlignment="Right" VerticalAlignment="Center"
                                    Visibility="{Binding IsWaiting, Converter={StaticResource BoolToVisibility}}"/>
             </Grid>
 
@@ -565,7 +568,7 @@
                          reserves the scrollbar's own column instead of floating it over the row's own
                          right-aligned size text, same fix as the outer targets ScrollViewer above. -->
                     <ScrollViewer Style="{x:Null}" MaxHeight="240" VerticalScrollBarVisibility="Auto"
-                                  views:BubbleScroll.Enabled="True">
+                                  behaviors:BubbleScroll.Enabled="True">
                         <ItemsControl ItemsSource="{Binding LeftoverCandidates}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -619,7 +622,7 @@
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                Visibility="{Binding HasDriverDeviceCandidates, Converter={StaticResource BoolToVisibility}}"/>
                     <ScrollViewer Style="{x:Null}" MaxHeight="180" VerticalScrollBarVisibility="Auto"
-                                  views:BubbleScroll.Enabled="True">
+                                  behaviors:BubbleScroll.Enabled="True">
                         <ItemsControl ItemsSource="{Binding DriverDeviceCandidates}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -664,7 +667,7 @@
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                Visibility="{Binding HasDriverPackageCandidates, Converter={StaticResource BoolToVisibility}}"/>
                     <ScrollViewer Style="{x:Null}" MaxHeight="180" VerticalScrollBarVisibility="Auto"
-                                  views:BubbleScroll.Enabled="True">
+                                  behaviors:BubbleScroll.Enabled="True">
                         <ItemsControl ItemsSource="{Binding DriverPackageCandidates}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -721,7 +724,7 @@
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
 
                     <ScrollViewer Style="{x:Null}" MaxHeight="240" VerticalScrollBarVisibility="Auto"
-                                  views:BubbleScroll.Enabled="True">
+                                  behaviors:BubbleScroll.Enabled="True">
                         <ItemsControl ItemsSource="{Binding OldPythonVersionCandidates}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -773,7 +776,7 @@
                             Visibility="{Binding IsCleaning, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel Orientation="Horizontal">
                         <!-- A fixed width keeps the bar from stretching with the window. -->
-                        <views:PillProgressBar Width="240" Height="6" VerticalAlignment="Center"
+                        <controls:PillProgressBar Width="240" Height="6" VerticalAlignment="Center"
                                                Value="{Binding Percent}"/>
                         <TextBlock Margin="10,0,0,0" FontSize="11"
                                    VerticalAlignment="Center"
@@ -889,7 +892,7 @@
                                     <ScrollViewer x:Name="EntriesItemsScroll" MaxHeight="240"
                                                   VerticalScrollBarVisibility="Auto"
                                                   CanContentScroll="True"
-                                                  views:BubbleScroll.Enabled="True">
+                                                  behaviors:BubbleScroll.Enabled="True">
                                         <ItemsPresenter/>
                                     </ScrollViewer>
                                 </ControlTemplate>

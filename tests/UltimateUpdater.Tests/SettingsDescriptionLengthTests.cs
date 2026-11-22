@@ -18,7 +18,7 @@ public class SettingsDescriptionLengthTests
     public void Every_bound_card_description_fits_the_cap_in_german()
     {
         var root = FindRoot();
-        var xaml = XDocument.Load(Path.Combine(root, "src", "UltimateUpdater", "Views", "SettingsWindow.xaml"));
+        var xaml = XDocument.Load(ViewSources.Find(Path.Combine(root, "src", "UltimateUpdater", "Views"), "SettingsWindow.xaml"));
         var german = ReadResx(Path.Combine(root, "src", "UltimateUpdater", "Resources", "Strings.de.resx"));
 
         var keys = xaml.Descendants(Wpf + "TextBlock")

@@ -4,10 +4,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 using Color = System.Windows.Media.Color;
 
 namespace UltimateUpdater.Tests;
@@ -69,7 +66,7 @@ public partial class WindowLayoutTests
             {
                 foreach (var card in FindAllByName<Grid>(content, "RunningRowCard"))
                 {
-                    var bar = FindFirstDescendant<UltimateUpdater.Views.IndeterminateBar>(card);
+                    var bar = FindFirstDescendant<IndeterminateBar>(card);
                     if (bar is not null)
                         barLefts.Add(bar.TransformToAncestor(content).Transform(new Point(0, 0)).X);
                 }

@@ -1,7 +1,6 @@
 using System.Net.Http;
 using System.Reflection;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources.PackageManagers;
 
 namespace UltimateUpdater.Tests;

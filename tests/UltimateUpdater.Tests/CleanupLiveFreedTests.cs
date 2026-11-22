@@ -1,7 +1,5 @@
 using System.IO;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

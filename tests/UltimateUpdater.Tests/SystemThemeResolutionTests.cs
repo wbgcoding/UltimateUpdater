@@ -1,4 +1,3 @@
-using UltimateUpdater.Services;
 using Wpf.Ui.Appearance;
 
 namespace UltimateUpdater.Tests;

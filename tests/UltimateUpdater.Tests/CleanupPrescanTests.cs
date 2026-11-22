@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

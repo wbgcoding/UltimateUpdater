@@ -1,4 +1,3 @@
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Sources;
 

@@ -1,7 +1,6 @@
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
 
 namespace UltimateUpdater.Tests;

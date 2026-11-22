@@ -4,7 +4,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using UltimateUpdater.Services;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
@@ -173,7 +172,7 @@ internal static class WpfHarness
 
                 // No user in front of this: a modal dialog here (the crash handler raises one) waits for a
                 // click that never comes and hangs the entire test run.
-                UltimateUpdater.Services.Dialogs.SuppressInteractiveDialogs = true;
+                Dialogs.SuppressInteractiveDialogs = true;
 
                 // An exception that escapes onto this dispatcher ends Dispatcher.Run() and takes the one
                 // shared Application with it, so every later test in the run reports only "the application
@@ -441,10 +440,10 @@ internal static class WpfHarness
         if (root is Expander { DataContext: System.Windows.Data.CollectionViewGroup } groupExpander)
             groupExpander.IsExpanded = true;
 
-        if (root is Expander { DataContext: ViewModels.CleanupItemViewModel { HasEntries: true } } entryExpander)
+        if (root is Expander { DataContext: CleanupItemViewModel { HasEntries: true } } entryExpander)
             entryExpander.IsExpanded = true;
 
-        if (root is Expander { DataContext: ViewModels.CleanupGroupViewModel { } categoryGroup } categoryCard
+        if (root is Expander { DataContext: CleanupGroupViewModel { } categoryGroup } categoryCard
             && categoryGroup.Items.Any(item =>
                 item.HasEntries || item.HasDriverDeviceCandidates || item.HasDriverPackageCandidates))
         {
@@ -481,7 +480,7 @@ internal static class WpfHarness
     }
 
     /// <summary>
-    /// Waits for a <see cref="ViewModels.CleanupViewModel"/>'s catalogue to finish building: the
+    /// Waits for a <see cref="CleanupViewModel"/>'s catalogue to finish building: the
     /// constructor only starts that work now (see its own doc comment), wrapping the result into view
     /// models on whichever thread the view model was itself constructed on, queued there rather than run
     /// inline. A plain blocking wait would deadlock here, because that queued work never runs unless
@@ -489,7 +488,7 @@ internal static class WpfHarness
     /// that, on both a bare xUnit thread and the harness's own pumped dispatcher thread (a nested frame is
     /// the ordinary way to enter a second message loop within one already running).
     /// </summary>
-    public static void WaitForCleanupCatalog(ViewModels.CleanupViewModel viewModel)
+    public static void WaitForCleanupCatalog(CleanupViewModel viewModel)
     {
         var task = viewModel.CatalogReadyTask;
         if (task.IsCompleted)

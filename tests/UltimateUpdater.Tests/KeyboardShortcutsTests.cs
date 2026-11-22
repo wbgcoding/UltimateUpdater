@@ -1,5 +1,4 @@
 using System.Windows.Input;
-using UltimateUpdater.Views;
 using Xunit;
 
 namespace UltimateUpdater.Tests;

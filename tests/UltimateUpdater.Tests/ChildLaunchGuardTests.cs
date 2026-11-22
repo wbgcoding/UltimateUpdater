@@ -10,7 +10,8 @@ namespace UltimateUpdater.Tests;
 /// </summary>
 public class ChildLaunchGuardTests
 {
-    private static readonly string[] Launchers = ["ProcessRunner.cs", "SuspendedChildProcess.cs"];
+    private static readonly string[] Launchers =
+        [Path.Combine("Processes", "ProcessRunner.cs"), Path.Combine("Elevation", "SuspendedChildProcess.cs")];
 
     [Fact]
     public void No_other_source_file_starts_a_handle_inheriting_child()
@@ -19,7 +20,7 @@ public class ChildLaunchGuardTests
         var offenders = Directory.EnumerateFiles(Path.Combine(root, "src"), "*.cs", SearchOption.AllDirectories)
             .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
                            && !file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}"))
-            .Where(file => !Launchers.Contains(Path.GetFileName(file), StringComparer.OrdinalIgnoreCase))
+            .Where(file => !Launchers.Any(launcher => file.EndsWith(Path.Combine("Services", launcher), StringComparison.OrdinalIgnoreCase)))
             .SelectMany(file => FindUnlockedLaunches(Path.GetRelativePath(root, file), File.ReadAllText(file)))
             .ToList();
 

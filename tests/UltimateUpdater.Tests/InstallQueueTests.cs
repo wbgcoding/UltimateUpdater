@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Sources;
 
 namespace UltimateUpdater.Tests;
@@ -1788,7 +1787,7 @@ public class InstallQueueTests
     }
 
     /// <summary>
-    /// Fails on its FIRST attempt with a message <see cref="Sources.InstallErrorExplainer"/>
+    /// Fails on its FIRST attempt with a message <see cref="InstallErrorExplainer"/>
     /// marks as safe to retry automatically (same message shape as
     /// <see cref="A_retryable_failure_is_retried_exactly_once_and_can_still_succeed"/>'s own source), after
     /// reporting real download progress, then SUCCEEDS on the retry round with its own real progress too -

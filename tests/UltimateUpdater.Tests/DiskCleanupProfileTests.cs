@@ -115,7 +115,7 @@ public class DiskCleanupTimeLimitTests
         using var process = StartNeverEndingProcess();
         try
         {
-            var service = new CleanupService(new UltimateUpdater.Services.LoggingService());
+            var service = new CleanupService(new LoggingService());
 
             var outcome = await service.WaitForDiskCleanupAsync(process, TimeSpan.FromMilliseconds(300), CancellationToken.None);
 
@@ -136,7 +136,7 @@ public class DiskCleanupTimeLimitTests
         using var process = StartNeverEndingProcess();
         try
         {
-            var service = new CleanupService(new UltimateUpdater.Services.LoggingService());
+            var service = new CleanupService(new LoggingService());
             using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
 
             var outcome = await service.WaitForDiskCleanupAsync(process, TimeSpan.FromMinutes(5), cts.Token);
@@ -160,8 +160,8 @@ public class DiskCleanupTimeLimitTests
     {
         var message = new CleanupWorkerMessage { Type = "result", Id = "disk-cleanup", TimedOut = true };
 
-        var (state, _) = UltimateUpdater.ViewModels.CleanupViewModel.ApplySingleTargetMessage(
-            UltimateUpdater.ViewModels.CleanupViewModel.SingleTargetCleanupState.Initial, message);
+        var (state, _) = CleanupViewModel.ApplySingleTargetMessage(
+            CleanupViewModel.SingleTargetCleanupState.Initial, message);
 
         Assert.True(state.Outcome!.Value.TimedOut);
         Assert.False(state.Outcome.Value.WasStopped);

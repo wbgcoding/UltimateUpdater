@@ -1,4 +1,3 @@
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 
@@ -179,7 +178,7 @@ public class InstallStallWatchTests
     [Fact]
     public void The_stalled_row_says_so_in_one_plain_sentence_and_does_not_count_as_a_repeat_failure()
     {
-        var text = UltimateUpdater.Services.Sources.InstallErrorExplainer.RowText(
+        var text = InstallErrorExplainer.RowText(
             "winget", new InstallerStalledException("winget").Message, key => key);
 
         Assert.Equal("InstallStalled", text);

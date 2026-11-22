@@ -1,11 +1,9 @@
 using System.Net.Http;
 using UltimateUpdater.Models;
 using UltimateUpdater.Models.Settings;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.SelfUpdate;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

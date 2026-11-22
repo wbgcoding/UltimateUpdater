@@ -2,9 +2,9 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-             xmlns:views="clr-namespace:UltimateUpdater.Views">
+             xmlns:converters="clr-namespace:UltimateUpdater.Views.Converters">
     <UserControl.Resources>
-        <views:ShortcutTooltipConverter x:Key="ShortcutTooltip"/>
+        <converters:ShortcutTooltipConverter x:Key="ShortcutTooltip"/>
         <!-- The toolbar's own filter chip: a full pill at the search box's height, with primary-colour text and
              the controls' own fills. It does not derive from the shared App.xaml FilterChip, whose smaller look
              the history and settings lists keep. FilterChipLabel is a short word so all four chips fit at the
@@ -118,7 +118,7 @@
                            ToolTip="{Binding Loc[ToolbarCleanupLabel], Converter={StaticResource ShortcutTooltip}, ConverterParameter=CleanupTitle}"
                            AutomationProperties.Name="{Binding Loc[ToolbarCleanupLabel]}">
                     <ui:Button.Resources>
-                        <views:InverseBoolToVisibilityConverter x:Key="ToolbarInverseBoolToVisibility"/>
+                        <converters:InverseBoolToVisibilityConverter x:Key="ToolbarInverseBoolToVisibility"/>
                     </ui:Button.Resources>
                     <!-- ui:Button.Icon only accepts an IconElement (SymbolIcon and similar), so the
                          two-state swap (broom glyph or the animated disk, chosen by IsCleanupRunning)

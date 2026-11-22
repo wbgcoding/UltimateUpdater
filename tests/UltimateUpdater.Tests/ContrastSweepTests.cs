@@ -1,4 +1,3 @@
-using UltimateUpdater.Services;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 using Color = System.Windows.Media.Color;
@@ -7,7 +6,7 @@ namespace UltimateUpdater.Tests;
 
 /// <summary>
 /// Walks every text-on-surface brush-key pair this app actually renders somewhere (the catalogue below was
-/// built from a grep of every Foreground/Background/BorderBrush pairing across Views/*.xaml, not invented)
+/// built from a grep of every Foreground/Background/BorderBrush pairing across Views/**/*.xaml, not invented)
 /// and reads the two brushes' LIVE resolved colours the same way <see cref="LiveButtonContrastTests"/>
 /// already does for the accent-filled control family, rather than reasoning about which dictionary wins.
 /// 4.5:1 is the floor for ordinary text; 3.0:1 for text 24px or larger and for focus rings/control borders,
@@ -29,7 +28,7 @@ public class ContrastSweepTests
 {
     private sealed record Pair(string Foreground, string Background, double MinRatio, string Description);
 
-    /// <summary>Every pair actually rendered somewhere in Views/*.xaml, grouped by the surface it sits on.
+    /// <summary>Every pair actually rendered somewhere in Views/**/*.xaml, grouped by the surface it sits on.
     /// AccentTextFillColorPrimaryBrush-on-card (the focus ring) is deliberately not repeated here:
     /// <see cref="LiveButtonContrastTests.The_cleanup_card_focus_ring_is_visible_against_the_card"/> already
     /// covers exactly that pair permanently.</summary>

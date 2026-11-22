@@ -1,12 +1,11 @@
 using System.IO;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using Xunit;
 
 namespace UltimateUpdater.Tests;
 
 /// <summary>
-/// Services/ScanResultCache.cs: the last finished scan persisted so the table has something to show
+/// Services/Scan/ScanResultCache.cs: the last finished scan persisted so the table has something to show
 /// before the first scan of a session finishes. Every test uses its own temporary file (the explicit-path
 /// constructor is a testing seam, mirroring SettingsService's) so none of this touches the shared
 /// AppPaths.DataDirectory the rest of the suite writes to.

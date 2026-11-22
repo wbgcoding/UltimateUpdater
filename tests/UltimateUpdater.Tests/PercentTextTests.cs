@@ -1,9 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 
@@ -109,7 +107,10 @@ public class PercentTextTests
             directory = directory.Parent;
 
         Assert.NotNull(directory);
-        var offenders = Directory.EnumerateFiles(Path.Combine(directory!.FullName, "src", "UltimateUpdater", "ViewModels"), "*.cs")
+        var viewModelFiles = Directory.EnumerateFiles(
+            Path.Combine(directory!.FullName, "src", "UltimateUpdater", "ViewModels"), "*.cs", SearchOption.AllDirectories).ToList();
+        Assert.True(viewModelFiles.Count >= 20, $"Expected the view model files below ViewModels, found {viewModelFiles.Count}.");
+        var offenders = viewModelFiles
             .SelectMany(file => File.ReadLines(file).Select((line, index) => (file, line, index)))
             .Where(x => x.line.Contains("} %\"", StringComparison.Ordinal))
             .Select(x => $"{Path.GetFileName(x.file)}:{x.index + 1}")

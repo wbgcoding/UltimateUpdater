@@ -1,5 +1,4 @@
 using System.Net.Http;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

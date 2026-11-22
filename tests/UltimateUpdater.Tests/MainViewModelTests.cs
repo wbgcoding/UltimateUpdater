@@ -1,11 +1,8 @@
 using System.Net.Http;
 using System.Reflection;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.SelfUpdate;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 
 namespace UltimateUpdater.Tests;
 
@@ -105,17 +102,17 @@ public partial class MainViewModelTests
         WpfHarness.OnUiThread(() =>
         {
             var viewModel = Create();
-            UltimateUpdater.Services.LocalizationService.Instance.Apply(language);
+            LocalizationService.Instance.Apply(language);
             try
             {
                 Assert.Equal(expected, viewModel.DateSortTooltip);
-                Assert.Contains(UltimateUpdater.Services.LocalizationService.Instance["ColumnName"], viewModel.NameSortTooltip);
-                Assert.Contains(UltimateUpdater.Services.LocalizationService.Instance["ColumnVersion"], viewModel.VersionSortTooltip);
-                Assert.Contains(UltimateUpdater.Services.LocalizationService.Instance["ColumnSize"], viewModel.SizeSortTooltip);
+                Assert.Contains(LocalizationService.Instance["ColumnName"], viewModel.NameSortTooltip);
+                Assert.Contains(LocalizationService.Instance["ColumnVersion"], viewModel.VersionSortTooltip);
+                Assert.Contains(LocalizationService.Instance["ColumnSize"], viewModel.SizeSortTooltip);
             }
             finally
             {
-                UltimateUpdater.Services.LocalizationService.Instance.Apply("en");
+                LocalizationService.Instance.Apply("en");
             }
         });
     }
@@ -1225,10 +1222,10 @@ public partial class MainViewModelTests
     private static MainViewModel Create(
         IReadOnlyList<IUpdateSource>? sources = null,
         Func<string, CancellationToken, Task<string?>>? changelogFetcher = null,
-        Func<string, CancellationToken, Task<Services.Sources.NpmChangelogLookup.NpmChangelogSource>>? npmChangelogLookup = null,
+        Func<string, CancellationToken, Task<NpmChangelogLookup.NpmChangelogSource>>? npmChangelogLookup = null,
         Services.Install.InstallBlockers? installBlockers = null,
         Services.SelfUpdate.SelfUpdateService? selfUpdate = null,
-        Services.WingetBootstrapService? wingetBootstrap = null,
+        WingetBootstrapService? wingetBootstrap = null,
         Func<bool>? canShowWingetOffer = null)
     {
         var logging = new LoggingService();

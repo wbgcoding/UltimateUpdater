@@ -1,6 +1,5 @@
 using System.Collections.Specialized;
 using System.Reflection;
-using UltimateUpdater.ViewModels;
 
 namespace UltimateUpdater.Tests;
 

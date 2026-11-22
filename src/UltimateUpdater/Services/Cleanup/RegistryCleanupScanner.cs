@@ -16,7 +16,7 @@ public static class RegistryCleanupScanner
     /// <summary>
     /// HKCU as well as HKLM, everywhere a per-user copy of the key exists. Reading only the machine hive
     /// would miss a program installed for the current user alone, while
-    /// <see cref="Sources.LauncherResolver"/> reads its App Paths from HKCU, so the two would disagree about
+    /// <see cref="LauncherResolver"/> reads its App Paths from HKCU, so the two would disagree about
     /// what is there (the "Anwendungspfade" and "ActiveX/COM" categories came back empty in practice).
     /// </summary>
     private static readonly string[] AppPathsRoots =

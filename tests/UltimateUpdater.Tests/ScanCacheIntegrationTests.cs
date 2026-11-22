@@ -2,17 +2,15 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Install;
 using UltimateUpdater.Services.SelfUpdate;
 using UltimateUpdater.Services.Sources;
-using UltimateUpdater.ViewModels;
 using Xunit;
 
 namespace UltimateUpdater.Tests;
 
 /// <summary>
-/// End to end coverage for how MainViewModel.Scan.cs wires up Services/ScanResultCache.cs: a session's
+/// End to end coverage for how MainViewModel.Scan.cs wires up Services/Scan/ScanResultCache.cs: a session's
 /// finished scan is what the NEXT session's first scan shows before it has found anything of its own.
 /// Reads the same effective path MainViewModel's own parameterless ScanResultCache resolves to
 /// (ScanResultCache.EffectivePath: WpfHarness's redirected test file, never the real

@@ -1,8 +1,5 @@
 using System.Windows;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
-using UltimateUpdater.ViewModels;
-using UltimateUpdater.Views;
 using Xunit;
 
 namespace UltimateUpdater.Tests;

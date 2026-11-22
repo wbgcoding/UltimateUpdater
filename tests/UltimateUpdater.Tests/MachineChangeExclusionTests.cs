@@ -1,5 +1,4 @@
 using System.Text.Json;
-using UltimateUpdater.Services;
 
 namespace UltimateUpdater.Tests;
 

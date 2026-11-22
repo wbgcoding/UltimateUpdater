@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
-using UltimateUpdater.Services;
 using UltimateUpdater.Services.Cleanup;
 
 namespace UltimateUpdater.Tests;
