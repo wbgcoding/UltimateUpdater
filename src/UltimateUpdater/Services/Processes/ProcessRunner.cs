@@ -796,6 +796,51 @@ public static class ProcessRunner
     }
 
     /// <summary>
+    /// An uninstaller program named by a registry command, for a launch with or without administrator rights.
+    /// It is not signed as a rule (most uninstallers are not), so the location carries the trust instead: for an
+    /// elevated launch the file is pinned first, must lie outside every user profile, and must sit where only
+    /// administrators can write (<see cref="ElevatedPathTrust"/>), judged against the pinned handle.
+    /// An unelevated launch crosses no boundary and only needs an existing absolute path.
+    /// </summary>
+    internal static ResolvedExecutable ResolveUninstaller(
+        string path, bool elevated, Func<string, FileStream, bool>? locationTrust = null)
+    {
+        if (!Path.IsPathFullyQualified(path) || !File.Exists(path))
+            throw new UntrustedToolException(path, "not an existing absolute path");
+
+        if (!elevated)
+            return new ResolvedExecutable(path, null);
+
+        var pin = TryPin(path) ?? throw new UntrustedToolException(path, "cannot be pinned");
+        try
+        {
+            if (IsUnderUserProfile(path) || !(locationTrust ?? ElevatedPathTrust.IsTrustedLocation)(path, pin))
+                throw new UntrustedToolException(path, "not in a location only administrators can change");
+        }
+        catch
+        {
+            pin.Dispose();
+            throw;
+        }
+
+        return new ResolvedExecutable(path, pin);
+    }
+
+    /// <summary>True when <see cref="ResolveUninstaller"/> would accept the file for an elevated launch now.</summary>
+    internal static bool IsTrustedUninstallerLocation(string path)
+    {
+        try
+        {
+            using var executable = ResolveUninstaller(path, elevated: true);
+            return true;
+        }
+        catch (UntrustedToolException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// The real image behind a shim this app knows launches another executable: chocolatey's
     /// <c>bin\choco.exe</c> starts <c>..\choco.exe</c> in the chocolatey root. Null for everything else.
     /// A shim of that shape whose target is missing yields the missing path, which then cannot be pinned and
