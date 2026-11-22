@@ -108,7 +108,7 @@ public static partial class RegistryCleanupSafety
     private static partial Regex FileGluedToSwitchRegex();
 
     [GeneratedRegex(
-        @"^""?msiexec(\.exe)?""?\s+/[xi]\s*(\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\})",
+        @"^""?(?:[A-Za-z]:\\Windows\\(?:System32|SysWOW64)\\)?msiexec(\.exe)?""?\s+/[xi]\s*(\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\})",
         RegexOptions.IgnoreCase)]
     private static partial Regex MsiExecCommandRegex();
 

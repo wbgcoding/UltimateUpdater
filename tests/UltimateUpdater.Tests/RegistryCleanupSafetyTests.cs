@@ -228,8 +228,16 @@ public class RegistryCleanupSafetyTests
     [InlineData("MsiExec.exe /X{AC76BA86-7AD7-1033-7B44-AC0F074E4100}", "{AC76BA86-7AD7-1033-7B44-AC0F074E4100}")]
     [InlineData("MsiExec.exe /I{AC76BA86-7AD7-1033-7B44-AC0F074E4100}", "{AC76BA86-7AD7-1033-7B44-AC0F074E4100}")]
     [InlineData("\"MsiExec.exe\" /X{ac76ba86-7ad7-1033-7b44-ac0f074e4100}", "{ac76ba86-7ad7-1033-7b44-ac0f074e4100}")]
+    [InlineData("\"C:\\Windows\\System32\\MsiExec.exe\" /X{AC76BA86-7AD7-1033-7B44-AC0F074E4100}", "{AC76BA86-7AD7-1033-7B44-AC0F074E4100}")]
+    [InlineData("C:\\Windows\\SysWOW64\\msiexec.exe /I{AC76BA86-7AD7-1033-7B44-AC0F074E4100}", "{AC76BA86-7AD7-1033-7B44-AC0F074E4100}")]
     public void ExtractMsiProductCode_reads_the_guid_from_an_uninstall_or_repair_command(string command, string expected) =>
         Assert.Equal(expected, RegistryCleanupSafety.ExtractMsiProductCode(command));
+
+    [Theory]
+    [InlineData("C:\\Temp\\msiexec.exe /X{AC76BA86-7AD7-1033-7B44-AC0F074E4100}")]
+    [InlineData("C:\\Windows\\Temp\\msiexec.exe /X{AC76BA86-7AD7-1033-7B44-AC0F074E4100}")]
+    public void ExtractMsiProductCode_is_null_for_a_msiexec_outside_the_system_folders(string command) =>
+        Assert.Null(RegistryCleanupSafety.ExtractMsiProductCode(command));
 
     [Fact]
     public void ExtractMsiProductCode_is_null_for_a_non_msi_command() =>
