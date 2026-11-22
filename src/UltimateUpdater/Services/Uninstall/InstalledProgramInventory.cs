@@ -81,21 +81,25 @@ public sealed class InstalledProgramInventory
     /// One key as an entry, or null when it is not a program a person installed: a system component, an update
     /// (ParentKeyName or ReleaseType), a key with no display name, or one with no uninstall command at all.
     /// </summary>
-    internal InstalledProgramEntry? ReadEntry(string keyPath, UninstallScope scope)
+    internal InstalledProgramEntry? ReadEntry(string keyPath, UninstallScope scope) => ReadEntry(_registry, keyPath, scope);
+
+    /// <summary>The same read over any registry view, for a caller that holds no readers for Store apps or winget
+    /// (the elevated worker re-reads one machine entry this way).</summary>
+    internal static InstalledProgramEntry? ReadEntry(IRegistryView registry, string keyPath, UninstallScope scope)
     {
-        if (_registry.DwordValue(keyPath, "SystemComponent") == 1)
+        if (registry.DwordValue(keyPath, "SystemComponent") == 1)
             return null;
 
-        if (!string.IsNullOrWhiteSpace(_registry.Value(keyPath, "ParentKeyName"))
-            || !string.IsNullOrWhiteSpace(_registry.Value(keyPath, "ReleaseType")))
+        if (!string.IsNullOrWhiteSpace(registry.Value(keyPath, "ParentKeyName"))
+            || !string.IsNullOrWhiteSpace(registry.Value(keyPath, "ReleaseType")))
             return null;
 
-        var name = Text(_registry.Value(keyPath, "DisplayName"));
+        var name = Text(registry.Value(keyPath, "DisplayName"));
         if (name.Length == 0)
             return null;
 
-        var quiet = Text(_registry.Value(keyPath, "QuietUninstallString"));
-        var normal = Text(_registry.Value(keyPath, "UninstallString"));
+        var quiet = Text(registry.Value(keyPath, "QuietUninstallString"));
+        var normal = Text(registry.Value(keyPath, "UninstallString"));
         if (quiet.Length == 0 && normal.Length == 0)
             return null;
 
@@ -103,7 +107,7 @@ public sealed class InstalledProgramInventory
         var msiCode = RegistryCleanupSafety.ExtractMsiProductCode(normal)
                       ?? RegistryCleanupSafety.ExtractMsiProductCode(quiet);
 
-        long? size = _registry.DwordValue(keyPath, "EstimatedSize") is { } kilobytes and > 0
+        long? size = registry.DwordValue(keyPath, "EstimatedSize") is { } kilobytes and > 0
             ? (long)(uint)kilobytes * 1024
             : null;
 
@@ -112,16 +116,16 @@ public sealed class InstalledProgramInventory
             Key = keyPath,
             Kind = UninstallEntryKind.Program,
             Name = name,
-            Publisher = Text(_registry.Value(keyPath, "Publisher")),
-            Version = Text(_registry.Value(keyPath, "DisplayVersion")),
-            InstallDate = ParseInstallDate(_registry.Value(keyPath, "InstallDate")),
+            Publisher = Text(registry.Value(keyPath, "Publisher")),
+            Version = Text(registry.Value(keyPath, "DisplayVersion")),
+            InstallDate = ParseInstallDate(registry.Value(keyPath, "InstallDate")),
             SizeBytes = size,
-            InstallLocation = Text(_registry.Value(keyPath, "InstallLocation")),
+            InstallLocation = Text(registry.Value(keyPath, "InstallLocation")),
             Scope = scope,
             QuietUninstallString = quiet,
             UninstallString = normal,
             MsiProductCode = msiCode,
-            DisplayIcon = Text(_registry.Value(keyPath, "DisplayIcon")),
+            DisplayIcon = Text(registry.Value(keyPath, "DisplayIcon")),
         };
     }
 

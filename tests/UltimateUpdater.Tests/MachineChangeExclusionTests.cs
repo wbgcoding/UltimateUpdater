@@ -113,6 +113,48 @@ public class MachineChangeExclusionTests
         await cleanupSlot.DisposeAsync();
     }
 
+    /// <summary>A program removal changes the machine like an install: the same writer lock, so the two never
+    /// overlap, in both directions.</summary>
+    [Fact]
+    public async Task An_uninstall_job_and_an_install_job_exclude_each_other()
+    {
+        var uninstallSlot = await ElevatedWorker.AcquireMachineChangeSlotAsync("uninstall-program", CancellationToken.None);
+        var installAcquire = ElevatedWorker.AcquireMachineChangeSlotAsync("install", CancellationToken.None);
+        var raced = await Task.WhenAny(installAcquire, Task.Delay(TimeSpan.FromMilliseconds(200)));
+        Assert.NotSame(installAcquire, raced);
+
+        await uninstallSlot.DisposeAsync();
+        var installSlot = await installAcquire.WaitAsync(TimeSpan.FromSeconds(5));
+
+        var uninstallAcquire = ElevatedWorker.AcquireMachineChangeSlotAsync("uninstall-program", CancellationToken.None);
+        raced = await Task.WhenAny(uninstallAcquire, Task.Delay(TimeSpan.FromMilliseconds(200)));
+        Assert.NotSame(uninstallAcquire, raced);
+
+        await installSlot.DisposeAsync();
+        await (await uninstallAcquire.WaitAsync(TimeSpan.FromSeconds(5))).DisposeAsync();
+    }
+
+    /// <summary>A file cleanup can delete what a setup unpacks, so it waits for a running uninstall too.</summary>
+    [Fact]
+    public async Task An_uninstall_job_blocks_a_file_cleanup_until_it_is_done()
+    {
+        var uninstallSlot = await ElevatedWorker.AcquireMachineChangeSlotAsync("uninstall-program", CancellationToken.None);
+        var cleanupAcquire = ElevatedWorker.AcquireMachineChangeSlotAsync("cleanup", CancellationToken.None);
+        var raced = await Task.WhenAny(cleanupAcquire, Task.Delay(TimeSpan.FromMilliseconds(200)));
+        Assert.NotSame(cleanupAcquire, raced);
+
+        await uninstallSlot.DisposeAsync();
+        await (await cleanupAcquire.WaitAsync(TimeSpan.FromSeconds(5))).DisposeAsync();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void IsExclusiveJob_is_always_true_for_an_uninstall_whatever_the_wire_field_says(bool wireExclusive)
+    {
+        Assert.True(ElevatedWorker.IsExclusiveJob(JobWith("uninstall-program", wireExclusive)));
+    }
+
     /// <summary>The other direction: a cleanup holding its reader slot blocks an install from starting.</summary>
     [Fact]
     public async Task AcquireMachineChangeSlotAsync_blocks_an_install_while_a_cleanup_holds_the_slot()

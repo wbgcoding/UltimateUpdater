@@ -2452,4 +2452,34 @@ Esto no se puede deshacer.</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>Consulta GitHub al iniciar y en cada análisis periódico.</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>Este programa no se puede quitar automáticamente. Quítalo en Configuración de Windows, en Aplicaciones.</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>Su desinstalador está en una carpeta sin protección, por lo que no se ejecuta con derechos de administrador. Quítalo en Configuración de Windows, en Aplicaciones.</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>El desinstalador terminó, pero el programa sigue instalado.</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>Se canceló la desinstalación.</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>Hay otra instalación en curso. Inténtalo de nuevo cuando termine.</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>Una directiva de este equipo impide la eliminación.</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>El desinstalador informó de un error (código {0}).</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>No se pudo iniciar el desinstalador.</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>Eliminado. Reinicia Windows para terminar.</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>No iniciado.</value>
+  </data>
 </root>

@@ -2452,4 +2452,34 @@ Continuați cu drepturi de administrator?</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>Întreabă GitHub la pornire și la fiecare scanare periodică.</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>Acest program nu poate fi eliminat automat. Elimină-l din Setările Windows, la Aplicații.</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>Programul de dezinstalare se află într-un folder neprotejat, deci nu este rulat cu drepturi de administrator. Elimină-l din Setările Windows, la Aplicații.</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>Programul de dezinstalare s-a încheiat, dar programul este încă instalat.</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>Dezinstalarea a fost anulată.</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>Rulează o altă instalare. Încearcă din nou după ce se termină.</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>O politică de pe acest PC blochează eliminarea.</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>Programul de dezinstalare a raportat o eroare (cod {0}).</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>Programul de dezinstalare nu a putut fi pornit.</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>Eliminat. Repornește Windows pentru a finaliza.</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>Neînceput.</value>
+  </data>
 </root>

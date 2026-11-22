@@ -2452,4 +2452,34 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>Fragt GitHub beim Start und bei jedem Intervall-Scan.</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>Dieses Programm lässt sich nicht automatisch entfernen. Entferne es in den Windows-Einstellungen unter Apps.</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>Das Deinstallationsprogramm liegt in einem ungeschützten Ordner und wird deshalb nicht mit Admin-Rechten gestartet. Entferne es in den Windows-Einstellungen unter Apps.</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>Das Deinstallationsprogramm ist durchgelaufen, aber das Programm ist weiterhin installiert.</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>Die Deinstallation wurde abgebrochen.</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>Es läuft gerade eine andere Installation. Versuche es erneut, sobald sie fertig ist.</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>Eine Richtlinie auf diesem PC verhindert das Entfernen.</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>Das Deinstallationsprogramm meldete einen Fehler (Code {0}).</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>Das Deinstallationsprogramm ließ sich nicht starten.</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>Entfernt. Starte Windows neu, um es abzuschließen.</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>Nicht gestartet.</value>
+  </data>
 </root>

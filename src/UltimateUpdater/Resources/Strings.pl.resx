@@ -2452,4 +2452,34 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>Pyta GitHub przy starcie i przy każdym skanowaniu okresowym.</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>Tego programu nie można usunąć automatycznie. Usuń go w Ustawieniach systemu Windows, w sekcji Aplikacje.</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>Jego dezinstalator znajduje się w niezabezpieczonym folderze, dlatego nie jest uruchamiany z uprawnieniami administratora. Usuń program w Ustawieniach systemu Windows, w sekcji Aplikacje.</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>Dezinstalator zakończył pracę, ale program nadal jest zainstalowany.</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>Odinstalowanie zostało anulowane.</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>Trwa inna instalacja. Spróbuj ponownie po jej zakończeniu.</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>Zasady na tym komputerze blokują usunięcie.</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>Dezinstalator zgłosił błąd (kod {0}).</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>Nie udało się uruchomić dezinstalatora.</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>Usunięto. Uruchom ponownie system Windows, aby zakończyć.</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>Nie rozpoczęto.</value>
+  </data>
 </root>

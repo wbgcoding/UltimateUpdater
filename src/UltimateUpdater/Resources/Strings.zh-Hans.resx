@@ -2452,4 +2452,34 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>启动时和每次定期扫描时向 GitHub 查询。</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>无法自动卸载此程序。请在 Windows 设置的“应用”中卸载。</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>其卸载程序位于未受保护的文件夹中，因此不会以管理员权限运行。请在 Windows 设置的“应用”中卸载。</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>卸载程序已结束，但该程序仍已安装。</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>卸载已取消。</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>另一项安装正在进行。请在其完成后重试。</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>此电脑上的策略阻止了卸载。</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>卸载程序报告了错误（代码 {0}）。</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>无法启动卸载程序。</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>已卸载。请重启 Windows 以完成。</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>未开始。</value>
+  </data>
 </root>

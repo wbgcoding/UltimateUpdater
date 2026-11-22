@@ -2452,4 +2452,34 @@ Doorgaan met beheerdersrechten?</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>Vraagt GitHub bij het starten en bij elke periodieke scan.</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>Dit programma kan niet automatisch worden verwijderd. Verwijder het in Windows-instellingen onder Apps.</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>Het verwijderprogramma staat in een onbeveiligde map en wordt daarom niet met beheerdersrechten uitgevoerd. Verwijder het in Windows-instellingen onder Apps.</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>Het verwijderprogramma is klaar, maar het programma staat nog steeds geïnstalleerd.</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>Het verwijderen is geannuleerd.</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>Er loopt al een andere installatie. Probeer het opnieuw als die klaar is.</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>Een beleidsregel op deze pc blokkeert het verwijderen.</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>Het verwijderprogramma meldde een fout (code {0}).</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>Het verwijderprogramma kon niet worden gestart.</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>Verwijderd. Start Windows opnieuw op om het af te ronden.</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>Niet gestart.</value>
+  </data>
 </root>

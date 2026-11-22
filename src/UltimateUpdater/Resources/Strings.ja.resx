@@ -2452,4 +2452,34 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>起動時と定期スキャンのたびに GitHub に問い合わせます。</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>このプログラムは自動で削除できません。Windows の設定の「アプリ」から削除してください。</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>アンインストーラーが保護されていないフォルダーにあるため、管理者権限では実行しません。Windows の設定の「アプリ」から削除してください。</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>アンインストーラーは終了しましたが、プログラムはまだインストールされています。</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>アンインストールはキャンセルされました。</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>別のインストールが実行中です。完了後にもう一度お試しください。</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>このPCのポリシーにより削除がブロックされています。</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>アンインストーラーがエラーを報告しました（コード {0}）。</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>アンインストーラーを起動できませんでした。</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>削除しました。完了するには Windows を再起動してください。</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>開始していません。</value>
+  </data>
 </root>

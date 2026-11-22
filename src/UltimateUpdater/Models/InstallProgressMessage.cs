@@ -53,4 +53,8 @@ public sealed class InstallProgressMessage
     /// <see cref="InstallPhase.Unknown"/>.
     /// </summary>
     public InstallPhase Phase { get; set; }
+
+    /// <summary>The exit code of the program a removal ran, on the "result" of an uninstall-program job; null
+    /// on every other message (a copy that does not know it reads no code).</summary>
+    public int? ExitCode { get; set; }
 }

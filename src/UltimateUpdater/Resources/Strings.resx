@@ -2452,4 +2452,34 @@ Continue with admin rights?</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>Asks GitHub at start and with each interval scan.</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>This program cannot be removed automatically. Remove it in Windows Settings under Apps.</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>Its uninstaller is in a folder that is not protected, so it is not run as administrator. Remove it in Windows Settings under Apps.</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>The uninstaller finished, but the program is still installed.</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>The uninstall was cancelled.</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>Another installation is running. Try again when it has finished.</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>A policy on this PC blocks the removal.</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>The uninstaller reported an error (code {0}).</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>The uninstaller could not be started.</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>Removed. Restart Windows to finish.</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>Not started.</value>
+  </data>
 </root>

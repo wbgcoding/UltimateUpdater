@@ -2452,4 +2452,34 @@ Continuare con privilegi di amministratore?</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>Chiede a GitHub all'avvio e a ogni analisi periodica.</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>Questo programma non può essere rimosso automaticamente. Rimuovilo da Impostazioni di Windows, in App.</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>Il suo programma di disinstallazione si trova in una cartella non protetta e quindi non viene eseguito con diritti di amministratore. Rimuovilo da Impostazioni di Windows, in App.</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>Il programma di disinstallazione è terminato, ma il programma risulta ancora installato.</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>La disinstallazione è stata annullata.</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>È in corso un'altra installazione. Riprova quando sarà terminata.</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>Un criterio di questo PC impedisce la rimozione.</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>Il programma di disinstallazione ha segnalato un errore (codice {0}).</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>Non è stato possibile avviare il programma di disinstallazione.</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>Rimosso. Riavvia Windows per completare.</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>Non avviato.</value>
+  </data>
 </root>

@@ -2452,4 +2452,34 @@ Continuer avec les droits administrateur ?</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>Interroge GitHub au démarrage et à chaque analyse périodique.</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>Ce programme ne peut pas être supprimé automatiquement. Supprimez-le dans les Paramètres Windows, sous Applications.</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>Son désinstalleur se trouve dans un dossier non protégé et n'est donc pas lancé avec les droits d'administrateur. Supprimez-le dans les Paramètres Windows, sous Applications.</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>Le désinstalleur s'est terminé, mais le programme est toujours installé.</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>La désinstallation a été annulée.</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>Une autre installation est en cours. Réessayez une fois qu'elle est terminée.</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>Une stratégie de ce PC bloque la suppression.</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>Le désinstalleur a signalé une erreur (code {0}).</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>Le désinstalleur n'a pas pu être lancé.</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>Supprimé. Redémarrez Windows pour terminer.</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>Non démarré.</value>
+  </data>
 </root>

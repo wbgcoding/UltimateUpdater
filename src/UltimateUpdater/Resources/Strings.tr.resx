@@ -2452,4 +2452,34 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
     <value>Başlangıçta ve her aralıklı taramada GitHub'a sorar.</value>
   </data>
+  <data name="UninstallNotRemovable" xml:space="preserve">
+    <value>Bu program otomatik olarak kaldırılamıyor. Windows Ayarları'nda Uygulamalar bölümünden kaldırın.</value>
+  </data>
+  <data name="UninstallRefusedUntrusted" xml:space="preserve">
+    <value>Kaldırıcısı korumasız bir klasörde olduğu için yönetici haklarıyla çalıştırılmaz. Windows Ayarları'nda Uygulamalar bölümünden kaldırın.</value>
+  </data>
+  <data name="UninstallStillPresent" xml:space="preserve">
+    <value>Kaldırıcı tamamlandı ancak program hâlâ yüklü.</value>
+  </data>
+  <data name="UninstallCancelled" xml:space="preserve">
+    <value>Kaldırma işlemi iptal edildi.</value>
+  </data>
+  <data name="UninstallBusy" xml:space="preserve">
+    <value>Başka bir yükleme çalışıyor. Bitince yeniden deneyin.</value>
+  </data>
+  <data name="UninstallBlockedByPolicy" xml:space="preserve">
+    <value>Bu bilgisayardaki bir ilke kaldırmayı engelliyor.</value>
+  </data>
+  <data name="UninstallErrorCode" xml:space="preserve">
+    <value>Kaldırıcı bir hata bildirdi (kod {0}).</value>
+  </data>
+  <data name="UninstallCouldNotStart" xml:space="preserve">
+    <value>Kaldırıcı başlatılamadı.</value>
+  </data>
+  <data name="UninstallNeedsRestart" xml:space="preserve">
+    <value>Kaldırıldı. Tamamlamak için Windows'u yeniden başlatın.</value>
+  </data>
+  <data name="UninstallNotStarted" xml:space="preserve">
+    <value>Başlatılmadı.</value>
+  </data>
 </root>

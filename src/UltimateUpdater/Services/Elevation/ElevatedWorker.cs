@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using UltimateUpdater.Models;
 using UltimateUpdater.Services.Cleanup;
+using UltimateUpdater.Services.Uninstall;
 
 namespace UltimateUpdater.Services.Elevation;
 
@@ -13,7 +14,7 @@ public sealed class ElevatedJob
 {
     public string Id { get; set; } = string.Empty;
 
-    /// <summary>"install", "cleanup" (and its per-lane variants "cleanup-repair", "cleanup-diskcleanup",
+    /// <summary>"install", "uninstall-program", "cleanup" (and its per-lane variants "cleanup-repair", "cleanup-diskcleanup",
     /// "cleanup-defrag", "cleanup-registry"), or "control" to stop or hold one of those.</summary>
     public string Kind { get; set; } = string.Empty;
 
@@ -102,7 +103,9 @@ public static class ElevatedWorker
     /// </summary>
     internal static async Task<IAsyncDisposable> AcquireMachineChangeSlotAsync(string kind, CancellationToken token)
     {
-        if (kind == "install")
+        // An uninstall changes the machine like an install does: the same writer lock, so a program removal never
+        // runs beside an install or a file cleanup (Windows Installer allows one machine-wide change at a time).
+        if (kind is "install" or "uninstall-program")
         {
             await InstallVsCleanupWriterLock.WaitAsync(token);
             return new WriterSlot();
@@ -293,7 +296,7 @@ public static class ElevatedWorker
     /// </summary>
     internal static bool IsExclusiveJob(ElevatedJob job) => job.Kind switch
     {
-        "install" => true,
+        "install" or "uninstall-program" => true,
         "cleanup" or "cleanup-repair" or "cleanup-diskcleanup" or "cleanup-defrag" or "cleanup-registry" =>
             !IsReadOnlyCleanupCommand(job.Payload),
         _ => true,
@@ -316,8 +319,8 @@ public static class ElevatedWorker
     /// Extracted so an unrecognised kind can be tested without a live pipe.
     /// </summary>
     internal static bool IsRecognizedKind(string kind) =>
-        kind is "install" or "cleanup" or "cleanup-repair" or "cleanup-diskcleanup" or "cleanup-defrag"
-            or "cleanup-registry" or "control";
+        kind is "install" or "uninstall-program" or "cleanup" or "cleanup-repair" or "cleanup-diskcleanup"
+            or "cleanup-defrag" or "cleanup-registry" or "control";
 
     /// <summary>
     /// The stop switch and the hold of a running job, so a stop does not have to wait for every remaining
@@ -750,6 +753,8 @@ public static class ElevatedWorker
 
             if (job.Kind == "install")
                 await RunInstallAsync(job, writer, logging, control);
+            else if (job.Kind == "uninstall-program")
+                await ProgramUninstallWorker.RunJobAsync(job.Payload, writer, job.Id, logging, control.Cancellation.Token);
             else
                 await RunCleanupAsync(job, writer, logging, control);
         }
@@ -796,7 +801,7 @@ public static class ElevatedWorker
     {
         while (TryDequeueLog(out var line))
         {
-            object message = job.Kind == "install"
+            object message = job.Kind is "install" or "uninstall-program"
                 ? new InstallProgressMessage { Type = "log", Status = line }
                 : new CleanupWorkerMessage { Type = "log", Text = line };
             if (!Send(writer, job.Id, message))

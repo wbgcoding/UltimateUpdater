@@ -120,6 +120,7 @@ public class CleanupLaneTests
     [InlineData("cleanup-defrag")]
     [InlineData("cleanup-registry")]
     [InlineData("control")]
+    [InlineData("uninstall-program")]
     public void ElevatedWorker_recognizes_every_real_job_kind(string kind)
     {
         Assert.True(ElevatedWorker.IsRecognizedKind(kind));
