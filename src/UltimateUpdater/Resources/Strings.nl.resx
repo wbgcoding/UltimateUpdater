@@ -1996,6 +1996,15 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pip waarschuwt hier niet meer over; niets anders op deze computer gebruikt deze mappen.</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>Resten van verwijderde programma's</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>Mappen van programma's die niet meer geïnstalleerd zijn, in AppData, ProgramData en Program Files. Alleen mappen waar niets op deze pc naar verwijst en die zes maanden niet zijn aangeraakt, worden getoond, elk met grootte en laatste gebruik. Er wordt niets voor je aangevinkt.</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>De mappen die je aanvinkt gaan naar de Prullenbak, dus je kunt ze terugzetten. De instellingen en opgeslagen gegevens van dat programma staan dan niet meer waar het ze verwacht.</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>Oudere Python-versies</value>
   </data>

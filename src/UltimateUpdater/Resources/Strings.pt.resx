@@ -1996,6 +1996,15 @@ Continuar com direitos de administrador?</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>O pip deixa de avisar sobre elas; nada mais neste computador usa estas pastas.</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>Restos de programas removidos</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>Pastas de programas que já não estão instalados, em AppData, ProgramData e Arquivos de Programas. Só são listadas as pastas a que nada neste PC faz referência e que não são tocadas há seis meses, cada uma com o tamanho e a última utilização. Nada vem marcado por si.</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>As pastas que marcar vão para a Reciclagem, por isso pode restaurá-las. As definições e os dados guardados desse programa deixam de estar onde ele os espera.</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>Versões antigas do Python</value>
   </data>

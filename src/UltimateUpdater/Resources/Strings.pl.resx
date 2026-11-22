@@ -1996,6 +1996,15 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pip przestanie o nich ostrzegać; nic innego na tym komputerze nie korzysta z tych folderów.</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>Pozostałości usuniętych programów</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>Foldery programów, które nie są już zainstalowane, w AppData, ProgramData i Program Files. Wyświetlane są tylko foldery, do których nic na tym komputerze się nie odwołuje i których nie ruszano od sześciu miesięcy, każdy z rozmiarem i datą ostatniego użycia. Nic nie jest zaznaczone za Ciebie.</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>Zaznaczone foldery trafiają do Kosza, więc można je przywrócić. Ustawienia i zapisane dane tego programu nie leżą już tam, gdzie program ich szuka.</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>Starsze wersje Pythona</value>
   </data>

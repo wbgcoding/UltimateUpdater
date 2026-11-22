@@ -1996,6 +1996,15 @@ Continuare con privilegi di amministratore?</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pip non avvisa più; nessun altro programma su questo computer usa queste cartelle.</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>Resti di programmi rimossi</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>Cartelle di programmi non più installati, in AppData, ProgramData e Programmi. Vengono elencate solo le cartelle a cui nulla su questo PC fa riferimento e che non vengono toccate da sei mesi, ciascuna con dimensione e ultimo utilizzo. Nulla è selezionato per te.</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>Le cartelle selezionate vanno nel Cestino, quindi puoi ripristinarle. Le impostazioni e i dati salvati di quel programma non si trovano più dove li cerca.</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>Versioni precedenti di Python</value>
   </data>

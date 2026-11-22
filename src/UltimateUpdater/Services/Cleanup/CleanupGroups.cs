@@ -21,9 +21,7 @@ public enum CleanupGroupKey
 /// <see cref="CleanupTarget.Kind"/> IS trusted for one case: every <see cref="CleanupKind.RegistryCleanup"/>
 /// target is Registry, whatever its id; <see cref="RegistryCleanupCatalog"/> builds a category per
 /// registry area and this file would otherwise need updating every time one is added.
-/// No entry exists for <see cref="CleanupKind.LeftoverInstalls"/>: that catalogue entry is deliberately
-/// pulled back out (see the comment in <see cref="CleanupCatalog.Build"/>), so there is nothing to
-/// group yet; add its mapping when that entry returns, not before. <c>CleanupGroupsTests</c> fails
+/// <c>CleanupGroupsTests</c> fails
 /// loudly if <see cref="CleanupCatalog.Build"/> ever produces a target this table does not know about,
 /// the same "a new entry must be reviewed, never silently miscategorised" discipline
 /// <c>CleanupSafetyTests</c> already applies to the deletion gate itself.
@@ -44,6 +42,7 @@ public static class CleanupGroups
         ["build-tool-cache"] = CleanupGroupKey.Caches,
         ["app-cache-sweep"] = CleanupGroupKey.Caches,
         ["pip-install-leftovers"] = CleanupGroupKey.Caches,
+        ["leftover-programs"] = CleanupGroupKey.Caches,
 
         ["windows-update-cache"] = CleanupGroupKey.WindowsMaintenance,
         ["windows-logs"] = CleanupGroupKey.WindowsMaintenance,

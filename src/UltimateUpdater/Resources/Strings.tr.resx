@@ -1996,6 +1996,15 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pip artık bunlar hakkında uyarmaz; bu bilgisayarda başka hiçbir şey bu klasörleri kullanmaz.</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>Kaldırılan programların artıkları</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>AppData, ProgramData ve Program Files içindeki, artık kurulu olmayan programların klasörleri. Bu bilgisayarda hiçbir şeyin başvurmadığı ve altı aydır dokunulmamış klasörler, boyutları ve son kullanım tarihleriyle listelenir. Sizin yerinize hiçbir şey işaretlenmez.</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>İşaretlediğiniz klasörler Geri Dönüşüm Kutusu'na taşınır, böylece geri yükleyebilirsiniz. O programın ayarları ve kayıtlı verileri artık programın beklediği yerde olmaz.</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>Eski Python sürümleri</value>
   </data>

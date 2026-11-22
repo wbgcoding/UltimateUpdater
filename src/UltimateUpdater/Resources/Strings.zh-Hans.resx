@@ -1996,6 +1996,15 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pip 将不再发出此警告；此计算机上没有其他任何东西使用这些文件夹。</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>已卸载程序的残留</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>位于 AppData、ProgramData 和 Program Files 中、已不再安装的程序的文件夹。只列出这台电脑上没有任何内容引用、且六个月未被触碰的文件夹，并显示各自的大小和最后使用时间。不会替你勾选任何项目。</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>你勾选的文件夹会移到回收站，因此可以还原。该程序的设置和已保存的数据将不再位于它期望的位置。</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>较旧的 Python 版本</value>
   </data>

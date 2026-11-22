@@ -25,8 +25,8 @@ public enum CleanupKind
     AppCacheSweep,
 
     /// <summary>
-    /// Whole top-level folders that plausibly belong to an uninstalled program; see
-    /// <see cref="LeftoverInstallDiscovery"/>. Unlike every other kind here, deletion goes through the
+    /// Whole top-level folders of programs that are no longer installed; see
+    /// <see cref="AppDataLeftoverDiscovery"/>. Unlike every other kind here, deletion goes through the
     /// recycle bin (<see cref="RecycleBinDeleter"/>), never a permanent delete, and the UI must offer each
     /// candidate individually with none pre-selected.
     /// </summary>

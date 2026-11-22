@@ -982,12 +982,12 @@ public partial class CleanupService
         }
     }
 
-    /// <summary>Finds plausible leftovers (see <see cref="LeftoverInstallDiscovery"/>) without touching
+    /// <summary>Finds leftovers of removed programs (see <see cref="AppDataLeftoverDiscovery"/>) without touching
     /// anything. Files carries the candidate count for the row's summary text; Candidates carries the
     /// actual list the UI must show individually.</summary>
     private CleanupScanResult ScanLeftovers(CancellationToken cancellationToken)
     {
-        var candidates = LeftoverInstallDiscovery.DiscoverCandidates(DateTimeOffset.UtcNow, cancellationToken);
+        var candidates = AppDataLeftoverDiscovery.DiscoverCandidates(DateTimeOffset.UtcNow, cancellationToken);
         var bytes = candidates.Sum(c => c.SizeBytes);
 
         return new CleanupScanResult(bytes, candidates.Count, 0) { Candidates = candidates };
@@ -1007,7 +1007,7 @@ public partial class CleanupService
         if (selectedPaths is not { Count: > 0 })
             return new CleanupOutcome(0, 0, 0);
 
-        var fresh = LeftoverInstallDiscovery.DiscoverCandidates(DateTimeOffset.UtcNow, cancellationToken)
+        var fresh = AppDataLeftoverDiscovery.DiscoverCandidates(DateTimeOffset.UtcNow, cancellationToken)
             .ToDictionary(c => c.Path, StringComparer.OrdinalIgnoreCase);
 
         long freed = 0;

@@ -1996,6 +1996,15 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pipの警告がなくなります。このフォルダーを使用しているものは他にありません。</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>削除済みプログラムの残りファイル</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>AppData、ProgramData、Program Files にある、すでにインストールされていないプログラムのフォルダーです。この PC のどこからも参照されておらず、6 か月間使われていないフォルダーだけを、サイズと最終使用日とともに表示します。自動でチェックされる項目はありません。</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>チェックしたフォルダーはごみ箱に移動するため、元に戻せます。そのプログラムの設定や保存データは、本来の場所からなくなります。</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>古いPythonバージョン</value>
   </data>

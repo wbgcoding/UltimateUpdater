@@ -1996,6 +1996,15 @@ Esto no se puede deshacer.</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pip deja de avisar sobre ellas; nada más en este equipo usa estas carpetas.</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>Restos de programas eliminados</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>Carpetas de programas que ya no están instalados, en AppData, ProgramData y Archivos de programa. Solo se muestran las carpetas a las que nada en este PC hace referencia y que llevan seis meses sin tocarse, cada una con su tamaño y su último uso. No se marca nada por ti.</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>Las carpetas que marques van a la Papelera de reciclaje, así que puedes restaurarlas. La configuración y los datos guardados de ese programa ya no estarán donde los espera.</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>Versiones antiguas de Python</value>
   </data>

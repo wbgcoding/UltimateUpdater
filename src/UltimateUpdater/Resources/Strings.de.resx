@@ -1996,6 +1996,15 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pip warnt nicht mehr davor; sonst nutzt nichts auf diesem Rechner diese Ordner.</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>Reste entfernter Programme</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>Ordner von Programmen, die nicht mehr installiert sind, in AppData, ProgramData und Programme. Aufgelistet werden nur Ordner, auf die nichts auf diesem PC verweist und die seit sechs Monaten unberührt sind, jeweils mit Größe und letzter Nutzung. Nichts ist vorausgewählt.</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>Die angehakten Ordner landen im Papierkorb und lassen sich wiederherstellen. Einstellungen und gespeicherte Daten dieses Programms liegen dann nicht mehr dort, wo es sie erwartet.</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>Ältere Python-Versionen</value>
   </data>

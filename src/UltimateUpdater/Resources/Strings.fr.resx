@@ -1996,6 +1996,15 @@ Continuer avec les droits administrateur ?</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pip cesse de les signaler ; rien d'autre sur cet ordinateur n'utilise ces dossiers.</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>Restes de programmes supprimés</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>Dossiers de programmes qui ne sont plus installés, dans AppData, ProgramData et Program Files. Seuls les dossiers auxquels rien sur ce PC ne fait référence et qui n'ont pas été touchés depuis six mois sont listés, chacun avec sa taille et sa dernière utilisation. Rien n'est coché à votre place.</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>Les dossiers cochés vont dans la Corbeille, vous pouvez donc les restaurer. Les réglages et les données enregistrées de ce programme ne sont plus là où il les attend.</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>Anciennes versions de Python</value>
   </data>

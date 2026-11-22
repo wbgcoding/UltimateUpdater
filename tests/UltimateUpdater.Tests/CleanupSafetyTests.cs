@@ -217,6 +217,7 @@ public class CleanupSafetyTests
             "driver-cleanup",
             "old-python-versions",
             "app-cache-sweep",
+            "leftover-programs",
             // ResetBase removes the ability to uninstall an installed Windows update, the most
             // consequential single row in the whole catalogue; it must be a deliberate opt-in.
             "component-resetbase",

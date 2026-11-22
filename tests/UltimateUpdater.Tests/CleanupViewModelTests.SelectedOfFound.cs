@@ -54,6 +54,9 @@ public partial class CleanupViewModelTests
         var group = viewModel.Groups.First(g => g.Items.Count > 1 && !g.IsRegistryGroup
             && g.Items.All(i => !CleanupService.SkipsWithoutAdmin(i.Target, processElevated: false)));
         SetFoundSizes(viewModel, 2 * 1024 * 1024);
+        // The leftovers row counts only the folders ticked one by one, never the row itself.
+        foreach (var leftovers in group.Items.Where(i => i.Target.Kind == CleanupKind.LeftoverInstalls))
+            leftovers.Bytes = 0;
         var found = ByteSize.Format(group.TotalBytes);
 
         foreach (var item in group.Items)

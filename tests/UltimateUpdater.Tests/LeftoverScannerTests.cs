@@ -312,9 +312,9 @@ public sealed class LeftoverScannerTests
         tree.Registry.Set(@"HKCU\Software\Contoso Notes", "Setting", "1");
         tree.Registry.Set(@"HKCU\Software\Fabrikam\Contoso Notes", "Setting", "1");
 
-        Assert.Empty(Scan(tree, Notes).Where(i => i.Kind == LeftoverKind.RegistryKey));
-        Assert.Empty(Scan(tree, Notes with { Publisher = "Microsoft Corporation" }).Where(i => i.Kind == LeftoverKind.RegistryKey));
-        Assert.Empty(Scan(tree, Notes with { Publisher = string.Empty }).Where(i => i.Kind == LeftoverKind.RegistryKey));
+        Assert.DoesNotContain(Scan(tree, Notes), i => i.Kind == LeftoverKind.RegistryKey);
+        Assert.DoesNotContain(Scan(tree, Notes with { Publisher = "Microsoft Corporation" }), i => i.Kind == LeftoverKind.RegistryKey);
+        Assert.DoesNotContain(Scan(tree, Notes with { Publisher = string.Empty }), i => i.Kind == LeftoverKind.RegistryKey);
     }
 
     [Fact]

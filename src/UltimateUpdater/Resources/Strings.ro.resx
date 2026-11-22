@@ -1996,6 +1996,15 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pip nu mai avertizează despre ele; nimic altceva de pe acest calculator nu folosește aceste foldere.</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>Resturi ale programelor eliminate</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>Foldere ale programelor care nu mai sunt instalate, din AppData, ProgramData și Program Files. Sunt listate doar folderele la care nu face referire nimic de pe acest PC și care nu au fost atinse de șase luni, fiecare cu dimensiunea și ultima utilizare. Nimic nu este bifat în locul tău.</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>Folderele bifate merg în Coșul de reciclare, deci le poți restaura. Setările și datele salvate ale acelui program nu mai sunt unde le caută.</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>Versiuni Python mai vechi</value>
   </data>

@@ -1996,6 +1996,15 @@ Continue with admin rights?</value>
   <data name="CleanupPipLeftoversConsequence" xml:space="preserve">
     <value>pip stops warning about them; nothing else on this machine uses these folders.</value>
   </data>
+  <data name="CleanupLeftoverInstalls" xml:space="preserve">
+    <value>Leftovers of removed programs</value>
+  </data>
+  <data name="CleanupLeftoverInstallsDesc" xml:space="preserve">
+    <value>Folders of programs that are no longer installed, found in AppData, ProgramData and Program Files. Only folders that nothing on this PC refers to and that have not been touched for six months are listed, each with its size and last use. Nothing is ticked for you.</value>
+  </data>
+  <data name="CleanupLeftoverInstallsConsequence" xml:space="preserve">
+    <value>The folders you tick move to the Recycle Bin, so you can restore them. The settings and saved data of that program are no longer where it expects them.</value>
+  </data>
   <data name="CleanupOldPythonVersions" xml:space="preserve">
     <value>Older Python versions</value>
   </data>

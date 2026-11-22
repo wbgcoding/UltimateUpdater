@@ -197,10 +197,12 @@ public static class CleanupCatalog
                 MinFileAge = CacheMinFileAge,
             },
 
-            // The LeftoverInstalls catalogue entry is intentionally absent. LeftoverInstallDiscovery and
-            // LeftoverInstallSafety stay in the codebase, built and tested, for when a stronger detection
-            // signal exists; nothing reachable may delete a real,
-            // installed program in the meantime.
+            // Whole folders of programs that are gone, found by AppDataLeftoverDiscovery: only folders no
+            // evidence on this machine explains and nothing has touched for months. OFF and never
+            // pre-selected, every folder is its own row the user ticks, and deletion goes to the recycle bin.
+            new CleanupTarget("leftover-programs", "CleanupLeftoverInstalls", "CleanupLeftoverInstallsDesc",
+                CleanupKind.LeftoverInstalls, DefaultEnabled: false,
+                RiskLevel: CleanupRiskLevel.Risky, ConsequenceKey: "CleanupLeftoverInstallsConsequence"),
 
             // Folders pip itself leaves behind under a "~"-prefixed name after an install got interrupted
             // mid-rename; unambiguous by construction, see PythonCleanupDiscovery, so this is safe and on
