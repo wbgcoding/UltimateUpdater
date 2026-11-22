@@ -25,6 +25,10 @@ internal interface IChildProcess : IDisposable
 
     Task WaitForExitAsync(CancellationToken cancellationToken);
 
+    /// <summary>Waits until the child and everything it started that stayed with it are gone. A launch that cannot
+    /// tell (no job) waits for the child alone.</summary>
+    Task WaitForTreeAsync(CancellationToken cancellationToken) => WaitForExitAsync(cancellationToken);
+
     /// <summary>Ends the child and everything it started. Never throws: it may already be gone.</summary>
     void Kill();
 }
@@ -88,6 +92,7 @@ internal sealed class SuspendedChildProcess : IChildProcess
     private const uint WaitObject0 = 0;
     private const int ResumeFailed = -1;
     private const int JobObjectExtendedLimitInformationClass = 9;
+    private const int JobObjectBasicAccountingInformationClass = 1;
     private const uint JobObjectLimitBreakawayOk = 0x00000800;
 
     private readonly SafeWaitHandle _process;
@@ -137,7 +142,7 @@ internal sealed class SuspendedChildProcess : IChildProcess
     /// <summary>The limit flags the child's job carries, 0 when there is no job.</summary>
     internal uint JobLimitFlags =>
         _job is { IsInvalid: false, IsClosed: false }
-        && QueryInformationJobObject(_job, JobObjectExtendedLimitInformationClass, out var limits,
+        && QueryInformationJobObject(_job, JobObjectExtendedLimitInformationClass, out JobExtendedLimitInformation limits,
             (uint)Marshal.SizeOf<JobExtendedLimitInformation>(), IntPtr.Zero)
             ? limits.Basic.LimitFlags
             : 0;
@@ -162,6 +167,26 @@ internal sealed class SuspendedChildProcess : IChildProcess
 
         // The console ends its output only once it is closed; the reader then gets the last lines and the end.
         _console?.CloseInBackground();
+    }
+
+    /// <summary>How often the job is asked whether anything of the tree still runs.</summary>
+    internal static readonly TimeSpan TreePollInterval = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>The processes still alive in the child's job (the child included), -1 when there is no job to ask.</summary>
+    internal int ActiveJobProcesses =>
+        _job is { IsInvalid: false, IsClosed: false }
+        && QueryInformationJobObject(_job, JobObjectBasicAccountingInformationClass, out JobBasicAccountingInformation accounting,
+            (uint)Marshal.SizeOf<JobBasicAccountingInformation>(), IntPtr.Zero)
+            ? (int)accounting.ActiveProcesses
+            : -1;
+
+    /// <summary>An installer that copies itself elsewhere and exits (NSIS does) leaves the real work to a process
+    /// the root never waits for; it stays in the job, so the job says when the work is over.</summary>
+    public async Task WaitForTreeAsync(CancellationToken cancellationToken)
+    {
+        await WaitForExitAsync(cancellationToken);
+        while (ActiveJobProcesses > 0)
+            await Task.Delay(TreePollInterval, cancellationToken);
     }
 
     public void Kill()
@@ -619,6 +644,19 @@ internal sealed class SuspendedChildProcess : IChildProcess
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    private struct JobBasicAccountingInformation
+    {
+        public long TotalUserTime;
+        public long TotalKernelTime;
+        public long ThisPeriodTotalUserTime;
+        public long ThisPeriodTotalKernelTime;
+        public uint TotalPageFaultCount;
+        public uint TotalProcesses;
+        public uint ActiveProcesses;
+        public uint TotalTerminatedProcesses;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     private struct StartupInfoEx
     {
         public StartupInfo StartupInfo;
@@ -710,6 +748,11 @@ internal sealed class SuspendedChildProcess : IChildProcess
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool QueryInformationJobObject(
         SafeFileHandle job, int informationClass, out JobExtendedLimitInformation information, uint length, IntPtr returnLength);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool QueryInformationJobObject(
+        SafeFileHandle job, int informationClass, out JobBasicAccountingInformation information, uint length, IntPtr returnLength);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

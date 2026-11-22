@@ -172,7 +172,8 @@ public static class ProcessRunner
         bool? scrubEnvironment = null,
         StallWatchOptions? stallWatch = null,
         bool killOnTimeout = true,
-        bool pseudoConsole = false)
+        bool pseudoConsole = false,
+        bool waitForTree = false)
     {
         var startInfo = BuildStartInfo(executable, arguments, environment, outputEncoding, elevated, scrubEnvironment: scrubEnvironment);
 
@@ -185,7 +186,7 @@ public static class ProcessRunner
         // Owns the child, and with killOnTimeout false its own pump token source too: both outlive this call
         // when the tool is left running. Not linked to the caller's token, or a cancel would stop the readers
         // while the tool still writes.
-        var process = ChildFactoryForTest.Value?.Invoke() ?? StartChild(executable, startInfo, ScanScope.IsActive, pseudoConsole);
+        var process = ChildFactoryForTest.Value?.Invoke() ?? StartChild(executable, startInfo, ScanScope.IsActive, pseudoConsole, waitForTree);
         using var lease = new ChildLease(process, killOnTimeout ? null : new CancellationTokenSource());
         var pumpCts = lease.PumpCts ?? timeoutCts;
 
@@ -220,7 +221,7 @@ public static class ProcessRunner
         {
             try
             {
-                await process.WaitForExitAsync(timeoutCts.Token);
+                await (waitForTree ? process.WaitForTreeAsync(timeoutCts.Token) : process.WaitForExitAsync(timeoutCts.Token));
 
                 // WaitForExitAsync does not drain the pumps; EOF must flush the last segment of each before the
                 // output is read. Bounded: EOF never arrives if a grandchild (an MSI custom action, a vendor updater,
@@ -1163,7 +1164,8 @@ public static class ProcessRunner
     /// (<see cref="SuspendedChildProcess"/>).
     /// </summary>
     private static IChildProcess StartChild(
-        ResolvedExecutable executable, ProcessStartInfo startInfo, bool lowPriority, bool pseudoConsole = false)
+        ResolvedExecutable executable, ProcessStartInfo startInfo, bool lowPriority, bool pseudoConsole = false,
+        bool inJob = false)
     {
         if (pseudoConsole)
         {
@@ -1179,7 +1181,8 @@ public static class ProcessRunner
             }
         }
 
-        if (executable.AliasPin is not null)
+        // The job is what tells a wait for the whole tree when it is over; only the suspended launch has one.
+        if (executable.AliasPin is not null || inJob)
             return StartSuspended(executable, startInfo, lowPriority, pseudoConsole: false);
 
         var process = new Process { StartInfo = startInfo };

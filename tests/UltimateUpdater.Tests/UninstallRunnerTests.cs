@@ -76,7 +76,7 @@ public class UninstallRunnerTests
 
         public UninstallRunner Runner { get; }
 
-        public Harness()
+        public Harness(TimeSpan? lateWindow = null)
         {
             Runner = new UninstallRunner(
                 entry => Plans[entry.Name],
@@ -87,7 +87,9 @@ public class UninstallRunnerTests
                     Interlocked.Increment(ref GoneChecks);
                     return Task.FromResult(Gone.Contains(entry.Name));
                 },
-                Lookup);
+                Lookup,
+                lateWindow ?? TimeSpan.FromMilliseconds(40),
+                TimeSpan.FromMilliseconds(10));
         }
 
         public Harness Add(string name, UninstallPlan plan, bool gone = true)
@@ -495,6 +497,66 @@ public class UninstallRunnerTests
     {
         Key = $"appx:{fullName}", Name = "App", Kind = UninstallEntryKind.StoreApp, PackageFullName = fullName,
     };
+
+    [Fact]
+    public async Task A_setup_whose_entry_disappears_after_it_ended_is_removed_when_it_is_recognised_by_its_files()
+    {
+        var h = new Harness(TimeSpan.FromSeconds(10));
+        h.Add("A", UserPlan(), gone: false);
+        h.User.Handler = (_, _) =>
+        {
+            // The entry goes a moment after the root process has exited.
+            _ = Task.Delay(150).ContinueWith(_ => { lock (h.Gone) h.Gone.Add("A"); });
+            return Task.FromResult(new UninstallExecutionResult(0));
+        };
+
+        var results = await h.RunAsync(null, default, "A");
+
+        Assert.Equal(UninstallOutcome.Removed, results[0].Outcome);
+        Assert.True(h.GoneChecks > 1);
+    }
+
+    [Fact]
+    public async Task A_vendor_window_setup_is_given_the_same_time_to_finish_the_removal()
+    {
+        var h = new Harness(TimeSpan.FromSeconds(10));
+        h.Add("A", InteractivePlan(), gone: false);
+        h.User.Handler = (_, _) =>
+        {
+            _ = Task.Delay(150).ContinueWith(_ => { lock (h.Gone) h.Gone.Add("A"); });
+            return Task.FromResult(new UninstallExecutionResult(0));
+        };
+
+        var results = await h.RunAsync(null, default, "A");
+
+        Assert.Equal(UninstallOutcome.Removed, results[0].Outcome);
+    }
+
+    [Fact]
+    public async Task A_setup_that_never_removes_the_entry_fails_after_the_window()
+    {
+        var h = new Harness(TimeSpan.FromMilliseconds(100));
+        h.Add("A", UserPlan(), gone: false);
+
+        var results = await h.RunAsync(null, default, "A");
+
+        Assert.Equal(UninstallOutcome.Failed, results[0].Outcome);
+        Assert.True(h.GoneChecks > 1);
+    }
+
+    [Fact]
+    public async Task A_removal_that_is_not_a_setup_recognised_by_its_files_is_checked_once()
+    {
+        var h = new Harness(TimeSpan.FromSeconds(10));
+        h.Add("Q", MachinePlan(), gone: false).Add("S", StorePlan(), gone: false);
+        h.Machine.Handler = (_, _) => Task.FromResult(new UninstallExecutionResult(1));
+        h.User.Handler = (_, _) => Task.FromResult(new UninstallExecutionResult(1));
+
+        var results = await h.RunAsync(null, default, "Q", "S");
+
+        Assert.All(results, r => Assert.Equal(UninstallOutcome.Failed, r.Outcome));
+        Assert.Equal(2, h.GoneChecks);
+    }
 
     private static UninstallGoneCheck Check(IRegistryView registry, IAppxPackageSource? appx = null, int attempts = 3) =>
         new(registry, appx ?? new FakeAppx([]), attempts, TimeSpan.Zero);

@@ -56,15 +56,25 @@ public sealed class UninstallRunner
     private readonly IUninstallExecutor _userExecutor;
     private readonly Func<InstalledProgramEntry, CancellationToken, Task<bool>> _isGone;
     private readonly Func<string, string> _lookup;
+    private readonly TimeSpan _lateRemovalWindow;
+    private readonly TimeSpan _lateRemovalPoll;
     private volatile bool _stopRequested;
+
+    /// <summary>How long a setup recognised by its files (or shown to a person) is given, after it has ended, to
+    /// finish removing the entry: some hand the work to a process the first one does not wait for.</summary>
+    public static readonly TimeSpan DefaultLateRemovalWindow = TimeSpan.FromSeconds(60);
 
     public UninstallRunner(
         Func<InstalledProgramEntry, UninstallPlan> plan,
         IUninstallExecutor machineExecutor,
         IUninstallExecutor userExecutor,
         Func<InstalledProgramEntry, CancellationToken, Task<bool>> isGone,
-        Func<string, string> lookup)
+        Func<string, string> lookup,
+        TimeSpan? lateRemovalWindow = null,
+        TimeSpan? lateRemovalPoll = null)
     {
+        _lateRemovalWindow = lateRemovalWindow ?? DefaultLateRemovalWindow;
+        _lateRemovalPoll = lateRemovalPoll ?? TimeSpan.FromSeconds(3);
         _plan = plan;
         _machineExecutor = machineExecutor;
         _userExecutor = userExecutor;
@@ -205,6 +215,9 @@ public sealed class UninstallRunner
             gone = false;
         }
 
+        if (!gone && plan.Method is UninstallMethod.SilentSwitch or UninstallMethod.Interactive && exitCode is not (3010 or 1641))
+            gone = await WaitForLateRemovalAsync(entry, hardToken);
+
         if (exitCode is 3010 or 1641)
             return new UninstallEntryResult(entry, UninstallOutcome.NeedsRestart, _lookup("UninstallNeedsRestart"), run.Detail, exitCode);
 
@@ -213,6 +226,27 @@ public sealed class UninstallRunner
             return new UninstallEntryResult(entry, UninstallOutcome.Removed, null, run.Detail, exitCode);
 
         return new UninstallEntryResult(entry, UninstallOutcome.Failed, FailureReason(plan, exitCode, run.Detail), run.Detail, exitCode);
+    }
+
+    /// <summary>Asks again until the entry is gone or the window is over. A list that cannot be read, or a
+    /// cancel, ends the wait with "not gone".</summary>
+    private async Task<bool> WaitForLateRemovalAsync(InstalledProgramEntry entry, CancellationToken hardToken)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            while (watch.Elapsed < _lateRemovalWindow)
+            {
+                await Task.Delay(_lateRemovalPoll, hardToken);
+                if (await _isGone(entry, hardToken))
+                    return true;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+
+        return false;
     }
 
     /// <summary>The reason for a removal that ran but left the entry installed: the program's exit code in the
