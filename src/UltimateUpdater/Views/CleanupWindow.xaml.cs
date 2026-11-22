@@ -74,6 +74,7 @@ public partial class CleanupWindow
     public CleanupWindow(CleanupViewModel viewModel)
     {
         InitializeComponent();
+        Resources.MergedDictionaries.OfType<Cleanup.CleanupTemplates>().Single().Logging = viewModel.Logging;
         WindowBackdropType = ThemeService.ActiveBackdrop;
         DataContext = viewModel;
         _viewModel = viewModel;
@@ -434,32 +435,6 @@ public partial class CleanupWindow
             _viewModel.IsDetailColumnHidden,
             _viewModel.SetDetailColumnHidden,
             _viewModel.ResetDetailColumns);
-    }
-
-    /// <summary>A detail row's right-click "open folder". Goes through <see cref="UriLauncher.LaunchDetached"/>: ShellExecute blocks until the shell takes over, which froze this dialog for seconds with a cold Explorer. The helper also refuses a path that does not exist.</summary>
-    private void OnEntryOpenFolderClick(object sender, RoutedEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.DataContext is not CleanupEntryViewModel { OpenPath.Length: > 0 } entry)
-            return;
-
-        UriLauncher.LaunchDetached(entry.OpenPath, _viewModel.Logging);
-    }
-
-    /// <summary>Same clipboard pattern as <see cref="MainWindow.OnErrorPillRightClick"/>: a locked clipboard is transient and not worth surfacing.</summary>
-    private void OnEntryCopyPathClick(object sender, RoutedEventArgs e)
-    {
-        // A recycled file's original path: the $R name inside the bin is of no use to anyone.
-        if ((sender as FrameworkElement)?.DataContext is not CleanupEntryViewModel { PathText.Length: > 0 } entry)
-            return;
-
-        try
-        {
-            System.Windows.Clipboard.SetText(entry.PathText);
-        }
-        catch (System.Runtime.InteropServices.ExternalException)
-        {
-            _viewModel.Logging.Info("Cleanup entry copy-path: clipboard was locked by another process.");
-        }
     }
 
     /// <summary>Opens the earlier-cleanups window on this dialog's own view model, which already holds the history. Non-modal, like HistoryWindow beside the main window.</summary>

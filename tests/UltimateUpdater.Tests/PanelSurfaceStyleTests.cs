@@ -90,7 +90,8 @@ public class PanelSurfaceStyleTests
     public void Cleanup_window_category_is_a_flat_section_of_the_card_that_carries_the_glass_highlight()
     {
         var xaml = LoadXaml("Views/CleanupWindow.xaml");
-        var style = xaml.Descendants(Presentation + "Style").FirstOrDefault(s => Key(s) == "CleanupGroupCard");
+        var templates = LoadXaml("Views/Cleanup/CleanupTemplates.xaml");
+        var style = templates.Descendants(Presentation + "Style").FirstOrDefault(s => Key(s) == "CleanupGroupCard");
 
         Assert.NotNull(style);
         var border = style!.Descendants(Presentation + "Border").FirstOrDefault();

@@ -1445,7 +1445,7 @@ public partial class WindowLayoutTests
     [Fact]
     public void Driver_group_headings_carry_an_explicit_foreground()
     {
-        var xaml = File.ReadAllText(Path.Combine(FindViewsDirectory(), "CleanupWindow.xaml"));
+        var xaml = ViewSources.ReadWindow(FindViewsDirectory(), "CleanupWindow.xaml");
 
         foreach (var binding in new[] { "DriverGroupDisconnectedText", "DriverGroupOldPackagesText" })
         {

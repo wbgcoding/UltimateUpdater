@@ -235,7 +235,7 @@ public partial class CleanupViewModelTests
     [Fact]
     public void Both_risky_dot_triggers_paint_the_critical_brush_not_caution()
     {
-        var xaml = File.ReadAllText(Path.Combine(FindViewsDirectory(), "CleanupWindow.xaml"));
+        var xaml = ViewSources.ReadWindow(FindViewsDirectory(), "CleanupWindow.xaml");
 
         var riskyTriggers = System.Text.RegularExpressions.Regex.Matches(
             xaml,
