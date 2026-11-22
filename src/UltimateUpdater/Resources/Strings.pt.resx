@@ -2482,4 +2482,76 @@ Continuar com direitos de administrador?</value>
   <data name="UninstallNotStarted" xml:space="preserve">
     <value>Não iniciado.</value>
   </data>
+  <data name="UninstallRiskOwn" xml:space="preserve">
+    <value>Este aplicativo; desinstale-o nas Configurações do Windows.</value>
+  </data>
+  <data name="UninstallRiskDriver" xml:space="preserve">
+    <value>Driver: removê-lo pode desativar um dispositivo.</value>
+  </data>
+  <data name="UninstallRiskUpdate" xml:space="preserve">
+    <value>Atualização do Windows: removê-la pode reabrir falhas de segurança.</value>
+  </data>
+  <data name="UninstallRiskPackageManagerItself" xml:space="preserve">
+    <value>Remove o próprio gerenciador de pacotes.</value>
+  </data>
+  <data name="UninstallRiskAccessibility" xml:space="preserve">
+    <value>Software de acessibilidade: alguém pode depender dele para usar este PC.</value>
+  </data>
+  <data name="UninstallRiskDataLoss" xml:space="preserve">
+    <value>Removê-lo também apaga os dados guardados nele (jogos, progresso salvo, discos virtuais ou contêineres).</value>
+  </data>
+  <data name="UninstallRiskSecurity" xml:space="preserve">
+    <value>Software de segurança ou criptografia: o PC pode ficar desprotegido ou os dados criptografados ilegíveis.</value>
+  </data>
+  <data name="UninstallRiskCompanyAccess" xml:space="preserve">
+    <value>Gerenciamento da empresa ou acesso à rede: o PC pode perder a conexão com a empresa ou a proteção.</value>
+  </data>
+  <data name="UninstallRiskRuntime" xml:space="preserve">
+    <value>Runtime compartilhado: outros programas podem deixar de funcionar.</value>
+  </data>
+  <data name="UninstallRiskHardware" xml:space="preserve">
+    <value>Componente de hardware: um dispositivo ou uma função importante pode parar de funcionar.</value>
+  </data>
+  <data name="UninstallRiskVirtualization" xml:space="preserve">
+    <value>Virtualização: as máquinas virtuais deixam de iniciar e seus adaptadores de rede são removidos.</value>
+  </data>
+  <data name="UninstallRiskMicrosoft" xml:space="preserve">
+    <value>Componente do Windows da Microsoft: o Windows ou outros programas podem depender dele.</value>
+  </data>
+  <data name="UninstallRiskRemote" xml:space="preserve">
+    <value>Acesso remoto ou VPN: uma sessão remota ou conexão de rede por meio dele é encerrada.</value>
+  </data>
+  <data name="UninstallRiskSync" xml:space="preserve">
+    <value>Backup ou sincronização: os backups param e os arquivos mantidos apenas on-line deixam de abrir neste PC.</value>
+  </data>
+  <data name="UninstallRiskGamePlatform" xml:space="preserve">
+    <value>Plataforma de jogos ou antitrapaça: os jogos que dependem dela deixam de iniciar.</value>
+  </data>
+  <data name="UninstallRiskInputMethod" xml:space="preserve">
+    <value>Método de entrada ou layout de teclado: digitar nesse idioma ou layout deixa de funcionar.</value>
+  </data>
+  <data name="UninstallRiskDevRuntime" xml:space="preserve">
+    <value>Runtime de programação: as ferramentas e os programas baseados nele deixam de funcionar.</value>
+  </data>
+  <data name="UninstallRiskOemTool" xml:space="preserve">
+    <value>Ferramenta do fabricante: pode gerenciar drivers, firmware ou teclas especiais.</value>
+  </data>
+  <data name="UninstallRiskNeededByOthers" xml:space="preserve">
+    <value>Outros pacotes instalados dependem dele.</value>
+  </data>
+  <data name="UninstallRiskStoreData" xml:space="preserve">
+    <value>Aplicativo da Loja: os dados dele neste PC são excluídos junto.</value>
+  </data>
+  <data name="UninstallRiskInteractive" xml:space="preserve">
+    <value>Mostra o próprio desinstalador, que pode fazer perguntas.</value>
+  </data>
+  <data name="UninstallRiskUnknown" xml:space="preserve">
+    <value>Editor desconhecido, instalado para todos os usuários.</value>
+  </data>
+  <data name="UninstallRiskIncomplete" xml:space="preserve">
+    <value>Informações insuficientes para avaliá-lo.</value>
+  </data>
+  <data name="UninstallRiskOrdinary" xml:space="preserve">
+    <value>Programa comum sem dependências conhecidas.</value>
+  </data>
 </root>

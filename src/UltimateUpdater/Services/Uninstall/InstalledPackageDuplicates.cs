@@ -34,8 +34,31 @@ public static partial class InstalledPackageDuplicates
             return string.Empty;
 
         // The marks go first, as a space so "Intel(R)Wireless" stays two words: NFKC would turn the trademark sign into the letters "TM".
-        var normalized = MarkSpellings().Replace(text, " ").Normalize(NormalizationForm.FormKC).Replace('\u00A0', ' ');
+        var normalized = MarkSpellings().Replace(WithoutLoneSurrogates(text), " ").Normalize(NormalizationForm.FormKC).Replace('\u00A0', ' ');
         return Whitespace().Replace(normalized, " ").Trim().ToLower(CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>A registry value can hold an unpaired surrogate, which Unicode normalization rejects with an exception; it becomes a space.</summary>
+    private static string WithoutLoneSurrogates(string text)
+    {
+        char[]? fixedText = null;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (char.IsHighSurrogate(c) && i + 1 < text.Length && char.IsLowSurrogate(text[i + 1]))
+            {
+                i++;
+                continue;
+            }
+
+            if (char.IsSurrogate(c))
+            {
+                fixedText ??= text.ToCharArray();
+                fixedText[i] = ' ';
+            }
+        }
+
+        return fixedText is null ? text : new string(fixedText);
     }
 
     [GeneratedRegex(@"[\u00AE\u2122\u00A9]|\((?:r|tm|c)\)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, 1000)]

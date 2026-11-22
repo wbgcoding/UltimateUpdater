@@ -2482,4 +2482,76 @@ Continuer avec les droits administrateur ?</value>
   <data name="UninstallNotStarted" xml:space="preserve">
     <value>Non démarré.</value>
   </data>
+  <data name="UninstallRiskOwn" xml:space="preserve">
+    <value>Cette application ; désinstallez-la depuis les Paramètres Windows.</value>
+  </data>
+  <data name="UninstallRiskDriver" xml:space="preserve">
+    <value>Pilote : le supprimer peut désactiver un périphérique.</value>
+  </data>
+  <data name="UninstallRiskUpdate" xml:space="preserve">
+    <value>Mise à jour Windows : la supprimer peut rouvrir des failles de sécurité.</value>
+  </data>
+  <data name="UninstallRiskPackageManagerItself" xml:space="preserve">
+    <value>Supprime le gestionnaire de paquets lui-même.</value>
+  </data>
+  <data name="UninstallRiskAccessibility" xml:space="preserve">
+    <value>Logiciel d'accessibilité : quelqu'un en a peut-être besoin pour utiliser ce PC.</value>
+  </data>
+  <data name="UninstallRiskDataLoss" xml:space="preserve">
+    <value>Sa suppression efface aussi les données qu'il contient (jeux, sauvegardes, disques virtuels ou conteneurs).</value>
+  </data>
+  <data name="UninstallRiskSecurity" xml:space="preserve">
+    <value>Logiciel de sécurité ou de chiffrement : le PC peut rester sans protection ou les données chiffrées devenir illisibles.</value>
+  </data>
+  <data name="UninstallRiskCompanyAccess" xml:space="preserve">
+    <value>Gestion d'entreprise ou accès réseau : le PC peut perdre sa connexion à l'entreprise ou sa protection.</value>
+  </data>
+  <data name="UninstallRiskRuntime" xml:space="preserve">
+    <value>Environnement d'exécution partagé : d'autres programmes peuvent cesser de fonctionner.</value>
+  </data>
+  <data name="UninstallRiskHardware" xml:space="preserve">
+    <value>Composant matériel : un périphérique ou une fonction importante peut cesser de fonctionner.</value>
+  </data>
+  <data name="UninstallRiskVirtualization" xml:space="preserve">
+    <value>Virtualisation : les machines virtuelles ne démarrent plus et leurs cartes réseau sont supprimées.</value>
+  </data>
+  <data name="UninstallRiskMicrosoft" xml:space="preserve">
+    <value>Composant Windows de Microsoft : Windows ou d'autres programmes peuvent en dépendre.</value>
+  </data>
+  <data name="UninstallRiskRemote" xml:space="preserve">
+    <value>Accès à distance ou VPN : une session à distance ou une connexion réseau passant par lui s'interrompt.</value>
+  </data>
+  <data name="UninstallRiskSync" xml:space="preserve">
+    <value>Sauvegarde ou synchronisation : les sauvegardes s'arrêtent et les fichiers conservés uniquement en ligne ne s'ouvrent plus sur ce PC.</value>
+  </data>
+  <data name="UninstallRiskGamePlatform" xml:space="preserve">
+    <value>Plateforme de jeux ou anti-triche : les jeux qui en dépendent ne démarrent plus.</value>
+  </data>
+  <data name="UninstallRiskInputMethod" xml:space="preserve">
+    <value>Méthode de saisie ou disposition de clavier : la saisie dans cette langue ou cette disposition ne fonctionne plus.</value>
+  </data>
+  <data name="UninstallRiskDevRuntime" xml:space="preserve">
+    <value>Environnement de programmation : les outils et programmes qui s'appuient dessus ne fonctionnent plus.</value>
+  </data>
+  <data name="UninstallRiskOemTool" xml:space="preserve">
+    <value>Outil du fabricant : il peut gérer les pilotes, le firmware ou les touches spéciales.</value>
+  </data>
+  <data name="UninstallRiskNeededByOthers" xml:space="preserve">
+    <value>D'autres paquets installés en ont besoin.</value>
+  </data>
+  <data name="UninstallRiskStoreData" xml:space="preserve">
+    <value>Application du Store : ses données sur ce PC sont supprimées avec elle.</value>
+  </data>
+  <data name="UninstallRiskInteractive" xml:space="preserve">
+    <value>Affiche son propre désinstalleur, qui peut poser des questions.</value>
+  </data>
+  <data name="UninstallRiskUnknown" xml:space="preserve">
+    <value>Éditeur inconnu, installé pour tous les utilisateurs.</value>
+  </data>
+  <data name="UninstallRiskIncomplete" xml:space="preserve">
+    <value>Informations insuffisantes pour l'évaluer.</value>
+  </data>
+  <data name="UninstallRiskOrdinary" xml:space="preserve">
+    <value>Programme ordinaire sans dépendances connues.</value>
+  </data>
 </root>

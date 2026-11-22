@@ -2482,4 +2482,76 @@ Continue with admin rights?</value>
   <data name="UninstallNotStarted" xml:space="preserve">
     <value>Not started.</value>
   </data>
+  <data name="UninstallRiskOwn" xml:space="preserve">
+    <value>This app; uninstall it from Windows Settings.</value>
+  </data>
+  <data name="UninstallRiskDriver" xml:space="preserve">
+    <value>Driver: removing it can disable a device.</value>
+  </data>
+  <data name="UninstallRiskUpdate" xml:space="preserve">
+    <value>Windows update: removing it can reopen security gaps.</value>
+  </data>
+  <data name="UninstallRiskPackageManagerItself" xml:space="preserve">
+    <value>Removes the package manager itself.</value>
+  </data>
+  <data name="UninstallRiskAccessibility" xml:space="preserve">
+    <value>Accessibility software: someone may depend on it to use this PC.</value>
+  </data>
+  <data name="UninstallRiskDataLoss" xml:space="preserve">
+    <value>Removing it also deletes data stored inside it (games, saves, virtual disks or containers).</value>
+  </data>
+  <data name="UninstallRiskSecurity" xml:space="preserve">
+    <value>Security or encryption software: the PC may be left unprotected or encrypted data unreadable.</value>
+  </data>
+  <data name="UninstallRiskCompanyAccess" xml:space="preserve">
+    <value>Company management or network access: the PC may lose its company connection or protection.</value>
+  </data>
+  <data name="UninstallRiskRuntime" xml:space="preserve">
+    <value>Shared runtime: other programs may stop working.</value>
+  </data>
+  <data name="UninstallRiskHardware" xml:space="preserve">
+    <value>Hardware component: a device or a key function may stop working.</value>
+  </data>
+  <data name="UninstallRiskVirtualization" xml:space="preserve">
+    <value>Virtualization: virtual machines stop starting and its network adapters are removed.</value>
+  </data>
+  <data name="UninstallRiskMicrosoft" xml:space="preserve">
+    <value>Windows component from Microsoft: Windows or other programs may depend on it.</value>
+  </data>
+  <data name="UninstallRiskRemote" xml:space="preserve">
+    <value>Remote access or VPN: a remote session or network connection through it ends.</value>
+  </data>
+  <data name="UninstallRiskSync" xml:space="preserve">
+    <value>Backup or sync: backups stop and files kept only online no longer open on this PC.</value>
+  </data>
+  <data name="UninstallRiskGamePlatform" xml:space="preserve">
+    <value>Game platform or anti-cheat: games that need it stop starting.</value>
+  </data>
+  <data name="UninstallRiskInputMethod" xml:space="preserve">
+    <value>Input method or keyboard layout: typing in that language or layout stops working.</value>
+  </data>
+  <data name="UninstallRiskDevRuntime" xml:space="preserve">
+    <value>Programming runtime: tools and programs built on it stop working.</value>
+  </data>
+  <data name="UninstallRiskOemTool" xml:space="preserve">
+    <value>Manufacturer tool: may handle drivers, firmware or special keys.</value>
+  </data>
+  <data name="UninstallRiskNeededByOthers" xml:space="preserve">
+    <value>Other installed packages need it.</value>
+  </data>
+  <data name="UninstallRiskStoreData" xml:space="preserve">
+    <value>Store app: its data on this PC is deleted with it.</value>
+  </data>
+  <data name="UninstallRiskInteractive" xml:space="preserve">
+    <value>Shows its own uninstaller, which may ask questions.</value>
+  </data>
+  <data name="UninstallRiskUnknown" xml:space="preserve">
+    <value>Unknown publisher, installed for all users.</value>
+  </data>
+  <data name="UninstallRiskIncomplete" xml:space="preserve">
+    <value>Not enough information to rate it.</value>
+  </data>
+  <data name="UninstallRiskOrdinary" xml:space="preserve">
+    <value>Ordinary program without known dependencies.</value>
+  </data>
 </root>

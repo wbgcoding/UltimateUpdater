@@ -253,6 +253,10 @@ public class LocalizationCompletenessTests
         foreach (var category in Enum.GetValues<UpdateCategory>())
             used.Add($"Category{category}");
 
+        // The uninstaller's risk reasons name their text the same way: "UninstallRisk" + a reason value.
+        foreach (var reason in Enum.GetValues<UltimateUpdater.Services.Uninstall.UninstallRiskReason>())
+            used.Add($"UninstallRisk{reason}");
+
         var unused = FindUnusedKeys(defined, used, text).Order().ToList();
 
         Assert.True(unused.Count == 0, $"Keys defined but never used: {string.Join(", ", unused)}");

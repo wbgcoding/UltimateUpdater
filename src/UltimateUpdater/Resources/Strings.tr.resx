@@ -2482,4 +2482,76 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallNotStarted" xml:space="preserve">
     <value>Başlatılmadı.</value>
   </data>
+  <data name="UninstallRiskOwn" xml:space="preserve">
+    <value>Bu uygulama; Windows Ayarları'ndan kaldırın.</value>
+  </data>
+  <data name="UninstallRiskDriver" xml:space="preserve">
+    <value>Sürücü: kaldırmak bir aygıtı devre dışı bırakabilir.</value>
+  </data>
+  <data name="UninstallRiskUpdate" xml:space="preserve">
+    <value>Windows güncelleştirmesi: kaldırmak güvenlik açıklarını yeniden açabilir.</value>
+  </data>
+  <data name="UninstallRiskPackageManagerItself" xml:space="preserve">
+    <value>Paket yöneticisinin kendisini kaldırır.</value>
+  </data>
+  <data name="UninstallRiskAccessibility" xml:space="preserve">
+    <value>Erişilebilirlik yazılımı: biri bu bilgisayarı kullanmak için ona bağımlı olabilir.</value>
+  </data>
+  <data name="UninstallRiskDataLoss" xml:space="preserve">
+    <value>Kaldırmak, içinde saklanan verileri de siler (oyunlar, kayıtlar, sanal diskler veya kapsayıcılar).</value>
+  </data>
+  <data name="UninstallRiskSecurity" xml:space="preserve">
+    <value>Güvenlik veya şifreleme yazılımı: bilgisayar korumasız kalabilir veya şifrelenmiş veriler okunamaz hale gelebilir.</value>
+  </data>
+  <data name="UninstallRiskCompanyAccess" xml:space="preserve">
+    <value>Şirket yönetimi veya ağ erişimi: bilgisayar şirket bağlantısını veya korumasını kaybedebilir.</value>
+  </data>
+  <data name="UninstallRiskRuntime" xml:space="preserve">
+    <value>Paylaşılan çalışma zamanı: diğer programlar çalışmayabilir.</value>
+  </data>
+  <data name="UninstallRiskHardware" xml:space="preserve">
+    <value>Donanım bileşeni: bir aygıt veya önemli bir işlev çalışmayabilir.</value>
+  </data>
+  <data name="UninstallRiskVirtualization" xml:space="preserve">
+    <value>Sanallaştırma: sanal makineler başlamaz ve ağ bağdaştırıcıları kaldırılır.</value>
+  </data>
+  <data name="UninstallRiskMicrosoft" xml:space="preserve">
+    <value>Microsoft'un Windows bileşeni: Windows veya diğer programlar ona bağlı olabilir.</value>
+  </data>
+  <data name="UninstallRiskRemote" xml:space="preserve">
+    <value>Uzaktan erişim veya VPN: onun üzerinden bir uzak oturum veya ağ bağlantısı kesilir.</value>
+  </data>
+  <data name="UninstallRiskSync" xml:space="preserve">
+    <value>Yedekleme veya eşitleme: yedeklemeler durur ve yalnızca çevrimiçi tutulan dosyalar bu bilgisayarda açılmaz.</value>
+  </data>
+  <data name="UninstallRiskGamePlatform" xml:space="preserve">
+    <value>Oyun platformu veya hile önleme: ona bağlı oyunlar başlamaz.</value>
+  </data>
+  <data name="UninstallRiskInputMethod" xml:space="preserve">
+    <value>Giriş yöntemi veya klavye düzeni: o dilde veya düzende yazmak artık çalışmaz.</value>
+  </data>
+  <data name="UninstallRiskDevRuntime" xml:space="preserve">
+    <value>Programlama çalışma zamanı: üzerine kurulu araçlar ve programlar çalışmaz.</value>
+  </data>
+  <data name="UninstallRiskOemTool" xml:space="preserve">
+    <value>Üretici aracı: sürücüleri, bellenimi veya özel tuşları yönetiyor olabilir.</value>
+  </data>
+  <data name="UninstallRiskNeededByOthers" xml:space="preserve">
+    <value>Yüklü diğer paketler buna ihtiyaç duyuyor.</value>
+  </data>
+  <data name="UninstallRiskStoreData" xml:space="preserve">
+    <value>Mağaza uygulaması: bu bilgisayardaki verileri de onunla birlikte silinir.</value>
+  </data>
+  <data name="UninstallRiskInteractive" xml:space="preserve">
+    <value>Kendi kaldırma programını gösterir; bu program sorular sorabilir.</value>
+  </data>
+  <data name="UninstallRiskUnknown" xml:space="preserve">
+    <value>Yayımcı bilinmiyor, tüm kullanıcılar için yüklenmiş.</value>
+  </data>
+  <data name="UninstallRiskIncomplete" xml:space="preserve">
+    <value>Değerlendirmek için yeterli bilgi yok.</value>
+  </data>
+  <data name="UninstallRiskOrdinary" xml:space="preserve">
+    <value>Bilinen bağımlılığı olmayan sıradan program.</value>
+  </data>
 </root>

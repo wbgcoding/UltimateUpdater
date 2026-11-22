@@ -2482,4 +2482,76 @@ Esto no se puede deshacer.</value>
   <data name="UninstallNotStarted" xml:space="preserve">
     <value>No iniciado.</value>
   </data>
+  <data name="UninstallRiskOwn" xml:space="preserve">
+    <value>Esta aplicación; desinstálala desde Configuración de Windows.</value>
+  </data>
+  <data name="UninstallRiskDriver" xml:space="preserve">
+    <value>Controlador: quitarlo puede desactivar un dispositivo.</value>
+  </data>
+  <data name="UninstallRiskUpdate" xml:space="preserve">
+    <value>Actualización de Windows: quitarla puede reabrir brechas de seguridad.</value>
+  </data>
+  <data name="UninstallRiskPackageManagerItself" xml:space="preserve">
+    <value>Quita el propio administrador de paquetes.</value>
+  </data>
+  <data name="UninstallRiskAccessibility" xml:space="preserve">
+    <value>Software de accesibilidad: puede que alguien dependa de él para usar este PC.</value>
+  </data>
+  <data name="UninstallRiskDataLoss" xml:space="preserve">
+    <value>Al quitarlo también se borran los datos guardados en él (juegos, partidas guardadas, discos virtuales o contenedores).</value>
+  </data>
+  <data name="UninstallRiskSecurity" xml:space="preserve">
+    <value>Software de seguridad o cifrado: el PC puede quedar desprotegido o los datos cifrados ilegibles.</value>
+  </data>
+  <data name="UninstallRiskCompanyAccess" xml:space="preserve">
+    <value>Administración o acceso de red de la empresa: el PC puede perder la conexión con la empresa o su protección.</value>
+  </data>
+  <data name="UninstallRiskRuntime" xml:space="preserve">
+    <value>Entorno de ejecución compartido: otros programas pueden dejar de funcionar.</value>
+  </data>
+  <data name="UninstallRiskHardware" xml:space="preserve">
+    <value>Componente de hardware: un dispositivo o una función importante puede dejar de funcionar.</value>
+  </data>
+  <data name="UninstallRiskVirtualization" xml:space="preserve">
+    <value>Virtualización: las máquinas virtuales dejan de iniciarse y se quitan sus adaptadores de red.</value>
+  </data>
+  <data name="UninstallRiskMicrosoft" xml:space="preserve">
+    <value>Componente de Windows de Microsoft: Windows u otros programas pueden depender de él.</value>
+  </data>
+  <data name="UninstallRiskRemote" xml:space="preserve">
+    <value>Acceso remoto o VPN: una sesión remota o conexión de red a través de él se interrumpe.</value>
+  </data>
+  <data name="UninstallRiskSync" xml:space="preserve">
+    <value>Copia de seguridad o sincronización: las copias se detienen y los archivos guardados solo en línea ya no se abren en este PC.</value>
+  </data>
+  <data name="UninstallRiskGamePlatform" xml:space="preserve">
+    <value>Plataforma de juegos o antitrampas: los juegos que lo necesitan dejan de iniciarse.</value>
+  </data>
+  <data name="UninstallRiskInputMethod" xml:space="preserve">
+    <value>Método de entrada o distribución de teclado: escribir en ese idioma o distribución deja de funcionar.</value>
+  </data>
+  <data name="UninstallRiskDevRuntime" xml:space="preserve">
+    <value>Entorno de programación: las herramientas y programas basados en él dejan de funcionar.</value>
+  </data>
+  <data name="UninstallRiskOemTool" xml:space="preserve">
+    <value>Herramienta del fabricante: puede gestionar controladores, firmware o teclas especiales.</value>
+  </data>
+  <data name="UninstallRiskNeededByOthers" xml:space="preserve">
+    <value>Otros paquetes instalados lo necesitan.</value>
+  </data>
+  <data name="UninstallRiskStoreData" xml:space="preserve">
+    <value>Aplicación de la Tienda: sus datos en este PC se eliminan con ella.</value>
+  </data>
+  <data name="UninstallRiskInteractive" xml:space="preserve">
+    <value>Muestra su propio desinstalador, que puede hacer preguntas.</value>
+  </data>
+  <data name="UninstallRiskUnknown" xml:space="preserve">
+    <value>Editor desconocido, instalado para todos los usuarios.</value>
+  </data>
+  <data name="UninstallRiskIncomplete" xml:space="preserve">
+    <value>Información insuficiente para valorarlo.</value>
+  </data>
+  <data name="UninstallRiskOrdinary" xml:space="preserve">
+    <value>Programa normal sin dependencias conocidas.</value>
+  </data>
 </root>

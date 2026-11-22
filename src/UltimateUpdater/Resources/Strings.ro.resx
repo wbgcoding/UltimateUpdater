@@ -2482,4 +2482,76 @@ Continuați cu drepturi de administrator?</value>
   <data name="UninstallNotStarted" xml:space="preserve">
     <value>Neînceput.</value>
   </data>
+  <data name="UninstallRiskOwn" xml:space="preserve">
+    <value>Această aplicație; dezinstaleaz-o din Setările Windows.</value>
+  </data>
+  <data name="UninstallRiskDriver" xml:space="preserve">
+    <value>Driver: eliminarea lui poate dezactiva un dispozitiv.</value>
+  </data>
+  <data name="UninstallRiskUpdate" xml:space="preserve">
+    <value>Actualizare Windows: eliminarea ei poate redeschide breșe de securitate.</value>
+  </data>
+  <data name="UninstallRiskPackageManagerItself" xml:space="preserve">
+    <value>Elimină managerul de pachete însuși.</value>
+  </data>
+  <data name="UninstallRiskAccessibility" xml:space="preserve">
+    <value>Software de accesibilitate: cineva poate depinde de el pentru a folosi acest PC.</value>
+  </data>
+  <data name="UninstallRiskDataLoss" xml:space="preserve">
+    <value>Eliminarea șterge și datele stocate în el (jocuri, salvări, discuri virtuale sau containere).</value>
+  </data>
+  <data name="UninstallRiskSecurity" xml:space="preserve">
+    <value>Software de securitate sau criptare: PC-ul poate rămâne neprotejat sau datele criptate pot deveni ilizibile.</value>
+  </data>
+  <data name="UninstallRiskCompanyAccess" xml:space="preserve">
+    <value>Administrare sau acces la rețeaua companiei: PC-ul poate pierde conexiunea cu compania sau protecția.</value>
+  </data>
+  <data name="UninstallRiskRuntime" xml:space="preserve">
+    <value>Mediu de execuție comun: alte programe pot înceta să funcționeze.</value>
+  </data>
+  <data name="UninstallRiskHardware" xml:space="preserve">
+    <value>Componentă hardware: un dispozitiv sau o funcție importantă poate înceta să funcționeze.</value>
+  </data>
+  <data name="UninstallRiskVirtualization" xml:space="preserve">
+    <value>Virtualizare: mașinile virtuale nu mai pornesc, iar adaptoarele lor de rețea sunt eliminate.</value>
+  </data>
+  <data name="UninstallRiskMicrosoft" xml:space="preserve">
+    <value>Componentă Windows de la Microsoft: Windows sau alte programe pot depinde de ea.</value>
+  </data>
+  <data name="UninstallRiskRemote" xml:space="preserve">
+    <value>Acces la distanță sau VPN: o sesiune la distanță sau o conexiune de rețea prin el se întrerupe.</value>
+  </data>
+  <data name="UninstallRiskSync" xml:space="preserve">
+    <value>Backup sau sincronizare: backup-urile se opresc, iar fișierele păstrate doar online nu se mai deschid pe acest PC.</value>
+  </data>
+  <data name="UninstallRiskGamePlatform" xml:space="preserve">
+    <value>Platformă de jocuri sau anti-cheat: jocurile care depind de ea nu mai pornesc.</value>
+  </data>
+  <data name="UninstallRiskInputMethod" xml:space="preserve">
+    <value>Metodă de introducere sau aranjament de tastatură: scrierea în acea limbă sau în acel aranjament nu mai funcționează.</value>
+  </data>
+  <data name="UninstallRiskDevRuntime" xml:space="preserve">
+    <value>Mediu de programare: instrumentele și programele construite pe el nu mai funcționează.</value>
+  </data>
+  <data name="UninstallRiskOemTool" xml:space="preserve">
+    <value>Instrument al producătorului: poate gestiona drivere, firmware sau taste speciale.</value>
+  </data>
+  <data name="UninstallRiskNeededByOthers" xml:space="preserve">
+    <value>Alte pachete instalate au nevoie de el.</value>
+  </data>
+  <data name="UninstallRiskStoreData" xml:space="preserve">
+    <value>Aplicație din Store: datele ei de pe acest PC sunt șterse odată cu ea.</value>
+  </data>
+  <data name="UninstallRiskInteractive" xml:space="preserve">
+    <value>Afișează propriul dezinstalator, care poate pune întrebări.</value>
+  </data>
+  <data name="UninstallRiskUnknown" xml:space="preserve">
+    <value>Editor necunoscut, instalat pentru toți utilizatorii.</value>
+  </data>
+  <data name="UninstallRiskIncomplete" xml:space="preserve">
+    <value>Informații insuficiente pentru a-l evalua.</value>
+  </data>
+  <data name="UninstallRiskOrdinary" xml:space="preserve">
+    <value>Program obișnuit fără dependențe cunoscute.</value>
+  </data>
 </root>

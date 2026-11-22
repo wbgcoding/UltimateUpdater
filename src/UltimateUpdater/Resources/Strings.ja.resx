@@ -2482,4 +2482,76 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="UninstallNotStarted" xml:space="preserve">
     <value>開始していません。</value>
   </data>
+  <data name="UninstallRiskOwn" xml:space="preserve">
+    <value>このアプリ自体です。Windows の設定からアンインストールしてください。</value>
+  </data>
+  <data name="UninstallRiskDriver" xml:space="preserve">
+    <value>ドライバー: 削除するとデバイスが使えなくなる場合があります。</value>
+  </data>
+  <data name="UninstallRiskUpdate" xml:space="preserve">
+    <value>Windows 更新プログラム: 削除するとセキュリティ上の穴が再び開く可能性があります。</value>
+  </data>
+  <data name="UninstallRiskPackageManagerItself" xml:space="preserve">
+    <value>パッケージ マネージャー自体が削除されます。</value>
+  </data>
+  <data name="UninstallRiskAccessibility" xml:space="preserve">
+    <value>アクセシビリティ ソフトウェア: このPCを使うために誰かが必要としている可能性があります。</value>
+  </data>
+  <data name="UninstallRiskDataLoss" xml:space="preserve">
+    <value>削除すると、その中に保存されたデータ（ゲーム、セーブデータ、仮想ディスク、コンテナー）も消えます。</value>
+  </data>
+  <data name="UninstallRiskSecurity" xml:space="preserve">
+    <value>セキュリティまたは暗号化ソフトウェア: PCが無防備になったり、暗号化されたデータが読めなくなったりする可能性があります。</value>
+  </data>
+  <data name="UninstallRiskCompanyAccess" xml:space="preserve">
+    <value>会社の管理またはネットワーク接続: PCが会社への接続や保護を失う可能性があります。</value>
+  </data>
+  <data name="UninstallRiskRuntime" xml:space="preserve">
+    <value>共有ランタイム: 他のプログラムが動作しなくなる可能性があります。</value>
+  </data>
+  <data name="UninstallRiskHardware" xml:space="preserve">
+    <value>ハードウェア コンポーネント: デバイスや重要な機能が使えなくなる可能性があります。</value>
+  </data>
+  <data name="UninstallRiskVirtualization" xml:space="preserve">
+    <value>仮想化: 仮想マシンが起動しなくなり、そのネットワーク アダプターも削除されます。</value>
+  </data>
+  <data name="UninstallRiskMicrosoft" xml:space="preserve">
+    <value>Microsoft の Windows コンポーネント: Windows や他のプログラムが依存している可能性があります。</value>
+  </data>
+  <data name="UninstallRiskRemote" xml:space="preserve">
+    <value>リモート アクセスまたは VPN: それを経由するリモート セッションやネットワーク接続が切断されます。</value>
+  </data>
+  <data name="UninstallRiskSync" xml:space="preserve">
+    <value>バックアップまたは同期: バックアップが止まり、オンラインのみに保存されたファイルをこのPCで開けなくなります。</value>
+  </data>
+  <data name="UninstallRiskGamePlatform" xml:space="preserve">
+    <value>ゲーム プラットフォームまたはチート対策: それを必要とするゲームが起動しなくなります。</value>
+  </data>
+  <data name="UninstallRiskInputMethod" xml:space="preserve">
+    <value>入力方式またはキーボード レイアウト: その言語やレイアウトで入力できなくなります。</value>
+  </data>
+  <data name="UninstallRiskDevRuntime" xml:space="preserve">
+    <value>プログラミング ランタイム: それに基づくツールやプログラムが動作しなくなります。</value>
+  </data>
+  <data name="UninstallRiskOemTool" xml:space="preserve">
+    <value>メーカー製ツール: ドライバー、ファームウェア、特殊キーを管理している場合があります。</value>
+  </data>
+  <data name="UninstallRiskNeededByOthers" xml:space="preserve">
+    <value>他のインストール済みパッケージが必要としています。</value>
+  </data>
+  <data name="UninstallRiskStoreData" xml:space="preserve">
+    <value>ストア アプリ: このPC上のデータもいっしょに削除されます。</value>
+  </data>
+  <data name="UninstallRiskInteractive" xml:space="preserve">
+    <value>独自のアンインストーラーが表示され、確認を求められることがあります。</value>
+  </data>
+  <data name="UninstallRiskUnknown" xml:space="preserve">
+    <value>発行元が不明で、すべてのユーザー向けにインストールされています。</value>
+  </data>
+  <data name="UninstallRiskIncomplete" xml:space="preserve">
+    <value>評価するための情報が足りません。</value>
+  </data>
+  <data name="UninstallRiskOrdinary" xml:space="preserve">
+    <value>既知の依存関係のない通常のプログラムです。</value>
+  </data>
 </root>

@@ -2482,4 +2482,76 @@ Doorgaan met beheerdersrechten?</value>
   <data name="UninstallNotStarted" xml:space="preserve">
     <value>Niet gestart.</value>
   </data>
+  <data name="UninstallRiskOwn" xml:space="preserve">
+    <value>Deze app; verwijder hem via Windows-instellingen.</value>
+  </data>
+  <data name="UninstallRiskDriver" xml:space="preserve">
+    <value>Stuurprogramma: verwijderen kan een apparaat onbruikbaar maken.</value>
+  </data>
+  <data name="UninstallRiskUpdate" xml:space="preserve">
+    <value>Windows-update: verwijderen kan beveiligingslekken weer openen.</value>
+  </data>
+  <data name="UninstallRiskPackageManagerItself" xml:space="preserve">
+    <value>Verwijdert de pakketbeheerder zelf.</value>
+  </data>
+  <data name="UninstallRiskAccessibility" xml:space="preserve">
+    <value>Toegankelijkheidssoftware: iemand kan ervan afhankelijk zijn om deze pc te bedienen.</value>
+  </data>
+  <data name="UninstallRiskDataLoss" xml:space="preserve">
+    <value>Verwijderen wist ook de gegevens erin (games, savegames, virtuele schijven of containers).</value>
+  </data>
+  <data name="UninstallRiskSecurity" xml:space="preserve">
+    <value>Beveiligings- of versleutelingssoftware: de pc kan onbeschermd achterblijven of versleutelde gegevens kunnen onleesbaar worden.</value>
+  </data>
+  <data name="UninstallRiskCompanyAccess" xml:space="preserve">
+    <value>Bedrijfsbeheer of netwerktoegang: de pc kan de verbinding met het bedrijf of zijn beveiliging verliezen.</value>
+  </data>
+  <data name="UninstallRiskRuntime" xml:space="preserve">
+    <value>Gedeelde runtime: andere programma's kunnen niet meer werken.</value>
+  </data>
+  <data name="UninstallRiskHardware" xml:space="preserve">
+    <value>Hardwarecomponent: een apparaat of een belangrijke functie kan uitvallen.</value>
+  </data>
+  <data name="UninstallRiskVirtualization" xml:space="preserve">
+    <value>Virtualisatie: virtuele machines starten niet meer en de netwerkadapters ervan worden verwijderd.</value>
+  </data>
+  <data name="UninstallRiskMicrosoft" xml:space="preserve">
+    <value>Windows-onderdeel van Microsoft: Windows of andere programma's kunnen ervan afhangen.</value>
+  </data>
+  <data name="UninstallRiskRemote" xml:space="preserve">
+    <value>Toegang op afstand of VPN: een externe sessie of netwerkverbinding via dit programma wordt verbroken.</value>
+  </data>
+  <data name="UninstallRiskSync" xml:space="preserve">
+    <value>Back-up of synchronisatie: back-ups stoppen en bestanden die alleen online staan, openen niet meer op deze pc.</value>
+  </data>
+  <data name="UninstallRiskGamePlatform" xml:space="preserve">
+    <value>Gameplatform of anticheat: games die het nodig hebben, starten niet meer.</value>
+  </data>
+  <data name="UninstallRiskInputMethod" xml:space="preserve">
+    <value>Invoermethode of toetsenbordindeling: typen in die taal of indeling werkt niet meer.</value>
+  </data>
+  <data name="UninstallRiskDevRuntime" xml:space="preserve">
+    <value>Programmeer-runtime: tools en programma's die erop draaien, werken niet meer.</value>
+  </data>
+  <data name="UninstallRiskOemTool" xml:space="preserve">
+    <value>Fabrikanttool: kan stuurprogramma's, firmware of speciale toetsen beheren.</value>
+  </data>
+  <data name="UninstallRiskNeededByOthers" xml:space="preserve">
+    <value>Andere geïnstalleerde pakketten hebben het nodig.</value>
+  </data>
+  <data name="UninstallRiskStoreData" xml:space="preserve">
+    <value>Store-app: de gegevens ervan op deze pc worden mee verwijderd.</value>
+  </data>
+  <data name="UninstallRiskInteractive" xml:space="preserve">
+    <value>Toont een eigen verwijderprogramma, dat vragen kan stellen.</value>
+  </data>
+  <data name="UninstallRiskUnknown" xml:space="preserve">
+    <value>Onbekende uitgever, geïnstalleerd voor alle gebruikers.</value>
+  </data>
+  <data name="UninstallRiskIncomplete" xml:space="preserve">
+    <value>Te weinig gegevens om het te beoordelen.</value>
+  </data>
+  <data name="UninstallRiskOrdinary" xml:space="preserve">
+    <value>Gewoon programma zonder bekende afhankelijkheden.</value>
+  </data>
 </root>
