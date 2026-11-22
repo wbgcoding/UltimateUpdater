@@ -2446,4 +2446,10 @@ Continuare con privilegi di amministratore?</value>
   <data name="FilterShowManual" xml:space="preserve">
     <value>Mostra voci da aprire manualmente</value>
   </data>
+  <data name="SettingsAutoUpdateCheck" xml:space="preserve">
+    <value>Cerca automaticamente nuove versioni</value>
+  </data>
+  <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
+    <value>Chiede a GitHub all'avvio e a ogni analisi periodica.</value>
+  </data>
 </root>

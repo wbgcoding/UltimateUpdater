@@ -2446,4 +2446,10 @@ Doorgaan met beheerdersrechten?</value>
   <data name="FilterShowManual" xml:space="preserve">
     <value>Zelf te openen items tonen</value>
   </data>
+  <data name="SettingsAutoUpdateCheck" xml:space="preserve">
+    <value>Automatisch naar nieuwe versies zoeken</value>
+  </data>
+  <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
+    <value>Vraagt GitHub bij het starten en bij elke periodieke scan.</value>
+  </data>
 </root>

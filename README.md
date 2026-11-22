@@ -138,7 +138,8 @@ No account, no ads. Nothing about you or your PC is sent to the author. The app 
   PyPI, npm, Windows Update),
 - the download hosts those sources name, with a header-only request to show the download size,
 - NVIDIA's driver lookup, which receives your GPU model and Windows version, when an NVIDIA GPU is present,
-- GitHub, for the app's own update check and, when you ask for it, to repair winget.
+- GitHub, for the app's own update check (automatic only when turned on in Settings, off by default) and,
+  when you ask for it, to repair winget.
 
 Each of these hosts sees your IP address, as with any download. When the Windows proxy fails, requests are
 retried without it and the log notes that. Settings, history and logs stay on your PC, and the log redacts

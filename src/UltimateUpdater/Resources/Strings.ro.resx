@@ -2446,4 +2446,10 @@ Continuați cu drepturi de administrator?</value>
   <data name="FilterShowManual" xml:space="preserve">
     <value>Arată intrările de deschis manual</value>
   </data>
+  <data name="SettingsAutoUpdateCheck" xml:space="preserve">
+    <value>Caută automat versiuni noi</value>
+  </data>
+  <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
+    <value>Întreabă GitHub la pornire și la fiecare scanare periodică.</value>
+  </data>
 </root>

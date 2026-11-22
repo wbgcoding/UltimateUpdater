@@ -183,10 +183,13 @@ public sealed class TableLayoutState
     public bool SortDescending { get; set; }
 }
 
-/// <summary>Enabled is the user's preference; actual availability additionally requires the Dev-channel compile flag + gh CLI.</summary>
+/// <summary>
+/// Enabled is the automatic check at start and with the interval scan. Off by default: the check contacts
+/// GitHub, so it waits for the user's consent; "Check now" in the settings always works.
+/// </summary>
 public sealed class SelfUpdateSettings
 {
-    public bool Enabled { get; set; } = true;
+    public bool Enabled { get; set; } = false;
     public bool CheckOnStart { get; set; } = true;
 }
 

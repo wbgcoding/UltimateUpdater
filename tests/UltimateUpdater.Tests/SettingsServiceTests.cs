@@ -317,7 +317,7 @@ public class SettingsServiceTests : IDisposable
         Assert.True(service.Current.Install.PreselectCritical);
         Assert.Equal("system", service.Current.Ui.Theme);
         Assert.Equal("system", service.Current.Ui.Language);
-        Assert.True(service.Current.SelfUpdate.Enabled);
+        Assert.False(service.Current.SelfUpdate.Enabled);
         Assert.False(service.Current.Security.ScanDownloads);
         Assert.Empty(service.Current.Excludes);
         Assert.Equal(30, service.Current.Logs.RetentionDays);

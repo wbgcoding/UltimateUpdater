@@ -2446,4 +2446,10 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="FilterShowManual" xml:space="preserve">
     <value>手動で開く項目を表示</value>
   </data>
+  <data name="SettingsAutoUpdateCheck" xml:space="preserve">
+    <value>新しいバージョンを自動で確認する</value>
+  </data>
+  <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
+    <value>起動時と定期スキャンのたびに GitHub に問い合わせます。</value>
+  </data>
 </root>

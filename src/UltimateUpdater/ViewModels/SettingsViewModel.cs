@@ -83,6 +83,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool closeToTray;
 
+    [ObservableProperty]
+    private bool autoUpdateCheck;
+
     /// <summary>Inverted from the settings root's CleanupReminderOff so the switch reads naturally; the banner's "never again" sets that flag directly.</summary>
     [ObservableProperty]
     private bool cleanupReminderEnabled;
@@ -442,6 +445,7 @@ public partial class SettingsViewModel : ObservableObject
         notifyCriticalOnly = current.Notify.CriticalOnly;
         autostartEnabled = current.Autostart;
         closeToTray = current.Ui.CloseToTray;
+        autoUpdateCheck = current.SelfUpdate.Enabled;
         cleanupReminderEnabled = !current.CleanupReminderOff;
         cleanupRecycleInsteadOfDelete = current.CleanupRecycleInsteadOfDelete;
         cleanupPrescanAtStartup = current.CleanupPrescanAtStartup;
@@ -587,6 +591,8 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnNotifyCriticalOnlyChanged(bool value) => Apply(s => s.Notify.CriticalOnly = value);
 
     partial void OnCloseToTrayChanged(bool value) => Apply(s => s.Ui.CloseToTray = value);
+
+    partial void OnAutoUpdateCheckChanged(bool value) => Apply(s => s.SelfUpdate.Enabled = value);
 
     partial void OnCleanupReminderEnabledChanged(bool value) => Apply(s => s.CleanupReminderOff = !value);
 
@@ -910,6 +916,7 @@ public partial class SettingsViewModel : ObservableObject
         NotifyCriticalOnly = current.Notify.CriticalOnly;
         AutostartEnabled = current.Autostart;
         CloseToTray = current.Ui.CloseToTray;
+        AutoUpdateCheck = current.SelfUpdate.Enabled;
         CleanupReminderEnabled = !current.CleanupReminderOff;
         CleanupRecycleInsteadOfDelete = current.CleanupRecycleInsteadOfDelete;
         CleanupPrescanAtStartup = current.CleanupPrescanAtStartup;

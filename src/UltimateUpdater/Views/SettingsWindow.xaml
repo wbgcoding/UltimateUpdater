@@ -1166,6 +1166,24 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="ArrowSync24" Style="{StaticResource CardIcon}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsAutoUpdateCheck]}"/>
+                            <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsAutoUpdateCheckDesc]}"/>
+                        </StackPanel>
+                        <ui:ToggleSwitch x:Name="AutoUpdateCheckToggle" Grid.Column="2" VerticalAlignment="Center"
+                                         IsChecked="{Binding AutoUpdateCheck}"
+                                         AutomationProperties.Name="{Binding Loc[SettingsAutoUpdateCheck]}"/>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="ArrowDownload24" Style="{StaticResource CardIcon}"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsCheckUpdatesDesc]}"/>

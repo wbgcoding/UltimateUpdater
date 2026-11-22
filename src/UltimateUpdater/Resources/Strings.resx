@@ -2446,4 +2446,10 @@ Continue with admin rights?</value>
   <data name="FilterShowManual" xml:space="preserve">
     <value>Show entries to open yourself</value>
   </data>
+  <data name="SettingsAutoUpdateCheck" xml:space="preserve">
+    <value>Check for new versions automatically</value>
+  </data>
+  <data name="SettingsAutoUpdateCheckDesc" xml:space="preserve">
+    <value>Asks GitHub at start and with each interval scan.</value>
+  </data>
 </root>

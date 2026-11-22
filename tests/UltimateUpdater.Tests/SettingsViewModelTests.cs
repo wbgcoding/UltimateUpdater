@@ -41,6 +41,29 @@ public class SettingsViewModelTests
         Assert.True(viewModel.CleanupRecycleInsteadOfDelete);
     }
 
+    /// <summary>The automatic check for a new app version contacts GitHub, so it is off until the user turns
+    /// it on; the switch writes the setting the start and interval checks read, and survives a reload.</summary>
+    [Fact]
+    public void The_automatic_update_check_is_off_by_default_and_the_switch_persists_it()
+    {
+        var logging = new LoggingService();
+        var path = Path.Combine(Directory.CreateTempSubdirectory("wu-settings-viewmodel-").FullName, "settings.json");
+        var settings = new SettingsService(logging, path);
+        var viewModel = new SettingsViewModel(settings, logging, new ThemeService(), new AutostartService(logging));
+        Assert.False(viewModel.AutoUpdateCheck);
+        Assert.False(settings.Current.SelfUpdate.Enabled);
+
+        viewModel.AutoUpdateCheck = true;
+
+        Assert.True(settings.Current.SelfUpdate.Enabled);
+        settings.Flush();
+        Assert.True(new SettingsService(logging, path).Current.SelfUpdate.Enabled);
+
+        settings.Current.SelfUpdate.Enabled = false;
+        viewModel.ReloadFromSettings();
+        Assert.False(viewModel.AutoUpdateCheck);
+    }
+
     /// <summary>The startup prescan switch: on by default, flipping it writes the setting the main window
     /// reads, it survives a reload from disk, and a reload of the window's own state shows it again.</summary>
     [Fact]
