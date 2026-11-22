@@ -51,6 +51,9 @@ public partial class MainWindow : FluentWindow
 
         Toolbar.ToolbarWrapPanel.SizeChanged += (_, _) => UpdateFilterChipLabels();
         LocalizationService.Instance.PropertyChanged += (_, _) => ScheduleFilterChipLabelUpdate();
+        SizeChanged += (_, _) => UpdateToolbarUninstallerLabel();
+        LocalizationService.Instance.PropertyChanged += (_, _) => UpdateToolbarUninstallerLabel();
+        Loaded += (_, _) => UpdateToolbarUninstallerLabel();
 
         Activated += OnMainWindowActivated;
 
@@ -205,6 +208,23 @@ public partial class MainWindow : FluentWindow
 
         if (e.PropertyName is nameof(MainViewModel.IsCleanupRunning) or "")
             UpdateCleanupIconSweep();
+    }
+
+    /// <summary>Narrowest window width that shows the uninstaller button's text; below it the button keeps its icon and tooltip, so the filter chips stay on the search row.</summary>
+    private const double UninstallerLabelMinWidth = 1100;
+
+    private void UpdateToolbarUninstallerLabel()
+    {
+        // A language switch can come from any thread (a worker job applies its own language).
+        if (!Dispatcher.CheckAccess())
+        {
+            Dispatcher.BeginInvoke(UpdateToolbarUninstallerLabel);
+            return;
+        }
+
+        var label = ActualWidth >= UninstallerLabelMinWidth ? LocalizationService.Instance["ToolbarUninstallerLabel"] : null;
+        if (!Equals(Toolbar.ToolbarUninstallerButton.Content, label))
+            Toolbar.ToolbarUninstallerButton.Content = label;
     }
 
     private bool _chipLabelUpdateQueued;

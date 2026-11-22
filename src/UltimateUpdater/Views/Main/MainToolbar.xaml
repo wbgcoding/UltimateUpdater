@@ -187,8 +187,8 @@
                       </StackPanel>
                     </ui:Button.Content>
                 </ui:Button>
+                <!-- The label is set from MainWindow.UpdateToolbarUninstallerLabel: shown only in a window wide enough for the filter chips to stay on the search row. -->
                 <ui:Button x:Name="ToolbarUninstallerButton" Command="{Binding ShowUninstallerCommand}" Appearance="Secondary" Padding="11,8" Margin="0,0,8,0"
-                           Content="{Binding Loc[ToolbarUninstallerLabel]}"
                            ToolTip="{Binding Loc[UninstallerTitle], Converter={StaticResource ShortcutTooltip}, ConverterParameter=UninstallerTitle}"
                            AutomationProperties.Name="{Binding Loc[UninstallerTitle]}">
                     <ui:Button.Icon><ui:SymbolIcon Symbol="Delete24" FontSize="20"/></ui:Button.Icon>
