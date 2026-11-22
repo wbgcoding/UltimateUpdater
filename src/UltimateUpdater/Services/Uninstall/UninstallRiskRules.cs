@@ -624,7 +624,7 @@ internal static class UninstallRiskRules
         Maps
         Media Player
         Outlook
-        Copilot
+        copilot
         Power Automate
         Quick Assist
         s:Microsoft.Windows.Photos
@@ -651,7 +651,7 @@ internal static class UninstallRiskRules
         s:Microsoft.WindowsMaps
         s:Microsoft.ZuneMusic
         s:Microsoft.OutlookForWindows
-        s:Microsoft.Copilot
+        s:Microsoft.copilot
         s:Microsoft.PowerAutomateDesktop
         s:MicrosoftCorporationII.QuickAssist
         """, Applies.StoreOnly);
