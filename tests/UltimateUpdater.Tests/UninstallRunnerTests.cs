@@ -144,28 +144,56 @@ public class UninstallRunnerTests
     }
 
     [Fact]
-    public async Task The_machine_lane_the_user_lane_and_the_store_lane_run_side_by_side()
+    public async Task A_setup_lane_and_the_store_lane_run_side_by_side()
     {
         var h = new Harness();
-        h.Add("M", MachinePlan()).Add("U", UserPlan()).Add("S", StorePlan());
+        h.Add("M", MachinePlan()).Add("S", StorePlan());
 
-        // Every removal waits until all three have started: sequential lanes would never get there.
+        // Both removals wait until the other has started: sequential lanes would never get there.
         var started = 0;
-        var allStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var bothStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         async Task<UninstallExecutionResult> Barrier(InstalledProgramEntry e, CancellationToken ct)
         {
-            if (Interlocked.Increment(ref started) == 3)
-                allStarted.TrySetResult();
-            await allStarted.Task.WaitAsync(Patience, ct);
+            if (Interlocked.Increment(ref started) == 2)
+                bothStarted.TrySetResult();
+            await bothStarted.Task.WaitAsync(Patience, ct);
             return new UninstallExecutionResult(0);
         }
 
         h.Machine.Handler = Barrier;
         h.User.Handler = Barrier;
 
-        var results = await h.RunAsync(null, default, "M", "U", "S");
+        var results = await h.RunAsync(null, default, "M", "S");
 
         Assert.All(results, r => Assert.Equal(UninstallOutcome.Removed, r.Outcome));
+    }
+
+    [Fact]
+    public async Task A_machine_removal_and_a_user_setup_never_run_at_the_same_time()
+    {
+        var h = new Harness();
+        h.Add("M1", MachinePlan()).Add("M2", MachinePlan()).Add("U1", UserPlan()).Add("U2", UserPlan());
+
+        var running = 0;
+        var most = 0;
+        async Task<UninstallExecutionResult> Slow(InstalledProgramEntry e, CancellationToken ct)
+        {
+            var now = Interlocked.Increment(ref running);
+            lock (h)
+                most = Math.Max(most, now);
+            await Delay();
+            Interlocked.Decrement(ref running);
+            return new UninstallExecutionResult(0);
+        }
+
+        h.Machine.Handler = Slow;
+        h.User.Handler = Slow;
+
+        var results = await h.RunAsync(null, default, "M1", "M2", "U1", "U2");
+
+        Assert.Equal(1, most);
+        Assert.All(results, r => Assert.Equal(UninstallOutcome.Removed, r.Outcome));
+        Assert.DoesNotContain(results, r => r.Reason == "UninstallBusy");
     }
 
     [Fact]

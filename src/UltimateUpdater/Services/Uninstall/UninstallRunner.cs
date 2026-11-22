@@ -38,9 +38,9 @@ public sealed record UninstallEntryResult(
 public sealed record UninstallEntryUpdate(InstalledProgramEntry Entry, UninstallEntryState State, UninstallEntryResult? Result);
 
 /// <summary>
-/// One run for every ticked entry. Machine-scope entries go one after the other in a lane of their own (Windows
-/// Installer holds one machine-wide lock and most setups collide); user-scope setups go one after the other in a
-/// second lane, beside it; Store apps run up to three at a time beside both. A removal that shows the vendor's own
+/// One run for every ticked entry. Machine-scope entries and user-scope setups run one at a time through one shared
+/// gate (Windows Installer holds one machine-wide lock that a per-user MSI takes as well, and most setups collide),
+/// each kind in its own order; Store apps run up to three at a time beside them. A removal that shows the vendor's own
 /// window is held back until every silent one has finished and then runs alone, one at a time. A stop lets the
 /// running removals finish and starts no further entry.
 /// After each removal the entry is looked up again: the program being gone is the truth, the exit code only
@@ -129,10 +129,22 @@ public sealed class UninstallRunner
             Finish(index, await RemoveAsync(entries[index], plans[index], hardToken));
         }
 
-        async Task RunInOrderAsync(IEnumerable<int> indices)
+        // One setup at a time across the machine lane and the user lane.
+        using var setupGate = new SemaphoreSlim(1);
+        async Task RunSetupsInOrderAsync(IEnumerable<int> indices)
         {
             foreach (var index in indices)
-                await RunOneAsync(index);
+            {
+                await setupGate.WaitAsync();
+                try
+                {
+                    await RunOneAsync(index);
+                }
+                finally
+                {
+                    setupGate.Release();
+                }
+            }
         }
 
         using var storeGate = new SemaphoreSlim(MaxParallelStoreApps);
@@ -151,10 +163,11 @@ public sealed class UninstallRunner
 
         // The silent lanes run side by side, the vendor windows only afterwards and alone.
         await Task.WhenAll(
-            RunInOrderAsync(machine),
-            RunInOrderAsync(userSetups),
+            RunSetupsInOrderAsync(machine),
+            RunSetupsInOrderAsync(userSetups),
             Task.WhenAll(storeApps.Select(RunStoreAppAsync)));
-        await RunInOrderAsync(interactive);
+        foreach (var index in interactive)
+            await RunOneAsync(index);
 
         return results!;
     }
