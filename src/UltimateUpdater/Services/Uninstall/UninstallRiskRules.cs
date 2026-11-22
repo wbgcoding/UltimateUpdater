@@ -391,6 +391,15 @@ internal static class UninstallRiskRules
         Elastic Agent
         Splunk Universal Forwarder
         v:Absolute
+        Cisco Secure Endpoint
+        Cisco AMP for Endpoints Connector
+        Tanium Client
+        Huntress Agent
+        Cybereason
+        Arctic Wolf Agent
+        Action1 Agent
+        Lansweeper Agent
+        PDQ Connect Agent
         """);
 
     private static readonly Group RuntimeRisky = new("""
@@ -410,6 +419,10 @@ internal static class UninstallRiskRules
         Windows Software Development Kit
         Vulkan Run Time Libraries
         Vulkan Runtime
+        re:access (?:database engine|runtime)
+        Primary Interop Assemblies
+        Office Web Components
+        Tools for Office Runtime
         """);
 
     // ---- 11 to 13. The guest tools come first: they are drivers inside a virtual machine, and the Virtualization table
@@ -459,6 +472,8 @@ internal static class UninstallRiskRules
         Voicemeeter
         libusb
         Mobile Device Support
+        Boot Camp
+        Harmony Wireless
         """);
 
     private static readonly Group HardwareVendors = new("""
@@ -532,6 +547,18 @@ internal static class UninstallRiskRules
         v:Sound Research
         v:Focusrite
         v:Steinberg
+        v:IDT|Integrated Device Technology|Tempo Semiconductor
+        v:Senary
+        v:C-Media
+        v:Fortemedia
+        v:ESS Technology
+        v:Atheros
+        v:Aquantia
+        v:Ralink
+        v:ATI Technologies
+        p:CSR|Cambridge Silicon Radio
+        v:BlueSoleil|IVT
+        v:Etron
         v:Yamaha
         v:Roland
         v:PreSonus
