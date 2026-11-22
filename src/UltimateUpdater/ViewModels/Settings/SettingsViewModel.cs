@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using UltimateUpdater.Models.Settings;
 
 namespace UltimateUpdater.ViewModels.Settings;
 
@@ -38,6 +39,10 @@ public partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty]
     private bool createRestorePoint;
+
+    /// <summary>When the uninstall window makes a restore point; the settings row's combo box selects it by the option's tag.</summary>
+    [ObservableProperty]
+    private UninstallBackupMode uninstallBackup;
 
     [ObservableProperty]
     private int maxParallelInstalls;
@@ -430,6 +435,7 @@ public partial class SettingsViewModel : ObservableObject
         scanRespectMetered = current.Scan.RespectMetered;
         preselectCritical = current.Install.PreselectCritical;
         createRestorePoint = current.Install.CreateRestorePoint;
+        uninstallBackup = current.Install.UninstallBackup;
         maxParallelInstalls = current.Install.MaxParallelInstalls;
         maxParallelSources = current.Scan.MaxParallelSources;
         parallelismChosenByUser = current.ParallelismChosenByUser;
@@ -464,6 +470,8 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnPreselectCriticalChanged(bool value) => Apply(s => s.Install.PreselectCritical = value);
 
     partial void OnCreateRestorePointChanged(bool value) => Apply(s => s.Install.CreateRestorePoint = value);
+
+    partial void OnUninstallBackupChanged(UninstallBackupMode value) => Apply(s => s.Install.UninstallBackup = value);
 
     partial void OnMaxParallelInstallsChanged(int value) => ApplyParallelismChange(s => s.Install.MaxParallelInstalls = value);
 
@@ -892,6 +900,7 @@ public partial class SettingsViewModel : ObservableObject
         ScanRespectMetered = current.Scan.RespectMetered;
         PreselectCritical = current.Install.PreselectCritical;
         CreateRestorePoint = current.Install.CreateRestorePoint;
+        UninstallBackup = current.Install.UninstallBackup;
 
         _suppressParallelismPin = true;
         try

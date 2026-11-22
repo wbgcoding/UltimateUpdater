@@ -1,3 +1,4 @@
+using UltimateUpdater.Models.Settings;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Uninstall;
 using UltimateUpdater.ViewModels.Uninstall;
@@ -54,6 +55,28 @@ public class UninstallerViewModelTests
         public List<IReadOnlyList<UninstallLeftoverGroup>> RemovedGroups { get; } = [];
 
         public int ScanCalls { get; private set; }
+
+        /// <summary>Off by default so the older tests see no restore point step.</summary>
+        public UninstallBackupMode BackupMode { get; set; } = UninstallBackupMode.Off;
+
+        public Func<UninstallRestorePointResult> RestorePoint { get; set; } =
+            () => new UninstallRestorePointResult(UninstallRestorePointOutcome.Created);
+
+        public int RestorePointCalls { get; private set; }
+
+        /// <summary>Runs while the restore point is being made, for tests that look at the run's first step.</summary>
+        public Action? DuringRestorePoint { get; set; }
+
+        public List<InstalledProgramEntry> Recorded { get; } = [];
+
+        public Task<UninstallRestorePointResult> CreateRestorePointAsync(CancellationToken cancellationToken)
+        {
+            RestorePointCalls++;
+            DuringRestorePoint?.Invoke();
+            return Task.FromResult(RestorePoint());
+        }
+
+        public void RecordRemoved(InstalledProgramEntry entry) => Recorded.Add(entry);
 
         public Task<IReadOnlyList<UninstallLeftoverGroup>> FindLeftoversAsync(
             IReadOnlyList<InstalledProgramEntry> removed, CancellationToken cancellationToken)

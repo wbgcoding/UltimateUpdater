@@ -114,10 +114,26 @@ public sealed class NotifySettings
     public bool CriticalOnly { get; set; }
 }
 
+/// <summary>Whether the uninstall window creates a system restore point before a run.</summary>
+public enum UninstallBackupMode
+{
+    /// <summary>Only when the run needs administrator rights or removes a row rated Risky.</summary>
+    Automatic,
+
+    /// <summary>Before every run.</summary>
+    Always,
+
+    /// <summary>Never.</summary>
+    Off,
+}
+
 public sealed class InstallSettings
 {
     public bool PreselectCritical { get; set; } = true;
     public bool CreateRestorePoint { get; set; } = true;
+
+    /// <summary>When the uninstall window makes a restore point before it removes programs; see <see cref="UninstallBackupMode"/>.</summary>
+    public UninstallBackupMode UninstallBackup { get; set; } = UninstallBackupMode.Automatic;
 
     /// <summary>
     /// How many installs may run at once (winget items among themselves, and different sources against

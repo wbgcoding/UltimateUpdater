@@ -430,6 +430,9 @@ public sealed class SettingsService
 
         // A hand-edited or out-of-range value must never reach the elevated worker unchecked.
         settings.Install.MaxParallelInstalls = Math.Clamp(settings.Install.MaxParallelInstalls, 1, 5);
+        // A number outside the enum (hand edit) falls back to the default instead of silently meaning "never".
+        if (!Enum.IsDefined(settings.Install.UninstallBackup))
+            settings.Install.UninstallBackup = defaults.Install.UninstallBackup;
         // A null here would reach the cleanup dialog's constructor and every scan's ApplyPermanentExclusions.
         settings.CleanupSelection ??= defaults.CleanupSelection;
         settings.CleanupPermanentlyExcludedPaths ??= defaults.CleanupPermanentlyExcludedPaths;

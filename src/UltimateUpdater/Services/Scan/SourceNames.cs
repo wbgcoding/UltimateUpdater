@@ -62,6 +62,7 @@ internal static class SourceNames
         ["jetbrains-toolbox"] = "JetBrains Toolbox",
         ["docker-desktop"] = "Docker Desktop",
         ["unity-hub"] = "Unity Hub",
+        ["uninstaller"] = "Uninstaller",
     };
 
     /// <summary>

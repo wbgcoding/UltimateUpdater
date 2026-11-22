@@ -16,6 +16,19 @@ public sealed partial class UninstallerViewModel
         Dialogs.Confirm(
             headline, body, LocalizationService.Instance["UninstallButton"], destructive: true, acknowledgeText: acknowledge);
 
+    /// <summary>Asks whether to remove anyway when no restore point could be created. Replaced by tests; the default is the themed confirm dialog.</summary>
+    public Func<bool> ConfirmWithoutRestorePoint { get; set; } = () =>
+        Dialogs.Confirm(
+            LocalizationService.Instance["UninstallerRestorePointFailed"], string.Empty,
+            LocalizationService.Instance["UninstallerRestorePointFailedButton"], destructive: true);
+
+    /// <summary>What the restore point step says: "Creating a restore point..." while it runs, "Using the restore point from ..." when one within 24 hours covers the run, else empty.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRestorePointText))]
+    private string restorePointText = string.Empty;
+
+    public bool HasRestorePointText => RestorePointText.Length > 0;
+
     [ObservableProperty]
     private bool isRunning;
 
@@ -90,6 +103,19 @@ public sealed partial class UninstallerViewModel
         var byEntry = rows.ToDictionary(row => row.Entry);
         var runner = _runner = _backend.CreateRunner(entry => byEntry[entry].Listing.Plan);
         using var cts = _runCts = new CancellationTokenSource();
+        if (!await PrepareRestorePointAsync(rows, cts.Token))
+        {
+            // Nothing was removed: the rows go back to what they were and no summary appears.
+            foreach (var row in rows)
+                row.State = UninstallRowState.Idle;
+
+            _runner = null;
+            _runCts = null;
+            IsStopping = false;
+            IsRunning = false;
+            return;
+        }
+
         try
         {
             var results = await Task.Run(
@@ -98,7 +124,11 @@ public sealed partial class UninstallerViewModel
             Post(() =>
             {
                 foreach (var result in results)
+                {
                     ApplyResult(byEntry[result.Entry], result);
+                    if (result.Outcome is UninstallOutcome.Removed or UninstallOutcome.NeedsRestart)
+                        _backend.RecordRemoved(result.Entry);
+                }
             });
             await FlushAsync();
         }
@@ -122,6 +152,44 @@ public sealed partial class UninstallerViewModel
         }
 
         await ScanLeftoversAsync([.. rows.Where(row => row.State == UninstallRowState.Removed)]);
+    }
+
+    /// <summary>
+    /// The restore point before the removals, when the setting and the ticked rows call for one. False when no restore
+    /// point could be made and the person chose not to go on. A reused one (within 24 hours) is only said.
+    /// </summary>
+    private async Task<bool> PrepareRestorePointAsync(IReadOnlyList<UninstallRowViewModel> rows, CancellationToken cancellationToken)
+    {
+        RestorePointText = string.Empty;
+        var wanted = UninstallRestorePointPolicy.Wanted(
+            _backend.BackupMode,
+            anyElevated: rows.Any(row => row.Listing.Plan is { IsRunnable: true, Elevated: true }),
+            anyRisky: rows.Any(row => row.IsRisky));
+        if (!wanted)
+            return true;
+
+        RestorePointText = Loc["InstallRestorePointStep"];
+        UninstallRestorePointResult result;
+        try
+        {
+            result = await _backend.CreateRestorePointAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            RestorePointText = string.Empty;
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logging.Warn($"Restore point before uninstalling failed: {ex.Message}");
+            result = new UninstallRestorePointResult(UninstallRestorePointOutcome.Failed);
+        }
+
+        RestorePointText = result is { Outcome: UninstallRestorePointOutcome.Reused, At: { } at }
+            ? string.Format(Loc["UninstallerRestorePointReused"], at.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentUICulture))
+            : string.Empty;
+
+        return result.Outcome != UninstallRestorePointOutcome.Failed || ConfirmWithoutRestorePoint();
     }
 
     private void Post(Action action)

@@ -4,6 +4,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:behaviors="clr-namespace:UltimateUpdater.Views.Behaviors"
         xmlns:app="clr-namespace:UltimateUpdater.Services.App"
+        xmlns:settingsModels="clr-namespace:UltimateUpdater.Models.Settings"
         Title="{Binding Loc[SettingsTitle]}"
         Height="720" Width="800"
         MinHeight="480" MinWidth="520"
@@ -591,6 +592,31 @@
                             <ui:ToggleSwitch x:Name="InstallRestorePointToggle" Grid.Column="2" VerticalAlignment="Center"
                                              IsChecked="{Binding CreateRestorePoint}"
                                              AutomationProperties.Name="{Binding Loc[SettingsRestorePoint]}"/>
+                        </Grid>
+
+                        <Border Style="{StaticResource CardSeparator}"/>
+
+                        <!-- When the uninstall window makes a restore point; the option's tag is the enum value. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="Delete24" Style="{StaticResource CardIcon}"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsUninstallBackupDesc]}">
+                                <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsUninstallBackup]}"/>
+                                <WrapPanel>
+                                    <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsUninstallBackupDesc]}"/>
+                                </WrapPanel>
+                            </StackPanel>
+                            <ComboBox x:Name="UninstallBackupCombo" AutomationProperties.Name="{Binding Loc[SettingsUninstallBackup]}" Grid.Column="2" Style="{StaticResource CardCombo}"
+                                      MinWidth="120" HorizontalAlignment="Right"
+                                      SelectedValue="{Binding UninstallBackup}" SelectedValuePath="Tag">
+                                <ComboBoxItem Tag="{x:Static settingsModels:UninstallBackupMode.Automatic}" Content="{Binding Loc[SettingsUninstallBackupAutomatic]}"/>
+                                <ComboBoxItem Tag="{x:Static settingsModels:UninstallBackupMode.Always}" Content="{Binding Loc[SettingsUninstallBackupAlways]}"/>
+                                <ComboBoxItem Tag="{x:Static settingsModels:UninstallBackupMode.Off}" Content="{Binding Loc[SettingsUninstallBackupOff]}"/>
+                            </ComboBox>
                         </Grid>
 
                         <Border Style="{StaticResource CardSeparator}"/>
