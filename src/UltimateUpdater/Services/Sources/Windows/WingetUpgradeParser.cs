@@ -249,6 +249,53 @@ public static class WingetUpgradeParser
     }
 
     /// <summary>
+    /// Every row of a full `winget list` table as name, id and installed version. Rows whose id is cut short with
+    /// an ellipsis or is no package id (the "ARP\..." and "MSIX\..." ids of programs winget only sees, never the
+    /// ones it installed) are left out: neither names a package a command could address.
+    /// </summary>
+    internal static IReadOnlyList<(string Name, string Id, string Version)> ParseListRows(string stdout)
+    {
+        var rows = new List<(string, string, string)>();
+        if (string.IsNullOrWhiteSpace(stdout))
+            return rows;
+
+        var lines = SplitTableLines(stdout);
+        int[]? columnStarts = null;
+        string? previousLine = null;
+
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var line = lines[index].TrimEnd();
+            if (line.Length == 0)
+            {
+                previousLine = null;
+                columnStarts = null;
+                continue;
+            }
+
+            if (IsSeparator(line))
+            {
+                columnStarts = previousLine is null ? null : FindColumnStarts(previousLine, BlockRows(lines, index + 1));
+                previousLine = line;
+                continue;
+            }
+
+            previousLine = line;
+
+            if (columnStarts is null || columnStarts.Length < 3)
+                continue;
+
+            var id = Slice(line, columnStarts, 1);
+            if (!IsPackageId(id) || id.Contains('…') || id.Contains('\\'))
+                continue;
+
+            rows.Add((Slice(line, columnStarts, 0), id, Slice(line, columnStarts, 2)));
+        }
+
+        return rows;
+    }
+
+    /// <summary>
     /// The lines of a winget table. winget redraws its progress spinner with a bare carriage return, so
     /// whatever precedes the last one on a line is a spinner frame, not table text.
     /// </summary>
