@@ -7,9 +7,10 @@ namespace UltimateUpdater.Services.Cleanup;
 /// </summary>
 public sealed class CleanupCommand
 {
-    /// <summary>"scan" (measure only), "clean", or "analyze" (a read-only DISM component store
-    /// measurement, which needs no target ids at all). The session ends by closing the pipe, not by a
-    /// message.</summary>
+    /// <summary>"scan" (measure only), "clean", "analyze" (a read-only DISM component store
+    /// measurement, which needs no target ids at all) or "leftovers" (remove the chosen traces of a removed
+    /// program from the machine-wide places, see <see cref="LeftoverSubject"/>; no target ids either). The
+    /// session ends by closing the pipe, not by a message.</summary>
     public string Command { get; set; } = string.Empty;
 
     public List<string> TargetIds { get; set; } = new();
@@ -95,4 +96,20 @@ public sealed class CleanupCommand
     /// its interpreter's python.exe path); never "everything the last scan found", same none-pre-selected
     /// rule as <see cref="SelectedDriverDeviceInstanceIds"/>. Ignored for every other target.</summary>
     public List<string> SelectedPythonVersionPaths { get; set; } = new();
+
+    /// <summary>"leftovers" only: the removed program whose traces are looked for. Name and publisher are
+    /// text from its registry entry; they only select what to look at.</summary>
+    public Uninstall.LeftoverSubject? LeftoverSubject { get; set; }
+
+    /// <summary>"leftovers" only: what the user ticked. The worker scans again itself and removes only a
+    /// ticked item that its own scan still finds and its own safety check still passes.</summary>
+    public List<Uninstall.LeftoverSelectionDto> SelectedLeftovers { get; set; } = new();
+
+    /// <summary>"leftovers" only: names, publishers and folders of the programs still installed that the
+    /// worker cannot read itself (Store apps, winget programs). They can only remove offers, never add one.</summary>
+    public List<string> LeftoverClaimedNames { get; set; } = new();
+
+    public List<string> LeftoverClaimedPublishers { get; set; } = new();
+
+    public List<string> LeftoverClaimedPaths { get; set; } = new();
 }

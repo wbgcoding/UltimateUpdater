@@ -304,8 +304,8 @@ public static class ElevatedWorker
 
     /// <summary>"scan" (measuring what could be freed) and "analyze" (DISM's read-only AnalyzeComponentStore)
     /// never delete anything, so they run alongside other work instead of taking the exclusive lane. Every
-    /// other command arrives on the "cleanup" kind only as "clean" (see CleanupViewModel.RunElevatedAsync),
-    /// which changes the machine and stays exclusive.</summary>
+    /// other command arrives on the "cleanup" kind only as "clean" (see CleanupViewModel.RunElevatedAsync) or
+    /// "leftovers" (removing a removed program's traces), which change the machine and stay exclusive.</summary>
     private static bool IsReadOnlyCleanupCommand(JsonElement payload) =>
         payload.ValueKind == JsonValueKind.Object
         && payload.TryGetProperty("command", out var commandValue)

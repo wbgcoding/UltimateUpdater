@@ -1,5 +1,7 @@
 using System.IO;
 using System.Text.Json;
+using UltimateUpdater.Services.Sources.Windows;
+using UltimateUpdater.Services.Uninstall;
 
 namespace UltimateUpdater.Services.Cleanup;
 
@@ -37,13 +39,20 @@ public static class CleanupWorker
         CancellationToken cancellationToken, PauseGate pause, CleanupService? serviceOverride = null,
         Func<string, bool>? isTrustedDirectory = null, string? workerSidOverride = null)
     {
-        if (command is null || command.Command is not ("scan" or "clean" or "analyze"))
+        if (command is null || command.Command is not ("scan" or "clean" or "analyze" or "leftovers"))
         {
             Send(writer, jobId, new CleanupWorkerMessage { Type = "done" });
             return;
         }
 
         LocalizationService.Instance.Apply(command.Language);
+
+        // Traces of a removed program in the machine-wide places: no catalogue target, its own safety gate.
+        if (command.Command == "leftovers")
+        {
+            await RunLeftoversCommandAsync(command, writer, jobId, logging, cancellationToken, isTrustedDirectory);
+            return;
+        }
 
         // No target list, no registry backup settings, nothing to resolve against the catalogue: this
         // is a single read-only DISM call, answered and finished before the "scan"/"clean"
@@ -179,6 +188,72 @@ public static class CleanupWorker
         ElevatedWorker.StopLogFlushTimer(logFlushTimer);
         DrainLog(writer, jobId);
         Send(writer, jobId, new CleanupWorkerMessage { Type = "done" });
+    }
+
+    /// <summary>Most ticked leftovers one command may carry; anything beyond is ignored.</summary>
+    internal const int MaxSelectedLeftovers = 500;
+
+    private static async Task RunLeftoversCommandAsync(
+        CleanupCommand command, StreamWriter writer, string jobId, LoggingService logging,
+        CancellationToken cancellationToken, Func<string, bool>? isTrustedDirectory)
+    {
+        try
+        {
+            var roots = LeftoverRoots.Current();
+            var registry = WindowsRegistryView.Instance;
+            var remover = new LeftoverRemover(new LeftoverScanner(roots, registry), roots, logging);
+            var backupFolder = ChooseRegistryBackupFolder(
+                command.RegistryBackupFolder, Models.Settings.RegistryCleanupSettings.DefaultBackupFolder, logging,
+                isTrustedDirectory ?? ElevatedPathTrust.IsTrustedDirectory);
+
+            Send(writer, jobId, await LeftoversResultAsync(command, remover, registry, backupFolder, cancellationToken));
+        }
+        catch (OperationCanceledException)
+        {
+            logging.Info("Cleanup worker stopped during the leftover removal.");
+        }
+        catch (Exception ex)
+        {
+            logging.Error("Cleanup worker failed to remove leftovers", ex);
+            Send(writer, jobId, new CleanupWorkerMessage { Type = "result", Id = LeftoversId, Failed = true });
+        }
+
+        DrainLog(writer, jobId);
+        Send(writer, jobId, new CleanupWorkerMessage { Type = "done" });
+    }
+
+    /// <summary>The id the "result" of a "leftovers" command carries.</summary>
+    internal const string LeftoversId = "leftovers";
+
+    /// <summary>
+    /// The machine-lane removal of one "leftovers" command and its result message. Only the machine lane is
+    /// ever handled here (Program Files, ProgramData, HKLM, all-users shortcuts); the user's own places are the
+    /// app's to remove, and an elevated process may be another account. The ticked items are looked up again in
+    /// a scan made here from this process's own view of the machine, so nothing the pipe carries can name a
+    /// path or key the worker did not find itself.
+    /// </summary>
+    internal static async Task<CleanupWorkerMessage> LeftoversResultAsync(
+        CleanupCommand command, LeftoverRemover remover, IRegistryView registry, string backupFolder,
+        CancellationToken cancellationToken)
+    {
+        if (command.LeftoverSubject is not { } subject || command.SelectedLeftovers.Count == 0)
+            return new CleanupWorkerMessage { Type = "result", Id = LeftoversId };
+
+        var claims = LeftoverClaims.FromRegistry(registry, subject.Key)
+            .WithText(command.LeftoverClaimedNames, command.LeftoverClaimedPublishers, command.LeftoverClaimedPaths);
+
+        var removal = await remover.RemoveAsync(
+            subject, claims, LeftoverLane.Machine, command.SelectedLeftovers.Take(MaxSelectedLeftovers).ToList(),
+            backupFolder, command.RegistryBackupRetentionCount, cancellationToken);
+
+        return new CleanupWorkerMessage
+        {
+            Type = "result",
+            Id = LeftoversId,
+            Freed = removal.FreedBytes,
+            Files = removal.Removed,
+            Skipped = removal.Skipped,
+        };
     }
 
     /// <summary>
