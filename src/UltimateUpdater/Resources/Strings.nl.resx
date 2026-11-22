@@ -2563,4 +2563,124 @@ Doorgaan met beheerdersrechten?</value>
   <data name="UninstallRiskOrdinary" xml:space="preserve">
     <value>Gewoon programma zonder bekende afhankelijkheden.</value>
   </data>
+  <data name="UninstallerTitle" xml:space="preserve">
+    <value>Programma's verwijderen</value>
+  </data>
+  <data name="ToolbarUninstallerLabel" xml:space="preserve">
+    <value>Verwijderen</value>
+  </data>
+  <data name="UninstallerSearchPlaceholder" xml:space="preserve">
+    <value>Programma's zoeken…</value>
+  </data>
+  <data name="UninstallerSelectAll" xml:space="preserve">
+    <value>Alles selecteren</value>
+  </data>
+  <data name="UninstallerSelectNone" xml:space="preserve">
+    <value>Selectie opheffen</value>
+  </data>
+  <data name="UninstallerSelectedCount" xml:space="preserve">
+    <value>{0} geselecteerd</value>
+  </data>
+  <data name="UninstallerColName" xml:space="preserve">
+    <value>Naam</value>
+  </data>
+  <data name="UninstallerColPublisher" xml:space="preserve">
+    <value>Uitgever</value>
+  </data>
+  <data name="UninstallerColVersion" xml:space="preserve">
+    <value>Versie</value>
+  </data>
+  <data name="UninstallerColSize" xml:space="preserve">
+    <value>Grootte</value>
+  </data>
+  <data name="UninstallerColInstalled" xml:space="preserve">
+    <value>Geïnstalleerd</value>
+  </data>
+  <data name="UninstallerColMethod" xml:space="preserve">
+    <value>Methode</value>
+  </data>
+  <data name="UninstallerColRisk" xml:space="preserve">
+    <value>Risico</value>
+  </data>
+  <data name="UninstallerMethodSilent" xml:space="preserve">
+    <value>Stil</value>
+  </data>
+  <data name="UninstallerMethodOwnWindow" xml:space="preserve">
+    <value>Toont een eigen venster</value>
+  </data>
+  <data name="UninstallerMethodCannot" xml:space="preserve">
+    <value>Niet automatisch te verwijderen</value>
+  </data>
+  <data name="UninstallerSectionPrograms" xml:space="preserve">
+    <value>Programma's en apps</value>
+  </data>
+  <data name="UninstallerSectionPackages" xml:space="preserve">
+    <value>Pakketbeheerders</value>
+  </data>
+  <data name="UninstallerSectionDrivers" xml:space="preserve">
+    <value>Stuurprogramma's</value>
+  </data>
+  <data name="UninstallerSectionUpdates" xml:space="preserve">
+    <value>Windows-updates</value>
+  </data>
+  <data name="UninstallerButton" xml:space="preserve">
+    <value>Selectie verwijderen</value>
+  </data>
+  <data name="UninstallerConfirm" xml:space="preserve">
+    <value>{0} items verwijderen? Programma's zonder stille modus tonen een eigen venster.</value>
+  </data>
+  <data name="UninstallerAcknowledge" xml:space="preserve">
+    <value>Ik begrijp dat dit Windows of andere programma's kan beïnvloeden.</value>
+  </data>
+  <data name="UninstallerLoading" xml:space="preserve">
+    <value>Geïnstalleerde programma's worden gelezen…</value>
+  </data>
+  <data name="UninstallerEmpty" xml:space="preserve">
+    <value>Er is niets geïnstalleerds gevonden.</value>
+  </data>
+  <data name="UninstallerNoMatch" xml:space="preserve">
+    <value>Geen programma komt overeen met de zoekopdracht.</value>
+  </data>
+  <data name="UninstallerStop" xml:space="preserve">
+    <value>Stoppen</value>
+  </data>
+  <data name="UninstallerStateWaiting" xml:space="preserve">
+    <value>Wacht</value>
+  </data>
+  <data name="UninstallerStateRunning" xml:space="preserve">
+    <value>Wordt verwijderd…</value>
+  </data>
+  <data name="UninstallerStateRemoved" xml:space="preserve">
+    <value>Verwijderd</value>
+  </data>
+  <data name="UninstallerStateFailed" xml:space="preserve">
+    <value>Mislukt</value>
+  </data>
+  <data name="UninstallerStateNeedsRestart" xml:space="preserve">
+    <value>Verwijderd, herstart nodig</value>
+  </data>
+  <data name="UninstallerStateNotStarted" xml:space="preserve">
+    <value>Niet gestart</value>
+  </data>
+  <data name="UninstallerSummary" xml:space="preserve">
+    <value>{0} verwijderd, {1} mislukt, {2} restanten verwijderd</value>
+  </data>
+  <data name="UninstallerRemoveLeftovers" xml:space="preserve">
+    <value>Restanten verwijderen</value>
+  </data>
+  <data name="UninstallerLeftoversHeading" xml:space="preserve">
+    <value>Gevonden restanten</value>
+  </data>
+  <data name="UninstallerLeftoversScanning" xml:space="preserve">
+    <value>Zoeken naar restanten…</value>
+  </data>
+  <data name="UninstallerLeftoverFolder" xml:space="preserve">
+    <value>Map</value>
+  </data>
+  <data name="UninstallerLeftoverRegistry" xml:space="preserve">
+    <value>Registersleutel</value>
+  </data>
+  <data name="UninstallerLeftoverShortcut" xml:space="preserve">
+    <value>Snelkoppeling</value>
+  </data>
 </root>

@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
+using UltimateUpdater.ViewModels.Uninstall;
 
 namespace UltimateUpdater.Tests;
 
@@ -51,6 +52,16 @@ public class XamlBindingTests
             typeof(CleanupTopAreaViewModel),
             typeof(CleanupHistoryRowViewModel),
             typeof(CleanupHistoryAreaViewModel));
+
+    [Fact]
+    public void UninstallerWindow_bindings_all_exist() =>
+        AssertBindingsResolve(
+            "UninstallerWindow.xaml",
+            typeof(UninstallerViewModel),
+            typeof(UninstallSectionViewModel),
+            typeof(UninstallRowViewModel),
+            typeof(UninstallLeftoverGroupViewModel),
+            typeof(UninstallLeftoverItemViewModel));
 
     [Fact]
     public void CleanupHistoryWindow_bindings_all_exist() =>

@@ -2563,4 +2563,124 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="UninstallRiskOrdinary" xml:space="preserve">
     <value>Gewöhnliches Programm ohne bekannte Abhängigkeiten.</value>
   </data>
+  <data name="UninstallerTitle" xml:space="preserve">
+    <value>Programme deinstallieren</value>
+  </data>
+  <data name="ToolbarUninstallerLabel" xml:space="preserve">
+    <value>Deinstallieren</value>
+  </data>
+  <data name="UninstallerSearchPlaceholder" xml:space="preserve">
+    <value>Programme suchen…</value>
+  </data>
+  <data name="UninstallerSelectAll" xml:space="preserve">
+    <value>Alle auswählen</value>
+  </data>
+  <data name="UninstallerSelectNone" xml:space="preserve">
+    <value>Auswahl aufheben</value>
+  </data>
+  <data name="UninstallerSelectedCount" xml:space="preserve">
+    <value>{0} ausgewählt</value>
+  </data>
+  <data name="UninstallerColName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="UninstallerColPublisher" xml:space="preserve">
+    <value>Herausgeber</value>
+  </data>
+  <data name="UninstallerColVersion" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="UninstallerColSize" xml:space="preserve">
+    <value>Größe</value>
+  </data>
+  <data name="UninstallerColInstalled" xml:space="preserve">
+    <value>Installiert</value>
+  </data>
+  <data name="UninstallerColMethod" xml:space="preserve">
+    <value>Weg</value>
+  </data>
+  <data name="UninstallerColRisk" xml:space="preserve">
+    <value>Risiko</value>
+  </data>
+  <data name="UninstallerMethodSilent" xml:space="preserve">
+    <value>Still</value>
+  </data>
+  <data name="UninstallerMethodOwnWindow" xml:space="preserve">
+    <value>Zeigt eigenes Fenster</value>
+  </data>
+  <data name="UninstallerMethodCannot" xml:space="preserve">
+    <value>Nicht automatisch entfernbar</value>
+  </data>
+  <data name="UninstallerSectionPrograms" xml:space="preserve">
+    <value>Programme und Apps</value>
+  </data>
+  <data name="UninstallerSectionPackages" xml:space="preserve">
+    <value>Paketmanager</value>
+  </data>
+  <data name="UninstallerSectionDrivers" xml:space="preserve">
+    <value>Treiber</value>
+  </data>
+  <data name="UninstallerSectionUpdates" xml:space="preserve">
+    <value>Windows-Updates</value>
+  </data>
+  <data name="UninstallerButton" xml:space="preserve">
+    <value>Ausgewählte deinstallieren</value>
+  </data>
+  <data name="UninstallerConfirm" xml:space="preserve">
+    <value>{0} Einträge deinstallieren? Programme ohne stillen Modus zeigen ihr eigenes Fenster.</value>
+  </data>
+  <data name="UninstallerAcknowledge" xml:space="preserve">
+    <value>Mir ist klar, dass diese Einträge Windows oder andere Programme beeinträchtigen können.</value>
+  </data>
+  <data name="UninstallerLoading" xml:space="preserve">
+    <value>Installierte Programme werden gelesen…</value>
+  </data>
+  <data name="UninstallerEmpty" xml:space="preserve">
+    <value>Es wurde nichts Installiertes gefunden.</value>
+  </data>
+  <data name="UninstallerNoMatch" xml:space="preserve">
+    <value>Kein Programm passt zur Suche.</value>
+  </data>
+  <data name="UninstallerStop" xml:space="preserve">
+    <value>Stoppen</value>
+  </data>
+  <data name="UninstallerStateWaiting" xml:space="preserve">
+    <value>Wartet</value>
+  </data>
+  <data name="UninstallerStateRunning" xml:space="preserve">
+    <value>Wird entfernt…</value>
+  </data>
+  <data name="UninstallerStateRemoved" xml:space="preserve">
+    <value>Entfernt</value>
+  </data>
+  <data name="UninstallerStateFailed" xml:space="preserve">
+    <value>Fehlgeschlagen</value>
+  </data>
+  <data name="UninstallerStateNeedsRestart" xml:space="preserve">
+    <value>Entfernt, Neustart nötig</value>
+  </data>
+  <data name="UninstallerStateNotStarted" xml:space="preserve">
+    <value>Nicht gestartet</value>
+  </data>
+  <data name="UninstallerSummary" xml:space="preserve">
+    <value>{0} entfernt, {1} fehlgeschlagen, {2} Reste entfernt</value>
+  </data>
+  <data name="UninstallerRemoveLeftovers" xml:space="preserve">
+    <value>Reste entfernen</value>
+  </data>
+  <data name="UninstallerLeftoversHeading" xml:space="preserve">
+    <value>Gefundene Reste</value>
+  </data>
+  <data name="UninstallerLeftoversScanning" xml:space="preserve">
+    <value>Suche nach Resten…</value>
+  </data>
+  <data name="UninstallerLeftoverFolder" xml:space="preserve">
+    <value>Ordner</value>
+  </data>
+  <data name="UninstallerLeftoverRegistry" xml:space="preserve">
+    <value>Registrierungsschlüssel</value>
+  </data>
+  <data name="UninstallerLeftoverShortcut" xml:space="preserve">
+    <value>Verknüpfung</value>
+  </data>
 </root>

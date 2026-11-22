@@ -44,6 +44,28 @@ and one failed update never stops the rest.
 If a program that is about to be updated is still open, a short window lists it before the batch starts
 and asks once for all of them: close the programs and continue, skip those updates, or try anyway.
 
+## Uninstalling programs
+
+The Uninstall button in the toolbar (Ctrl+U) opens a window of its own that lists what is installed:
+programs and Store apps, package manager entries, drivers and Windows updates. Every row shows its
+publisher, version, size, install date, how it would be removed (silently, in the program's own window,
+or not automatically) and a risk level. The last three sections start collapsed.
+
+Tick the rows to remove and press Uninstall selected. Select all, Shift+click ranges and Space on several
+highlighted rows never tick a row rated Risky; such a row is ticked only by its own checkbox. A selection
+with Risky rows lists them with the reason and asks you to tick that you understand they can affect
+Windows or other programs before the Uninstall button works. Rows that cannot be removed automatically
+are greyed out without a checkbox. Stop lets the removals already running finish and starts no further one.
+
+When the run ends, a summary line counts what was removed, what failed and how many leftovers were
+removed. For every removed program the window then looks for what it left behind (its folders, registry
+keys and shortcuts) and lists them under the program's name. Only an item the scan is sure belongs to
+the removed program starts ticked. Remove leftovers takes the ticked ones: folders and shortcuts go to
+the recycle bin, registry keys are exported to the registry backup folder first. Items in Program Files,
+ProgramData or HKLM need administrator rights and are removed by the elevated helper. The window cannot
+start a new run while the removals or the leftover step are still working, and closing it mid-run does
+not stop them.
+
 ## Cleanup categories
 
 The cleanup window groups its targets into seven sections. None of them touches your own folders

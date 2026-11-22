@@ -80,4 +80,22 @@ public partial class MainViewModelTests
         Assert.DoesNotContain("DismissOnDeactivate.Attach", window);
         Assert.Contains("new CleanupWindow(cleanupViewModel), openStarted: openStarted, independent: true", dialogs);
     }
+
+    /// <summary>The uninstaller window runs long removals, so like the cleanup window it is independent: no dismissal by clicks in the main window.</summary>
+    [Fact]
+    public void The_uninstaller_window_is_not_closed_by_working_in_the_main_window()
+    {
+        var root = new DirectoryInfo(AppContext.BaseDirectory);
+        while (root is not null && !File.Exists(Path.Combine(root.FullName, "UltimateUpdater.slnx")))
+            root = root.Parent;
+        Assert.NotNull(root);
+
+        var source = Path.Combine(root!.FullName, "src", "UltimateUpdater");
+        var window = File.ReadAllText(Path.Combine(source, "Views", "Uninstall", "UninstallerWindow.xaml.cs"));
+        var dialogs = File.ReadAllText(Path.Combine(source, "ViewModels", "Main", "MainViewModel.Dialogs.cs"));
+
+        Assert.DoesNotContain("DismissOnDeactivate.Attach", window);
+        Assert.Contains("new UninstallerWindow(_uninstallerViewModel), openStarted: openStarted, independent: true", dialogs);
+        Assert.Contains("!_uninstallerViewModel.IsBusy", dialogs);
+    }
 }

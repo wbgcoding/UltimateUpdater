@@ -6,6 +6,11 @@ versioning: [SemVer](https://semver.org).
 ## [Unreleased]
 
 ### Updates
+- New uninstall window (toolbar button or Ctrl+U): lists installed programs, Store apps, package manager
+  entries, drivers and Windows updates with size, removal method and a risk level, and removes the
+  ticked ones. Entries rated Risky are never ticked by Select all and need an extra confirmation.
+  Afterwards it lists what the removed programs left behind (folders, registry keys, shortcuts) and
+  removes the ticked ones; only a certain match starts ticked, and a run ends with a one-line summary.
 - The cleanup window is a window of its own: starting a scan or working in the main window no longer
   closes it, and both can sit side by side with their own taskbar buttons.
 - Setup is about a fifth smaller and the portable program file about a third: it no longer carries a

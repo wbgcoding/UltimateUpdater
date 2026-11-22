@@ -43,6 +43,9 @@ it in one go. A separate cleanup window frees disk space and runs Windows' own m
   their own update page.
 - Comes with a cleanup window for temp files, caches, old drivers, old Python versions, the component
   store, drive optimisation and system repair, each with its size and a risk level.
+- Comes with an uninstall window (Ctrl+U) that lists installed programs, Store apps, package manager
+  entries, drivers and Windows updates with their size, how they would be removed and a risk level;
+  entries that can affect Windows or other programs need an extra confirmation.
 - Lets you undo: an optional restore point before the first admin batch, a registry backup before
   registry cleanup, a driver export before a driver package is removed, and a rollback to the previous
   version for winget packages.

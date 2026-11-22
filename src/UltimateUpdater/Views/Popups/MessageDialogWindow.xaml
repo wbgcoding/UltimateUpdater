@@ -59,6 +59,10 @@
                                TextWrapping="Wrap" LineHeight="19"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 </ScrollViewer>
+                <CheckBox Margin="0,14,0,0" IsChecked="{Binding Acknowledged}"
+                          Visibility="{Binding HasAcknowledge, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="{Binding AcknowledgeText}" TextWrapping="Wrap"/>
+                </CheckBox>
             </StackPanel>
         </Grid>
 
@@ -107,6 +111,7 @@
                        Content="{Binding SecondaryText}"
                        Visibility="{Binding HasSecondary, Converter={StaticResource BoolToVisibility}}"/>
             <ui:Button x:Name="PrimaryButton" Click="OnPrimary" Appearance="Primary" MinWidth="96"
+                       IsEnabled="{Binding CanConfirm}"
                        Content="{Binding PrimaryText}"/>
         </StackPanel>
     </Grid>

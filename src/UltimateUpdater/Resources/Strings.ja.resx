@@ -2563,4 +2563,124 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="UninstallRiskOrdinary" xml:space="preserve">
     <value>既知の依存関係のない通常のプログラムです。</value>
   </data>
+  <data name="UninstallerTitle" xml:space="preserve">
+    <value>プログラムのアンインストール</value>
+  </data>
+  <data name="ToolbarUninstallerLabel" xml:space="preserve">
+    <value>アンインストール</value>
+  </data>
+  <data name="UninstallerSearchPlaceholder" xml:space="preserve">
+    <value>プログラムを検索…</value>
+  </data>
+  <data name="UninstallerSelectAll" xml:space="preserve">
+    <value>すべて選択</value>
+  </data>
+  <data name="UninstallerSelectNone" xml:space="preserve">
+    <value>選択を解除</value>
+  </data>
+  <data name="UninstallerSelectedCount" xml:space="preserve">
+    <value>{0} 件を選択</value>
+  </data>
+  <data name="UninstallerColName" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="UninstallerColPublisher" xml:space="preserve">
+    <value>発行元</value>
+  </data>
+  <data name="UninstallerColVersion" xml:space="preserve">
+    <value>バージョン</value>
+  </data>
+  <data name="UninstallerColSize" xml:space="preserve">
+    <value>サイズ</value>
+  </data>
+  <data name="UninstallerColInstalled" xml:space="preserve">
+    <value>インストール日</value>
+  </data>
+  <data name="UninstallerColMethod" xml:space="preserve">
+    <value>方法</value>
+  </data>
+  <data name="UninstallerColRisk" xml:space="preserve">
+    <value>リスク</value>
+  </data>
+  <data name="UninstallerMethodSilent" xml:space="preserve">
+    <value>サイレント</value>
+  </data>
+  <data name="UninstallerMethodOwnWindow" xml:space="preserve">
+    <value>独自のウィンドウを表示</value>
+  </data>
+  <data name="UninstallerMethodCannot" xml:space="preserve">
+    <value>自動では削除できません</value>
+  </data>
+  <data name="UninstallerSectionPrograms" xml:space="preserve">
+    <value>プログラムとアプリ</value>
+  </data>
+  <data name="UninstallerSectionPackages" xml:space="preserve">
+    <value>パッケージマネージャー</value>
+  </data>
+  <data name="UninstallerSectionDrivers" xml:space="preserve">
+    <value>ドライバー</value>
+  </data>
+  <data name="UninstallerSectionUpdates" xml:space="preserve">
+    <value>Windows 更新プログラム</value>
+  </data>
+  <data name="UninstallerButton" xml:space="preserve">
+    <value>選択をアンインストール</value>
+  </data>
+  <data name="UninstallerConfirm" xml:space="preserve">
+    <value>{0} 件をアンインストールしますか? サイレントモードのないプログラムは独自のウィンドウを表示します。</value>
+  </data>
+  <data name="UninstallerAcknowledge" xml:space="preserve">
+    <value>これらが Windows や他のプログラムに影響する可能性があることを理解しています。</value>
+  </data>
+  <data name="UninstallerLoading" xml:space="preserve">
+    <value>インストール済みのプログラムを読み込み中…</value>
+  </data>
+  <data name="UninstallerEmpty" xml:space="preserve">
+    <value>インストール済みの項目は見つかりませんでした。</value>
+  </data>
+  <data name="UninstallerNoMatch" xml:space="preserve">
+    <value>検索に一致するプログラムはありません。</value>
+  </data>
+  <data name="UninstallerStop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="UninstallerStateWaiting" xml:space="preserve">
+    <value>待機中</value>
+  </data>
+  <data name="UninstallerStateRunning" xml:space="preserve">
+    <value>削除中…</value>
+  </data>
+  <data name="UninstallerStateRemoved" xml:space="preserve">
+    <value>削除済み</value>
+  </data>
+  <data name="UninstallerStateFailed" xml:space="preserve">
+    <value>失敗</value>
+  </data>
+  <data name="UninstallerStateNeedsRestart" xml:space="preserve">
+    <value>削除済み、再起動が必要</value>
+  </data>
+  <data name="UninstallerStateNotStarted" xml:space="preserve">
+    <value>未開始</value>
+  </data>
+  <data name="UninstallerSummary" xml:space="preserve">
+    <value>{0} 件削除、{1} 件失敗、残りファイル {2} 件削除</value>
+  </data>
+  <data name="UninstallerRemoveLeftovers" xml:space="preserve">
+    <value>残りを削除</value>
+  </data>
+  <data name="UninstallerLeftoversHeading" xml:space="preserve">
+    <value>見つかった残り</value>
+  </data>
+  <data name="UninstallerLeftoversScanning" xml:space="preserve">
+    <value>残りを検索中…</value>
+  </data>
+  <data name="UninstallerLeftoverFolder" xml:space="preserve">
+    <value>フォルダー</value>
+  </data>
+  <data name="UninstallerLeftoverRegistry" xml:space="preserve">
+    <value>レジストリキー</value>
+  </data>
+  <data name="UninstallerLeftoverShortcut" xml:space="preserve">
+    <value>ショートカット</value>
+  </data>
 </root>

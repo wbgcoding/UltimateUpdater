@@ -31,6 +31,7 @@
         <KeyBinding Key="Enter" Modifiers="Control" Command="{Binding InstallSelectedCommand}"/>
         <KeyBinding Key="F" Modifiers="Control" Command="{x:Static main:MainWindow.FocusSearchCommand}"/>
         <KeyBinding Key="L" Modifiers="Control" Command="{Binding ShowCleanupCommand}"/>
+        <KeyBinding Key="U" Modifiers="Control" Command="{Binding ShowUninstallerCommand}"/>
         <KeyBinding Key="H" Modifiers="Control" Command="{Binding ShowHistoryCommand}"/>
         <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding ShowSettingsCommand}"/>
         <KeyBinding Key="F1" Command="{x:Static main:MainWindow.ShowShortcutsCommand}"/>

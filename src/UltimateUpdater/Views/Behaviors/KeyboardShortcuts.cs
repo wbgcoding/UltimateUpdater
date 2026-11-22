@@ -24,6 +24,7 @@ public static class KeyboardShortcuts
         new("InstallSelectedButton", "Ctrl+Enter", Key.Enter, ModifierKeys.Control),
         new("SearchPlaceholder", "Ctrl+F", Key.F, ModifierKeys.Control),
         new("CleanupTitle", "Ctrl+L", Key.L, ModifierKeys.Control),
+        new("UninstallerTitle", "Ctrl+U", Key.U, ModifierKeys.Control),
         new("HistoryButton", "Ctrl+H", Key.H, ModifierKeys.Control),
         new("SettingsButton", "Ctrl+,", Key.OemComma, ModifierKeys.Control),
         new("ShortcutsTitle", "F1", Key.F1, ModifierKeys.None),

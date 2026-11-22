@@ -68,7 +68,8 @@ public static class Dialogs
         string body,
         string? confirmText = null,
         string? cancelText = null,
-        bool destructive = false)
+        bool destructive = false,
+        string? acknowledgeText = null)
     {
         var vm = new MessageDialogViewModel(
             destructive ? DialogKind.Warning : DialogKind.Question,
@@ -77,7 +78,8 @@ public static class Dialogs
             body,
             confirmText ?? L("DialogYes"),
             cancelText ?? L("DialogCancel"),
-            destructive: destructive);
+            destructive: destructive,
+            acknowledgeText: acknowledgeText);
 
         return Show(vm) == true;
     }

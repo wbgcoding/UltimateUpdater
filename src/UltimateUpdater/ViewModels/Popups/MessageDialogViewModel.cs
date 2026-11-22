@@ -53,6 +53,18 @@ public partial class MessageDialogViewModel : ObservableObject
     [ObservableProperty]
     private bool copied;
 
+    /// <summary>A sentence the user must tick before the primary button works (a removal that can affect Windows). Null: no checkbox.</summary>
+    public string? AcknowledgeText { get; }
+
+    public bool HasAcknowledge => !string.IsNullOrEmpty(AcknowledgeText);
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConfirm))]
+    private bool acknowledged;
+
+    /// <summary>Whether the primary button may be pressed: always, unless a sentence is still unticked.</summary>
+    public bool CanConfirm => !HasAcknowledge || Acknowledged;
+
     public MessageDialogViewModel(
         DialogKind kind,
         string title,
@@ -62,8 +74,10 @@ public partial class MessageDialogViewModel : ObservableObject
         string? secondaryText = null,
         string? details = null,
         bool destructive = false,
-        string? tertiaryText = null)
+        string? tertiaryText = null,
+        string? acknowledgeText = null)
     {
+        AcknowledgeText = acknowledgeText;
         Kind = kind;
         Title = title;
         Headline = headline;

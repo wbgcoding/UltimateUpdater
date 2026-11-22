@@ -187,6 +187,12 @@
                       </StackPanel>
                     </ui:Button.Content>
                 </ui:Button>
+                <ui:Button x:Name="ToolbarUninstallerButton" Command="{Binding ShowUninstallerCommand}" Appearance="Secondary" Padding="11,8" Margin="0,0,8,0"
+                           Content="{Binding Loc[ToolbarUninstallerLabel]}"
+                           ToolTip="{Binding Loc[UninstallerTitle], Converter={StaticResource ShortcutTooltip}, ConverterParameter=UninstallerTitle}"
+                           AutomationProperties.Name="{Binding Loc[UninstallerTitle]}">
+                    <ui:Button.Icon><ui:SymbolIcon Symbol="Delete24" FontSize="20"/></ui:Button.Icon>
+                </ui:Button>
                 <ui:Button Command="{Binding ShowHistoryCommand}" Appearance="Secondary" Padding="11,8" Margin="0,0,8,0"
                            ToolTip="{Binding Loc[HistoryButton], Converter={StaticResource ShortcutTooltip}, ConverterParameter=HistoryButton}"
                            AutomationProperties.Name="{Binding Loc[HistoryButton]}">

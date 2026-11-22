@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using UltimateUpdater.Models;
 using UltimateUpdater.Services.Sources;
+using UltimateUpdater.Services.Uninstall;
 
 namespace UltimateUpdater.ViewModels.Main;
 
@@ -68,6 +69,29 @@ public partial class MainViewModel
         // Independent, not owned: an owned window floats above the main one, minimises with it and closes on a click in the main window, so starting a scan there would take the cleanup away. Unowned, both windows work side by side with their own taskbar buttons.
         ShowOwned(new CleanupWindow(cleanupViewModel), openStarted: openStarted, independent: true);
     }
+
+    /// <summary>The uninstaller window. Unowned and independent like the cleanup window: a removal can run for minutes and the main window stays usable beside it. The view model outlives the window, so closing it mid-run keeps the run going and reopening shows it again; a finished or idle one is rebuilt so the list never opens stale.</summary>
+    [RelayCommand]
+    private void ShowUninstaller()
+    {
+        if (IsOpen<UninstallerWindow>())
+            return;
+
+        var openStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+        if (_uninstallerViewModel is null || !_uninstallerViewModel.IsBusy)
+        {
+            _uninstallerViewModel?.Discard();
+            _uninstallerViewModel = new UninstallerViewModel(
+                UninstallerBackendOverride?.Invoke() ?? new UninstallerBackend(_logging, _elevated, _settings), _logging);
+        }
+
+        ShowOwned(new UninstallerWindow(_uninstallerViewModel), openStarted: openStarted, independent: true);
+    }
+
+    private UninstallerViewModel? _uninstallerViewModel;
+
+    /// <summary>Lets a test open the window on a fake machine.</summary>
+    internal Func<IUninstallerBackend>? UninstallerBackendOverride { get; set; }
 
     /// <summary>The view model the dialog opens on. Busy, not merely cleaning: a dialog reopened while still measuring must reuse it, or its scan would race the old one over the same folders. Whatever is still going is picked back up; only a finished dialog, or none, starts fresh. A prescanned one is kept while its result is fresh and untouched, so opening it costs no new measuring (the admin targets the prescan left out are measured on open).</summary>
     internal CleanupViewModel EnsureCleanupViewModel()
