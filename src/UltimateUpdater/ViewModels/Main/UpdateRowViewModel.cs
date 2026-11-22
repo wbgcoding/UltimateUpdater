@@ -379,8 +379,18 @@ public partial class UpdateRowViewModel : ObservableObject
     /// <summary>Whether the row can launch the installed program: the source knows how, or an executable was resolved.</summary>
     public bool CanStart => (_actions?.CanStart(Item) ?? false) || !string.IsNullOrEmpty(LaunchTargetPath);
 
-    /// <summary>Whether the source can remove this item (every package manager, Steam, launcher clients).</summary>
-    public bool CanUninstall => _actions?.CanUninstall(Item) ?? false;
+    /// <summary>Whether the item can be removed: its source has a removal of its own, or the row maps to exactly one installed program the uninstaller can remove (<see cref="IRowActions.CanUninstallMapped"/>).</summary>
+    public bool CanUninstall => (_actions?.CanUninstall(Item) ?? false) || (_actions?.CanUninstallMapped(this) ?? false);
+
+    /// <summary>The row's context menu opened: a row that could map to an installed program has that looked up now, not while the table was built.</summary>
+    public void OnContextMenuOpened() => _actions?.LoadUninstallMapping(this);
+
+    /// <summary>The installed programs became known: the row asks again whether it can be removed.</summary>
+    internal void RefreshUninstallAvailability()
+    {
+        OnPropertyChanged(nameof(CanUninstall));
+        UninstallCommand.NotifyCanExecuteChanged();
+    }
 
     [RelayCommand(CanExecute = nameof(CanStart))]
     private void Start() => _actions?.Start(this);

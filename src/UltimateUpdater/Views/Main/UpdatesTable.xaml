@@ -67,7 +67,7 @@
              outside the visual tree, so it takes its DataContext from the row that opened it
              (PlacementTarget.DataContext below). The Steam sub-row's smaller 3-item menu is deliberately its own
              ContextMenu. -->
-        <ContextMenu x:Key="RowActionsMenu" Style="{StaticResource RowContextMenu}"
+        <ContextMenu x:Key="RowActionsMenu" Style="{StaticResource RowContextMenu}" Opened="RowActionsMenu_Opened"
                      DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
             <MenuItem Style="{StaticResource RowMenuItem}"
                       Header="{Binding StartHeader}" Command="{Binding StartCommand}"

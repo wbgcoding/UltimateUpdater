@@ -93,8 +93,14 @@ public class UninstallerViewModelTests
                 ?? Task.FromResult(new UninstallLeftoverResult(groups.Sum(group => group.Items.Count), 0, 0));
         }
 
-        public Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<UninstallListing>>(listings);
+        /// <summary>How often the installed programs were listed.</summary>
+        public int ListCalls { get; private set; }
+
+        public Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken)
+        {
+            ListCalls++;
+            return Task.FromResult<IReadOnlyList<UninstallListing>>(listings);
+        }
 
         public UninstallRunner CreateRunner(Func<InstalledProgramEntry, UninstallPlan> plan)
         {

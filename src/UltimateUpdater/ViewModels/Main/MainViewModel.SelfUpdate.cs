@@ -303,7 +303,7 @@ public partial class MainViewModel
     /// <summary>Install work counts from the moment it owns the install machinery or has rows waiting for it, not only while <see cref="IsInstalling"/> is set: a solo activity clears that flag just before it hands queued rows to a new batch.</summary>
     internal bool WorkIsRunning =>
         IsInstalling || _installActivityRunning || _installPending.Count > 0 || _installPreflightsOpen > 0
-        || IsCleanupRunning || DefragRunState.IsRunning;
+        || _mappedUninstalls.Count > 0 || IsCleanupRunning || DefragRunState.IsRunning;
 
     /// <summary>How many pre-flight dialogs are open. The rows are not queued yet, but the request is already work that applying would cut off.</summary>
     private int _installPreflightsOpen;

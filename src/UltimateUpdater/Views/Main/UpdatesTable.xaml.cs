@@ -31,6 +31,13 @@ public partial class UpdatesTable
         }
     }
 
+    /// <summary>A row's menu opened: a row that could map to an installed program has it looked up now (once per scan), so "Uninstall" appears only when it fits.</summary>
+    private void RowActionsMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.ContextMenu { DataContext: UpdateRowViewModel row })
+            row.OnContextMenuOpened();
+    }
+
     /// <summary>Remembers a group's collapse state so the next rebuild keeps it.</summary>
     private void OnGroupExpanderToggled(object sender, RoutedEventArgs e)
     {

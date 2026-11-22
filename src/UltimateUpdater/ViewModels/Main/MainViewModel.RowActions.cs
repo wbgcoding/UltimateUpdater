@@ -450,7 +450,11 @@ public partial class MainViewModel
     void IRowActions.InstallSingle(UpdateRowViewModel row) => _ = Background.Run(EnqueueInstallAsync([row]), _logging, "install single");
 
     // The per-row "stop this one" button; the rest of the queue keeps running.
-    void IRowActions.CancelSingle(UpdateRowViewModel row) => _installQueue.CancelItem(row.Item.SourceId, row.Item.Id);
+    void IRowActions.CancelSingle(UpdateRowViewModel row)
+    {
+        if (!CancelMappedUninstall(row))
+            _installQueue.CancelItem(row.Item.SourceId, row.Item.Id);
+    }
 
     // The Start and Uninstall entries on a row's context menu.
 
@@ -583,6 +587,13 @@ public partial class MainViewModel
         if (UninstallBlockedForRow(row))
         {
             Dialogs.Warn(Loc["UninstallBlockedByActivity"]);
+            return;
+        }
+
+        // A row whose source has no removal of its own goes through the uninstaller (MainViewModel.RowUninstall.cs).
+        if (UsesMappedUninstall(row.Item))
+        {
+            await UninstallMappedRowAsync(row);
             return;
         }
 

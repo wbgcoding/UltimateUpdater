@@ -17,6 +17,16 @@ public interface IRowActions
 
     void Uninstall(UpdateRowViewModel row);
 
+    /// <summary>True when the row's source has no removal of its own but the row maps to exactly one installed
+    /// program the uninstaller can remove. False until <see cref="LoadUninstallMapping"/> has read the installed programs.</summary>
+    bool CanUninstallMapped(UpdateRowViewModel row) => false;
+
+    /// <summary>Reads the installed programs (once per scan) for a row that could map to one, then tells the row to
+    /// ask again. Called when the row's context menu opens; does nothing for any other row.</summary>
+    void LoadUninstallMapping(UpdateRowViewModel row)
+    {
+    }
+
     /// <summary>Queues just this one row for installation (joining any batch already running).</summary>
     void InstallSingle(UpdateRowViewModel row)
     {

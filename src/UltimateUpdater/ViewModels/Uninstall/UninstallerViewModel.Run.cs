@@ -161,35 +161,20 @@ public sealed partial class UninstallerViewModel
     private async Task<bool> PrepareRestorePointAsync(IReadOnlyList<UninstallRowViewModel> rows, CancellationToken cancellationToken)
     {
         RestorePointText = string.Empty;
-        var wanted = UninstallRestorePointPolicy.Wanted(
-            _backend.BackupMode,
+        var step = await UninstallRestorePointStep.RunAsync(
+            _backend,
             anyElevated: rows.Any(row => row.Listing.Plan is { IsRunnable: true, Elevated: true }),
-            anyRisky: rows.Any(row => row.IsRisky));
-        if (!wanted)
-            return true;
+            anyRisky: rows.Any(row => row.IsRisky),
+            ConfirmWithoutRestorePoint,
+            _logging,
+            onCreating: () => RestorePointText = Loc["InstallRestorePointStep"],
+            cancellationToken);
 
-        RestorePointText = Loc["InstallRestorePointStep"];
-        UninstallRestorePointResult result;
-        try
-        {
-            result = await _backend.CreateRestorePointAsync(cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            RestorePointText = string.Empty;
-            return false;
-        }
-        catch (Exception ex)
-        {
-            _logging.Warn($"Restore point before uninstalling failed: {ex.Message}");
-            result = new UninstallRestorePointResult(UninstallRestorePointOutcome.Failed);
-        }
-
-        RestorePointText = result is { Outcome: UninstallRestorePointOutcome.Reused, At: { } at }
+        RestorePointText = step.ReusedAt is { } at
             ? string.Format(Loc["UninstallerRestorePointReused"], at.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentUICulture))
             : string.Empty;
 
-        return result.Outcome != UninstallRestorePointOutcome.Failed || ConfirmWithoutRestorePoint();
+        return step.Proceed;
     }
 
     private void Post(Action action)

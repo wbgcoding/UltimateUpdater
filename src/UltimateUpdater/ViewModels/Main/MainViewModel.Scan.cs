@@ -366,6 +366,8 @@ public partial class MainViewModel
         // Only a finished scan restarts the interval: a stopped scan checked nothing.
         if (completedCleanly)
         {
+            // The installed programs the rows were mapped to may have changed: the next context menu reads them again.
+            _rowUninstallInventory?.Invalidate();
             ScanCompleted?.Invoke();
             StartCleanupPrescanIfWanted();
         }
