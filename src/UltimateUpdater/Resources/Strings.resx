@@ -2683,4 +2683,49 @@ Continue with admin rights?</value>
   <data name="UninstallerLeftoverShortcut" xml:space="preserve">
     <value>Shortcut</value>
   </data>
+  <data name="SettingsUninstallBackup" xml:space="preserve">
+    <value>Backup before uninstalling</value>
+  </data>
+  <data name="SettingsUninstallBackupDesc" xml:space="preserve">
+    <value>Automatic only for programs that need admin rights.</value>
+  </data>
+  <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
+    <value>Automatic (recommended)</value>
+  </data>
+  <data name="SettingsUninstallBackupAlways" xml:space="preserve">
+    <value>Always create a restore point</value>
+  </data>
+  <data name="SettingsUninstallBackupOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="UninstallerRestorePointReused" xml:space="preserve">
+    <value>Using the restore point from {0}</value>
+  </data>
+  <data name="UninstallerRestorePointFailed" xml:space="preserve">
+    <value>No restore point could be created. Uninstall anyway?</value>
+  </data>
+  <data name="UninstallerRestorePointFailedButton" xml:space="preserve">
+    <value>Uninstall anyway</value>
+  </data>
+  <data name="UninstallerLeftoversRestorable" xml:space="preserve">
+    <value>Removed leftovers can be restored for 14 days from the history.</value>
+  </data>
+  <data name="HistoryLeftoversRemoved" xml:space="preserve">
+    <value>Leftovers removed</value>
+  </data>
+  <data name="HistoryRestoreLeftovers" xml:space="preserve">
+    <value>Restore leftovers</value>
+  </data>
+  <data name="HistoryRestoreResult" xml:space="preserve">
+    <value>Restored: {0}. Already present and left alone: {1}. Failed: {2}.</value>
+  </data>
+  <data name="HistoryRestoreNothing" xml:space="preserve">
+    <value>Nothing to restore: the leftovers were restored already or are no longer stored.</value>
+  </data>
+  <data name="HistoryRestoreMachineSkipped" xml:space="preserve">
+    <value>The machine-wide items were not restored because the administrator prompt was declined or failed.</value>
+  </data>
+  <data name="HistoryRestoreFailed" xml:space="preserve">
+    <value>The leftovers could not be restored.</value>
+  </data>
 </root>

@@ -66,6 +66,21 @@ ProgramData or HKLM need administrator rights and are removed by the elevated he
 start a new run while the removals or the leftover step are still working, and closing it mid-run does
 not stop them.
 
+Before the removals start, the window can create a system restore point. Settings, Install, Backup before
+uninstalling decides when: Automatic (the default) creates one when a program that needs administrator
+rights is among the ticked rows or a row rated Risky is, Always creates one for every run, Off never does.
+At most one restore point is made per 24 hours, shared with the install restore point: a run within that
+time says which point it uses instead. If Windows cannot create one, the window asks whether to uninstall
+anyway; Cancel leaves everything as it was. Every removed program is also written to the history.
+
+Leftovers you remove after an uninstall are not deleted at once: folders and shortcuts are moved into a quarantine
+(per user below the local app data folder, for all users below ProgramData, readable by administrators only) and
+registry keys are exported there before they are removed. In the history, the entry of the removed leftovers
+has a Restore leftovers button for 14 days: it moves the items back and imports the registry exports. A place
+that exists again is left alone and counted, never overwritten; restoring all-users items asks for administrator
+rights. Quarantine folders older than 14 days are deleted at the next removal. An item that cannot be moved
+(another drive, a locked file) goes to the recycle bin as before and is not restorable from the history.
+
 ## Cleanup categories
 
 The cleanup window groups its targets into seven sections. None of them touches your own folders

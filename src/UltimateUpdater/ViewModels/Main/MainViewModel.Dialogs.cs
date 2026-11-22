@@ -42,7 +42,8 @@ public partial class MainViewModel
                 _history,
                 pinningCapableSourceIds,
                 entry => DowngradeFromHistory(entry.SourceId, entry.ItemId, entry.Name, entry.ToVersion, entry.FromVersion!),
-                _settings);
+                _settings,
+                entry => _ = RestoreLeftoversFromHistoryAsync(entry));
         }
         finally
         {
@@ -51,6 +52,26 @@ public partial class MainViewModel
 
         // Released with its window: it holds every parsed history row.
         ShowOwned(new HistoryWindow(_historyViewModel, _logging), onClosed: () => _historyViewModel = null, openStarted);
+    }
+
+    /// <summary>"Restore leftovers" on a history entry: the user items are put back here, the machine items by the elevated helper. Nothing existing is overwritten; the result is told in one dialog.</summary>
+    private async Task RestoreLeftoversFromHistoryAsync(HistoryEntry entry)
+    {
+        try
+        {
+            var outcome = await new UninstallRestoreService(_logging, _elevated)
+                .RestoreAsync(entry.QuarantineUser, entry.QuarantineMachine, CancellationToken.None);
+            var headline = Loc["HistoryRestoreLeftovers"];
+            if (outcome.IsClean)
+                Dialogs.Success(headline, outcome.Describe());
+            else
+                Dialogs.Warn(headline, outcome.Describe());
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logging.Warn($"Restoring leftovers failed: {ex.Message}");
+            Dialogs.Warn(Loc["HistoryRestoreLeftovers"], Loc["HistoryRestoreFailed"]);
+        }
     }
 
     /// <summary>The cleanup dialog. It measures on open and deletes only after its own second, red confirmation; nothing here starts a cleanup and there is no automatic one. The view model outlives the window on purpose: closing the dialog mid-run leaves the cleaning going (the toolbar broom shows it) and reopening picks the run back up. A finished run, or none, starts fresh so the dialog never opens on a stale result.</summary>
@@ -82,7 +103,7 @@ public partial class MainViewModel
         {
             _uninstallerViewModel?.Discard();
             _uninstallerViewModel = new UninstallerViewModel(
-                UninstallerBackendOverride?.Invoke() ?? new UninstallerBackend(_logging, _elevated, _settings), _logging);
+                UninstallerBackendOverride?.Invoke() ?? new UninstallerBackend(_logging, _elevated, _settings, _history), _logging);
         }
 
         ShowOwned(new UninstallerWindow(_uninstallerViewModel), openStarted: openStarted, independent: true);

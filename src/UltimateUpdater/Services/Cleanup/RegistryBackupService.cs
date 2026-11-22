@@ -61,11 +61,12 @@ public static partial class RegistryBackupService
     /// backups beyond <paramref name="retentionCount"/>. Returns the backup file path with the roots it
     /// holds, or null when there was nothing to back up (none of the keys exist) OR when a key that DOES
     /// exist could not be exported, the caller must not delete anything in the latter case, and there is
-    /// nothing to delete in the former either way.
+    /// nothing to delete in the former either way. The folder must lie inside the user profile, or inside
+    /// <paramref name="allowedRoot"/> when one is given (the leftover quarantine's own folder).
     /// </summary>
     internal static async Task<RegistryBackupResult?> BackupRootsBeforeWriteAsync(
         IReadOnlyList<string> rootKeys, string backupFolder, int retentionCount, LoggingService logging,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, string? allowedRoot = null)
     {
         if (rootKeys.Count == 0)
             return null;
@@ -74,7 +75,7 @@ public static partial class RegistryBackupService
         // check an edited (or tampered) settings.json could point an ELEVATED process at an arbitrary path,
         // e.g. a system directory the user could not otherwise write to. Keep the elevated write inside
         // the same boundary the user already fully owns.
-        if (!IsWithinUserProfile(backupFolder))
+        if (!IsWithinUserProfile(backupFolder, allowedRoot))
         {
             logging.Error($"Registry cleanup: refusing to back up to '{backupFolder}', outside the user profile.");
             return null;
@@ -728,7 +729,7 @@ public static partial class RegistryBackupService
 
     /// <summary><c>reg export</c> always writes the long hive name, never the <c>HKLM</c>/<c>HKCU</c>
     /// shorthand this app's own key paths use internally.</summary>
-    private static string ToFullHiveName(string keyPath)
+    internal static string ToFullHiveName(string keyPath)
     {
         var separator = keyPath.IndexOf('\\');
         var (hive, rest) = separator <= 0 ? (keyPath, string.Empty) : (keyPath[..separator], keyPath[separator..]);

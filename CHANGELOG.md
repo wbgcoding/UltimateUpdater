@@ -11,6 +11,12 @@ versioning: [SemVer](https://semver.org).
   ticked ones. Entries rated Risky are never ticked by Select all and need an extra confirmation.
   Afterwards it lists what the removed programs left behind (folders, registry keys, shortcuts) and
   removes the ticked ones; only a certain match starts ticked, and a run ends with a one-line summary.
+- Uninstalling can create a system restore point first (Settings, Install, Backup before uninstalling:
+  Automatic, Always or Off). It is shared with the 24 hour limit of the install restore point, asks
+  before going on without one, and every removed program is written to the history.
+- Removed leftovers of a program are moved into a quarantine instead of deleted and can be restored for 14
+  days from the history (button Restore leftovers). Nothing existing is overwritten; registry keys are exported
+  first, and folders older than 14 days are deleted at the next removal.
 - The cleanup window is a window of its own: starting a scan or working in the main window no longer
   closes it, and both can sit side by side with their own taskbar buttons.
 - Setup is about a fifth smaller and the portable program file about a third: it no longer carries a

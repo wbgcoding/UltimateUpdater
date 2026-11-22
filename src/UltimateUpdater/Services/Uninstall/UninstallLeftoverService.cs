@@ -8,8 +8,17 @@ namespace UltimateUpdater.Services.Uninstall;
 /// <summary>What a removed program left behind: the program and every trace the scan found (or, for a removal, the ones the user ticked).</summary>
 public sealed record UninstallLeftoverGroup(InstalledProgramEntry Entry, IReadOnlyList<LeftoverItem> Items);
 
-/// <summary>What one leftover removal did: items removed, items kept (failed or no longer found) and bytes freed.</summary>
-public sealed record UninstallLeftoverResult(int Removed, int Skipped, long FreedBytes);
+/// <summary>What one leftover removal did: items removed, items kept (failed or no longer found) and bytes freed.
+/// <see cref="Quarantined"/> names, per program, the quarantine folders the removed items can be restored from.</summary>
+public sealed record UninstallLeftoverResult(
+    int Removed, int Skipped, long FreedBytes, IReadOnlyList<QuarantinedLeftovers>? Quarantined = null)
+{
+    /// <summary>The quarantine folders of this removal; empty when nothing was moved into one.</summary>
+    public IReadOnlyList<QuarantinedLeftovers> QuarantinedOrEmpty => Quarantined ?? [];
+}
+
+/// <summary>The quarantine folders (names only) one removed program's leftovers went into, per lane.</summary>
+public sealed record QuarantinedLeftovers(string Program, string? UserFolder, string? MachineFolder);
 
 /// <summary>
 /// The uninstaller's use of the leftover scan and the leftover remover. The scan runs in this process (reading
@@ -55,23 +64,32 @@ internal sealed class UninstallLeftoverService(
             var remover = new LeftoverRemover(LeftoverScanner.ForThisMachine(), roots, logging);
             int removed = 0, skipped = 0;
             long freed = 0;
+            var quarantined = new List<QuarantinedLeftovers>();
+
+            // The user folders of last time's removals past their 14 days go first; the machine ones go with the
+            // helper's next run.
+            QuarantineStore.Prune(QuarantineStore.UserRoot(), DateTime.Now, logging);
 
             foreach (var group in groups)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var subject = LeftoverSubject.From(group.Entry);
 
+                string? userFolder = null;
                 var userPicks = Picks(group, LeftoverLane.User);
                 if (userPicks.Count > 0)
                 {
                     try
                     {
+                        using var quarantine = QuarantineSession.OpenUser(group.Entry.Name, logging);
                         var result = await remover.RemoveAsync(
                             subject, claims, LeftoverLane.User, userPicks,
-                            settings.BackupFolder, settings.RetentionCount, cancellationToken);
+                            settings.BackupFolder, settings.RetentionCount, cancellationToken, quarantine);
                         removed += result.Removed;
                         skipped += result.Skipped;
                         freed += result.FreedBytes;
+                        if (quarantine is { HasItems: true })
+                            userFolder = quarantine.FolderName;
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {
@@ -80,6 +98,7 @@ internal sealed class UninstallLeftoverService(
                     }
                 }
 
+                string? machineFolder = null;
                 var machinePicks = Picks(group, LeftoverLane.Machine);
                 if (machinePicks.Count > 0)
                 {
@@ -87,10 +106,14 @@ internal sealed class UninstallLeftoverService(
                     removed += machine.Removed;
                     skipped += machine.Skipped;
                     freed += machine.FreedBytes;
+                    machineFolder = machine.QuarantinedOrEmpty.FirstOrDefault()?.MachineFolder;
                 }
+
+                if (userFolder is not null || machineFolder is not null)
+                    quarantined.Add(new QuarantinedLeftovers(group.Entry.Name, userFolder, machineFolder));
             }
 
-            return new UninstallLeftoverResult(removed, skipped, freed);
+            return new UninstallLeftoverResult(removed, skipped, freed, quarantined);
         },
         cancellationToken);
 
@@ -166,6 +189,10 @@ internal sealed class UninstallLeftoverService(
             return new UninstallLeftoverResult(0, picks.Count, 0);
         }
 
-        return new UninstallLeftoverResult(result.Files, result.Skipped, result.Freed);
+        // The folder name comes over the pipe; only a name with the quarantine shape is kept.
+        var machineFolder = QuarantineStore.IsFolderName(result.QuarantineFolder) ? result.QuarantineFolder : null;
+        return new UninstallLeftoverResult(
+            result.Files, result.Skipped, result.Freed,
+            machineFolder is null ? null : [new QuarantinedLeftovers(subject.Name, null, machineFolder)]);
     }
 }

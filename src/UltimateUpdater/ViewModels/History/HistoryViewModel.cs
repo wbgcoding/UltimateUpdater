@@ -5,12 +5,13 @@ using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using UltimateUpdater.Models.Settings;
+using UltimateUpdater.Services.Uninstall;
 
 namespace UltimateUpdater.ViewModels.History;
 
 public sealed partial class HistoryRowViewModel(
     HistoryEntry entry, bool canDowngrade = false, Action<HistoryEntry>? onDowngrade = null,
-    int unchangedCount = 0)
+    int unchangedCount = 0, Action<HistoryEntry>? onRestoreLeftovers = null)
     : ObservableObject
 {
     public string When => entry.Timestamp.LocalDateTime.ToString("g", CultureInfo.CurrentUICulture);
@@ -62,6 +63,7 @@ public sealed partial class HistoryRowViewModel(
         : entry.IsCancelled ? "RowCancelled"
         : !entry.Success ? "HistoryFailed"
         : entry.IsRollback ? "HistoryRolledBack"
+        : entry.Action == "leftovers" ? "HistoryLeftoversRemoved"
         : entry.Action == "uninstall" ? "HistoryUninstalled"
         : "HistorySucceeded"];
 
@@ -101,9 +103,21 @@ public sealed partial class HistoryRowViewModel(
     [RelayCommand(CanExecute = nameof(CanDowngrade))]
     private void Downgrade() => onDowngrade?.Invoke(entry);
 
+    /// <summary>Removed leftovers can be put back while their quarantine folder is within its 14 days.</summary>
+    public bool CanRestoreLeftovers => onRestoreLeftovers is not null
+        && entry is { Action: "leftovers", Success: true }
+        && (QuarantineStore.IsRestorable(entry.QuarantineUser, DateTime.Now)
+            || QuarantineStore.IsRestorable(entry.QuarantineMachine, DateTime.Now));
+
+    public string RestoreLeftoversHeader => LocalizationService.Instance["HistoryRestoreLeftovers"];
+
+    [RelayCommand(CanExecute = nameof(CanRestoreLeftovers))]
+    private void RestoreLeftovers() => onRestoreLeftovers?.Invoke(entry);
+
     /// <summary>The result word is read from the resources in code, so a language change has to re-raise it.</summary>
     public void RefreshLocalizedText()
     {
+        OnPropertyChanged(nameof(RestoreLeftoversHeader));
         OnPropertyChanged(nameof(When));
         OnPropertyChanged(nameof(SizeText));
         OnPropertyChanged(nameof(AutomationName));
@@ -205,8 +219,9 @@ public partial class HistoryViewModel : ObservableObject
         HistoryService history,
         IReadOnlySet<string>? pinningCapableSourceIds = null,
         Action<HistoryEntry>? onDowngrade = null,
-        SettingsService? settings = null)
-        : this(history.Read(), pinningCapableSourceIds, onDowngrade, settings)
+        SettingsService? settings = null,
+        Action<HistoryEntry>? onRestoreLeftovers = null)
+        : this(history.Read(), pinningCapableSourceIds, onDowngrade, settings, onRestoreLeftovers)
     {
     }
 
@@ -215,17 +230,19 @@ public partial class HistoryViewModel : ObservableObject
         HistoryService history,
         IReadOnlySet<string>? pinningCapableSourceIds = null,
         Action<HistoryEntry>? onDowngrade = null,
-        SettingsService? settings = null)
+        SettingsService? settings = null,
+        Action<HistoryEntry>? onRestoreLeftovers = null)
     {
         var read = await Task.Run(() => history.Read());
-        return new HistoryViewModel(read, pinningCapableSourceIds, onDowngrade, settings);
+        return new HistoryViewModel(read, pinningCapableSourceIds, onDowngrade, settings, onRestoreLeftovers);
     }
 
     private HistoryViewModel(
         IReadOnlyList<HistoryEntry> read,
         IReadOnlySet<string>? pinningCapableSourceIds,
         Action<HistoryEntry>? onDowngrade,
-        SettingsService? settings)
+        SettingsService? settings,
+        Action<HistoryEntry>? onRestoreLeftovers)
     {
         _settings = settings;
 
@@ -262,7 +279,7 @@ public partial class HistoryViewModel : ObservableObject
         }
 
         Entries = new ObservableCollection<HistoryRowViewModel>(
-            read.Select((e, i) => new HistoryRowViewModel(e, canDowngradeFlags[i], onDowngrade, unchangedCounts[i])));
+            read.Select((e, i) => new HistoryRowViewModel(e, canDowngradeFlags[i], onDowngrade, unchangedCounts[i], onRestoreLeftovers)));
 
         SourceFilters = Entries
             .Select(row => row.SourceId)

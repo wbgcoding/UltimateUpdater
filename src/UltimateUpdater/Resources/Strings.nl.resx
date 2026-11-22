@@ -2683,4 +2683,49 @@ Doorgaan met beheerdersrechten?</value>
   <data name="UninstallerLeftoverShortcut" xml:space="preserve">
     <value>Snelkoppeling</value>
   </data>
+  <data name="SettingsUninstallBackup" xml:space="preserve">
+    <value>Back-up vóór het verwijderen</value>
+  </data>
+  <data name="SettingsUninstallBackupDesc" xml:space="preserve">
+    <value>Automatisch maakt een herstelpunt wanneer programma's worden verwijderd die beheerdersrechten nodig hebben.</value>
+  </data>
+  <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
+    <value>Automatisch (aanbevolen)</value>
+  </data>
+  <data name="SettingsUninstallBackupAlways" xml:space="preserve">
+    <value>Altijd een herstelpunt maken</value>
+  </data>
+  <data name="SettingsUninstallBackupOff" xml:space="preserve">
+    <value>Uit</value>
+  </data>
+  <data name="UninstallerRestorePointReused" xml:space="preserve">
+    <value>Het herstelpunt van {0} wordt gebruikt</value>
+  </data>
+  <data name="UninstallerRestorePointFailed" xml:space="preserve">
+    <value>Er kon geen herstelpunt worden gemaakt. Toch verwijderen?</value>
+  </data>
+  <data name="UninstallerRestorePointFailedButton" xml:space="preserve">
+    <value>Toch verwijderen</value>
+  </data>
+  <data name="UninstallerLeftoversRestorable" xml:space="preserve">
+    <value>Verwijderde restanten kunnen 14 dagen lang vanuit de geschiedenis worden hersteld.</value>
+  </data>
+  <data name="HistoryLeftoversRemoved" xml:space="preserve">
+    <value>Restanten verwijderd</value>
+  </data>
+  <data name="HistoryRestoreLeftovers" xml:space="preserve">
+    <value>Restanten herstellen</value>
+  </data>
+  <data name="HistoryRestoreResult" xml:space="preserve">
+    <value>Hersteld: {0}. Al aanwezig en ongemoeid gelaten: {1}. Mislukt: {2}.</value>
+  </data>
+  <data name="HistoryRestoreNothing" xml:space="preserve">
+    <value>Niets te herstellen: de restanten zijn al hersteld of niet meer opgeslagen.</value>
+  </data>
+  <data name="HistoryRestoreMachineSkipped" xml:space="preserve">
+    <value>De items voor het hele systeem zijn niet hersteld omdat de beheerdersprompt is geweigerd of mislukte.</value>
+  </data>
+  <data name="HistoryRestoreFailed" xml:space="preserve">
+    <value>De restanten konden niet worden hersteld.</value>
+  </data>
 </root>

@@ -14,7 +14,7 @@ public sealed class ElevatedJob
 {
     public string Id { get; set; } = string.Empty;
 
-    /// <summary>"install", "uninstall-program", "cleanup" (and its per-lane variants "cleanup-repair", "cleanup-diskcleanup",
+    /// <summary>"install", "uninstall-program", "uninstall-restore", "cleanup" (and its per-lane variants "cleanup-repair", "cleanup-diskcleanup",
     /// "cleanup-defrag", "cleanup-registry"), or "control" to stop or hold one of those.</summary>
     public string Kind { get; set; } = string.Empty;
 
@@ -105,7 +105,7 @@ public static class ElevatedWorker
     {
         // An uninstall changes the machine like an install does: the same writer lock, so a program removal never
         // runs beside an install or a file cleanup (Windows Installer allows one machine-wide change at a time).
-        if (kind is "install" or "uninstall-program")
+        if (kind is "install" or "uninstall-program" or "uninstall-restore")
         {
             await InstallVsCleanupWriterLock.WaitAsync(token);
             return new WriterSlot();
@@ -296,7 +296,7 @@ public static class ElevatedWorker
     /// </summary>
     internal static bool IsExclusiveJob(ElevatedJob job) => job.Kind switch
     {
-        "install" or "uninstall-program" => true,
+        "install" or "uninstall-program" or "uninstall-restore" => true,
         "cleanup" or "cleanup-repair" or "cleanup-diskcleanup" or "cleanup-defrag" or "cleanup-registry" =>
             !IsReadOnlyCleanupCommand(job.Payload),
         _ => true,
@@ -319,7 +319,7 @@ public static class ElevatedWorker
     /// Extracted so an unrecognised kind can be tested without a live pipe.
     /// </summary>
     internal static bool IsRecognizedKind(string kind) =>
-        kind is "install" or "uninstall-program" or "cleanup" or "cleanup-repair" or "cleanup-diskcleanup"
+        kind is "install" or "uninstall-program" or "uninstall-restore" or "cleanup" or "cleanup-repair" or "cleanup-diskcleanup"
             or "cleanup-defrag" or "cleanup-registry" or "control";
 
     /// <summary>
@@ -755,6 +755,8 @@ public static class ElevatedWorker
                 await RunInstallAsync(job, writer, logging, control);
             else if (job.Kind == "uninstall-program")
                 await ProgramUninstallWorker.RunJobAsync(job.Payload, writer, job.Id, logging, control.Cancellation.Token);
+            else if (job.Kind == "uninstall-restore")
+                await QuarantineRestoreWorker.RunJobAsync(job.Payload, writer, job.Id, logging, control.Cancellation.Token);
             else
                 await RunCleanupAsync(job, writer, logging, control);
         }
@@ -801,7 +803,7 @@ public static class ElevatedWorker
     {
         while (TryDequeueLog(out var line))
         {
-            object message = job.Kind is "install" or "uninstall-program"
+            object message = job.Kind is "install" or "uninstall-program" or "uninstall-restore"
                 ? new InstallProgressMessage { Type = "log", Status = line }
                 : new CleanupWorkerMessage { Type = "log", Text = line };
             if (!Send(writer, job.Id, message))

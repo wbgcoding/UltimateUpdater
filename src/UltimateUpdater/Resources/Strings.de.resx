@@ -2683,4 +2683,49 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="UninstallerLeftoverShortcut" xml:space="preserve">
     <value>Verknüpfung</value>
   </data>
+  <data name="SettingsUninstallBackup" xml:space="preserve">
+    <value>Sicherung vor dem Deinstallieren</value>
+  </data>
+  <data name="SettingsUninstallBackupDesc" xml:space="preserve">
+    <value>Automatisch nur bei Programmen mit Admin-Rechten.</value>
+  </data>
+  <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
+    <value>Automatisch (empfohlen)</value>
+  </data>
+  <data name="SettingsUninstallBackupAlways" xml:space="preserve">
+    <value>Immer einen Wiederherstellungspunkt anlegen</value>
+  </data>
+  <data name="SettingsUninstallBackupOff" xml:space="preserve">
+    <value>Aus</value>
+  </data>
+  <data name="UninstallerRestorePointReused" xml:space="preserve">
+    <value>Nutzt den Wiederherstellungspunkt von {0}</value>
+  </data>
+  <data name="UninstallerRestorePointFailed" xml:space="preserve">
+    <value>Es konnte kein Wiederherstellungspunkt angelegt werden. Trotzdem deinstallieren?</value>
+  </data>
+  <data name="UninstallerRestorePointFailedButton" xml:space="preserve">
+    <value>Trotzdem deinstallieren</value>
+  </data>
+  <data name="UninstallerLeftoversRestorable" xml:space="preserve">
+    <value>Entfernte Reste lassen sich 14 Tage lang im Verlauf wiederherstellen.</value>
+  </data>
+  <data name="HistoryLeftoversRemoved" xml:space="preserve">
+    <value>Reste entfernt</value>
+  </data>
+  <data name="HistoryRestoreLeftovers" xml:space="preserve">
+    <value>Reste wiederherstellen</value>
+  </data>
+  <data name="HistoryRestoreResult" xml:space="preserve">
+    <value>Wiederhergestellt: {0}. Schon vorhanden und unverändert: {1}. Fehlgeschlagen: {2}.</value>
+  </data>
+  <data name="HistoryRestoreNothing" xml:space="preserve">
+    <value>Nichts wiederherzustellen: Die Reste sind schon zurückgeholt oder nicht mehr gespeichert.</value>
+  </data>
+  <data name="HistoryRestoreMachineSkipped" xml:space="preserve">
+    <value>Die Elemente für alle Benutzer wurden nicht wiederhergestellt, weil die Administratorabfrage abgelehnt wurde oder fehlschlug.</value>
+  </data>
+  <data name="HistoryRestoreFailed" xml:space="preserve">
+    <value>Die Reste konnten nicht wiederhergestellt werden.</value>
+  </data>
 </root>

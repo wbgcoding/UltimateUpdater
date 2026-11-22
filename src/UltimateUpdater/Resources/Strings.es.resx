@@ -2683,4 +2683,49 @@ Esto no se puede deshacer.</value>
   <data name="UninstallerLeftoverShortcut" xml:space="preserve">
     <value>Acceso directo</value>
   </data>
+  <data name="SettingsUninstallBackup" xml:space="preserve">
+    <value>Copia de seguridad antes de desinstalar</value>
+  </data>
+  <data name="SettingsUninstallBackupDesc" xml:space="preserve">
+    <value>Automático crea un punto de restauración cuando se quitan programas que necesitan derechos de administrador.</value>
+  </data>
+  <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
+    <value>Automático (recomendado)</value>
+  </data>
+  <data name="SettingsUninstallBackupAlways" xml:space="preserve">
+    <value>Crear siempre un punto de restauración</value>
+  </data>
+  <data name="SettingsUninstallBackupOff" xml:space="preserve">
+    <value>Desactivado</value>
+  </data>
+  <data name="UninstallerRestorePointReused" xml:space="preserve">
+    <value>Se usa el punto de restauración de {0}</value>
+  </data>
+  <data name="UninstallerRestorePointFailed" xml:space="preserve">
+    <value>No se pudo crear un punto de restauración. ¿Desinstalar de todos modos?</value>
+  </data>
+  <data name="UninstallerRestorePointFailedButton" xml:space="preserve">
+    <value>Desinstalar de todos modos</value>
+  </data>
+  <data name="UninstallerLeftoversRestorable" xml:space="preserve">
+    <value>Los restos eliminados se pueden restaurar durante 14 días desde el historial.</value>
+  </data>
+  <data name="HistoryLeftoversRemoved" xml:space="preserve">
+    <value>Restos eliminados</value>
+  </data>
+  <data name="HistoryRestoreLeftovers" xml:space="preserve">
+    <value>Restaurar restos</value>
+  </data>
+  <data name="HistoryRestoreResult" xml:space="preserve">
+    <value>Restaurados: {0}. Ya existentes y sin tocar: {1}. Con error: {2}.</value>
+  </data>
+  <data name="HistoryRestoreNothing" xml:space="preserve">
+    <value>Nada que restaurar: los restos ya se restauraron o ya no están guardados.</value>
+  </data>
+  <data name="HistoryRestoreMachineSkipped" xml:space="preserve">
+    <value>Los elementos de todo el equipo no se restauraron porque se rechazó la solicitud de administrador o falló.</value>
+  </data>
+  <data name="HistoryRestoreFailed" xml:space="preserve">
+    <value>No se pudieron restaurar los restos.</value>
+  </data>
 </root>

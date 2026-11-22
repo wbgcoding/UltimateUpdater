@@ -2683,4 +2683,49 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="UninstallerLeftoverShortcut" xml:space="preserve">
     <value>Skrót</value>
   </data>
+  <data name="SettingsUninstallBackup" xml:space="preserve">
+    <value>Kopia zapasowa przed odinstalowaniem</value>
+  </data>
+  <data name="SettingsUninstallBackupDesc" xml:space="preserve">
+    <value>Automatyczne tworzy punkt przywracania, gdy usuwane są programy wymagające uprawnień administratora.</value>
+  </data>
+  <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
+    <value>Automatycznie (zalecane)</value>
+  </data>
+  <data name="SettingsUninstallBackupAlways" xml:space="preserve">
+    <value>Zawsze twórz punkt przywracania</value>
+  </data>
+  <data name="SettingsUninstallBackupOff" xml:space="preserve">
+    <value>Wyłączone</value>
+  </data>
+  <data name="UninstallerRestorePointReused" xml:space="preserve">
+    <value>Używany jest punkt przywracania z {0}</value>
+  </data>
+  <data name="UninstallerRestorePointFailed" xml:space="preserve">
+    <value>Nie udało się utworzyć punktu przywracania. Odinstalować mimo to?</value>
+  </data>
+  <data name="UninstallerRestorePointFailedButton" xml:space="preserve">
+    <value>Odinstaluj mimo to</value>
+  </data>
+  <data name="UninstallerLeftoversRestorable" xml:space="preserve">
+    <value>Usunięte pozostałości można przywrócić z historii przez 14 dni.</value>
+  </data>
+  <data name="HistoryLeftoversRemoved" xml:space="preserve">
+    <value>Pozostałości usunięte</value>
+  </data>
+  <data name="HistoryRestoreLeftovers" xml:space="preserve">
+    <value>Przywróć pozostałości</value>
+  </data>
+  <data name="HistoryRestoreResult" xml:space="preserve">
+    <value>Przywrócono: {0}. Już istnieją i pozostawiono bez zmian: {1}. Niepowodzenia: {2}.</value>
+  </data>
+  <data name="HistoryRestoreNothing" xml:space="preserve">
+    <value>Nie ma czego przywracać: pozostałości zostały już przywrócone lub nie są już przechowywane.</value>
+  </data>
+  <data name="HistoryRestoreMachineSkipped" xml:space="preserve">
+    <value>Elementy ogólnosystemowe nie zostały przywrócone, ponieważ monit administratora odrzucono lub się nie powiódł.</value>
+  </data>
+  <data name="HistoryRestoreFailed" xml:space="preserve">
+    <value>Nie udało się przywrócić pozostałości.</value>
+  </data>
 </root>

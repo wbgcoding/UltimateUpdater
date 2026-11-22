@@ -2,6 +2,7 @@ using System.IO;
 using System.Text.Json;
 using UltimateUpdater.Models;
 using UltimateUpdater.Services.Elevation;
+using UltimateUpdater.Services.Install;
 using UltimateUpdater.Services.Platform;
 using UltimateUpdater.Services.Processes;
 using UltimateUpdater.Services.Sources.Windows;
@@ -22,6 +23,13 @@ public sealed class UninstallProgramJob
     /// <summary>The winget id the app found for method Winget (it is not stored in the registry). It is only compared
     /// with the id the worker derives itself and never reaches a command line.</summary>
     public string? WingetId { get; set; }
+
+    /// <summary>Make a system restore point first. A job with this flag and no <see cref="Key"/> does only that.</summary>
+    public bool CreateRestorePoint { get; set; }
+
+    /// <summary>When the restore point cannot be made, end the job without touching the entry (the app asks the
+    /// person and sends the entry again without the flag).</summary>
+    public bool StopIfRestorePointFails { get; set; }
 }
 
 /// <summary>
@@ -126,8 +134,10 @@ internal static class ProgramUninstallWorker
 
     private static Decision Refuse(string reason) => new(null, reason);
 
+    /// <param name="createRestorePoint">Makes the system restore point (description, log); a test replaces it, the worker uses Windows'.</param>
     public static async Task RunJobAsync(
-        JsonElement payload, StreamWriter writer, string jobId, LoggingService logging, CancellationToken cancellationToken)
+        JsonElement payload, StreamWriter writer, string jobId, LoggingService logging, CancellationToken cancellationToken,
+        Func<string, LoggingService, bool>? createRestorePoint = null)
     {
         UninstallProgramJob? job;
         try
@@ -137,6 +147,27 @@ internal static class ProgramUninstallWorker
         catch (JsonException)
         {
             job = null;
+        }
+
+        // Quarantine folders past their 14 days are pruned by the next elevated removal (no extra prompt).
+        QuarantineStore.Prune(QuarantineStore.MachineRoot(), DateTime.Now, logging);
+
+        if (job is { CreateRestorePoint: true })
+        {
+            var created = TryCreateRestorePoint(writer, jobId, logging, createRestorePoint ?? RestorePointService.TryCreate);
+            if (!created && job.StopIfRestorePointFails)
+            {
+                Send(writer, jobId, new InstallProgressMessage { Type = "restorePointFailed" });
+                Send(writer, jobId, new InstallProgressMessage { Type = "done" });
+                return;
+            }
+
+            // A restore point job without an entry ends here; it has nothing to refuse or run.
+            if (string.IsNullOrEmpty(job.Key))
+            {
+                Send(writer, jobId, new InstallProgressMessage { Type = "done" });
+                return;
+            }
         }
 
         IReadOnlyList<WingetListRow>? wingetRows = null;
@@ -193,6 +224,32 @@ internal static class ProgramUninstallWorker
             logging.Warn($"Elevated uninstall could not run: {ex.Message}");
             Finish(writer, jobId, job.Key, success: false, exitCode: null, error: ex.Message, detail: null);
         }
+    }
+
+    /// <summary>Slow (up to a minute) and blocking, like the install worker's. The fact travels back as data: this
+    /// worker writes no file, the app records the time.</summary>
+    private static bool TryCreateRestorePoint(
+        StreamWriter writer, string jobId, LoggingService logging, Func<string, LoggingService, bool> create)
+    {
+        logging.Info("Creating a restore point before uninstalling.");
+        try
+        {
+            if (create("Ultimate Updater, before uninstalling programs", logging))
+            {
+                Send(writer, jobId, new InstallProgressMessage
+                {
+                    Type = "restorePointCreated", RestorePointCreatedAt = DateTimeOffset.UtcNow,
+                });
+                return true;
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // A damaged WMI repository throws past TryCreate's own catch.
+            logging.Warn($"Restore point could not be created: {ex.Message}");
+        }
+
+        return false;
     }
 
     private static void Finish(

@@ -120,8 +120,13 @@ internal static class DriverBackupStaging
     /// this process' own token owner and carrying exactly that ACL. Returns null on any failure; the caller's
     /// contract is to treat that as "nowhere safe to export" and skip every row rather than delete without a
     /// backup.
+    /// The leftover quarantine uses the same creation under its own <paramref name="subfolder"/> with
+    /// <paramref name="usersCanRead"/> off (SYSTEM and Administrators only, two entries): what a removed
+    /// program left is for an administrator to put back. <paramref name="label"/> only names the caller in the log.
     /// </summary>
-    internal static StagingFolder? PrepareStagingRoot(LoggingService logging)
+    internal static StagingFolder? PrepareStagingRoot(
+        LoggingService logging, string subfolder = "driver-backups", bool usersCanRead = true,
+        string? folderName = null, string label = "Driver cleanup")
     {
         // SpecialFolder.CommonApplicationData resolves through the Win32 known-folder API
         // (SHGetKnownFolderPath), never through the %ProgramData% environment variable, which a same-user
@@ -129,13 +134,13 @@ internal static class DriverBackupStaging
         // ever started.
         var programData = ProgramDataRootOverride ?? Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
         var appRoot = Path.Combine(programData, "UltimateUpdater");
-        var backupsRoot = Path.Combine(appRoot, "driver-backups");
-        var folderName = StagingNameOverride ?? DateTime.Now.ToString("yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture);
+        var backupsRoot = Path.Combine(appRoot, subfolder);
+        folderName ??= StagingNameOverride ?? DateTime.Now.ToString("yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture);
         var target = Path.Combine(backupsRoot, folderName);
 
         if (CleanupSafety.AncestryLeadsThroughLink(target))
         {
-            logging.Error("Driver cleanup: refusing to stage backups, part of the ProgramData path is a reparse point.");
+            logging.Error($"{label}: refusing to stage backups, part of the ProgramData path is a reparse point.");
             return null;
         }
 
@@ -145,15 +150,15 @@ internal static class DriverBackupStaging
             // pre-create these two or swap one for a junction. Each is born protected, and one that already
             // exists must be a real directory that only an administrator could have created. CreateDirectory
             // accepts an existing folder silently, hence the owner check runs after it as well.
-            if (!EnsureAdminOnlyDirectory(appRoot) || !EnsureAdminOnlyDirectory(backupsRoot))
+            if (!EnsureAdminOnlyDirectory(appRoot, usersCanRead: true) || !EnsureAdminOnlyDirectory(backupsRoot, usersCanRead))
             {
-                logging.Error("Driver cleanup: refusing to stage backups, a staging parent folder is a link or not owned by an administrator.");
+                logging.Error($"{label}: refusing to stage backups, a staging parent folder is a link or not owned by an administrator.");
                 return null;
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
-            logging.Error($"Driver cleanup: could not prepare the backup staging folder: {ex.Message}");
+            logging.Error($"{label}: could not prepare the backup staging folder: {ex.Message}");
             return null;
         }
 
@@ -161,7 +166,7 @@ internal static class DriverBackupStaging
         // junction could be planted in the window between the check above and CreateDirectory resolving it.
         if (CleanupSafety.AncestryLeadsThroughLink(target))
         {
-            logging.Error("Driver cleanup: refusing to stage backups, a reparse point appeared while preparing the folder.");
+            logging.Error($"{label}: refusing to stage backups, a reparse point appeared while preparing the folder.");
             return null;
         }
 
@@ -169,29 +174,29 @@ internal static class DriverBackupStaging
         // was put there by someone else. Never adopted, never "repaired".
         if (PathExists(target))
         {
-            logging.Error("Driver cleanup: refusing to stage backups, the staging folder already exists.");
+            logging.Error($"{label}: refusing to stage backups, the staging folder already exists.");
             return null;
         }
 
         SafeFileHandle? pin = null;
         try
         {
-            ExpectedSecurity().CreateDirectory(target);
+            (usersCanRead ? ExpectedSecurity() : ParentSecurity(usersCanRead: false)).CreateDirectory(target);
 
             // CreateDirectory accepts an existing directory silently, so the checks below are what proves
             // this one is ours, not the exists-check above (which a racing process can still beat).
             pin = CleanupSafety.TryLockForUse(target);
-            if (pin is null || !IsOurOwnNewFolder(pin, target))
+            if (pin is null || !IsOurOwnNewFolder(pin, target, usersCanRead))
             {
                 pin?.Dispose();
-                logging.Error("Driver cleanup: refusing to stage backups, the staging folder is not the one just created.");
+                logging.Error($"{label}: refusing to stage backups, the staging folder is not the one just created.");
                 return null;
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
             pin?.Dispose();
-            logging.Error($"Driver cleanup: could not create the backup folder with its ACL: {ex.Message}");
+            logging.Error($"{label}: could not create the backup folder with its ACL: {ex.Message}");
             return null;
         }
 
@@ -308,10 +313,10 @@ internal static class DriverBackupStaging
 
     /// <summary>Creates the directory with the admin-only protected ACL when it is missing, then demands that
     /// what is there is a real directory (no reparse point) with a trusted owner.</summary>
-    private static bool EnsureAdminOnlyDirectory(string path)
+    private static bool EnsureAdminOnlyDirectory(string path, bool usersCanRead)
     {
         if (!PathExists(path))
-            ParentSecurity().CreateDirectory(path);
+            ParentSecurity(usersCanRead).CreateDirectory(path);
 
         try
         {
@@ -354,7 +359,7 @@ internal static class DriverBackupStaging
 
     /// <summary>The ACL the folder is born with. Inheritance off: a folder this narrow must not pick up
     /// whatever ProgramData's own ACL happens to grant, now or after some future change to it.</summary>
-    private static DirectorySecurity ExpectedSecurity()
+    private static DirectorySecurity ExpectedSecurity(bool usersCanRead = true)
     {
         var security = new DirectorySecurity();
         security.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
@@ -362,8 +367,12 @@ internal static class DriverBackupStaging
             SystemSid, FileSystemRights.FullControl, Inherit, PropagationFlags.None, AccessControlType.Allow));
         security.AddAccessRule(new FileSystemAccessRule(
             AdministratorsSid, FileSystemRights.FullControl, Inherit, PropagationFlags.None, AccessControlType.Allow));
-        security.AddAccessRule(new FileSystemAccessRule(
-            UsersSid, FileSystemRights.ReadAndExecute, Inherit, PropagationFlags.None, AccessControlType.Allow));
+        if (usersCanRead)
+        {
+            security.AddAccessRule(new FileSystemAccessRule(
+                UsersSid, FileSystemRights.ReadAndExecute, Inherit, PropagationFlags.None, AccessControlType.Allow));
+        }
+
         return security;
     }
 
@@ -373,9 +382,9 @@ internal static class DriverBackupStaging
     /// Administrators, so there nothing is added; it only keeps the creating account able to create the
     /// child inside a parent it just made when this runs without elevation (the tests).
     /// </summary>
-    private static DirectorySecurity ParentSecurity()
+    private static DirectorySecurity ParentSecurity(bool usersCanRead = true)
     {
-        var security = ExpectedSecurity();
+        var security = ExpectedSecurity(usersCanRead);
         if (TokenOwner() is { } owner && !owner.Equals(AdministratorsSid) && !owner.Equals(SystemSid))
         {
             security.AddAccessRule(new FileSystemAccessRule(
@@ -390,7 +399,7 @@ internal static class DriverBackupStaging
     /// with no reparse point, the owner is this process' own default owner (a folder someone else created
     /// first is owned by them), and the ACL is exactly <see cref="ExpectedSecurity"/>.
     /// </summary>
-    internal static bool IsOurOwnNewFolder(SafeFileHandle pin, string path)
+    internal static bool IsOurOwnNewFolder(SafeFileHandle pin, string path, bool usersCanRead = true)
     {
         try
         {
@@ -411,10 +420,14 @@ internal static class DriverBackupStaging
                 return false;
 
             var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
-            return rules.Count == 3
+            // The quarantine child (no Users read) also carries an unelevated creator, as its parents do, or that
+            // account could not use the folder it just made (the tests); the elevated worker adds nothing.
+            var ownerExtra = !usersCanRead && !tokenOwner.Equals(AdministratorsSid) && !tokenOwner.Equals(SystemSid);
+            return rules.Count == (usersCanRead ? 3 : 2) + (ownerExtra ? 1 : 0)
                 && HasRule(rules, SystemSid, FileSystemRights.FullControl)
                 && HasRule(rules, AdministratorsSid, FileSystemRights.FullControl)
-                && HasRule(rules, UsersSid, FileSystemRights.ReadAndExecute);
+                && (!usersCanRead || HasRule(rules, UsersSid, FileSystemRights.ReadAndExecute))
+                && (!ownerExtra || HasRule(rules, tokenOwner, FileSystemRights.FullControl));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException
                                        or ArgumentException or NotSupportedException or InvalidOperationException)

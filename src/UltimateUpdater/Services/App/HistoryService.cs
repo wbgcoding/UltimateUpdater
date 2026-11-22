@@ -92,6 +92,13 @@ public sealed class HistoryEntry
     /// Absent reads as false.
     /// </summary>
     public bool IsRollback { get; set; }
+
+    /// <summary>On a "leftovers" entry: the name of the user quarantine folder the removed leftovers were moved
+    /// into (below the local app data), or null. A name only, never a path; it is resolved again when restoring.</summary>
+    public string? QuarantineUser { get; set; }
+
+    /// <summary>On a "leftovers" entry: the name of the machine quarantine folder (below ProgramData), or null.</summary>
+    public string? QuarantineMachine { get; set; }
 }
 
 /// <summary>

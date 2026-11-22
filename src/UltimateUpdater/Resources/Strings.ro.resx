@@ -2683,4 +2683,49 @@ Continuați cu drepturi de administrator?</value>
   <data name="UninstallerLeftoverShortcut" xml:space="preserve">
     <value>Comandă rapidă</value>
   </data>
+  <data name="SettingsUninstallBackup" xml:space="preserve">
+    <value>Copie de siguranță înainte de dezinstalare</value>
+  </data>
+  <data name="SettingsUninstallBackupDesc" xml:space="preserve">
+    <value>Automat creează un punct de restaurare când sunt eliminate programe care necesită drepturi de administrator.</value>
+  </data>
+  <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
+    <value>Automat (recomandat)</value>
+  </data>
+  <data name="SettingsUninstallBackupAlways" xml:space="preserve">
+    <value>Creează întotdeauna un punct de restaurare</value>
+  </data>
+  <data name="SettingsUninstallBackupOff" xml:space="preserve">
+    <value>Dezactivat</value>
+  </data>
+  <data name="UninstallerRestorePointReused" xml:space="preserve">
+    <value>Se folosește punctul de restaurare din {0}</value>
+  </data>
+  <data name="UninstallerRestorePointFailed" xml:space="preserve">
+    <value>Nu s-a putut crea un punct de restaurare. Dezinstalezi oricum?</value>
+  </data>
+  <data name="UninstallerRestorePointFailedButton" xml:space="preserve">
+    <value>Dezinstalează oricum</value>
+  </data>
+  <data name="UninstallerLeftoversRestorable" xml:space="preserve">
+    <value>Resturile eliminate pot fi restaurate din istoric timp de 14 zile.</value>
+  </data>
+  <data name="HistoryLeftoversRemoved" xml:space="preserve">
+    <value>Resturi eliminate</value>
+  </data>
+  <data name="HistoryRestoreLeftovers" xml:space="preserve">
+    <value>Restaurează resturile</value>
+  </data>
+  <data name="HistoryRestoreResult" xml:space="preserve">
+    <value>Restaurate: {0}. Deja prezente și lăsate neschimbate: {1}. Eșuate: {2}.</value>
+  </data>
+  <data name="HistoryRestoreNothing" xml:space="preserve">
+    <value>Nimic de restaurat: resturile au fost deja restaurate sau nu mai sunt păstrate.</value>
+  </data>
+  <data name="HistoryRestoreMachineSkipped" xml:space="preserve">
+    <value>Elementele la nivel de computer nu au fost restaurate, deoarece solicitarea de administrator a fost refuzată sau a eșuat.</value>
+  </data>
+  <data name="HistoryRestoreFailed" xml:space="preserve">
+    <value>Resturile nu au putut fi restaurate.</value>
+  </data>
 </root>

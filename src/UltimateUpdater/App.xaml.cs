@@ -303,6 +303,13 @@ public partial class App : Application
             Task.Run(() => history.CleanupOldEntries(settings.Current.HistoryRetentionDays)), logging, "history retention sweep");
         _ = Background.Run(Task.Run(() => AppDataCleaner.DeleteStaleTempSiblings(AppPaths.DataDirectory, TimeSpan.FromDays(1))), logging, "stale temp sweep");
 
+        // Removed leftovers stay restorable for 14 days; the user's quarantine folders past that go now (the
+        // machine ones go with the next elevated removal, which needs no extra prompt).
+        _ = Background.Run(
+            Task.Run(() => Services.Uninstall.QuarantineStore.Prune(
+                Services.Uninstall.QuarantineStore.UserRoot(), DateTime.Now, logging)),
+            logging, "leftover quarantine sweep");
+
         // An installed update leaves its downloaded setup in the temp folder (it runs from there after this
         // process is gone); a day later nothing can still be using it.
         _ = Background.Run(

@@ -378,11 +378,23 @@
         </Border>
 
         <StackPanel Grid.Row="3">
+            <!-- The restore point step: running, or which earlier one is used. -->
+            <TextBlock x:Name="RestorePointLine" Text="{Binding RestorePointText}" FontSize="12" Margin="24,10,24,0"
+                       TextTrimming="CharacterEllipsis" ToolTip="{Binding RestorePointText}"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       Visibility="{Binding HasRestorePointText, Converter={StaticResource BoolToVisibility}}"/>
+
             <!-- The run's one-line summary, from the end of a run on. -->
             <TextBlock x:Name="SummaryLine" Text="{Binding SummaryText}" FontSize="13" FontWeight="SemiBold" Margin="24,12,24,0"
                        TextTrimming="CharacterEllipsis" ToolTip="{Binding SummaryText}"
                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                        Visibility="{Binding HasSummary, Converter={StaticResource BoolToVisibility}}"/>
+
+            <!-- Said once leftovers went into the quarantine: they can be brought back from the history. -->
+            <TextBlock x:Name="RestorableLine" Text="{Binding RestorableText}" FontSize="12" Margin="24,4,24,0"
+                       TextTrimming="CharacterEllipsis" ToolTip="{Binding RestorableText}"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       Visibility="{Binding LeftoversRestorable, Converter={StaticResource BoolToVisibility}}"/>
 
             <!-- What the removed programs left behind, per program, to tick off. -->
             <Border x:Name="LeftoversCard" Margin="24,10,24,0" CornerRadius="8" BorderThickness="1"

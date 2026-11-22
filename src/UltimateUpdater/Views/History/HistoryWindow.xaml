@@ -409,6 +409,19 @@
                                                AutomationProperties.Name="{Binding DowngradeHeader}">
                                         <ui:SymbolIcon Symbol="ArrowReset24" FontSize="14"/>
                                     </ui:Button>
+
+                                    <!-- Puts back the leftovers an uninstall removed, while they are within the
+                                         14 days they are kept. Only on a "leftovers" entry, so it never meets the
+                                         two buttons above in the shared trailing column. -->
+                                    <ui:Button x:Name="HistoryRestoreLeftoversButton"
+                                               Grid.Column="6" Margin="4,0,0,0" Padding="4" Appearance="Transparent"
+                                               VerticalAlignment="Center"
+                                               Command="{Binding RestoreLeftoversCommand}"
+                                               Visibility="{Binding CanRestoreLeftovers, Converter={StaticResource BoolToVisibility}}"
+                                               ToolTip="{Binding RestoreLeftoversHeader}"
+                                               AutomationProperties.Name="{Binding RestoreLeftoversHeader}">
+                                        <ui:SymbolIcon Symbol="ArrowUndo24" FontSize="14"/>
+                                    </ui:Button>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

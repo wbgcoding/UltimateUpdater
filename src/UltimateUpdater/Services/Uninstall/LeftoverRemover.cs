@@ -21,7 +21,9 @@ internal sealed record LeftoverRemoval(int Removed, int Skipped, long FreedBytes
 /// right now and only a chosen item that the fresh scan still finds, and that still passes
 /// <see cref="LeftoverTargetSafety"/>, is touched. Folders and shortcuts go to the recycle bin (never gone for
 /// good); a registry key is exported first and removed handle by handle without ever following a link, and
-/// only when the export holds it. Whatever fails stays where it is and is counted as skipped.
+/// only when the export holds it. Whatever fails stays where it is and is counted as skipped. With a
+/// <see cref="QuarantineSession"/> the items are moved into the quarantine (and each key exported into it) instead,
+/// so they can be restored; an item the quarantine cannot take goes the old way.
 /// </summary>
 internal sealed class LeftoverRemover
 {
@@ -49,7 +51,7 @@ internal sealed class LeftoverRemover
 
     internal async Task<LeftoverRemoval> RemoveAsync(
         LeftoverSubject subject, LeftoverClaims claims, LeftoverLane lane, IReadOnlyList<LeftoverSelectionDto> selected,
-        string backupFolder, int backupRetention, CancellationToken cancellationToken)
+        string backupFolder, int backupRetention, CancellationToken cancellationToken, QuarantineSession? quarantine = null)
     {
         if (selected.Count == 0)
             return new LeftoverRemoval(0, 0, 0);
@@ -84,6 +86,16 @@ internal sealed class LeftoverRemover
                 continue;
             }
 
+            if (quarantine is not null && quarantine.TryMove(item))
+            {
+                removed++;
+                freed += item.SizeBytes;
+                continue;
+            }
+
+            if (quarantine is not null)
+                _logging.Warn($"Leftovers: '{item.Path}' could not go into the quarantine; it goes to the recycle bin instead.");
+
             if (_recycle(item.Path))
             {
                 removed++;
@@ -96,6 +108,34 @@ internal sealed class LeftoverRemover
         }
 
         var keys = chosen.Where(i => i.Kind == LeftoverKind.RegistryKey).ToList();
+        if (quarantine is not null && keys.Count > 0)
+        {
+            // Each safe key is exported into the quarantine first; only then it is removed. A key the quarantine
+            // could not take stays in the list for the regular backup below.
+            var remaining = new List<LeftoverItem>();
+            foreach (var key in keys)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!LeftoverTargetSafety.IsSafeRegistryKeyPath(key.Path, out _)
+                    || !await quarantine.TryBackupKeyAsync(key, cancellationToken))
+                {
+                    remaining.Add(key);
+                    continue;
+                }
+
+                var status = _deleteKey(key.Path);
+                if (status == RegistryBackupService.KeyTreeDeleteStatus.Deleted)
+                    removed++;
+                else
+                {
+                    _logging.Warn($"Leftovers: '{key.Path}' was not removed ({status}).");
+                    skipped++;
+                }
+            }
+
+            keys = remaining;
+        }
+
         if (keys.Count > 0)
         {
             var (done, kept) = await RemoveKeysAsync(keys, backupFolder, backupRetention, cancellationToken);

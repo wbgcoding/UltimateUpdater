@@ -2683,4 +2683,49 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallerLeftoverShortcut" xml:space="preserve">
     <value>Kısayol</value>
   </data>
+  <data name="SettingsUninstallBackup" xml:space="preserve">
+    <value>Kaldırmadan önce yedekleme</value>
+  </data>
+  <data name="SettingsUninstallBackupDesc" xml:space="preserve">
+    <value>Otomatik, yönetici hakları gerektiren programlar kaldırılırken bir geri yükleme noktası oluşturur.</value>
+  </data>
+  <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
+    <value>Otomatik (önerilen)</value>
+  </data>
+  <data name="SettingsUninstallBackupAlways" xml:space="preserve">
+    <value>Her zaman geri yükleme noktası oluştur</value>
+  </data>
+  <data name="SettingsUninstallBackupOff" xml:space="preserve">
+    <value>Kapalı</value>
+  </data>
+  <data name="UninstallerRestorePointReused" xml:space="preserve">
+    <value>{0} tarihli geri yükleme noktası kullanılıyor</value>
+  </data>
+  <data name="UninstallerRestorePointFailed" xml:space="preserve">
+    <value>Geri yükleme noktası oluşturulamadı. Yine de kaldırılsın mı?</value>
+  </data>
+  <data name="UninstallerRestorePointFailedButton" xml:space="preserve">
+    <value>Yine de kaldır</value>
+  </data>
+  <data name="UninstallerLeftoversRestorable" xml:space="preserve">
+    <value>Kaldırılan artıklar 14 gün boyunca geçmişten geri yüklenebilir.</value>
+  </data>
+  <data name="HistoryLeftoversRemoved" xml:space="preserve">
+    <value>Artıklar kaldırıldı</value>
+  </data>
+  <data name="HistoryRestoreLeftovers" xml:space="preserve">
+    <value>Artıkları geri yükle</value>
+  </data>
+  <data name="HistoryRestoreResult" xml:space="preserve">
+    <value>Geri yüklenen: {0}. Zaten var ve dokunulmadı: {1}. Başarısız: {2}.</value>
+  </data>
+  <data name="HistoryRestoreNothing" xml:space="preserve">
+    <value>Geri yüklenecek bir şey yok: artıklar zaten geri yüklendi veya artık saklanmıyor.</value>
+  </data>
+  <data name="HistoryRestoreMachineSkipped" xml:space="preserve">
+    <value>Yönetici istemi reddedildiği veya başarısız olduğu için makine genelindeki öğeler geri yüklenmedi.</value>
+  </data>
+  <data name="HistoryRestoreFailed" xml:space="preserve">
+    <value>Artıklar geri yüklenemedi.</value>
+  </data>
 </root>

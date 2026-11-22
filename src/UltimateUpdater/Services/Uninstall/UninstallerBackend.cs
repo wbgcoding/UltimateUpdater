@@ -1,3 +1,4 @@
+using UltimateUpdater.Models.Settings;
 namespace UltimateUpdater.Services.Uninstall;
 
 /// <summary>One installed entry with what the window shows about it: how it would be removed and how much care it deserves.</summary>
@@ -19,21 +20,72 @@ public interface IUninstallerBackend
     /// <summary>Removes the given leftovers (the ticked ones). Items that could not be removed count as skipped.</summary>
     Task<UninstallLeftoverResult> RemoveLeftoversAsync(
         IReadOnlyList<UninstallLeftoverGroup> groups, CancellationToken cancellationToken);
+
+    /// <summary>The setting that decides when a run gets a restore point.</summary>
+    UninstallBackupMode BackupMode { get; }
+
+    /// <summary>Creates the restore point of a run, or reports the one within the last 24 hours that covers it. Slow, may raise the UAC prompt.</summary>
+    Task<UninstallRestorePointResult> CreateRestorePointAsync(CancellationToken cancellationToken);
+
+    /// <summary>Writes the history line of an entry the run removed.</summary>
+    void RecordRemoved(InstalledProgramEntry entry);
 }
 
 /// <summary>The real machine behind <see cref="IUninstallerBackend"/>.</summary>
-public sealed class UninstallerBackend(LoggingService logging, ElevatedHost? elevated, SettingsService? settings = null) : IUninstallerBackend
+public sealed class UninstallerBackend(
+    LoggingService logging, ElevatedHost? elevated, SettingsService? settings = null, HistoryService? history = null) : IUninstallerBackend
 {
     private readonly UninstallLeftoverService _leftovers = new(
-        logging, elevated, settings is null ? null : () => settings.Current.RegistryCleanup);
+        logging, elevated, settings is { } current ? () => current.Current.RegistryCleanup : null);
+
+    private readonly UninstallRestorePointService _restorePoint = new(logging, elevated);
+
+    public UninstallBackupMode BackupMode => settings?.Current.Install.UninstallBackup ?? UninstallBackupMode.Automatic;
+
+    public Task<UninstallRestorePointResult> CreateRestorePointAsync(CancellationToken cancellationToken) =>
+        _restorePoint.EnsureAsync(cancellationToken);
+
+    public void RecordRemoved(InstalledProgramEntry entry) => history?.Append(HistoryForRemoved(entry));
+
+    /// <summary>The history line of a removed entry: the program's own version, no target version, no download size.</summary>
+    internal static HistoryEntry HistoryForRemoved(InstalledProgramEntry entry) => new()
+    {
+        Timestamp = DateTimeOffset.Now,
+        SourceId = "uninstaller",
+        ItemId = entry.Key,
+        Name = entry.Name,
+        FromVersion = string.IsNullOrWhiteSpace(entry.Version) ? null : entry.Version,
+        SizeBytes = entry.SizeBytes,
+        Success = true,
+        Action = "uninstall",
+    };
 
     public Task<IReadOnlyList<UninstallLeftoverGroup>> FindLeftoversAsync(
         IReadOnlyList<InstalledProgramEntry> removed, CancellationToken cancellationToken) =>
         _leftovers.FindAsync(removed, cancellationToken);
 
-    public Task<UninstallLeftoverResult> RemoveLeftoversAsync(
-        IReadOnlyList<UninstallLeftoverGroup> groups, CancellationToken cancellationToken) =>
-        _leftovers.RemoveAsync(groups, cancellationToken);
+    public async Task<UninstallLeftoverResult> RemoveLeftoversAsync(
+        IReadOnlyList<UninstallLeftoverGroup> groups, CancellationToken cancellationToken)
+    {
+        var result = await _leftovers.RemoveAsync(groups, cancellationToken);
+        foreach (var quarantined in result.QuarantinedOrEmpty)
+            history?.Append(HistoryForLeftovers(quarantined));
+
+        return result;
+    }
+
+    /// <summary>The history line of one program's removed leftovers: it keeps the quarantine folder names so the history can restore them.</summary>
+    internal static HistoryEntry HistoryForLeftovers(QuarantinedLeftovers quarantined) => new()
+    {
+        Timestamp = DateTimeOffset.Now,
+        SourceId = "uninstaller",
+        ItemId = quarantined.Program,
+        Name = quarantined.Program,
+        Success = true,
+        Action = "leftovers",
+        QuarantineUser = quarantined.UserFolder,
+        QuarantineMachine = quarantined.MachineFolder,
+    };
 
     public Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>

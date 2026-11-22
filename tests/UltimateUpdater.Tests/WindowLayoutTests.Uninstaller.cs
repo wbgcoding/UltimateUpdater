@@ -1,3 +1,4 @@
+using UltimateUpdater.Models.Settings;
 using System.Windows;
 using System.Windows.Controls;
 using UltimateUpdater.Services.Cleanup;
@@ -23,6 +24,15 @@ public partial class WindowLayoutTests
         public Task<UninstallLeftoverResult> RemoveLeftoversAsync(
             IReadOnlyList<UninstallLeftoverGroup> groups, CancellationToken cancellationToken) =>
             Task.FromResult(new UninstallLeftoverResult(0, 0, 0));
+
+        public UninstallBackupMode BackupMode => UninstallBackupMode.Off;
+
+        public Task<UninstallRestorePointResult> CreateRestorePointAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(new UninstallRestorePointResult(UninstallRestorePointOutcome.Created));
+
+        public void RecordRemoved(InstalledProgramEntry entry)
+        {
+        }
     }
 
     /// <summary>A realistic inventory: ordinary rows, long names and publishers, a Risky driver, an own-window setup, a row that cannot be removed.</summary>
@@ -103,6 +113,33 @@ public partial class WindowLayoutTests
             var content = (FrameworkElement)window.Content;
             result = WpfHarness.RenderWindow(window, $"uninstaller-narrow-{language}", (int)window.MinWidth, (int)window.MinHeight);
             AssertUninstallerLaidOut(content, window);
+        });
+
+        AssertRendered(result);
+    }
+
+    /// <summary>The restore point step's line above the footer, in both languages, running and reused.</summary>
+    [Theory]
+    [InlineData("de")]
+    [InlineData("en")]
+    public void Uninstaller_window_shows_the_restore_point_line(string language)
+    {
+        RenderResult? result = null;
+
+        WpfHarness.OnUiThread(() =>
+        {
+            LocalizationService.Instance.Apply(language);
+            ApplyTheme("dark");
+
+            var viewModel = CreateUninstallerViewModel();
+            viewModel.RestorePointText = string.Format(
+                LocalizationService.Instance["UninstallerRestorePointReused"], new DateTime(2026, 3, 2, 14, 30, 0).ToString("g", System.Globalization.CultureInfo.CurrentUICulture));
+            var window = new UninstallerWindow(viewModel);
+            var content = (FrameworkElement)window.Content;
+            result = WpfHarness.RenderWindow(window, $"uninstaller-restorepoint-{language}", (int)window.MinWidth, (int)window.MinHeight);
+            var line = FindByName<FrameworkElement>(content, "RestorePointLine");
+            Assert.NotNull(line);
+            Assert.True(line!.ActualWidth > 0 && line.ActualHeight > 0, "the restore point line was not laid out");
         });
 
         AssertRendered(result);

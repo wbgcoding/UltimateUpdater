@@ -12,6 +12,10 @@ public sealed class CleanupWorkerMessage
 
     public string? Id { get; set; }
 
+    /// <summary>The "leftovers" result only: the name (never a path) of the machine quarantine folder the removed
+    /// items were moved into, or null when nothing was quarantined.</summary>
+    public string? QuarantineFolder { get; set; }
+
     public long Bytes { get; set; }
 
     public int Files { get; set; }

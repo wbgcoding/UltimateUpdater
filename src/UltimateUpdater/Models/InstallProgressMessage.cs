@@ -57,4 +57,13 @@ public sealed class InstallProgressMessage
     /// <summary>The exit code of the program a removal ran, on the "result" of an uninstall-program job; null
     /// on every other message (a copy that does not know it reads no code).</summary>
     public int? ExitCode { get; set; }
+
+    /// <summary>On the "result" of an uninstall-restore job: how many quarantined items were put back.</summary>
+    public int RestoredCount { get; set; }
+
+    /// <summary>On the "result" of an uninstall-restore job: items left alone because the place was taken again.</summary>
+    public int PresentCount { get; set; }
+
+    /// <summary>On the "result" of an uninstall-restore job: items that could not be put back.</summary>
+    public int FailedCount { get; set; }
 }

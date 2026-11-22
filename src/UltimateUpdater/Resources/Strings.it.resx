@@ -2683,4 +2683,49 @@ Continuare con privilegi di amministratore?</value>
   <data name="UninstallerLeftoverShortcut" xml:space="preserve">
     <value>Collegamento</value>
   </data>
+  <data name="SettingsUninstallBackup" xml:space="preserve">
+    <value>Backup prima della disinstallazione</value>
+  </data>
+  <data name="SettingsUninstallBackupDesc" xml:space="preserve">
+    <value>Automatico crea un punto di ripristino quando vengono rimossi programmi che richiedono i diritti di amministratore.</value>
+  </data>
+  <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
+    <value>Automatico (consigliato)</value>
+  </data>
+  <data name="SettingsUninstallBackupAlways" xml:space="preserve">
+    <value>Crea sempre un punto di ripristino</value>
+  </data>
+  <data name="SettingsUninstallBackupOff" xml:space="preserve">
+    <value>Disattivato</value>
+  </data>
+  <data name="UninstallerRestorePointReused" xml:space="preserve">
+    <value>Viene usato il punto di ripristino del {0}</value>
+  </data>
+  <data name="UninstallerRestorePointFailed" xml:space="preserve">
+    <value>Non è stato possibile creare un punto di ripristino. Disinstallare comunque?</value>
+  </data>
+  <data name="UninstallerRestorePointFailedButton" xml:space="preserve">
+    <value>Disinstalla comunque</value>
+  </data>
+  <data name="UninstallerLeftoversRestorable" xml:space="preserve">
+    <value>Gli avanzi rimossi possono essere ripristinati per 14 giorni dalla cronologia.</value>
+  </data>
+  <data name="HistoryLeftoversRemoved" xml:space="preserve">
+    <value>Avanzi rimossi</value>
+  </data>
+  <data name="HistoryRestoreLeftovers" xml:space="preserve">
+    <value>Ripristina avanzi</value>
+  </data>
+  <data name="HistoryRestoreResult" xml:space="preserve">
+    <value>Ripristinati: {0}. Già presenti e lasciati invariati: {1}. Non riusciti: {2}.</value>
+  </data>
+  <data name="HistoryRestoreNothing" xml:space="preserve">
+    <value>Niente da ripristinare: gli avanzi sono già stati ripristinati o non sono più conservati.</value>
+  </data>
+  <data name="HistoryRestoreMachineSkipped" xml:space="preserve">
+    <value>Gli elementi validi per tutto il computer non sono stati ripristinati perché la richiesta di amministratore è stata rifiutata o non è riuscita.</value>
+  </data>
+  <data name="HistoryRestoreFailed" xml:space="preserve">
+    <value>Non è stato possibile ripristinare gli avanzi.</value>
+  </data>
 </root>

@@ -2683,4 +2683,49 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="UninstallerLeftoverShortcut" xml:space="preserve">
     <value>ショートカット</value>
   </data>
+  <data name="SettingsUninstallBackup" xml:space="preserve">
+    <value>アンインストール前のバックアップ</value>
+  </data>
+  <data name="SettingsUninstallBackupDesc" xml:space="preserve">
+    <value>自動では、管理者権限が必要なプログラムを削除するときに復元ポイントを作成します。</value>
+  </data>
+  <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
+    <value>自動 (推奨)</value>
+  </data>
+  <data name="SettingsUninstallBackupAlways" xml:space="preserve">
+    <value>常に復元ポイントを作成する</value>
+  </data>
+  <data name="SettingsUninstallBackupOff" xml:space="preserve">
+    <value>オフ</value>
+  </data>
+  <data name="UninstallerRestorePointReused" xml:space="preserve">
+    <value>{0} の復元ポイントを使用します</value>
+  </data>
+  <data name="UninstallerRestorePointFailed" xml:space="preserve">
+    <value>復元ポイントを作成できませんでした。このままアンインストールしますか?</value>
+  </data>
+  <data name="UninstallerRestorePointFailedButton" xml:space="preserve">
+    <value>このままアンインストール</value>
+  </data>
+  <data name="UninstallerLeftoversRestorable" xml:space="preserve">
+    <value>削除した残りは、履歴から14日間復元できます。</value>
+  </data>
+  <data name="HistoryLeftoversRemoved" xml:space="preserve">
+    <value>残りを削除</value>
+  </data>
+  <data name="HistoryRestoreLeftovers" xml:space="preserve">
+    <value>残りを復元</value>
+  </data>
+  <data name="HistoryRestoreResult" xml:space="preserve">
+    <value>復元: {0}。既に存在し変更なし: {1}。失敗: {2}。</value>
+  </data>
+  <data name="HistoryRestoreNothing" xml:space="preserve">
+    <value>復元するものはありません。残りは既に復元済みか、保存されていません。</value>
+  </data>
+  <data name="HistoryRestoreMachineSkipped" xml:space="preserve">
+    <value>管理者の確認が拒否されたか失敗したため、PC全体の項目は復元されませんでした。</value>
+  </data>
+  <data name="HistoryRestoreFailed" xml:space="preserve">
+    <value>残りを復元できませんでした。</value>
+  </data>
 </root>

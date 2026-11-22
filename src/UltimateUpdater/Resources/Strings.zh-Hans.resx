@@ -2683,4 +2683,49 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="UninstallerLeftoverShortcut" xml:space="preserve">
     <value>快捷方式</value>
   </data>
+  <data name="SettingsUninstallBackup" xml:space="preserve">
+    <value>卸载前备份</value>
+  </data>
+  <data name="SettingsUninstallBackupDesc" xml:space="preserve">
+    <value>自动：删除需要管理员权限的程序时创建还原点。</value>
+  </data>
+  <data name="SettingsUninstallBackupAutomatic" xml:space="preserve">
+    <value>自动 (推荐)</value>
+  </data>
+  <data name="SettingsUninstallBackupAlways" xml:space="preserve">
+    <value>始终创建还原点</value>
+  </data>
+  <data name="SettingsUninstallBackupOff" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="UninstallerRestorePointReused" xml:space="preserve">
+    <value>使用 {0} 的还原点</value>
+  </data>
+  <data name="UninstallerRestorePointFailed" xml:space="preserve">
+    <value>无法创建还原点。仍要卸载吗?</value>
+  </data>
+  <data name="UninstallerRestorePointFailedButton" xml:space="preserve">
+    <value>仍要卸载</value>
+  </data>
+  <data name="UninstallerLeftoversRestorable" xml:space="preserve">
+    <value>已移除的残留项可在 14 天内从历史记录中还原。</value>
+  </data>
+  <data name="HistoryLeftoversRemoved" xml:space="preserve">
+    <value>已移除残留项</value>
+  </data>
+  <data name="HistoryRestoreLeftovers" xml:space="preserve">
+    <value>还原残留项</value>
+  </data>
+  <data name="HistoryRestoreResult" xml:space="preserve">
+    <value>已还原: {0}。已存在而保持不变: {1}。失败: {2}。</value>
+  </data>
+  <data name="HistoryRestoreNothing" xml:space="preserve">
+    <value>没有可还原的内容:残留项已还原或不再保存。</value>
+  </data>
+  <data name="HistoryRestoreMachineSkipped" xml:space="preserve">
+    <value>由于管理员提示被拒绝或失败,整台电脑范围的项目未被还原。</value>
+  </data>
+  <data name="HistoryRestoreFailed" xml:space="preserve">
+    <value>无法还原残留项。</value>
+  </data>
 </root>

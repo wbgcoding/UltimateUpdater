@@ -28,6 +28,12 @@ public sealed partial class UninstallerViewModel
     [NotifyPropertyChangedFor(nameof(SummaryText))]
     private int leftoversRemoved;
 
+    /// <summary>True once this run's leftover removal moved something into the quarantine: the line that says so is shown.</summary>
+    [ObservableProperty]
+    private bool leftoversRestorable;
+
+    public string RestorableText => Loc["UninstallerLeftoversRestorable"];
+
     /// <summary>True from the end of a run on: the summary line is shown.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSummary), nameof(SummaryText))]
@@ -71,6 +77,7 @@ public sealed partial class UninstallerViewModel
     {
         LeftoverGroups.Clear();
         LeftoversRemoved = 0;
+        LeftoversRestorable = false;
         RunFinished = false;
         UpdateLeftoverState();
     }
@@ -146,6 +153,8 @@ public sealed partial class UninstallerViewModel
         {
             var result = await _backend.RemoveLeftoversAsync(picks, CancellationToken.None);
             LeftoversRemoved += result.Removed;
+            if (result.QuarantinedOrEmpty.Count > 0)
+                LeftoversRestorable = true;
             if (result.Skipped > 0)
                 _logging.Warn($"Uninstaller: {result.Skipped} leftover(s) could not be removed and stay listed.");
 
@@ -170,5 +179,6 @@ public sealed partial class UninstallerViewModel
             item.RefreshText();
 
         OnPropertyChanged(nameof(SummaryText));
+        OnPropertyChanged(nameof(RestorableText));
     }
 }

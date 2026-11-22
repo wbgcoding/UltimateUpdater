@@ -206,7 +206,13 @@ public static class CleanupWorker
                 command.RegistryBackupFolder, Models.Settings.RegistryCleanupSettings.DefaultBackupFolder, logging,
                 isTrustedDirectory ?? ElevatedPathTrust.IsTrustedDirectory);
 
-            Send(writer, jobId, await LeftoversResultAsync(command, remover, registry, backupFolder, cancellationToken));
+            // Quarantine folders past their 14 days are pruned here, by the next elevated removal (no extra prompt).
+            QuarantineStore.Prune(QuarantineStore.MachineRoot(), DateTime.Now, logging);
+
+            using var quarantine = command.LeftoverSubject is { } subject && command.SelectedLeftovers.Count > 0
+                ? QuarantineSession.OpenMachine(subject.Name, logging)
+                : null;
+            Send(writer, jobId, await LeftoversResultAsync(command, remover, registry, backupFolder, cancellationToken, quarantine));
         }
         catch (OperationCanceledException)
         {
@@ -234,7 +240,7 @@ public static class CleanupWorker
     /// </summary>
     internal static async Task<CleanupWorkerMessage> LeftoversResultAsync(
         CleanupCommand command, LeftoverRemover remover, IRegistryView registry, string backupFolder,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, QuarantineSession? quarantine = null)
     {
         if (command.LeftoverSubject is not { } subject || command.SelectedLeftovers.Count == 0)
             return new CleanupWorkerMessage { Type = "result", Id = LeftoversId };
@@ -244,12 +250,13 @@ public static class CleanupWorker
 
         var removal = await remover.RemoveAsync(
             subject, claims, LeftoverLane.Machine, command.SelectedLeftovers.Take(MaxSelectedLeftovers).ToList(),
-            backupFolder, command.RegistryBackupRetentionCount, cancellationToken);
+            backupFolder, command.RegistryBackupRetentionCount, cancellationToken, quarantine);
 
         return new CleanupWorkerMessage
         {
             Type = "result",
             Id = LeftoversId,
+            QuarantineFolder = quarantine is { HasItems: true } ? quarantine.FolderName : null,
             Freed = removal.FreedBytes,
             Files = removal.Removed,
             Skipped = removal.Skipped,
