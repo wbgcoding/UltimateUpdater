@@ -37,6 +37,11 @@ public sealed class PsGallerySource(LoggingService logging, HttpClient httpClien
 
     protected override string Executable => "powershell";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["-NoProfile", "-NonInteractive", "-Command", ScanScript];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.FromOutdated(PackageManagerParsers.ParsePsGalleryInstalledJson(stdout));
+
     protected override TimeSpan ScanTimeout => TimeSpan.FromMinutes(5);
 
     protected override async Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken)

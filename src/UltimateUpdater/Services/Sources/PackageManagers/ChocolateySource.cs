@@ -12,6 +12,19 @@ public sealed class ChocolateySource(LoggingService logging, HttpClient httpClie
 
     protected override string Executable => "choco";
 
+    /// <summary>Everything installed. 1.x `list` asks the remote feed unless told `--local-only`, so the version is read first.</summary>
+    protected internal override IReadOnlyList<string>? ListInstalledArguments =>
+        _isVersion1 ? ["list", "--limit-output", "--local-only"] : ["list", "--limit-output"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.ParseChocolatey(stdout);
+
+    public override async Task<IReadOnlyList<UpdateItem>> ListInstalledAsync(CancellationToken cancellationToken)
+    {
+        await EnsureVersionKnownAsync(cancellationToken);
+        return await base.ListInstalledAsync(cancellationToken);
+    }
+
     /// <summary>
     /// `choco outdated` carries no date or size, so both are read afterwards from the Chocolatey
     /// community feed's OData entry for the exact version; read-only, no key. Fails closed.
@@ -61,13 +74,17 @@ public sealed class ChocolateySource(LoggingService logging, HttpClient httpClie
 
     public override async Task<string?> GetInstalledVersionAsync(UpdateItem item, CancellationToken cancellationToken)
     {
+        await EnsureVersionKnownAsync(cancellationToken);
+        return await base.GetInstalledVersionAsync(item, cancellationToken);
+    }
+
+    private async Task EnsureVersionKnownAsync(CancellationToken cancellationToken)
+    {
         if (!_versionKnown && await ReadMajorVersionAsync(cancellationToken) is { } major)
         {
             _isVersion1 = major < 2;
             _versionKnown = true;
         }
-
-        return await base.GetInstalledVersionAsync(item, cancellationToken);
     }
 
     /// <summary>`choco --version` prints the bare version ("1.4.0", "2.2.2"); null when it cannot be read,

@@ -62,6 +62,33 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
     protected override string Executable => Resolved.Value.Executable ?? "sdkmanager";
 
     /// <summary>
+    /// The "Installed packages" section of the same listing the scan reads. A complete listing is trusted over the
+    /// tool's crash exit (see <see cref="BuildScanResult"/>); a run that gave no package and did not exit cleanly fails.
+    /// </summary>
+    public override async Task<IReadOnlyList<UpdateItem>> ListInstalledAsync(CancellationToken cancellationToken)
+    {
+        var (_, sdkRoot, useAndroidCli) = Resolved.Value;
+        if (!useAndroidCli && ResolvedJavaHome.Value is null)
+            throw new InvalidOperationException(
+                string.Format(LocalizationService.Instance["ScanFailedNoJava"], MinimumJavaMajor));
+
+        var result = await RunAsync(BuildScanArguments(useAndroidCli, sdkRoot), cancellationToken, ProcessEnvironment);
+        return BuildInstalledResult(result);
+    }
+
+    internal IReadOnlyList<UpdateItem> BuildInstalledResult(ProcessResult result)
+    {
+        if (result.TimedOut)
+            EnsureScanCompleted(result);
+
+        var packages = InstalledListParsers.ParseSdkManagerInstalled(result.StandardOutput);
+        if (packages.Count == 0 && !IsAcceptedScanExitCode(result.ExitCode))
+            EnsureScanCompleted(result);
+
+        return ToInstalledItems(packages);
+    }
+
+    /// <summary>
     /// The listing first downloads and parses every repository manifest and prints nothing meanwhile;
     /// during a full scan, with the JVM starting next to every other source, that stayed silent past
     /// the default minute on a real developer PC and the source was reported as failed.

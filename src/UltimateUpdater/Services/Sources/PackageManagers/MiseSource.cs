@@ -24,6 +24,11 @@ public sealed class MiseSource(LoggingService logging) : CliUpdateSource(logging
 
     protected override string Executable => "mise";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["ls", "--json"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.ParseMiseList(stdout);
+
     protected override async Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken)
     {
         var result = EnsureScanCompleted(await RunAsync(["outdated", "--json"], cancellationToken));

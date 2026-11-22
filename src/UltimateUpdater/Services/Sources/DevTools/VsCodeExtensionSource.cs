@@ -16,6 +16,11 @@ public sealed class VsCodeExtensionSource(LoggingService logging, HttpClient htt
 
     protected override string Executable => "code";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["--list-extensions", "--show-versions"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.FromOutdated(PackageManagerParsers.ParseVsCodeExtensions(stdout));
+
     /// <summary>
     /// `--list-extensions --show-versions` never says what the newest marketplace version is (like
     /// pipx, every installed extension is an upgrade CANDIDATE), the Marketplace's own gallery API

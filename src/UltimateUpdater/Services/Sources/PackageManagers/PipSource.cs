@@ -210,6 +210,80 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
     }
 
     /// <summary>
+    /// Every package of every interpreter, like the scan's own rows. Whether another package needs one comes from
+    /// `pip list --not-required`: a package it prints has no dependent, one it leaves out is required. When that second
+    /// call fails the flag stays unknown instead of guessing. An interpreter without pip has nothing to list; when every
+    /// interpreter fails the first failure is rethrown, so a broken pip never reads as an empty machine.
+    /// </summary>
+    public override async Task<IReadOnlyList<UpdateItem>> ListInstalledAsync(CancellationToken cancellationToken)
+    {
+        var interpreters = DiscoverInterpreters();
+        if (interpreters.Count == 0)
+            return [];
+
+        var multiple = interpreters.Count > 1;
+        var perInterpreter = await BoundedFanOut.SelectAsync(
+            interpreters,
+            (interpreter, token) => ListInterpreterAsync(interpreter, multiple, token),
+            cancellationToken,
+            limit: MaxParallelInterpreters);
+
+        return CombineInterpreterResults(perInterpreter);
+    }
+
+    private async Task<(IReadOnlyList<UpdateItem>? Rows, Exception? Error)> ListInterpreterAsync(
+        PythonInterpreter interpreter, bool multiple, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var run = await ProcessRunner.RunAsync(
+                interpreter.PythonExe, ["-m", "pip", "list", "--format=json", "--disable-pip-version-check"],
+                ScanTimeout, cancellationToken, Utf8Environment, ScanIdleTimeout);
+
+            if (IsPipNotInstalled(interpreter, run, PipFoldersPresent))
+                return ([], null);
+
+            EnsureListCompleted(run);
+            var all = InstalledListParsers.ParsePipList(run.StandardOutput);
+            var free = await ReadNotRequiredAsync(interpreter, all.Count, cancellationToken);
+
+            return (InstalledListParsers.MarkPipRequired(all, free)
+                .Select(p => CreateItem(new OutdatedPackage(p.Id, p.Name, p.Version, null), interpreter, multiple, p.RequiredByOthers))
+                .ToList(), null);
+        }
+        catch (Exception ex) when (ex is TimeoutException or InvalidOperationException or ExternalToolCrashedException
+                                       or ProcessIdleTimeoutException or System.ComponentModel.Win32Exception)
+        {
+            Logging.Warn($"pip ({interpreter.DisplayLabel}): listing failed; {ex.Message}");
+            return (null, ex);
+        }
+    }
+
+    /// <summary>The packages nothing else needs, or null when the call did not give a usable answer (a dependency tree
+    /// always has a leaf, so an empty answer for a non-empty install is no answer).</summary>
+    private async Task<IReadOnlyList<InstalledPackage>?> ReadNotRequiredAsync(
+        PythonInterpreter interpreter, int installedCount, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var run = await ProcessRunner.RunAsync(
+                interpreter.PythonExe, ["-m", "pip", "list", "--not-required", "--format=json", "--disable-pip-version-check"],
+                ScanTimeout, cancellationToken, Utf8Environment, ScanIdleTimeout);
+
+            if (run.TimedOut || run.ExitCode != 0)
+                return null;
+
+            var free = InstalledListParsers.ParsePipList(run.StandardOutput);
+            return free.Count == 0 && installedCount > 0 ? null : free;
+        }
+        catch (Exception ex) when (ex is ProcessIdleTimeoutException or System.ComponentModel.Win32Exception)
+        {
+            Logging.Warn($"pip ({interpreter.DisplayLabel}): could not tell which packages others need; {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
     /// A Python installed without pip (installer box unticked, an embeddable or vendor-registered build)
     /// answers <c>-m pip</c> with "No module named pip". That is a tool that is not there, not a source that
     /// failed. A pip that IS on disk but fails to import stays an error: the repair path in InstallAsync
@@ -248,7 +322,7 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
         }
     }
 
-    private UpdateItem CreateItem(OutdatedPackage package, PythonInterpreter interpreter, bool multiple)
+    private UpdateItem CreateItem(OutdatedPackage package, PythonInterpreter interpreter, bool multiple, bool? requiredByOthers = null)
     {
         var id = BuildId(package.Id, interpreter, multiple);
         var name = multiple ? $"{package.Name} ({interpreter.DisplayLabel})" : package.Name;
@@ -262,6 +336,7 @@ public sealed class PipSource(LoggingService logging, HttpClient httpClient) : C
             InstalledVersion = package.Installed,
             AvailableVersion = package.Available,
             IsCritical = SecurityRelevance.IsSecurityRelevant(package.Id, package.Name),
+            RequiredByOthers = requiredByOthers,
             Meta = new Dictionary<string, string>
             {
                 [PackageMetaKey] = package.Id,

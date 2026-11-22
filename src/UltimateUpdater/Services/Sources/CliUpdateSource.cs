@@ -144,6 +144,49 @@ public abstract class CliUpdateSource : IUpdateSource
 
     public virtual bool CanUninstall(UpdateItem item) => UninstallArguments(item) is not null;
 
+    /// <summary>The command that lists every installed package (not only the outdated ones), or null when this manager has no such listing.</summary>
+    protected internal virtual IReadOnlyList<string>? ListInstalledArguments => null;
+
+    /// <summary>Reads the output of <see cref="ListInstalledArguments"/>; a line it cannot read is skipped.</summary>
+    protected internal virtual IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) => [];
+
+    /// <summary>True for a listing that ran although the exit code is not zero (npm exits 1 for a tree with a problem and still prints it).</summary>
+    protected internal virtual bool IsCompleteInstalledListing(ProcessResult result) => false;
+
+    /// <summary>
+    /// Implements <see cref="IUpdateSource.ListInstalledAsync"/> for every CLI source that names a listing command;
+    /// declared here so an override takes part in interface dispatch. A listing that failed or timed out throws, like
+    /// a scan: it must never look like a machine with nothing installed.
+    /// </summary>
+    public virtual async Task<IReadOnlyList<UpdateItem>> ListInstalledAsync(CancellationToken cancellationToken)
+    {
+        if (ListInstalledArguments is not { } arguments)
+            return [];
+
+        var run = await RunAsync(arguments, cancellationToken, ProcessEnvironment);
+        EnsureListCompleted(run);
+        return ToInstalledItems(ParseInstalledList(run.StandardOutput));
+    }
+
+    /// <summary>Like <see cref="EnsureScanCompleted"/> but strict: only exit code zero (or a listing the source vouches for) counts.</summary>
+    protected internal void EnsureListCompleted(ProcessResult result)
+    {
+        if (result.TimedOut)
+            throw new TimeoutException($"{Id}: listing timed out after {ScanTimeout.TotalSeconds:0} seconds.");
+
+        if (result.ExitCode == 0 || IsCompleteInstalledListing(result))
+            return;
+
+        if (ProcessExitCodes.IsCrash(result.ExitCode))
+            throw new ExternalToolCrashedException(Executable, result.ExitCode);
+
+        throw new InvalidOperationException($"{Id}: listing failed; '{Executable}' exited with code {result.ExitCode}.");
+    }
+
+    /// <summary>The items of a listing, shaped like the scan's own rows so <see cref="UninstallAsync"/> accepts them.</summary>
+    protected internal IReadOnlyList<UpdateItem> ToInstalledItems(IEnumerable<InstalledPackage> packages) =>
+        packages.Select(p => CreateItem(p.Id, p.Name, p.Version, null, requiredByOthers: p.RequiredByOthers)).ToList();
+
     /// <summary>
     /// Implements the interface's enrichment hook for every CLI source (default: nothing to add), so a
     /// subclass can simply <c>override</c> it. Declared here rather than left to the interface's own
@@ -238,7 +281,8 @@ public abstract class CliUpdateSource : IUpdateSource
     protected virtual bool IsRebootRequired(ProcessResult result) => false;
 
     protected UpdateItem CreateItem(
-        string id, string name, string? installed, string? available, IReadOnlyDictionary<string, string>? meta = null) => new()
+        string id, string name, string? installed, string? available, IReadOnlyDictionary<string, string>? meta = null,
+        bool? requiredByOthers = null) => new()
     {
         Id = id,
         SourceId = Id,
@@ -248,6 +292,7 @@ public abstract class CliUpdateSource : IUpdateSource
         AvailableVersion = available,
         IsCritical = SecurityRelevance.IsSecurityRelevant(id, name),
         Meta = meta ?? new Dictionary<string, string>(),
+        RequiredByOthers = requiredByOthers,
     };
 
     /// <summary>

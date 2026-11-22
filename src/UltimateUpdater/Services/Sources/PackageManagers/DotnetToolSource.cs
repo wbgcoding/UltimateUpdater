@@ -17,6 +17,17 @@ public sealed class DotnetToolSource(LoggingService logging, HttpClient httpClie
 
     protected override string Executable => "dotnet";
 
+    /// <summary>`dotnet tool list --global`; without an installed SDK there is nothing to list.</summary>
+    public override async Task<IReadOnlyList<UpdateItem>> ListInstalledAsync(CancellationToken cancellationToken)
+    {
+        var listed = await RunAsync(["tool", "list", "--global"], cancellationToken);
+        if (IsSdkMissing(listed))
+            return [];
+
+        EnsureListCompleted(listed);
+        return ToInstalledItems(InstalledListParsers.FromOutdated(PackageManagerParsers.ParseDotnetToolList(listed.StandardOutput)));
+    }
+
     /// <summary>
     /// `dotnet tool list` reports neither a publish date nor a size. The date comes from the NuGet
     /// registration leaf for the exact version; the registration leaf carries no size, so that comes from

@@ -242,6 +242,29 @@ public sealed class OllamaSource(LoggingService logging, HttpClient httpClient) 
         }
     }
 
+    /// <summary>
+    /// Every model the local server has, in the same shape as the scan's rows. The server is only asked, never
+    /// started: without one the models cannot be listed and the answer is empty.
+    /// </summary>
+    public async Task<IReadOnlyList<UpdateItem>> ListInstalledAsync(CancellationToken cancellationToken)
+    {
+        var models = await ReadLocalModelsAsync(cancellationToken);
+        if (models is null)
+            return [];
+
+        return models.Select(model => new UpdateItem
+        {
+            Id = model.Name,
+            SourceId = Id,
+            Category = Category,
+            Name = AiModelNames.Friendly(model.Name),
+            InstalledVersion = Short(model.Digest),
+            IsCritical = false,
+            DownloadSize = model.Size,
+            PublishDate = model.Modified,
+        }).ToList();
+    }
+
     public bool CanUninstall(UpdateItem item) => true;
 
     /// <summary>`ollama rm` removes the pulled model from local disk; nothing here reaches the registry.</summary>

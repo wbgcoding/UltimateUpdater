@@ -156,6 +156,32 @@ public sealed class PyenvWinSource(LoggingService logging) : IUpdateSource
         progress.Report(new InstallProgress { PercentComplete = 100, StatusText = item.Name });
     }
 
+    /// <summary>
+    /// Every Python version pyenv has installed (`pyenv versions`), one row each. A failing call throws; an exit
+    /// without a version is an empty answer only when the tool says so with exit code zero.
+    /// </summary>
+    public async Task<IReadOnlyList<UpdateItem>> ListInstalledAsync(CancellationToken cancellationToken)
+    {
+        var result = await ProcessRunner.RunAsync("pyenv", ["versions"], ExternalCallTimeouts.Long, cancellationToken);
+        if (result.TimedOut)
+            throw new TimeoutException("pyenv-win: listing the installed versions timed out.");
+
+        if (result.ExitCode != 0)
+            throw new InvalidOperationException($"pyenv-win: 'pyenv versions' exited with code {result.ExitCode}.");
+
+        return InstalledListParsers.ParsePyenvVersions(result.StandardOutput)
+            .Select(version => new UpdateItem
+            {
+                Id = $"pyenv-win-{version}",
+                SourceId = Id,
+                Category = Category,
+                Name = $"Python {version} (pyenv)",
+                InstalledVersion = version,
+                IsCritical = false,
+            })
+            .ToList();
+    }
+
     /// <summary>The row's id is the synthetic "pyenv-win-global" pin, not a real version; removal targets
     /// <see cref="UpdateItem.InstalledVersion"/>, the actual Python version currently pinned.</summary>
     public bool CanUninstall(UpdateItem item) => !string.IsNullOrWhiteSpace(item.InstalledVersion);

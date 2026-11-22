@@ -80,6 +80,16 @@ public interface IUpdateSource
         Task.FromResult<UpdateEnrichment?>(null);
 
     /// <summary>
+    /// Everything this source has installed, not only what is outdated, for the uninstaller's list of programs.
+    /// Each item carries its installed version and, where the tool can say, <see cref="UpdateItem.RequiredByOthers"/>;
+    /// its shape matches the scan's items, so <see cref="UninstallAsync"/> works on it unchanged. Read-only: it never
+    /// installs or fetches anything to list, and a failing tool throws instead of looking like an empty machine.
+    /// Default: a source that cannot list what it installed returns nothing.
+    /// </summary>
+    Task<IReadOnlyList<UpdateItem>> ListInstalledAsync(CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<UpdateItem>>([]);
+
+    /// <summary>
     /// Re-checks the installed version right after a successful install, for the sources that
     /// can answer cheaply, one local call, no network: winget, Chocolatey, npm, pip. Default: null, which
     /// means "no statement", not "unchanged" - a source that cannot answer says so instead of guessing,

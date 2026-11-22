@@ -21,6 +21,15 @@ public sealed class PnpmSource(LoggingService logging, HttpClient httpClient) : 
 
     protected override string Executable => "pnpm";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["ls", "-g", "--depth=0", "--json"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.ParsePnpmList(stdout);
+
+    /// <summary>`npm ls` exits 1 for a tree with a problem and still prints the whole list; a report counts, a failure does not.</summary>
+    protected internal override bool IsCompleteInstalledListing(ProcessResult result) =>
+        result.ExitCode == 1 && InstalledListParsers.IsNpmListReport(result.StandardOutput);
+
     /// <summary>pnpm's global packages are npm registry packages: same lookup npm's own row uses.</summary>
     public override Task<UpdateEnrichment?> EnrichAsync(UpdateItem item, CancellationToken cancellationToken) =>
         NpmEnrichment.FetchAsync(httpClient, Logging, Id, item.Id, item.AvailableVersion, item.Id, cancellationToken);

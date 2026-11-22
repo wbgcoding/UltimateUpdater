@@ -17,6 +17,11 @@ public sealed class PipxSource(LoggingService logging, HttpClient httpClient) : 
 
     protected override string Executable => "pipx";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["list", "--json"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.FromOutdated(PackageManagerParsers.ParsePipxJson(stdout));
+
     /// <summary>
     /// pipx wraps PyPI, so PyPI knows everything `pipx list` cannot: the newest version, when it shipped
     /// and its download size. Unlike pip's enrichment (which looks up an already-known target version),

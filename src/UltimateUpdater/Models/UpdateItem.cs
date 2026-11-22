@@ -48,6 +48,13 @@ public sealed class UpdateItem
     public string? PinnedVersion { get; init; }
 
     /// <summary>
+    /// Only for a row of an installed-packages listing: true when another installed package depends on this one,
+    /// false when nothing does, null when the package manager cannot say. Removing a required package can break the
+    /// packages that need it.
+    /// </summary>
+    public bool? RequiredByOthers { get; init; }
+
+    /// <summary>
     /// Only for a reinstall's fresh install: the scope the program had before it was removed, "user" or
     /// "machine" (<see cref="InstallScopes"/>), so the new copy lands where the old one was. Null = not
     /// known, and the install then names no scope at all.
@@ -73,6 +80,7 @@ public sealed class UpdateItem
         PublishDate = PublishDate,
         PinnedVersion = PinnedVersion,
         IsRollback = IsRollback,
+        RequiredByOthers = RequiredByOthers,
         InstallScope = InstallScopes.Normalize(scope),
     };
 
@@ -100,6 +108,7 @@ public sealed class UpdateItem
         DownloadSize = DownloadSize,
         PublishDate = PublishDate,
         PinnedVersion = version,
+        RequiredByOthers = RequiredByOthers,
         IsRollback = true,
     };
 }

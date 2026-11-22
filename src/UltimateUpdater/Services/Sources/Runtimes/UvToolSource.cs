@@ -1,6 +1,5 @@
 using System.Net.Http;
 using UltimateUpdater.Models;
-using UltimateUpdater.Services.Sources.PackageManagers;
 
 namespace UltimateUpdater.Services.Sources.Runtimes;
 
@@ -19,6 +18,11 @@ public sealed class UvToolSource(LoggingService logging, HttpClient httpClient) 
     public override UpdateCategory Category => UpdateCategory.DeveloperTools;
 
     protected override string Executable => "uv";
+
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["tool", "list"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.FromOutdated(PackageManagerParsers.ParseUvToolList(stdout));
 
     /// <summary>Date and size for the version being offered, from the same PyPI release pip already reads.</summary>
     public override Task<UpdateEnrichment?> EnrichAsync(UpdateItem item, CancellationToken cancellationToken)

@@ -12,6 +12,11 @@ public sealed class ComposerSource(LoggingService logging, HttpClient httpClient
 
     protected override string Executable => "composer";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["global", "show", "--format=json", "--no-interaction"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.ParseComposerShow(stdout);
+
     protected override async Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken)
     {
         var result = EnsureScanCompleted(

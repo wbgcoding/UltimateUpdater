@@ -200,6 +200,29 @@ public sealed class VoltaSource(LoggingService logging, HttpClient httpClient) :
         progress.Report(new InstallProgress { PercentComplete = 100, StatusText = item.Name });
     }
 
+    /// <summary>
+    /// The default tools `volta list` reports that `volta uninstall` can remove (the runtimes it refuses are left out),
+    /// shaped like the scan's rows. A failing `volta list` throws instead of reading as an empty toolchain.
+    /// </summary>
+    public async Task<IReadOnlyList<UpdateItem>> ListInstalledAsync(CancellationToken cancellationToken)
+    {
+        var result = await ProcessRunner.RunAsync("volta", ["list", "all", "--format", "plain"], ExternalCallTimeouts.Long, cancellationToken);
+
+        return ReadDefaultTools(result)
+            .Select(tool => new UpdateItem
+            {
+                Id = $"volta-{tool.Name}",
+                SourceId = Id,
+                Category = Category,
+                Name = $"{tool.Name} (Volta)",
+                InstalledVersion = tool.Version,
+                IsCritical = false,
+                Meta = new Dictionary<string, string> { ["voltaName"] = tool.Name, ["voltaKind"] = tool.Kind },
+            })
+            .Where(CanUninstall)
+            .ToList();
+    }
+
     /// <summary>`volta uninstall` only removes packages: for the runtimes node, npm and yarn it answers
     /// "not supported", so the menu entry is not offered for them at all.</summary>
     public bool CanUninstall(UpdateItem item) =>

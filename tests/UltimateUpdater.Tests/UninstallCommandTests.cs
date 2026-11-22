@@ -185,7 +185,7 @@ public class UninstallCommandTests
     /// <see cref="ClientLauncherSource.CreateKnown"/> are covered generically below instead, since their
     /// count varies with <see cref="LauncherCatalog"/>.
     /// </summary>
-    private static readonly Dictionary<string, bool> ExpectedCanUninstall = new()
+    internal static readonly Dictionary<string, bool> ExpectedCanUninstall = new()
     {
         // has removal
         ["winget"] = true,

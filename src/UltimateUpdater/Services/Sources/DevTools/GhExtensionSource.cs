@@ -12,6 +12,11 @@ public sealed class GhExtensionSource(LoggingService logging, HttpClient httpCli
 
     protected override string Executable => "gh";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["extension", "list"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.ParseGhExtensions(stdout);
+
     /// <summary>
     /// `gh extension list` marks an update as pending but never says what version it upgrades to, the
     /// GitHub REST API for the extension's own repo does. Read-only, unauthenticated (rate-limited but

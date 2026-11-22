@@ -12,6 +12,11 @@ public sealed class GemSource(LoggingService logging, HttpClient httpClient) : C
 
     protected override string Executable => "gem";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["list", "--local"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.ParseGemList(stdout);
+
     protected override async Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken)
     {
         var result = EnsureScanCompleted(await RunAsync(["outdated"], cancellationToken));

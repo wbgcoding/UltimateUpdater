@@ -17,6 +17,11 @@ public sealed class GcloudComponentSource(LoggingService logging) : CliUpdateSou
 
     protected override string Executable => "gcloud";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["components", "list", "--format=json", "--quiet"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.ParseGcloudInstalled(stdout);
+
     /// <summary>No per-component release notes exist, the SDK's combined release notes page is attached
     /// instead, a constant with no lookup involved.</summary>
     public override Task<UpdateEnrichment?> EnrichAsync(UpdateItem item, CancellationToken cancellationToken) =>

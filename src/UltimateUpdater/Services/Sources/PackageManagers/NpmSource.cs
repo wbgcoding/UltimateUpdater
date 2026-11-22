@@ -11,6 +11,15 @@ public sealed class NpmSource(LoggingService logging, HttpClient httpClient) : C
 
     protected override string Executable => "npm";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["ls", "-g", "--depth=0", "--json"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.ParseNpmList(stdout);
+
+    /// <summary>`npm ls` exits 1 for a tree with a problem and still prints the whole list; a report counts, a failure does not.</summary>
+    protected internal override bool IsCompleteInstalledListing(ProcessResult result) =>
+        result.ExitCode == 1 && InstalledListParsers.IsNpmListReport(result.StandardOutput);
+
     /// <summary>
     /// `npm outdated` reports no publish date, so it is read afterwards from the public npm registry
     /// packument (<see cref="NpmEnrichment"/>). Fails closed.

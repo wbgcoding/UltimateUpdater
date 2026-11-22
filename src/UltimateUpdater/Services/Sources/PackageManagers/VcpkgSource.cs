@@ -17,6 +17,11 @@ public sealed class VcpkgSource(LoggingService logging) : CliUpdateSource(loggin
 
     protected override string Executable => "vcpkg";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["list"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.ParseVcpkgList(stdout);
+
     protected override async Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken)
     {
         var result = EnsureScanCompleted(await RunAsync(["update"], cancellationToken));

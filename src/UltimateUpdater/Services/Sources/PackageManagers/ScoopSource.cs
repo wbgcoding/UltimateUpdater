@@ -12,6 +12,11 @@ public sealed class ScoopSource(LoggingService logging) : CliUpdateSource(loggin
 
     protected override string Executable => "scoop";
 
+    protected internal override IReadOnlyList<string>? ListInstalledArguments => ["export"];
+
+    protected internal override IReadOnlyList<InstalledPackage> ParseInstalledList(string stdout) =>
+        InstalledListParsers.ParseScoopExport(stdout);
+
     protected override async Task<IReadOnlyList<UpdateItem>> ScanCoreAsync(CancellationToken cancellationToken)
     {
         // refresh the bucket manifests first, otherwise `status` compares against stale data
