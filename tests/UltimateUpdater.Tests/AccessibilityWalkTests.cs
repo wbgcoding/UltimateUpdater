@@ -80,10 +80,10 @@ public class AccessibilityWalkTests
         var viewsDirectory = FindViewsDirectory();
         var offenders = new List<string>();
 
-        foreach (var file in Directory.EnumerateFiles(viewsDirectory, "*.xaml"))
+        foreach (var (fileName, file) in ViewSources.AllXaml(viewsDirectory))
         {
             if (File.ReadAllText(file).Contains("TabIndex", StringComparison.Ordinal))
-                offenders.Add(Path.GetFileName(file));
+                offenders.Add(fileName);
         }
 
         Assert.True(offenders.Count == 0,

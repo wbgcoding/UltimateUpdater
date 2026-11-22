@@ -63,9 +63,8 @@ public class HardwiredTextTests
         var approved = ApprovedExceptions.ToHashSet(StringComparer.Ordinal);
         var unexpected = new List<string>();
 
-        foreach (var file in Directory.EnumerateFiles(viewsDirectory, "*.xaml", SearchOption.AllDirectories))
+        foreach (var (fileName, file) in ViewSources.AllXaml(viewsDirectory))
         {
-            var fileName = Path.GetFileName(file);
             var xaml = File.ReadAllText(file);
 
             foreach (var entry in FindUnapproved(fileName, xaml, approved))

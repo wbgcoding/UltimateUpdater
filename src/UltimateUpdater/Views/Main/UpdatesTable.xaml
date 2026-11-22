@@ -1,0 +1,1402 @@
+<UserControl x:Class="UltimateUpdater.Views.Main.UpdatesTable"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:views="clr-namespace:UltimateUpdater.Views">
+    <UserControl.Resources>
+        <views:ShortcutTooltipConverter x:Key="ShortcutTooltip"/>
+        <views:UpperCaseConverter x:Key="UpperCase"/>
+        <!-- The table's row buttons: outline only, no grey fill, so a column of them reads as quiet controls on
+             the table surface. Hover and pressed fills come from the stock template. -->
+        <Style x:Key="RowOutlineButton" TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <!-- The sort mark beside a sortable column title: only the active direction, in the accent. Fixed width
+             so the mark never nudges the label. -->
+        <Style x:Key="SortGlyphText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Width" Value="14"/>
+            <Setter Property="TextAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+        </Style>
+
+        <!-- Same tone as the app-wide "PanelSurfaceBorder" (App.xaml): the updates table sits directly under the
+             hint banner, which uses that style, so the two must match. -->
+        <Style x:Key="SectionCard" TargetType="Border" BasedOn="{StaticResource PanelSurfaceBorder}"/>
+
+        <!-- The available version as a link: accent text, underlined on hover and keyboard focus. The label lives
+             in the template (not in Content) so the triggers can underline it. Used where a row has a changelog
+             to open. -->
+        <Style x:Key="VersionLinkButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="True"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <TextBlock x:Name="Label" Text="{TemplateBinding Content}" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{TemplateBinding Foreground}"
+                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                   VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                   Style="{StaticResource TabularNumberText}"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Label" Property="TextDecorations" Value="Underline"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Label" Property="TextDecorations" Value="Underline"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Shared by every row with the full action set (main table rows and manual-open rows). A ContextMenu is
+             outside the visual tree, so it takes its DataContext from the row that opened it
+             (PlacementTarget.DataContext below). The Steam sub-row's smaller 3-item menu is deliberately its own
+             ContextMenu. -->
+        <ContextMenu x:Key="RowActionsMenu" Style="{StaticResource RowContextMenu}"
+                     DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding StartHeader}" Command="{Binding StartCommand}"
+                      Visibility="{Binding CanStart, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- Names what will open (a web page, or the plain word for a
+                 launcher); the shared "Open" is the tray menu's and the folder
+                 action's and must not be renamed under them. -->
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding OpenTargetHeader}" Command="{Binding OpenCommand}"
+                      Visibility="{Binding CanOpen, Converter={StaticResource BoolToVisibility}}"/>
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding RetryHeader}" Command="{Binding RetryCommand}"
+                      Visibility="{Binding ShowRetryButton, Converter={StaticResource BoolToVisibility}}"/>
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding UninstallHeader}" Command="{Binding UninstallCommand}"
+                      Visibility="{Binding CanUninstall, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- "back to the previous version", offered only once a successful install on
+                 record can actually be undone (ShowDowngradeButton on the row). -->
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding DowngradeHeader}" Command="{Binding DowngradeCommand}"
+                      Visibility="{Binding ShowDowngradeButton, Converter={StaticResource BoolToVisibility}}"/>
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding OpenFolderHeader}" Command="{Binding OpenFolderCommand}"
+                      Visibility="{Binding CanOpenFolder, Converter={StaticResource BoolToVisibility}}"/>
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding InfoLinkHeader}" Command="{Binding OpenInfoLinkCommand}"
+                      Visibility="{Binding HasInfoLink, Converter={StaticResource BoolToVisibility}}"/>
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding IgnoreHeader}" Command="{Binding IgnoreCommand}"
+                      Visibility="{Binding ShowIgnoreVersionEntry, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- hidden once the whole package is already ignored, it would say
+                 nothing the row is not already doing -->
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding IgnoreAllHeader}" Command="{Binding IgnoreAllVersionsCommand}"
+                      Visibility="{Binding ShowIgnoreAllEntry, Converter={StaticResource BoolToVisibility}}"/>
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding IgnoreSimpleHeader}" Command="{Binding IgnoreCommand}"
+                      Visibility="{Binding IsManualOnly, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- "Remind me later": hidden once the row is already ignored (no snooze concept until
+                 un-ignored) or already snoozed (the "show again now" entry below takes over instead). -->
+            <MenuItem Style="{StaticResource RowSubmenuItem}" Header="{Binding SnoozeHeader}"
+                      Visibility="{Binding ShowSnoozeMenu, Converter={StaticResource BoolToVisibility}}">
+                <MenuItem Style="{StaticResource RowMenuItem}"
+                          Header="{Binding SnoozeOneDayHeader}" Command="{Binding SnoozeCommand}" CommandParameter="day"/>
+                <MenuItem Style="{StaticResource RowMenuItem}"
+                          Header="{Binding SnoozeOneWeekHeader}" Command="{Binding SnoozeCommand}" CommandParameter="week"/>
+                <MenuItem Style="{StaticResource RowMenuItem}"
+                          Header="{Binding SnoozeOneMonthHeader}" Command="{Binding SnoozeCommand}" CommandParameter="month"/>
+            </MenuItem>
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding UnsnoozeHeader}" Command="{Binding UnsnoozeCommand}"
+                      Visibility="{Binding ShowUnsnoozeEntry, Converter={StaticResource BoolToVisibility}}"/>
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding DetailsHeader}" Command="{Binding ShowErrorDetailCommand}"
+                      Visibility="{Binding HasInstallError, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- Only for a failure classified as interactively maybe fixable, never for
+                 "restart needed" or "no applicable package". -->
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding RetryInteractiveHeader}" Command="{Binding RetryInteractiveCommand}"
+                      Visibility="{Binding ShowRetryInteractiveButton, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- Only for winget's different-install-technology refusal. -->
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding ReinstallHeader}" Command="{Binding ReinstallCommand}"
+                      ToolTip="{Binding ReinstallTooltip}"
+                      Visibility="{Binding ShowReinstallButton, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- The only way out of NeedsManualWork, Install/Retry stay hidden until this is used. -->
+            <MenuItem Style="{StaticResource RowMenuItem}"
+                      Header="{Binding ResetPersistentFailureHeader}" Command="{Binding ResetPersistentFailureCommand}"
+                      Visibility="{Binding ShowResetPersistentFailureEntry, Converter={StaticResource BoolToVisibility}}"/>
+        </ContextMenu>
+    </UserControl.Resources>
+
+    <!-- Results. Same 24px page margin on the right as on the left, so the card is
+         inset symmetrically and the scrollbar sits inside it rather than flush to the window edge. -->
+    <Grid Margin="24,0,24,0">
+
+        <!-- Empty state carries the primary action -->
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="380">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasResults}" Value="False">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <!-- a tick would read as "all good" when the real reason is that a filter hid everything -->
+            <ui:SymbolIcon FontSize="44" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                <ui:SymbolIcon.Style>
+                    <Style TargetType="ui:SymbolIcon">
+                        <Setter Property="Symbol" Value="CheckmarkCircle24"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsFilterHidingEverything}" Value="True">
+                                <Setter Property="Symbol" Value="Search24"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ShowNotCheckedPrompt}" Value="True">
+                                <Setter Property="Symbol" Value="Search24"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ui:SymbolIcon.Style>
+            </ui:SymbolIcon>
+            <TextBlock x:Name="EmptyStateTextBlock" Text="{Binding EmptyStateText}" Margin="0,12,0,0"
+                       HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+            <!-- Before any result exists the empty table is not an answer: the empty state carries the scan. -->
+            <ui:Button x:Name="EmptyStateScanButton" HorizontalAlignment="Center" Margin="0,16,0,0"
+                       Appearance="Primary" Padding="16,8"
+                       Content="{Binding Loc[ScanButton]}"
+                       Command="{Binding ScanCommand}"
+                       Visibility="{Binding ShowNotCheckedPrompt, Converter={StaticResource BoolToVisibility}}">
+                <ui:Button.Icon>
+                    <ui:SymbolIcon Symbol="ArrowSync24" FontSize="16"/>
+                </ui:Button.Icon>
+            </ui:Button>
+        </StackPanel>
+
+        <Border Style="{StaticResource SectionCard}"
+                Visibility="{Binding HasResults, Converter={StaticResource BoolToVisibility}}">
+          <!-- RoundedClip: the scrollbar's square surface would otherwise paint over the card's rounded
+               lower right corner (7 = the card's radius 8 minus its 1px stroke). -->
+          <Grid x:Name="ResultsCardContent" views:RoundedClip.Radius="7">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>   <!-- clickable column headers -->
+                <!-- Rows + the manual-open block share ONE scroll area (below) so the compact block
+                     rolls with the table instead of sitting in its own capped box. -->
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Column headers: click to sort within each category group; click the active one again
+                 to flip direction. The insets approximate the row item's own margins/padding so the
+                 labels line up over their lanes. -->
+            <!-- Column order: Datum, Version, Größe. Widths stay attached to their content, not their
+                 position: 168 (the wider lane, for "1.2.3 → 1.2.4") sits under Version, 88 under the
+                 shorter Größe text. -->
+            <Grid Grid.Row="0" Margin="12,4,26,5" MinHeight="30">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource ColWidthCheck}"/>
+                    <ColumnDefinition Width="{StaticResource ColWidthIcon}"/>
+                    <ColumnDefinition Width="*"/>
+                    <!-- Publisher sits directly before date, hidden by default (see
+                         App.xaml), still hideable through the column chooser. -->
+                    <ColumnDefinition Width="{DynamicResource ColWidthPublisher}"/>
+                    <ColumnDefinition Width="{DynamicResource ColWidthDate}"/>
+                    <ColumnDefinition Width="{DynamicResource ColWidthVersion}"/>
+                    <ColumnDefinition Width="{DynamicResource ColWidthSize}"/>
+                    <ColumnDefinition Width="{StaticResource ColWidthAction}"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Select / clear every visible installable update at once. Tri-state: shows the
+                     indeterminate box when only some are ticked. The category checkboxes below sit
+                     flush with the ListBox's own left edge (no inset), while this header Grid carries
+                     the card's usual 12px left margin - the negative margin cancels exactly that, so
+                     this box lines up with them instead of sitting 12px right of them. MinHeight
+                     matches the category header's own StackPanel MinHeight (30) for the same reason. -->
+                <CheckBox x:Name="SelectAllCheckBox" Grid.Column="0" Margin="0"
+                          VerticalAlignment="Center" HorizontalAlignment="Left"
+                          IsThreeState="True"
+                          IsChecked="{Binding AllVisibleSelected, Mode=OneWay}"
+                          Command="{Binding SelectAllCommand}"
+                          ToolTip="{Binding SelectAllTooltip, Converter={StaticResource ShortcutTooltip}, ConverterParameter=SelectAllButton}"
+                          AutomationProperties.Name="{Binding SelectAllTooltip}"/>
+
+                <!-- Column titles: bigger (14, like the category headers) and vertically centred in the
+                     header strip; date/size/version are centred to their own lane, name stays left. -->
+                <StackPanel x:Name="SortHeaderName" Grid.Column="2" Orientation="Horizontal" Cursor="Hand" Margin="10,0,12,0"
+                            VerticalAlignment="Center" Focusable="True" KeyDown="OnClickTargetKeyDown"
+                            AutomationProperties.Name="{Binding Loc[ColumnName]}"
+                            ToolTip="{Binding NameSortTooltip}">
+                    <StackPanel.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="name"/>
+                    </StackPanel.InputBindings>
+                    <TextBlock Text="{Binding Loc[ColumnName]}" FontSize="12" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <!-- Fixed width so the arrow appearing/disappearing never nudges the label. -->
+                    <TextBlock Text="{Binding NameSortGlyph}" Style="{StaticResource SortGlyphText}"/>
+                </StackPanel>
+
+                <!-- Publisher, hidden by default; a plain label, not clickable, there is
+                     no per-row sort key for it. -->
+                <TextBlock Grid.Column="3" Text="{Binding Loc[ColumnPublisher]}" FontSize="12" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                <StackPanel x:Name="SortHeaderDate" Grid.Column="4" Orientation="Horizontal" Cursor="Hand" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Focusable="True" KeyDown="OnClickTargetKeyDown"
+                            AutomationProperties.Name="{Binding Loc[ColumnDate]}"
+                            ToolTip="{Binding DateSortTooltip}">
+                    <StackPanel.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="date"/>
+                    </StackPanel.InputBindings>
+                    <TextBlock Text="{Binding Loc[ColumnDate]}" FontSize="12" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="{Binding DateSortGlyph}" Style="{StaticResource SortGlyphText}"/>
+                </StackPanel>
+
+                <StackPanel x:Name="SortHeaderVersion" Grid.Column="5" Orientation="Horizontal" Cursor="Hand" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Focusable="True" KeyDown="OnClickTargetKeyDown"
+                            AutomationProperties.Name="{Binding Loc[ColumnVersion]}"
+                            ToolTip="{Binding VersionSortTooltip}">
+                    <StackPanel.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="version"/>
+                    </StackPanel.InputBindings>
+                    <TextBlock Text="{Binding Loc[ColumnVersion]}" FontSize="12" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="{Binding VersionSortGlyph}" Style="{StaticResource SortGlyphText}"/>
+                </StackPanel>
+
+                <StackPanel x:Name="SortHeaderSize" Grid.Column="6" Orientation="Horizontal" Cursor="Hand" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Focusable="True" KeyDown="OnClickTargetKeyDown"
+                            AutomationProperties.Name="{Binding Loc[ColumnSize]}"
+                            ToolTip="{Binding SizeSortTooltip}">
+                    <StackPanel.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding SortByCommand}" CommandParameter="size"/>
+                    </StackPanel.InputBindings>
+                    <TextBlock Text="{Binding Loc[ColumnSize]}" FontSize="12" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="{Binding SizeSortGlyph}" Style="{StaticResource SortGlyphText}"/>
+                </StackPanel>
+
+                <!-- The shared column chooser (Views/ColumnChooser.cs), opened here for the main table
+                     it configures; MainWindow.xaml.cs builds the menu from MainViewModel's own column
+                     list rather than one being declared in XAML per window. Subtle, right-aligned in
+                     the action lane. -->
+                <ui:Button x:Name="MainColumnsButton" Grid.Column="7" Click="OnColumnsButtonClick"
+                           Width="28" Height="28" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                           Appearance="Transparent"
+                           ToolTip="{Binding Loc[ColumnsButton]}" AutomationProperties.Name="{Binding Loc[ColumnsButton]}">
+                    <ui:Button.Icon><ui:SymbolIcon Symbol="ColumnEdit24" FontSize="16"/></ui:Button.Icon>
+                </ui:Button>
+            </Grid>
+
+            <!-- Edge to edge, like the row lines below it: an inset line reads as broken off. -->
+            <Border x:Name="ColumnHeaderLine" Grid.Row="0" Height="1" VerticalAlignment="Bottom" Margin="0"
+                    Background="{DynamicResource CardStrokeColorDefaultBrush}"/>
+
+            <!-- Rows and the manual-open block below share this ONE reserved-lane ScrollViewer (14px classic
+                 bar, themed by the app-wide ScrollBar style, Style="{x:Null}") instead of each having its own
+                 scroll area. Pixel scrolling (CanContentScroll=False), so the bar glides over every row
+                 instead of jumping a whole category. The ListBox loses its own virtualization here (every row
+                 is realized); that cost is negligible for the dozens of rows a real update list has. -->
+            <ScrollViewer x:Name="ResultsScrollViewer" Grid.Row="1" Style="{x:Null}" Focusable="False"
+                          CanContentScroll="False" PanningMode="VerticalOnly"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Visible">
+            <StackPanel>
+            <!-- Grouped virtualization is deliberately OFF: WPF's virtualizing panel drops or blanks rows
+                 when groups are expanded or collapsed, so the grouped list renders in full. Update lists are
+                 dozens of rows, so the cost is negligible next to a correct table. -->
+            <ListBox x:Name="UpdatesListBox" ItemsSource="{Binding UpdatesView}"
+                     Background="Transparent" BorderThickness="0"
+                     Padding="0,0,0,8"
+                     HorizontalContentAlignment="Stretch"
+                     VirtualizingPanel.IsVirtualizingWhenGrouping="False"
+                     PreviewKeyDown="OnUpdatesListPreviewKeyDown">
+
+                <!-- The ListBox's class command binding answers Ctrl+A itself (selecting list items, not the
+                     rows' IsSelected checkboxes) once focus is inside it, so the window-level KeyBinding
+                     never sees the key. An instance CommandBinding on the same element is checked before the
+                     class one, so this one wins and forwards to the same SelectAllCommand the window binding
+                     uses. -->
+                <ListBox.CommandBindings>
+                    <CommandBinding Command="ApplicationCommands.SelectAll"
+                                     Executed="OnUpdatesListSelectAllExecuted"
+                                     CanExecute="OnUpdatesListSelectAllCanExecute"/>
+                </ListBox.CommandBindings>
+
+                <!-- No ScrollViewer of its own: the outer one above scrolls
+                     both this and the manual-open block; a nested one here would be a second,
+                     redundant scroll area. -->
+                <ListBox.Template>
+                    <ControlTemplate TargetType="ListBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
+                    </ControlTemplate>
+                </ListBox.Template>
+
+
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Margin" Value="0"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Focusable" Value="True"/>
+                        <!-- Continue lets Tab walk into the row's CheckBox/Open button (WPF's default
+                             Once would skip over both). A focused CheckBox already toggles on Space by
+                             itself; toggling straight from row-level focus would need a Command the row
+                             VM doesn't expose, so that part stays undone. -->
+                        <Setter Property="KeyboardNavigation.TabNavigation" Value="Continue"/>
+                        <!-- Double-clicking a manual-open row (a store, a launcher) runs its Open
+                             action, since those rows have no checkbox to act on. -->
+                        <EventSetter Event="MouseDoubleClick" Handler="OnRowDoubleClick"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <!-- One hairline above every row (no zebra, no card): the table is one
+                                         surface and the rows are told apart by thin lines. The tint layer
+                                         sits behind the content and spans the full width, so a ticked row
+                                         reads as a faint accent wash that follows the accent setting. -->
+                                    <Border x:Name="Root" BorderThickness="0,1,0,0" Background="Transparent"
+                                            BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+                                        <Grid>
+                                            <Border x:Name="SelectedTint" Visibility="Collapsed" Opacity="0.12"
+                                                    Background="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                            <ContentPresenter Margin="12,3"/>
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                            <Setter TargetName="SelectedTint" Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Root" Property="Background"
+                                                    Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                            <Setter TargetName="Root" Property="Background"
+                                                    Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                        </Trigger>
+                                        <!-- A row eases in rather than appearing hard, so a scan streaming
+                                             in results reads as the table filling up instead of
+                                             flickering. Opacity ONLY and capped at 60 fps, because
+                                             a transform here is costly. -->
+                                        <EventTrigger RoutedEvent="Loaded">
+                                            <BeginStoryboard>
+                                                <Storyboard Timeline.DesiredFrameRate="60">
+                                                    <DoubleAnimation Storyboard.TargetName="Root"
+                                                                     Storyboard.TargetProperty="Opacity"
+                                                                     From="0" To="1" Duration="0:0:0.14"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <!-- Every row (including the manual-open ones now) gets the shared
+                             RowActionsMenu, with Start at the very top. Version-specific ignore is
+                             shown only for real update rows; manual rows get a single plain "ignore". -->
+                        <Setter Property="ContextMenu" Value="{StaticResource RowActionsMenu}"/>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+
+                <!-- Category groups: chevron sits next to its label, not across the window. -->
+                <ListBox.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.ContainerStyle>
+                            <Style TargetType="GroupItem">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="GroupItem">
+                                            <!-- Even top/bottom margin so a run of collapsed groups sits at a
+                                                 steady rhythm, and the header content is centred on the chevron
+                                                 so nothing jumps as a group folds shut. IsExpanded is set from
+                                                 code-behind (Loaded) rather than hardcoded: WPF regenerates
+                                                 these groups as the table refreshes, and a hardcoded default
+                                                 would silently reopen whatever the user had collapsed. -->
+                                            <!-- The same hairline the rows use closes every category, so
+                                                 categories are told apart like rows instead of by a gap. -->
+                                            <Border x:Name="GroupDivider" BorderThickness="0,0,0,1"
+                                                    BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+                                            <Expander Margin="0" Padding="0" BorderThickness="0"
+                                                      Background="Transparent" HorizontalContentAlignment="Stretch"
+                                                      Loaded="OnGroupExpanderLoaded"
+                                                      Expanded="OnGroupExpanderToggled"
+                                                      Collapsed="OnGroupExpanderToggled">
+                                                <!-- Own template instead of the stock one: the whole header row
+                                                     (everything but the category checkbox, which handles its own
+                                                     click) is the toggle, and there is no right-hand chevron; the
+                                                     chevron sits in the header itself, between the checkbox and
+                                                     the icon. -->
+                                                <Expander.Template>
+                                                    <ControlTemplate TargetType="Expander">
+                                                        <StackPanel>
+                                                            <ToggleButton x:Name="GroupHeaderToggle" Focusable="True"
+                                                                          HorizontalAlignment="Stretch"
+                                                                          HorizontalContentAlignment="Stretch"
+                                                                          IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                                                <ToggleButton.Template>
+                                                                    <ControlTemplate TargetType="ToggleButton">
+                                                                        <Border x:Name="Hit" Background="Transparent" CornerRadius="4"
+                                                                                BorderThickness="1" BorderBrush="Transparent">
+                                                                            <ContentPresenter HorizontalAlignment="Stretch"/>
+                                                                        </Border>
+                                                                        <ControlTemplate.Triggers>
+                                                                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                                                                <Setter TargetName="Hit" Property="BorderBrush"
+                                                                                        Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                                                            </Trigger>
+                                                                        </ControlTemplate.Triggers>
+                                                                    </ControlTemplate>
+                                                                </ToggleButton.Template>
+                                                                <ContentPresenter ContentSource="Header"/>
+                                                            </ToggleButton>
+                                                            <ContentPresenter x:Name="ExpandSite" Visibility="Collapsed"/>
+                                                        </StackPanel>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsExpanded" Value="True">
+                                                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Expander.Template>
+                                                <Expander.Header>
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                                                MinHeight="38" Margin="12,0,0,0">
+                                                        <!-- Ticks or clears every installable row in this
+                                                             category at once. The command decides which of
+                                                             the two by what is already selected. -->
+                                                        <!-- Tri-state, so ticking everything from the header
+                                                             (or the bottom button) visibly ticks the
+                                                             categories too. It binds to
+                                                             SelectionVersion as well, because a group raises
+                                                             nothing when a row inside it changes. -->
+                                                        <!-- Visibility also binds to SelectionVersion, same reason
+                                                             as IsChecked below: a group raises nothing when a row
+                                                             inside it changes state, so the last installable row
+                                                             being queued left this checkbox visibly stuck without it. -->
+                                                        <CheckBox x:Name="CategoryCheckBox" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                                  IsThreeState="True"
+                                                                  AutomationProperties.Name="{Binding Name}"
+                                                                  CommandParameter="{Binding}"
+                                                                  Command="{Binding DataContext.SelectCategoryCommand,
+                                                                            RelativeSource={RelativeSource AncestorType=ListBox}}">
+                                                            <CheckBox.Visibility>
+                                                                <MultiBinding Converter="{StaticResource GroupInstallable}" Mode="OneWay">
+                                                                    <Binding/>
+                                                                    <Binding Path="DataContext.SelectionVersion"
+                                                                             RelativeSource="{RelativeSource AncestorType=ListBox}"/>
+                                                                </MultiBinding>
+                                                            </CheckBox.Visibility>
+                                                            <CheckBox.IsChecked>
+                                                                <MultiBinding Converter="{StaticResource GroupSelection}" Mode="OneWay">
+                                                                    <Binding/>
+                                                                    <Binding Path="DataContext.SelectionVersion"
+                                                                             RelativeSource="{RelativeSource AncestorType=ListBox}"/>
+                                                                </MultiBinding>
+                                                            </CheckBox.IsChecked>
+                                                        </CheckBox>
+                                                        <!-- Same drawn chevron as the cleanup window cards (a Path rotates
+                                                             cleanly and needs no icon font): pointing down when
+                                                             collapsed, turned over when expanded. -->
+                                                        <Path x:Name="GroupChevron" Margin="0,0,10,0"
+                                                              Data="M0,0 L5,5 L10,0" StrokeThickness="1.5"
+                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                              StrokeLineJoin="Round" VerticalAlignment="Center"
+                                                              Stroke="{DynamicResource TextFillColorTertiaryBrush}"
+                                                              RenderTransformOrigin="0.5,0.5">
+                                                            <Path.Style>
+                                                                <Style TargetType="Path">
+                                                                    <Setter Property="RenderTransform">
+                                                                        <Setter.Value>
+                                                                            <RotateTransform Angle="0"/>
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=Expander}}" Value="True">
+                                                                            <Setter Property="RenderTransform">
+                                                                                <Setter.Value>
+                                                                                    <RotateTransform Angle="180"/>
+                                                                                </Setter.Value>
+                                                                            </Setter>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Path.Style>
+                                                        </Path>
+                                                        <!-- A Fluent glyph per category, sized to fill the header's line
+                                                             height next to the capitals. -->
+                                                        <ui:SymbolIcon Symbol="{Binding Items[0].CategoryKey, Converter={StaticResource CategoryIcon}}"
+                                                                       FontSize="20" Margin="0,0,9,0" VerticalAlignment="Center"
+                                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                        <!-- A muted capitals label with its count, not a heading: the
+                                                             rows under it are the content. -->
+                                                        <TextBlock Text="{Binding Name, Converter={StaticResource UpperCase}}" FontWeight="SemiBold"
+                                                                   FontSize="13" VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                        <TextBlock Text="{Binding ItemCount, StringFormat=' ({0})'}"
+                                                                   FontSize="13" VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                                    </StackPanel>
+                                                </Expander.Header>
+                                                <ItemsPresenter/>
+                                            </Expander>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </GroupStyle.ContainerStyle>
+                    </GroupStyle>
+                </ListBox.GroupStyle>
+
+                <!-- Row: checkbox · icon · name over source · version change · action/state -->
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                      <StackPanel>
+                        <!-- Fixed content height so no row is ever taller than its siblings, however long
+                             its name. Name and version are both single-line-with-ellipsis
+                             now, so nothing wraps into it; ClipToBounds stays as the backstop for anything
+                             that still overruns. Height came down from 56 to 48, and the row padding with
+                             it. -->
+                        <Grid x:Name="TableRow" Height="48" ClipToBounds="True">
+                            <!-- The columns to the RIGHT of the starred name are all fixed width, so
+                                 date · size · version · action each keep the same column on every row
+                                 and read as clean vertical lanes. An ignored row is
+                                 dimmed as well as badged. -->
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsIgnored}" Value="True">
+                                            <Setter Property="Opacity" Value="0.55"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsSnoozed}" Value="True">
+                                            <Setter Property="Opacity" Value="0.55"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{StaticResource ColWidthCheck}"/>
+                                <ColumnDefinition Width="{StaticResource ColWidthIcon}"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="{DynamicResource ColWidthPublisher}"/>
+                                <ColumnDefinition Width="{DynamicResource ColWidthDate}"/>
+                                <ColumnDefinition Width="{DynamicResource ColWidthVersion}"/>
+                                <ColumnDefinition Width="{DynamicResource ColWidthSize}"/>
+                                <ColumnDefinition Width="{StaticResource ColWidthAction}"/>
+                            </Grid.ColumnDefinitions>
+
+                            <CheckBox Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                      IsChecked="{Binding IsSelected}"
+                                      Visibility="{Binding CanInstall, Converter={StaticResource BoolToVisibility}}"
+                                      AutomationProperties.Name="{Binding Name}"/>
+
+                            <Grid Grid.Column="1" Width="24" Height="24" VerticalAlignment="Center">
+                                <!-- Fallback only: it keeps the gutter from looking ragged when no icon
+                                     resolves, and it disappears the moment a real one does, a round
+                                     app icon otherwise showed the square tile through its corners. -->
+                                <Border CornerRadius="4" Background="{Binding TileBackground}"
+                                        Visibility="{Binding UsesTile, Converter={StaticResource BoolToVisibility}}">
+                                    <Grid>
+                                        <TextBlock Text="{Binding InitialLetter}" FontSize="12" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                   Visibility="{Binding UsesLetterTile, Converter={StaticResource BoolToVisibility}}"/>
+
+                                        <ui:SymbolIcon FontSize="13" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Visibility="{Binding UsesGlyphTile, Converter={StaticResource BoolToVisibility}}">
+                                            <ui:SymbolIcon.Style>
+                                                <Style TargetType="ui:SymbolIcon">
+                                                    <Setter Property="Symbol" Value="Box24"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Item.Category}" Value="SystemAndDrivers">
+                                                            <Setter Property="Symbol" Value="Shield24"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item.Category}" Value="DeveloperTools">
+                                                            <Setter Property="Symbol" Value="Code24"/>
+                                                        </DataTrigger>
+                                                        <!-- Microsoft's own marks are not in the bundled
+                                                             icon set (their owners had them removed
+                                                             upstream), so the Store fell through to the
+                                                             generic box. -->
+                                                        <DataTrigger Binding="{Binding Item.Category}" Value="Store">
+                                                            <Setter Property="Symbol" Value="StoreMicrosoft24"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Item.Category}" Value="Games">
+                                                            <Setter Property="Symbol" Value="Games24"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ui:SymbolIcon.Style>
+                                        </ui:SymbolIcon>
+
+                                        <!-- bundled brand mark in its brand colour (the text colour where that colour would vanish on the tile) -->
+                                        <Path Data="{Binding BrandGeometry}" Fill="{Binding BrandBrush}" Stretch="Uniform"
+                                              Width="14" Height="14"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Visibility="{Binding UsesBrandTile, Converter={StaticResource BoolToVisibility}}"/>
+                                    </Grid>
+                                </Border>
+                                <Image Source="{Binding Icon}" Width="24" Height="24"/>
+                            </Grid>
+
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="10,0,12,0">
+                                <!-- Grid, not a horizontal StackPanel: a StackPanel measures its children
+                                     with infinite width, so TextTrimming never engages and a long name is cut
+                                     off mid-letter. -->
+                                <!-- HorizontalAlignment=Left makes the badges hug the name: the Grid arranges
+                                     at its desired width, so the star column shrinks to the text. Measure
+                                     still gets the real available width, so a long name trims. -->
+                                <Grid HorizontalAlignment="Left">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- One line, then an ellipsis. Wrapping made a long name push the source
+                                         line out of the row's fixed height and end in a half-drawn line of
+                                         its own (worst at 200% scale and minimum width), and it made rows
+                                         uneven in a table whose whole point is columns that line up. The
+                                         full name is on the tooltip, it also puts the package id,
+                                         source and (where known) publisher there, one per line. -->
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding NameTooltip}"
+                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                    <!-- Both marks sit to the RIGHT of the name: the
+                                         critical badge first, then the ignored mark. -->
+                                    <Border Grid.Column="1" Margin="8,0,0,0" Padding="8,2" CornerRadius="5"
+                                            VerticalAlignment="Center"
+                                            Background="{DynamicResource SystemFillColorCriticalBackgroundBrush}"
+                                            Visibility="{Binding IsCritical, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="{Binding CriticalLabel}" FontSize="12.5" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                    </Border>
+                                    <Border Grid.Column="2" Margin="8,0,0,0" Padding="6,1" CornerRadius="4"
+                                            HorizontalAlignment="Left" VerticalAlignment="Center"
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                            Visibility="{Binding IsIgnored, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="{Binding IgnoredBadgeLabel}" FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                    </Border>
+                                    <!-- Says until WHEN, unlike the plain "Ignored" pill, without this a
+                                         row revealed by the "Zurückgestellt" chip gives no reason to trust
+                                         it will come back on its own. -->
+                                    <Border Grid.Column="3" Margin="8,0,0,0" Padding="6,1" CornerRadius="4"
+                                            HorizontalAlignment="Left" VerticalAlignment="Center"
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                            Visibility="{Binding IsSnoozed, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="{Binding SnoozedBadgeLabel}" FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                    </Border>
+                                </Grid>
+                                <!-- The source line ("Battle.net", "Rockstar Games", …) is dropped for
+                                     manual-open rows where it just repeats the name; the name then sits
+                                     vertically centred on its own. -->
+                                <!-- When the same update is on offer from more than one source the table
+                                     shows ONE row and names them all here, best first.
+                                     The first one is the source that will actually do the work. -->
+                                <TextBlock Text="{Binding AllSourcesText}" FontSize="11" Margin="0,1,0,0"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding AllSourcesTooltip}"
+                                           Visibility="{Binding ShowSourceText, Converter={StaticResource BoolToVisibility}}"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                <!-- While the row installs without a figure to show, the line says what it
+                                     is doing and for how long, in place of the source. -->
+                                <TextBlock x:Name="InstallingPhaseText" Text="{Binding RunningStatusText}" FontSize="11" Margin="0,1,0,0"
+                                           TextTrimming="CharacterEllipsis"
+                                           Style="{StaticResource TabularNumberText}"
+                                           Visibility="{Binding ShowIndeterminateProgress, Converter={StaticResource BoolToVisibility}}"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                <!-- A failed row says WHY here, in place of the source: the translated
+                                     explainer only, never raw tool output (that stays behind Details). -->
+                                <TextBlock x:Name="FailureLineText" Text="{Binding FailureLine}" FontSize="11" Margin="0,1,0,0"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding FailureLine}"
+                                           Visibility="{Binding IsInstallFailed, Converter={StaticResource BoolToVisibility}}"
+                                           Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                <!-- A cancelled row that carries its own reason (a blocked row the user
+                                     skipped) says it here in place of the source; nothing failed, so the
+                                     secondary text brush, not the critical one. -->
+                                <TextBlock x:Name="CancelledReasonText" Text="{Binding CancelledReasonLine}" FontSize="11" Margin="0,1,0,0"
+                                           TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding CancelledReasonLine}"
+                                           Visibility="{Binding ShowCancelledReason, Converter={StaticResource BoolToVisibility}}"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                <!-- A one-line nudge once the three-strikes tally has flagged
+                                     this row, wired straight to the row's own existing ignore command
+                                     rather than a new one. -->
+                                <!-- A WPF-UI ui:Button reserves more vertical room than its own
+                                     Padding suggests (its default style/template sets its own MinHeight),
+                                     which tipped this row's third stacked line past the row's fixed 48px
+                                     height and clipped the text's descenders against ClipToBounds. MinHeight
+                                     and BorderThickness are both zeroed so the button takes only as much
+                                     room as its own text content, matching the plain TextBlock line above it.
+                                     Padding top and bottom gives the line's own descenders (from
+                                     "ignorieren", "g") room to clear that same ClipToBounds edge, and
+                                     the matching negative top Margin gives that room back to the
+                                     StackPanel's own layout so the row's total stacked height still
+                                     does not pass 48px: the button's own box grows, its footprint in
+                                     the stack does not. -->
+                                <ui:Button Content="{Binding PersistentFailureHintText}"
+                                           Command="{Binding IgnoreCommand}"
+                                           Appearance="Transparent" Padding="0,2" Margin="0,-5,0,0"
+                                           MinHeight="0" BorderThickness="0"
+                                           HorizontalAlignment="Left" HorizontalContentAlignment="Left"
+                                           VerticalAlignment="Top" VerticalContentAlignment="Center"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                           Visibility="{Binding ShowPersistentFailureHint, Converter={StaticResource BoolToVisibility}}"/>
+                            </StackPanel>
+
+                            <!-- Date lane: its own fixed column so every row's date lines up. Filled up front
+                                 where the source dates, or later by the background enrichment pass (a
+                                 package's own registry). Centred in its lane, like the header. -->
+                            <TextBlock Grid.Column="4" Text="{Binding PublishDateText}" FontSize="12"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Style="{StaticResource TabularNumberText}"
+                                       Visibility="{Binding HasPublishDate, Converter={StaticResource BoolToVisibility}}"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                            <!-- Version lane. Sources that cannot report what is installed show only the new
+                                 version, not an arrow pointing away from nothing. Order Datum/Version/Größe,
+                                 centred like the header. A fixed 4-column Grid (62/14/62/20 = 158px in the
+                                 168px lane) instead of a centred StackPanel, whose width varies with which
+                                 children are visible, so the arrow would land at a different X on every row.
+                                 The fourth column (20px) holds the changelog spinner. -->
+                            <!-- One tooltip for the whole lane (Background="Transparent"
+                                 makes the gaps and the arrow hit-testable too), instead of one on
+                                 each of the two version TextBlocks. -->
+                            <Grid x:Name="VersionLane" Grid.Column="5" Width="158" VerticalAlignment="Center"
+                                  HorizontalAlignment="Center" Background="Transparent"
+                                  ToolTip="{Binding VersionChangeTooltip}"
+                                  Visibility="{Binding HasVersions, Converter={StaticResource BoolToVisibility}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="62"/>
+                                    <ColumnDefinition Width="14"/>
+                                    <ColumnDefinition Width="62"/>
+                                    <ColumnDefinition Width="20"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" x:Name="InstalledVersionText" Text="{Binding InstalledVersion}" FontSize="12"
+                                           VerticalAlignment="Center"
+                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                           TextAlignment="Right" Style="{StaticResource TabularNumberText}"
+                                           Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                <TextBlock Grid.Column="1" x:Name="VersionArrow" Text="→" FontSize="12"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                <!-- The available version. Spans its own 62px column plus the old
+                                     changelog column (the spinner's place) when there is an installed
+                                     version to arrow away from, otherwise the three version columns
+                                     (138px), centred: their middle is the arrow's, so a lone version
+                                     sits right under the arrows of the rows around it.
+                                     Column/alignment come from the Style, not a local value, since a
+                                     local value always outranks a Style Setter/Trigger regardless of
+                                     which one is written last. With a changelog the version is a link
+                                     that opens it, without one it stays plain text. -->
+                                <Grid x:Name="AvailableVersionHost" VerticalAlignment="Center">
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Grid.Column" Value="2"/>
+                                            <Setter Property="Grid.ColumnSpan" Value="2"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasInstalledVersion}" Value="False">
+                                                    <Setter Property="Grid.Column" Value="0"/>
+                                                    <Setter Property="Grid.ColumnSpan" Value="3"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock x:Name="AvailableVersionText" Text="{Binding AvailableVersion}" FontSize="12" FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource TabularNumberText}">
+                                                <Setter Property="TextAlignment" Value="Left"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasInstalledVersion}" Value="False">
+                                                        <Setter Property="TextAlignment" Value="Center"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding HasChangelog}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+
+                                    <Button x:Name="AvailableVersionLink" Content="{Binding AvailableVersion}"
+                                            Command="{Binding ShowChangelogCommand}"
+                                            ToolTip="{Binding ChangelogHeader}"
+                                            AutomationProperties.Name="{Binding ChangelogHeader}"
+                                            Visibility="{Binding HasChangelog, Converter={StaticResource BoolToVisibility}}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource VersionLinkButton}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasInstalledVersion}" Value="False">
+                                                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+
+                                    <!-- A click-triggered fetch in flight: a small ring right of the version. -->
+                                    <views:WaitSpinner Grid.Column="1" Width="12" Height="12" Margin="4,0,0,0"
+                                                       VerticalAlignment="Center"
+                                                       Visibility="{Binding IsChangelogLoading, Converter={StaticResource BoolToVisibility}}"/>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Size lane, where the source or the enrichment pass knew it; blank otherwise. -->
+                            <TextBlock Grid.Column="6" Text="{Binding DownloadSizeText}" FontSize="12"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Style="{StaticResource TabularNumberText}"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Visibility="{Binding HasDownloadSize, Converter={StaticResource BoolToVisibility}}"/>
+
+                            <Grid Grid.Column="7" VerticalAlignment="Center">
+                                <!-- Idle installable row: a per-row Install button that queues just
+                                     this update (it joins any batch already running). -->
+                                <ui:Button Style="{StaticResource RowOutlineButton}" Content="{Binding InstallHeader}" Command="{Binding InstallCommand}"
+                                           Appearance="Secondary" Padding="12,3" FontSize="12"
+                                           HorizontalAlignment="Right"
+                                           Visibility="{Binding ShowInstallButton, Converter={StaticResource BoolToVisibility}}"/>
+
+                                <ui:Button Style="{StaticResource RowOutlineButton}" Content="{Binding OpenHeader}" Command="{Binding OpenCommand}"
+                                           Appearance="Secondary" Padding="10,3" FontSize="12"
+                                           HorizontalAlignment="Right"
+                                           Visibility="{Binding ShowOpenButton, Converter={StaticResource BoolToVisibility}}"/>
+
+                                <!-- Running: either the hand-drawn bar or the interactive label (never
+                                     both), plus this row's own stop button, all in one
+                                     Right-aligned group so they sit side by side instead of overlapping
+                                     (every sibling here is HorizontalAlignment="Right" on its own). -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Visibility="{Binding IsInstallRunning, Converter={StaticResource BoolToVisibility}}">
+                                    <!-- the percentage, then a hand-drawn bar. A hand-drawn bar
+                                         (a pill-shaped PillProgressBar) is used rather than a ProgressBar on purpose: a
+                                         WPF-UI ProgressBar given a star-sized or infinite measure here
+                                         sends the layout into an infinite measure recursion. -->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                                Visibility="{Binding ShowRunningProgress, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock x:Name="RunningPercentText" Text="{Binding InstallPercentText}" FontSize="12"
+                                                   VerticalAlignment="Center" MinWidth="34" TextAlignment="Right"
+                                                   Margin="0,0,8,0" Style="{StaticResource TabularNumberText}"
+                                                   Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                        <views:PillProgressBar x:Name="RunningProgressBar" Width="96" Height="6" VerticalAlignment="Center"
+                                                               Value="{Binding InstallPercent}"
+                                                               Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
+                                        <!-- No figure to show (installing, or nothing measurable reported):
+                                             a moving bar and no number; the line under the name says what
+                                             is going on and for how long. -->
+                                        <views:IndeterminateBar x:Name="RunningIndeterminateBar" Width="96" Height="6"
+                                                                VerticalAlignment="Center"
+                                                                Visibility="{Binding ShowIndeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
+                                    </StackPanel>
+
+                                    <!-- The vendor's own UI is driving, so a percentage would be
+                                         meaningless, the row says so in words instead. -->
+                                    <TextBlock Text="{Binding InteractiveRunningText}" FontSize="12"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                               Visibility="{Binding ShowInteractiveRunningLabel, Converter={StaticResource BoolToVisibility}}"/>
+
+                                    <!-- this row's own stop button: stops just this one,
+                                         the rest of the queue keeps running. -->
+                                    <ui:Button Style="{StaticResource RowOutlineButton}" Margin="8,0,0,0" Padding="5,2" Appearance="Secondary"
+                                               Command="{Binding StopSingleCommand}"
+                                               ToolTip="{Binding StopSingleTooltip}"
+                                               AutomationProperties.Name="{Binding StopSingleTooltip}"
+                                               Visibility="{Binding ShowStopSingleButton, Converter={StaticResource BoolToVisibility}}">
+                                        <ui:SymbolIcon Symbol="Stop24" FontSize="13" Filled="True"
+                                                                     Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                    </ui:Button>
+                                </StackPanel>
+
+                                <!-- queued / done / failed. A failure shows a red warning icon rather than
+                                     the easily-missed "failed" word (the retry/details buttons make the
+                                     state obvious anyway). Details (info) comes first, then Retry. -->
+                                <!-- A DockPanel, not a horizontal StackPanel: it measures each child with what is
+                                     left of the column, so the marker texts below really trim instead of
+                                     pushing the whole group out past the column's left edge. -->
+                                <DockPanel LastChildFill="False" HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Visibility="{Binding ShowStateLabel, Converter={StaticResource BoolToVisibility}}">
+                                    <!-- Queued: a turning ring in front of the word, so a waiting row
+                                         reads as waiting rather than as stuck. -->
+                                    <views:WaitSpinner Margin="0,0,7,0" VerticalAlignment="Center"
+                                                       Visibility="{Binding IsInstallQueued, Converter={StaticResource BoolToVisibility}}"/>
+                                    <!-- RowStuck/RowHandedOff show a single word, the full sentence lives in the tooltip
+                                         (InstallStateTooltip). MaxWidth is what makes TextTrimming engage
+                                         (a StackPanel measures its children with infinite width in the
+                                         stack direction, so trimming alone never trims; same reasoning
+                                         as the name column's own Grid-instead-of-StackPanel fix above),
+                                         and guards the 150px action column against a longer word. -->
+                                    <TextBlock x:Name="RowStateWord" VerticalAlignment="Center" MaxWidth="140"
+                                               FontSize="12" TextTrimming="CharacterEllipsis"
+                                               Text="{Binding InstallStateText}"
+                                               ToolTip="{Binding InstallStateTooltip}"
+                                               ToolTipService.InitialShowDelay="150"
+                                               Visibility="{Binding ShowStateWord, Converter={StaticResource BoolToVisibility}}"
+                                               Foreground="{Binding InstallStateBrush}"/>
+                                    <!-- failed: a red warning triangle; the reason is one hover (or the
+                                         details button) away -->
+                                    <ui:SymbolIcon Symbol="Warning24" FontSize="16" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                                   ToolTip="{Binding InstallFailedTooltip}"
+                                                   ToolTipService.InitialShowDelay="150"
+                                                   AutomationProperties.Name="{Binding InstallFailedTooltip}"
+                                                   Visibility="{Binding IsInstallFailed, Converter={StaticResource BoolToVisibility}}"/>
+                                    <!-- needs manual work, with its retry button beside: the word moves into the
+                                         hover text so the button fits -->
+                                    <ui:SymbolIcon Symbol="Warning24" FontSize="16" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                                   ToolTip="{Binding InstallStateText}"
+                                                   ToolTipService.InitialShowDelay="150"
+                                                   AutomationProperties.Name="{Binding InstallStateText}"
+                                                   Visibility="{Binding ShowResetAndRetryButton, Converter={StaticResource BoolToVisibility}}"/>
+                                    <!-- installed, but a reboot is pending -->
+                                    <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12"
+                                               TextTrimming="CharacterEllipsis"
+                                               Text="{Binding RebootMarkerText}"
+                                               ToolTip="{Binding RebootMarkerText}"
+                                               Visibility="{Binding NeedsReboot, Converter={StaticResource BoolToVisibility}}"
+                                               Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
+                                    <!-- Installed, but the re-check found the same version as before: a quiet
+                                         note, not a warning, so no caution colour. -->
+                                    <TextBlock VerticalAlignment="Center" Margin="8,0,0,0" FontSize="12"
+                                               TextTrimming="CharacterEllipsis"
+                                               Text="{Binding VersionUnchangedText}"
+                                               ToolTip="{Binding VersionUnchangedTooltip}"
+                                               Visibility="{Binding VersionUnchanged, Converter={StaticResource BoolToVisibility}}"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                    <!-- the details button carries the real tool output on demand -->
+                                    <ui:Button Style="{StaticResource RowOutlineButton}" Margin="8,0,0,0" Padding="5,2" Appearance="Secondary"
+                                               Command="{Binding ShowErrorDetailCommand}"
+                                               ToolTip="{Binding DetailsHeader}"
+                                               AutomationProperties.Name="{Binding DetailsHeader}"
+                                               Visibility="{Binding HasInstallError, Converter={StaticResource BoolToVisibility}}">
+                                        <ui:SymbolIcon Symbol="Info24" FontSize="13"/>
+                                    </ui:Button>
+                                    <!-- a failed row can be retried -->
+                                    <ui:Button Style="{StaticResource RowOutlineButton}" Margin="6,0,0,0" Padding="10,3" FontSize="12" Appearance="Secondary"
+                                               Content="{Binding RetryHeader}" Command="{Binding RetryCommand}"
+                                               Visibility="{Binding ShowRetryButton, Converter={StaticResource BoolToVisibility}}"/>
+                                    <!-- a row that needs manual work gets the same retry, clearing the flag first -->
+                                    <ui:Button Style="{StaticResource RowOutlineButton}" Margin="6,0,0,0" Padding="10,3" FontSize="12" Appearance="Secondary"
+                                               AutomationProperties.AutomationId="RowResetAndRetry"
+                                               Content="{Binding RetryHeader}" Command="{Binding ResetAndRetryCommand}"
+                                               Visibility="{Binding ShowResetAndRetryButton, Converter={StaticResource BoolToVisibility}}"/>
+                                </DockPanel>
+
+                                <!-- Ignored rows offer an inline "show again" where their Install button
+                                     would otherwise be. A subtle accent-coloured text button rather than a
+                                     solid secondary one, whose black text looks out of place on the dimmed
+                                     row. -->
+                                <ui:Button Content="{Binding UnignoreHeader}" Command="{Binding IgnoreCommand}"
+                                           Appearance="Transparent" Padding="8,3" FontSize="12"
+                                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                           HorizontalAlignment="Right"
+                                           Visibility="{Binding ShowUnignoreButton, Converter={StaticResource BoolToVisibility}}"/>
+                            </Grid>
+
+                            <!-- Publisher, hidden by default, shown through the column
+                                 chooser. Blank rather than a hyphen where the id carries none,
+                                 matching how the rest of this row leaves an unknown fact out rather
+                                 than marking it. Text is the shortened form (Services/PublisherShortener.cs);
+                                 the tooltip keeps the full, unshortened name for whenever it differs. -->
+                            <TextBlock Grid.Column="3" Text="{Binding PublisherDisplay}" FontSize="12"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding Publisher}"
+                                       Visibility="{Binding HasPublisher, Converter={StaticResource BoolToVisibility}}"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        </Grid>
+
+                        <!-- Steam's pending game updates hang under the Steam launcher row as a
+                             collapsible sub-list instead of filling a category of their own. The
+                             open/closed state lives in the view model, so a scan streaming in new
+                             results cannot silently reopen what the user just closed. -->
+                        <Expander Margin="44,4,0,8" Padding="0" BorderThickness="0"
+                                  Background="Transparent" HorizontalContentAlignment="Stretch"
+                                  Visibility="{Binding HasChildren, Converter={StaticResource BoolToVisibility}}"
+                                  IsExpanded="{Binding AreChildrenExpanded, Mode=TwoWay}">
+                            <Expander.Header>
+                                <!-- Exactly the category group header's shape: the same
+                                     MinHeight and font. The update glyph is gone but
+                                     the MinHeight stays, so the row keeps its height either way. -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" MinHeight="30">
+                                    <TextBlock Text="{Binding ChildCountText}" FontSize="14" FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                </StackPanel>
+                            </Expander.Header>
+
+                            <ItemsControl ItemsSource="{Binding Children}" Margin="0,6,0,2">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <!-- A child is a row in its own right: right-click still starts
+                                             or removes the game. It also gets its OWN hover highlight,
+                                             not just the whole Steam card's, the parent ListBoxItem's
+                                             hover Border wraps the entire card INCLUDING this nested
+                                             ItemsControl, so without a highlight of its own, pointing at
+                                             one game would light up the whole card rather than that
+                                             game's own line. -->
+                                        <!-- Focusable so Tab/arrow navigation can reach a Steam child game
+                                             at all, Space/Enter/Delete on it route through the same
+                                             OnUpdatesListPreviewKeyDown handler as a top-level row, since
+                                             that handler tunnels down from the ListBox regardless of
+                                             nesting depth. The context menu lives on this element (not the
+                                             inner Grid) so the Apps-key/Shift+F10 default WPF behaviour,
+                                             which looks at whatever element currently has keyboard focus,
+                                             finds it. -->
+                                        <Border x:Name="ChildRow" CornerRadius="6" Margin="0,1" Padding="6,2"
+                                                Focusable="True"
+                                                AutomationProperties.Name="{Binding Name}">
+                                            <Border.ContextMenu>
+                                                <!-- Same themed card surface as the main row menu. -->
+                                                <ContextMenu Style="{StaticResource RowContextMenu}"
+                                                             DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                                    <MenuItem Style="{StaticResource RowMenuItem}"
+                                                              Header="{Binding StartHeader}" Command="{Binding StartCommand}"
+                                                              Visibility="{Binding CanStart, Converter={StaticResource BoolToVisibility}}"/>
+                                                    <MenuItem Style="{StaticResource RowMenuItem}"
+                                                              Header="{Binding UninstallHeader}" Command="{Binding UninstallCommand}"
+                                                              Visibility="{Binding CanUninstall, Converter={StaticResource BoolToVisibility}}"/>
+                                                    <MenuItem Style="{StaticResource RowMenuItem}"
+                                                              Header="{Binding OpenFolderHeader}" Command="{Binding OpenFolderCommand}"
+                                                              Visibility="{Binding CanOpenFolder, Converter={StaticResource BoolToVisibility}}"/>
+                                                    <MenuItem Style="{StaticResource RowSubmenuItem}" Header="{Binding SnoozeHeader}"
+                                                              Visibility="{Binding ShowSnoozeMenu, Converter={StaticResource BoolToVisibility}}">
+                                                        <MenuItem Style="{StaticResource RowMenuItem}"
+                                                                  Header="{Binding SnoozeOneDayHeader}" Command="{Binding SnoozeCommand}" CommandParameter="day"/>
+                                                        <MenuItem Style="{StaticResource RowMenuItem}"
+                                                                  Header="{Binding SnoozeOneWeekHeader}" Command="{Binding SnoozeCommand}" CommandParameter="week"/>
+                                                        <MenuItem Style="{StaticResource RowMenuItem}"
+                                                                  Header="{Binding SnoozeOneMonthHeader}" Command="{Binding SnoozeCommand}" CommandParameter="month"/>
+                                                    </MenuItem>
+                                                    <MenuItem Style="{StaticResource RowMenuItem}"
+                                                              Header="{Binding UnsnoozeHeader}" Command="{Binding UnsnoozeCommand}"
+                                                              Visibility="{Binding ShowUnsnoozeEntry, Converter={StaticResource BoolToVisibility}}"/>
+                                                    <MenuItem Style="{StaticResource RowMenuItem}"
+                                                              Header="{Binding ResetPersistentFailureHeader}" Command="{Binding ResetPersistentFailureCommand}"
+                                                              Visibility="{Binding ShowResetPersistentFailureEntry, Converter={StaticResource BoolToVisibility}}"/>
+                                                </ContextMenu>
+                                            </Border.ContextMenu>
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background"
+                                                                    Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsKeyboardFocused" Value="True">
+                                                            <Setter Property="Background"
+                                                                    Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="28"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="{DynamicResource ColWidthDate}"/>
+                                                <ColumnDefinition Width="{StaticResource ColWidthAction}"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Image Grid.Column="0" Source="{Binding Icon}"
+                                                   Width="22" Height="22" VerticalAlignment="Center"/>
+
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}" Margin="10,0,12,0"
+                                                       FontSize="14" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"
+                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+
+                                            <!-- State lane: the same words, spinner and details button the parent row's action
+                                                 column carries, so a game removal shows what it is doing and
+                                                 that it finished. Auto width, so an idle game reserves nothing. -->
+                                            <StackPanel x:Name="ChildStateLane" Grid.Column="2" Orientation="Horizontal"
+                                                        VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <StackPanel x:Name="ChildRunningLane" Orientation="Horizontal" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsInstallRunning, Converter={StaticResource BoolToVisibility}}">
+                                                    <views:WaitSpinner Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding RunningProgressText}" FontSize="12" VerticalAlignment="Center"
+                                                               Style="{StaticResource TabularNumberText}"
+                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                               Visibility="{Binding ShowRunningProgress, Converter={StaticResource BoolToVisibility}}"/>
+                                                    <TextBlock Text="{Binding InteractiveRunningText}" FontSize="12" VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                               Visibility="{Binding ShowInteractiveRunningLabel, Converter={StaticResource BoolToVisibility}}"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                                            Visibility="{Binding ShowStateLabel, Converter={StaticResource BoolToVisibility}}">
+                                                    <views:WaitSpinner Margin="0,0,7,0" VerticalAlignment="Center"
+                                                                       Visibility="{Binding IsInstallQueued, Converter={StaticResource BoolToVisibility}}"/>
+                                                    <TextBlock x:Name="ChildStateWord" VerticalAlignment="Center" MaxWidth="140"
+                                                               FontSize="12" TextTrimming="CharacterEllipsis"
+                                                               Text="{Binding InstallStateText}"
+                                                               ToolTip="{Binding InstallStateTooltip}"
+                                                               ToolTipService.InitialShowDelay="150"
+                                                               Visibility="{Binding ShowStateWord, Converter={StaticResource BoolToVisibility}}"
+                                                               Foreground="{Binding InstallStateBrush}"/>
+                                                    <ui:SymbolIcon Symbol="Warning24" FontSize="16" VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                                                   ToolTip="{Binding InstallFailedTooltip}"
+                                                                   ToolTipService.InitialShowDelay="150"
+                                                                   AutomationProperties.Name="{Binding InstallFailedTooltip}"
+                                                                   Visibility="{Binding IsInstallFailed, Converter={StaticResource BoolToVisibility}}"/>
+                                                    <ui:Button Margin="8,0,0,0" Padding="5,2" Appearance="Secondary"
+                                                               Command="{Binding ShowErrorDetailCommand}"
+                                                               ToolTip="{Binding DetailsHeader}"
+                                                               AutomationProperties.Name="{Binding DetailsHeader}"
+                                                               Visibility="{Binding HasInstallError, Converter={StaticResource BoolToVisibility}}">
+                                                        <ui:SymbolIcon Symbol="Info24" FontSize="13"/>
+                                                    </ui:Button>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- date lane, aligned like the main table -->
+                                            <TextBlock Grid.Column="3" Text="{Binding PublishDateText}" FontSize="12"
+                                                       VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,14,0"
+                                                       Style="{StaticResource TabularNumberText}"
+                                                       Visibility="{Binding HasPublishDate, Converter={StaticResource BoolToVisibility}}"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                                            <!-- Same fixed-column reasoning as the main row's version lane above
+                                                 (a Grid does not clip per column, so an unbounded long version
+                                                 here would bleed left over the name text instead of being
+                                                 trimmed) and the same fix: a centred StackPanel put the arrow at
+                                                 a different X per row depending on which children were visible,
+                                                 and only the arrow had VerticalAlignment="Center" so it sat
+                                                 lower than the stretched text either side. No
+                                                 changelog column here, sub-rows never show one. -->
+                                            <!-- One tooltip for the whole lane, same as the
+                                                 main row's version lane above. -->
+                                            <Grid x:Name="ChildVersionLane" Grid.Column="4" Width="138"
+                                                  VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,4,0"
+                                                  Background="Transparent"
+                                                  ToolTip="{Binding VersionChangeTooltip}"
+                                                  Visibility="{Binding HasVersions, Converter={StaticResource BoolToVisibility}}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="62"/>
+                                                    <ColumnDefinition Width="14"/>
+                                                    <ColumnDefinition Width="62"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0" Text="{Binding InstalledVersion}" FontSize="13"
+                                                           VerticalAlignment="Center"
+                                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                           TextAlignment="Right"
+                                                           Style="{StaticResource TabularNumberText}"
+                                                           Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"
+                                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                                <TextBlock Grid.Column="1" Text="→" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"
+                                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                                <!-- Same no-installed-version centring as the flat
+                                                     table's own version lane, spanning all 3 columns
+                                                     here (no changelog lane in a sub-row). -->
+                                                <TextBlock Text="{Binding AvailableVersion}" FontSize="13" FontWeight="SemiBold"
+                                                           VerticalAlignment="Center"
+                                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource TabularNumberText}">
+                                                            <Setter Property="Grid.Column" Value="2"/>
+                                                            <Setter Property="TextAlignment" Value="Left"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding HasInstalledVersion}" Value="False">
+                                                                    <Setter Property="Grid.Column" Value="0"/>
+                                                                    <Setter Property="Grid.ColumnSpan" Value="3"/>
+                                                                    <Setter Property="TextAlignment" Value="Center"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Expander>
+                      </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Manual-open rows (a store, a launcher: no install this app can do, and per HideManualNumbers
+                 no real values to show): gathered here instead of sitting full-height in their category group
+                 with blank cells. A second, independent ListCollectionView over the same _visible collection
+                 (MainViewModel.ManualOnlyView) with its own Filter/SortDescriptions, set once at
+                 construction, not a GroupStyleSelector (WPF calls one with group=null in this configuration).
+                 The main ListBox's grouping, sorting and the _visible/SyncVisible mechanics are untouched. -->
+            <StackPanel Margin="12,10,26,4"
+                        Visibility="{Binding HasManualOnlyResults, Converter={StaticResource BoolToVisibility}}">
+                <Border Height="1" Margin="0,0,0,10" Background="{DynamicResource CardStrokeColorDefaultBrush}"/>
+                <TextBlock Text="{Binding Loc[ManualUpdatesSectionTitle]}" FontSize="12" Margin="0,0,0,8"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+
+                <!-- No own capped ScrollViewer: this rolls with the table in the one shared outer
+                     ScrollViewer above. ScrollViewer.HorizontalScrollBarVisibility="Disabled" is what makes
+                     the WrapPanel below wrap (the default Auto measures at infinite width), and
+                     VerticalScrollBarVisibility is disabled so this ListBox does not open a nested scroll
+                     area. -->
+                <ListBox x:Name="ManualOpenListBox" ItemsSource="{Binding ManualOnlyView}"
+                         Background="Transparent" BorderThickness="0" Padding="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         PreviewKeyDown="OnUpdatesListPreviewKeyDown">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel x:Name="ManualOpenWrapPanel" Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="0,0,8,8"/>
+                            <Setter Property="Focusable" Value="True"/>
+                            <Setter Property="KeyboardNavigation.TabNavigation" Value="Continue"/>
+                            <EventSetter Event="MouseDoubleClick" Handler="OnRowDoubleClick"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Root" CornerRadius="8" Padding="8,6"
+                                                Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                                BorderThickness="1">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Root" Property="Background"
+                                                        Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                                <Setter TargetName="Root" Property="Background"
+                                                        Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
+                                            </Trigger>
+                                            <DataTrigger Binding="{Binding IsIgnored}" Value="True">
+                                                <Setter TargetName="Root" Property="Opacity" Value="0.55"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsSnoozed}" Value="True">
+                                                <Setter TargetName="Root" Property="Opacity" Value="0.55"/>
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <!-- Same shared RowActionsMenu as the main table's row menu, every
+                                 item a compact row could plausibly need already gates itself via
+                                 Visibility, so reuse rather than a second, drifting copy. -->
+                            <Setter Property="ContextMenu" Value="{StaticResource RowActionsMenu}"/>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" ToolTip="{Binding Name}"
+                                        AutomationProperties.Name="{Binding Name}">
+                                <Grid Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,7,0">
+                                    <Border CornerRadius="4" Background="{Binding TileBackground}"
+                                            Visibility="{Binding UsesTile, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid>
+                                            <TextBlock Text="{Binding InitialLetter}" FontSize="10" FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                       Visibility="{Binding UsesLetterTile, Converter={StaticResource BoolToVisibility}}"/>
+                                            <ui:SymbolIcon FontSize="11" Symbol="Box24" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Visibility="{Binding UsesGlyphTile, Converter={StaticResource BoolToVisibility}}"/>
+                                            <Path Data="{Binding BrandGeometry}" Fill="{Binding BrandBrush}" Stretch="Uniform"
+                                                  Width="12" Height="12"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  Visibility="{Binding UsesBrandTile, Converter={StaticResource BoolToVisibility}}"/>
+                                        </Grid>
+                                    </Border>
+                                    <Image Source="{Binding Icon}" Width="20" Height="20"/>
+                                </Grid>
+
+                                <TextBlock Text="{Binding Name}" FontSize="12" VerticalAlignment="Center"
+                                           MaxWidth="170" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+
+                                <Border Margin="6,0,0,0" Padding="6,1" CornerRadius="4"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource SystemFillColorCriticalBackgroundBrush}"
+                                        Visibility="{Binding IsCritical, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="{Binding CriticalLabel}" FontSize="10.5" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                </Border>
+
+                                <ui:Button Margin="6,0,0,0" Padding="3" Appearance="Transparent"
+                                           Command="{Binding ShowChangelogCommand}"
+                                           ToolTip="{Binding ChangelogHeader}"
+                                           AutomationProperties.Name="{Binding ChangelogHeader}"
+                                           Visibility="{Binding HasChangelog, Converter={StaticResource BoolToVisibility}}">
+                                    <Grid>
+                                        <ui:SymbolIcon Symbol="Info24" FontSize="12"
+                                                       Visibility="{Binding ShowChangelogIcon, Converter={StaticResource BoolToVisibility}}"/>
+                                        <views:WaitSpinner Visibility="{Binding IsChangelogLoading, Converter={StaticResource BoolToVisibility}}"/>
+                                    </Grid>
+                                </ui:Button>
+
+                                <ui:Button Margin="4,0,0,0" Padding="3,2" Appearance="Secondary" FontSize="11"
+                                           Content="{Binding OpenHeader}" Command="{Binding OpenCommand}"
+                                           ToolTip="{Binding OpenTargetHeader}"
+                                           Visibility="{Binding ShowOpenButton, Converter={StaticResource BoolToVisibility}}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+            </StackPanel>
+            </ScrollViewer>
+          </Grid>
+        </Border>
+    </Grid>
+</UserControl>

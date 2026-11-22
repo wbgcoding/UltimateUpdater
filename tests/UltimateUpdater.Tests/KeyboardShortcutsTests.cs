@@ -77,7 +77,7 @@ public class KeyboardShortcutsTests
     [Fact]
     public void Every_control_bound_shortcut_is_named_in_its_own_tooltip()
     {
-        var xaml = File.ReadAllText(Path.Combine(FindViewsDirectory(), "MainWindow.xaml"));
+        var xaml = ViewSources.ReadWindow(FindViewsDirectory(), "MainWindow.xaml");
         var violations = new List<string>();
 
         foreach (var entry in KeyboardShortcuts.All)

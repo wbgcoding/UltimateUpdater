@@ -180,10 +180,9 @@ public class KeyboardOperabilityTests
     {
         var violations = new List<string>();
 
-        foreach (var file in Directory.EnumerateFiles(ViewsDirectory, "*.xaml"))
+        foreach (var (fileName, file) in ViewSources.AllXaml(ViewsDirectory))
         {
             var xaml = File.ReadAllText(file);
-            var fileName = Path.GetFileName(file);
 
             // Each <ui:Button> block is carved out by a plain index scan, not one combined regex: a
             // regex alternation of "self-closing OR paired" back-and-forth-backtracks on a GREEDY
@@ -254,10 +253,9 @@ public class KeyboardOperabilityTests
     {
         var violations = new List<string>();
 
-        foreach (var file in Directory.EnumerateFiles(ViewsDirectory, "*.xaml"))
+        foreach (var (fileName, file) in ViewSources.AllXaml(ViewsDirectory))
         {
             var xaml = File.ReadAllText(file);
-            var fileName = Path.GetFileName(file);
 
             foreach (Match binding in Regex.Matches(xaml, @"<MouseBinding\s+MouseAction=""LeftClick"""))
             {
@@ -309,8 +307,7 @@ public class KeyboardOperabilityTests
     [Fact]
     public void No_row_command_is_offered_by_both_the_context_menu_and_an_inline_button()
     {
-        var mainWindowPath = Path.Combine(ViewsDirectory, "MainWindow.xaml");
-        var xaml = File.ReadAllText(mainWindowPath);
+        var xaml = ViewSources.ReadWindow(ViewsDirectory, "MainWindow.xaml");
 
         var menuStart = xaml.IndexOf("<ContextMenu x:Key=\"RowActionsMenu\"", StringComparison.Ordinal);
         var menuEnd = xaml.IndexOf("</ContextMenu>", menuStart, StringComparison.Ordinal);
@@ -358,9 +355,8 @@ public class KeyboardOperabilityTests
 
         var found = new HashSet<(string File, string Handler)>();
 
-        foreach (var file in Directory.EnumerateFiles(ViewsDirectory, "*.xaml"))
+        foreach (var (fileName, file) in ViewSources.AllXaml(ViewsDirectory))
         {
-            var fileName = Path.GetFileName(file);
             foreach (Match m in Regex.Matches(
                 File.ReadAllText(file), @"(?:Preview)?Mouse(?:Left|Right)?ButtonDown\s*=\s*""(\w+)"""))
             {

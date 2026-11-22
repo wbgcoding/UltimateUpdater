@@ -91,8 +91,8 @@ public class ContinuousMotionTests : IDisposable
             var (viewModel, theme, settings) = WindowLayoutTests.CreateMainViewModel("en");
             var window = new MainWindow(viewModel, theme, settings);
             var content = (FrameworkElement)window.Content;
-            var rotate = (RotateTransform)window.FindName("ScanButtonIconRotate")!;
-            var installBar = (UIElement)window.FindName("InstallBar")!;
+            var rotate = (RotateTransform)window.Header.FindName("ScanButtonIconRotate")!;
+            var installBar = window.InstallBand.InstallBar;
             window.Content = null;
 
             var host = new Window

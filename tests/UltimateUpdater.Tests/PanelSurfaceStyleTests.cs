@@ -69,7 +69,7 @@ public class PanelSurfaceStyleTests
     [Fact]
     public void Main_window_section_card_derives_from_the_shared_panel_surface_style()
     {
-        var style = LoadXaml("Views/MainWindow.xaml").Descendants(Presentation + "Style")
+        var style = LoadXaml("Views/Main/UpdatesTable.xaml").Descendants(Presentation + "Style")
             .FirstOrDefault(s => Key(s) == "SectionCard");
 
         Assert.NotNull(style);

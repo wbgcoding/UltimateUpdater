@@ -1,0 +1,257 @@
+<UserControl x:Class="UltimateUpdater.Views.Main.MainToolbar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:views="clr-namespace:UltimateUpdater.Views">
+    <UserControl.Resources>
+        <views:ShortcutTooltipConverter x:Key="ShortcutTooltip"/>
+        <!-- The toolbar's own filter chip: a full pill at the search box's height, with primary-colour text and
+             the controls' own fills. It does not derive from the shared App.xaml FilterChip, whose smaller look
+             the history and settings lists keep. FilterChipLabel is a short word so all four chips fit at the
+             default width; MainWindow.UpdateFilterChipLabels collapses it in a narrower window, leaving icon and
+             tooltip. -->
+        <Style x:Key="ToolbarFilterChip" TargetType="ToggleButton">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Margin" Value="0,0,8,4"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <!-- Keyboard focus only: a ring after a mouse click would make an unlit chip look half lit. -->
+            <Setter Property="FocusVisualStyle">
+                <Setter.Value>
+                    <Style>
+                        <Setter Property="Control.Template">
+                            <Setter.Value>
+                                <ControlTemplate>
+                                    <Border Margin="-3" CornerRadius="20" BorderThickness="2"
+                                            BorderBrush="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" CornerRadius="17" Padding="{TemplateBinding Padding}"
+                                Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                BorderThickness="1">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush"
+                                        Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+                                <Setter Property="Foreground"
+                                        Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource AccentFillColorSecondaryBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush"
+                                        Value="{DynamicResource AccentFillColorSecondaryBrush}"/>
+                            </MultiTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="False"/>
+                                    <Condition Property="IsPressed" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
+                            </MultiTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsPressed" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{DynamicResource AccentFillColorTertiaryBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush"
+                                        Value="{DynamicResource AccentFillColorTertiaryBrush}"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="FilterChipLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="6,0,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- Toolbar: icon actions docked right, search and filters filling the rest. The button block is
+         DOCKED, not a Grid column: a Grid column here would starve to zero width next to the search box
+         on a narrow window, leaving the buttons clipped off the edge. Docked children always keep their
+         full natural size; only the WrapPanel below (the fill child) gives way, wrapping search/switches
+         onto a second line on a narrow window instead of anything clipping. Same technique as the
+         install strip's Pause/Cancel block below (Grid.Row="4", "InstallStrip"). -->
+    <!-- No divider line above the toolbar: the header, toolbar and table read as one surface. Cards keep
+         their own glass highlight. -->
+    <Grid Margin="24,0,24,12">
+        <DockPanel LastChildFill="True">
+            <!-- Bigger secondary buttons with larger icons, one block so they move together. Docked,
+                 so they never give way, the search box and switches do instead. -->
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                <!-- While a cleanup runs in the background the button shows the cleaning disk (same
+                     body/platter/hub/arm geometry as the cleanup dialog's centre animation,
+                     CleaningDiskGeometries.xaml, without the sparkles), so a closed dialog still signals the
+                     run. A plain broom glyph shows otherwise. Both are RenderTransforms (no layout pass), the
+                     storyboard exists only while the trigger holds, and it respects "reduce motion"
+                     (SystemParameters.MinimizeAnimation). -->
+                <ui:Button x:Name="ToolbarCleanupButton" Command="{Binding ShowCleanupCommand}" Appearance="Secondary" Padding="11,8" Margin="0,0,8,0"
+                           ToolTip="{Binding Loc[ToolbarCleanupLabel], Converter={StaticResource ShortcutTooltip}, ConverterParameter=CleanupTitle}"
+                           AutomationProperties.Name="{Binding Loc[ToolbarCleanupLabel]}">
+                    <ui:Button.Resources>
+                        <views:InverseBoolToVisibilityConverter x:Key="ToolbarInverseBoolToVisibility"/>
+                    </ui:Button.Resources>
+                    <!-- ui:Button.Icon only accepts an IconElement (SymbolIcon and similar), so the
+                         two-state swap (broom glyph or the animated disk, chosen by IsCleanupRunning)
+                         is built as plain Content instead, the same size an Icon slot would take. -->
+                    <ui:Button.Content>
+                      <StackPanel Orientation="Horizontal">
+                        <Grid Width="20" Height="20" VerticalAlignment="Center">
+                            <ui:SymbolIcon x:Name="ToolbarCleaningBroom" Symbol="Broom24" FontSize="20"
+                                           Visibility="{Binding IsCleanupRunning, Converter={StaticResource ToolbarInverseBoolToVisibility}}"/>
+                            <!-- The disk's drawing only fills about three quarters of its 24x24 canvas, so
+                                 scaled to the 20x20 icon slot it looks smaller than the other toolbar glyphs.
+                                 Drawn at 30x30 instead, centred, with a negative margin that spills into the
+                                 button's 11,8 padding while the slot (and the button's outer size) stays
+                                 fixed. It stays still: only the light travels. -->
+                            <Grid x:Name="ToolbarCleaningDisk"
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Visibility="{Binding IsCleanupRunning, Converter={StaticResource BoolToVisibility}}">
+                                <!-- Same 24x24 geometry as CleaningDiskGeometries.xaml, inlined rather than
+                                     merged as a resource so this block stays self-contained. -->
+                                <Viewbox Width="30" Height="30" Margin="-5" Stretch="Uniform">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Data="M4.8 2 L19.2 2 A1.8,1.8 0 0 1 21 3.8 L21 20.2 A1.8,1.8 0 0 1 19.2 22 L4.8 22 A1.8,1.8 0 0 1 3 20.2 L3 3.8 A1.8,1.8 0 0 1 4.8 2 Z"
+                                              Fill="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                              Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" StrokeThickness="0.35"/>
+                                        <!-- The travelling light: the same body silhouette shown only through
+                                             a moving gradient mask, as in the cleanup dialog's centre
+                                             animation (CleanupWindow.xaml, SurfaceLight), so the light cannot
+                                             spill past the body's edge. -->
+                                        <Path x:Name="ToolbarCleaningLight"
+                                              Data="M4.8 2 L19.2 2 A1.8,1.8 0 0 1 21 3.8 L21 20.2 A1.8,1.8 0 0 1 19.2 22 L4.8 22 A1.8,1.8 0 0 1 3 20.2 L3 3.8 A1.8,1.8 0 0 1 4.8 2 Z"
+                                              Opacity="0.5" Fill="{DynamicResource AccentFillColorDefaultBrush}">
+                                            <Path.OpacityMask>
+                                                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5" MappingMode="RelativeToBoundingBox">
+                                                    <LinearGradientBrush.RelativeTransform>
+                                                        <TranslateTransform x:Name="ToolbarLightSlide" X="-0.75"/>
+                                                    </LinearGradientBrush.RelativeTransform>
+                                                    <GradientStop Color="Transparent" Offset="0"/>
+                                                    <GradientStop Color="White" Offset="0.5"/>
+                                                    <GradientStop Color="Transparent" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Path.OpacityMask>
+                                        </Path>
+                                        <!-- Driven from MainWindow.xaml.cs (UpdateCleanupIconSweep) with
+                                             BeginAnimation straight on ToolbarLightSlide, not from a Style
+                                             trigger: a Storyboard animating through a Brush's
+                                             RelativeTransform (two hops deep) via a Style's implicit target
+                                             breaks WPF-UI's render harness for unrelated windows. -->
+                                        <Path Data="M18.8 10.2 A6.8,6.8 0 1 1 5.2 10.2 A6.8,6.8 0 1 1 18.8 10.2 Z"
+                                              Fill="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                        <Path Data="M18.8 10.2 A6.8,6.8 0 1 1 5.2 10.2 A6.8,6.8 0 1 1 18.8 10.2 Z"
+                                              Stroke="{DynamicResource AccentFillColorDefaultBrush}" StrokeThickness="0.8"/>
+                                        <Path Data="M13.8 10.2 A1.8,1.8 0 1 1 10.2 10.2 A1.8,1.8 0 1 1 13.8 10.2 Z"
+                                              Fill="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                        <Path Data="M12.65 10.2 A0.65,0.65 0 1 1 11.35 10.2 A0.65,0.65 0 1 1 12.65 10.2 Z"
+                                              Fill="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                        <Path Data="F1 M17.468 18.558 L14.978 14.406 L14.222 14.794 L16.132 19.242 Z M15.201 14.293 L14.632 13.18 L13.43 13.795 L13.999 14.907 Z M18.3 18.9 A1.5,1.5 0 1 1 15.3 18.9 A1.5,1.5 0 1 1 18.3 18.9 Z"
+                                              Fill="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                        <Path Data="M17.3 18.9 A0.5,0.5 0 1 1 16.3 18.9 A0.5,0.5 0 1 1 17.3 18.9 Z"
+                                              Fill="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Grid>
+                        </Grid>
+                        <TextBlock Text="{Binding ToolbarCleanupText}" Margin="8,0,0,0" VerticalAlignment="Center"
+                                   Style="{StaticResource TabularNumberText}"/>
+                      </StackPanel>
+                    </ui:Button.Content>
+                </ui:Button>
+                <ui:Button Command="{Binding ShowHistoryCommand}" Appearance="Secondary" Padding="11,8" Margin="0,0,8,0"
+                           ToolTip="{Binding Loc[HistoryButton], Converter={StaticResource ShortcutTooltip}, ConverterParameter=HistoryButton}"
+                           AutomationProperties.Name="{Binding Loc[HistoryButton]}">
+                    <ui:Button.Icon><ui:SymbolIcon Symbol="History24" FontSize="20"/></ui:Button.Icon>
+                </ui:Button>
+                <ui:Button Command="{Binding ShowSettingsCommand}" Appearance="Secondary" Padding="11,8"
+                           ToolTip="{Binding Loc[SettingsButton], Converter={StaticResource ShortcutTooltip}, ConverterParameter=SettingsButton}"
+                           AutomationProperties.Name="{Binding Loc[SettingsButton]}">
+                    <ui:Button.Icon><ui:SymbolIcon Symbol="Settings24" FontSize="20"/></ui:Button.Icon>
+                </ui:Button>
+            </StackPanel>
+
+            <WrapPanel x:Name="ToolbarWrapPanel" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Delay on the binding: the table is only re-shaped once typing settles, so re-filtering
+                     never stutters mid-word. -->
+                <ui:TextBox x:Name="SearchBox" Width="260" Margin="0,0,16,4"
+                            PlaceholderText="{Binding Loc[SearchPlaceholder]}"
+                            Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged, Delay=180}"
+                            Icon="{ui:SymbolIcon Search24}"
+                            ToolTip="{Binding Loc[SearchPlaceholder], Converter={StaticResource ShortcutTooltip}, ConverterParameter=SearchPlaceholder}"
+                            AutomationProperties.Name="{Binding Loc[SearchPlaceholder]}"/>
+
+                <!-- The filter switches (critical only, show ignored, show entries to open yourself, and
+                     the persistent-failure collector while it has something) as toggle chips, one click
+                     each and always visible. The labels hide (code-behind) when the
+                     toolbar cannot hold the search box and every chip with its text in one row, so
+                     the row never wraps; the tooltip keeps the full text. -->
+                <ToggleButton x:Name="FilterCriticalChip" Style="{StaticResource ToolbarFilterChip}"
+                              IsChecked="{Binding ShowOnlyCritical, Mode=TwoWay}"
+                              ToolTip="{Binding Loc[FilterCriticalOnly]}"
+                              AutomationProperties.Name="{Binding Loc[FilterCriticalOnly]}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Shield24" FontSize="16"/>
+                        <TextBlock Text="{Binding Loc[FilterChipCritical]}" Style="{StaticResource FilterChipLabel}"/>
+                    </StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="FilterIgnoredChip" Style="{StaticResource ToolbarFilterChip}"
+                              IsChecked="{Binding ShowIgnored, Mode=TwoWay}"
+                              ToolTip="{Binding Loc[FilterShowIgnored]}"
+                              AutomationProperties.Name="{Binding Loc[FilterShowIgnored]}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="EyeOff24" FontSize="16"/>
+                        <TextBlock Text="{Binding Loc[FilterChipIgnored]}" Style="{StaticResource FilterChipLabel}"/>
+                    </StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="FilterManualChip" Style="{StaticResource ToolbarFilterChip}"
+                              IsChecked="{Binding ShowManual, Mode=TwoWay}"
+                              ToolTip="{Binding Loc[FilterShowManual]}"
+                              AutomationProperties.Name="{Binding Loc[FilterShowManual]}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="HandRight24" FontSize="16"/>
+                        <TextBlock Text="{Binding Loc[FilterChipManual]}" Style="{StaticResource FilterChipLabel}"/>
+                    </StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="FilterFailuresChip" Style="{StaticResource ToolbarFilterChip}"
+                              IsChecked="{Binding ShowOnlyPersistentFailures, Mode=TwoWay}"
+                              ToolTip="{Binding PersistentFailureFilterLabel}"
+                              AutomationProperties.Name="{Binding PersistentFailureFilterLabel}"
+                              Visibility="{Binding ShowPersistentFailureFilter, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="ErrorCircle24" FontSize="16"/>
+                        <TextBlock Text="{Binding PersistentFailureChipLabel}" Style="{StaticResource FilterChipLabel}"/>
+                    </StackPanel>
+                </ToggleButton>
+            </WrapPanel>
+        </DockPanel>
+    </Grid>
+</UserControl>

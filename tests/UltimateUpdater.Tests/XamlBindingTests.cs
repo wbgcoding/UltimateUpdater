@@ -73,7 +73,7 @@ public class XamlBindingTests
 
     private static void AssertBindingsResolve(string fileName, params Type[] candidates)
     {
-        var xaml = File.ReadAllText(Path.Combine(ViewsDirectory, fileName));
+        var xaml = ViewSources.ReadWindow(ViewsDirectory, fileName);
 
         var known = candidates
             .SelectMany(type => type.GetProperties(BindingFlags.Public | BindingFlags.Instance))

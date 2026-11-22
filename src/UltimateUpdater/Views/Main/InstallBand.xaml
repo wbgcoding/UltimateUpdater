@@ -1,0 +1,607 @@
+<UserControl x:Class="UltimateUpdater.Views.Main.InstallBand"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:views="clr-namespace:UltimateUpdater.Views">
+    <!-- Live install/queue band: current item, its progress and the rest of the queue, its own
+         full-width row below the toolbar, so Cleanup/History/Settings and search stay reachable
+         throughout a batch. Auto-sized row: zero space taken when not installing. -->
+    <Border Margin="24,0,24,12" CornerRadius="10"
+            Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            Visibility="{Binding IsInstalling, Converter={StaticResource BoolToVisibility}}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- A quiet "something is running here" signal, not a brand colour. -->
+            <Border Grid.Column="0" Width="3" Margin="0,4,0,4" CornerRadius="2"
+                    Background="{DynamicResource AccentFillColorDefaultBrush}"/>
+
+          <Border Grid.Column="1" Padding="18,7,14,7">
+          <StackPanel>
+            <!-- The batch's own automatic second attempt, its own visibly separate section
+                 once it actually starts; stays up for the rest of this batch, not just the retry. -->
+            <TextBlock x:Name="SecondAttemptHeader" Text="{Binding Loc[InstallRetryRound]}" FontSize="11" FontWeight="SemiBold"
+                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                       Margin="0,0,0,4"
+                       Visibility="{Binding IsSecondAttemptActive, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- The stop button is DOCKED, not a Grid column: a Grid column here would starve to zero
+                 width next to the star columns on a narrow window, leaving it clipped off the
+                 edge, unreachable. Docked children always keep their full natural size; only
+                 the Grid below (the fill child) gives way. -->
+            <DockPanel x:Name="InstallStrip" LastChildFill="True">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="16,0,0,0">
+                    <ui:Button Command="{Binding CancelInstallCommand}" Appearance="Secondary" Padding="12,5"
+                               Content="{Binding Loc[InstallProgressCancel]}"/>
+                </StackPanel>
+
+                <!-- Outer Grid is the DockPanel's own fill child; the two panels inside it occupy the
+                     same cell and are never visible at once (an exact switch,
+                     ShowSingleInstallView/HasMultipleRunning are exact opposites while installing), so
+                     nesting them here rather than making either one directly the last DockPanel child
+                     is what keeps both getting the DockPanel's "fill the rest" treatment regardless of
+                     which one currently is Visible. -->
+                <Grid>
+                <Grid x:Name="InstallStripContent"
+                      Visibility="{Binding ShowSingleInstallView, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.ColumnDefinitions>
+                        <!-- Star, not Auto: at the window's 860px minimum the item name is what gives way
+                             first (it trims to an ellipsis), instead of the whole strip clipping. -->
+                        <ColumnDefinition Width="*" MinWidth="72" MaxWidth="300"/>
+                        <!-- The bar's column: 204 fits the minimum window width exactly; any room beyond that
+                             goes to the bar, up to a length that still reads as one glance. The spacer column
+                             takes only what both turn down. -->
+                        <ColumnDefinition Width="1.5*" MinWidth="204" MaxWidth="400"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="0.001*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                        <TextBlock x:Name="InstallStripItemName" Text="{Binding CurrentInstallRow.Name}" FontWeight="SemiBold" FontSize="13"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding CurrentInstallRow.Name}"
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        <!-- What this one item is doing: its source, its exact %, and its download figure
+                             when the tool reports bytes. A Grid, not a horizontal StackPanel: a StackPanel
+                             lays children out at their unconstrained width, so only the outer column clipped
+                             the overflow mid-digit, without an ellipsis. The Auto columns give Source/Percent
+                             their natural width; the trailing * column gives TransferText a bounded width to
+                             trim against. -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding CurrentInstallRow.SourceDisplay}" FontSize="11"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                            <TextBlock x:Name="InstallStripProgressText" Grid.Column="1" Text="{Binding CurrentInstallRow.RunningProgressText}" FontSize="11"
+                                       Margin="8,0,0,0" Style="{StaticResource TabularNumberText}"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Column="2" Text="{Binding CurrentInstallRow.TransferText}" FontSize="11" Margin="8,0,0,0"
+                                       TextTrimming="CharacterEllipsis"
+                                       Visibility="{Binding CurrentInstallRow.HasTransfer, Converter={StaticResource BoolToVisibility}}"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Overall progress: a hand-drawn bar (track + fill), not a WPF-UI ProgressBar,
+                         which recurses when star-measured (as it would be here). The exact overall %
+                         sits beside it so the number is never hidden inside the bar. The fill's Value is
+                         driven entirely from code-behind (UpdateInstallBarFill) so it can glide instead
+                         of jump, a plain Binding here would fight the animation on every tick. -->
+                    <Grid Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- The bar takes the room its column has (the column grows with the strip, see
+                             the column definitions above); its fill is driven from code-behind
+                             (UpdateInstallBarFill) as a value glide. Until a real reading arrives a soft
+                             shine travels the track instead, so a bar stuck dead at 0 never reads as
+                             frozen. The shine is a segment of the bar itself, which keeps it inside the
+                             track's round ends while it enters and leaves. -->
+                        <views:PillProgressBar x:Name="InstallBar" Height="6" VerticalAlignment="Center">
+                            <views:PillProgressBar.Style>
+                                <Style TargetType="views:PillProgressBar">
+                                    <Style.Triggers>
+                                        <!-- Both conditions, not just InstallHasRealProgress: that alone is
+                                             also False when nothing is installing, which would leave the
+                                             storyboard running at 60 fps while idle (a data trigger inside a
+                                             Collapsed strip still fires). -->
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding InstallHasRealProgress}" Value="False"/>
+                                                <Condition Binding="{Binding IsInstalling}" Value="True"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="SegmentLength" Value="56"/>
+                                            <Setter Property="SegmentFade" Value="True"/>
+                                        </MultiDataTrigger>
+                                        <!-- The sweep itself also needs the window shown: an install that keeps
+                                             running while the window is hidden to the tray would otherwise tick
+                                             this storyboard at 60fps for nothing. A trigger of its own, so the
+                                             strip's visibility above never depends on an ancestor window. -->
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding InstallHasRealProgress}" Value="False"/>
+                                                <Condition Binding="{Binding IsInstalling}" Value="True"/>
+                                                <Condition Binding="{Binding IsVisible, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                                <Condition Binding="{Binding Source={x:Static views:MotionPreference.AnimationsEnabled}}" Value="True"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <MultiDataTrigger.EnterActions>
+                                                <BeginStoryboard Name="InstallBarShineStory">
+                                                    <Storyboard Timeline.DesiredFrameRate="60">
+                                                        <DoubleAnimation
+                                                            Storyboard.TargetProperty="SegmentPhase"
+                                                            From="0" To="1" Duration="0:0:1.1"
+                                                            RepeatBehavior="Forever">
+                                                            <DoubleAnimation.EasingFunction>
+                                                                <SineEase EasingMode="EaseInOut"/>
+                                                            </DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </MultiDataTrigger.EnterActions>
+                                            <MultiDataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="InstallBarShineStory"/>
+                                            </MultiDataTrigger.ExitActions>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </views:PillProgressBar.Style>
+                        </views:PillProgressBar>
+                        <TextBlock Grid.Column="1" Text="{Binding InstallOverallPercentText}" FontSize="12" Margin="10,0,0,0"
+                                   MinWidth="34" TextAlignment="Right" VerticalAlignment="Center"
+                                   Style="{StaticResource TabularNumberText}"
+                                   Visibility="{Binding ActualWidth, ElementName=InstallStrip,
+                                                Converter={StaticResource WideEnough}, ConverterParameter=400}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    </Grid>
+
+                    <!-- The version being installed to, and its release date where the source knows one;
+                         shown even for a single queued item, never gated on batch size. -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="0,0,16,0"
+                                Visibility="{Binding CurrentInstallRow.HasVersions, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock FontSize="12" TextTrimming="CharacterEllipsis" MaxWidth="140"
+                                   Style="{StaticResource TabularNumberText}"
+                                   ToolTip="{Binding CurrentInstallRow.AvailableVersion}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                            <Run Text="→ "/><Run Text="{Binding CurrentInstallRow.AvailableVersion, Mode=OneWay}"/>
+                        </TextBlock>
+                        <TextBlock Text="{Binding CurrentInstallRow.PublishDateText}" FontSize="11"
+                                   Style="{StaticResource TabularNumberText}"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Visibility="{Binding CurrentInstallRow.HasPublishDate, Converter={StaticResource BoolToVisibility}}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <TextBlock Text="{Binding InstallCountText}" FontSize="12" HorizontalAlignment="Right"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        <!-- Top-left: total size. Below it: downloaded so far. To ITS right: current
+                             speed (a deliberate layout, not incidental), each line only appears once
+                             it has a real figure. -->
+                        <Grid HorizontalAlignment="Right"
+                              Visibility="{Binding ActualWidth, ElementName=InstallStrip,
+                                           Converter={StaticResource WideEnough}, ConverterParameter=440}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Right"
+                                       Text="{Binding InstallTotalSizeText}" FontSize="11"
+                                       Visibility="{Binding HasInstallTotalSize, Converter={StaticResource BoolToVisibility}}"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right"
+                                       Text="{Binding InstallDownloadedText}" FontSize="11"
+                                       Visibility="{Binding HasInstallDownloaded, Converter={StaticResource BoolToVisibility}}"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Margin="6,0,0,0"
+                                       Text="{Binding InstallSpeedText}" FontSize="11"
+                                       Visibility="{Binding HasInstallSpeed, Converter={StaticResource BoolToVisibility}}"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Two or more rows running at once, a compact list instead of the single-row
+                     view above, each with its own hand-drawn bar (same reasoning as the single-row bar:
+                     a WPF-UI ProgressBar recurses under a star/infinite measure) and its own stop
+                     button, reusing UpdateRowViewModel's own StopSingleCommand rather than inventing
+                     a second stop mechanism. -->
+                <StackPanel x:Name="InstallStripMultiRunning"
+                            Visibility="{Binding HasMultipleRunning, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="{Binding InstallRunningCountText}" FontSize="12" FontWeight="Medium"
+                               Margin="0,0,0,6"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <ItemsControl x:Name="RunningRowsList" ItemsSource="{Binding RunningRows}" Grid.IsSharedSizeScope="True">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- Strict columns, the same in every row: name, percent, bar, stop. Every
+                                     bar therefore starts and ends at the same x and the rows read as one
+                                     table. The name is a fixed box that trims to an ellipsis; the bar takes
+                                     whatever room is left, within a length that still reads as one glance. -->
+                                <Grid x:Name="RunningRowCard" Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="240"/>
+                                        <!-- Auto, shared by every row: the cell shows either a percentage or a
+                                             phase with the elapsed time ("Installing… 1:23"), which a fixed
+                                             40 px box cut off. Sharing the width keeps the bars aligned. -->
+                                        <ColumnDefinition Width="Auto" MinWidth="40" SharedSizeGroup="RunningProgressText"/>
+                                        <ColumnDefinition Width="*" MinWidth="120" MaxWidth="520"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="RunningRowName" Grid.Column="0" Text="{Binding Name}" FontSize="12"
+                                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                               Margin="0,0,12,0"
+                                               ToolTip="{Binding Name}"
+                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                    <TextBlock x:Name="RunningRowProgressText" Grid.Column="1" Text="{Binding RunningProgressText}" FontSize="11"
+                                               VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,10,0"
+                                               Style="{StaticResource TabularNumberText}"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                    <Grid Grid.Column="2" VerticalAlignment="Center">
+                                        <views:PillProgressBar x:Name="RunningRowBar" Height="6" VerticalAlignment="Center"
+                                                               Value="{Binding InstallPercent}"
+                                                               Visibility="{Binding ShowDeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
+                                        <views:IndeterminateBar Height="6" VerticalAlignment="Center"
+                                                                Visibility="{Binding ShowIndeterminateProgress, Converter={StaticResource BoolToVisibility}}"/>
+                                    </Grid>
+                                    <ui:Button Grid.Column="3" Margin="12,0,0,0" Padding="4,2" Appearance="Secondary"
+                                               Command="{Binding StopSingleCommand}"
+                                               ToolTip="{Binding StopSingleTooltip}"
+                                               AutomationProperties.Name="{Binding StopSingleTooltip}">
+                                        <ui:SymbolIcon Symbol="Stop24" FontSize="11" Filled="True"
+                                                                     Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                    </ui:Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+                </Grid>
+            </DockPanel>
+
+            <!-- Collapsible queue panel, everything else waiting behind the current item. -->
+            <Expander IsExpanded="{Binding IsQueuePanelExpanded}"
+                      Background="Transparent" BorderThickness="0" Padding="0" Margin="0,10,0,0"
+                      HorizontalContentAlignment="Stretch"
+                      Visibility="{Binding HasQueuedRows, Converter={StaticResource BoolToVisibility}}">
+                <!-- Own template instead of the stock one: the stock expander paints a header band, content
+                     block and borders that show as a second, darker panel inside the strip. Here the header
+                     and rows sit directly on the strip's surface; only the header's hover highlight and the
+                     row cards carry a fill. -->
+                <Expander.Template>
+                    <ControlTemplate TargetType="Expander">
+                        <StackPanel>
+                            <ToggleButton x:Name="QueueHeaderToggle" Focusable="True"
+                                          HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                          IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="Hit" Background="Transparent" CornerRadius="6"
+                                                BorderThickness="1" BorderBrush="Transparent">
+                                            <ContentPresenter HorizontalAlignment="Stretch"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                                <Setter TargetName="Hit" Property="BorderBrush"
+                                                        Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                                <ContentPresenter ContentSource="Header"/>
+                            </ToggleButton>
+                            <ContentPresenter x:Name="ExpandSite" Visibility="Collapsed"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Expander.Template>
+                <Expander.Header>
+                    <!-- The whole header row is the hoverable/clickable area, not just icon and text, so it
+                         gives feedback that it is interactive. -->
+                    <Border x:Name="QueueHeaderHover" HorizontalAlignment="Stretch" CornerRadius="6" Padding="8,6">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="ReOrderDotsVertical24" FontSize="18" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                            <TextBlock Grid.Column="1" Text="{Binding QueuePanelHeaderText}" FontSize="14" FontWeight="SemiBold"
+                                       Margin="6,0,0,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Grid.Column="2" Text="{Binding QueueTotalSizeText}" FontSize="12"
+                                       Style="{StaticResource TabularNumberText}" VerticalAlignment="Center"
+                                       Margin="12,0,0,0"
+                                       Visibility="{Binding HasQueueTotalSize, Converter={StaticResource BoolToVisibility}}"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                            <!-- The fold cue the own template does not draw: points down while shut, up while
+                                 open. -->
+                            <ui:SymbolIcon Grid.Column="3" FontSize="12" Margin="12,0,0,0" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                <ui:SymbolIcon.Style>
+                                    <Style TargetType="ui:SymbolIcon">
+                                        <Setter Property="Symbol" Value="ChevronDown24"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=Expander}}" Value="True">
+                                                <Setter Property="Symbol" Value="ChevronUp24"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ui:SymbolIcon.Style>
+                            </ui:SymbolIcon>
+                        </Grid>
+                    </Border>
+                </Expander.Header>
+                <!-- Scrolls past a handful of rows instead of growing the strip without limit. 240 fits 4
+                     full rows (plus a partial 5th) at about 51 px per row (47.3 px card + 4 px margin); keep
+                     this in step if the row template's height changes. Auto visibility, so a short queue
+                     shows no scrollbar. -->
+                <ScrollViewer x:Name="QueueRowsScroll" VerticalScrollBarVisibility="Auto" MaxHeight="240" Margin="0,6,0,0">
+                    <!-- 18px right margin (14px track + 4px air) keeps the auto scrollbar from overlaying
+                         the row content, same defect and same fix as EntriesScroll in CleanupWindow.xaml. -->
+                    <ItemsControl x:Name="QueueItemsControl" ItemsSource="{Binding QueueRows}" AlternationCount="999" Margin="0,0,18,0"
+                                  Grid.IsSharedSizeScope="True">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- The whole card is the drag source/drop target; reordering and removing here
+                                 changes InstallQueue's real install order, not just this list. A rounded
+                                 hover card, like every other row surface in the app (e.g. the Steam child
+                                 rows). -->
+                            <Border x:Name="QueueRowCard" CornerRadius="10" Margin="0,2" Padding="12,8"
+                                    BorderThickness="1" AllowDrop="True"
+                                    Focusable="True"
+                                    AutomationProperties.Name="{Binding Name}"
+                                    Loaded="OnQueueRowCardLoaded"
+                                    KeyDown="OnQueueRowKeyDown"
+                                    MouseLeftButtonDown="OnQueueRowMouseDown"
+                                    MouseMove="OnQueueRowMouseMove"
+                                    GiveFeedback="OnQueueRowGiveFeedback"
+                                    DragOver="OnQueueRowDragOver"
+                                    Drop="OnQueueRowDrop">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}"/>
+                                        <!-- The hairline only shows on hover/focus, at rest the card reads
+                                             quieter, the same background-only cue every other row surface uses. -->
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+                                            </Trigger>
+                                            <!-- Keyboard-only reachable otherwise: this card is the only
+                                                 focusable thing on the row until the remove button (Hidden
+                                                 except on hover/focus, see below) reveals itself. -->
+                                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <!-- Critical mark: a fixed column of its own, so the version lane
+                                             to its right starts at the same x whether or not a row has one. -->
+                                        <ColumnDefinition Width="24"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Grip dots, permanent: the row's only "you can reorder this" cue, so visible at rest, not
+                                         just on hover/focus (a position number would say nothing a screen
+                                         reader can't already read off the automation name below). Tertiary
+                                         at rest, secondary on hover or focus. Alt+Up/Down
+                                         (OnQueueRowKeyDown) applies as well; the cursor stays the normal arrow. -->
+                                    <ui:SymbolIcon x:Name="QueueGripIcon" Grid.Column="0" Symbol="ReOrderDotsVertical24" FontSize="12"
+                                                   Margin="0,0,8,0" VerticalAlignment="Center"
+                                                   ToolTip="{Binding DataContext.Loc[QueueReorderTooltip],
+                                                             RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                                        <ui:SymbolIcon.Style>
+                                            <Style TargetType="ui:SymbolIcon">
+                                                <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsMouseOver, ElementName=QueueRowCard}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=QueueRowCard}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ui:SymbolIcon.Style>
+                                    </ui:SymbolIcon>
+
+                                    <!-- Same tile language as the main table (brand mark / letter / category
+                                         glyph), just smaller, so a name is easy to place at a glance in a
+                                         fast-moving queue. -->
+                                    <Grid Grid.Column="1" Width="22" Height="22" Margin="0,0,10,0" VerticalAlignment="Center">
+                                        <Border CornerRadius="4" Background="{Binding TileBackground}"
+                                                Visibility="{Binding UsesTile, Converter={StaticResource BoolToVisibility}}">
+                                            <Grid>
+                                                <TextBlock Text="{Binding InitialLetter}" FontSize="11" FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                           Visibility="{Binding UsesLetterTile, Converter={StaticResource BoolToVisibility}}"/>
+                                                <ui:SymbolIcon Symbol="Box24" FontSize="12" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                               Visibility="{Binding UsesGlyphTile, Converter={StaticResource BoolToVisibility}}"/>
+                                                <Path Data="{Binding BrandGeometry}" Fill="{Binding BrandBrush}" Stretch="Uniform"
+                                                      Width="12" Height="12"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      Visibility="{Binding UsesBrandTile, Converter={StaticResource BoolToVisibility}}"/>
+                                            </Grid>
+                                        </Border>
+                                        <Image Source="{Binding Icon}" Width="22" Height="22"/>
+                                    </Grid>
+
+                                    <!-- Two lines, name+source on top, everything else compact underneath,
+                                         nothing here may wrap (fixed rule for every row surface). -->
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <TextBlock x:Name="QueueRowName" Text="{Binding Name}" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding Name}"
+                                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                        <!-- Same reason: the trailing star column hands the size text a bounded
+                                             width to trim against. -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding SourceDisplay}" FontSize="10"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                            <ui:SymbolIcon Grid.Column="1" Symbol="Shield24" FontSize="10" Margin="5,0,0,0"
+                                                           VerticalAlignment="Center"
+                                                           ToolTip="{Binding DataContext.Loc[InstallQueueNeedsAdminTooltip],
+                                                                     RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                           Visibility="{Binding NeedsElevation, Converter={StaticResource BoolToVisibility}}"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding PublishDateText}" FontSize="10" Margin="6,0,0,0"
+                                                       Style="{StaticResource TabularNumberText}"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                       Visibility="{Binding HasPublishDate, Converter={StaticResource BoolToVisibility}}"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding DownloadSizeText}" FontSize="10" Margin="6,0,0,0"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Style="{StaticResource TabularNumberText}"
+                                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                       Visibility="{Binding HasDownloadSize, Converter={StaticResource BoolToVisibility}}"/>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <ui:SymbolIcon x:Name="QueueRowCriticalIcon" Grid.Column="3" Symbol="ErrorCircle24" FontSize="16"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   ToolTip="{Binding CriticalLabel}"
+                                                   AutomationProperties.Name="{Binding CriticalLabel}"
+                                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                                   Visibility="{Binding IsCritical, Converter={StaticResource BoolToVisibility}}"/>
+
+                                    <!-- Version lane, built like the main table's: installed version
+                                         right-aligned, the arrow, the new version left-aligned. Both version
+                                         boxes share one width across all rows (shared size group on the
+                                         ItemsControl), so the arrows stand in one vertical line, and they
+                                         grow with the longest version, taking the room from the name column
+                                         instead of cutting the version. Without an installed version the new
+                                         one is centred over the whole lane. One tooltip for the whole lane
+                                         (the transparent background makes the arrow and the gaps
+                                         hit-testable too). -->
+                                    <Grid x:Name="QueueVersionLane" Grid.Column="4" Margin="8,0,0,0"
+                                          VerticalAlignment="Center" Background="Transparent"
+                                          ToolTip="{Binding VersionChangeTooltip}"
+                                          Visibility="{Binding HasVersions, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" MinWidth="68" SharedSizeGroup="QueueVersion"/>
+                                            <ColumnDefinition Width="16"/>
+                                            <ColumnDefinition Width="Auto" MinWidth="68" SharedSizeGroup="QueueVersion"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" x:Name="QueueInstalledVersionText" Text="{Binding InstalledVersion}" FontSize="11" MaxWidth="180"
+                                                   VerticalAlignment="Center" TextAlignment="Right"
+                                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                   Style="{StaticResource TabularNumberText}"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                   Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"/>
+                                        <TextBlock Grid.Column="1" x:Name="QueueVersionArrow" Text="→" FontSize="11"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                                   Visibility="{Binding HasInstalledVersion, Converter={StaticResource BoolToVisibility}}"/>
+                                        <!-- Column and alignment come from the Style, not local values: a local
+                                             value outranks a Style trigger. -->
+                                        <TextBlock x:Name="QueueAvailableVersionText" Text="{Binding AvailableVersion}" FontSize="11" MaxWidth="180"
+                                                   VerticalAlignment="Center"
+                                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource TabularNumberText}">
+                                                    <Setter Property="Grid.Column" Value="2"/>
+                                                    <Setter Property="TextAlignment" Value="Left"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasInstalledVersion}" Value="False">
+                                                            <Setter Property="Grid.Column" Value="0"/>
+                                                            <Setter Property="Grid.ColumnSpan" Value="3"/>
+                                                            <Setter Property="TextAlignment" Value="Center"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+
+                                    <!-- Hidden (not just dimmed) until the card is hovered, so the row
+                                         does not carry a permanent X. Hidden rather than
+                                         Collapsed keeps the column's reserved width, so nothing else in
+                                         the row shifts when it appears. -->
+                                    <ui:Button x:Name="RemoveQueueButton" Grid.Column="5" Appearance="Transparent" Padding="6" Margin="4,0,0,0"
+                                               Command="{Binding DataContext.RemoveFromQueueCommand,
+                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               CommandParameter="{Binding}"
+                                               ToolTip="{Binding DataContext.Loc[InstallQueueRemoveTooltip],
+                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               AutomationProperties.Name="{Binding DataContext.Loc[InstallQueueRemoveTooltip],
+                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                                        <ui:Button.Style>
+                                            <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                                <Setter Property="Visibility" Value="Hidden"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsMouseOver, ElementName=QueueRowCard}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                    <!-- Also on keyboard focus anywhere inside the card (the
+                                                         card or this button): keying on the card's own focus
+                                                         alone would hide the button the moment Tab moves onto
+                                                         it, and hidden-until-hover alone would leave keyboard
+                                                         users nothing to Tab to. Entf on the card
+                                                         (OnQueueRowKeyDown) reaches the same command without
+                                                         a second Tab. -->
+                                                    <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=QueueRowCard}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ui:Button.Style>
+                                        <ui:SymbolIcon Symbol="Dismiss24" FontSize="12"/>
+                                    </ui:Button>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Expander>
+          </StackPanel>
+          </Border>
+        </Grid>
+    </Border>
+</UserControl>

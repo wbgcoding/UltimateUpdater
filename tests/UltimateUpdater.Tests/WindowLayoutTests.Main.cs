@@ -129,7 +129,7 @@ public partial class WindowLayoutTests
             var window = new MainWindow(viewModel, theme, settings);
             WpfHarness.RenderWindow(window, "ctrl-a-list-focused-de", 1100, 700);
 
-            var listBox = (ListBox)window.FindName("UpdatesListBox")!;
+            var listBox = window.Table.UpdatesListBox;
             var installable = viewModel.Updates.Where(r => r.CanInstall).ToList();
             Assert.NotEmpty(installable);
             // A critical row starts pre-selected on purpose (unrelated feature); what matters here is

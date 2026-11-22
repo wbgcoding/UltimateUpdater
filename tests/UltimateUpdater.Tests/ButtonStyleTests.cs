@@ -86,7 +86,7 @@ public class ButtonStyleTests
         string? xamlPath = null;
         while (directory is not null && xamlPath is null)
         {
-            var candidate = Path.Combine(directory.FullName, "src", "UltimateUpdater", "Views", "MainWindow.xaml");
+            var candidate = Path.Combine(directory.FullName, "src", "UltimateUpdater", "Views", "Main", "UpdatesTable.xaml");
             if (File.Exists(candidate))
                 xamlPath = candidate;
             directory = directory.Parent;
