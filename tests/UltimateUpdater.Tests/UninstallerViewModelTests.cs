@@ -102,6 +102,18 @@ public class UninstallerViewModelTests
             return Task.FromResult<IReadOnlyList<UninstallListing>>(listings);
         }
 
+        /// <summary>What the installed Windows updates read gives; null is a read that failed. Empty by default.</summary>
+        public Func<IReadOnlyList<UninstallListing>?> Updates { get; set; } = () => [];
+
+        /// <summary>How often the installed updates were read.</summary>
+        public int UpdateCalls { get; private set; }
+
+        public Task<IReadOnlyList<UninstallListing>?> ListUpdatesAsync(CancellationToken cancellationToken)
+        {
+            UpdateCalls++;
+            return Task.FromResult(Updates());
+        }
+
         public UninstallRunner CreateRunner(Func<InstalledProgramEntry, UninstallPlan> plan)
         {
             var executor = new Executor(this);

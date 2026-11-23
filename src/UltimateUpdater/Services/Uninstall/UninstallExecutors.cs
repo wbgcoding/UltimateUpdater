@@ -133,6 +133,13 @@ public sealed class UninstallGoneCheck(
                        windowsDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.Windows), "INF", packageName));
         }
 
+        // An update is gone when the servicing stack no longer lists it as installed; an unreadable list is never gone.
+        if (entry.Kind == UninstallEntryKind.WindowsUpdate)
+        {
+            return WindowsUpdateDiscovery.IdentityOf(entry.Key) is { } identity
+                   && WindowsUpdateDiscovery.IsGone(registry, identity);
+        }
+
         if (entry.Kind == UninstallEntryKind.StoreApp)
         {
             var apps = await appx.ReadAsync(cancellationToken);

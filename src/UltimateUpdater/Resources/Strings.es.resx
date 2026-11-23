@@ -2737,4 +2737,25 @@ Esto no se puede deshacer.</value>
   <data name="UninstallDriverKept" xml:space="preserve">
     <value>Windows conservó el paquete de controlador, puede que un dispositivo aún lo use (código {0}).</value>
   </data>
+  <data name="UninstallerUpdateKept" xml:space="preserve">
+    <value>Windows no permite quitar esta actualización</value>
+  </data>
+  <data name="UninstallerUpdateCumulative" xml:space="preserve">
+    <value>Actualización acumulativa (compilación {0})</value>
+  </data>
+  <data name="UninstallerUpdateServicingStack" xml:space="preserve">
+    <value>Actualización de la pila de mantenimiento</value>
+  </data>
+  <data name="UninstallerUpdatesLoading" xml:space="preserve">
+    <value>Leyendo las actualizaciones instaladas. Windows puede pedir permiso.</value>
+  </data>
+  <data name="UninstallerUpdatesFailed" xml:space="preserve">
+    <value>No se pudieron leer las actualizaciones instaladas.</value>
+  </data>
+  <data name="UninstallerUpdatesNone" xml:space="preserve">
+    <value>No se encontraron actualizaciones que se puedan quitar.</value>
+  </data>
+  <data name="UninstallDismFailed" xml:space="preserve">
+    <value>Windows no pudo quitar la actualización (código {0}).</value>
+  </data>
 </root>

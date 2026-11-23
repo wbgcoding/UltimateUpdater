@@ -2737,4 +2737,25 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="UninstallDriverKept" xml:space="preserve">
     <value>Windows hat das Treiberpaket behalten, ein Gerät nutzt es möglicherweise noch (Code {0}).</value>
   </data>
+  <data name="UninstallerUpdateKept" xml:space="preserve">
+    <value>Windows erlaubt das Entfernen dieses Updates nicht</value>
+  </data>
+  <data name="UninstallerUpdateCumulative" xml:space="preserve">
+    <value>Kumulatives Update (Build {0})</value>
+  </data>
+  <data name="UninstallerUpdateServicingStack" xml:space="preserve">
+    <value>Update des Wartungsstapels</value>
+  </data>
+  <data name="UninstallerUpdatesLoading" xml:space="preserve">
+    <value>Die installierten Updates werden gelesen. Windows fragt eventuell nach einer Berechtigung.</value>
+  </data>
+  <data name="UninstallerUpdatesFailed" xml:space="preserve">
+    <value>Die installierten Updates konnten nicht gelesen werden.</value>
+  </data>
+  <data name="UninstallerUpdatesNone" xml:space="preserve">
+    <value>Keine entfernbaren Updates gefunden.</value>
+  </data>
+  <data name="UninstallDismFailed" xml:space="preserve">
+    <value>Windows konnte das Update nicht entfernen (Code {0}).</value>
+  </data>
 </root>

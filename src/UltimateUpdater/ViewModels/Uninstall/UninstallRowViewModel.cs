@@ -136,12 +136,13 @@ internal static class UninstallRowText
         _ => "CleanupRiskRisky",
     };
 
-    /// <summary>The note under a row the plan refused for a reason worth saying: a driver in use. Empty otherwise
+    /// <summary>The note under a row the plan refused for a reason worth saying: a driver in use, an update Windows does not let go. Empty otherwise
     /// (the method column already says "cannot remove").</summary>
     internal static string Note(UninstallPlan plan, InstalledProgramEntry entry) => plan.Refusal switch
     {
         UninstallRefusal.DriverInUse => string.Format(
             LocalizationService.Instance["UninstallerDriverInUse"], entry.InUseBy),
+        UninstallRefusal.UpdateNotRemovable => LocalizationService.Instance["UninstallerUpdateKept"],
         _ => string.Empty,
     };
 

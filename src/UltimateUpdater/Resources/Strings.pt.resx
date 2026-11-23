@@ -2737,4 +2737,25 @@ Continuar com direitos de administrador?</value>
   <data name="UninstallDriverKept" xml:space="preserve">
     <value>O Windows manteve o pacote do driver, um dispositivo ainda pode estar a usá-lo (código {0}).</value>
   </data>
+  <data name="UninstallerUpdateKept" xml:space="preserve">
+    <value>O Windows não permite remover esta atualização</value>
+  </data>
+  <data name="UninstallerUpdateCumulative" xml:space="preserve">
+    <value>Atualização cumulativa (compilação {0})</value>
+  </data>
+  <data name="UninstallerUpdateServicingStack" xml:space="preserve">
+    <value>Atualização da pilha de manutenção</value>
+  </data>
+  <data name="UninstallerUpdatesLoading" xml:space="preserve">
+    <value>A ler as atualizações instaladas. O Windows pode pedir permissão.</value>
+  </data>
+  <data name="UninstallerUpdatesFailed" xml:space="preserve">
+    <value>Não foi possível ler as atualizações instaladas.</value>
+  </data>
+  <data name="UninstallerUpdatesNone" xml:space="preserve">
+    <value>Não foram encontradas atualizações removíveis.</value>
+  </data>
+  <data name="UninstallDismFailed" xml:space="preserve">
+    <value>O Windows não conseguiu remover a atualização (código {0}).</value>
+  </data>
 </root>

@@ -18,6 +18,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
     private readonly LoggingService _logging;
     private List<UninstallRowViewModel> _all = [];
     private CancellationTokenSource? _loadCts;
+    private CancellationTokenSource? _updatesCts;
 
     public UninstallerViewModel(IUninstallerBackend backend, LoggingService logging)
     {
@@ -28,8 +29,15 @@ public sealed partial class UninstallerViewModel : ObservableObject
             new(UninstallSection.Programs, "UninstallerSectionPrograms", expanded: true),
             new(UninstallSection.Packages, "UninstallerSectionPackages", expanded: false),
             new(UninstallSection.Drivers, "UninstallerSectionDrivers", expanded: false),
-            new(UninstallSection.Updates, "UninstallerSectionUpdates", expanded: false),
+            new(UninstallSection.Updates, "UninstallerSectionUpdates", expanded: false, lazy: true),
         ];
+
+        // The installed updates are read when their section is opened: it needs the elevated helper.
+        Sections[^1].PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(UninstallSectionViewModel.IsExpanded) && Sections[^1].IsExpanded)
+                _ = LoadUpdatesAsync();
+        };
     }
 
     public LocalizationService Loc => LocalizationService.Instance;
@@ -67,6 +75,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
     {
         _loadCts?.Cancel();
         var cts = _loadCts = new CancellationTokenSource();
+        ResetUpdates();
         IsLoading = true;
         try
         {
@@ -88,8 +97,76 @@ public sealed partial class UninstallerViewModel : ObservableObject
         finally
         {
             if (ReferenceEquals(_loadCts, cts))
+            {
                 IsLoading = false;
+                if (UpdatesSection.IsExpanded)
+                    _ = LoadUpdatesAsync();
+            }
         }
+    }
+
+    private UninstallSectionViewModel UpdatesSection => Sections.First(section => section.Kind == UninstallSection.Updates);
+
+    /// <summary>Forgets the installed updates: a reload starts over (the section reads them again when it is open).</summary>
+    private void ResetUpdates()
+    {
+        _updatesCts?.Cancel();
+        _updatesCts = null;
+        UpdatesSection.Load = UninstallSectionLoad.NotLoaded;
+    }
+
+    /// <summary>
+    /// Reads the installed Windows updates (elevated helper, so this can raise the elevation prompt) and adds them to
+    /// the table. Skipped while a run is on, while the first list is still loading, or when the updates are already
+    /// read or being read; a failed read can be tried again.
+    /// </summary>
+    internal async Task LoadUpdatesAsync()
+    {
+        var section = UpdatesSection;
+        if (IsBusy || IsLoading || section.Load is UninstallSectionLoad.Loading or UninstallSectionLoad.Loaded or UninstallSectionLoad.Empty)
+            return;
+
+        _updatesCts?.Cancel();
+        var cts = _updatesCts = new CancellationTokenSource();
+        section.Load = UninstallSectionLoad.Loading;
+        IReadOnlyList<UninstallListing>? listings;
+        try
+        {
+            listings = await _backend.ListUpdatesAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch (Exception ex)
+        {
+            _logging.Warn($"Windows update list failed: {ex.Message}");
+            listings = null;
+        }
+
+        if (cts.IsCancellationRequested || IsBusy)
+        {
+            // a reload or a run came in meanwhile: the answer is dropped and the next open reads again
+            if (ReferenceEquals(_updatesCts, cts) && section.Load == UninstallSectionLoad.Loading)
+                section.Load = UninstallSectionLoad.NotLoaded;
+
+            return;
+        }
+
+        if (listings is null)
+        {
+            section.Load = UninstallSectionLoad.Failed;
+            return;
+        }
+
+        var rows = listings
+            .Where(listing => listing.Entry.Kind == UninstallEntryKind.WindowsUpdate)
+            .Select(listing => new UninstallRowViewModel(listing, OnRowSelectionChanged))
+            .ToList();
+        _all = [.. _all.Where(row => row.Entry.Kind != UninstallEntryKind.WindowsUpdate), .. rows];
+        section.Load = rows.Count == 0 ? UninstallSectionLoad.Empty : UninstallSectionLoad.Loaded;
+        Refresh();
+        UpdateSelectionState();
     }
 
     [RelayCommand]
@@ -201,5 +278,9 @@ public sealed partial class UninstallerViewModel : ObservableObject
     }
 
     /// <summary>Cancels a list read in flight; the window closed for good.</summary>
-    public void Discard() => _loadCts?.Cancel();
+    public void Discard()
+    {
+        _loadCts?.Cancel();
+        _updatesCts?.Cancel();
+    }
 }

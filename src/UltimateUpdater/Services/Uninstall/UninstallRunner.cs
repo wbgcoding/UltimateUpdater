@@ -272,6 +272,15 @@ public sealed class UninstallRunner
         if (plan.Method == UninstallMethod.Driver)
             return string.Format(_lookup("UninstallDriverKept"), exitCode);
 
+        // DISM: 0x800F0825 is "this package is permanent" (the list said removable, Windows says otherwise); any other
+        // failure names its code in hex, the form DISM and the Windows documentation use.
+        if (plan.Method == UninstallMethod.WindowsUpdate)
+        {
+            return exitCode == unchecked((int)0x800F0825)
+                ? _lookup("UninstallerUpdateKept")
+                : string.Format(_lookup("UninstallDismFailed"), "0x" + exitCode.ToString("X8", System.Globalization.CultureInfo.InvariantCulture));
+        }
+
         if (plan.Method == UninstallMethod.Winget
             && InstallErrorExplainer.Explain("winget", detail)?.Format(_lookup) is { Length: > 0 } explained)
             return explained;

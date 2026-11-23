@@ -178,6 +178,20 @@ internal static class ProgramUninstallWorker
             return;
         }
 
+        // Windows updates are DISM packages, not registry entries: a list job (read only) and a removal job, each
+        // checked and planned by the worker itself.
+        if (job?.Method == WindowsUpdateWorker.ListMethod)
+        {
+            await RunUpdateListAsync(writer, jobId, logging, cancellationToken);
+            return;
+        }
+
+        if (job?.Method == nameof(UninstallMethod.WindowsUpdate))
+        {
+            await RunUpdateAsync(job, writer, jobId, logging, cancellationToken);
+            return;
+        }
+
         IReadOnlyList<WingetListRow>? wingetRows = null;
         if (job?.Method == nameof(UninstallMethod.Winget)
             && await new WingetListReader().ListAsync(cancellationToken) is { } listing)
@@ -230,6 +244,57 @@ internal static class ProgramUninstallWorker
                                        or InvalidOperationException or TimeoutException)
         {
             logging.Warn($"Elevated uninstall could not run: {ex.Message}");
+            Finish(writer, jobId, job.Key, success: false, exitCode: null, error: ex.Message, detail: null);
+        }
+    }
+
+    /// <summary>Reads the installed updates (DISM needs the elevated worker) and returns them as JSON in the result's
+    /// detail; the app only shows them and the removal job derives everything again.</summary>
+    private static async Task RunUpdateListAsync(
+        StreamWriter writer, string jobId, LoggingService logging, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var rows = await WindowsUpdateWorker.ListAsync(WindowsRegistryView.Instance, logging, cancellationToken);
+            Finish(
+                writer, jobId, null, success: rows is not null, exitCode: null,
+                error: rows is null ? "the installed updates could not be read" : null,
+                detail: rows is null ? null : JsonSerializer.Serialize(rows, JsonOptions));
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or InvalidOperationException
+                                       or UnauthorizedAccessException)
+        {
+            logging.Warn($"Elevated update list could not run: {ex.Message}");
+            Finish(writer, jobId, null, success: false, exitCode: null, error: ex.Message, detail: null);
+        }
+    }
+
+    private static async Task RunUpdateAsync(
+        UninstallProgramJob job, StreamWriter writer, string jobId, LoggingService logging, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var outcome = await WindowsUpdateWorker.RemoveAsync(
+                job.Key, WindowsRegistryView.Instance, new FileSystemUninstallProbe(), logging, cancellationToken);
+            if (outcome.Refusal is { } refusal)
+                logging.Warn($"Elevated update removal refused: {refusal}");
+
+            Finish(
+                writer, jobId, job.Key, outcome.ExitCode is 0 or 3010 or 1641, outcome.ExitCode,
+                error: outcome.Refusal, detail: outcome.Detail);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or InvalidOperationException
+                                       or UnauthorizedAccessException)
+        {
+            logging.Warn($"Elevated update removal could not run: {ex.Message}");
             Finish(writer, jobId, job.Key, success: false, exitCode: null, error: ex.Message, detail: null);
         }
     }

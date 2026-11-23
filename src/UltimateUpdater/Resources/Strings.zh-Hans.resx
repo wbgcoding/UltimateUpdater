@@ -2737,4 +2737,25 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="UninstallDriverKept" xml:space="preserve">
     <value>Windows 保留了该驱动程序包，可能仍有设备在使用它（代码 {0}）。</value>
   </data>
+  <data name="UninstallerUpdateKept" xml:space="preserve">
+    <value>Windows 不允许删除此更新</value>
+  </data>
+  <data name="UninstallerUpdateCumulative" xml:space="preserve">
+    <value>累积更新（版本 {0}）</value>
+  </data>
+  <data name="UninstallerUpdateServicingStack" xml:space="preserve">
+    <value>服务堆栈更新</value>
+  </data>
+  <data name="UninstallerUpdatesLoading" xml:space="preserve">
+    <value>正在读取已安装的更新。Windows 可能会请求权限。</value>
+  </data>
+  <data name="UninstallerUpdatesFailed" xml:space="preserve">
+    <value>无法读取已安装的更新。</value>
+  </data>
+  <data name="UninstallerUpdatesNone" xml:space="preserve">
+    <value>未找到可删除的更新。</value>
+  </data>
+  <data name="UninstallDismFailed" xml:space="preserve">
+    <value>Windows 无法删除该更新（代码 {0}）。</value>
+  </data>
 </root>

@@ -127,6 +127,9 @@ public static partial class UninstallPlanner
         if (entry.Kind == UninstallEntryKind.Driver)
             return PlanDriver(entry);
 
+        if (entry.Kind == UninstallEntryKind.WindowsUpdate)
+            return PlanUpdate(entry);
+
         if (entry.Kind != UninstallEntryKind.Program)
             return Refuse(UninstallRefusal.NoCommand);
 
@@ -237,6 +240,28 @@ public static partial class UninstallPlanner
             Method = UninstallMethod.Driver,
             Executable = Path.Combine(System.Environment.SystemDirectory, "pnputil.exe"),
             Arguments = ["/delete-driver", packageName],
+            Elevated = true,
+        };
+    }
+
+    /// <summary>
+    /// A Windows update: `dism /online /remove-package /packagename:&lt;identity&gt; /quiet /norestart`, DISM by its
+    /// absolute System32 path. Only a package Windows lets be removed is planned; the identity must be a known update
+    /// wrapper so nothing else can be put into the argument.
+    /// </summary>
+    private static UninstallPlan PlanUpdate(InstalledProgramEntry entry)
+    {
+        if (WindowsUpdateDiscovery.IdentityOf(entry.Key) is not { } identity)
+            return Refuse(UninstallRefusal.InvalidId);
+
+        if (!entry.WindowsAllowsRemoval)
+            return Refuse(UninstallRefusal.UpdateNotRemovable);
+
+        return new UninstallPlan
+        {
+            Method = UninstallMethod.WindowsUpdate,
+            Executable = Path.Combine(System.Environment.SystemDirectory, "dism.exe"),
+            Arguments = ["/online", "/remove-package", "/packagename:" + identity, "/quiet", "/norestart"],
             Elevated = true,
         };
     }

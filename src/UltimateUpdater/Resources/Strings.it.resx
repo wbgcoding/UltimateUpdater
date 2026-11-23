@@ -2737,4 +2737,25 @@ Continuare con privilegi di amministratore?</value>
   <data name="UninstallDriverKept" xml:space="preserve">
     <value>Windows ha mantenuto il pacchetto driver, un dispositivo potrebbe ancora usarlo (codice {0}).</value>
   </data>
+  <data name="UninstallerUpdateKept" xml:space="preserve">
+    <value>Windows non consente di rimuovere questo aggiornamento</value>
+  </data>
+  <data name="UninstallerUpdateCumulative" xml:space="preserve">
+    <value>Aggiornamento cumulativo (build {0})</value>
+  </data>
+  <data name="UninstallerUpdateServicingStack" xml:space="preserve">
+    <value>Aggiornamento dello stack di servizio</value>
+  </data>
+  <data name="UninstallerUpdatesLoading" xml:space="preserve">
+    <value>Lettura degli aggiornamenti installati. Windows potrebbe chiedere l'autorizzazione.</value>
+  </data>
+  <data name="UninstallerUpdatesFailed" xml:space="preserve">
+    <value>Impossibile leggere gli aggiornamenti installati.</value>
+  </data>
+  <data name="UninstallerUpdatesNone" xml:space="preserve">
+    <value>Nessun aggiornamento rimovibile trovato.</value>
+  </data>
+  <data name="UninstallDismFailed" xml:space="preserve">
+    <value>Windows non è riuscito a rimuovere l'aggiornamento (codice {0}).</value>
+  </data>
 </root>

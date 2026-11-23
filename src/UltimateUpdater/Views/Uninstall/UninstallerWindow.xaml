@@ -365,19 +365,25 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Expander Style="{StaticResource UninstallSectionCard}" IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
-                                              Visibility="{Binding HasRows, Converter={StaticResource BoolToVisibility}}">
+                                              Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}">
                                         <Expander.Header>
                                             <TextBlock Text="{Binding Header}" FontSize="13" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                                         </Expander.Header>
                                         <!-- Several rows can be highlighted (Ctrl, Shift); Space ticks them together. The list never scrolls itself: the card's scrollbar does. -->
-                                        <ListBox ItemsSource="{Binding Rows}" SelectionMode="Extended" BorderThickness="0" Background="Transparent"
-                                                 ItemContainerStyle="{StaticResource UninstallRowItem}"
-                                                 ItemTemplate="{StaticResource UninstallRowTemplate}"
-                                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                                 behaviors:BubbleScroll.Enabled="True"
-                                                 PreviewKeyDown="OnRowListKeyDown"/>
+                                        <StackPanel>
+                                            <!-- A section read on demand says what it is doing or why it is empty. -->
+                                            <TextBlock Text="{Binding StatusText}" FontSize="13" Margin="16,6,16,10" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                       Visibility="{Binding HasStatus, Converter={StaticResource BoolToVisibility}}"/>
+                                            <ListBox ItemsSource="{Binding Rows}" SelectionMode="Extended" BorderThickness="0" Background="Transparent"
+                                                     ItemContainerStyle="{StaticResource UninstallRowItem}"
+                                                     ItemTemplate="{StaticResource UninstallRowTemplate}"
+                                                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                     behaviors:BubbleScroll.Enabled="True"
+                                                     PreviewKeyDown="OnRowListKeyDown"/>
+                                        </StackPanel>
                                     </Expander>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
