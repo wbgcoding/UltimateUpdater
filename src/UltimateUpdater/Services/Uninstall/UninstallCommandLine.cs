@@ -23,6 +23,12 @@ public enum UninstallRefusal
 
     /// <summary>The entry is this app's own; its own setup removes it, never this run.</summary>
     OwnEntry,
+
+    /// <summary>A driver package a present device uses: it is listed, never removed here.</summary>
+    DriverInUse,
+
+    /// <summary>An update Windows itself does not let anyone remove (a permanent package, the servicing stack, a cumulative update).</summary>
+    UpdateNotRemovable,
 }
 
 /// <summary>

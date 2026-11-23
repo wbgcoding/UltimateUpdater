@@ -2731,4 +2731,10 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="HistoryRestoreFailed" xml:space="preserve">
     <value>Die Reste konnten nicht wiederhergestellt werden.</value>
   </data>
+  <data name="UninstallerDriverInUse" xml:space="preserve">
+    <value>Wird von {0} benutzt, hier nicht entfernbar.</value>
+  </data>
+  <data name="UninstallDriverKept" xml:space="preserve">
+    <value>Windows hat das Treiberpaket behalten, ein Gerät nutzt es möglicherweise noch (Code {0}).</value>
+  </data>
 </root>

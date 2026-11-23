@@ -2731,4 +2731,10 @@ Continuar com direitos de administrador?</value>
   <data name="HistoryRestoreFailed" xml:space="preserve">
     <value>Não foi possível restaurar os restos.</value>
   </data>
+  <data name="UninstallerDriverInUse" xml:space="preserve">
+    <value>Em uso por {0}, não pode ser removido aqui.</value>
+  </data>
+  <data name="UninstallDriverKept" xml:space="preserve">
+    <value>O Windows manteve o pacote do driver, um dispositivo ainda pode estar a usá-lo (código {0}).</value>
+  </data>
 </root>

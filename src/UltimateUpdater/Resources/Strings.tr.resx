@@ -2731,4 +2731,10 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="HistoryRestoreFailed" xml:space="preserve">
     <value>Artıklar geri yüklenemedi.</value>
   </data>
+  <data name="UninstallerDriverInUse" xml:space="preserve">
+    <value>{0} tarafından kullanılıyor, burada kaldırılamaz.</value>
+  </data>
+  <data name="UninstallDriverKept" xml:space="preserve">
+    <value>Windows sürücü paketini kaldırmadı, bir aygıt hâlâ kullanıyor olabilir (kod {0}).</value>
+  </data>
 </root>

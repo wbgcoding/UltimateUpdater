@@ -2731,4 +2731,10 @@ Continuați cu drepturi de administrator?</value>
   <data name="HistoryRestoreFailed" xml:space="preserve">
     <value>Resturile nu au putut fi restaurate.</value>
   </data>
+  <data name="UninstallerDriverInUse" xml:space="preserve">
+    <value>Folosit de {0}, nu poate fi eliminat de aici.</value>
+  </data>
+  <data name="UninstallDriverKept" xml:space="preserve">
+    <value>Windows a păstrat pachetul de driver, este posibil ca un dispozitiv să îl folosească încă (cod {0}).</value>
+  </data>
 </root>

@@ -2731,4 +2731,10 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="HistoryRestoreFailed" xml:space="preserve">
     <value>无法还原残留项。</value>
   </data>
+  <data name="UninstallerDriverInUse" xml:space="preserve">
+    <value>正被 {0} 使用，无法在此处删除。</value>
+  </data>
+  <data name="UninstallDriverKept" xml:space="preserve">
+    <value>Windows 保留了该驱动程序包，可能仍有设备在使用它（代码 {0}）。</value>
+  </data>
 </root>

@@ -1,4 +1,5 @@
 using UltimateUpdater.Models.Settings;
+using UltimateUpdater.Services.Cleanup;
 namespace UltimateUpdater.Services.Uninstall;
 
 /// <summary>One installed entry with what the window shows about it: how it would be removed and how much care it deserves.</summary>
@@ -93,9 +94,27 @@ public sealed class UninstallerBackend(
             var inventory = new InstalledProgramInventory(
                 WindowsRegistryView.Instance, new AppxPackageReader(), new WingetListReader());
             var entries = await inventory.ReadAsync(cancellationToken);
+            entries = [.. entries, .. DriverEntries(new SetupApiDriverInventoryProvider(logging.Warn), cancellationToken)];
             return Rate(entries, new FileSystemUninstallProbe(), Environment.GetFolderPath(Environment.SpecialFolder.Windows));
         },
         cancellationToken);
+
+    /// <summary>The third-party driver packages as entries. A driver inventory that cannot be read lists no driver at
+    /// all (never a guess about which are in use).</summary>
+    internal IReadOnlyList<InstalledProgramEntry> DriverEntries(IDriverInventoryProvider provider, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var devices = provider.GatherDevices(cancellationToken);
+            var packages = provider.GatherPackages(cancellationToken);
+            return [.. DriverUninstallDiscovery.List(devices, packages).Select(DriverUninstallDiscovery.ToEntry)];
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logging.Warn($"Driver list failed: {ex.Message}");
+            return [];
+        }
+    }
 
     /// <summary>Plans and rates every entry. Pure apart from the probe the planner reads installers with.</summary>
     internal static IReadOnlyList<UninstallListing> Rate(

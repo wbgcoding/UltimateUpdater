@@ -2731,4 +2731,10 @@ Doorgaan met beheerdersrechten?</value>
   <data name="HistoryRestoreFailed" xml:space="preserve">
     <value>De restanten konden niet worden hersteld.</value>
   </data>
+  <data name="UninstallerDriverInUse" xml:space="preserve">
+    <value>In gebruik door {0}, kan hier niet worden verwijderd.</value>
+  </data>
+  <data name="UninstallDriverKept" xml:space="preserve">
+    <value>Windows heeft het stuurprogrammapakket behouden, mogelijk gebruikt een apparaat het nog (code {0}).</value>
+  </data>
 </root>

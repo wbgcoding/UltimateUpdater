@@ -27,6 +27,12 @@ public enum UninstallMethod
     /// <summary>`Remove-AppxPackage` for a Store app.</summary>
     StoreApp,
 
+    /// <summary>`pnputil /delete-driver` for a third-party driver package no present device uses.</summary>
+    Driver,
+
+    /// <summary>`dism /online /remove-package` for an installed Windows update that Windows lets people remove.</summary>
+    WindowsUpdate,
+
     /// <summary>No safe way: the row shows that it cannot be removed automatically.</summary>
     Refused,
 }
@@ -118,6 +124,9 @@ public static partial class UninstallPlanner
         if (entry.Kind == UninstallEntryKind.StoreApp)
             return PlanStoreApp(entry);
 
+        if (entry.Kind == UninstallEntryKind.Driver)
+            return PlanDriver(entry);
+
         if (entry.Kind != UninstallEntryKind.Program)
             return Refuse(UninstallRefusal.NoCommand);
 
@@ -208,6 +217,28 @@ public static partial class UninstallPlanner
         var windows = Path.TrimEndingDirectorySeparator(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Windows));
         return new[] { windows, Path.Combine(windows, "System32"), Path.Combine(windows, "SysWOW64") }
             .Any(system => string.Equals(folder, system, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// A third-party driver package: `pnputil /delete-driver &lt;oemNN.inf&gt;`, no `/uninstall` and no `/force`, so
+    /// pnputil itself refuses a package a device still uses. A package a present device uses is refused here already
+    /// (listed greyed). The program is pnputil by its absolute System32 path, never resolved from PATH.
+    /// </summary>
+    private static UninstallPlan PlanDriver(InstalledProgramEntry entry)
+    {
+        if (DriverUninstallDiscovery.PackageNameOf(entry.Key) is not { } packageName)
+            return Refuse(UninstallRefusal.InvalidId);
+
+        if (!string.IsNullOrWhiteSpace(entry.InUseBy))
+            return Refuse(UninstallRefusal.DriverInUse);
+
+        return new UninstallPlan
+        {
+            Method = UninstallMethod.Driver,
+            Executable = Path.Combine(System.Environment.SystemDirectory, "pnputil.exe"),
+            Arguments = ["/delete-driver", packageName],
+            Elevated = true,
+        };
     }
 
     private static UninstallPlan PlanStoreApp(InstalledProgramEntry entry)

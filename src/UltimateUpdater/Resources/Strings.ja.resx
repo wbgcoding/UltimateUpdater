@@ -2731,4 +2731,10 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="HistoryRestoreFailed" xml:space="preserve">
     <value>残りを復元できませんでした。</value>
   </data>
+  <data name="UninstallerDriverInUse" xml:space="preserve">
+    <value>{0} が使用中のため、ここでは削除できません。</value>
+  </data>
+  <data name="UninstallDriverKept" xml:space="preserve">
+    <value>Windows はドライバーパッケージを残しました。デバイスがまだ使用している可能性があります (コード {0})。</value>
+  </data>
 </root>

@@ -2731,4 +2731,10 @@ Continue with admin rights?</value>
   <data name="HistoryRestoreFailed" xml:space="preserve">
     <value>The leftovers could not be restored.</value>
   </data>
+  <data name="UninstallerDriverInUse" xml:space="preserve">
+    <value>In use by {0}, cannot be removed here.</value>
+  </data>
+  <data name="UninstallDriverKept" xml:space="preserve">
+    <value>Windows kept the driver package, a device may still use it (code {0}).</value>
+  </data>
 </root>

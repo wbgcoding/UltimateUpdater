@@ -151,7 +151,9 @@ public sealed partial class UninstallerViewModel
             RunFinished = true;
         }
 
-        await ScanLeftoversAsync([.. rows.Where(row => row.State == UninstallRowState.Removed)]);
+        // A driver package or a Windows update leaves no program folders or keys to look for.
+        await ScanLeftoversAsync([.. rows.Where(row => row.State == UninstallRowState.Removed
+            && row.Entry.Kind is not (UninstallEntryKind.Driver or UninstallEntryKind.WindowsUpdate))]);
     }
 
     /// <summary>

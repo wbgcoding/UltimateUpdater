@@ -268,6 +268,10 @@ public sealed class UninstallRunner
         if (exitCode == 1625)
             return _lookup("UninstallBlockedByPolicy");
 
+        // pnputil refuses a package a device still uses (no /force); the code alone says nothing, the cause is named.
+        if (plan.Method == UninstallMethod.Driver)
+            return string.Format(_lookup("UninstallDriverKept"), exitCode);
+
         if (plan.Method == UninstallMethod.Winget
             && InstallErrorExplainer.Explain("winget", detail)?.Format(_lookup) is { Length: > 0 } explained)
             return explained;

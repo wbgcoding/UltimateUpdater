@@ -2731,4 +2731,10 @@ Continuare con privilegi di amministratore?</value>
   <data name="HistoryRestoreFailed" xml:space="preserve">
     <value>Non è stato possibile ripristinare gli avanzi.</value>
   </data>
+  <data name="UninstallerDriverInUse" xml:space="preserve">
+    <value>In uso da {0}, non può essere rimosso qui.</value>
+  </data>
+  <data name="UninstallDriverKept" xml:space="preserve">
+    <value>Windows ha mantenuto il pacchetto driver, un dispositivo potrebbe ancora usarlo (codice {0}).</value>
+  </data>
 </root>

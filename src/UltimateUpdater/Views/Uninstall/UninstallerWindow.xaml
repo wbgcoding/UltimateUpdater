@@ -140,6 +140,10 @@
                     <StackPanel Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                    ToolTip="{Binding Name}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        <!-- Why a greyed row cannot be removed (a driver a device uses). -->
+                        <TextBlock Text="{Binding NoteText}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding NoteText}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}"/>
                         <TextBlock Text="{Binding StateText}" FontSize="11" TextTrimming="CharacterEllipsis"
                                    ToolTip="{Binding StateText}"
                                    Visibility="{Binding ShowsState, Converter={StaticResource BoolToVisibility}}">

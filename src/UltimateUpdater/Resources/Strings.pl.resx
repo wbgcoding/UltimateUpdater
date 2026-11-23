@@ -2731,4 +2731,10 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="HistoryRestoreFailed" xml:space="preserve">
     <value>Nie udało się przywrócić pozostałości.</value>
   </data>
+  <data name="UninstallerDriverInUse" xml:space="preserve">
+    <value>Używany przez {0}, nie można go tutaj usunąć.</value>
+  </data>
+  <data name="UninstallDriverKept" xml:space="preserve">
+    <value>System Windows zachował pakiet sterownika, urządzenie może go jeszcze używać (kod {0}).</value>
+  </data>
 </root>

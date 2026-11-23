@@ -187,7 +187,7 @@ public static class DriverCleanupExecutor
         }
     }
 
-    private static async Task<bool> ExportPackageAsync(
+    internal static async Task<bool> ExportPackageAsync(
         string pnputil, string packageName, DriverBackupStaging.StagingFolder staging, LoggingService logging,
         CancellationToken cancellationToken)
     {
@@ -216,7 +216,15 @@ public static class DriverCleanupExecutor
     /// exit code for the given arguments. Per async flow, so parallel tests never see each other's.</summary>
     internal static readonly AsyncLocal<Func<IReadOnlyList<string>, Task<int>>?> PnputilForTest = new();
 
-    private static async Task<bool> RunPnputilAsync(
+    internal static async Task<bool> RunPnputilAsync(
+        string pnputil, IReadOnlyList<string> arguments, LoggingService logging, CancellationToken cancellationToken,
+        string? failureMessage = null) =>
+        (await RunPnputilForCodeAsync(pnputil, arguments, logging, cancellationToken, failureMessage)) is { } code
+        && IsPnputilSuccess(code);
+
+    /// <summary>The pnputil exit code, or null when the tool could not be run at all. A failing code is logged
+    /// here, so a caller that only needs the code adds no log line of its own.</summary>
+    internal static async Task<int?> RunPnputilForCodeAsync(
         string pnputil, IReadOnlyList<string> arguments, LoggingService logging, CancellationToken cancellationToken,
         string? failureMessage = null)
     {
@@ -230,11 +238,11 @@ public static class DriverCleanupExecutor
                 if (result.ExitCode != 0)
                     logging.Info($"Driver cleanup: pnputil {string.Join(' ', arguments)} succeeded; a restart is needed to finish it (exit code {result.ExitCode}).");
 
-                return true;
+                return result.ExitCode;
             }
 
             logging.Warn(failureMessage ?? $"Driver cleanup: pnputil {string.Join(' ', arguments)} failed with exit code {result.ExitCode}.");
-            return false;
+            return result.ExitCode;
         }
         catch (OperationCanceledException)
         {
@@ -243,7 +251,7 @@ public static class DriverCleanupExecutor
         catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or InvalidOperationException)
         {
             logging.Warn($"Driver cleanup: pnputil call failed: {ex.Message}");
-            return false;
+            return null;
         }
     }
 }

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using UltimateUpdater.Models;
+using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Elevation;
 using UltimateUpdater.Services.Install;
 using UltimateUpdater.Services.Platform;
@@ -87,7 +88,7 @@ internal static class ProgramUninstallWorker
             return Refuse("the entry key is not a machine uninstall key");
 
         if (!Enum.TryParse(job.Method, ignoreCase: false, out UninstallMethod method) || !Enum.IsDefined(method)
-            || method is UninstallMethod.Refused or UninstallMethod.StoreApp)
+            || method is UninstallMethod.Refused or UninstallMethod.StoreApp or UninstallMethod.Driver or UninstallMethod.WindowsUpdate)
             return Refuse("the method is not one the worker runs");
 
         var root = job.Key![..^(leaf.Length + 1)];
@@ -137,7 +138,7 @@ internal static class ProgramUninstallWorker
     /// <param name="createRestorePoint">Makes the system restore point (description, log); a test replaces it, the worker uses Windows'.</param>
     public static async Task RunJobAsync(
         JsonElement payload, StreamWriter writer, string jobId, LoggingService logging, CancellationToken cancellationToken,
-        Func<string, LoggingService, bool>? createRestorePoint = null)
+        Func<string, LoggingService, bool>? createRestorePoint = null, IDriverInventoryProvider? driverInventory = null)
     {
         UninstallProgramJob? job;
         try
@@ -168,6 +169,13 @@ internal static class ProgramUninstallWorker
                 Send(writer, jobId, new InstallProgressMessage { Type = "done" });
                 return;
             }
+        }
+
+        // A driver package is not a registry entry: it takes its own checks (fresh inventory, export, pnputil).
+        if (job?.Method == nameof(UninstallMethod.Driver))
+        {
+            await RunDriverAsync(job, writer, jobId, logging, driverInventory, cancellationToken);
+            return;
         }
 
         IReadOnlyList<WingetListRow>? wingetRows = null;
@@ -222,6 +230,34 @@ internal static class ProgramUninstallWorker
                                        or InvalidOperationException or TimeoutException)
         {
             logging.Warn($"Elevated uninstall could not run: {ex.Message}");
+            Finish(writer, jobId, job.Key, success: false, exitCode: null, error: ex.Message, detail: null);
+        }
+    }
+
+    private static async Task RunDriverAsync(
+        UninstallProgramJob job, StreamWriter writer, string jobId, LoggingService logging,
+        IDriverInventoryProvider? driverInventory, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var outcome = await DriverUninstallWorker.RunAsync(
+                job.Key, driverInventory ?? new SetupApiDriverInventoryProvider(logging.Warn), new FileSystemUninstallProbe(),
+                logging, cancellationToken);
+            if (outcome.Refusal is { } refusal)
+                logging.Warn($"Elevated driver removal refused: {refusal}");
+
+            Finish(
+                writer, jobId, job.Key, outcome.ExitCode is { } code && DriverCleanupExecutor.IsPnputilSuccess(code),
+                outcome.ExitCode, error: outcome.Refusal, detail: null);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or InvalidOperationException
+                                       or UnauthorizedAccessException)
+        {
+            logging.Warn($"Elevated driver removal could not run: {ex.Message}");
             Finish(writer, jobId, job.Key, success: false, exitCode: null, error: ex.Message, detail: null);
         }
     }

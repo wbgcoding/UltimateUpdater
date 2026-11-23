@@ -65,6 +65,11 @@ public sealed partial class UninstallRowViewModel : ObservableObject
 
     public string MethodText => LocalizationService.Instance[UninstallRowText.MethodKey(Listing.Plan)];
 
+    /// <summary>Why a row cannot be ticked, when the plan says (a driver a device uses); empty for every other row.</summary>
+    public string NoteText => UninstallRowText.Note(Listing.Plan, Entry);
+
+    public bool HasNote => NoteText.Length > 0;
+
     /// <summary>The name that sorts and matches: the row's own, case-insensitive, never empty.</summary>
     public string SortName => Name;
 
@@ -114,6 +119,7 @@ public sealed partial class UninstallRowViewModel : ObservableObject
         OnPropertyChanged(nameof(ReasonText));
         OnPropertyChanged(nameof(RiskTooltip));
         OnPropertyChanged(nameof(MethodText));
+        OnPropertyChanged(nameof(NoteText));
         OnPropertyChanged(nameof(StateText));
         OnPropertyChanged(nameof(SizeText));
         OnPropertyChanged(nameof(InstalledText));
@@ -128,6 +134,15 @@ internal static class UninstallRowText
         CleanupRiskLevel.Safe => "CleanupRiskSafe",
         CleanupRiskLevel.Considered => "CleanupRiskConsidered",
         _ => "CleanupRiskRisky",
+    };
+
+    /// <summary>The note under a row the plan refused for a reason worth saying: a driver in use. Empty otherwise
+    /// (the method column already says "cannot remove").</summary>
+    internal static string Note(UninstallPlan plan, InstalledProgramEntry entry) => plan.Refusal switch
+    {
+        UninstallRefusal.DriverInUse => string.Format(
+            LocalizationService.Instance["UninstallerDriverInUse"], entry.InUseBy),
+        _ => string.Empty,
     };
 
     internal static string MethodKey(UninstallPlan plan) => plan.Method switch

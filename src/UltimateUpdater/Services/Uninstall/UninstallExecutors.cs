@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.Json;
 using UltimateUpdater.Models;
 using UltimateUpdater.Services.Elevation;
@@ -103,7 +104,8 @@ public sealed class InProcessUninstallExecutor(LoggingService logging) : IUninst
 /// positive answer is awaited a few times; a list that cannot be read counts as not gone, never as removed.
 /// </summary>
 public sealed class UninstallGoneCheck(
-    IRegistryView registry, IAppxPackageSource appx, int attempts = 5, TimeSpan? delay = null)
+    IRegistryView registry, IAppxPackageSource appx, int attempts = 5, TimeSpan? delay = null,
+    string? windowsDirectory = null)
 {
     private readonly TimeSpan _delay = delay ?? TimeSpan.FromMilliseconds(1500);
 
@@ -123,6 +125,14 @@ public sealed class UninstallGoneCheck(
 
     private async Task<bool> IsGoneOnceAsync(InstalledProgramEntry entry, CancellationToken cancellationToken)
     {
+        // A driver package is published as %windir%\INF\oemNN.inf; pnputil removes that file with the package.
+        if (entry.Kind == UninstallEntryKind.Driver)
+        {
+            return DriverUninstallDiscovery.PackageNameOf(entry.Key) is { } packageName
+                   && !File.Exists(Path.Combine(
+                       windowsDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.Windows), "INF", packageName));
+        }
+
         if (entry.Kind == UninstallEntryKind.StoreApp)
         {
             var apps = await appx.ReadAsync(cancellationToken);

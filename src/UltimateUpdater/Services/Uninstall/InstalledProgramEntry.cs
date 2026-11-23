@@ -48,4 +48,12 @@ public sealed record InstalledProgramEntry
     public string? PackageFullName { get; init; }
 
     public string? PackageFamilyName { get; init; }
+
+    /// <summary>Driver packages only: the names of the present devices that use the package. Empty or null means no
+    /// present device uses it. An entry with a value here is listed greyed and is never removed.</summary>
+    public string? InUseBy { get; init; }
+
+    /// <summary>Windows updates only: false when Windows does not allow removing the package (permanent, the servicing
+    /// stack, a cumulative update, or any doubt). The default leaves every other entry kind unaffected.</summary>
+    public bool WindowsAllowsRemoval { get; init; } = true;
 }
