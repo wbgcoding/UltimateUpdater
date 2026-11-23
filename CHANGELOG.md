@@ -3,7 +3,7 @@
 All notable changes to Ultimate Updater. Format: [Keep a Changelog](https://keepachangelog.com),
 versioning: [SemVer](https://semver.org).
 
-## [Unreleased]
+## [1.3.0] - unreleased
 
 ### Updates
 - New uninstall window (toolbar button or Ctrl+U): lists installed programs, Store apps, package manager
