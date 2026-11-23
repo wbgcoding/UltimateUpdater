@@ -33,8 +33,8 @@ dotnet test tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj -c Release 
 - **No invented versions.** A row shows a version only when it is really known.
 - **Tests with every change.** New behaviour comes with a test; a bug fix comes with a test that
   failed before the fix.
-- **Every language.** New user-facing text goes into `Resources/Strings.resx` and every
-  `Strings.<language>.resx`.
+- **Every language.** New user-facing text goes into `Resources/Strings.resx` and every translated
+  `Strings.*.resx` (for example `Strings.de.resx`).
 - **One topic per pull request,** with a short description of what changed and how you tested it.
 
 ## License
