@@ -11,7 +11,7 @@ namespace UltimateUpdater.ViewModels.History;
 
 public sealed partial class HistoryRowViewModel(
     HistoryEntry entry, bool canDowngrade = false, Action<HistoryEntry>? onDowngrade = null,
-    int unchangedCount = 0, Action<HistoryEntry>? onRestoreLeftovers = null)
+    int unchangedCount = 0, Func<HistoryEntry, Task>? onRestoreLeftovers = null)
     : ObservableObject
 {
     public string When => entry.Timestamp.LocalDateTime.ToString("g", CultureInfo.CurrentUICulture);
@@ -111,8 +111,10 @@ public sealed partial class HistoryRowViewModel(
 
     public string RestoreLeftoversHeader => LocalizationService.Instance["HistoryRestoreLeftovers"];
 
+    /// <summary>Async on purpose: the toolkit's command refuses a second press while the first restore runs, so a
+    /// double click cannot start the same restore (and its elevation prompt) twice.</summary>
     [RelayCommand(CanExecute = nameof(CanRestoreLeftovers))]
-    private void RestoreLeftovers() => onRestoreLeftovers?.Invoke(entry);
+    private Task RestoreLeftovers() => onRestoreLeftovers?.Invoke(entry) ?? Task.CompletedTask;
 
     /// <summary>The result word is read from the resources in code, so a language change has to re-raise it.</summary>
     public void RefreshLocalizedText()
@@ -220,7 +222,7 @@ public partial class HistoryViewModel : ObservableObject
         IReadOnlySet<string>? pinningCapableSourceIds = null,
         Action<HistoryEntry>? onDowngrade = null,
         SettingsService? settings = null,
-        Action<HistoryEntry>? onRestoreLeftovers = null)
+        Func<HistoryEntry, Task>? onRestoreLeftovers = null)
         : this(history.Read(), pinningCapableSourceIds, onDowngrade, settings, onRestoreLeftovers)
     {
     }
@@ -231,7 +233,7 @@ public partial class HistoryViewModel : ObservableObject
         IReadOnlySet<string>? pinningCapableSourceIds = null,
         Action<HistoryEntry>? onDowngrade = null,
         SettingsService? settings = null,
-        Action<HistoryEntry>? onRestoreLeftovers = null)
+        Func<HistoryEntry, Task>? onRestoreLeftovers = null)
     {
         var read = await Task.Run(() => history.Read());
         return new HistoryViewModel(read, pinningCapableSourceIds, onDowngrade, settings, onRestoreLeftovers);
@@ -242,7 +244,7 @@ public partial class HistoryViewModel : ObservableObject
         IReadOnlySet<string>? pinningCapableSourceIds,
         Action<HistoryEntry>? onDowngrade,
         SettingsService? settings,
-        Action<HistoryEntry>? onRestoreLeftovers)
+        Func<HistoryEntry, Task>? onRestoreLeftovers)
     {
         _settings = settings;
 

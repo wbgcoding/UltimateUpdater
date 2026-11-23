@@ -43,7 +43,7 @@ public partial class MainViewModel
                 pinningCapableSourceIds,
                 entry => DowngradeFromHistory(entry.SourceId, entry.ItemId, entry.Name, entry.ToVersion, entry.FromVersion!),
                 _settings,
-                entry => _ = RestoreLeftoversFromHistoryAsync(entry));
+                RestoreLeftoversFromHistoryAsync);
         }
         finally
         {

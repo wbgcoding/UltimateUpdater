@@ -43,7 +43,7 @@ public partial class WindowLayoutTests
                 },
             };
 
-            var viewModel = new HistoryViewModel(HistoryWith(entries), onRestoreLeftovers: _ => { });
+            var viewModel = new HistoryViewModel(HistoryWith(entries), onRestoreLeftovers: _ => Task.CompletedTask);
             var window = new HistoryWindow(viewModel, new LoggingService());
             var content = (FrameworkElement)window.Content;
             result = WpfHarness.RenderWindow(window, $"history-restore-leftovers-{language}", 820, 520);
