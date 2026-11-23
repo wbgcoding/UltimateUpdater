@@ -172,17 +172,23 @@ internal static class VerifiedDelete
         string rootFinalPath, string directory, DateTime? youngerThanUtc = null) =>
         DeleteCore(rootFinalPath, directory, expectDirectory: true, out _, writeAttributes: false, youngerThanUtc);
 
+    /// <summary>Removes a link itself (a junction, a directory symlink or a file symlink) without ever entering
+    /// or following it: the object is opened as the link, must carry the reparse flag and must lie inside the
+    /// root by its own final path. A real folder or file swapped in meanwhile is refused.</summary>
+    internal static Outcome TryDeleteLink(string rootFinalPath, string path) =>
+        DeleteCore(rootFinalPath, path, expectDirectory: false, out _, writeAttributes: false, youngerThanUtc: null, expectLink: true);
+
     private static Outcome DeleteCore(
         string rootFinalPath, string path, bool expectDirectory, out long size, bool writeAttributes,
-        DateTime? youngerThanUtc)
+        DateTime? youngerThanUtc, bool expectLink = false)
     {
         size = 0;
         using var handle = OpenChecked(
-            rootFinalPath, path, expectDirectory, writeAttributes, youngerThanUtc, out var outcome);
+            rootFinalPath, path, expectDirectory, writeAttributes, youngerThanUtc, out var outcome, expectLink);
         if (handle is null)
             return outcome;
 
-        if (!expectDirectory)
+        if (!expectDirectory && !expectLink)
             size = FreedBytes(handle);
 
         if (!writeAttributes)
@@ -202,7 +208,7 @@ internal static class VerifiedDelete
             // Reopen with write access: the old call needs it to clear the read-only attribute first. The
             // reopen runs the same checks again, so nothing verified earlier is trusted.
             handle.Dispose();
-            return DeleteCore(rootFinalPath, path, expectDirectory, out size, writeAttributes: true, youngerThanUtc);
+            return DeleteCore(rootFinalPath, path, expectDirectory, out size, writeAttributes: true, youngerThanUtc, expectLink);
         }
 
         if (GetFileInformationByHandle(handle, out var info) && (info.FileAttributes & AttributeReadOnly) != 0)
@@ -223,7 +229,7 @@ internal static class VerifiedDelete
     /// <paramref name="outcome"/> says why (vanished or refused); a handle means it is cleared to delete.</summary>
     private static SafeFileHandle? OpenChecked(
         string rootFinalPath, string path, bool expectDirectory, bool writeAttributes, DateTime? youngerThanUtc,
-        out Outcome outcome)
+        out Outcome outcome, bool expectLink = false)
     {
         string extended;
         try
@@ -256,8 +262,8 @@ internal static class VerifiedDelete
         if (finalPath is null
             || !IsInsideRoot(rootFinalPath, finalPath)
             || !GetFileInformationByHandle(handle, out var info)
-            || (info.FileAttributes & AttributeReparsePoint) != 0
-            || ((info.FileAttributes & AttributeDirectory) != 0) != expectDirectory)
+            || ((info.FileAttributes & AttributeReparsePoint) != 0) != expectLink
+            || (!expectLink && ((info.FileAttributes & AttributeDirectory) != 0) != expectDirectory))
         {
             handle.Dispose();
             outcome = Outcome.Refused;

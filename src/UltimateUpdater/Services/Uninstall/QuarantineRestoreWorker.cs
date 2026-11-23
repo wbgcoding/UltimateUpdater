@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using UltimateUpdater.Models;
+using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Elevation;
 
 namespace UltimateUpdater.Services.Uninstall;
@@ -39,13 +40,17 @@ internal static class QuarantineRestoreWorker
         var folder = QuarantineStore.ResolveFolder(QuarantineStore.MachineRoot(), job?.Folder);
         if (folder is null)
         {
-            logging.Warn("Leftover restore refused: the folder is not one of the machine quarantine folders.");
-            ElevatedWorker.Send(writer, jobId, new InstallProgressMessage
-            {
-                Type = "result", SourceId = "quarantine", Success = false, FailedCount = 1,
-                Error = "the folder is not a machine quarantine folder",
-            });
-            ElevatedWorker.Send(writer, jobId, new InstallProgressMessage { Type = "done" });
+            Refuse("the folder is not a machine quarantine folder");
+            return;
+        }
+
+        // The folder and the two levels above it must be the protected administrator-only ones this tool creates
+        // (a folder a plain user made first is theirs to re-point), and stay pinned until everything is put back.
+        using var pins = DriverBackupStaging.PinMachineQuarantine(
+            QuarantineStore.MachineRoot(), Path.GetFileName(folder), logging, "Leftover restore");
+        if (pins is null)
+        {
+            Refuse("the machine quarantine is not protected");
             return;
         }
 
@@ -63,6 +68,16 @@ internal static class QuarantineRestoreWorker
             FailedCount = result.Failed,
         });
         ElevatedWorker.Send(writer, jobId, new InstallProgressMessage { Type = "done" });
+
+        void Refuse(string reason)
+        {
+            logging.Warn($"Leftover restore refused: {reason}.");
+            ElevatedWorker.Send(writer, jobId, new InstallProgressMessage
+            {
+                Type = "result", SourceId = "quarantine", Success = false, FailedCount = 1, Error = reason,
+            });
+            ElevatedWorker.Send(writer, jobId, new InstallProgressMessage { Type = "done" });
+        }
     }
 }
 

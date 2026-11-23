@@ -207,7 +207,7 @@ public static class CleanupWorker
                 isTrustedDirectory ?? ElevatedPathTrust.IsTrustedDirectory);
 
             // Quarantine folders past their 14 days are pruned here, by the next elevated removal (no extra prompt).
-            QuarantineStore.Prune(QuarantineStore.MachineRoot(), DateTime.Now, logging);
+            QuarantineStore.Prune(QuarantineStore.MachineRoot(), DateTime.Now, logging, requireProtectedAcl: true);
 
             using var quarantine = command.LeftoverSubject is { } subject && command.SelectedLeftovers.Count > 0
                 ? QuarantineSession.OpenMachine(subject.Name, logging)

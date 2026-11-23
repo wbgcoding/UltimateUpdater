@@ -30,6 +30,7 @@ public sealed class DriverBackupStagingTests : IDisposable
     {
         DriverBackupStaging.ProgramDataRootOverride = null;
         DriverBackupStaging.StagingNameOverride = null;
+        DriverBackupStaging.ProductionOwnerRulesForTest = false;
         try { Directory.Delete(_root, recursive: true); } catch { }
     }
 
@@ -549,5 +550,92 @@ public sealed class DriverBackupStagingTests : IDisposable
         Assert.True(File.Exists(Path.Combine(outside, "keep.txt")));
         Assert.True(Directory.Exists(link), "a link is not a backup folder and stays");
         Assert.False(Directory.Exists(Path.Combine(BackupsRoot, "2020-01-01_000000")));
+    }
+
+    private static readonly SecurityIdentifier PlainUser = new("S-1-5-21-1111111111-2222222222-3333333333-1001");
+
+    /// <summary>Runs <paramref name="check"/> with a fake non-admin token owner (what an elevated token reports under
+    /// the "object creator" policy) and the seams restored afterwards.</summary>
+    private static void WithTokenOwner(SecurityIdentifier owner, bool productionRules, Action check)
+    {
+        DriverBackupStaging.TokenOwnerOverride = owner;
+        DriverBackupStaging.ProductionOwnerRulesForTest = productionRules;
+        try
+        {
+            check();
+        }
+        finally
+        {
+            DriverBackupStaging.TokenOwnerOverride = null;
+            DriverBackupStaging.ProductionOwnerRulesForTest = false;
+        }
+    }
+
+    [Fact]
+    public void The_production_rules_never_trust_or_grant_the_token_owner_and_force_administrators_as_owner()
+    {
+        WithTokenOwner(PlainUser, productionRules: true, () =>
+        {
+            Assert.Equal(AdminsSid, DriverBackupStaging.ExpectedOwner());
+
+            var parent = DriverBackupStaging.ParentSecurity(usersCanRead: false);
+            Assert.Equal(AdminsSid, parent.GetOwner(typeof(SecurityIdentifier)));
+            var rules = parent.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
+            Assert.Equal(2, rules.Count);
+            Assert.DoesNotContain(rules, r => r.IdentityReference.Equals(PlainUser));
+
+            var child = DriverBackupStaging.ExpectedSecurity(usersCanRead: false);
+            Assert.Equal(AdminsSid, child.GetOwner(typeof(SecurityIdentifier)));
+        });
+    }
+
+    [Fact]
+    public void A_redirected_test_root_still_trusts_and_grants_the_token_owner()
+    {
+        WithTokenOwner(PlainUser, productionRules: false, () =>
+        {
+            Assert.Equal(PlainUser, DriverBackupStaging.ExpectedOwner());
+
+            var rules = DriverBackupStaging.ParentSecurity(usersCanRead: false)
+                .GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
+            Assert.Contains(rules, r => r.IdentityReference.Equals(PlainUser) && r.FileSystemRights.HasFlag(FileSystemRights.FullControl));
+        });
+    }
+
+    [Fact]
+    public void An_administrator_or_system_token_owner_behaves_as_before_under_the_production_rules()
+    {
+        WithTokenOwner(AdminsSid, productionRules: true, () =>
+        {
+            Assert.Equal(AdminsSid, DriverBackupStaging.ExpectedOwner());
+            Assert.Null(DriverBackupStaging.ExpectedSecurity().GetOwner(typeof(SecurityIdentifier)));
+            Assert.Equal(2, DriverBackupStaging.ParentSecurity(usersCanRead: false)
+                .GetAccessRules(true, true, typeof(SecurityIdentifier)).Count);
+        });
+
+        WithTokenOwner(SystemAccount, productionRules: true, () => Assert.Equal(SystemAccount, DriverBackupStaging.ExpectedOwner()));
+    }
+
+    [Fact]
+    public void PrepareStagingRoot_under_the_production_rules_refuses_an_app_folder_a_plain_user_owns()
+    {
+        var appRoot = Path.Combine(_root, "UltimateUpdater");
+        Directory.CreateDirectory(appRoot);
+        var owner = new DirectoryInfo(appRoot).GetAccessControl().GetOwner(typeof(SecurityIdentifier));
+        if (owner is null || owner.Equals(AdminsSid) || owner.Equals(SystemAccount))
+            return;   // the creating account is itself an administrator owner: nothing to tell apart here
+
+        DriverBackupStaging.ProductionOwnerRulesForTest = true;
+        try
+        {
+            using var result = DriverBackupStaging.PrepareStagingRoot(new LoggingService());
+
+            Assert.Null(result);
+            Assert.False(Directory.Exists(Path.Combine(appRoot, "driver-backups")));
+        }
+        finally
+        {
+            DriverBackupStaging.ProductionOwnerRulesForTest = false;
+        }
     }
 }

@@ -343,6 +343,107 @@ public sealed class LeftoverQuarantineTests
     }
 
     [Fact]
+    public void An_expired_folder_goes_with_its_nested_content_and_a_link_inside_it_loses_only_itself()
+    {
+        using var tree = new LeftoverTree();
+        var outside = tree.Folder("Elsewhere", "precious");
+        var expired = Path.Combine(tree.Root, "Expired");
+        Directory.CreateDirectory(Path.Combine(expired, "sub", "deeper"));
+        File.WriteAllText(Path.Combine(expired, "sub", "deeper", "a.txt"), "a");
+        File.WriteAllText(Path.Combine(expired, "b.txt"), "b");
+        File.SetAttributes(Path.Combine(expired, "b.txt"), FileAttributes.ReadOnly);
+        LeftoverTestLinks.CreateJunction(Path.Combine(expired, "link"), outside);
+
+        Assert.True(QuarantineTreeDelete.Delete(expired, new LoggingService()));
+
+        Assert.False(Directory.Exists(expired));
+        Assert.True(File.Exists(Path.Combine(outside, "data.txt")));
+    }
+
+    [Fact]
+    public void A_folder_swapped_for_a_junction_after_the_listing_is_not_entered_and_the_folder_stays()
+    {
+        using var tree = new LeftoverTree();
+        var outside = tree.Folder("Elsewhere", "precious");
+        var expired = Path.Combine(tree.Root, "Expired");
+        var sub = Path.Combine(expired, "sub");
+        Directory.CreateDirectory(sub);
+        File.WriteAllText(Path.Combine(sub, "a.txt"), "a");
+
+        QuarantineTreeDelete.AfterListingForTest.Value = directory =>
+        {
+            if (!string.Equals(directory, expired, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            Directory.Delete(sub, recursive: true);
+            LeftoverTestLinks.CreateJunction(sub, outside);
+        };
+        try
+        {
+            Assert.False(QuarantineTreeDelete.Delete(expired, new LoggingService()));
+
+            Assert.True(File.Exists(Path.Combine(outside, "data.txt")));
+            Assert.True(Directory.Exists(expired));
+        }
+        finally
+        {
+            QuarantineTreeDelete.AfterListingForTest.Value = null;
+            Directory.Delete(sub);
+        }
+    }
+
+    [Fact]
+    public void A_file_swapped_for_a_junction_after_the_listing_is_left_alone()
+    {
+        using var tree = new LeftoverTree();
+        var outside = tree.Folder("Elsewhere", "precious");
+        var expired = Path.Combine(tree.Root, "Expired");
+        var file = Path.Combine(expired, "a.txt");
+        Directory.CreateDirectory(expired);
+        File.WriteAllText(file, "a");
+
+        QuarantineTreeDelete.AfterListingForTest.Value = directory =>
+        {
+            if (!string.Equals(directory, expired, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            File.Delete(file);
+            LeftoverTestLinks.CreateJunction(file, outside);
+        };
+        try
+        {
+            Assert.False(QuarantineTreeDelete.Delete(expired, new LoggingService()));
+
+            Assert.True(File.Exists(Path.Combine(outside, "data.txt")));
+            Assert.True(Directory.Exists(expired));
+        }
+        finally
+        {
+            QuarantineTreeDelete.AfterListingForTest.Value = null;
+            Directory.Delete(file);
+        }
+    }
+
+    [Fact]
+    public void An_expired_folder_that_became_a_junction_is_not_deleted_through()
+    {
+        using var tree = new LeftoverTree();
+        var outside = tree.Folder("Elsewhere", "precious");
+        var link = Path.Combine(tree.Root, "2026-01-01_000000");
+        LeftoverTestLinks.CreateJunction(link, outside);
+        try
+        {
+            Assert.False(QuarantineTreeDelete.Delete(link, new LoggingService()));
+
+            Assert.True(File.Exists(Path.Combine(outside, "data.txt")));
+        }
+        finally
+        {
+            Directory.Delete(link);
+        }
+    }
+
+    [Fact]
     public void A_folder_is_restorable_for_fourteen_days_by_the_moment_in_its_name()
     {
         var now = new DateTime(2026, 11, 22, 12, 0, 0);
@@ -437,6 +538,42 @@ public sealed class LeftoverQuarantineTests
     }
 
     [Fact]
+    public void A_registry_export_with_any_line_reg_export_never_writes_is_not_imported()
+    {
+        using var tree = new LeftoverTree();
+        const string key = @"HKCU\Software\Contoso\Contoso Notes";
+        const string header = @"[HKEY_CURRENT_USER\Software\Contoso\Contoso Notes]";
+        string Write(string name, params string[] lines)
+        {
+            var file = Path.Combine(tree.Root, name);
+            File.WriteAllLines(file, ["Windows Registry Editor Version 5.00", string.Empty, .. lines], Encoding.Unicode);
+            return file;
+        }
+
+        var real = Write(
+            "real.reg", header, "@=\"default\"", "\"Path\"=\"C:\\\\Program Files\\\\Contoso\"", "\"Count\"=dword:0000002a",
+            "\"Blob\"=hex:01,02,03,04,\\", "  05,06,07", "\"Multi\"=hex(7):41,00,00,00,00,00", "\"Empty\"=hex:", string.Empty,
+            header.Replace("Notes]", @"Notes\Sub]"), "\"Name with \\\"quote\\\"\"=\"x\"");
+        Assert.True(QuarantineRestorer.RegFileHoldsOnly(real, key));
+
+        var valueDeletion = Write("valuedel.reg", header, "\"Old\"=-");
+        var comment = Write("comment.reg", header, "; a comment");
+        var unknown = Write("unknown.reg", header, "DeleteKey HKEY_LOCAL_MACHINE");
+        var strayHeaderLike = Write("stray.reg", header, "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Evil");
+        var danglingContinuation = Write("dangling.reg", header, "\"Blob\"=hex:01,\\", "\"Next\"=\"x\"");
+        var junkContinuation = Write("junk.reg", header, "\"Blob\"=hex:01,\\", "  [-HKEY_LOCAL_MACHINE\\SOFTWARE\\Evil]");
+        var badData = Write("baddata.reg", header, "\"A\"=notavalue");
+
+        Assert.False(QuarantineRestorer.RegFileHoldsOnly(valueDeletion, key));
+        Assert.False(QuarantineRestorer.RegFileHoldsOnly(comment, key));
+        Assert.False(QuarantineRestorer.RegFileHoldsOnly(unknown, key));
+        Assert.False(QuarantineRestorer.RegFileHoldsOnly(strayHeaderLike, key));
+        Assert.False(QuarantineRestorer.RegFileHoldsOnly(danglingContinuation, key));
+        Assert.False(QuarantineRestorer.RegFileHoldsOnly(junkContinuation, key));
+        Assert.False(QuarantineRestorer.RegFileHoldsOnly(badData, key));
+    }
+
+    [Fact]
     public async Task A_quarantined_key_is_imported_back_through_the_verified_export_and_never_when_it_exists_or_holds_more()
     {
         using var tree = new LeftoverTree();
@@ -489,7 +626,7 @@ public sealed class LeftoverQuarantineTests
         var asked = new List<HistoryEntry>();
 
         HistoryRowViewModel Row(HistoryEntry entry, bool wired = true) =>
-            new(entry, onRestoreLeftovers: wired ? asked.Add : null);
+            new(entry, onRestoreLeftovers: wired ? e => { asked.Add(e); return Task.CompletedTask; } : null);
 
         var fresh = new HistoryEntry { SourceId = "uninstaller", ItemId = "x", Action = "leftovers", Success = true, Name = "Contoso Notes", QuarantineUser = Name(1) };
         var machineOnly = new HistoryEntry { SourceId = "uninstaller", ItemId = "x", Action = "leftovers", Success = true, Name = "Contoso Notes", QuarantineMachine = Name(13) };
@@ -510,6 +647,220 @@ public sealed class LeftoverQuarantineTests
         Assert.Same(fresh, Assert.Single(asked));
         Assert.False(Row(old).RestoreLeftoversCommand.CanExecute(null));
         Assert.False(string.IsNullOrWhiteSpace(row.RestoreLeftoversHeader));
+    }
+
+    [Fact]
+    public void A_folder_whose_parent_is_swapped_for_a_junction_before_the_move_is_not_moved()
+    {
+        using var tree = new LeftoverTree();
+        var folder = tree.Folder("AppData", "Roaming", "Contoso Notes");
+        var roaming = Path.GetDirectoryName(folder)!;
+        var decoy = tree.Folder("Elsewhere", "decoy");
+        Directory.CreateDirectory(Path.Combine(decoy, "Contoso Notes"));
+        File.WriteAllText(Path.Combine(decoy, "Contoso Notes", "decoy.txt"), "x");
+        using var session = QuarantineSession.OpenUser("Contoso Notes", new LoggingService(), QuarantineStore.UserRoot(tree.LocalAppData));
+        var moved = roaming + ".moved";
+
+        QuarantineMove.BeforeQuarantineMoveForTest.Value = _ =>
+        {
+            Directory.Move(roaming, moved);
+            LeftoverTestLinks.CreateJunction(roaming, decoy);
+        };
+        try
+        {
+            Assert.False(session!.TryMove(FolderItem(folder)));
+
+            Assert.True(File.Exists(Path.Combine(decoy, "Contoso Notes", "decoy.txt")));
+            Assert.True(File.Exists(Path.Combine(moved, "Contoso Notes", "data.txt")));
+            Assert.False(session.HasItems);
+            Assert.False(Directory.Exists(Path.Combine(session.Root, "items", "1")));
+        }
+        finally
+        {
+            QuarantineMove.BeforeQuarantineMoveForTest.Value = null;
+            Directory.Delete(roaming);
+        }
+    }
+
+    [Fact]
+    public void A_quarantine_folder_swapped_for_a_junction_before_the_move_receives_nothing()
+    {
+        using var tree = new LeftoverTree();
+        var folder = tree.Folder("AppData", "Roaming", "Contoso Notes");
+        var outside = tree.Folder("Elsewhere", "outside");
+        using var session = QuarantineSession.OpenUser("Contoso Notes", new LoggingService(), QuarantineStore.UserRoot(tree.LocalAppData));
+        var items = Path.Combine(session!.Root, "items");
+
+        QuarantineMove.BeforeQuarantineMoveForTest.Value = _ =>
+        {
+            Directory.Delete(items);
+            LeftoverTestLinks.CreateJunction(items, outside);
+        };
+        try
+        {
+            Assert.False(session.TryMove(FolderItem(folder)));
+
+            Assert.True(File.Exists(Path.Combine(folder, "data.txt")));
+            Assert.Equal(["data.txt"], Directory.GetFileSystemEntries(outside).Select(Path.GetFileName));
+            Assert.False(session.HasItems);
+        }
+        finally
+        {
+            QuarantineMove.BeforeQuarantineMoveForTest.Value = null;
+            Directory.Delete(items);
+        }
+    }
+
+    [Fact]
+    public async Task A_stored_item_whose_folder_is_swapped_for_a_junction_before_the_restore_stays_where_it_is()
+    {
+        using var tree = new LeftoverTree();
+        var folder = tree.Folder("AppData", "Roaming", "Contoso Notes");
+        using var session = QuarantineSession.OpenUser("Contoso Notes", new LoggingService(), QuarantineStore.UserRoot(tree.LocalAppData));
+        Assert.True(session!.TryMove(FolderItem(folder)));
+        var items = Path.Combine(session.Root, "items");
+        var moved = items + ".moved";
+        var decoy = tree.Folder("Elsewhere", "decoy");
+        Directory.CreateDirectory(Path.Combine(decoy, "1"));
+        File.WriteAllText(Path.Combine(decoy, "1", "evil.txt"), "x");
+
+        QuarantineMove.BeforeQuarantineMoveForTest.Value = _ =>
+        {
+            Directory.Move(items, moved);
+            LeftoverTestLinks.CreateJunction(items, decoy);
+        };
+        try
+        {
+            var result = await new QuarantineRestorer(new LoggingService(), tree.Roots)
+                .RestoreAsync(session.Root, LeftoverLane.User, CancellationToken.None);
+
+            Assert.Equal(new QuarantineRestoreResult(0, 0, 1), result);
+            Assert.False(Directory.Exists(folder));
+            Assert.True(File.Exists(Path.Combine(decoy, "1", "evil.txt")));
+            Assert.True(File.Exists(Path.Combine(moved, "1", "data.txt")));
+        }
+        finally
+        {
+            QuarantineMove.BeforeQuarantineMoveForTest.Value = null;
+            Directory.Delete(items);
+        }
+    }
+
+    [Fact]
+    public async Task A_restore_target_folder_swapped_for_a_junction_before_the_restore_receives_nothing()
+    {
+        using var tree = new LeftoverTree();
+        var folder = tree.Folder("AppData", "Roaming", "Contoso Notes");
+        var roaming = Path.GetDirectoryName(folder)!;
+        using var session = QuarantineSession.OpenUser("Contoso Notes", new LoggingService(), QuarantineStore.UserRoot(tree.LocalAppData));
+        Assert.True(session!.TryMove(FolderItem(folder)));
+        var outside = tree.Folder("Elsewhere", "outside");
+
+        QuarantineMove.BeforeQuarantineMoveForTest.Value = _ =>
+        {
+            Directory.Move(roaming, roaming + ".moved");
+            LeftoverTestLinks.CreateJunction(roaming, outside);
+        };
+        try
+        {
+            var result = await new QuarantineRestorer(new LoggingService(), tree.Roots)
+                .RestoreAsync(session.Root, LeftoverLane.User, CancellationToken.None);
+
+            Assert.Equal(new QuarantineRestoreResult(0, 0, 1), result);
+            Assert.Equal(["data.txt"], Directory.GetFileSystemEntries(outside).Select(Path.GetFileName));
+            Assert.True(File.Exists(Path.Combine(session.Root, "items", "1", "data.txt")));
+        }
+        finally
+        {
+            QuarantineMove.BeforeQuarantineMoveForTest.Value = null;
+            Directory.Delete(roaming);
+        }
+    }
+
+    [Fact]
+    public async Task A_restore_never_replaces_a_folder_that_appears_just_before_the_move()
+    {
+        using var tree = new LeftoverTree();
+        var folder = tree.Folder("AppData", "Roaming", "Contoso Notes");
+        using var session = QuarantineSession.OpenUser("Contoso Notes", new LoggingService(), QuarantineStore.UserRoot(tree.LocalAppData));
+        Assert.True(session!.TryMove(FolderItem(folder)));
+
+        QuarantineMove.BeforeQuarantineMoveForTest.Value = _ =>
+        {
+            Directory.CreateDirectory(folder);
+            File.WriteAllText(Path.Combine(folder, "new.txt"), "newer");
+        };
+        try
+        {
+            var result = await new QuarantineRestorer(new LoggingService(), tree.Roots)
+                .RestoreAsync(session.Root, LeftoverLane.User, CancellationToken.None);
+
+            Assert.Equal(new QuarantineRestoreResult(0, 0, 1), result);
+            Assert.Equal("newer", File.ReadAllText(Path.Combine(folder, "new.txt")));
+            Assert.False(File.Exists(Path.Combine(folder, "data.txt")));
+            Assert.True(File.Exists(Path.Combine(session.Root, "items", "1", "data.txt")));
+        }
+        finally
+        {
+            QuarantineMove.BeforeQuarantineMoveForTest.Value = null;
+        }
+    }
+
+    [Fact]
+    public async Task A_key_whose_manifest_entry_could_not_be_saved_is_not_listed_by_a_later_save()
+    {
+        using var tree = new LeftoverTree();
+        var program = "UuQuarantineTest" + Guid.NewGuid().ToString("N")[..10];
+        var key = $@"HKCU\Software\UuQuarantinePub\{program}";
+        using var session = QuarantineSession.OpenUser(
+            "Contoso Notes", new LoggingService(), QuarantineStore.UserRoot(tree.LocalAppData),
+            backup: (k, folder, _) =>
+            {
+                Directory.CreateDirectory(folder);
+                var file = Path.Combine(folder, "export.reg");
+                File.WriteAllLines(file, ["Windows Registry Editor Version 5.00", string.Empty, $@"[HKEY_CURRENT_USER\Software\UuQuarantinePub\{program}]"], Encoding.Unicode);
+                return Task.FromResult<RegistryBackupService.RegistryBackupResult?>(new RegistryBackupService.RegistryBackupResult(file, [k]));
+            });
+        var manifestPath = Path.Combine(session!.Root, QuarantineStore.ManifestName);
+        if (File.Exists(manifestPath))
+            File.Delete(manifestPath);
+
+        // A directory where the manifest file belongs: the write fails.
+        Directory.CreateDirectory(manifestPath);
+        Assert.False(await session.TryBackupKeyAsync(new LeftoverItem(LeftoverKind.RegistryKey, LeftoverLane.User, key, program, true, 0), CancellationToken.None));
+        Assert.Empty(session.Manifest.Items);
+
+        Directory.Delete(manifestPath);
+        Assert.True(session.TryMove(FolderItem(tree.Folder("AppData", "Roaming", "Contoso Notes"))));
+
+        var saved = QuarantineStore.ReadManifest(session.Root)!;
+        Assert.Equal(LeftoverKind.Folder, Assert.Single(saved.Items).Kind);
+    }
+
+    [Fact]
+    public async Task A_second_press_on_restore_leftovers_is_ignored_until_the_first_restore_finished()
+    {
+        var name = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd_HHmmss");
+        var entry = new HistoryEntry { SourceId = "uninstaller", ItemId = "x", Action = "leftovers", Success = true, Name = "Contoso Notes", QuarantineUser = name };
+        var release = new TaskCompletionSource();
+        var started = 0;
+        var row = new HistoryRowViewModel(entry, onRestoreLeftovers: _ =>
+        {
+            started++;
+            return release.Task;
+        });
+
+        var first = row.RestoreLeftoversCommand.ExecuteAsync(null);
+        Assert.False(row.RestoreLeftoversCommand.CanExecute(null));
+        // What a button does: it executes only when the command says it can.
+        if (row.RestoreLeftoversCommand.CanExecute(null))
+            row.RestoreLeftoversCommand.Execute(null);
+
+        Assert.Equal(1, started);
+
+        release.SetResult();
+        await first;
+        Assert.True(row.RestoreLeftoversCommand.CanExecute(null));
     }
 
     [Fact]
@@ -557,6 +908,7 @@ public sealed class MachineQuarantineTests : IDisposable
     public void Dispose()
     {
         DriverBackupStaging.ProgramDataRootOverride = null;
+        DriverBackupStaging.ProductionOwnerRulesForTest = false;
         _tree.Dispose();
     }
 
@@ -579,9 +931,17 @@ public sealed class MachineQuarantineTests : IDisposable
 
     /// <summary>A machine quarantine folder named <paramref name="name"/> below <paramref name="root"/> that holds one
     /// moved program folder, as a session would leave it.</summary>
-    private string MakeQuarantine(string root, string name, string original)
+    private string MakeQuarantine(string root, string name, string original, bool protectedChain = true)
     {
         var folder = Path.Combine(root, name);
+        if (protectedChain && string.Equals(root, QuarantineStore.MachineRoot(), StringComparison.OrdinalIgnoreCase))
+        {
+            // As the elevated worker leaves it: the ProgramData levels and the folder created with the protected ACL.
+            using var staged = DriverBackupStaging.PrepareStagingRoot(
+                new LoggingService(), "Quarantine", usersCanRead: false, folderName: name, label: "test");
+            Assert.NotNull(staged);
+        }
+
         var stored = Path.Combine(folder, "items", "1");
         Directory.CreateDirectory(stored);
         File.WriteAllText(Path.Combine(stored, "data.txt"), "x");
@@ -653,6 +1013,56 @@ public sealed class MachineQuarantineTests : IDisposable
         Assert.Equal(1, result.GetProperty("restoredCount").GetInt32());
         Assert.True(File.Exists(Path.Combine(original, "data.txt")));
         Assert.Contains(lines, l => l.GetProperty("type").GetString() == "done");
+    }
+
+    [Fact]
+    public async Task The_restore_job_refuses_a_quarantine_nobody_protected()
+    {
+        var original = Path.Combine(_tree.ProgramFiles, "Contoso", "Contoso Notes");
+        Directory.CreateDirectory(Path.GetDirectoryName(original)!);
+        var folder = MakeQuarantine(QuarantineStore.MachineRoot(), "2026-11-21_100000", original, protectedChain: false);
+
+        AssertRefused(await RunAsync(folder, _tree.Roots), original);
+        Assert.True(Directory.Exists(Path.Combine(folder, "items", "1")), "nothing was moved out");
+    }
+
+    [Fact]
+    public async Task The_restore_job_refuses_a_quarantine_folder_with_a_widened_acl()
+    {
+        var original = Path.Combine(_tree.ProgramFiles, "Contoso", "Contoso Notes");
+        Directory.CreateDirectory(Path.GetDirectoryName(original)!);
+        var folder = MakeQuarantine(QuarantineStore.MachineRoot(), "2026-11-21_100000", original);
+        var info = new DirectoryInfo(folder);
+        var security = info.GetAccessControl();
+        security.AddAccessRule(new FileSystemAccessRule(
+            new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null), FileSystemRights.Modify,
+            InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
+        info.SetAccessControl(security);
+
+        AssertRefused(await RunAsync(folder, _tree.Roots), original);
+    }
+
+    [Fact]
+    public void The_machine_prune_touches_nothing_unless_the_chain_is_the_protected_one()
+    {
+        var now = new DateTime(2026, 11, 22, 12, 0, 0);
+        var plain = MakeQuarantine(QuarantineStore.MachineRoot(), "2026-01-01_000000", @"C:\x", protectedChain: false);
+
+        Assert.Equal(0, QuarantineStore.Prune(QuarantineStore.MachineRoot(), now, new LoggingService(), requireProtectedAcl: true));
+        Assert.True(Directory.Exists(plain));
+    }
+
+    [Fact]
+    public void The_machine_prune_removes_an_expired_folder_of_the_protected_chain_and_keeps_a_recent_one()
+    {
+        var now = new DateTime(2026, 11, 22, 12, 0, 0);
+        var old = MakeQuarantine(QuarantineStore.MachineRoot(), "2026-01-01_000000", @"C:\x");
+        var recent = MakeQuarantine(QuarantineStore.MachineRoot(), "2026-11-21_100000", @"C:\x");
+
+        Assert.Equal(1, QuarantineStore.Prune(QuarantineStore.MachineRoot(), now, new LoggingService(), requireProtectedAcl: true));
+
+        Assert.False(Directory.Exists(old));
+        Assert.True(Directory.Exists(recent));
     }
 
     [Fact]

@@ -151,10 +151,14 @@ internal static class QuarantineStore
     /// <summary>
     /// Deletes the quarantine folders of <paramref name="root"/> that are older than <see cref="RetentionDays"/>,
     /// by the moment in their name. Only a plain folder with a quarantine folder name is a candidate (a link, a
-    /// file or any other name stays), and a root that leads through a link is not entered. Failures are logged,
-    /// never thrown; a folder that cannot be deleted now is tried again at the next prune.
+    /// file or any other name stays), and a root that leads through a link is not entered. A folder goes through
+    /// <see cref="QuarantineTreeDelete"/>, never a recursive path delete: its content was moved in from places a
+    /// user can write to. With <paramref name="requireProtectedAcl"/> (the machine root, pruned by the elevated
+    /// worker) nothing is touched unless the ProgramData levels and the root are the protected administrator-only
+    /// folders this tool creates, held open during the prune. Failures are logged, never thrown; a folder that
+    /// cannot be deleted now is tried again at the next prune.
     /// </summary>
-    internal static int Prune(string root, DateTime now, LoggingService logging)
+    internal static int Prune(string root, DateTime now, LoggingService logging, bool requireProtectedAcl = false)
     {
         var removed = 0;
         try
@@ -162,20 +166,21 @@ internal static class QuarantineStore
             if (!Directory.Exists(root) || CleanupSafety.AncestryLeadsThroughLink(root))
                 return 0;
 
+            using var pins = requireProtectedAcl
+                ? DriverBackupStaging.PinMachineQuarantine(root, null, logging, "Leftover quarantine")
+                : null;
+            if (requireProtectedAcl && pins is null)
+                return 0;
+
             foreach (var folder in SafeEnumerate.Directories(root).ToList())
             {
                 if (CreatedOf(Path.GetFileName(folder)) is not { } moment || now - moment <= TimeSpan.FromDays(RetentionDays))
                     continue;
 
-                try
+                if (QuarantineTreeDelete.Delete(folder, logging))
                 {
-                    Directory.Delete(folder, recursive: true);
                     removed++;
                     logging.Info($"Leftover quarantine: removed the expired folder '{Path.GetFileName(folder)}'.");
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
-                    logging.Warn($"Leftover quarantine: could not remove the expired folder '{Path.GetFileName(folder)}': {ex.Message}");
                 }
             }
         }
@@ -335,22 +340,14 @@ internal sealed class QuarantineSession : IDisposable
                 return false;
             }
 
-            try
-            {
-                if (item.Kind == LeftoverKind.Shortcut)
-                    File.Move(source, target);
-                else
-                    Directory.Move(source, target);
-
+            // By handle: the item is proven to be at its path and the quarantine folder is locked while it moves.
+            if (QuarantineMove.TryRename(source, target, item.Kind != LeftoverKind.Shortcut, out var failure))
                 return true;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                _logging.Warn($"Leftover quarantine: could not move '{source}': {ex.Message}");
-                Manifest.Items.Remove(entry);
-                Save();
-                return false;
-            }
+
+            _logging.Warn($"Leftover quarantine: could not move '{source}': {failure}");
+            Manifest.Items.Remove(entry);
+            Save();
+            return false;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
@@ -375,14 +372,19 @@ internal sealed class QuarantineSession : IDisposable
             return false;
         }
 
-        Manifest.Items.Add(new QuarantineEntry
+        var entry = new QuarantineEntry
         {
             Kind = LeftoverKind.RegistryKey,
             OriginalPath = key.Path,
             StoredAs = Path.GetRelativePath(Root, result.Path),
-        });
+        };
+        Manifest.Items.Add(entry);
+        if (Save())
+            return true;
 
-        return Save();
+        // Not on disk, so not listed: a later successful save must not list a key the caller was told is unsaved.
+        Manifest.Items.Remove(entry);
+        return false;
     }
 
     /// <summary>Writes the manifest. False when it cannot be written; nothing is then moved or deleted on its account.</summary>
@@ -453,14 +455,7 @@ internal sealed class QuarantineSession : IDisposable
         if (HasItems)
             return;
 
-        try
-        {
-            if (Directory.Exists(Root) && !CleanupSafety.AncestryLeadsThroughLink(Root))
-                Directory.Delete(Root, recursive: true);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            _logging.Warn($"Leftover quarantine: could not remove the empty folder '{FolderName}': {ex.Message}");
-        }
+        if (Directory.Exists(Root) && !CleanupSafety.AncestryLeadsThroughLink(Root))
+            QuarantineTreeDelete.Delete(Root, _logging);
     }
 }

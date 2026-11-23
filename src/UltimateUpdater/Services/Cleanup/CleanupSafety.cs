@@ -524,6 +524,24 @@ public static class CleanupSafety
                 return false;
             }
 
+            return HandleIsAtPath(handle, path);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException
+                                       or IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// True when the object behind <paramref name="handle"/> really is the one <paramref name="path"/> names:
+    /// the handle's final path (where Windows says it points, a link followed on the way shows its target) equals
+    /// the path's own long form. Works for a file or a folder; a link opened as itself is judged by the caller.
+    /// </summary>
+    internal static bool HandleIsAtPath(SafeFileHandle handle, string path)
+    {
+        try
+        {
             var actual = StripExtendedPrefix(VerifiedDelete.FinalPathOf(handle));
             // Asked after the open so a name that changed in between is measured against the same state.
             var expected = StripExtendedPrefix(LongPathOf(Path.GetFullPath(path)));

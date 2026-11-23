@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Processes;
 
@@ -22,7 +23,7 @@ public sealed record QuarantineRestoreResult(int Restored, int AlreadyPresent, i
 /// inside the quarantine folder itself. A registry export is imported only after every key header in it has been
 /// read and found to be the item's own key or below it (no deletion header, no other key).
 /// </summary>
-internal sealed class QuarantineRestorer(
+internal sealed partial class QuarantineRestorer(
     LoggingService logging, LeftoverRoots roots, Func<string, CancellationToken, Task<bool>>? importRegistryFile = null)
 {
     private const long MaxRegFileBytes = 64L * 1024 * 1024;
@@ -110,10 +111,12 @@ internal sealed class QuarantineRestorer(
                 return Outcome.Failed;
             }
 
-            if (entry.Kind == LeftoverKind.Shortcut)
-                File.Move(stored, original);
-            else
-                Directory.Move(stored, original);
+            // By handle: the stored item is proven to be at its path and the target folder is locked while it moves.
+            if (!QuarantineMove.TryRename(stored, original, entry.Kind != LeftoverKind.Shortcut, out var failure))
+            {
+                logging.Warn($"Leftover quarantine: could not restore '{original}': {failure}");
+                return Outcome.Failed;
+            }
 
             return Outcome.Restored;
         }
@@ -178,6 +181,7 @@ internal sealed class QuarantineRestorer(
             var expected = RegistryBackupService.ToFullHiveName(keyPath);
             var sawHeader = false;
             var first = true;
+            var continued = false;
             foreach (var raw in File.ReadLines(file, Encoding.Unicode))
             {
                 var line = raw.TrimEnd();
@@ -190,8 +194,28 @@ internal sealed class QuarantineRestorer(
                     continue;
                 }
 
-                if (!line.StartsWith('['))
+                // Only what reg export writes: a blank line, a key header, a value line or the rest of a long
+                // binary value. Anything else (a comment, a value deletion, an unknown line) is not an export.
+                if (continued)
+                {
+                    if (!HexContinuation().IsMatch(line))
+                        return false;
+
+                    continued = line.EndsWith('\\');
                     continue;
+                }
+
+                if (line.Length == 0)
+                    continue;
+
+                if (!line.StartsWith('['))
+                {
+                    if (!ValueLine().IsMatch(line))
+                        return false;
+
+                    continued = line.EndsWith('\\') && !line.EndsWith("\"", StringComparison.Ordinal);
+                    continue;
+                }
 
                 if (!line.EndsWith(']') || line.Length < 3 || line[1] == '-')
                     return false;
@@ -211,6 +235,14 @@ internal sealed class QuarantineRestorer(
             return false;
         }
     }
+
+    // A value line as reg export writes it: the name (or @), then a string, dword or hex value; the "-" that
+    // deletes a value matches none of them.
+    [GeneratedRegex(@"^(@|""(?:[^""\\]|\\.)*"")=(""(?:[^""\\]|\\.)*""|dword:[0-9A-Fa-f]{1,8}|hex(?:\([0-9A-Fa-f]+\))?:(?:[0-9A-Fa-f]{2}(?:,[0-9A-Fa-f]{2})*,?\\?)?)$")]
+    private static partial Regex ValueLine();
+
+    [GeneratedRegex(@"^\s+[0-9A-Fa-f]{2}(?:,[0-9A-Fa-f]{2})*,?\\?$")]
+    private static partial Regex HexContinuation();
 
     private bool IsRestoreTarget(string original, LeftoverKind kind, LeftoverLane lane)
     {

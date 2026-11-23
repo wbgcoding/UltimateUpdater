@@ -150,7 +150,7 @@ internal static class ProgramUninstallWorker
         }
 
         // Quarantine folders past their 14 days are pruned by the next elevated removal (no extra prompt).
-        QuarantineStore.Prune(QuarantineStore.MachineRoot(), DateTime.Now, logging);
+        QuarantineStore.Prune(QuarantineStore.MachineRoot(), DateTime.Now, logging, requireProtectedAcl: true);
 
         if (job is { CreateRestorePoint: true })
         {

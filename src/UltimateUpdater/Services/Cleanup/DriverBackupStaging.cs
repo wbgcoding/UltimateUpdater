@@ -36,6 +36,18 @@ internal static class DriverBackupStaging
     internal static SecurityIdentifier? TokenOwnerOverride { get; set; }
 
     /// <summary>
+    /// Test-only seam: applies the production owner rules although <see cref="ProgramDataRootOverride"/> is set.
+    /// Those rules (no extra trust and no extra ACL entry for this process' own token owner, the creator's owner
+    /// forced to Administrators) are what the real, elevated worker always runs under.
+    /// </summary>
+    internal static bool ProductionOwnerRulesForTest { get; set; }
+
+    /// <summary>True for the real ProgramData (or when a test asks for it). Only a redirected root, which exists for
+    /// the unelevated test process, may trust its own token owner: on a real machine an elevated token's default
+    /// owner can be a plain user account (the "object creator" policy), which must never count as trusted.</summary>
+    private static bool ProductionRules => ProgramDataRootOverride is null || ProductionOwnerRulesForTest;
+
+    /// <summary>
     /// The folder the exports go into, held open for as long as this object lives: the handle has no delete
     /// share, so the folder and every directory above it can be neither renamed nor replaced by a link while
     /// the exports run (an admin process writing into whatever a same-user process re-pointed the path at is
@@ -156,7 +168,8 @@ internal static class DriverBackupStaging
                 return null;
             }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException
+                                       or InvalidOperationException)
         {
             logging.Error($"{label}: could not prepare the backup staging folder: {ex.Message}");
             return null;
@@ -193,7 +206,8 @@ internal static class DriverBackupStaging
                 return null;
             }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException
+                                       or InvalidOperationException)
         {
             pin?.Dispose();
             logging.Error($"{label}: could not create the backup folder with its ACL: {ex.Message}");
@@ -306,10 +320,38 @@ internal static class DriverBackupStaging
 
     private static SecurityIdentifier? TokenOwner() => TokenOwnerOverride ?? WindowsIdentity.GetCurrent().Owner;
 
-    /// <summary>Administrators and SYSTEM, plus this process' own token owner (what a folder this very call
-    /// creates is owned by; an elevated token's is Administrators).</summary>
+    /// <summary>Administrators and SYSTEM, plus <paramref name="tokenOwner"/> when one is given (a test process'
+    /// own account; see <see cref="ExtraTrustedOwner"/>).</summary>
     internal static bool IsTrustedFolderOwner(SecurityIdentifier owner, SecurityIdentifier? tokenOwner) =>
-        owner.Equals(AdministratorsSid) || owner.Equals(SystemSid) || (tokenOwner is not null && owner.Equals(tokenOwner));
+        IsAdminOrSystem(owner) || (tokenOwner is not null && owner.Equals(tokenOwner));
+
+    private static bool IsAdminOrSystem(SecurityIdentifier sid) => sid.Equals(AdministratorsSid) || sid.Equals(SystemSid);
+
+    /// <summary>The one extra account a folder owner may be: this process' own token owner, but only under a
+    /// redirected test root. Never on the real machine, where an elevated token's default owner may be an
+    /// ordinary user account that could have pre-created the folder.</summary>
+    private static SecurityIdentifier? ExtraTrustedOwner() => ProductionRules ? null : TokenOwner();
+
+    /// <summary>The owner a folder this code creates must have: Administrators (SYSTEM when the process runs as
+    /// SYSTEM) on a real machine, this process' own token owner under a redirected test root.</summary>
+    internal static SecurityIdentifier? ExpectedOwner()
+    {
+        var tokenOwner = TokenOwner();
+        if (!ProductionRules)
+            return tokenOwner;
+
+        return tokenOwner is not null && tokenOwner.Equals(SystemSid) ? SystemSid : AdministratorsSid;
+    }
+
+    /// <summary>Makes the new folder owned by <see cref="ExpectedOwner"/> when the token's default owner would be
+    /// someone else (the "object creator" policy gives an elevated token its user account as owner).</summary>
+    private static DirectorySecurity WithExpectedOwner(DirectorySecurity security)
+    {
+        if (ExpectedOwner() is { } expected && !Equals(expected, TokenOwner()))
+            security.SetOwner(expected);
+
+        return security;
+    }
 
     /// <summary>Creates the directory with the admin-only protected ACL when it is missing, then demands that
     /// what is there is a real directory (no reparse point) with a trusted owner.</summary>
@@ -326,7 +368,7 @@ internal static class DriverBackupStaging
 
             var security = info.GetAccessControl(AccessControlSections.Owner);
             return security.GetOwner(typeof(SecurityIdentifier)) is SecurityIdentifier owner
-                && IsTrustedFolderOwner(owner, TokenOwner());
+                && IsTrustedFolderOwner(owner, ExtraTrustedOwner());
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException
                                        or ArgumentException or NotSupportedException or InvalidOperationException)
@@ -359,9 +401,9 @@ internal static class DriverBackupStaging
 
     /// <summary>The ACL the folder is born with. Inheritance off: a folder this narrow must not pick up
     /// whatever ProgramData's own ACL happens to grant, now or after some future change to it.</summary>
-    private static DirectorySecurity ExpectedSecurity(bool usersCanRead = true)
+    internal static DirectorySecurity ExpectedSecurity(bool usersCanRead = true)
     {
-        var security = new DirectorySecurity();
+        var security = WithExpectedOwner(new DirectorySecurity());
         security.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
         security.AddAccessRule(new FileSystemAccessRule(
             SystemSid, FileSystemRights.FullControl, Inherit, PropagationFlags.None, AccessControlType.Allow));
@@ -378,14 +420,14 @@ internal static class DriverBackupStaging
 
     /// <summary>
     /// The ACL of the two parent levels: the staging folder's own ACL, plus FullControl for this process' own
-    /// token owner when that is not already Administrators or SYSTEM. An elevated worker's token owner IS
-    /// Administrators, so there nothing is added; it only keeps the creating account able to create the
-    /// child inside a parent it just made when this runs without elevation (the tests).
+    /// token owner when that is not already Administrators or SYSTEM, only under a redirected test root. It
+    /// keeps the creating account able to create the child inside a parent it just made when this runs without
+    /// elevation (the tests). The real elevated worker never gets the extra entry, whatever its token owner is.
     /// </summary>
-    private static DirectorySecurity ParentSecurity(bool usersCanRead = true)
+    internal static DirectorySecurity ParentSecurity(bool usersCanRead = true)
     {
         var security = ExpectedSecurity(usersCanRead);
-        if (TokenOwner() is { } owner && !owner.Equals(AdministratorsSid) && !owner.Equals(SystemSid))
+        if (!ProductionRules && TokenOwner() is { } owner && !IsAdminOrSystem(owner))
         {
             security.AddAccessRule(new FileSystemAccessRule(
                 owner, FileSystemRights.FullControl, Inherit, PropagationFlags.None, AccessControlType.Allow));
@@ -396,7 +438,7 @@ internal static class DriverBackupStaging
 
     /// <summary>
     /// Read through the pin (which cannot be swapped any more): the handle resolves to exactly this path
-    /// with no reparse point, the owner is this process' own default owner (a folder someone else created
+    /// with no reparse point, the owner is <see cref="ExpectedOwner"/> (a folder someone else created
     /// first is owned by them), and the ACL is exactly <see cref="ExpectedSecurity"/>.
     /// </summary>
     internal static bool IsOurOwnNewFolder(SafeFileHandle pin, string path, bool usersCanRead = true)
@@ -412,27 +454,100 @@ internal static class DriverBackupStaging
 
             var security = info.GetAccessControl(AccessControlSections.Access | AccessControlSections.Owner);
 
-            var tokenOwner = TokenOwner();
-            if (tokenOwner is null || security.GetOwner(typeof(SecurityIdentifier)) is not SecurityIdentifier owner || !owner.Equals(tokenOwner))
+            var expectedOwner = ExpectedOwner();
+            if (expectedOwner is null || security.GetOwner(typeof(SecurityIdentifier)) is not SecurityIdentifier owner || !owner.Equals(expectedOwner))
                 return false;
 
-            if (!security.AreAccessRulesProtected)
-                return false;
-
-            var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
             // The quarantine child (no Users read) also carries an unelevated creator, as its parents do, or that
-            // account could not use the folder it just made (the tests); the elevated worker adds nothing.
-            var ownerExtra = !usersCanRead && !tokenOwner.Equals(AdministratorsSid) && !tokenOwner.Equals(SystemSid);
-            return rules.Count == (usersCanRead ? 3 : 2) + (ownerExtra ? 1 : 0)
-                && HasRule(rules, SystemSid, FileSystemRights.FullControl)
-                && HasRule(rules, AdministratorsSid, FileSystemRights.FullControl)
-                && (!usersCanRead || HasRule(rules, UsersSid, FileSystemRights.ReadAndExecute))
-                && (!ownerExtra || HasRule(rules, tokenOwner, FileSystemRights.FullControl));
+            // account could not use the folder it just made (the tests). The real elevated worker adds nothing.
+            var tokenOwner = TokenOwner();
+            var ownerExtra = !ProductionRules && !usersCanRead && tokenOwner is not null && !IsAdminOrSystem(tokenOwner);
+            return AclMatches(security, usersCanRead, ownerExtra ? tokenOwner : null);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException
                                        or ArgumentException or NotSupportedException or InvalidOperationException)
         {
             return false;
+        }
+    }
+
+    /// <summary>Protected (no inheritance) and exactly SYSTEM and Administrators full control, plus Users read
+    /// and execute when <paramref name="usersCanRead"/>, plus <paramref name="extraFullControl"/> when given.</summary>
+    private static bool AclMatches(FileSystemSecurity security, bool usersCanRead, SecurityIdentifier? extraFullControl)
+    {
+        if (!security.AreAccessRulesProtected)
+            return false;
+
+        var rules = security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
+        return rules.Count == (usersCanRead ? 3 : 2) + (extraFullControl is null ? 0 : 1)
+            && HasRule(rules, SystemSid, FileSystemRights.FullControl)
+            && HasRule(rules, AdministratorsSid, FileSystemRights.FullControl)
+            && (!usersCanRead || HasRule(rules, UsersSid, FileSystemRights.ReadAndExecute))
+            && (extraFullControl is null || HasRule(rules, extraFullControl, FileSystemRights.FullControl));
+    }
+
+    /// <summary>
+    /// Holds the three levels of the machine quarantine open and proven, for as long as it lives: the ProgramData
+    /// app folder (a real directory owned by an administrator or SYSTEM), the quarantine root and, when asked for, one
+    /// quarantine folder (each a real directory carrying exactly the protected administrator-only ACL this code
+    /// creates it with, owned by an administrator). The handles have no delete share, so nothing in between can be
+    /// swapped for a link while the caller works. Null, with the reason logged, when any level fails: a folder a
+    /// plain user created first (ProgramData lets them make subfolders and own them) is never trusted, because
+    /// what lies in it could be planted or re-pointed by that user while an elevated process acts on it.
+    /// </summary>
+    internal static IDisposable? PinMachineQuarantine(string root, string? folderName, LoggingService logging, string label)
+    {
+        var pins = new List<SafeFileHandle>(3);
+        var parentExtra = !ProductionRules && TokenOwner() is { } t && !IsAdminOrSystem(t) ? t : null;
+
+        bool Add(string path, bool usersCanRead, bool requireAcl, bool isNewFolder)
+        {
+            var pin = CleanupSafety.TryLockForUse(path);
+            if (pin is null)
+                return false;
+
+            pins.Add(pin);
+            try
+            {
+                if (isNewFolder)
+                    return IsOurOwnNewFolder(pin, path, usersCanRead);
+
+                if (!ResolvesTo(pin, path) || new DirectoryInfo(path).Attributes.HasFlag(FileAttributes.ReparsePoint))
+                    return false;
+
+                var security = new DirectoryInfo(path).GetAccessControl(AccessControlSections.Access | AccessControlSections.Owner);
+                return security.GetOwner(typeof(SecurityIdentifier)) is SecurityIdentifier owner
+                    && IsTrustedFolderOwner(owner, ExtraTrustedOwner())
+                    && (!requireAcl || AclMatches(security, usersCanRead, parentExtra));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException
+                                           or ArgumentException or NotSupportedException or InvalidOperationException)
+            {
+                return false;
+            }
+        }
+
+        var appRoot = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(root)));
+        var ok = appRoot is not null
+            && Add(appRoot, usersCanRead: true, requireAcl: false, isNewFolder: false)
+            && Add(root, usersCanRead: false, requireAcl: true, isNewFolder: false)
+            && (folderName is null || Add(Path.Combine(root, folderName), usersCanRead: false, requireAcl: true, isNewFolder: true));
+        if (ok)
+            return new PinSet(pins);
+
+        foreach (var pin in pins)
+            pin.Dispose();
+
+        logging.Warn($"{label}: the machine quarantine is not the protected administrator-only folder this tool creates; not used.");
+        return null;
+    }
+
+    private sealed class PinSet(List<SafeFileHandle> pins) : IDisposable
+    {
+        public void Dispose()
+        {
+            foreach (var pin in pins)
+                pin.Dispose();
         }
     }
 
