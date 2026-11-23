@@ -150,6 +150,32 @@ public class UninstallerViewModelTests
     }
 
     [Fact]
+    public async Task The_refresh_command_reads_the_installed_programs_again()
+    {
+        var (vm, backend) = await LoadedAsync(Listing("A"));
+        Assert.Equal(1, backend.ListCalls);
+
+        await vm.ReloadCommand.ExecuteAsync(null);
+
+        Assert.Equal(2, backend.ListCalls);
+        Assert.Single(vm.AllRows);
+    }
+
+    [Fact]
+    public void The_uninstaller_window_binds_the_refresh_command_to_a_button_and_to_F5()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "src", "UltimateUpdater", "Views", "Uninstall", "UninstallerWindow.xaml")))
+            directory = directory.Parent;
+
+        Assert.NotNull(directory);
+        var xaml = File.ReadAllText(Path.Combine(directory.FullName, "src", "UltimateUpdater", "Views", "Uninstall", "UninstallerWindow.xaml"));
+
+        Assert.Contains("Command=\"{Binding ReloadCommand}\"", xaml);
+        Assert.Contains("<KeyBinding Key=\"F5\" Command=\"{Binding ReloadCommand}\"", xaml);
+    }
+
+    [Fact]
     public async Task Select_all_ticks_only_the_ordinary_rows_and_a_second_press_unticks_them()
     {
         var (vm, _) = await LoadedAsync(

@@ -2578,6 +2578,9 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="UninstallerSelectNone" xml:space="preserve">
     <value>Odznacz wszystko</value>
   </data>
+  <data name="UninstallerRefresh" xml:space="preserve">
+    <value>Skanuj ponownie</value>
+  </data>
   <data name="UninstallerSelectedCount" xml:space="preserve">
     <value>Zaznaczono: {0}</value>
   </data>

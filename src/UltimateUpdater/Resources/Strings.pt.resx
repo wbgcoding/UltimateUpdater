@@ -2578,6 +2578,9 @@ Continuar com direitos de administrador?</value>
   <data name="UninstallerSelectNone" xml:space="preserve">
     <value>Limpar seleção</value>
   </data>
+  <data name="UninstallerRefresh" xml:space="preserve">
+    <value>Verificar novamente</value>
+  </data>
   <data name="UninstallerSelectedCount" xml:space="preserve">
     <value>{0} selecionados</value>
   </data>

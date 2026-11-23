@@ -2578,6 +2578,9 @@ Continuați cu drepturi de administrator?</value>
   <data name="UninstallerSelectNone" xml:space="preserve">
     <value>Anulează selecția</value>
   </data>
+  <data name="UninstallerRefresh" xml:space="preserve">
+    <value>Rescanare</value>
+  </data>
   <data name="UninstallerSelectedCount" xml:space="preserve">
     <value>{0} selectate</value>
   </data>

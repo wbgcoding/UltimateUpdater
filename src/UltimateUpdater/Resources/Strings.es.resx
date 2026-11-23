@@ -2578,6 +2578,9 @@ Esto no se puede deshacer.</value>
   <data name="UninstallerSelectNone" xml:space="preserve">
     <value>Quitar la selección</value>
   </data>
+  <data name="UninstallerRefresh" xml:space="preserve">
+    <value>Volver a analizar</value>
+  </data>
   <data name="UninstallerSelectedCount" xml:space="preserve">
     <value>{0} seleccionados</value>
   </data>

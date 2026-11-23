@@ -2578,6 +2578,9 @@ Continuare con privilegi di amministratore?</value>
   <data name="UninstallerSelectNone" xml:space="preserve">
     <value>Deseleziona tutto</value>
   </data>
+  <data name="UninstallerRefresh" xml:space="preserve">
+    <value>Analizza di nuovo</value>
+  </data>
   <data name="UninstallerSelectedCount" xml:space="preserve">
     <value>{0} selezionati</value>
   </data>

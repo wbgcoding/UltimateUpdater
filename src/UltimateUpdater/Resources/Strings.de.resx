@@ -2578,6 +2578,9 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="UninstallerSelectNone" xml:space="preserve">
     <value>Auswahl aufheben</value>
   </data>
+  <data name="UninstallerRefresh" xml:space="preserve">
+    <value>Neu prüfen</value>
+  </data>
   <data name="UninstallerSelectedCount" xml:space="preserve">
     <value>{0} ausgewählt</value>
   </data>

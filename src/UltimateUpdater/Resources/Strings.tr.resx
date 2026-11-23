@@ -2578,6 +2578,9 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallerSelectNone" xml:space="preserve">
     <value>Seçimi kaldır</value>
   </data>
+  <data name="UninstallerRefresh" xml:space="preserve">
+    <value>Yeniden tara</value>
+  </data>
   <data name="UninstallerSelectedCount" xml:space="preserve">
     <value>{0} seçili</value>
   </data>

@@ -2578,6 +2578,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="UninstallerSelectNone" xml:space="preserve">
     <value>取消选择</value>
   </data>
+  <data name="UninstallerRefresh" xml:space="preserve">
+    <value>重新扫描</value>
+  </data>
   <data name="UninstallerSelectedCount" xml:space="preserve">
     <value>已选择 {0} 项</value>
   </data>

@@ -199,6 +199,9 @@
         </ResourceDictionary>
     </ui:FluentWindow.Resources>
 
+    <ui:FluentWindow.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding ReloadCommand}"/>
+    </ui:FluentWindow.InputBindings>
     <Grid Background="Transparent">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>   <!-- title bar -->
@@ -219,6 +222,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <ui:TextBox x:Name="SearchBox" Grid.Column="0" MaxWidth="460" HorizontalAlignment="Left" Width="460"
                         PlaceholderText="{Binding Loc[UninstallerSearchPlaceholder]}"
@@ -229,6 +233,8 @@
                        Content="{Binding Loc[UninstallerSelectAll]}"/>
             <ui:Button Grid.Column="2" Command="{Binding ClearSelectionCommand}" Appearance="Secondary" Margin="8,0,0,0"
                        Content="{Binding Loc[UninstallerSelectNone]}"/>
+            <ui:Button x:Name="RefreshButton" Grid.Column="3" Command="{Binding ReloadCommand}" Appearance="Secondary" Margin="8,0,0,0"
+                       Icon="{ui:SymbolIcon ArrowClockwise24}" Content="{Binding Loc[UninstallerRefresh]}"/>
         </Grid>
 
         <Border Grid.Row="2" Margin="24,0,24,0" CornerRadius="8" BorderThickness="1"

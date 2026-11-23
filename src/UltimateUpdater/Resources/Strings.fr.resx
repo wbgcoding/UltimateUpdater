@@ -2578,6 +2578,9 @@ Continuer avec les droits administrateur ?</value>
   <data name="UninstallerSelectNone" xml:space="preserve">
     <value>Tout désélectionner</value>
   </data>
+  <data name="UninstallerRefresh" xml:space="preserve">
+    <value>Réanalyser</value>
+  </data>
   <data name="UninstallerSelectedCount" xml:space="preserve">
     <value>{0} sélectionnés</value>
   </data>
