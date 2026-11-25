@@ -275,16 +275,28 @@ if not defined ISCC (
     if exist "%ROOT%build\setup-out" rmdir /s /q "%ROOT%build\setup-out"
     "%ISCC%" /O"%ROOT%build\setup-out" /DAppVersion=%VERSION% "%ROOT%installer\UltimateUpdater.iss"
     if errorlevel 1 goto :error
-    move /y "%ROOT%build\setup-out\Setup-UltimateUpdater-%VERSION%.exe" "%DIST%\" >nul
+    move /y "%ROOT%build\setup-out\UltimateUpdater-Setup-%VERSION%.exe" "%DIST%\" >nul
     if errorlevel 1 goto :error
 )
 
 rem And the installer itself, which is the file most users actually download.
 if not defined WU_SIGN_THUMBPRINT goto :nosignsetup
-if not exist "%DIST%\Setup-UltimateUpdater-%VERSION%.exe" goto :nosignsetup
-"%SIGNTOOL%" sign /sha1 %WU_SIGN_THUMBPRINT% /fd SHA256 /td SHA256 /tr "%WU_SIGN_TIMESTAMP_URL%" "%DIST%\Setup-UltimateUpdater-%VERSION%.exe"
+if not exist "%DIST%\UltimateUpdater-Setup-%VERSION%.exe" goto :nosignsetup
+"%SIGNTOOL%" sign /sha1 %WU_SIGN_THUMBPRINT% /fd SHA256 /td SHA256 /tr "%WU_SIGN_TIMESTAMP_URL%" "%DIST%\UltimateUpdater-Setup-%VERSION%.exe"
 if errorlevel 1 goto :error
 :nosignsetup
+
+rem Transition copy: installed versions older than the rename look for "Setup-UltimateUpdater-<version>.exe" and
+rem would otherwise find no update. It is copied AFTER the signing above so both files are byte-identical, and
+rem it gets its own checksum line and signature like the new name below. Dropped once no supported release
+rem still looks for the old name.
+if not exist "%DIST%\UltimateUpdater-Setup-%VERSION%.exe" goto :nooldname
+copy /y "%DIST%\UltimateUpdater-Setup-%VERSION%.exe" "%DIST%\Setup-UltimateUpdater-%VERSION%.exe" >nul
+if errorlevel 1 (
+    echo ERROR: could not write the old-name copy of the installer.
+    goto :error
+)
+:nooldname
 
 echo.
 echo === checksums === [%time:~0,8%]

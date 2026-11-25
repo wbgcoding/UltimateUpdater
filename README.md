@@ -105,7 +105,7 @@ tiers and the cleanup categories in detail.
 | Download | What it is |
 | --- | --- |
 | `UltimateUpdater.exe` | Portable, x64, no installation, keeps its data in `data\` next to itself |
-| `Setup-UltimateUpdater-<version>.exe` | Installer for x64 and ARM64: all users, just you, or a portable copy |
+| `UltimateUpdater-Setup-<version>.exe` | Installer for x64 and ARM64: all users, just you, or a portable copy |
 
 Requirements: Windows 10 1809 or newer. The .NET runtime is included, nothing else is needed.
 
@@ -186,7 +186,8 @@ self-contained executables for x64 and ARM64, the installer and checksums. `dist
 | File | What it is |
 | --- | --- |
 | `UltimateUpdater.exe` | portable build (x64) |
-| `Setup-UltimateUpdater-<version>.exe` | installer with both architectures |
+| `UltimateUpdater-Setup-<version>.exe` | installer with both architectures |
+| `Setup-UltimateUpdater-<version>.exe` | identical copy under the old installer name, so installed older versions still find the update |
 | `SHA256SUMS.txt` | checksums for both |
 
 A second run with nothing changed reports "Build is up to date" and exits; `build.bat --force` (or `FORCE=1`) rebuilds anyway.

@@ -324,7 +324,7 @@ public class ReleaseSignatureTests
         var (pem, key) = NewKey();
         using (key)
         {
-            const string name = "Setup-UltimateUpdater-999.0.0.exe";
+            const string name = "UltimateUpdater-Setup-999.0.0.exe";
             var feed = Feed(Content, Sign(key, Content), key, name: name);
 
             await AssertRefusedBeforeDownloadAsync(feed, pem, Update(name: name), isInstalled: () => false);
@@ -346,7 +346,7 @@ public class ReleaseSignatureTests
         var (pem, key) = NewKey();
         using (key)
         {
-            const string exact = "Setup-UltimateUpdater-999.0.0.exe";
+            const string exact = "UltimateUpdater-Setup-999.0.0.exe";
             var service = Service(Feed(Content, Sign(key, Content), key, name: exact), pem, Content, () => true);
             var result = await service.DownloadVerifiedAsync(Update(name: exact), CancellationToken.None);
 
@@ -354,15 +354,15 @@ public class ReleaseSignatureTests
             service.DiscardVerified(result.Path!);
 
             // another version's setup is refused even though it is signed and carries the Setup- prefix
-            const string other = "Setup-UltimateUpdater-998.0.0.exe";
+            const string other = "UltimateUpdater-Setup-998.0.0.exe";
             await AssertRefusedBeforeDownloadAsync(
                 Feed(Content, Sign(key, Content), key, name: other), pem, Update(name: other), () => true);
         }
     }
 
     [Theory]
-    [InlineData(true, "999.0.0", "Setup-UltimateUpdater-999.0.0.exe")]
-    [InlineData(true, "1.2.3-beta.1", "Setup-UltimateUpdater-1.2.3-beta.1.exe")]
+    [InlineData(true, "999.0.0", "UltimateUpdater-Setup-999.0.0.exe")]
+    [InlineData(true, "1.2.3-beta.1", "UltimateUpdater-Setup-1.2.3-beta.1.exe")]
     [InlineData(false, "999.0.0", "UltimateUpdater.exe")]
     public void The_expected_asset_name_follows_the_install_kind(bool installed, string version, string expected) =>
         Assert.Equal(expected, SelfUpdateService.ExpectedAssetName(installed, version));

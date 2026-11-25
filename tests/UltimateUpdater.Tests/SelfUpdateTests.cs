@@ -213,7 +213,7 @@ public class SelfUpdateTests
     {
         const string body = """
             e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  UltimateUpdater-0.2.0-win-x64.exe
-            0000000000000000000000000000000000000000000000000000000000000001 *Setup-UltimateUpdater-0.2.0.exe
+            0000000000000000000000000000000000000000000000000000000000000001 *UltimateUpdater-Setup-0.2.0.exe
             """;
 
         var checksums = UpdateManifest.ParseChecksums(body);
@@ -222,7 +222,7 @@ public class SelfUpdateTests
         Assert.Equal("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             checksums["UltimateUpdater-0.2.0-win-x64.exe"]);
         // the binary marker is not part of the filename
-        Assert.True(checksums.ContainsKey("Setup-UltimateUpdater-0.2.0.exe"));
+        Assert.True(checksums.ContainsKey("UltimateUpdater-Setup-0.2.0.exe"));
     }
 
     [Fact]
@@ -303,7 +303,7 @@ public class SelfUpdateTests
         var release = UpdateManifest.ParseRelease("""
             {"tag_name":"v0.2.0","draft":false,"assets":[
               {"name":"UltimateUpdater-0.2.0-win-x64.exe","browser_download_url":"https://github.com/a","url":"https://api.github.com/b","size":10},
-              {"name":"Setup-UltimateUpdater-0.2.0.exe","browser_download_url":"https://github.com/c","url":"https://api.github.com/d","size":10},
+              {"name":"UltimateUpdater-Setup-0.2.0.exe","browser_download_url":"https://github.com/c","url":"https://api.github.com/d","size":10},
               {"name":"SHA256SUMS.txt","browser_download_url":"https://github.com/e","url":"https://api.github.com/f","size":10}
             ]}
             """);
@@ -311,10 +311,10 @@ public class SelfUpdateTests
         Assert.NotNull(release);
 
         var installer = release!.Assets.SingleOrDefault(a =>
-            a.Name.StartsWith("Setup-", StringComparison.OrdinalIgnoreCase) &&
+            a.Name.Contains("-Setup-", StringComparison.OrdinalIgnoreCase) &&
             a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
         var portable = release.Assets.SingleOrDefault(a =>
-            !a.Name.StartsWith("Setup-", StringComparison.OrdinalIgnoreCase) &&
+            !a.Name.Contains("-Setup-", StringComparison.OrdinalIgnoreCase) &&
             a.Name.Contains("x64", StringComparison.OrdinalIgnoreCase) &&
             a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
 

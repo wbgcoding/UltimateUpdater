@@ -73,7 +73,7 @@ public partial class MainViewModelTests
             const string releasesJson = """
                 {"tag_name":"v999.0.0","draft":false,"body":"### Fixed\n- a bug","assets":[
                   {"name":"UltimateUpdater.exe","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/a.exe","url":"https://api.github.com/repos/x/y/releases/assets/1","size":10},
-                  {"name":"Setup-UltimateUpdater-999.0.0.exe","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/b.exe","url":"https://api.github.com/repos/x/y/releases/assets/2","size":10},
+                  {"name":"UltimateUpdater-Setup-999.0.0.exe","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/b.exe","url":"https://api.github.com/repos/x/y/releases/assets/2","size":10},
                   {"name":"SHA256SUMS.txt","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/SHA256SUMS.txt","url":"https://api.github.com/repos/x/y/releases/assets/3","size":10}
                 ]}
                 """;
@@ -116,7 +116,7 @@ public partial class MainViewModelTests
             const string releasesJson = """
                 {"tag_name":"v999.0.0","draft":false,"body":"### Fixed\n- a bug","assets":[
                   {"name":"UltimateUpdater.exe","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/a.exe","url":"https://api.github.com/repos/x/y/releases/assets/1","size":10},
-                  {"name":"Setup-UltimateUpdater-999.0.0.exe","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/b.exe","url":"https://api.github.com/repos/x/y/releases/assets/2","size":10},
+                  {"name":"UltimateUpdater-Setup-999.0.0.exe","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/b.exe","url":"https://api.github.com/repos/x/y/releases/assets/2","size":10},
                   {"name":"SHA256SUMS.txt","browser_download_url":"https://github.com/x/y/releases/download/v999.0.0/SHA256SUMS.txt","url":"https://api.github.com/repos/x/y/releases/assets/3","size":10}
                 ]}
                 """;

@@ -111,7 +111,7 @@ ShowLanguageDialog=no
 LanguageDetectionMethod=uilanguage
 OutputDir=..\dist
 ; No space in the artifact name: it ends up in release URLs and on command lines.
-OutputBaseFilename=Setup-UltimateUpdater-{#AppVersion}
+OutputBaseFilename=UltimateUpdater-Setup-{#AppVersion}
 SetupIconFile=..\src\UltimateUpdater\Assets\app.ico
 UninstallDisplayIcon={code:GetAppExePath}
 UninstallDisplayName={#AppName}

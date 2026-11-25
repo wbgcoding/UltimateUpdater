@@ -10,7 +10,7 @@ namespace UltimateUpdater.Tests;
 /// <summary>A declined elevation prompt keeps the verified download for the next click; every other end discards it.</summary>
 public sealed class SelfUpdateDeclineTests
 {
-    private const string SetupName = "Setup-UltimateUpdater-999.0.0.exe";
+    private const string SetupName = "UltimateUpdater-Setup-999.0.0.exe";
 
     private static readonly byte[] Content = [1, 2, 3, 4];
 

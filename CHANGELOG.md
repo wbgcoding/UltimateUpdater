@@ -25,6 +25,8 @@ versioning: [SemVer](https://semver.org).
   closes it, and both can sit side by side with their own taskbar buttons.
 - Setup is about a fifth smaller and the portable program file about a third: it no longer carries a
   second, recompiled copy of the .NET runtime.
+- The installer is now named UltimateUpdater-Setup-<version>.exe. Releases also carry an identical copy
+  under the old name, so installed older versions still find their update.
 - A Windows Update install stopped because the update service shut down now says so in plain words
   instead of showing a bare error number.
 - A failed install's details no longer repeat the same "waiting for another installation" line dozens of

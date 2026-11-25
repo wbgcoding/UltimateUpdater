@@ -260,8 +260,8 @@ public sealed partial class SelfUpdateService
             // The artifact signature covers bytes only, so the name decides what Apply does with them: a signed
             // portable exe renamed to a Setup name would otherwise be started elevated as an installer. Only the
             // exact name for this install kind is taken.
-            var expectedName = ExpectedAssetName(_isInstalled(), update.Version);
-            if (!string.Equals(update.Asset.Name, expectedName, StringComparison.Ordinal))
+            var acceptedNames = AcceptedAssetNames(_isInstalled(), update.Version);
+            if (!acceptedNames.Contains(update.Asset.Name, StringComparer.Ordinal))
             {
                 _logging.EventFailed(ActivityLog.SelfUpdate, $"'{update.Asset.Name}' is not the artifact this install takes; refusing the update");
                 return new SelfUpdateDownloadResult(SelfUpdateDownloadOutcome.SignatureInvalid);
@@ -863,19 +863,37 @@ public sealed partial class SelfUpdateService
     /// </summary>
     private const string PortableAssetName = "UltimateUpdater.exe";
 
-    private ReleaseAsset? SelectAssetForThisMachine(ReleaseInfo release)
+    internal ReleaseAsset? SelectAssetForThisMachine(ReleaseInfo release)
     {
         // Installed builds take the installer, portable builds the fixed-name portable exe. ONE installer
         // carries both architectures and picks at install time, so its name has no architecture in it. The
         // portable download is x64-only; an ARM64 machine running a portable copy is not a supported shape,
-        // ARM64 users take the installer.
-        var expected = ExpectedAssetName(_isInstalled(), release.Version);
-        return release.Assets.FirstOrDefault(a => string.Equals(a.Name, expected, StringComparison.Ordinal));
+        // ARM64 users take the installer. The names are tried in order, so the current name wins and the
+        // old one is only a fallback for a release that carries nothing else.
+        foreach (var name in AcceptedAssetNames(_isInstalled(), release.Version))
+        {
+            var asset = release.Assets.FirstOrDefault(a => string.Equals(a.Name, name, StringComparison.Ordinal));
+            if (asset is not null)
+                return asset;
+        }
+
+        return null;
     }
 
-    /// <summary>The one asset name this install kind may take for <paramref name="version"/>.</summary>
+    /// <summary>The asset name this install kind prefers for <paramref name="version"/>.</summary>
     internal static string ExpectedAssetName(bool installed, string version) =>
-        installed ? $"Setup-UltimateUpdater-{version}.exe" : PortableAssetName;
+        installed ? $"UltimateUpdater-Setup-{version}.exe" : PortableAssetName;
+
+    /// <summary>
+    /// Every asset name this install kind may take for <paramref name="version"/>, preferred first. The
+    /// installer used to be called "Setup-UltimateUpdater-&lt;version&gt;.exe" and releases still ship a
+    /// byte-identical copy under that name for the installed copies that look for it; the exact name is
+    /// still required, never a pattern.
+    /// </summary>
+    internal static IReadOnlyList<string> AcceptedAssetNames(bool installed, string version) =>
+        installed
+            ? [ExpectedAssetName(true, version), $"Setup-UltimateUpdater-{version}.exe"]
+            : [PortableAssetName];
 
     private static string ChooseUrl(ReleaseAsset asset) =>
         string.IsNullOrEmpty(asset.DownloadUrl) ? asset.ApiUrl : asset.DownloadUrl;
