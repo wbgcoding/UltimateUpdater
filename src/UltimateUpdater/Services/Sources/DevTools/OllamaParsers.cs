@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using UltimateUpdater.Services.Sources.Shared;
 
 namespace UltimateUpdater.Services.Sources.DevTools;
 
@@ -112,11 +113,11 @@ public static class OllamaParsers
         if (parts.Length is not (1 or 2))
             return false;
 
-        if (!IsPlainToken(parts[0]))
+        if (!SafeToken.IsPlain(parts[0], MaxNameLength, allowDotRuns: false))
             return false;
 
         var candidateTag = parts.Length == 2 ? parts[1] : "latest";
-        if (!IsPlainToken(candidateTag))
+        if (!SafeToken.IsPlain(candidateTag, MaxNameLength, allowDotRuns: false))
             return false;
 
         name = parts[0];
@@ -124,14 +125,5 @@ public static class OllamaParsers
         return true;
     }
 
-    /// <summary>
-    /// Letters, digits and the few separators model names really use: nothing that changes a path. The
-    /// ".." check is not decoration: Uri.EscapeDataString leaves dots alone, so a segment of ".." travels
-    /// into the URL intact and walks out of /v2/library/ (caught by its own test).
-    /// </summary>
-    private static bool IsPlainToken(string value) =>
-        value.Length is > 0 and <= 128
-        && !value.Contains("..")
-        && value != "."
-        && value.All(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '-' or '_');
+    private const int MaxNameLength = 128;
 }
