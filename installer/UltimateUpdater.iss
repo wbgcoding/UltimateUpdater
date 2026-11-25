@@ -105,6 +105,10 @@ CreateUninstallRegKey=not IsPortableMode
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 
+; The language comes from the Windows display language, never from a picker: Inno shows that picker before any
+; script runs, so a script cannot raise it above other windows. Every language entry below stays available.
+ShowLanguageDialog=no
+LanguageDetectionMethod=uilanguage
 OutputDir=..\dist
 ; No space in the artifact name: it ends up in release URLs and on command lines.
 OutputBaseFilename=Setup-UltimateUpdater-{#AppVersion}
@@ -289,9 +293,9 @@ var
   DirPageMode: Integer;
   { True while the wizard is being held above other windows so it cannot start hidden behind them. }
   HoldingFront: Boolean;
-  { True once the foreground has been asked for, so the first page that appears does it and no
-    later page repeats it. }
-  FrontRequested: Boolean;
+  { True once the wizard has really been the foreground window, so asking stops there and a page change
+    never pulls it back in front of a window the user chose to switch to. }
+  FrontReached: Boolean;
   { True when the standard installation of this scope was already there when Setup started, read once in
     InitializeSetup before anything is written. }
   WasUpgrade: Boolean;
@@ -307,6 +311,9 @@ var
   was more recently activated, which is what a plain-launched admin console can already be. }
 function SetForegroundWindow(Wnd: HWND): BOOL;
   external 'SetForegroundWindow@user32.dll stdcall';
+
+function AllowSetForegroundWindow(ProcessId: DWORD): BOOL;
+  external 'AllowSetForegroundWindow@user32.dll stdcall';
 
 function GetForegroundWindow: HWND;
   external 'GetForegroundWindow@user32.dll stdcall';
@@ -331,6 +338,8 @@ const
   HWND_NOTOPMOST = -2;
   SWP_NOMOVE = $2;
   SWP_NOSIZE = $1;
+  { ASFW_ANY: any process may take the foreground from this one. }
+  ASFW_ANY = $FFFFFFFF;
 
 { The actual fix: SetForegroundWindow's own refusal is keyed to which THREAD last received user
   input, not which process. Temporarily attaching Setup's UI thread to the current foreground
@@ -430,6 +439,8 @@ end;
 { Read once, before Setup writes anything: afterwards the uninstall key is there on a first install too. }
 function InitializeSetup: Boolean;
 begin
+  { Runs un-elevated too, and lets the elevated copy Setup relaunches itself as take the foreground. }
+  AllowSetForegroundWindow(ASFW_ANY);
   WasUpgrade := ExistingInstallDir <> '';
   Result := True;
 end;
@@ -507,11 +518,16 @@ begin
   ModePortableInfo.Top := PortableRadio.Top + PortableRadio.Height + TitleGap;
 end;
 
+procedure BringWizardToFront; forward;
+
 procedure InitializeWizard;
 var
   InstallInfo, PortableInfo: TNewStaticText;
   Indent, Surface, ContentWidth, BlockLeft, TitleGap, BlockGap, Top: Integer;
 begin
+  { Asked for here as well as on each page change: this is the earliest point the wizard form exists. }
+  BringWizardToFront;
+
   ModePage := CreateCustomPage(wpWelcome,
     CustomMessage('ModeCaption'), CustomMessage('ModeDescription'));
 
@@ -555,6 +571,7 @@ end;
   else for the rest of the run. }
 procedure WizardActivated(Sender: TObject);
 begin
+  FrontReached := True;
   if HoldingFront then
   begin
     HoldingFront := False;
@@ -571,18 +588,28 @@ end;
   activated. }
 procedure BringWizardToFront;
 begin
-  if FrontRequested then
+  if FrontReached then
     Exit;
 
-  FrontRequested := True;
-  HoldingFront := True;
+  if GetForegroundWindow = WizardForm.Handle then
+  begin
+    WizardActivated(nil);
+    Exit;
+  end;
+
   { The handler goes on BEFORE the activation attempt: if the window comes to the front immediately,
     OnActivate fires during ForceForeground, and hooking it afterwards would miss that and leave
     Setup top-most for the rest of the run. }
   WizardForm.OnActivate := @WizardActivated;
-  WizardForm.FormStyle := fsStayOnTop;
+  if not HoldingFront then
+  begin
+    HoldingFront := True;
+    WizardForm.FormStyle := fsStayOnTop;
+  end;
   WizardForm.BringToFront;
   ForceForeground(WizardForm.Handle);
+  if GetForegroundWindow = WizardForm.Handle then
+    WizardActivated(nil);
 end;
 
 { Portable mode skips the whole Tasks page - neither task (desktop icon, autostart) means anything for
@@ -609,7 +636,8 @@ begin
     NOT keyed to wpWelcome, because Inno's default
     is DisableWelcomePage=yes, this script does not turn it back on, so wpWelcome never becomes the
     current page and the call would sit behind a condition that could not be true.
-    BringWizardToFront guards itself, so this fires exactly once. }
+    BringWizardToFront stops for good once the wizard really is the foreground window; until then every
+    page change tries again. }
   BringWizardToFront;
 
   { The mode page: centre the two choices now that the surface has its real height, and pull the header's

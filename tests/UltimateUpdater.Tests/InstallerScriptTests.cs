@@ -184,15 +184,57 @@ public class InstallerScriptTests
         Assert.Contains("SwitchToThisWindow", forceForeground.Value);
     }
 
-    /// <summary>BringWizardToFront must still fire exactly once, a repeated call would leave Setup
-    /// topmost for the rest of the run (round 4's regression).</summary>
+    /// <summary>
+    /// BringWizardToFront keeps asking on every page change until the wizard has really been the foreground
+    /// window, then stops for good: a page change must never pull Setup back in front of a window the user
+    /// switched to, and the top-most hold is released the moment the wizard is active.
+    /// </summary>
     [Fact]
-    public void BringWizardToFront_guards_itself_with_FrontRequested()
+    public void BringWizardToFront_asks_until_the_wizard_is_in_front_and_then_stops()
     {
-        var bringToFront = Regex.Match(Script(), @"procedure BringWizardToFront;.*?^end;", RegexOptions.Singleline | RegexOptions.Multiline);
+        var script = Script();
+        var bringToFront = Regex.Match(script, @"procedure BringWizardToFront;\s*(?:var.*?)?^begin.*?^end;", RegexOptions.Singleline | RegexOptions.Multiline);
         Assert.True(bringToFront.Success, "BringWizardToFront procedure body not found");
-        Assert.Contains("if FrontRequested then", bringToFront.Value);
+        Assert.Contains("if FrontReached then", bringToFront.Value);
         Assert.Contains("Exit;", bringToFront.Value);
+        Assert.Contains("GetForegroundWindow = WizardForm.Handle", bringToFront.Value);
+
+        var changed = Regex.Match(script, @"procedure CurPageChanged\(CurPageID: Integer\);.*?^end;", RegexOptions.Singleline | RegexOptions.Multiline);
+        Assert.True(changed.Success, "CurPageChanged procedure body not found");
+        Assert.Contains("BringWizardToFront;", changed.Value);
+
+        var init = Regex.Match(script, @"procedure InitializeWizard;.*?^end;", RegexOptions.Singleline | RegexOptions.Multiline);
+        Assert.True(init.Success, "InitializeWizard procedure body not found");
+        Assert.Contains("BringWizardToFront;", init.Value);
+    }
+
+    /// <summary>
+    /// Inno's language picker shows before any script runs, so no script can raise it: the language comes from
+    /// the Windows display language, and every shipped language stays selectable by /LANG.
+    /// </summary>
+    [Fact]
+    public void Setup_picks_its_language_from_Windows_without_a_picker()
+    {
+        var script = Script();
+        var setup = script[script.IndexOf("[Setup]", StringComparison.Ordinal)..script.IndexOf("[Languages]", StringComparison.Ordinal)];
+
+        Assert.Matches(@"(?m)^ShowLanguageDialog=no\s*$", setup);
+        Assert.Matches(@"(?m)^LanguageDetectionMethod=uilanguage\s*$", setup);
+        Assert.Matches(@"(?m)^Name: ""en"";", script);
+        Assert.Matches(@"(?m)^Name: ""de"";", script);
+    }
+
+    /// <summary>Setup lets the elevated copy it relaunches as take the foreground, un-elevated runs included.</summary>
+    [Fact]
+    public void InitializeSetup_allows_any_process_to_take_the_foreground()
+    {
+        var script = Script();
+        Assert.Contains("AllowSetForegroundWindow(ProcessId: DWORD): BOOL;", script);
+        Assert.Contains("ASFW_ANY = $FFFFFFFF;", script);
+
+        var init = Regex.Match(script, @"function InitializeSetup: Boolean;.*?^end;", RegexOptions.Singleline | RegexOptions.Multiline);
+        Assert.True(init.Success, "InitializeSetup function body not found");
+        Assert.Contains("AllowSetForegroundWindow(ASFW_ANY);", init.Value);
     }
 
     /// <summary>
