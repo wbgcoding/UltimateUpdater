@@ -20,7 +20,8 @@ public static class ByteSize
     {
         double value = bytes;
         var unit = 0;
-        while (value >= 1024 && unit < Units.Length - 1)
+        // Judged on the rounded value, so 1023.96 KB steps up to "1.0 MB" instead of printing "1024.0 KB".
+        while (unit < Units.Length - 1 && Math.Round(value, 1, MidpointRounding.AwayFromZero) >= 1024)
         {
             value /= 1024;
             unit++;
