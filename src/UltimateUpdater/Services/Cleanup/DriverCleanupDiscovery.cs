@@ -55,8 +55,7 @@ public sealed record DriverPackageCandidate(
 /// <summary>
 /// Pure judgment over already-gathered device/package facts: which rows the driver cleanup category
 /// offers, in what order. Kept apart from the real SetupAPI/CfgMgr32/INF reads (<see
-/// cref="IDriverInventoryProvider"/>) the same way <see cref="LeftoverInstallSafety"/> is kept apart from
-/// <see cref="LeftoverInstallDiscovery"/>'s real directory walk: this class is what a unit test drives with
+/// cref="IDriverInventoryProvider"/>): this class is what a unit test drives with
 /// fabricated device and package lists, no real hardware and no elevation required. The elevated worker
 /// calls this again, immediately before deleting, against a freshly gathered inventory (see
 /// <see cref="DriverCleanupExecutor"/>) so a row the user selected minutes ago is only acted on if it still
@@ -256,7 +255,7 @@ public static class DriverCleanupDiscovery
 
     /// <summary>
     /// The package, among every other one sharing <paramref name="package"/>'s (original name, provider),
-    /// that is confidently newer than it - for the "installed now: version X" tooltip fact, not for the
+    /// that is confidently newer than it, for the "installed now: version X" tooltip fact, not for the
     /// supersede/delete decision above (that one only needs to know THAT a newer package exists, this one
     /// needs to know WHICH). Never a guess: only <see cref="IsNewerThan"/>-confirmed comparisons count, so a
     /// package with no orderable rival returns null even when other packages share its name.

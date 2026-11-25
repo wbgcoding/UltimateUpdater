@@ -5,8 +5,7 @@ namespace UltimateUpdater.Services.Uninstall;
 
 /// <summary>
 /// The gate every leftover passes before it is offered and again right before it is removed, per kind of
-/// target. A different question from <see cref="LeftoverInstallSafety"/>, which only judges the top-level
-/// program-folder roots of the old age heuristic. Every rule can only refuse: nothing here makes a path
+/// target. Every rule can only refuse: nothing here makes a path
 /// deletable, the scanner has to propose it first.
 /// </summary>
 internal static class LeftoverTargetSafety

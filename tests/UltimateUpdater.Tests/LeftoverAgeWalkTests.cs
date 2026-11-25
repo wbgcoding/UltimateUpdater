@@ -68,7 +68,7 @@ public class LeftoverAgeWalkTests : IDisposable
 
         Deny(sub);
 
-        Assert.Equal(DateTimeOffset.MaxValue, LeftoverInstallDiscovery.NewestWriteTime(candidate, CancellationToken.None));
+        Assert.Equal(DateTimeOffset.MaxValue, AppDataLeftoverDiscovery.NewestWriteTime(candidate, CancellationToken.None));
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class LeftoverAgeWalkTests : IDisposable
         File.SetLastWriteTimeUtc(file, old);
         Directory.SetLastWriteTimeUtc(candidate, old);
 
-        Assert.Equal(new DateTimeOffset(old, TimeSpan.Zero), LeftoverInstallDiscovery.NewestWriteTime(candidate, CancellationToken.None));
+        Assert.Equal(new DateTimeOffset(old, TimeSpan.Zero), AppDataLeftoverDiscovery.NewestWriteTime(candidate, CancellationToken.None));
     }
 
     [Fact]
@@ -90,7 +90,65 @@ public class LeftoverAgeWalkTests : IDisposable
     {
         Assert.Equal(
             DateTimeOffset.MaxValue,
-            LeftoverInstallDiscovery.NewestWriteTime(Path.Combine(_root, "gone"), CancellationToken.None));
+            AppDataLeftoverDiscovery.NewestWriteTime(Path.Combine(_root, "gone"), CancellationToken.None));
+    }
+
+    private static readonly DateTimeOffset Now = new(2026, 9, 26, 12, 0, 0, TimeSpan.Zero);
+
+    private static void AgeFile(string file, DateTime time)
+    {
+        File.SetCreationTimeUtc(file, time);
+        File.SetLastWriteTimeUtc(file, time);
+        File.SetLastAccessTimeUtc(file, time);
+    }
+
+    [Fact]
+    public void A_folder_of_only_old_files_is_idle_and_a_recent_one_in_a_sub_folder_makes_it_recent()
+    {
+        var folder = Path.Combine(_root, "App");
+        var sub = Path.Combine(folder, "data");
+        Directory.CreateDirectory(sub);
+        var oldFile = Path.Combine(folder, "old.dll");
+        var deepFile = Path.Combine(sub, "deep.dat");
+        File.WriteAllText(oldFile, "x");
+        File.WriteAllText(deepFile, "x");
+        var old = Now.UtcDateTime.AddDays(-400);
+        AgeFile(oldFile, old);
+        AgeFile(deepFile, old);
+
+        Assert.Equal(AppDataLeftoverDiscovery.FolderUse.Idle, AppDataLeftoverDiscovery.UseOf(folder, Now, CancellationToken.None));
+
+        File.SetLastAccessTimeUtc(deepFile, Now.UtcDateTime.AddDays(-2));
+        Assert.Equal(AppDataLeftoverDiscovery.FolderUse.Recent, AppDataLeftoverDiscovery.UseOf(folder, Now, CancellationToken.None));
+    }
+
+    [Fact]
+    public void A_recent_hidden_system_file_counts_as_recent_use()
+    {
+        var folder = Path.Combine(_root, "App");
+        Directory.CreateDirectory(folder);
+        var hidden = Path.Combine(folder, "state.dat");
+        File.WriteAllText(hidden, "x");
+        AgeFile(hidden, Now.UtcDateTime.AddDays(-1));
+        File.SetAttributes(hidden, FileAttributes.Hidden | FileAttributes.System);
+
+        try
+        {
+            Assert.Equal(AppDataLeftoverDiscovery.FolderUse.Recent, AppDataLeftoverDiscovery.UseOf(folder, Now, CancellationToken.None));
+        }
+        finally
+        {
+            File.SetAttributes(hidden, FileAttributes.Normal);
+        }
+    }
+
+    [Fact]
+    public void An_empty_folder_is_empty_not_idle()
+    {
+        var folder = Path.Combine(_root, "App");
+        Directory.CreateDirectory(Path.Combine(folder, "inner"));
+
+        Assert.Equal(AppDataLeftoverDiscovery.FolderUse.Empty, AppDataLeftoverDiscovery.UseOf(folder, Now, CancellationToken.None));
     }
 
     [Fact]

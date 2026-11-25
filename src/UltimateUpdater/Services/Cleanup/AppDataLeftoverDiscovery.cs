@@ -3,6 +3,10 @@ using UltimateUpdater.Services.Uninstall;
 
 namespace UltimateUpdater.Services.Cleanup;
 
+/// <summary>One folder the leftover scan offers: not proven orphaned, only unexplained and long untouched.
+/// The UI must show these individually and never pre-select one.</summary>
+public sealed record LeftoverCandidate(string Path, string DisplayName, long SizeBytes, DateTimeOffset NewestWriteTime);
+
 /// <summary>
 /// Finds folders of long-removed programs: direct children of %APPDATA%, %LOCALAPPDATA% (and its Programs
 /// folder), ProgramData and both Program Files that no program on this machine explains and that nothing has
@@ -14,8 +18,9 @@ namespace UltimateUpdater.Services.Cleanup;
 /// </summary>
 public static class AppDataLeftoverDiscovery
 {
-    /// <summary>Untouched for this long, the same bar as the install-folder check this replaces.</summary>
-    public static readonly TimeSpan MinimumAge = LeftoverInstallDiscovery.MinimumAge;
+    /// <summary>Untouched for this long. Deliberately generous: a portable app someone still uses gets touched
+    /// far more often than this, and the goal is to under-detect, never to over-detect.</summary>
+    public static readonly TimeSpan MinimumAge = TimeSpan.FromDays(180);
 
     private const int MaxFilesScannedPerCandidate = 2000;
     private const int MaxScanDepth = 3;
@@ -117,14 +122,14 @@ public static class AppDataLeftoverDiscovery
         if (!LeftoverTargetSafety.IsSafeFolder(full, roots, out var safety))
             return No("unsafe: " + safety);
 
-        if (IsHiddenOrSystem(full))
-            return No("hidden or system folder");
+        if (IsSystemOrOffline(full))
+            return No("system or offline folder");
 
         var explanation = evidence.Explain(full, roots);
         if (explanation is not null)
             return No("explained by " + explanation);
 
-        var newest = LeftoverInstallDiscovery.NewestWriteTime(full, cancellationToken);
+        var newest = NewestWriteTime(full, cancellationToken);
         if (now - newest < MinimumAge)
             return No("touched within the minimum age", newest);
 
@@ -146,7 +151,9 @@ public static class AppDataLeftoverDiscovery
         || ProtectedPrefixes.Any(p => normalized.StartsWith(p, StringComparison.Ordinal))
         || LeftoverNames.IsGeneric(normalized);
 
-    private static bool IsHiddenOrSystem(string folder)
+    /// <summary>A system, offline (cloud-only) or device folder is never offered. Hidden alone does not exclude:
+    /// app data folders are often hidden and the evidence rules judge them like any other.</summary>
+    private static bool IsSystemOrOffline(string folder)
     {
         try
         {
@@ -184,6 +191,9 @@ public static class AppDataLeftoverDiscovery
             }
 
             cancellationToken.ThrowIfCancellationRequested();
+            // The first recent file settles the verdict: the rest of the folder is not read. The times are read
+            // from the file itself, not the directory listing: a listing entry can lag behind for a hard-linked
+            // file, and a stale old time here would offer a folder that is in use.
             foreach (var file in SafeEnumerate.Files(dir, () => incomplete = true))
             {
                 if (scanned++ >= MaxFilesScannedPerCandidate)
@@ -194,12 +204,19 @@ public static class AppDataLeftoverDiscovery
 
                 try
                 {
-                    var newest = new[]
-                    {
-                        File.GetCreationTimeUtc(file), File.GetLastWriteTimeUtc(file), File.GetLastAccessTimeUtc(file),
-                    }.Max();
+                    // One FileInfo caches its attribute read: one call for all three times, not three.
+                    var info = new FileInfo(file);
+                    var newest = info.CreationTimeUtc;
+                    if (info.LastWriteTimeUtc > newest)
+                        newest = info.LastWriteTimeUtc;
+                    if (info.LastAccessTimeUtc > newest)
+                        newest = info.LastAccessTimeUtc;
+
                     if (now - new DateTimeOffset(newest, TimeSpan.Zero) < MinimumAge)
+                    {
                         recent = true;
+                        return;
+                    }
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
@@ -208,7 +225,11 @@ public static class AppDataLeftoverDiscovery
             }
 
             foreach (var sub in SafeEnumerate.Directories(dir, () => incomplete = true))
+            {
                 Walk(sub, depth + 1);
+                if (recent || incomplete)
+                    return;
+            }
         }
 
         Walk(folder, 0);
@@ -219,6 +240,79 @@ public static class AppDataLeftoverDiscovery
             return FolderUse.Unknown;
 
         return scanned == 0 ? FolderUse.Empty : FolderUse.Idle;
+    }
+
+    /// <summary>The most recent write time of anything found within the scan bound, the folder's own
+    /// timestamp counts too, so an empty folder is judged by when it was last touched, not treated as
+    /// infinitely old.</summary>
+    internal static DateTimeOffset NewestWriteTime(string directory, CancellationToken cancellationToken)
+    {
+        // Anything that stops the walk from seeing a folder in full means "recent" (MaxValue), so the
+        // folder is never offered: a partial listing could hide the file that proves it is in use.
+        DateTimeOffset newest;
+        try
+        {
+            if (!Directory.Exists(directory))
+                return DateTimeOffset.MaxValue; // gone since it was listed; nothing to judge
+
+            newest = new DateTimeOffset(Directory.GetLastWriteTimeUtc(directory), TimeSpan.Zero);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return DateTimeOffset.MaxValue;
+        }
+
+        var scanned = 0;
+        var listingFailed = false;
+        // Hitting the file cap or the depth limit is a partial view too: the newest file may be exactly the
+        // part that was not looked at, so it counts like a failed listing.
+        var truncated = false;
+        void OnListingError() => listingFailed = true;
+
+        void Walk(string dir, int depth)
+        {
+            if (depth > MaxScanDepth || scanned >= MaxFilesScannedPerCandidate)
+            {
+                truncated = true;
+                return;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            foreach (var file in SafeEnumerate.Files(dir, OnListingError))
+            {
+                if (scanned++ >= MaxFilesScannedPerCandidate)
+                {
+                    truncated = true;
+                    return;
+                }
+
+                try
+                {
+                    var written = File.GetLastWriteTimeUtc(file);
+                    if (written > newest.UtcDateTime)
+                        newest = new DateTimeOffset(written, TimeSpan.Zero);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    // Best-effort housekeeping only.
+                }
+            }
+
+            foreach (var sub in SafeEnumerate.Directories(dir, OnListingError))
+            {
+                if (scanned >= MaxFilesScannedPerCandidate)
+                {
+                    truncated = true;
+                    return;
+                }
+
+                Walk(sub, depth + 1);
+            }
+        }
+
+        Walk(directory, 0);
+        return listingFailed || truncated ? DateTimeOffset.MaxValue : newest;
     }
 
     internal enum FolderUse

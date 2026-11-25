@@ -928,6 +928,15 @@ public class RegistryCleanupUnavailableLocationTests
     }
 
     [Fact]
+    public void A_unc_path_is_never_probed_so_no_server_is_contacted()
+    {
+        var probed = 0;
+        Assert.True(RegistryCleanupScanner.ExistsInAnyView(
+            @"\\unreachable\share\x.exe", _ => true, _ => { probed++; return false; }));
+        Assert.Equal(0, probed);
+    }
+
+    [Fact]
     public void A_relative_path_names_no_drive_and_is_not_judged_unavailable()
     {
         Assert.False(RegistryCleanupScanner.IsOnUnavailableLocation("app.exe", _ => false));

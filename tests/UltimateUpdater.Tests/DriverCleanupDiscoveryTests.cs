@@ -4,8 +4,7 @@ namespace UltimateUpdater.Tests;
 
 /// <summary>
 /// The pure judgment behind the driver cleanup category, driven entirely from fabricated device/package
-/// lists: no real hardware, no SetupAPI call and no elevation required. Mirrors the discipline
-/// <see cref="LeftoverInstallSafetyTests"/> already applies to its own "plausible, never proven" gate.
+/// lists: no real hardware, no SetupAPI call and no elevation required.
 /// </summary>
 public class DriverCleanupDiscoveryTests
 {

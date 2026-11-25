@@ -367,17 +367,26 @@ public static class RegistryCleanupScanner
     /// would offer a working registration for deletion. Such a path, and any path the file system refuses to
     /// evaluate, therefore counts as existing.
     /// </summary>
-    internal static bool ExistsInAnyView(string path, Func<string, bool> isRootReady)
+    internal static bool ExistsInAnyView(string path, Func<string, bool> isRootReady) =>
+        ExistsInAnyView(path, isRootReady, ExistsByAttributes);
+
+    /// <summary>The same judgment with the file probe injected. A UNC path is decided before any probe: the
+    /// answer is "exists" either way, and a probe would make the machine connect and authenticate to a server
+    /// named by registry data, or stall on an unreachable one.</summary>
+    internal static bool ExistsInAnyView(string path, Func<string, bool> isRootReady, Func<string, bool> existsByAttributes)
     {
+        if (path.StartsWith(@"\\", StringComparison.Ordinal))
+            return true;
+
         try
         {
-            if (ExistsByAttributes(path))
+            if (existsByAttributes(path))
                 return true;
 
             foreach (var (native, wow) in WowRedirectedFolders.Value)
             {
                 if (path.StartsWith(native + @"\", StringComparison.OrdinalIgnoreCase)
-                    && ExistsByAttributes(wow + path[native.Length..]))
+                    && existsByAttributes(wow + path[native.Length..]))
                 {
                     return true;
                 }
@@ -478,47 +487,6 @@ public static class RegistryCleanupScanner
 
         _ => false,
     };
-
-    /// <summary>
-    /// Every real directory any installed program's uninstall entry claims as its own; InstallLocation
-    /// verbatim, plus the directory portion of a confidently-parsed DisplayIcon/UninstallString. Used by
-    /// the leftover-folder scanner to rule out a folder that a REAL, registered install still owns; unlike
-    /// the rest of this class, this reads every entry regardless of whether it looks broken.
-    /// </summary>
-    public static IReadOnlyList<string> AllUninstallInstallPaths()
-    {
-        var paths = new List<string>();
-        foreach (var root in WindowsRegistryRoots.Uninstall)
-        {
-            foreach (var subKeyName in SubKeyNames(root))
-            {
-                var keyPath = $@"{root}\{subKeyName}";
-
-                if (ReadValue(keyPath, "InstallLocation") is { Length: > 0 } location)
-                    paths.Add(location);
-
-                foreach (var raw in new[] { ReadValue(keyPath, "DisplayIcon"), ReadValue(keyPath, "UninstallString") })
-                {
-                    if (RegistryCleanupSafety.ExtractFilePath(raw, ExistsInAnyView) is { Length: > 0 } filePath)
-                    {
-                        try
-                        {
-                            if (Path.GetDirectoryName(filePath) is { Length: > 0 } directory)
-                                paths.Add(directory);
-                        }
-                        catch (ArgumentException)
-                        {
-                            // A malformed registry value with invalid path characters is simply skipped; this
-                            // static method has no logger and feeds only LeftoverInstallDiscovery's best-effort
-                            // heuristic, never a delete. Deliberate.
-                        }
-                    }
-                }
-            }
-        }
-
-        return paths;
-    }
 
     private static List<RegistryFinding> ScanAppPaths(CancellationToken cancellationToken)
     {
