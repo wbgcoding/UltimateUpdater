@@ -29,6 +29,7 @@ public class AppDataCleanerLeftoverTests : IDisposable
     public void Unreadable_copies_the_app_set_aside_are_deleted_and_look_alikes_are_kept()
     {
         var history = Touch(_dir, "cleanup-history.corrupt-20260102-030405.json");
+        var historyFixed = Touch(_dir, "cleanup-history.corrupt.json");
         var settings = Touch(_dir, "settings.json.corrupt-20260102-030405");
         var settingsKept = Touch(_dir, "settings.json");
         var stranger = Touch(_dir, "cleanup-history.corrupt-notatime.json");
@@ -38,6 +39,7 @@ public class AppDataCleanerLeftoverTests : IDisposable
 
         Assert.False(failed);
         Assert.False(File.Exists(history));
+        Assert.False(File.Exists(historyFixed));
         Assert.False(File.Exists(settings));
         Assert.True(File.Exists(settingsKept));
         Assert.True(File.Exists(stranger));

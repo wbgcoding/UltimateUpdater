@@ -133,10 +133,11 @@ public static class AppDataCleaner
     internal const string CrashNoteName = "UltimateUpdater-crash.log";
 
     /// <summary>The names the app gives an unreadable cleanup history and an unreadable settings file when
-    /// it keeps them aside: the original name, ".corrupt-" and a local timestamp.</summary>
+    /// it keeps them aside: the original name, ".corrupt" and, for the settings file and the history of older
+    /// versions, "-" and a local timestamp.</summary>
     private static readonly Regex[] CorruptCopyPatterns =
     [
-        new(@"^cleanup-history\.corrupt-[0-9]{8}-[0-9]{6}\.json$", RegexOptions.CultureInvariant),
+        new(@"^cleanup-history\.corrupt(-[0-9]{8}-[0-9]{6})?\.json$", RegexOptions.CultureInvariant),
         new(@"^settings\.json\.corrupt-[0-9]{8}-[0-9]{6}$", RegexOptions.CultureInvariant),
     ];
 

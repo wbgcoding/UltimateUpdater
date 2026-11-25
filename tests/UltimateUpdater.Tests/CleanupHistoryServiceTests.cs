@@ -90,8 +90,30 @@ public class CleanupHistoryServiceTests
 
         var reloaded = new CleanupHistoryService(new LoggingService(), path).Load();
         Assert.Equal(timestamp, Assert.Single(reloaded).Timestamp);
-        var aside = Assert.Single(Directory.GetFiles(Path.GetDirectoryName(path)!, "history.corrupt-*.json"));
+        var aside = Assert.Single(Directory.GetFiles(Path.GetDirectoryName(path)!, "history.corrupt*.json"));
         Assert.Equal(corrupt, File.ReadAllText(aside));
+    }
+
+    /// <summary>Two unreadable files in a row (even within one second) both let the new run land, and only one
+    /// copy is kept aside.</summary>
+    [Fact]
+    public void Two_corrupt_loads_in_a_row_keep_one_copy_and_lose_no_entry()
+    {
+        var path = TempHistoryPath();
+        var service = new CleanupHistoryService(new LoggingService(), path);
+
+        File.WriteAllText(path, "[{\"timestamp\": 1");
+        var first = DateTimeOffset.UtcNow;
+        service.Append(Entry(first, 1));
+
+        File.WriteAllText(path, "[{\"timestamp\": 2");
+        var second = first.AddMinutes(1);
+        service.Append(Entry(second, 2));
+
+        var reloaded = new CleanupHistoryService(new LoggingService(), path).Load();
+        Assert.Equal(second, Assert.Single(reloaded).Timestamp);
+        var aside = Assert.Single(Directory.GetFiles(Path.GetDirectoryName(path)!, "history.corrupt*.json"));
+        Assert.Equal("[{\"timestamp\": 2", File.ReadAllText(aside));
     }
 
     /// <summary>The service-layer half of the deletion contract: the file on disk actually changes.</summary>
@@ -225,7 +247,7 @@ public class CleanupHistoryServiceTests
 
         service.Append(Entry(DateTimeOffset.UtcNow, 7));
 
-        Assert.Single(Directory.GetFiles(directory, "*.corrupt-*.json"));
+        Assert.Single(Directory.GetFiles(directory, "*.corrupt*.json"));
         Assert.Single(service.Load());
     }
 }

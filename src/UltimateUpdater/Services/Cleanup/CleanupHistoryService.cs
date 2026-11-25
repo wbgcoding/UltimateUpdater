@@ -161,9 +161,10 @@ public sealed class CleanupHistoryService
         catch (JsonException ex)
         {
             var directory = Path.GetDirectoryName(_path) ?? string.Empty;
-            var aside = Path.Combine(
-                directory, $"{Path.GetFileNameWithoutExtension(_path)}.corrupt-{DateTime.Now:yyyyMMdd-HHmmss}.json");
-            File.Move(_path, aside);
+            // One fixed name, replaced each time: a second unreadable file within the same second no longer
+            // makes the move throw and lose the new entry, and the copies never pile up.
+            var aside = Path.Combine(directory, $"{Path.GetFileNameWithoutExtension(_path)}.corrupt.json");
+            File.Move(_path, aside, overwrite: true);
             _logging.Warn($"The cleanup history could not be parsed ({ex.Message}); kept it as '{aside}' and started a new one.");
             return [];
         }
