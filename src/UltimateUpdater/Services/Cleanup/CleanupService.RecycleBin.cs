@@ -225,8 +225,18 @@ public partial class CleanupService
     }
 
     /// <summary>How one drive's bin is emptied: the shell's whole-bin call, or exactly these rows.</summary>
+    /// <param name="FoundCount">How many items the bin held when the plan was made; the whole-bin call needs
+    /// the bin to still hold exactly that many.</param>
+    /// <param name="FallbackEntries">The rows to delete one by one when the whole-bin call is no longer safe.</param>
     internal readonly record struct RecycleBinDrivePlan(
-        string Root, string Label, bool UseShellEmpty, IReadOnlyList<CleanupEntry> Entries);
+        string Root, string Label, bool UseShellEmpty, IReadOnlyList<CleanupEntry> Entries,
+        int FoundCount = 0, IReadOnlyList<CleanupEntry>? FallbackEntries = null);
+
+    /// <summary>The shell's whole-bin call destroys everything in the bin, including an item recycled after
+    /// the plan was made, so it is only taken while a fresh count still equals the planned one. A failed
+    /// query proves nothing and counts as a mismatch.</summary>
+    internal static bool ShellEmptyStillMatchesPlan(RecycleBinDrivePlan plan, bool queried, int itemsNow) =>
+        queried && itemsNow == plan.FoundCount;
 
     /// <summary>
     /// Which drives are emptied and how. The shell's fast path is only taken for a drive where every listed
@@ -293,7 +303,8 @@ public partial class CleanupService
             var complete = drive.DetailsAvailable && !drive.AgeFilterHidItems && drive.SkippedIndexCount == 0
                 && drive.FoundCount == drive.ListedCount && selected.Count == drive.ListedCount
                 && (confirmedOnDrive is null || confirmedOnDrive == drive.FoundCount);
-            plans.Add(new RecycleBinDrivePlan(drive.Root, drive.Label, complete, complete ? [] : selected));
+            plans.Add(new RecycleBinDrivePlan(
+                drive.Root, drive.Label, complete, complete ? [] : selected, drive.FoundCount, selected));
         }
 
         return plans;
@@ -341,28 +352,40 @@ public partial class CleanupService
 
         foreach (var plan in plans)
         {
+            var rowEntries = plan.Entries;
             if (plan.UseShellEmpty)
             {
                 pause?.Wait(cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
 
-                TryQueryDrive(plan.Root, out var driveBytesBefore, out var driveItemsBefore);
-                EmptyDriveThroughShell(plan.Root);
+                var queried = TryQueryDrive(plan.Root, out var driveBytesBefore, out var driveItemsBefore);
+                if (!ShellEmptyStillMatchesPlan(plan, queried, driveItemsBefore))
+                {
+                    // Something arrived since the plan (or the count is unreadable): the whole-bin call would
+                    // take it unseen, so only the planned rows go.
+                    logging.Warn($"Cleanup: the recycle bin on '{plan.Root}' no longer matches what was confirmed; emptying the confirmed items one by one.");
+                    rowEntries = plan.FallbackEntries ?? [];
+                    totalSteps += rowEntries.Count - 1;
+                }
+                else
+                {
+                    EmptyDriveThroughShell(plan.Root);
 
-                // Derived from what is ACTUALLY still there afterwards: the shell reports failure by
-                // HRESULT and can also simply leave items behind that something else had open.
-                TryQueryDrive(plan.Root, out var driveBytesAfter, out var driveItemsAfter);
-                freed += Math.Max(0, driveBytesBefore - driveBytesAfter);
-                deleted += Math.Max(0, driveItemsBefore - driveItemsAfter);
-                skipped += Math.Max(0, driveItemsAfter);
-                skippedBytes += Math.Max(0, driveBytesAfter);
+                    // Derived from what is ACTUALLY still there afterwards: the shell reports failure by
+                    // HRESULT and can also simply leave items behind that something else had open.
+                    TryQueryDrive(plan.Root, out var driveBytesAfter, out var driveItemsAfter);
+                    freed += Math.Max(0, driveBytesBefore - driveBytesAfter);
+                    deleted += Math.Max(0, driveItemsBefore - driveItemsAfter);
+                    skipped += Math.Max(0, driveItemsAfter);
+                    skippedBytes += Math.Max(0, driveBytesAfter);
 
-                stepsDone++;
-                progress?.Report(new CleanupProgress(plan.Label, Percent(stepsDone, totalSteps), freed));
-                continue;
+                    stepsDone++;
+                    progress?.Report(new CleanupProgress(plan.Label, Percent(stepsDone, totalSteps), freed));
+                    continue;
+                }
             }
 
-            foreach (var entry in plan.Entries)
+            foreach (var entry in rowEntries)
             {
                 pause?.Wait(cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
@@ -532,7 +555,7 @@ public partial class CleanupService
             if (IsReparsePoint(entry.Path))
             {
                 // A link as the recycled item itself: only the link goes, never what it points at.
-                if (!RemoveRecycledLink(entry.Path))
+                if (!RemoveRecycledLink(binFinalPath, entry.Path))
                     return false;
             }
             else if (Directory.Exists(entry.Path))
@@ -586,21 +609,6 @@ public partial class CleanupService
     }
 
     /// <summary>Removes a link (junction, symlink) that is itself the recycled item, without following it.</summary>
-    private static bool RemoveRecycledLink(string path)
-    {
-        if (Directory.Exists(path))
-        {
-            Directory.Delete(path, recursive: false);
-            return true;
-        }
-
-        if (File.Exists(path))
-        {
-            ClearReadOnlyAttribute(path);
-            File.Delete(path);
-            return true;
-        }
-
-        return false;
-    }
+    private static bool RemoveRecycledLink(string binFinalPath, string path) =>
+        VerifiedDelete.TryDeleteLink(binFinalPath, path) == VerifiedDelete.Outcome.Deleted;
 }

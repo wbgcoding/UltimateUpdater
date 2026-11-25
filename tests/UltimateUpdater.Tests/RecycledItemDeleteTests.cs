@@ -233,6 +233,24 @@ public class RecycledItemDeleteTests : IDisposable
     }
 
     [Fact]
+    public void A_dangling_junction_as_the_recycled_item_is_removed_and_counted_deleted()
+    {
+        var gone = Path.Combine(_root, "gone-target");
+        Directory.CreateDirectory(gone);
+        var content = Path.Combine(BinFolder, "$R8");
+        Directory.CreateDirectory(BinFolder);
+        CreateJunction(content, gone);
+        Directory.Delete(gone);
+
+        Assert.True(Delete(content));
+
+        Assert.Null(new FileInfo(content).LinkTarget);
+        Assert.False(new DirectoryInfo(content).Exists);
+        Assert.False(File.Exists(content));
+        Assert.Empty(Directory.EnumerateFileSystemEntries(BinFolder));
+    }
+
+    [Fact]
     public void A_junction_as_the_recycled_item_is_only_unlinked_and_its_target_survives()
     {
         var outside = MakeOutside();

@@ -715,6 +715,33 @@ public class CleanupServiceTests : IDisposable
         Assert.True(plan.UseShellEmpty);
     }
 
+    /// <summary>The whole-bin call also destroys an item recycled between the plan and the call, so it needs a
+    /// fresh count equal to the planned one; a plan of 3 over a bin that now holds 4 (or one that cannot be
+    /// counted) falls back to the three planned rows.</summary>
+    [Fact]
+    public void The_whole_bin_call_needs_the_fresh_count_to_equal_the_planned_one()
+    {
+        const string a = @"C:\$Recycle.Bin\S-1-5-21-1-2-3-1001\$RAAA.txt";
+        const string b = @"C:\$Recycle.Bin\S-1-5-21-1-2-3-1001\$RBBB.txt";
+        const string c = @"C:\$Recycle.Bin\S-1-5-21-1-2-3-1001\$RCCC.txt";
+        CleanupEntry[] fresh =
+        [
+            RecycledFile(a, @"C:\Users\x\a.txt", 100),
+            RecycledFile(b, @"C:\Users\x\b.txt", 100),
+            RecycledFile(c, @"C:\Users\x\c.txt", 100),
+        ];
+        RecycleBinDriveSummary[] drives = [new(@"C:\", @"C:\", 3, 3, 300, 300, DetailsAvailable: true)];
+
+        var plan = Assert.Single(CleanupService.PlanRecycleBinEmpty(fresh, drives, null));
+
+        Assert.True(plan.UseShellEmpty);
+        Assert.Equal(3, plan.FoundCount);
+        Assert.Equal([a, b, c], plan.FallbackEntries!.Select(e => e.Path).Order());
+        Assert.True(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: true, itemsNow: 3));
+        Assert.False(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: true, itemsNow: 4));
+        Assert.False(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: false, itemsNow: 0));
+    }
+
     /// <summary>Nothing confirmed means nothing deleted, however much the bin holds now.</summary>
     [Fact]
     public void PlanRecycleBinEmpty_deletes_nothing_when_nothing_was_confirmed()
