@@ -91,6 +91,61 @@ public class NetworkTargetsTests
         });
     }
 
+    /// <summary>
+    /// Hosts of the table that receive the id or name of an installed item, with the words the README's
+    /// privacy text must use for them. A host new to the table fails the test until it is sorted into one list.
+    /// </summary>
+    private static readonly Dictionary<string, string> HostsThatReceiveInstalledItems = new(StringComparer.Ordinal)
+    {
+        ["api.github.com"] = "repository names",
+        ["gitlab.com"] = "GitLab",
+        ["www.nvidia.com"] = "NVIDIA",
+        ["gfwsl.geforce.com"] = "NVIDIA",
+        ["pypi.org"] = "PyPI",
+        ["registry.npmjs.org"] = "npm",
+        ["community.chocolatey.org"] = "Chocolatey",
+        ["api.nuget.org"] = "NuGet",
+        ["rubygems.org"] = "RubyGems",
+        ["repo.packagist.org"] = "Packagist",
+        ["www.powershellgallery.com"] = "PowerShell Gallery",
+        ["marketplace.visualstudio.com"] = "VS Code Marketplace",
+        ["api.steampowered.com"] = "Steam",
+        ["registry.ollama.ai"] = "Ollama",
+    };
+
+    /// <summary>Hosts that only serve fixed files or releases of the tool itself: nothing about the PC goes with the request.</summary>
+    private static readonly string[] HostsWithoutInstalledItemData =
+    [
+        "release-assets.githubusercontent.com", "objects.githubusercontent.com", "static.rust-lang.org",
+        "nodejs.org", "www.python.org", "dl.google.com", "storage.googleapis.com", "127.0.0.1:11434",
+    ];
+
+    [Fact]
+    public void The_readme_privacy_text_names_every_host_that_receives_an_installed_item()
+    {
+        var readme = Path.Combine(RepoRoot(), "README.md");
+        var text = File.ReadAllText(readme);
+        var start = text.IndexOf("## Privacy", StringComparison.Ordinal);
+        Assert.True(start >= 0, "README.md has no Privacy section");
+        var section = text[start..];
+        var next = section.IndexOf("\n## ", 3, StringComparison.Ordinal);
+        if (next > 0)
+            section = section[..next];
+
+        foreach (var host in CodeTableHosts())
+        {
+            if (HostsWithoutInstalledItemData.Contains(host))
+                continue;
+
+            Assert.True(
+                HostsThatReceiveInstalledItems.TryGetValue(host, out var words),
+                $"'{host}' is in the network table but not sorted into the privacy test: does it receive an installed item?");
+            Assert.True(
+                section.Contains(words!, StringComparison.OrdinalIgnoreCase),
+                $"The README privacy text does not mention '{words}' ({host}).");
+        }
+    }
+
     private static SettingsViewModel CreateSettingsViewModel(Func<string, bool>? isNotInstalled)
     {
         var logging = new LoggingService();

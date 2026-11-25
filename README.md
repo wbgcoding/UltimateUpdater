@@ -144,8 +144,20 @@ No account, no ads. Nothing about you or your PC is sent to the author. The app 
   PyPI, npm, Windows Update),
 - the download hosts those sources name, with a header-only request to show the download size,
 - NVIDIA's driver lookup, which receives your GPU model and Windows version, when an NVIDIA GPU is present,
-- GitHub, for the app's own update check (automatic only when turned on in Settings, off by default) and,
-  when you ask for it, to repair winget.
+- GitHub, for the app's own update check (automatic only when turned on in Settings, off by default), to
+  repair winget when you ask for it, and on every scan to look up the newest release of installed programs
+  that publish their releases there: it receives their repository names (owner and project), taken from
+  the program's own uninstall entry, plus the names of a few tools such as the gh extensions, deno, bun and
+  uv, and GitLab, when you open the changelog of an update whose notes are published there (it receives
+  the project path and release tag),
+- Steam's news API, which receives the ids of your installed games to find their latest patch notes,
+- the VS Code Marketplace, which receives the ids of your installed extensions,
+- the Ollama registry, which receives the names of your installed library models,
+- the package registries of the managers on your PC (PyPI, npm, NuGet, Chocolatey, RubyGems, Packagist,
+  the PowerShell Gallery), which receive the names of your installed packages.
+
+Only sources found on your PC are queried, and each of the lookups above can be avoided by switching that
+source off in Settings.
 
 Each of these hosts sees your IP address, as with any download. When the Windows proxy fails, requests are
 retried without it and the log notes that. Settings, history, logs and crash dumps stay on your PC, and the log
