@@ -962,6 +962,30 @@ public class DataFolderTests
         }
     }
 
+    /// <summary>A second merge into the same folder finds the first merge's legacy copy in place of the user's
+    /// own file; the backup of the user's file from the first merge must survive it.</summary>
+    [Fact]
+    public void A_second_merge_keeps_the_first_backup_of_the_users_own_file()
+    {
+        var source = NewTempDir("merge-twice-source");
+        var destination = NewTempDir("merge-twice-destination");
+        File.WriteAllText(Path.Combine(destination, "settings.json"), "A");
+        File.WriteAllText(Path.Combine(source, "settings.json"), "L");
+        try
+        {
+            Assert.True(AppPaths.TryMigrateInto(source, destination));
+            Assert.True(AppPaths.TryMigrateInto(source, destination));
+
+            Assert.Equal("L", File.ReadAllText(Path.Combine(destination, "settings.json")));
+            Assert.Equal("A", File.ReadAllText(Path.Combine(destination, "settings.json.before-migration")));
+        }
+        finally
+        {
+            Directory.Delete(source, recursive: true);
+            Directory.Delete(destination, recursive: true);
+        }
+    }
+
     /// <summary>A locked log is not worth blocking the migration for: logs are rewritten from scratch.</summary>
     [Fact]
     public void A_locked_log_does_not_block_the_migration()
