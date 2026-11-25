@@ -121,6 +121,14 @@ public sealed partial class UninstallerViewModel
             var results = await Task.Run(
                 () => runner.RunAsync(rows.Select(row => row.Entry).ToList(), update => Post(() => ApplyUpdate(byEntry, update)), cts.Token));
 
+            // The row shows only the short reason; the tool's own words and the exit code go to the log.
+            foreach (var failed in results.Where(result => result.Outcome == UninstallOutcome.Failed))
+            {
+                _logging.Warn(
+                    $"Uninstall of '{failed.Entry.Name}' failed: {failed.Reason} (exit code {failed.ExitCode?.ToString() ?? "none"}"
+                    + (string.IsNullOrWhiteSpace(failed.Detail) ? ")" : $", {failed.Detail})"));
+            }
+
             Post(() =>
             {
                 foreach (var result in results)

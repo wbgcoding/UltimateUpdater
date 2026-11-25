@@ -464,6 +464,28 @@ public class UninstallerViewModelTests
     }
 
     [Fact]
+    public async Task A_failed_removal_logs_its_reason_exit_code_and_the_tools_own_words()
+    {
+        LocalizationService.Instance.Apply("en");
+        var lines = new List<string>();
+        var backend = new FakeBackend(Listing("Good"), Listing("Bad"));
+        backend.Handler = (entry, _) => Task.FromResult(entry.Name == "Bad"
+            ? new UninstallExecutionResult(null, "the winget id asked for is not the one winget lists")
+            : new UninstallExecutionResult(0));
+        var vm = new UninstallerViewModel(backend, new LoggingService(lines.Add));
+        await vm.LoadAsync();
+        vm.SelectAllCommand.Execute(null);
+        vm.Confirm = (_, _, _) => true;
+
+        await vm.UninstallSelectedCommand.ExecuteAsync(null);
+
+        var line = Assert.Single(lines, l => l.Contains("Uninstall of 'Bad' failed"));
+        Assert.Contains("exit code none", line);
+        Assert.Contains("the winget id asked for is not the one winget lists", line);
+        Assert.DoesNotContain(lines, l => l.Contains("'Good' failed"));
+    }
+
+    [Fact]
     public async Task Stop_lets_the_running_removal_finish_and_leaves_the_rest_not_started()
     {
         var (vm, backend) = await LoadedAsync(Listing("First"), Listing("Second"), Listing("Third"));
