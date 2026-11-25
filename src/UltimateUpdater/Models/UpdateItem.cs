@@ -1,8 +1,17 @@
+using System.Runtime.CompilerServices;
+
 namespace UltimateUpdater.Models;
 
-/// <summary>One row in the update table. Immutable snapshot from a scan; re-fetched by Id at install time, never held as a live handle.</summary>
-public sealed class UpdateItem
+/// <summary>
+/// One row in the update table. Immutable snapshot from a scan; re-fetched by Id at install time, never held as a live handle.
+/// A record for its <c>with</c> copies only: two items are equal only when they are the same instance.
+/// </summary>
+public sealed record UpdateItem
 {
+    public bool Equals(UpdateItem? other) => ReferenceEquals(this, other);
+
+    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
+
     public required string Id { get; init; }
     public required string SourceId { get; init; }
     public required UpdateCategory Category { get; init; }
@@ -63,26 +72,7 @@ public sealed class UpdateItem
 
     /// <summary>A copy of this item carrying <paramref name="scope"/> (see <see cref="InstallScope"/>); an
     /// unrecognised value becomes null.</summary>
-    public UpdateItem WithInstallScope(string? scope) => new()
-    {
-        Id = Id,
-        SourceId = SourceId,
-        Category = Category,
-        Name = Name,
-        InstalledVersion = InstalledVersion,
-        AvailableVersion = AvailableVersion,
-        IsCritical = IsCritical,
-        Tier = Tier,
-        OpenTarget = OpenTarget,
-        Children = Children,
-        Meta = Meta,
-        DownloadSize = DownloadSize,
-        PublishDate = PublishDate,
-        PinnedVersion = PinnedVersion,
-        IsRollback = IsRollback,
-        RequiredByOthers = RequiredByOthers,
-        InstallScope = InstallScopes.Normalize(scope),
-    };
+    public UpdateItem WithInstallScope(string? scope) => this with { InstallScope = InstallScopes.Normalize(scope) };
 
     /// <summary>This run is a deliberate downgrade, so the history entry it produces records
     /// itself as a rollback rather than an ordinary update.</summary>
@@ -90,25 +80,8 @@ public sealed class UpdateItem
 
     /// <summary>
     /// A rollback's own copy: every field carried over, plus the older target version pinned as both the install
-    /// target and the history entry's "installed to". A plain class, so this is the one place the copy is written.
+    /// target and the history entry's "installed to".
     /// </summary>
-    public UpdateItem WithPinnedVersion(string version) => new()
-    {
-        Id = Id,
-        SourceId = SourceId,
-        Category = Category,
-        Name = Name,
-        InstalledVersion = InstalledVersion,
-        AvailableVersion = version,
-        IsCritical = IsCritical,
-        Tier = Tier,
-        OpenTarget = OpenTarget,
-        Children = Children,
-        Meta = Meta,
-        DownloadSize = DownloadSize,
-        PublishDate = PublishDate,
-        PinnedVersion = version,
-        RequiredByOthers = RequiredByOthers,
-        IsRollback = true,
-    };
+    public UpdateItem WithPinnedVersion(string version) =>
+        this with { AvailableVersion = version, PinnedVersion = version, IsRollback = true };
 }
