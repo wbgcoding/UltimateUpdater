@@ -45,11 +45,22 @@ public static class SingleInstanceService
     internal static string BuildMutexName(string userSid) =>
         $"{MutexBaseName}-{new string([.. userSid.Where(c => char.IsAsciiLetterOrDigit(c) || c == '-')])}";
 
-    private static string CurrentUserSid => WindowsIdentity.GetCurrent().User?.Value ?? "unknown";
+    private static string CurrentUserSid
+    {
+        get
+        {
+            using var identity = WindowsIdentity.GetCurrent();
+            return identity.User?.Value ?? "unknown";
+        }
+    }
 
-    private static string PipeName => _pipeName ??= BuildPipeName(
-        System.Diagnostics.Process.GetCurrentProcess().SessionId,
-        CurrentUserSid);
+    private static int CurrentSessionId()
+    {
+        using var process = System.Diagnostics.Process.GetCurrentProcess();
+        return process.SessionId;
+    }
+
+    private static string PipeName => _pipeName ??= BuildPipeName(CurrentSessionId(), CurrentUserSid);
 
     /// <summary>
     /// Reads the request line a client sent, bounded in time and length. Null when the client was silent
@@ -253,43 +264,102 @@ public static class SingleInstanceService
         }
     }
 
-    /// <summary>Runs for the app's lifetime; each connection is one focus request.</summary>
-    public static void StartListening(Action onFocusRequested) =>
-        StartListening(onFocusRequested, PipeName, CancellationToken.None);
+    /// <summary>The wait before the listener makes a new pipe instance, and the first wait after a failure.</summary>
+    internal static readonly TimeSpan ListenerRetryDelay = TimeSpan.FromMilliseconds(250);
 
-    internal static void StartListening(Action onFocusRequested, string pipeName, CancellationToken stop)
+    /// <summary>The longest wait between two failed attempts to create the pipe.</summary>
+    internal static readonly TimeSpan ListenerMaxRetryDelay = TimeSpan.FromSeconds(30);
+
+    /// <summary>The wait after <paramref name="consecutiveFailures"/> failed attempts in a row: the base delay
+    /// for none or one, then doubling up to <see cref="ListenerMaxRetryDelay"/>.</summary>
+    internal static TimeSpan NextRetryDelay(int consecutiveFailures, TimeSpan baseDelay)
     {
+        if (consecutiveFailures <= 1)
+            return baseDelay;
+
+        var doublings = Math.Min(consecutiveFailures - 1, 20);
+        var delay = TimeSpan.FromTicks(baseDelay.Ticks * (1L << doublings));
+        return delay > ListenerMaxRetryDelay ? ListenerMaxRetryDelay : delay;
+    }
+
+    /// <summary>Runs for the app's lifetime; each connection is one focus request.</summary>
+    public static void StartListening(Action onFocusRequested, LoggingService? logging = null) =>
+        StartListening(onFocusRequested, PipeName, CancellationToken.None, logging);
+
+    internal static void StartListening(
+        Action onFocusRequested, string pipeName, CancellationToken stop, LoggingService? logging = null,
+        TimeSpan? retryDelay = null)
+    {
+        var baseDelay = retryDelay ?? ListenerRetryDelay;
+
         _ = Task.Run(async () =>
         {
+            var failures = 0;
+
             while (!stop.IsCancellationRequested)
             {
+                NamedPipeServerStream? server = null;
                 try
                 {
-                    await using var server = new NamedPipeServerStream(
+                    server = new NamedPipeServerStream(
                         pipeName, PipeDirection.InOut, maxNumberOfServerInstances: 1, PipeTransmissionMode.Byte, Options);
-                    await server.WaitForConnectionAsync(stop);
-
-                    await using var writer = new StreamWriter(server) { AutoFlush = true };
-                    using var reader = new StreamReader(server, leaveOpen: true);
-
-                    if (await ReadRequestAsync(reader, MaxRequestChars, RequestTimeout) == FocusRequest)
-                    {
-                        // Answered before the window is raised: raising it blocks on the dispatcher, and the waiting
-                        // instance must not sit through a scan before it hears back.
-                        await writer.WriteLineAsync(FocusAck);
-                        onFocusRequested();
-                    }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // Must not escape: an unhandled exception here ends the loop for good, and every later launch would
-                    // report the app as already running instead of raising its window. Re-creating the pipe instance
-                    // while the previous client handle is still open raises UnauthorizedAccessException, which this
-                    // guards against.
+                    // The name is taken (a stale or foreign server of this user) or the system refuses a pipe. Said
+                    // once per streak, and each further attempt waits longer, so it neither floods the log nor
+                    // burns a first-chance exception four times a second for the whole run.
+                    if (failures++ == 0)
+                        logging?.Warn($"The single-instance listener could not create its pipe ({ex.GetType().Name}: {ex.Message}); retrying with a growing delay.");
+                }
+
+                if (server is not null)
+                {
+                    if (failures > 0)
+                    {
+                        logging?.Info($"The single-instance listener is running again after {failures} failed attempts.");
+                        failures = 0;
+                    }
+
+                    try
+                    {
+                        await using (server)
+                        {
+                            await server.WaitForConnectionAsync(stop);
+
+                            await using var writer = new StreamWriter(server) { AutoFlush = true };
+                            using var reader = new StreamReader(server, leaveOpen: true);
+
+                            if (await ReadRequestAsync(reader, MaxRequestChars, RequestTimeout) == FocusRequest)
+                            {
+                                // Answered before the window is raised: raising it blocks on the dispatcher, and the waiting
+                                // instance must not sit through a scan before it hears back.
+                                await writer.WriteLineAsync(FocusAck);
+                                onFocusRequested();
+                            }
+                        }
+                    }
+                    catch (OperationCanceledException) when (stop.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                    catch (Exception)
+                    {
+                        // Must not escape: an unhandled exception here ends the loop for good, and every later launch would
+                        // report the app as already running instead of raising its window. A client that vanished
+                        // mid-request is routine, so it is not logged.
+                    }
                 }
 
                 // Also stops a failure that repeats immediately from spinning a core.
-                await Task.Delay(250);
+                try
+                {
+                    await Task.Delay(NextRetryDelay(failures, baseDelay), stop);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
             }
         });
     }

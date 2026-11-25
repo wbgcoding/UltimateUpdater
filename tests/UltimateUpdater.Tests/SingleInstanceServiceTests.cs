@@ -245,4 +245,56 @@ public class SingleInstanceServiceTests
             stop.Cancel();
         }
     }
+
+    [Fact]
+    public void The_retry_wait_doubles_after_each_failure_and_stops_at_thirty_seconds()
+    {
+        var baseDelay = TimeSpan.FromMilliseconds(250);
+
+        Assert.Equal(baseDelay, SingleInstanceService.NextRetryDelay(0, baseDelay));
+        Assert.Equal(baseDelay, SingleInstanceService.NextRetryDelay(1, baseDelay));
+        Assert.Equal(TimeSpan.FromMilliseconds(500), SingleInstanceService.NextRetryDelay(2, baseDelay));
+        Assert.Equal(TimeSpan.FromSeconds(1), SingleInstanceService.NextRetryDelay(3, baseDelay));
+        Assert.Equal(TimeSpan.FromSeconds(30), SingleInstanceService.NextRetryDelay(40, baseDelay));
+        Assert.Equal(TimeSpan.FromSeconds(30), SingleInstanceService.NextRetryDelay(int.MaxValue, baseDelay));
+    }
+
+    [Fact]
+    public async Task A_pipe_name_that_is_taken_is_logged_once_and_the_recovery_is_logged_too()
+    {
+        var name = SingleInstanceService.BuildPipeName(9997, "S-test-" + Guid.NewGuid().ToString("N"));
+        var lines = new List<string>();
+        var logging = new LoggingService(line => { lock (lines) lines.Add(line); });
+        using var stop = new CancellationTokenSource();
+
+        var occupier = new NamedPipeServerStream(
+            name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+        try
+        {
+            SingleInstanceService.StartListening(() => { }, name, stop.Token, logging, TimeSpan.FromMilliseconds(5));
+            await Task.Delay(600);
+
+            logging.Flush();
+            lock (lines)
+                Assert.Single(lines, line => line.Contains("could not create its pipe", StringComparison.Ordinal));
+
+            occupier.Dispose();
+
+            var recovered = false;
+            for (var i = 0; i < 100 && !recovered; i++)
+            {
+                await Task.Delay(100);
+                logging.Flush();
+                lock (lines)
+                    recovered = lines.Any(line => line.Contains("is running again", StringComparison.Ordinal));
+            }
+
+            Assert.True(recovered);
+        }
+        finally
+        {
+            stop.Cancel();
+            occupier.Dispose();
+        }
+    }
 }
