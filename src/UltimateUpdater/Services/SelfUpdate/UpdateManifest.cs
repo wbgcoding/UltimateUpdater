@@ -171,7 +171,9 @@ public static class UpdateManifest
     /// <summary>
     /// True when <paramref name="candidate"/> is strictly newer than <paramref name="current"/>, compared as
     /// semver including the pre-release part, so 1.2.0-beta.1 to 1.2.0 counts as an update. Unparseable
-    /// input fails closed.
+    /// input fails closed. Strict on purpose, unlike <see cref="PackageManagerParsers.IsNewer"/>: this decides
+    /// whether a downloaded program is installed, so anything that is not three-part SemVer is "not newer"
+    /// instead of being guessed at.
     /// </summary>
     public static bool IsNewer(string current, string candidate)
     {

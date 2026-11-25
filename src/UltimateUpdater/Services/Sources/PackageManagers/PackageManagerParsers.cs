@@ -997,6 +997,13 @@ public static class PackageManagerParsers
     /// cores are ordered by SemVer pre-release precedence when both suffixes are SemVer shaped, and are
     /// NOT offered when they are not (no confident order, so no row). Only an unparseable numeric core
     /// falls back to string inequality.
+    /// This is the generic comparator for tool output, which is lenient on purpose: a "v" prefix, two parts
+    /// and padding are accepted, and an odd format still shows a row. The pre-release order comes from
+    /// <see cref="SelfUpdate.UpdateManifest.ComparePrerelease"/>, so the two agree wherever both accept the
+    /// input. They differ in one place on purpose: <see cref="SelfUpdate.UpdateManifest.IsNewer"/> gates the
+    /// install of a downloaded program and answers "no" for anything that is not strict SemVer, while this
+    /// one would rather offer a row than hide an update. Python packages (<c>Pep440</c>) and the NVIDIA driver
+    /// number are their own schemes and call this only for what they cannot read.
     /// </summary>
     public static bool IsNewer(string? installed, string? available)
     {
