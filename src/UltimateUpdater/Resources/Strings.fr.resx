@@ -778,6 +778,9 @@ Ultimate Updater ne peut pas annuler cette action.</value>
     <value>Ultimate Updater doit se fermer. Les détails se trouvent dans le dossier des journaux :
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>Ouvrir le dossier des journaux</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>Échec de la mise à jour. Ouvrez les détails pour en connaître la raison.</value>
   </data>

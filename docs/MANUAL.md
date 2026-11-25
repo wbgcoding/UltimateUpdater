@@ -112,6 +112,12 @@ always uses the system colours.
 
 Installed: `%APPDATA%\UltimateUpdater`. Portable: a `data` folder next to the executable. If that
 folder cannot be written to (Program Files, a read-only share), the portable copy uses `%APPDATA%`
-instead. Settings, install history, cleanup history and logs all live in that one folder, and
-uninstalling the app leaves it behind. You can move it in Settings, and Reset everything in Settings
-clears caches, history and logs.
+instead. Settings, install history and cleanup history live in that one folder. Logs, the icon cache,
+saved error reports and crash dumps of an installed copy live in `%LOCALAPPDATA%\UltimateUpdater`
+instead, so they do not roam with your profile; a portable copy keeps them in its `data` folder. The
+first start after an update moves existing logs, caches and reports over; a file that cannot be moved
+stays where it was. Uninstalling the app leaves both folders behind. You can move the data folder in
+Settings, and Reset everything in Settings clears caches, history and logs and removes the local folder.
+
+If the app crashes, it saves a small memory dump next to the logs (the newest three are kept) and the
+crash window offers a button that opens that folder. Dumps stay on your PC and are never uploaded.

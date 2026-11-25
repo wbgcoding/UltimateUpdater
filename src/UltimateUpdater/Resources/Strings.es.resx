@@ -778,6 +778,9 @@ Esto no se puede deshacer con Ultimate Updater.</value>
     <value>Ultimate Updater debe cerrarse. Los detalles están en la carpeta de registros:
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>Abrir carpeta de registros</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>La actualización falló. Abre los detalles para conocer el motivo.</value>
   </data>

@@ -778,6 +778,9 @@ Această acțiune nu poate fi anulată de Ultimate Updater.</value>
     <value>Ultimate Updater trebuie să se închidă. Detaliile sunt în folderul de jurnale:
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>Deschide folderul de jurnale</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>Actualizarea a eșuat. Deschideți detaliile pentru motiv.</value>
   </data>

@@ -778,6 +778,9 @@ This cannot be undone by Ultimate Updater.</value>
     <value>Ultimate Updater has to close. Details are in the log folder:
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>Open log folder</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>Update failed. Open the details for the reason.</value>
   </data>

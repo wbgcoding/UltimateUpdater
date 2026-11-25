@@ -778,6 +778,9 @@ Ultimate Updater 无法撤销此操作。</value>
     <value>Ultimate Updater 必须关闭。详情见日志文件夹：
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>打开日志文件夹</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>更新失败。打开详情查看原因。</value>
   </data>

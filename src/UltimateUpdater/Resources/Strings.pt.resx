@@ -778,6 +778,9 @@ Isto não pode ser desfeito pelo Ultimate Updater.</value>
     <value>O Ultimate Updater precisa ser fechado. Os detalhes estão na pasta de logs:
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>Abrir pasta de logs</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>A atualização falhou. Abra os detalhes para saber o motivo.</value>
   </data>

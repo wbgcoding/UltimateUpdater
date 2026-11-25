@@ -778,6 +778,9 @@ Ultimate Updater kann das nicht rückgängig machen.</value>
     <value>Ultimate Updater muss beendet werden. Details im Protokollordner:
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>Protokollordner öffnen</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>Update fehlgeschlagen. Die Details zeigen den Grund.</value>
   </data>

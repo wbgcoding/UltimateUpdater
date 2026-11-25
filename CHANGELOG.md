@@ -31,6 +31,13 @@ versioning: [SemVer](https://semver.org).
   instead of showing a bare error number.
 - A failed install's details no longer repeat the same "waiting for another installation" line dozens of
   times, so the actual error stays visible.
+- Logs, the icon cache and saved error reports of an installed copy now live in the local app data folder
+  instead of the roaming one, so they no longer travel with your profile. The first start moves what is
+  there; a file that cannot be moved stays and nothing is lost. Settings and history stay where they were,
+  and a portable copy keeps everything in its data folder.
+- After a crash a small memory dump is saved next to the logs (the newest three are kept, nothing is
+  uploaded), and the crash window has a button that opens the log folder. Reset everything also removes
+  the local folder.
 
 ## [1.2.0] - 2026-11-15
 

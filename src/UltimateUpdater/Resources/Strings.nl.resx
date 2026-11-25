@@ -778,6 +778,9 @@ Dit kan niet ongedaan worden gemaakt door Ultimate Updater.</value>
     <value>Ultimate Updater moet worden afgesloten. Details staan in de logmap:
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>Logmap openen</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>Update mislukt. Open de details voor de oorzaak.</value>
   </data>

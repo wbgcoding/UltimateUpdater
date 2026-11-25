@@ -778,6 +778,9 @@ L'operazione non può essere annullata da Ultimate Updater.</value>
     <value>Ultimate Updater deve chiudersi. I dettagli sono nella cartella dei registri:
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>Apri la cartella dei registri</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>Aggiornamento non riuscito. Apri i dettagli per conoscere il motivo.</value>
   </data>

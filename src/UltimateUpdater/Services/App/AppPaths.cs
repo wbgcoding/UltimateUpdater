@@ -64,6 +64,23 @@ public static class AppPaths
         get { AccessCount++; return DataDirectoryValue; }
     }
 
+    /// <summary>
+    /// Where the logs, the icon cache, the saved error reports and the crash dumps live. They can be rebuilt
+    /// or only matter on this PC, so they stay out of the roaming folder. Installed copies:
+    /// <c>%LOCALAPPDATA%\UltimateUpdater</c>. A portable copy keeps everything in its own <c>data</c> folder,
+    /// and so does a copy whose local folder cannot be written. Settings, history and the quarantine manifests
+    /// stay in <see cref="DataDirectory"/>.
+    /// </summary>
+    private static readonly string LocalDirectoryValue = ResolveLocalDirectory();
+
+    public static string LocalDirectory
+    {
+        get { AccessCount++; return LocalDirectoryValue; }
+    }
+
+    /// <summary>True when <see cref="LocalDirectory"/> is a folder of its own, apart from the data folder.</summary>
+    internal static bool LocalDirectoryIsSeparate => !SamePath(LocalDirectoryValue, DataDirectoryValue);
+
     private const string LogsFolderName = "logs";
     private static readonly string LogsDirectoryValue = EnsureSubdirectory(LogsFolderName);
 
@@ -77,6 +94,174 @@ public static class AppPaths
     public static string IconCacheDirectory
     {
         get { AccessCount++; return IconCacheDirectoryValue; }
+    }
+
+    /// <summary>The pure choice behind <see cref="LocalDirectory"/>: an installed copy takes a folder under
+    /// the local app data, everything else (portable, no local app data known) the data folder itself.</summary>
+    internal static string PickLocalDirectory(bool installed, string? localAppData, string dataDirectory) =>
+        installed && !string.IsNullOrWhiteSpace(localAppData)
+            ? Path.Combine(localAppData, DedicatedSubfolderName)
+            : dataDirectory;
+
+    private static bool SamePath(string a, string b)
+    {
+        try
+        {
+            static string Normalize(string path) =>
+                Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+            return string.Equals(Normalize(a), Normalize(b), StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Picks the local folder and, the first time an installed copy uses it, moves the logs, cache and reports
+    /// over from the data folder. This runs in a static initializer, so nothing may throw: whatever goes
+    /// wrong, the answer is the data folder, where those folders have always been.
+    /// </summary>
+    private static string ResolveLocalDirectory()
+    {
+        // The test suite points everything at one throwaway folder; the real local folder is never touched.
+        if (AppPathsTestOverride.DataDirectory is { Length: > 0 })
+            return DataDirectoryValue;
+
+        try
+        {
+            var local = PickLocalDirectory(
+                IsInstalledValue, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), DataDirectoryValue);
+
+            if (SamePath(local, DataDirectoryValue) || !TryPrepare(local))
+                return DataDirectoryValue;
+
+            var (moved, skipped) = MigrateToLocalDirectory(DataDirectoryValue, local);
+            if (moved > 0)
+                LocalFolderMigrationMessage = $"Moved {moved} log, cache and report file(s) from '{DataDirectoryValue}' to '{local}'.";
+
+            if (skipped > 0)
+                LocalFolderMigrationFailure = $"{skipped} log, cache or report entr(ies) in '{DataDirectoryValue}' could not be moved to '{local}' and stay where they are.";
+
+            return local;
+        }
+        catch (Exception)
+        {
+            return DataDirectoryValue;
+        }
+    }
+
+    /// <summary>The folders that moved from the data folder to the local one. A property, not a field: it is read
+    /// from the static initializer, before any later field would have been assigned.</summary>
+    internal static string[] LocalFolderNames => ["logs", "cache", "reports"];
+
+    /// <summary>Set when the one-time move of the logs, cache and reports carried something over; deferred
+    /// logging like <see cref="PointerFallbackReason"/>.</summary>
+    public static string? LocalFolderMigrationMessage { get; private set; }
+
+    /// <summary>Reads and clears <see cref="LocalFolderMigrationMessage"/> in one step.</summary>
+    public static string? ConsumeLocalFolderMigrationMessage()
+    {
+        var message = LocalFolderMigrationMessage;
+        LocalFolderMigrationMessage = null;
+        return message;
+    }
+
+    /// <summary>Set when part of the move had to be skipped; those files stay where they were.</summary>
+    public static string? LocalFolderMigrationFailure { get; private set; }
+
+    /// <summary>Reads and clears <see cref="LocalFolderMigrationFailure"/> in one step.</summary>
+    public static string? ConsumeLocalFolderMigrationFailure()
+    {
+        var message = LocalFolderMigrationFailure;
+        LocalFolderMigrationFailure = null;
+        return message;
+    }
+
+    /// <summary>
+    /// Moves the logs, cache and reports folders from <paramref name="dataDirectory"/> into
+    /// <paramref name="localDirectory"/>, file by file. Nothing is ever lost or blocked: a file that cannot be
+    /// moved (in use, a name that already exists there, a link) stays where it was, any error only skips that
+    /// entry, and a folder with nothing left in it is removed. It runs on every start but finds nothing to do
+    /// once the old folders are gone. Never throws; returns how many files moved and how many entries were skipped.
+    /// </summary>
+    internal static (int Moved, int Skipped) MigrateToLocalDirectory(string dataDirectory, string localDirectory)
+    {
+        var moved = 0;
+        var skipped = 0;
+
+        foreach (var name in LocalFolderNames)
+        {
+            try
+            {
+                MoveFolderContents(Path.Combine(dataDirectory, name), Path.Combine(localDirectory, name), ref moved, ref skipped);
+            }
+            catch (Exception)
+            {
+                skipped++;
+            }
+        }
+
+        return (moved, skipped);
+    }
+
+    private static void MoveFolderContents(string from, string to, ref int moved, ref int skipped)
+    {
+        // Gone: nothing to do. A link is never followed, in the source or at the target.
+        var kind = ClassifyEntry(from);
+        if (kind == EntryKind.Gone || !Directory.Exists(from))
+            return;
+
+        if (kind == EntryKind.Link || ClassifyEntry(to) == EntryKind.Link)
+        {
+            skipped++;
+            return;
+        }
+
+        Directory.CreateDirectory(to);
+
+        foreach (var entry in Directory.EnumerateFileSystemEntries(from).ToList())
+        {
+            var target = Path.Combine(to, Path.GetFileName(entry));
+            try
+            {
+                if (ClassifyEntry(entry) != EntryKind.Plain)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                if (Directory.Exists(entry))
+                {
+                    MoveFolderContents(entry, target, ref moved, ref skipped);
+                    continue;
+                }
+
+                if (File.Exists(target) || Directory.Exists(target))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                File.Move(entry, target);
+                moved++;
+            }
+            catch (Exception)
+            {
+                skipped++;
+            }
+        }
+
+        try
+        {
+            // only an empty folder goes; Directory.Delete without recursion refuses anything else
+            Directory.Delete(from, recursive: false);
+        }
+        catch (Exception)
+        {
+            // still in use or not empty: stays
+        }
     }
 
     /// <summary>
@@ -1020,10 +1205,11 @@ public static class AppPaths
         return true;
     }
 
-    /// <summary>Falls back to the data directory itself: a missing subfolder must not stop the app.</summary>
+    /// <summary>A subfolder of <see cref="LocalDirectory"/>. Falls back to the data directory itself: a missing
+    /// subfolder must not stop the app.</summary>
     private static string EnsureSubdirectory(string relative)
     {
-        var dir = Path.Combine(DataDirectory, relative);
+        var dir = Path.Combine(LocalDirectoryValue, relative);
 
         try
         {

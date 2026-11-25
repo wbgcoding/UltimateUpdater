@@ -413,6 +413,13 @@ public partial class SettingsViewModel : ObservableObject
         if (AppPaths.ConsumeLegacyDataFolderMigrationFailure() is { } migrationFailure)
             _logging.Warn(migrationFailure);
 
+        // And for the one-time move of the logs, cache and reports to the local app data folder.
+        if (AppPaths.ConsumeLocalFolderMigrationMessage() is { } localMessage)
+            _logging.Info(localMessage);
+
+        if (AppPaths.ConsumeLocalFolderMigrationFailure() is { } localFailure)
+            _logging.Warn(localFailure);
+
         SourceToggles = (sourceIds ?? [])
             .Select(id => new SourceToggle(
                 id, settings.Current.Sources.GetValueOrDefault(id, true), SetSourceEnabled,

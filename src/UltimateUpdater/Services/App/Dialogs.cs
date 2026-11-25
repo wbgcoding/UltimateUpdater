@@ -56,6 +56,36 @@ public static class Dialogs
     public static void Error(string headline, string body = "", string? details = null) =>
         Show(new MessageDialogViewModel(DialogKind.Error, Title, headline, body, L("DialogOk"), details: details));
 
+    /// <summary>
+    /// An error with a second button that runs <paramref name="action"/> (the crash dialog's "Open log
+    /// folder"). OK only closes it. Headless callers show nothing and run nothing.
+    /// </summary>
+    public static void ErrorWithAction(string headline, string body, string? details, string actionText, Action action)
+    {
+        if (SuppressInteractiveDialogs)
+            return;
+
+        var vm = new MessageDialogViewModel(
+            DialogKind.Error, Title, headline, body, L("DialogOk"), actionText, details: details);
+
+        var dispatcher = Application.Current?.Dispatcher;
+        var choice = dispatcher is not null && !dispatcher.CheckAccess()
+            ? dispatcher.Invoke(() => ShowThreeWayCore(vm))
+            : ShowThreeWayCore(vm);
+
+        if (choice != ThreeWayChoice.Secondary)
+            return;
+
+        try
+        {
+            action();
+        }
+        catch (Exception)
+        {
+            // the app is already crashing; a folder that will not open has nowhere to be reported
+        }
+    }
+
     public static void Success(string headline, string body = "") =>
         Show(new MessageDialogViewModel(DialogKind.Success, Title, headline, body, L("DialogOk")));
 

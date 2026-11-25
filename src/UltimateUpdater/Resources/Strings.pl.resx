@@ -778,6 +778,9 @@ Nie można tego cofnąć za pomocą Ultimate Updater.</value>
     <value>Ultimate Updater musi się zamknąć. Szczegóły znajdują się w folderze dzienników:
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>Otwórz folder dzienników</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>Aktualizacja nie powiodła się. Otwórz szczegóły, aby poznać przyczynę.</value>
   </data>

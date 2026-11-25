@@ -319,6 +319,13 @@ public partial class App : Application
 
         // --mock-sources: fake providers for offline UI and VM testing. isMockSession rides the same switch so InstallQueue never elevates for a mock row (the elevated worker builds the real provider set).
         var isMockSession = e.Args.Contains("--mock-sources");
+#if DEBUG
+        // --crash-test: a Debug build only; raises an unhandled exception a moment after start so the crash dump and the crash window can be driven end to end.
+        if (e.Args.Contains("--crash-test"))
+            Dispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                new Action(() => throw new InvalidOperationException("Forced crash for testing.")));
+#endif
         var sources = isMockSession
             ? MockUpdateSource.CreateAll(showcase: e.Args.Contains("--showcase"))
             : SourceRegistry.CreateAll(logging);
@@ -512,16 +519,22 @@ public partial class App : Application
 
         try
         {
-            var message = string.Format(
-                LocalizationService.Instance["FatalError"],
-                AppPaths.LogsDirectory);
+            var logFolder = AppPaths.LogsDirectory;
+            var message = string.Format(LocalizationService.Instance["FatalError"], logFolder);
+
+            // A small dump beside the logs, written before the dialog: the dialog waits for the user. The render
+            // harness never writes one.
+            if (!Dialogs.SuppressInteractiveDialogs && CrashDumpWriter.TryWrite(logFolder) is { } dump)
+                logging.Warn($"Crash dump written to '{dump}'.");
 
             // The full exception goes into the copyable Details panel, never into a shipped log, but the
             // user in front of the crash can read and copy it (SECURITY.md keeps it local, on request).
-            Dialogs.Error(
+            Dialogs.ErrorWithAction(
                 LocalizationService.Instance["FatalErrorHeadline"],
                 message,
-                exception.ToString());
+                exception.ToString(),
+                LocalizationService.Instance["FatalErrorOpenLogFolder"],
+                () => UriLauncher.OpenFolderDetached(logFolder, "log folder", logging));
         }
         catch (Exception ex)
         {

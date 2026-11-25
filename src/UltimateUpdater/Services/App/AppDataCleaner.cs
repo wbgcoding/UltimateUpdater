@@ -40,6 +40,18 @@ public static class AppDataCleaner
         var failed = DeleteOwnedContent(
             AppPaths.DataDirectory, logging, Path.GetTempPath(), new AutostartService(logging));
 
+        // An installed copy keeps its logs, icon cache, error reports and crash dumps in the local app data
+        // folder; that folder is this app's alone, so it goes as a whole.
+        if (AppPaths.LocalDirectoryIsSeparate)
+        {
+            var localExpected = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppPaths.DedicatedSubfolderName);
+            if (IsDeletableLocalFolder(AppPaths.LocalDirectory, localExpected))
+                failed |= !TryDeleteDirectory(AppPaths.LocalDirectory, logging);
+            else
+                logging.Warn($"Refusing to delete from '{AppPaths.LocalDirectory}': it is not the local folder this app created.");
+        }
+
         // AppPaths resolved these once in a static initializer and nothing else recreates them, so without
         // this the app would stop logging and caching icons for the rest of the session.
         Recreate(AppPaths.LogsDirectory, logging);
@@ -64,6 +76,22 @@ public static class AppDataCleaner
             return string.Equals(full, Normalize(defaultFolder), StringComparison.OrdinalIgnoreCase)
                 || string.Equals(full, Normalize(portableFolder), StringComparison.OrdinalIgnoreCase)
                 || AppPaths.IsDedicatedDataFolder(full);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>The local folder is deleted whole, so only the exact <c>%LOCALAPPDATA%\UltimateUpdater</c> qualifies.</summary>
+    internal static bool IsDeletableLocalFolder(string localDirectory, string expectedLocalFolder)
+    {
+        static string Normalize(string path) =>
+            Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        try
+        {
+            return string.Equals(Normalize(localDirectory), Normalize(expectedLocalFolder), StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {

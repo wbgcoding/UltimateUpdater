@@ -148,21 +148,24 @@ No account, no ads. Nothing about you or your PC is sent to the author. The app 
   when you ask for it, to repair winget.
 
 Each of these hosts sees your IP address, as with any download. When the Windows proxy fails, requests are
-retried without it and the log notes that. Settings, history and logs stay on your PC, and the log redacts
-user paths and anything shaped like a credential. Uninstalling programs adds no host: it only runs the programs' own uninstallers and reads the
+retried without it and the log notes that. Settings, history, logs and crash dumps stay on your PC, and the log
+redacts user paths and anything shaped like a credential. Uninstalling programs adds no host: it only runs the programs' own uninstallers and reads the
 registry and the Windows package lists on your PC.
 
 ## Where it keeps things
 
-| Mode | Data folder |
-| --- | --- |
-| Installed | `%APPDATA%\UltimateUpdater` |
-| Portable | `data\` next to the executable |
+| Mode | Data folder | Logs, caches, error reports, crash dumps |
+| --- | --- | --- |
+| Installed | `%APPDATA%\UltimateUpdater` | `%LOCALAPPDATA%\UltimateUpdater` |
+| Portable | `data\` next to the executable | the same `data\` folder |
 
-Settings, install history, driver backups and logs live there. Uninstalling leaves the folder
-behind; *Reset everything* in Settings clears caches, history and logs, or delete the folder yourself.
-The folder can be moved in Settings. After a crash, a short redacted note goes to
-`%TEMP%\UltimateUpdater-crash.log`.
+Settings, install history and driver backups live in the data folder. Logs, the icon cache, saved error
+reports and crash dumps stay out of the roaming folder, in the local one. Uninstalling leaves both
+folders behind; *Reset everything* in Settings clears caches, history and logs and removes the local
+folder, or delete the folders yourself. The data folder can be moved in Settings. After a crash, a
+small memory dump (the newest three are kept) goes next to the logs, and the crash window has a button
+that opens that folder; a short redacted note also goes to `%TEMP%\UltimateUpdater-crash.log`.
+The dumps never leave your PC.
 
 Two kinds of backup live elsewhere: registry backups go to `%APPDATA%\UltimateUpdater\registry-backups`
 (portable copies included; the folder can be changed in Settings), and every driver backup is also kept

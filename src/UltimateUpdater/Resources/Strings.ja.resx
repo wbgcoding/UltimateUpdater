@@ -778,6 +778,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
     <value>Ultimate Updater を終了する必要があります。詳細はログフォルダーにあります：
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>ログフォルダーを開く</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>更新に失敗しました。詳細を開いて原因を確認してください。</value>
   </data>

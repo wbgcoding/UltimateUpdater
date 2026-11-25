@@ -778,6 +778,9 @@ Bu işlem Ultimate Updater tarafından geri alınamaz.</value>
     <value>Ultimate Updater'ın kapatılması gerekiyor. Ayrıntılar günlük klasöründe:
 {0}</value>
   </data>
+  <data name="FatalErrorOpenLogFolder" xml:space="preserve">
+    <value>Günlük klasörünü aç</value>
+  </data>
   <data name="InstallFailed" xml:space="preserve">
     <value>Güncelleme başarısız oldu. Nedeni için ayrıntıları açın.</value>
   </data>

@@ -24,7 +24,7 @@ public static class ErrorReportBuilder
     private const string ReportFileSuffix = ".txt";
 
     /// <summary>Last ten reports live here, oldest pruned on every save.</summary>
-    public static string ReportsDirectory { get; } = Path.Combine(AppPaths.DataDirectory, "reports");
+    public static string ReportsDirectory { get; } = Path.Combine(AppPaths.LocalDirectory, "reports");
 
     public static string Build(string name, string sourceDisplay, string? versionChange, string? toolOutput)
     {
