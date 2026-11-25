@@ -5,8 +5,7 @@ namespace UltimateUpdater.Services.Support;
 /// <summary>Shared by every JSON-backed parser that wants "a string property, or empty"; a null/missing
 /// property or a non-string value is never worth failing a whole parse over.
 /// <c>PackageManagerParsers.GetString</c> and <c>NvidiaDriverLookup.GetString</c> stay separate: one also
-/// accepts a JSON number, the other returns null rather than empty on a miss; both genuinely different
-/// contracts, not copies of this one).</summary>
+/// accepts a JSON number, the other returns null rather than empty on a miss.</summary>
 internal static class JsonElementHelpers
 {
     internal static string GetString(JsonElement element, string propertyName) =>

@@ -5,18 +5,15 @@ namespace UltimateUpdater.Services.Branding;
 /// <summary>
 /// The colours an accent-filled surface is painted with; worked out from the accent alone, so it can be
 /// tested without a WPF Application in the room.
-/// Fluent's own dark theme fills an accent button with a LIGHT tint of the accent and writes the label in
-/// black. That is Windows' look, and it reads as broken; most recently confirmed by a snapshot of the
-/// shipped build, which showed the label and the
-/// icon at #000000 on light blue, at rest as much as pressed. So the fill here is the accent ITSELF, the
-/// same mid blue the app icon uses, and the label is white on it.
+/// Fluent's dark theme fills an accent button with a light tint and a black label; here the fill is the
+/// accent itself (the same mid blue the app icon uses) with a white label, deepened until it meets 4.5:1.
 /// </summary>
 public readonly record struct AccentPalette(Color Fill, Color Hover, Color Pressed, Color OnAccent)
 {
     /// <summary>Near-black rather than black: a pure black label on a pale accent reads as a hole.</summary>
     private static readonly Color DarkLabel = Color.FromRgb(0x1A, 0x1A, 0x1A);
 
-    /// <summary>WCAG AA for body text. Button labels are small and this is the whole point of the exercise.</summary>
+    /// <summary>WCAG AA for body text. Button labels are small, so the threshold is enforced.</summary>
     private const double MinimumContrast = 4.5;
 
     public static AccentPalette For(Color accent)

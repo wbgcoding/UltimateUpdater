@@ -183,10 +183,9 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
                 meta["rebootRequired"] = "true";
 
             // Captured here, off the same COM object already open for Title/Categories/severity above;
-            // EnrichAsync then reads these straight out of Meta with no COM call of its own. Re-querying
-            // WUA per row from EnrichAsync would mean a fresh session + a full re-search for every single
-            // item (there is no "get update by id" lookup), the exact per-row-COM-call cost this project
-            // already measured and rejected once for winget scanning (5s module vs 190s per-row COM).
+            // EnrichAsync then reads these straight out of Meta with no COM call of its own: WUA has no
+            // "get update by id" lookup, so a per-row query would need a fresh session and a full search
+            // for every item.
             if (GetProperty(update, "Description") is string description && !string.IsNullOrWhiteSpace(description))
                 meta["description"] = description;
             if (ReadFirstMoreInfoUrl(update, com) is { } moreInfoUrl)
@@ -319,11 +318,8 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
     }
 
     /// <summary>
-    /// the previous fallback matched the English string "Feature update" in the title when
-    /// categories could not be read; a locale-dependent guess that never matches on a non-English
-    /// Windows install, letting a feature upgrade slip through undetected on exactly the machines that
-    /// most need it caught. The category GUID is stable across every language; when it genuinely cannot
-    /// be read at all, that is "unknown", not "safe"; fail closed and exclude it either way.
+    /// Matched by the Upgrades category id, which is not localized; unreadable categories count as an
+    /// upgrade (fail closed): "unknown" is never treated as "safe".
     /// </summary>
     internal static bool IsFeatureUpgrade(HashSet<string> categoryIds, bool categoriesReadSuccessfully) =>
         categoryIds.Contains(UpgradesCategoryId) || !categoriesReadSuccessfully;
@@ -346,7 +342,7 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
             : null;
     }
 
-    /// <summary>orcSucceeded; the only result code that means this update is installed.</summary>
+    /// <summary>orcSucceeded, the only result code that means this update is installed.</summary>
     private const int OperationResultSucceeded = 2;
 
     /// <summary>orcSucceededWithErrors; an AGGREGATE verdict over the batch, not a per-update one.</summary>
@@ -476,12 +472,12 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
 
     /// <summary>
     /// The batch verdict alone is not an answer for the ONE update in it: every code except
-    /// orcSucceededWithErrors thrown as a bare number with no HRESULT reproduces exactly the
-    /// unexplained "result code 5" report above. So <c>GetUpdateResult(0)</c>; the one update
-    /// actually in the collection; is read for EVERY code short of orcSucceeded, and its own result
-    /// code plus HRESULT are what the exception reports. The code's English name is spelled out in the
-    /// exception text itself; that text stays English end to end (raw text and exceptions stay English);
-    /// InstallErrorExplainer builds the translated summary line from this same text.
+    /// orcSucceededWithErrors would otherwise be thrown as a bare number with no HRESULT. So
+    /// <c>GetUpdateResult(0)</c> (the one update actually in the collection) is read for EVERY code short
+    /// of orcSucceeded, and its own result code plus HRESULT are what the exception reports. The code's
+    /// English name is spelled out in the exception text itself; that text stays English end to end
+    /// (raw text and exceptions stay English); InstallErrorExplainer builds the translated summary line
+    /// from this same text.
     /// </summary>
     private static void VerifySucceeded(object? operationResult, ComScope com, string stage)
     {
@@ -651,9 +647,8 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
 
     /// <summary>
     /// Holds every COM object one call created and releases them in reverse order of creation. WUApiLib
-    /// hands back a fresh RCW for each searcher, result, collection, update and identity, and only the
-    /// session was ever released; so every scan and every install leaked the rest of them for as long as
-    /// the app ran. Non-COM values may be tracked too; <see cref="Release"/> ignores them.
+    /// hands back a fresh RCW for each searcher, result, collection, update and identity; releasing only
+    /// the session would leak the rest for as long as the app runs. Non-COM values may be tracked too; <see cref="Release"/> ignores them.
     /// </summary>
     internal sealed class ComScope : IDisposable
     {

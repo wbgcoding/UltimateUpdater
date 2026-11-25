@@ -343,7 +343,7 @@ public sealed class ThemeService
         application.Resources[GlassTopHighlightKey] = Frozen(System.Windows.Media.Colors.White, 0.06);
     }
 
-    /// <summary>Removes the four surface overrides (each falls back to the Fluent theme dictionary's own
+    /// <summary>Removes every <see cref="DarkPaletteSurfaceKeys"/> override (each falls back to the Fluent theme dictionary's own
     /// light-mode entry) and resets the highlight brush to transparent rather than removing it: that key has
     /// no dictionary to fall back to, so absence would leave a dangling DynamicResource.</summary>
     internal static void RemoveDarkPaletteOverrides()
@@ -399,11 +399,12 @@ public sealed class ThemeService
             _ => ResolveSystemTheme(),
         };
 
-        var accent = ResolveAccent(theme, _useSystemAccent, SystemParameters.HighContrast);
+        // Read once: accent and surfaces must be decided for the same mode.
+        var highContrast = SystemParameters.HighContrast;
+        var accent = ResolveAccent(theme, _useSystemAccent, highContrast);
 
         // High contrast overrides theme and accent alike: none of this app's own colour choices may compete with
         // a scheme the user turned on because the system's choices are the ones they can read.
-        var highContrast = SystemParameters.HighContrast;
         var backdrop = highContrast || applicationTheme == ApplicationTheme.Dark ? WindowBackdropType.None : WindowBackdropType.Mica;
         CurrentBackdrop = ActiveBackdrop = backdrop;
 

@@ -10,8 +10,7 @@ public readonly record struct FlutterInstalled(string Version, string Channel);
 public readonly record struct FlutterRelease(string Version, DateTimeOffset? ReleaseDate, string? ArchivePath);
 
 /// <summary>
-/// Pure parsing for <see cref="FlutterSource"/>. Both shapes below were captured against a real machine
-/// this session, not written from documentation alone.
+/// Pure parsing for <see cref="FlutterSource"/>, for the two shapes shown below.
 /// </summary>
 public static class FlutterParsers
 {
@@ -53,7 +52,7 @@ public static class FlutterParsers
     }
 
     /// <summary>
-    /// `https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json`, fetched live, looks like this:
+    /// `https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json` looks like this:
     /// { "current_release": { "stable": "058e0af2…", "beta": "7c7929ad…", "dev": "13a2fb10…" },
     /// "releases": [ { "hash": "7c7929ad…", "channel": "beta", "version": "3.47.0-0.3.pre",
     /// "release_date": "2026-07-30T20:57:55.349209Z",
