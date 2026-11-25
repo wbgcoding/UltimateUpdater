@@ -183,6 +183,14 @@ public class CleanupCallerTempTests : IDisposable
         Assert.All(own, p => Assert.True(Path.IsPathFullyQualified(p)));
     }
 
+    [Fact]
+    public void The_user_temp_row_lists_exactly_the_apps_own_temp_paths()
+    {
+        var row = CleanupCatalog.Build().Single(t => t.Id == "user-temp");
+
+        Assert.Equal(CleanupCatalog.OwnTempPaths(), row.Directories);
+    }
+
     public void Dispose()
     {
         try { Directory.Delete(_usersRoot, recursive: true); } catch { }

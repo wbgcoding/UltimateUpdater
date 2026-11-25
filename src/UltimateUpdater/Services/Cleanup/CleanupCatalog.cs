@@ -104,7 +104,8 @@ public static class CleanupCatalog
                 RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "CleanupUserTempConsequence")
             {
                 MinFileAge = TempMinFileAge,
-                Directories = Distinct([Path.GetTempPath(), Path.Combine(local, "Temp")]),
+                // The same list the caller reports to the worker, so the row and the worker's skip list cannot drift.
+                Directories = OwnTempPaths(),
             },
 
             new CleanupTarget("all-users-temp", "CleanupAllUsersTemp", "CleanupAllUsersTempDesc",
@@ -331,7 +332,7 @@ public static class CleanupCatalog
     /// <summary>
     /// One target PER drive whose media type could actually be determined:
     /// "never guess between the two" means a drive <see cref="DriveMediaTypeReader"/> could not classify at
-    /// all is still never offered, not shown with a placeholder action word - but a drive found and answering
+    /// all is still never offered, not shown with a placeholder action word, but a drive found and answering
     /// with no specific media type (<see cref="DriveMediaType.Unspecified"/>) now gets its own row, and a
     /// USB-attached drive gets one even where <see cref="DriveInfo.DriveType"/> reports it as
     /// <see cref="DriveType.Removable"/> rather than <see cref="DriveType.Fixed"/>. Off by
@@ -359,7 +360,7 @@ public static class CleanupCatalog
     /// <summary>
     /// Runs <paramref name="extract"/> over every drive-like source, skipping (and reporting through
     /// <paramref name="logWarning"/>) any one that throws while its facts are read instead of faulting the
-    /// whole catalogue - a drive can be pulled, or a share can turn restricted, at any point between the
+    /// whole catalogue: a drive can be pulled, or a share can turn restricted, at any point between the
     /// <see cref="DriveInfo.IsReady"/> check above and a property read such as <see cref="DriveInfo.TotalSize"/>.
     /// Generic over the source rather than <see cref="DriveInfo"/> directly, which is sealed and exposes no
     /// way to fabricate a throwing instance, so a test can prove the skip with a fake list instead.
