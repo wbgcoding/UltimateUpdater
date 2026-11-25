@@ -67,6 +67,62 @@ public class NativeLoadEnvironmentTests
         Assert.Equal(["COR_PROFILER", "DOTNET_GCPath"], found.OrderBy(n => n));
     }
 
+    /// <summary>A runas child gets its block from HKCU\Environment, so a value planted there must be found
+    /// before the start, whatever the case of its name.</summary>
+    [Theory]
+    [InlineData("CORECLR_ENABLE_PROFILING")]
+    [InlineData("coreclr_profiler_path")]
+    [InlineData("DOTNET_STARTUP_HOOKS")]
+    [InlineData("DOTNET_GCName")]
+    [InlineData("CORECLR_SOMETHING_NEW")]
+    [InlineData("COR_ENABLE_PROFILING")]
+    public void A_planted_runtime_variable_in_the_user_registry_environment_is_found(string name)
+    {
+        var userValues = new Dictionary<string, string?>
+        {
+            [name] = "1",
+            ["Path"] = @"C:\Tools",
+            ["TEMP"] = @"%USERPROFILE%\AppData\Local\Temp",
+        };
+
+        var found = NativeLoadEnvironment.FindSetIn(userValues);
+
+        Assert.Equal([name], found);
+    }
+
+    [Fact]
+    public void An_ordinary_or_empty_user_registry_environment_is_clean()
+    {
+        var userValues = new Dictionary<string, string?>
+        {
+            ["Path"] = @"C:\Tools",
+            ["DOTNET_ROOT"] = @"C:\Program Files\dotnet",
+            ["CORECLR_ENABLE_PROFILING"] = "",
+            ["DOTNET_STARTUP_HOOKS"] = null,
+        };
+
+        Assert.Empty(NativeLoadEnvironment.FindSetIn(userValues));
+    }
+
+    [Fact]
+    public void Both_user_registry_environment_keys_are_checked()
+    {
+        Assert.Equal(["Environment", "Volatile Environment"], NativeLoadEnvironment.UserEnvironmentKeys);
+    }
+
+    [Fact]
+    public void The_registry_check_runs_before_the_elevated_start()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            RepoRoot(), "src", "UltimateUpdater", "Services", "Elevation", "ElevationService.cs"));
+        var start = source.IndexOf("public static Process? StartWorker(string workerArgument", StringComparison.Ordinal);
+
+        var check = source.IndexOf("FindSetInUserRegistry()", start, StringComparison.Ordinal);
+        var launch = source.IndexOf("Process.Start(startInfo)", start, StringComparison.Ordinal);
+
+        Assert.True(start >= 0 && check > start && launch > check);
+    }
+
     [Fact]
     public void Scrub_removes_every_listed_variable_and_names_the_ones_that_were_set()
     {
@@ -126,5 +182,15 @@ public class NativeLoadEnvironmentTests
         {
             Environment.SetEnvironmentVariable(inherited, before);
         }
+    }
+
+    private static string RepoRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "UltimateUpdater.slnx")))
+            directory = directory.Parent;
+
+        Assert.True(directory is not null, "the repository root is not above the test binaries any more");
+        return directory!.FullName;
     }
 }

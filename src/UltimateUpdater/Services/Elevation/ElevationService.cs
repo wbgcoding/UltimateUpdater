@@ -270,6 +270,17 @@ public static class ElevationService
         if (scrubbed.Count > 0)
             logging.Warn($"Removed runtime load variables from the environment before starting the elevated worker: {string.Join(", ", scrubbed)}");
 
+        // Scrubbing this process is not enough: the runas child gets a fresh block built from the machine key
+        // plus the user's own HKCU\Environment, which the unelevated user can write. A planted profiler or
+        // startup hook there would load into the administrator process before the worker can refuse it.
+        var planted = NativeLoadEnvironment.FindSetInUserRegistry();
+        if (planted.Count > 0)
+        {
+            logging.Error("Refusing to start the elevated worker: the user environment in the registry sets "
+                + $"{string.Join(", ", planted)}. Remove it and try again.");
+            return null;
+        }
+
         if (Environment.ProcessPath is not { } selfPath)
         {
             RefuseElevation(logging, "the path of the running executable is unknown");

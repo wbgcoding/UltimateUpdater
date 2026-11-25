@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace UltimateUpdater.Services.Security;
 
 /// <summary>
@@ -6,7 +8,9 @@ namespace UltimateUpdater.Services.Security;
 /// minidump) before any managed code of the process runs. The elevated
 /// helper builds its environment from places the unelevated user can write, and the runtime reads these
 /// before the helper can look at anything, so they are removed from this process before the helper is
-/// started and the helper refuses to work when it finds any of them set anyway.
+/// started and the helper refuses to work when it finds any of them set anyway. A runas child does not
+/// inherit this process's block at all: Windows builds a fresh one from the machine key and the user's own
+/// <c>HKCU\Environment</c>, so those user keys are checked as well before the helper is started.
 /// </summary>
 internal static class NativeLoadEnvironment
 {
@@ -38,6 +42,62 @@ internal static class NativeLoadEnvironment
         "DOTNET_StressLog", "DOTNET_StressLogFilename", "COMPlus_StressLog", "COMPlus_StressLogFilename",
         "DOTNET_JitStdOutFile", "COMPlus_JitStdOutFile",
     ];
+
+    /// <summary>Keys below HKCU whose values Windows copies into the environment of a new process. Both are
+    /// writable by the unelevated user.</summary>
+    internal static readonly string[] UserEnvironmentKeys = ["Environment", "Volatile Environment"];
+
+    /// <summary>Whole families that are debugging hooks of the runtime and never legitimate for the helper.</summary>
+    private static readonly string[] Prefixes = ["CORECLR_", "COR_"];
+
+    /// <summary>True for a variable name that must not reach the elevated helper.</summary>
+    internal static bool IsBlocked(string name) =>
+        Names.Contains(name, StringComparer.OrdinalIgnoreCase)
+        || Prefixes.Any(prefix => name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The blocked names among <paramref name="userValues"/> (name and raw value of the user's
+    /// registry environment) that hold a non-empty value. The pure core of the check that runs before a
+    /// runas start.</summary>
+    internal static IReadOnlyList<string> FindSetIn(IEnumerable<KeyValuePair<string, string?>> userValues) =>
+        userValues
+            .Where(pair => !string.IsNullOrEmpty(pair.Value) && IsBlocked(pair.Key))
+            .Select(pair => pair.Key)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    /// <summary>Reads the user's registry environment (<see cref="UserEnvironmentKeys"/>) without expanding
+    /// anything; an unreadable key counts as empty because the helper checks its own block again.</summary>
+    internal static IReadOnlyList<string> FindSetInUserRegistry()
+    {
+        var values = new List<KeyValuePair<string, string?>>();
+        foreach (var keyName in UserEnvironmentKeys)
+        {
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(keyName);
+                if (key is null)
+                    continue;
+
+                foreach (var name in key.GetValueNames())
+                {
+                    var value = key.GetValue(name, null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames);
+                    values.Add(new(name, value switch
+                    {
+                        string text => text,
+                        string[] lines => string.Join(' ', lines),
+                        null => null,
+                        _ => "<binary>",
+                    }));
+                }
+            }
+            catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+            {
+                // Unreadable: nothing to report; the worker's own FindSet is the second line.
+            }
+        }
+
+        return FindSetIn(values);
+    }
 
     /// <summary>The variables from <see cref="Names"/> that currently hold a non-empty value.</summary>
     internal static IReadOnlyList<string> FindSet(Func<string, string?>? read = null)
