@@ -45,9 +45,40 @@ public class HistoryServiceTests : IDisposable
             Install("1.0", "2.0", source: "npm"),
         ];
 
-        Assert.Equal(2, HistoryService.CountUnchangedInstalls(entries, "winget", "Vendor.App", "1.0", "2.0"));
-        Assert.Equal(1, HistoryService.CountUnchangedInstalls(entries, "WINGET", "vendor.app", "1.0", "3.0"));
-        Assert.Equal(0, HistoryService.CountUnchangedInstalls(entries, "winget", "Vendor.App", "0.9", "2.0"));
+        var service = new HistoryService(new LoggingService(), Path.Combine(_tempDir, "unchanged.jsonl"));
+        foreach (var entry in entries)
+            service.Append(entry);
+
+        Assert.Equal(2, service.CountUnchangedInstalls("winget", "Vendor.App", "1.0", "2.0"));
+        Assert.Equal(1, service.CountUnchangedInstalls("WINGET", "vendor.app", "1.0", "3.0"));
+        Assert.Equal(0, service.CountUnchangedInstalls("winget", "Vendor.App", "0.9", "2.0"));
+    }
+
+    [Fact]
+    public void The_history_is_read_once_for_any_number_of_counts_and_a_later_append_is_included()
+    {
+        var path = Path.Combine(_tempDir, "counted.jsonl");
+        var writer = new HistoryService(new LoggingService(), path);
+        for (var i = 0; i < 3; i++)
+            writer.Append(Install("1.0", "2.0"));
+
+        var service = new HistoryService(new LoggingService(), path);
+
+        Assert.Equal(3, service.CountUnchangedInstalls("winget", "Vendor.App", "1.0", "2.0"));
+        Assert.Equal(3, service.CountUnchangedInstalls("winget", "Vendor.App", "1.0", "2.0"));
+        Assert.Equal(0, service.CountUnchangedInstalls("winget", "Other.App", "1.0", "2.0"));
+        Assert.Equal(1, service.UnchangedCountBuilds);
+
+        service.Append(Install("1.0", "2.0"));
+
+        Assert.Equal(4, service.CountUnchangedInstalls("winget", "Vendor.App", "1.0", "2.0"));
+        Assert.Equal(1, service.UnchangedCountBuilds);
+
+        service.InvalidateRollbackIndex();
+        File.Delete(path);
+
+        Assert.Equal(0, service.CountUnchangedInstalls("winget", "Vendor.App", "1.0", "2.0"));
+        Assert.Equal(2, service.UnchangedCountBuilds);
     }
 
     [Fact]
