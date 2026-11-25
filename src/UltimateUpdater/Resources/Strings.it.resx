@@ -2761,4 +2761,34 @@ Continuare con privilegi di amministratore?</value>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows non è riuscito a rimuovere l'aggiornamento (codice {0}).</value>
   </data>
+  <data name="LabelValue" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="ListSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="SubheadlineScanningWithSources" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="HistoryCopyFailed" xml:space="preserve">
+    <value>Non è stato possibile copiare l'elenco. Un altro programma potrebbe star usando gli appunti.</value>
+  </data>
+  <data name="CleanupTargetFailed" xml:space="preserve">
+    <value>Non riuscito, vedi il registro</value>
+  </data>
+  <data name="UninstallerLoadFailed" xml:space="preserve">
+    <value>Non è stato possibile leggere i programmi installati. Ricarica per riprovare.</value>
+  </data>
+  <data name="UninstallerLeftoversFailed" xml:space="preserve">
+    <value>Non è stato possibile rimuovere i residui. I dettagli sono nel registro.</value>
+  </data>
+  <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
+    <value>Non sarà più possibile tornare alle versioni dei componenti sostituite.</value>
+  </data>
+  <data name="SettingsParallelScansDesc" xml:space="preserve">
+    <value>Quante fonti vengono controllate contemporaneamente. Più fonti è più veloce, ma usa più processore e rete.</value>
+  </data>
+  <data name="SettingsCleanupReminderDesc" xml:space="preserve">
+    <value>Mostra un promemoria nella finestra principale quando l'ultima pulizia risale a molto tempo fa.</value>
+  </data>
 </root>

@@ -2761,4 +2761,34 @@ Doorgaan met beheerdersrechten?</value>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows kon de update niet verwijderen (code {0}).</value>
   </data>
+  <data name="LabelValue" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="ListSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="SubheadlineScanningWithSources" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="HistoryCopyFailed" xml:space="preserve">
+    <value>De lijst kon niet worden gekopieerd. Mogelijk gebruikt een ander programma het klembord.</value>
+  </data>
+  <data name="CleanupTargetFailed" xml:space="preserve">
+    <value>Mislukt, zie het logboek</value>
+  </data>
+  <data name="UninstallerLoadFailed" xml:space="preserve">
+    <value>De geïnstalleerde programma's konden niet worden gelezen. Laad opnieuw om het nog eens te proberen.</value>
+  </data>
+  <data name="UninstallerLeftoversFailed" xml:space="preserve">
+    <value>De restanten konden niet worden verwijderd. Details staan in het logboek.</value>
+  </data>
+  <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
+    <value>Vervangen onderdeelversies kunnen niet meer worden hersteld.</value>
+  </data>
+  <data name="SettingsParallelScansDesc" xml:space="preserve">
+    <value>Hoeveel bronnen tegelijk worden gecontroleerd. Meer is sneller, maar kost meer processor en netwerk.</value>
+  </data>
+  <data name="SettingsCleanupReminderDesc" xml:space="preserve">
+    <value>Toont een herinnering in het hoofdvenster als de laatste opruiming lang geleden is.</value>
+  </data>
 </root>

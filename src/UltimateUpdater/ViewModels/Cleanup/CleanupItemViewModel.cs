@@ -168,7 +168,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
             parts.Add(string.Format(inUseFormat, ByteSize.Format(inUse)));
         if (protectedBytes > 0)
             parts.Add(string.Format(LocalizationService.Instance["CleanupProtected"], ByteSize.Format(protectedBytes)));
-        return string.Join(", ", parts);
+        return string.Join(LabelValue.ListSeparator, parts);
     }
 
     public bool HasSkipped => SkippedBytes > 0;
@@ -243,7 +243,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
 
     public string RiskLevelText => LocalizationService.Instance[RiskLevelKey(Target.RiskLevel)];
 
-    public string RiskTooltip => $"{RiskLevelText}: {ConsequenceText}";
+    public string RiskTooltip => LabelValue.Join(RiskLevelText, ConsequenceText);
 
     /// <summary>The worst level among the ticked detail rows, Safe when none is. Kept as a value because the dot bindings read it on every selection change.</summary>
     private CleanupRiskLevel _selectedEntryRisk = CleanupRiskLevel.Safe;
@@ -341,9 +341,23 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     private void RaiseAnalyzingChanged()
     {
         OnPropertyChanged(nameof(IsAnalyzingComponentStore));
+        RaiseSizeCell();
+    }
+
+    /// <summary>What the size cell shows follows the scan, wait, size and analysis state together.</summary>
+    private void RaiseSizeCell()
+    {
         OnPropertyChanged(nameof(ShowsSize));
         OnPropertyChanged(nameof(ShowsNothingFound));
         OnPropertyChanged(nameof(HasSizeCell));
+    }
+
+    /// <summary>The "nothing found" hints of the candidate lists appear only once no scan or wait is going.</summary>
+    private void RaiseEmptyListHints()
+    {
+        OnPropertyChanged(nameof(ShowsNoLeftoversFound));
+        OnPropertyChanged(nameof(ShowsNoDriverFindings));
+        OnPropertyChanged(nameof(ShowsNoOldPythonVersionsFound));
     }
 
     public string RecycleAgeLabelText => LocalizationService.Instance["CleanupRecycleAgeLabel"];
@@ -891,6 +905,10 @@ public sealed partial class CleanupItemViewModel : ObservableObject
         OnPropertyChanged(nameof(RecycleAgeLabelText));
         OnPropertyChanged(nameof(RecycleAgeDaysText));
 
+        // The note of a skipped target was resolved when the run ended: say it again in the new language.
+        if (RunState == CleanupTargetState.Skipped && SkipReason is { } reason && !IsCleaning)
+            DetailText = reason.Text;
+
         foreach (var candidate in LeftoverCandidates)
             candidate.RefreshLocalizedText();
 
@@ -924,9 +942,7 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     {
         RaiseSelectedEntryFigures();
         OnPropertyChanged(nameof(SizeText));
-        OnPropertyChanged(nameof(ShowsSize));
-        OnPropertyChanged(nameof(ShowsNothingFound));
-        OnPropertyChanged(nameof(HasSizeCell));
+        RaiseSizeCell();
     }
 
     /// <summary>Only matters for a registry row, but cheap to raise unconditionally.</summary>
@@ -934,28 +950,18 @@ public sealed partial class CleanupItemViewModel : ObservableObject
     {
         RaiseSelectedEntryFigures();
         OnPropertyChanged(nameof(SizeText));
-        OnPropertyChanged(nameof(ShowsSize));
-        OnPropertyChanged(nameof(ShowsNothingFound));
-        OnPropertyChanged(nameof(HasSizeCell));
+        RaiseSizeCell();
     }
 
     partial void OnIsScanningChanged(bool value)
     {
-        OnPropertyChanged(nameof(ShowsSize));
-        OnPropertyChanged(nameof(ShowsNothingFound));
-        OnPropertyChanged(nameof(HasSizeCell));
-        OnPropertyChanged(nameof(ShowsNoLeftoversFound));
-        OnPropertyChanged(nameof(ShowsNoDriverFindings));
-        OnPropertyChanged(nameof(ShowsNoOldPythonVersionsFound));
+        RaiseSizeCell();
+        RaiseEmptyListHints();
     }
 
     partial void OnIsWaitingChanged(bool value)
     {
-        OnPropertyChanged(nameof(ShowsSize));
-        OnPropertyChanged(nameof(ShowsNothingFound));
-        OnPropertyChanged(nameof(HasSizeCell));
-        OnPropertyChanged(nameof(ShowsNoLeftoversFound));
-        OnPropertyChanged(nameof(ShowsNoDriverFindings));
-        OnPropertyChanged(nameof(ShowsNoOldPythonVersionsFound));
+        RaiseSizeCell();
+        RaiseEmptyListHints();
     }
 }

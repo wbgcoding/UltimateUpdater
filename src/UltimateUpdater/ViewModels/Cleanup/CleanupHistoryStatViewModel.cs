@@ -11,7 +11,7 @@ public sealed class CleanupHistoryStatViewModel(string label, string value)
 
     public string Value { get; } = value;
 
-    public override string ToString() => $"{Label}: {Value}";
+    public override string ToString() => LabelValue.Join(Label, Value);
 
     /// <summary>The lines under the total, in display order. The two system checks are always there (reading
     /// "never" until one ran); every other line is left out while it has nothing true to say.</summary>

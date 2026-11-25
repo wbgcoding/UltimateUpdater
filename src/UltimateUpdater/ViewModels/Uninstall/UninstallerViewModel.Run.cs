@@ -64,7 +64,7 @@ public sealed partial class UninstallerViewModel
             return (headline, string.Empty, null);
 
         var body = string.Join(
-            Environment.NewLine, risky.Select(row => $"{row.Name}: {row.ReasonText}"));
+            Environment.NewLine, risky.Select(row => LabelValue.Join(row.Name, row.ReasonText)));
         return (headline, body, Loc["UninstallerAcknowledge"]);
     }
 

@@ -2761,4 +2761,34 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows güncelleştirmeyi kaldıramadı (kod {0}).</value>
   </data>
+  <data name="LabelValue" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="ListSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="SubheadlineScanningWithSources" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="HistoryCopyFailed" xml:space="preserve">
+    <value>Liste kopyalanamadı. Panoyu başka bir program kullanıyor olabilir.</value>
+  </data>
+  <data name="CleanupTargetFailed" xml:space="preserve">
+    <value>Başarısız, günlüğe bakın</value>
+  </data>
+  <data name="UninstallerLoadFailed" xml:space="preserve">
+    <value>Yüklü programlar okunamadı. Yeniden denemek için yeniden yükleyin.</value>
+  </data>
+  <data name="UninstallerLeftoversFailed" xml:space="preserve">
+    <value>Kalıntılar kaldırılamadı. Ayrıntılar günlükte.</value>
+  </data>
+  <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
+    <value>Yerine geçilen bileşen sürümlerine artık geri dönülemez.</value>
+  </data>
+  <data name="SettingsParallelScansDesc" xml:space="preserve">
+    <value>Aynı anda kaç kaynağın denetlendiği. Daha fazlası daha hızlıdır ama işlemciyi ve ağı daha çok kullanır.</value>
+  </data>
+  <data name="SettingsCleanupReminderDesc" xml:space="preserve">
+    <value>Son temizlik uzun zaman önce yapıldıysa ana pencerede bir hatırlatma gösterir.</value>
+  </data>
 </root>

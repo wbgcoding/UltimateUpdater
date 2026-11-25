@@ -258,6 +258,49 @@
             </Style>
             <Style TargetType="{x:Type ui:Button}" BasedOn="{StaticResource PressedForegroundFix}" />
 
+            <!-- Monospaced text (a path or command being worked on in the cleanup window). -->
+            <FontFamily x:Key="MonoFontFamily">Consolas, Cascadia Mono, Courier New</FontFamily>
+
+            <!-- The tick in front of a candidate row of the cleanup lists (leftover installs, devices, driver packages, old Python): centred, 8px from the name, and only editable while the window allows editing. -->
+            <Style x:Key="CleanupCandidateCheckBox" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="Margin" Value="0,0,8,0"/>
+                <Setter Property="IsEnabled" Value="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"/>
+            </Style>
+
+            <!-- Destructive button (factory reset, uninstall, every destructive confirmation). WPF-UI's own Danger fill is a fixed #F44336 in both themes (white on it is only 3.7:1 in dark), and its ControlTemplate flips the CONTENT to near-black in the light theme regardless of a Button.Foreground override. No Appearance="Danger" here: its appearance triggers outrank a style setter and would bring #F44336 back. The Background is the saturated red Fluent's light-theme critical colour uses (5.7:1 for white text); hover and pressed fills are set too, or the stock ones would put a light fill under the white label. The label is its own TextBlock (DangerButtonLabel) with its own Foreground, so it reads white in both themes. Both colours are style setters, not local values, because a style trigger loses to a local value: under Windows high contrast the triggers hand both back to the system button colours. The binding goes through the property path so a live scheme switch is picked up (an x:Static reference is read once). -->
+            <Style x:Key="DangerButton" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource PressedForegroundFix}">
+                <Setter Property="Background" Value="#FFC42B1C"/>
+                <Setter Property="MouseOverBackground" Value="#FFA92417"/>
+                <Setter Property="PressedBackground" Value="#FF8E1D13"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Path=(SystemParameters.HighContrast), Mode=OneWay}" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                        <Setter Property="MouseOverBackground" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                        <Setter Property="PressedBackground" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                        <Setter Property="MouseOverBorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="DangerButtonLabel" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="White"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Path=(SystemParameters.HighContrast), Mode=OneWay}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="DangerButtonIcon" TargetType="ui:SymbolIcon">
+                <Setter Property="Foreground" Value="White"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Path=(SystemParameters.HighContrast), Mode=OneWay}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
             <!-- The window buttons' hover state is added in code (App.AddTitleBarHover): WPF-UI keys no base style for TitleBarButton, so XAML cannot derive from it without the self-reference trap above. -->
 
             <!-- App-wide scrollbar: a solid, opaque 14 px gutter so content ends to its left and never draws under icons in the last column. Rounded thumb, no up/down buttons. Implicit by type so every ScrollViewer picks it up. -->

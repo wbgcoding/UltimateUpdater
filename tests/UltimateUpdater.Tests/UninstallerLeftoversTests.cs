@@ -195,6 +195,27 @@ public class UninstallerLeftoversTests
     }
 
     [Fact]
+    public async Task A_removal_that_throws_is_reported_instead_of_leaving_the_panel_as_it_was()
+    {
+        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync(UninstallerViewModelTests.Listing("A"));
+        backend.Leftovers = TwoItemsFor("A");
+        backend.RemoveLeftovers = _ => throw new IOException("quarantine unavailable");
+        await RunAsync(vm);
+        Assert.False(vm.LeftoversFailed);
+
+        await vm.RemoveLeftoversCommand.ExecuteAsync(null);
+
+        Assert.True(vm.LeftoversFailed);
+        Assert.False(vm.IsRemovingLeftovers);
+        Assert.Equal(LocalizationService.Instance["UninstallerLeftoversFailed"], vm.LeftoversFailedText);
+
+        backend.RemoveLeftovers = null;
+        await vm.RemoveLeftoversCommand.ExecuteAsync(null);
+
+        Assert.False(vm.LeftoversFailed);
+    }
+
+    [Fact]
     public async Task A_rescan_keeps_an_item_the_user_unticked_unticked()
     {
         var (vm, backend) = await UninstallerViewModelTests.LoadedAsync(UninstallerViewModelTests.Listing("A"));

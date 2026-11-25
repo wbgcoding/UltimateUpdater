@@ -25,8 +25,16 @@ public partial class UninstallerWindow
 
         Loaded += async (_, _) =>
         {
-            if (viewModel.AllRows.Count == 0 && !viewModel.IsLoading)
-                await viewModel.LoadAsync();
+            try
+            {
+                if (viewModel.AllRows.Count == 0 && !viewModel.IsLoading)
+                    await viewModel.LoadAsync();
+            }
+            catch (Exception ex)
+            {
+                // LoadAsync already catches everything it can; this is the second line of defence, since an exception in an async void continuation takes the whole app down.
+                viewModel.Logging.Error("Uninstaller: the first list load faulted unexpectedly.", ex);
+            }
         };
 
         DialogKeyboard.CloseOnEscape(this);

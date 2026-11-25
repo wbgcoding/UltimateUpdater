@@ -30,6 +30,80 @@ public class HistoryViewModelTests
             FromVersion = "1.0", ToVersion = "2.0", Success = true, VersionUnchanged = true,
         }, unchangedCount: count);
 
+    private static HistoryViewModel ViewModelFor(params HistoryEntry[] entries)
+    {
+        var history = new HistoryService(
+            new LoggingService(), Path.Combine(Directory.CreateTempSubdirectory("uu-history-rollback-").FullName, "history.jsonl"));
+        foreach (var entry in entries)
+            history.Append(entry);
+
+        return new HistoryViewModel(history, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "winget" }, _ => { });
+    }
+
+    private static HistoryEntry Install(string from, string to, DateTimeOffset at, bool rollback = false, bool unchanged = false) => new()
+    {
+        Timestamp = at, SourceId = "winget", ItemId = "Vendor.App", Name = "App",
+        FromVersion = from, ToVersion = to, Success = true, IsRollback = rollback, VersionUnchanged = unchanged,
+    };
+
+    [Fact]
+    public void The_copied_note_is_gone_once_the_list_changes()
+    {
+        var at = new DateTimeOffset(2026, 3, 1, 10, 0, 0, TimeSpan.Zero);
+        var viewModel = ViewModelFor(Install("1.0", "2.0", at), Install("2.0", "3.0", at.AddHours(1)));
+        viewModel.SetClipboardText = _ => { };
+
+        viewModel.CopyListCommand.Execute(null);
+        Assert.True(viewModel.HasCopiedMessage);
+
+        viewModel.SearchQuery = "zzz-no-such-package";
+
+        Assert.Equal(string.Empty, viewModel.CopiedMessage);
+    }
+
+    [Fact]
+    public void A_copy_that_fails_on_a_held_clipboard_says_so_instead_of_keeping_the_earlier_success()
+    {
+        LocalizationService.Instance.Apply("en");
+        var viewModel = ViewModelFor(Install("1.0", "2.0", new DateTimeOffset(2026, 3, 1, 10, 0, 0, TimeSpan.Zero)));
+        viewModel.SetClipboardText = _ => { };
+        viewModel.CopyListCommand.Execute(null);
+
+        viewModel.SetClipboardText = _ => throw new System.Runtime.InteropServices.ExternalException("clipboard held");
+        viewModel.CopyListCommand.Execute(null);
+
+        Assert.Equal(LocalizationService.Instance["HistoryCopyFailed"], viewModel.CopiedMessage);
+    }
+
+    [Fact]
+    public void A_rollback_entry_is_not_offered_as_a_point_to_downgrade_from()
+    {
+        var older = new DateTimeOffset(2026, 3, 1, 10, 0, 0, TimeSpan.Zero);
+        var viewModel = ViewModelFor(
+            Install("1.0", "2.0", older),
+            Install("2.0", "1.0", older.AddHours(1), rollback: true));
+
+        // Newest first: the rollback itself is no point to go back from; the install before it still is, as in the rollback index.
+        Assert.False(viewModel.Entries[0].CanDowngrade);
+        Assert.True(viewModel.Entries[1].CanDowngrade);
+    }
+
+    [Fact]
+    public void An_install_that_left_the_version_unchanged_is_not_offered_as_a_downgrade()
+    {
+        var viewModel = ViewModelFor(Install("1.0", "1.0", new DateTimeOffset(2026, 3, 1, 10, 0, 0, TimeSpan.Zero), unchanged: true));
+
+        Assert.DoesNotContain(viewModel.Entries, r => r.CanDowngrade);
+    }
+
+    [Fact]
+    public void An_ordinary_newest_install_from_a_pinning_source_still_offers_the_downgrade()
+    {
+        var viewModel = ViewModelFor(Install("1.0", "2.0", new DateTimeOffset(2026, 3, 1, 10, 0, 0, TimeSpan.Zero)));
+
+        Assert.Single(viewModel.Entries, r => r.CanDowngrade);
+    }
+
     [Fact]
     public void An_unchanged_install_explains_itself_and_names_the_repeat_count_from_the_second_time()
     {

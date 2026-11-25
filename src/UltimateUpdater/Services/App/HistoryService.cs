@@ -260,7 +260,7 @@ public sealed class HistoryService
     /// <summary>A rollback entry is not an install to go back from (it would offer the version just left),
     /// and an install that left the version unchanged moved nothing, so its from-version is the one already
     /// installed.</summary>
-    private static bool QualifiesForRollback(HistoryEntry entry) =>
+    internal static bool QualifiesForRollback(HistoryEntry entry) =>
         entry.Action == "install" && entry.Success && !entry.IsManualHandoff
         && !entry.IsNotApplicable && !entry.IsCancelled && !entry.IsRollback && !entry.VersionUnchanged
         && !string.IsNullOrEmpty(entry.FromVersion);

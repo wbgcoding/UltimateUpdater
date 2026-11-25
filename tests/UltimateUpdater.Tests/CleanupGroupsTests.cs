@@ -21,6 +21,14 @@ public class CleanupGroupsTests
         }
     }
 
+    /// <summary>The risk dot's tooltip reads "level: consequence"; a consequence that repeats the row's own description says nothing new.</summary>
+    [Fact]
+    public void No_catalogue_target_reuses_its_description_as_its_consequence()
+    {
+        foreach (var target in CleanupCatalog.Build())
+            Assert.NotEqual(target.DescriptionKey, target.ConsequenceKey);
+    }
+
     [Fact]
     public void Every_registry_category_lands_in_the_registry_group()
     {

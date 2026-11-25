@@ -2761,4 +2761,34 @@ Continue with admin rights?</value>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows could not remove the update (code {0}).</value>
   </data>
+  <data name="LabelValue" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="ListSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="SubheadlineScanningWithSources" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="HistoryCopyFailed" xml:space="preserve">
+    <value>The list could not be copied. Another program may be using the clipboard.</value>
+  </data>
+  <data name="CleanupTargetFailed" xml:space="preserve">
+    <value>Failed, see the log</value>
+  </data>
+  <data name="UninstallerLoadFailed" xml:space="preserve">
+    <value>The installed programs could not be read. Reload to try again.</value>
+  </data>
+  <data name="UninstallerLeftoversFailed" xml:space="preserve">
+    <value>The leftovers could not be removed. Details are in the log.</value>
+  </data>
+  <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
+    <value>Superseded component versions can no longer be rolled back to.</value>
+  </data>
+  <data name="SettingsParallelScansDesc" xml:space="preserve">
+    <value>How many sources are checked at once. More is faster but uses more processor and network.</value>
+  </data>
+  <data name="SettingsCleanupReminderDesc" xml:space="preserve">
+    <value>Shows a reminder in the main window when the last cleanup was a long time ago.</value>
+  </data>
 </root>

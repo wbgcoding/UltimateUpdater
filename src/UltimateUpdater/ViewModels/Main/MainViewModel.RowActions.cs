@@ -109,7 +109,6 @@ public partial class MainViewModel
         Persist();
         IgnoreMarksChanged?.Invoke();
         ApplyFilter();
-        RefreshSelectionState();
         RefreshHeader();
     }
 
@@ -130,7 +129,6 @@ public partial class MainViewModel
         Persist();
         IgnoreMarksChanged?.Invoke();
         ApplyFilter();
-        RefreshSelectionState();
         RefreshHeader();
     }
 
@@ -153,10 +151,11 @@ public partial class MainViewModel
         row.IsSnoozed = true;
         row.SnoozedUntil = until;
 
+        // IsIgnored is a sort key and the view does not sort live: a row that was ignored (and parked among the ignored rows) goes back to its sorted place.
+        ReseatInVisible(row);
         Persist();
         IgnoreMarksChanged?.Invoke();
         ApplyFilter();
-        RefreshSelectionState();
         RefreshHeader();
     }
 
@@ -167,7 +166,6 @@ public partial class MainViewModel
 
         Persist();
         ApplyFilter();
-        RefreshSelectionState();
         RefreshHeader();
     }
 
@@ -197,7 +195,6 @@ public partial class MainViewModel
 
         Persist();
         ApplyFilter();
-        RefreshSelectionState();
         RefreshHeader();
     }
 
@@ -340,6 +337,32 @@ public partial class MainViewModel
         _ = Background.Run(DowngradeAsync(row, targetVersion, removeRowIfNotStarted: existing is null), _logging, "downgrade");
     }
 
+    /// <summary>Takes over the shared install state for one solo run (downgrade, interactive retry, uninstall without a running batch): renews the token, flags the activity, puts the row into its running state and starts the progress. <paramref name="prepareRow"/> runs after the row is deselected and before the progress starts, for what only that run sets on its row.</summary>
+    private CancellationToken BeginSoloActivity(UpdateRowViewModel row, Action<UpdateRowViewModel>? prepareRow = null)
+    {
+        _installCts?.Cancel();
+        _installCts?.Dispose();
+        _installCts = new CancellationTokenSource();
+        var token = _installCts.Token;
+        _installActivityRunning = true;
+        IsInstalling = true;
+
+        row.BeginInstall();
+        row.IsSelected = false;
+        prepareRow?.Invoke(row);
+        StartInstallProgress([row]);
+        return token;
+    }
+
+    /// <summary>The finish of <see cref="BeginSoloActivity"/>: releases the shared state, reports a needed reboot and hands the queue back to anything that waited.</summary>
+    private void EndSoloActivity(UpdateRowViewModel row)
+    {
+        var released = EndInstallActivity();
+        ReportRebootsFor([row]);
+        if (released)
+            HandOffPendingInstalls();
+    }
+
     /// <summary>Takes back a row built only for a downgrade that never started, so a declined or refused downgrade leaves no ghost entry.</summary>
     private void RemoveUnusedTransientRow(UpdateRowViewModel row)
     {
@@ -357,7 +380,8 @@ public partial class MainViewModel
         {
             Id = itemId,
             SourceId = sourceId,
-            Category = UpdateCategory.Software,
+            // The row sits under its source's own group for the run, not under "Software" whatever it is.
+            Category = _sources.FirstOrDefault(s => s.Id == sourceId)?.Category ?? UpdateCategory.Software,
             Name = name,
             InstalledVersion = installedVersion,
         };
@@ -373,59 +397,19 @@ public partial class MainViewModel
     /// <summary>"Back to {version}". Confirmed first, with a warning that the newer version will be offered again on the next scan, then run like an uninstall (one item, the shared elevation, progress and history plumbing) with the target item's <see cref="UpdateItem.AvailableVersion"/> and <see cref="UpdateItem.PinnedVersion"/> pinned to the older version by <see cref="UpdateItem.WithPinnedVersion"/>. A solo activity like uninstall and interactive retry (see <see cref="_installActivityRunning"/>): it owns the shared progress and elevation state and cannot run beside a batch or another solo activity.</summary>
     private async Task DowngradeAsync(UpdateRowViewModel row, string targetVersion, bool removeRowIfNotStarted = false)
     {
-        if (_installActivityRunning)
-        {
-            Dialogs.Warn(Loc["DowngradeBlockedByActivity"]);
-            if (removeRowIfNotStarted)
-                RemoveUnusedTransientRow(row);
-            return;
-        }
-
-        // A plain hyphen for a row with no known installed version, kept out of the dialog's argument list so the hardwired-text scan does not take it for an untranslated word (HardwiredTextTests.cs).
-        var installedVersionText = row.Item.InstalledVersion ?? "-";
-        var confirmBody = string.Format(Loc["DowngradeConfirmBody"], row.Name, installedVersionText, targetVersion);
-        var confirmText = string.Format(Loc["RowDowngrade"], targetVersion);
-        var confirmed = Dialogs.Confirm(
-            Loc["DowngradeConfirmTitle"], confirmBody, confirmText: confirmText, destructive: true);
-        if (!confirmed)
+        if (!DowngradeMayStart(row, targetVersion))
         {
             if (removeRowIfNotStarted)
                 RemoveUnusedTransientRow(row);
             return;
         }
 
-        // Dialogs.Confirm pumps messages; re-check as UninstallRowAsync does after its confirmation.
-        if (_installActivityRunning)
-        {
-            Dialogs.Warn(Loc["DowngradeBlockedByActivity"]);
-            if (removeRowIfNotStarted)
-                RemoveUnusedTransientRow(row);
-            return;
-        }
-
-        if (RefusedWhileSelfUpdateApplies("Rollback"))
-        {
-            if (removeRowIfNotStarted)
-                RemoveUnusedTransientRow(row);
-            return;
-        }
-
-        _installCts?.Cancel();
-        _installCts?.Dispose();
-        _installCts = new CancellationTokenSource();
-        _installActivityRunning = true;
-        IsInstalling = true;
-
-        row.BeginInstall();
-        row.IsSelected = false;
-        row.LastDowngradeTarget = targetVersion;
-        StartInstallProgress([row]);
-
+        var token = BeginSoloActivity(row, r => r.LastDowngradeTarget = targetVersion);
         var pinnedItem = row.Item.WithPinnedVersion(targetVersion);
 
         try
         {
-            await _installQueue.RunAsync([pinnedItem], _installCts.Token);
+            await _installQueue.RunAsync([pinnedItem], token);
         }
         catch (OperationCanceledException)
         {
@@ -439,11 +423,36 @@ public partial class MainViewModel
         }
         finally
         {
-            var released = EndInstallActivity();
-            ReportRebootsFor([row]);
-            if (released)
-                HandOffPendingInstalls();
+            EndSoloActivity(row);
         }
+    }
+
+    /// <summary>The gates in front of a downgrade: no other activity running (before and after the confirmation, which pumps messages), the user's confirmation, and no pending self-update.</summary>
+    private bool DowngradeMayStart(UpdateRowViewModel row, string targetVersion)
+    {
+        if (_installActivityRunning)
+        {
+            Dialogs.Warn(Loc["DowngradeBlockedByActivity"]);
+            return false;
+        }
+
+        // A plain hyphen for a row with no known installed version, kept out of the dialog's argument list so the hardwired-text scan does not take it for an untranslated word (HardwiredTextTests.cs).
+        var installedVersionText = row.Item.InstalledVersion ?? "-";
+        var confirmBody = string.Format(Loc["DowngradeConfirmBody"], row.Name, installedVersionText, targetVersion);
+        var confirmText = string.Format(Loc["RowDowngrade"], targetVersion);
+        var confirmed = Dialogs.Confirm(
+            Loc["DowngradeConfirmTitle"], confirmBody, confirmText: confirmText, destructive: true);
+        if (!confirmed)
+            return false;
+
+        // Dialogs.Confirm pumps messages; re-check as UninstallRowAsync does after its confirmation.
+        if (_installActivityRunning)
+        {
+            Dialogs.Warn(Loc["DowngradeBlockedByActivity"]);
+            return false;
+        }
+
+        return !RefusedWhileSelfUpdateApplies("Rollback");
     }
 
     // The per-row "Install" button queues just that row.
@@ -506,18 +515,8 @@ public partial class MainViewModel
         if (RefusedWhileSelfUpdateApplies("Interactive retry"))
             return;
 
-        _installCts?.Cancel();
-        _installCts?.Dispose();
-        _installCts = new CancellationTokenSource();
-        var token = _installCts.Token;
-        _installActivityRunning = true;
-        IsInstalling = true;
         _interactiveRetryLane = InstallQueue.LaneKey(row.Item);
-
-        row.BeginInstall();
-        row.IsSelected = false;
-        row.IsRunningInteractively = true;
-        StartInstallProgress([row]);
+        var token = BeginSoloActivity(row, r => r.IsRunningInteractively = true);
 
         var progress = new Progress<Models.InstallProgress>(p => row.ApplyInstallStatus(
             new InstallItemStatus(row.SourceId, row.Item.Id, p.PercentComplete, Loc["RowRunningInteractive"], null, null)
@@ -559,10 +558,7 @@ public partial class MainViewModel
         {
             row.IsRunningInteractively = false;
             _interactiveRetryLane = null;
-            var released = EndInstallActivity();
-            ReportRebootsFor([row]);
-            if (released)
-                HandOffPendingInstalls();
+            EndSoloActivity(row);
         }
     }
 
@@ -642,17 +638,7 @@ public partial class MainViewModel
         }
         else
         {
-            _installCts?.Cancel();
-            _installCts?.Dispose();
-            _installCts = new CancellationTokenSource();
-            token = _installCts.Token;
-            _installActivityRunning = true;
-            IsInstalling = true;
-
-            row.BeginInstall();
-            row.IsSelected = false;
-            row.WasUninstalled = uninstall;
-            StartInstallProgress([row]);
+            token = BeginSoloActivity(row, r => r.WasUninstalled = uninstall);
         }
 
         var key = PackageKey(row.Item);
@@ -685,10 +671,7 @@ public partial class MainViewModel
             }
             else
             {
-                var released = EndInstallActivity();
-                ReportRebootsFor([row]);
-                if (released)
-                    HandOffPendingInstalls();
+                EndSoloActivity(row);
             }
         }
     }

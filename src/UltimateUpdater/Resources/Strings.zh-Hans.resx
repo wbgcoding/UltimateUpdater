@@ -2761,4 +2761,34 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows 无法删除该更新（代码 {0}）。</value>
   </data>
+  <data name="LabelValue" xml:space="preserve">
+    <value>{0}：{1}</value>
+  </data>
+  <data name="ListSeparator" xml:space="preserve">
+    <value>、</value>
+  </data>
+  <data name="SubheadlineScanningWithSources" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="HistoryCopyFailed" xml:space="preserve">
+    <value>无法复制列表。可能有其他程序正在使用剪贴板。</value>
+  </data>
+  <data name="CleanupTargetFailed" xml:space="preserve">
+    <value>失败，请查看日志</value>
+  </data>
+  <data name="UninstallerLoadFailed" xml:space="preserve">
+    <value>无法读取已安装的程序。请重新加载后再试。</value>
+  </data>
+  <data name="UninstallerLeftoversFailed" xml:space="preserve">
+    <value>无法删除残留项。详细信息见日志。</value>
+  </data>
+  <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
+    <value>将无法再回退到已被取代的组件版本。</value>
+  </data>
+  <data name="SettingsParallelScansDesc" xml:space="preserve">
+    <value>同时检查的来源数量。数量越多速度越快，但会占用更多处理器和网络资源。</value>
+  </data>
+  <data name="SettingsCleanupReminderDesc" xml:space="preserve">
+    <value>距上次清理很久时，在主窗口显示提醒。</value>
+  </data>
 </root>

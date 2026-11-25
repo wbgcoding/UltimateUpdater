@@ -34,6 +34,12 @@ public sealed partial class UninstallerViewModel
 
     public string RestorableText => Loc["UninstallerLeftoversRestorable"];
 
+    /// <summary>True when the last leftover removal threw: the panel would otherwise return to how it was and the user would think the removal ran. Cleared by the next removal or run.</summary>
+    [ObservableProperty]
+    private bool leftoversFailed;
+
+    public string LeftoversFailedText => Loc["UninstallerLeftoversFailed"];
+
     /// <summary>True from the end of a run on: the summary line is shown.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSummary), nameof(SummaryText))]
@@ -78,6 +84,7 @@ public sealed partial class UninstallerViewModel
         LeftoverGroups.Clear();
         LeftoversRemoved = 0;
         LeftoversRestorable = false;
+        LeftoversFailed = false;
         RunFinished = false;
         UpdateLeftoverState();
     }
@@ -147,6 +154,7 @@ public sealed partial class UninstallerViewModel
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var entries = LeftoverGroups.Select(group => group.Entry).ToList();
 
+        LeftoversFailed = false;
         IsRemovingLeftovers = true;
         OnLeftoverSelectionChanged();
         try
@@ -165,6 +173,7 @@ public sealed partial class UninstallerViewModel
         catch (Exception ex)
         {
             _logging.Warn($"Leftover removal failed: {ex.Message}");
+            LeftoversFailed = true;
         }
         finally
         {
@@ -180,5 +189,6 @@ public sealed partial class UninstallerViewModel
 
         OnPropertyChanged(nameof(SummaryText));
         OnPropertyChanged(nameof(RestorableText));
+        OnPropertyChanged(nameof(LeftoversFailedText));
     }
 }

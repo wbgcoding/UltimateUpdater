@@ -2761,4 +2761,34 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows は更新プログラムを削除できませんでした (コード {0})。</value>
   </data>
+  <data name="LabelValue" xml:space="preserve">
+    <value>{0}：{1}</value>
+  </data>
+  <data name="ListSeparator" xml:space="preserve">
+    <value>、</value>
+  </data>
+  <data name="SubheadlineScanningWithSources" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="HistoryCopyFailed" xml:space="preserve">
+    <value>リストをコピーできませんでした。ほかのプログラムがクリップボードを使用している可能性があります。</value>
+  </data>
+  <data name="CleanupTargetFailed" xml:space="preserve">
+    <value>失敗しました。詳細はログを参照してください</value>
+  </data>
+  <data name="UninstallerLoadFailed" xml:space="preserve">
+    <value>インストール済みのプログラムを読み取れませんでした。再読み込みしてもう一度お試しください。</value>
+  </data>
+  <data name="UninstallerLeftoversFailed" xml:space="preserve">
+    <value>残ったデータを削除できませんでした。詳細はログに記録されています。</value>
+  </data>
+  <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
+    <value>置き換えられたコンポーネントのバージョンには、元に戻せなくなります。</value>
+  </data>
+  <data name="SettingsParallelScansDesc" xml:space="preserve">
+    <value>同時にチェックするソースの数です。多いほど速くなりますが、プロセッサとネットワークの負荷が増えます。</value>
+  </data>
+  <data name="SettingsCleanupReminderDesc" xml:space="preserve">
+    <value>前回のクリーンアップから長い時間がたつと、メインウィンドウにお知らせを表示します。</value>
+  </data>
 </root>

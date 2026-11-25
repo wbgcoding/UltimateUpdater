@@ -35,11 +35,9 @@
                  edge, unreachable. Docked children always keep their full natural size; only
                  the Grid below (the fill child) gives way. -->
             <DockPanel x:Name="InstallStrip" LastChildFill="True">
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
-                            Margin="16,0,0,0">
-                    <ui:Button Command="{Binding CancelInstallCommand}" Appearance="Secondary" Padding="12,5"
-                               Content="{Binding Loc[InstallProgressCancel]}"/>
-                </StackPanel>
+                <ui:Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0"
+                           Command="{Binding CancelInstallCommand}" Appearance="Secondary" Padding="12,5"
+                           Content="{Binding Loc[InstallProgressCancel]}"/>
 
                 <!-- Outer Grid is the DockPanel's own fill child; the two panels inside it occupy the
                      same cell and are never visible at once (an exact switch,
@@ -185,8 +183,7 @@
                         <TextBlock Text="{Binding InstallCountText}" FontSize="12" HorizontalAlignment="Right"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                         <!-- Top-left: total size. Below it: downloaded so far. To ITS right: current
-                             speed (a deliberate layout, not incidental), each line only appears once
-                             it has a real figure. -->
+                             speed, each line only appears once it has a real figure. -->
                         <Grid HorizontalAlignment="Right"
                               Visibility="{Binding ActualWidth, ElementName=InstallStrip,
                                            Converter={StaticResource WideEnough}, ConverterParameter=440}">
@@ -368,7 +365,7 @@
                 <ScrollViewer x:Name="QueueRowsScroll" VerticalScrollBarVisibility="Auto" MaxHeight="240" Margin="0,6,0,0">
                     <!-- 18px right margin (14px track + 4px air) keeps the auto scrollbar from overlaying
                          the row content, same defect and same fix as EntriesScroll in CleanupWindow.xaml. -->
-                    <ItemsControl x:Name="QueueItemsControl" ItemsSource="{Binding QueueRows}" AlternationCount="999" Margin="0,0,18,0"
+                    <ItemsControl x:Name="QueueItemsControl" ItemsSource="{Binding QueueRows}" Margin="0,0,18,0"
                                   Grid.IsSharedSizeScope="True">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -583,7 +580,7 @@
                                                          card or this button): keying on the card's own focus
                                                          alone would hide the button the moment Tab moves onto
                                                          it, and hidden-until-hover alone would leave keyboard
-                                                         users nothing to Tab to. Entf on the card
+                                                         users nothing to Tab to. Delete on the card
                                                          (OnQueueRowKeyDown) reaches the same command without
                                                          a second Tab. -->
                                                     <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=QueueRowCard}" Value="True">

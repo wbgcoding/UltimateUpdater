@@ -14,7 +14,24 @@ public partial class InstallBand
     public InstallBand()
     {
         InitializeComponent();
+        DataContextChanged += OnDataContextChanged;
     }
+
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (e.OldValue is MainViewModel old)
+            old.QueueRows.CollectionChanged -= OnQueueRowsChanged;
+        if (e.NewValue is MainViewModel current)
+            current.QueueRows.CollectionChanged += OnQueueRowsChanged;
+    }
+
+    /// <summary>The queue shrinks whenever an item starts and grows when one is added or removed, so every card's "position X of N" is stamped again; at Loaded priority, after the generator has made or dropped its containers.</summary>
+    private void OnQueueRowsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) =>
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () =>
+        {
+            if (DataContext is MainViewModel viewModel)
+                RefreshQueueRowAutomationNames(viewModel);
+        });
 
     // WinForms has same-named Point, MouseEventArgs and DragEventArgs types (GlobalUsings.cs), so these are qualified at their use site.
     private System.Windows.Point? _queueDragStart;
@@ -154,7 +171,7 @@ public partial class InstallBand
         e.Handled = true;
     }
 
-    /// <summary>The row card's accessible name when it is created; the reorder handlers refresh the others (see <see cref="RefreshQueueRowAutomationNames"/>).</summary>
+    /// <summary>The row card's accessible name when it is created; a change of the queue refreshes the others (see <see cref="RefreshQueueRowAutomationNames"/>).</summary>
     private void OnQueueRowCardLoaded(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement card && DataContext is MainViewModel viewModel)
@@ -174,7 +191,7 @@ public partial class InstallBand
             string.Format(viewModel.Loc["QueueRowPositionAutomation"], row.Name, index + 1, viewModel.QueueRows.Count));
     }
 
-    /// <summary>Re-stamps every generated queue row's accessible name after a reorder. WPF assigns <c>AlternationIndex</c> only when a container is generated and never recomputes it for rows a Move shifted, so a binding would leave stale positions.</summary>
+    /// <summary>Re-stamps every generated queue row's accessible name after the queue changed (a reorder, an item that started, a removal). WPF assigns <c>AlternationIndex</c> only when a container is generated and never recomputes it for rows a Move shifted, so a binding would leave stale positions.</summary>
     private void RefreshQueueRowAutomationNames(MainViewModel viewModel)
     {
         if (QueueItemsControl.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated)

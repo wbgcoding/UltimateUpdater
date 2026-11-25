@@ -2761,4 +2761,34 @@ Continuați cu drepturi de administrator?</value>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows nu a putut elimina actualizarea (cod {0}).</value>
   </data>
+  <data name="LabelValue" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="ListSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="SubheadlineScanningWithSources" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="HistoryCopyFailed" xml:space="preserve">
+    <value>Lista nu a putut fi copiată. Este posibil ca alt program să folosească clipboardul.</value>
+  </data>
+  <data name="CleanupTargetFailed" xml:space="preserve">
+    <value>Eșuat, vezi jurnalul</value>
+  </data>
+  <data name="UninstallerLoadFailed" xml:space="preserve">
+    <value>Programele instalate nu au putut fi citite. Reîncarcă pentru a încerca din nou.</value>
+  </data>
+  <data name="UninstallerLeftoversFailed" xml:space="preserve">
+    <value>Resturile nu au putut fi eliminate. Detaliile sunt în jurnal.</value>
+  </data>
+  <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
+    <value>Nu se va mai putea reveni la versiunile de componente înlocuite.</value>
+  </data>
+  <data name="SettingsParallelScansDesc" xml:space="preserve">
+    <value>Câte surse sunt verificate simultan. Mai multe merg mai repede, dar folosesc mai mult procesorul și rețeaua.</value>
+  </data>
+  <data name="SettingsCleanupReminderDesc" xml:space="preserve">
+    <value>Afișează un memento în fereastra principală când ultima curățare a fost demult.</value>
+  </data>
 </root>

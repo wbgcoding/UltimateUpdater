@@ -380,7 +380,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="Timer24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsIntervalDesc]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsIntervalLabel]}"/>
                                 <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsIntervalDesc]}"/>
                             </StackPanel>
@@ -409,7 +409,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="Flash24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsScanOnStartDesc]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsScanOnStart]}"/>
                                 <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsScanOnStartDesc]}"/>
                             </StackPanel>
@@ -446,7 +446,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="ArrowSort24" Style="{StaticResource CardIcon}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsParallelScansDesc]}">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsParallelScans]}"/>
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsParallelAuto]}"
                                        Visibility="{Binding ShowParallelismAutoNote, Converter={StaticResource BoolToVisibility}}"/>
@@ -563,7 +563,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="ShieldTask24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsPreselectCriticalDesc]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsPreselectCritical]}"/>
                                 <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsPreselectCriticalDesc]}"/>
                             </StackPanel>
@@ -751,7 +751,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="Delete24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[CleanupRecycleInsteadOfDeleteHint]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[CleanupRecycleInsteadOfDelete]}"/>
                                 <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[CleanupRecycleInsteadOfDeleteHint]}"/>
                             </StackPanel>
@@ -956,7 +956,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsLogRetentionDesc]}">
                                     <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsLogRetention]}"/>
                                     <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsLogRetentionDesc]}"/>
                                 </StackPanel>
@@ -986,7 +986,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="History24" Style="{StaticResource CardIcon}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsHistoryRetentionDesc]}">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsHistoryRetention]}"/>
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsHistoryRetentionDesc]}"/>
                         </StackPanel>
@@ -1015,7 +1015,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="Alert24" Style="{StaticResource CardIcon}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsNotifyOnFoundDesc]}">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsNotifyOnFound]}"/>
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsNotifyOnFoundDesc]}"/>
                         </StackPanel>
@@ -1032,7 +1032,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" Style="{StaticResource CardIcon}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsNotifyCriticalOnlyDesc]}">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsNotifyCriticalOnly]}"/>
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsNotifyCriticalOnlyDesc]}"/>
                         </StackPanel>
@@ -1051,7 +1051,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="Broom24" Style="{StaticResource CardIcon}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsCleanupReminderDesc]}">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsCleanupReminder]}"/>
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="2" VerticalAlignment="Center" IsChecked="{Binding CleanupReminderEnabled}"
@@ -1071,7 +1071,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <ui:SymbolIcon Grid.Column="0" Symbol="Color24" Style="{StaticResource CardIcon}"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[ThemeDesc]}">
                                 <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[ThemeLabel]}"/>
                                 <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[ThemeDesc]}"/>
                             </StackPanel>
@@ -1156,7 +1156,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="Power24" Style="{StaticResource CardIcon}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsAutostartDesc]}">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsAutostart]}"/>
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsAutostartDesc]}"/>
                         </StackPanel>
@@ -1173,7 +1173,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="ArrowMinimize24" Style="{StaticResource CardIcon}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsCloseToTrayDesc]}">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsCloseToTray]}"/>
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsCloseToTrayDesc]}"/>
                         </StackPanel>
@@ -1193,7 +1193,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="ArrowSync24" Style="{StaticResource CardIcon}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsAutoUpdateCheckDesc]}">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsAutoUpdateCheck]}"/>
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsAutoUpdateCheckDesc]}"/>
                         </StackPanel>
@@ -1243,50 +1243,12 @@
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsResetDesc]}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
                         </StackPanel>
-                        <!-- WPF-UI's own Danger fill is a fixed #F44336 in both themes (white on it is only 3.7:1
-                             in dark), and its ControlTemplate flips the CONTENT to near-black in the light theme
-                             regardless of a Button.Foreground override. The Background is pinned to the saturated
-                             red Fluent's light-theme critical colour uses (5.7:1 for white text), and the label
-                             is its own TextBlock with its own Foreground, so it reads white in both themes. Both
-                             colours are style setters rather than local values because a style trigger loses to a
-                             local value: under Windows high contrast the triggers hand both back to the system
-                             button colours. The binding goes through the property path so a live scheme switch is
-                             picked up (an x:Static reference is read once). -->
+                        <!-- Styled by the shared DangerButton / DangerButtonLabel styles (App.xaml), which explain the fixed red and the own-Foreground label. -->
                         <ui:Button x:Name="ResetEverythingButton" Grid.Column="2" VerticalAlignment="Center"
+                                   Style="{StaticResource DangerButton}"
                                    Command="{Binding ResetEverythingCommand}">
-                            <ui:Button.Style>
-                                <!-- No Appearance="Danger": its appearance triggers outrank a style setter, which
-                                     would turn the red back into the fixed #F44336 this button avoids. The hover
-                                     and pressed fills are set here too, or the stock ones would put a light fill
-                                     under the white label. -->
-                                <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-                                    <Setter Property="Background" Value="#FFC42B1C"/>
-                                    <Setter Property="MouseOverBackground" Value="#FFA92417"/>
-                                    <Setter Property="PressedBackground" Value="#FF8E1D13"/>
-                                    <Setter Property="BorderBrush" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Path=(SystemParameters.HighContrast), Mode=OneWay}" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
-                                            <Setter Property="MouseOverBackground" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
-                                            <Setter Property="PressedBackground" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
-                                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                                            <Setter Property="MouseOverBorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ui:Button.Style>
-                            <TextBlock x:Name="ResetEverythingLabel" Text="{Binding Loc[SettingsResetEverything]}">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="White"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Path=(SystemParameters.HighContrast), Mode=OneWay}" Value="True">
-                                                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                            <TextBlock x:Name="ResetEverythingLabel" Style="{StaticResource DangerButtonLabel}"
+                                       Text="{Binding Loc[SettingsResetEverything]}"/>
                         </ui:Button>
                     </Grid>
                 </Border>

@@ -324,7 +324,9 @@ public class AccessibilityWalkTests
     private static string DescribePath(UIElement element)
     {
         var name = (element as FrameworkElement)?.Name;
-        return string.IsNullOrEmpty(name) ? element.GetType().Name : $"{element.GetType().Name} '{name}'";
+        var context = (element as FrameworkElement)?.DataContext?.GetType().Name;
+        var label = string.IsNullOrEmpty(name) ? element.GetType().Name : $"{element.GetType().Name} '{name}'";
+        return context is null ? label : $"{label} (data: {context})";
     }
 
     /// <summary>Every window type this app has, each with the minimum realistic content its own render

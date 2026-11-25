@@ -2761,4 +2761,34 @@ Continuer avec les droits administrateur ?</value>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows n'a pas pu supprimer la mise à jour (code {0}).</value>
   </data>
+  <data name="LabelValue" xml:space="preserve">
+    <value>{0} : {1}</value>
+  </data>
+  <data name="ListSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="SubheadlineScanningWithSources" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="HistoryCopyFailed" xml:space="preserve">
+    <value>La liste n'a pas pu être copiée. Un autre programme utilise peut-être le presse-papiers.</value>
+  </data>
+  <data name="CleanupTargetFailed" xml:space="preserve">
+    <value>Échec, voir le journal</value>
+  </data>
+  <data name="UninstallerLoadFailed" xml:space="preserve">
+    <value>Les programmes installés n'ont pas pu être lus. Actualisez pour réessayer.</value>
+  </data>
+  <data name="UninstallerLeftoversFailed" xml:space="preserve">
+    <value>Les résidus n'ont pas pu être supprimés. Les détails figurent dans le journal.</value>
+  </data>
+  <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
+    <value>Il ne sera plus possible de revenir aux versions de composants remplacées.</value>
+  </data>
+  <data name="SettingsParallelScansDesc" xml:space="preserve">
+    <value>Nombre de sources vérifiées en même temps. Plus de sources va plus vite mais sollicite davantage le processeur et le réseau.</value>
+  </data>
+  <data name="SettingsCleanupReminderDesc" xml:space="preserve">
+    <value>Affiche un rappel dans la fenêtre principale lorsque le dernier nettoyage est ancien.</value>
+  </data>
 </root>

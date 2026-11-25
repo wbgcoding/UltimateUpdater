@@ -115,17 +115,17 @@ public partial class MainViewModel
         // Only a row from the cache actually reaching the screen counts; a save with zero new rows proves nothing.
         if (newRows.Count > 0)
         {
-            _logging.Event(
-                ActivityLog.App,
-                ActivityLog.FirstCachedRow(System.Diagnostics.Process.GetCurrentProcess().StartTime, DateTime.Now));
+            using var self = System.Diagnostics.Process.GetCurrentProcess();
+            _logging.Event(ActivityLog.App, ActivityLog.FirstCachedRow(self.StartTime, DateTime.Now));
         }
     }
 
-    /// <summary>A row survives a scan that never got to re-check it: one whose source failed outright, or was stopped from its pill and delivered only part of its list. Only a source that ran to the end without reporting the package means it is gone.</summary>
+    /// <summary>A row survives a scan that never got to re-check it: one whose source failed outright, was stopped from its pill and delivered only part of its list, or is switched off (its rows stay hidden, not forgotten, so switching it back on shows them again). Only a source that ran to the end without reporting the package means it is gone.</summary>
     private bool IsRowFromIncompleteSource(string key) =>
         _rowsByKey.TryGetValue(key, out var row)
-        && _liveStatuses.TryGetValue(row.Item.SourceId, out var status)
-        && status.State is ProviderScanState.Cancelled or ProviderScanState.Error;
+        && (!IsSourceEnabled(row.Item.SourceId)
+            || (_liveStatuses.TryGetValue(row.Item.SourceId, out var status)
+                && status.State is ProviderScanState.Cancelled or ProviderScanState.Error));
 
     public ObservableCollection<ProviderStatusViewModel> ProviderStatuses { get; } = [];
 
@@ -139,6 +139,16 @@ public partial class MainViewModel
         or ProviderScanState.Error or ProviderScanState.NotInstalled or ProviderScanState.Cancelled);
 
     private bool IsSourceEnabled(string sourceId) => _settings.Current.Sources.GetValueOrDefault(sourceId, true);
+
+    /// <summary>The orchestrator skips a switched-off source without reporting anything, so a scan would rebuild the pills without it and the main window would offer no way back. Each such Tier A/B source gets an idle status here (counts as finished, shows no state word) so its dimmed pill survives the scan.</summary>
+    private void SeedSwitchedOffSources()
+    {
+        foreach (var source in _sources)
+        {
+            if (source.Tier != SourceTier.C && !IsSourceEnabled(source.Id))
+                _liveStatuses[source.Id] = new ProviderStatus { SourceId = source.Id, State = ProviderScanState.NotInstalled };
+        }
+    }
 
     /// <summary>Clicking a source pill toggles it. Off: its rows leave the table at once and the next scan skips it; the pill stays, dimmed. It writes the same setting the settings window shows.</summary>
     [RelayCommand]
@@ -157,6 +167,10 @@ public partial class MainViewModel
         ApplyFilter();
         RefreshHeader();
         RefreshSelectionState();
+
+        // The rows kept from before may be stale by now, so a source switched back on checks itself again; while a full scan runs, that scan skipped it and the next one covers it.
+        if (nowEnabled && !IsScanning && _sources.Any(s => s.Id == sourceId))
+            _ = Background.Run(RescanSingleSourceAsync(sourceId), _logging, $"rescan of re-enabled source {sourceId}");
     }
 
     /// <summary>The cancel button on a running source's pill: stops only that source and leaves the rest of the scan valid. A no-op for a source that already finished; the orchestrator is the authority on that.</summary>
@@ -176,16 +190,7 @@ public partial class MainViewModel
         if (!enabled)
         {
             // The caller (ToggleSource) runs RefreshSelectionState once itself, so unselecting many rows costs one pass.
-            _suppressSelectionRefresh = true;
-            try
-            {
-                foreach (var row in Updates.Where(r => r.Item.SourceId == sourceId))
-                    row.IsSelected = false;
-            }
-            finally
-            {
-                _suppressSelectionRefresh = false;
-            }
+            SetSelected(Updates.Where(r => r.Item.SourceId == sourceId).ToList(), selected: false);
         }
     }
 
@@ -292,6 +297,7 @@ public partial class MainViewModel
             ProviderStatuses.Clear();
             _providerStatusById.Clear();
             _liveStatuses.Clear();
+            SeedSwitchedOffSources();
             while (_pendingItems.TryDequeue(out _))
             {
             }
@@ -358,9 +364,8 @@ public partial class MainViewModel
         _finishedScanCount++;
         if (_finishedScanCount is 1 or 5)
         {
-            _logging.Event(
-                ActivityLog.App,
-                ActivityLog.WorkingSetAfterScan(_finishedScanCount, System.Diagnostics.Process.GetCurrentProcess().WorkingSet64));
+            using var self = System.Diagnostics.Process.GetCurrentProcess();
+            _logging.Event(ActivityLog.App, ActivityLog.WorkingSetAfterScan(_finishedScanCount, self.WorkingSet64));
         }
 
         // Only a finished scan restarts the interval: a stopped scan checked nothing.

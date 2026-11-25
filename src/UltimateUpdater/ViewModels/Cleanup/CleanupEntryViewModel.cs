@@ -30,7 +30,7 @@ public sealed partial class CleanupEntryViewModel : ObservableObject
     public string RiskLevelText => LocalizationService.Instance[CleanupItemViewModel.RiskLevelKey(RiskLevel)];
 
     /// <summary>Same wording as the owning target's risk dot (<see cref="CleanupItemViewModel.RiskTooltip"/>); only the level word differs per row, the consequence sentence comes from the target.</summary>
-    public string RiskTooltip => $"{RiskLevelText}: {_consequenceTextProvider?.Invoke() ?? string.Empty}";
+    public string RiskTooltip => LabelValue.Join(RiskLevelText, _consequenceTextProvider?.Invoke() ?? string.Empty);
 
     private static CleanupRiskLevel EntryTypeRiskLevel(CleanupEntryType type) => type switch
     {

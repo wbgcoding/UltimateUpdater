@@ -9,5 +9,6 @@ internal static class MotionPreference
     /// server. Null (the default) reads the real setting.</summary>
     internal static bool? AnimationsEnabledForTest { get; set; }
 
+    /// <summary>Read each time by code that asks. A XAML <c>{x:Static}</c> binding to it is read once, so a trigger that uses it follows the Windows setting from the next start of the app.</summary>
     public static bool AnimationsEnabled => AnimationsEnabledForTest ?? SystemParameters.ClientAreaAnimation;
 }

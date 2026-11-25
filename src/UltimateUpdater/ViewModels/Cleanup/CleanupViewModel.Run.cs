@@ -747,6 +747,8 @@ public partial class CleanupViewModel
         {
             // One failing target must not stop the rest. Its row says "skipped", not "stopped", and does not read as finished.
             item.RunState = CleanupTargetState.Skipped;
+            item.SkipReason = new CleanupSkipReason("CleanupTargetFailed");
+            failureText = item.SkipReason.Text;
             _logging.Error($"Cleanup failed for '{item.Target.Id}'", ex);
 
             // Its outcome never arrived: take its live part back out so the failed target adds nothing.

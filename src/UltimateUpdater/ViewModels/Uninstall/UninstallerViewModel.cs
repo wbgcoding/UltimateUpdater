@@ -42,6 +42,8 @@ public sealed partial class UninstallerViewModel : ObservableObject
 
     public LocalizationService Loc => LocalizationService.Instance;
 
+    internal LoggingService Logging => _logging;
+
     public ObservableCollection<UninstallSectionViewModel> Sections { get; }
 
     [ObservableProperty]
@@ -66,7 +68,12 @@ public sealed partial class UninstallerViewModel : ObservableObject
 
     public bool ShowsEmptyText => !IsLoading && VisibleCount == 0;
 
-    public string EmptyText => Loc[_all.Count == 0 ? "UninstallerEmpty" : "UninstallerNoMatch"];
+    /// <summary>True when the last list read threw: the empty table then says so instead of claiming the machine has nothing installed (the toolbar's reload button and F5 try again).</summary>
+    public bool LoadFailed => _loadFailed;
+
+    private bool _loadFailed;
+
+    public string EmptyText => Loc[_all.Count > 0 ? "UninstallerNoMatch" : _loadFailed ? "UninstallerLoadFailed" : "UninstallerEmpty"];
 
     partial void OnSearchTextChanged(string value) => Refresh();
 
@@ -83,6 +90,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
             if (cts.IsCancellationRequested)
                 return;
 
+            _loadFailed = false;
             SetListings(listings);
         }
         catch (OperationCanceledException)
@@ -92,6 +100,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
         catch (Exception ex)
         {
             _logging.Warn($"Uninstaller list failed: {ex.Message}");
+            _loadFailed = true;
             SetListings([]);
         }
         finally

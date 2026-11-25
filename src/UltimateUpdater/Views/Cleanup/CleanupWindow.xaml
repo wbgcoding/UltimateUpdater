@@ -240,7 +240,7 @@
                          stay readable; the tooltip carries the whole text. -->
                     <TextBlock x:Name="CleanupStatusPath" Grid.Row="3" Margin="0,5,0,0"
                                Text="{Binding CurrentPathText}" FontSize="11"
-                               FontFamily="Consolas, Cascadia Mono, Courier New"
+                               FontFamily="{StaticResource MonoFontFamily}"
                                TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
                                ToolTip="{Binding CurrentDetailText}"
                                AutomationProperties.Name="{Binding CurrentDetailText}"

@@ -82,7 +82,7 @@ public sealed partial class DriverDeviceCandidateViewModel(DriverDeviceCandidate
             void Add(string label, string? value)
             {
                 if (!string.IsNullOrWhiteSpace(value))
-                    lines.Add($"{label}: {value}");
+                    lines.Add(LabelValue.Join(label, value));
             }
 
             Add(loc["CleanupDriverProviderLabel"], Provider);

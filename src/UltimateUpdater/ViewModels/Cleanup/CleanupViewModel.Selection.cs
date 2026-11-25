@@ -312,11 +312,11 @@ public partial class CleanupViewModel
 
             var groupTitle = Loc[CleanupGroups.TitleKey(key)];
             var groupBytes = selected.Where(i => !WillSkipForMissingAdmin(i)).Sum(i => i.SelectedEntryBytes);
-            lines.Add(groupBytes > 0 ? $"{groupTitle}: {ByteSize.Format(groupBytes)}" : groupTitle);
+            lines.Add(groupBytes > 0 ? LabelValue.Join(groupTitle, ByteSize.Format(groupBytes)) : groupTitle);
             lines.AddRange(selected.Select(i => WillSkipForMissingAdmin(i)
-                ? $"  • {i.Title}: {Loc["CleanupNeedsAdmin"]}"
+                ? "  • " + LabelValue.Join(i.Title, Loc["CleanupNeedsAdmin"])
                 : i.SelectedEntryBytes > 0
-                    ? $"  • {i.Title}: {ByteSize.Format(i.SelectedEntryBytes)}"
+                    ? "  • " + LabelValue.Join(i.Title, ByteSize.Format(i.SelectedEntryBytes))
                     : $"  • {i.Title}"));
             lines.Add(string.Empty);
         }

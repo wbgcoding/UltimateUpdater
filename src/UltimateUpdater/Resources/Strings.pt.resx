@@ -2761,4 +2761,34 @@ Continuar com direitos de administrador?</value>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>O Windows não conseguiu remover a atualização (código {0}).</value>
   </data>
+  <data name="LabelValue" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="ListSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="SubheadlineScanningWithSources" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="HistoryCopyFailed" xml:space="preserve">
+    <value>Não foi possível copiar a lista. Outro programa pode estar usando a área de transferência.</value>
+  </data>
+  <data name="CleanupTargetFailed" xml:space="preserve">
+    <value>Falhou, veja o registro</value>
+  </data>
+  <data name="UninstallerLoadFailed" xml:space="preserve">
+    <value>Não foi possível ler os programas instalados. Recarregue para tentar de novo.</value>
+  </data>
+  <data name="UninstallerLeftoversFailed" xml:space="preserve">
+    <value>Não foi possível remover os restos. Os detalhes estão no registro.</value>
+  </data>
+  <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
+    <value>Não será mais possível voltar às versões de componentes substituídas.</value>
+  </data>
+  <data name="SettingsParallelScansDesc" xml:space="preserve">
+    <value>Quantas fontes são verificadas ao mesmo tempo. Mais é mais rápido, mas usa mais processador e rede.</value>
+  </data>
+  <data name="SettingsCleanupReminderDesc" xml:space="preserve">
+    <value>Mostra um lembrete na janela principal quando a última limpeza foi há muito tempo.</value>
+  </data>
 </root>

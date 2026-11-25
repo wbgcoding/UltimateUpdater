@@ -2761,4 +2761,34 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows konnte das Update nicht entfernen (Code {0}).</value>
   </data>
+  <data name="LabelValue" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="ListSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="SubheadlineScanningWithSources" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="HistoryCopyFailed" xml:space="preserve">
+    <value>Die Liste konnte nicht kopiert werden. Möglicherweise nutzt ein anderes Programm die Zwischenablage.</value>
+  </data>
+  <data name="CleanupTargetFailed" xml:space="preserve">
+    <value>Fehlgeschlagen, Details im Protokoll</value>
+  </data>
+  <data name="UninstallerLoadFailed" xml:space="preserve">
+    <value>Die installierten Programme konnten nicht gelesen werden. Zum erneuten Versuch neu laden.</value>
+  </data>
+  <data name="UninstallerLeftoversFailed" xml:space="preserve">
+    <value>Die Reste konnten nicht entfernt werden. Details stehen im Protokoll.</value>
+  </data>
+  <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
+    <value>Auf ersetzte Komponentenversionen kann nicht mehr zurückgegangen werden.</value>
+  </data>
+  <data name="SettingsParallelScansDesc" xml:space="preserve">
+    <value>Wie viele Quellen gleichzeitig geprüft werden. Mehr geht schneller, braucht aber mehr Prozessor und Netzwerk.</value>
+  </data>
+  <data name="SettingsCleanupReminderDesc" xml:space="preserve">
+    <value>Zeigt im Hauptfenster einen Hinweis, wenn die letzte Bereinigung lange zurückliegt.</value>
+  </data>
 </root>

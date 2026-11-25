@@ -96,9 +96,15 @@ public class UninstallerViewModelTests
         /// <summary>How often the installed programs were listed.</summary>
         public int ListCalls { get; private set; }
 
+        /// <summary>When set, the installed-programs read throws it.</summary>
+        public Exception? ListThrows { get; set; }
+
         public Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken)
         {
             ListCalls++;
+            if (ListThrows is { } failure)
+                throw failure;
+
             return Task.FromResult<IReadOnlyList<UninstallListing>>(listings);
         }
 
@@ -159,6 +165,24 @@ public class UninstallerViewModelTests
         Assert.True(vm.Sections[0].IsExpanded);
         Assert.All(vm.Sections.Skip(1), section => Assert.False(section.IsExpanded));
         Assert.Equal("Programs and apps (2)", vm.Sections[0].Header);
+    }
+
+    [Fact]
+    public async Task A_failed_list_read_says_so_instead_of_claiming_nothing_is_installed()
+    {
+        LocalizationService.Instance.Apply("en");
+        var backend = new FakeBackend([]) { ListThrows = new InvalidOperationException("registry unreadable") };
+        var vm = new UninstallerViewModel(backend, new LoggingService());
+
+        await vm.LoadAsync();
+
+        Assert.True(vm.ShowsEmptyText);
+        Assert.Equal(LocalizationService.Instance["UninstallerLoadFailed"], vm.EmptyText);
+
+        backend.ListThrows = null;
+        await vm.ReloadCommand.ExecuteAsync(null);
+
+        Assert.Equal(LocalizationService.Instance["UninstallerEmpty"], vm.EmptyText);
     }
 
     [Fact]

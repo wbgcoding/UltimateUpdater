@@ -254,11 +254,9 @@ public partial class HistoryViewModel : ObservableObject
         for (var i = 0; i < read.Count; i++)
         {
             var entry = read[i];
-            if (entry.Action != "install" || !entry.Success || entry.IsManualHandoff
-                || entry.IsNotApplicable || entry.IsCancelled || string.IsNullOrEmpty(entry.FromVersion))
-            {
+            // The same rule HistoryService applies when it keeps rollback data, so the two never drift: a rollback entry or an install that left the version unchanged is no point to go back from.
+            if (!HistoryService.QualifiesForRollback(entry))
                 continue;
-            }
 
             var key = $"{entry.SourceId}:{entry.ItemId}";
             if (!newestSuccessfulInstallKeys.Add(key))
@@ -541,6 +539,9 @@ public partial class HistoryViewModel : ObservableObject
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         EntriesView.Refresh();
         OnPropertyChanged(nameof(NoMatches));
+
+        // "12 entries copied" no longer matches a list that just changed.
+        CopiedMessage = string.Empty;
     }
 
     // Copies the filtered and sorted rows as tab-separated text, the shape a spreadsheet paste expects.
@@ -552,18 +553,23 @@ public partial class HistoryViewModel : ObservableObject
 
     partial void OnCopiedMessageChanged(string value) => OnPropertyChanged(nameof(HasCopiedMessage));
 
+    /// <summary>Test seam: the clipboard write, replaced by a test that needs it to throw or to stay off the real clipboard.</summary>
+    internal Action<string> SetClipboardText { get; set; } = System.Windows.Clipboard.SetText;
+
     [RelayCommand]
     private void CopyList()
     {
+        CopiedMessage = string.Empty;
         var rows = EntriesView.Cast<HistoryRowViewModel>().ToList();
         try
         {
-            System.Windows.Clipboard.SetText(BuildClipboardText(rows));
+            SetClipboardText(BuildClipboardText(rows));
             CopiedMessage = string.Format(Loc[rows.Count == 1 ? "HistoryCopiedOne" : "HistoryCopied"], rows.Count);
         }
         catch (System.Runtime.InteropServices.ExternalException)
         {
-            // The clipboard can be held open by another process; a failed copy is not worth surfacing.
+            // The clipboard can be held open by another process: say so, or the button looks dead.
+            CopiedMessage = Loc["HistoryCopyFailed"];
         }
     }
 

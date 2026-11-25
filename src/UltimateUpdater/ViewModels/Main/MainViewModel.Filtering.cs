@@ -150,7 +150,10 @@ public partial class MainViewModel
                     .ToList();
 
                 return running.Count > 0
-                    ? $"{progress} · {string.Format(Loc["SubheadlineScanningSources"], string.Join(", ", running))}"
+                    ? string.Format(
+                        Loc["SubheadlineScanningWithSources"],
+                        progress,
+                        string.Format(Loc["SubheadlineScanningSources"], string.Join(LabelValue.ListSeparator, running)))
                     : progress;
             }
 
@@ -885,19 +888,23 @@ public partial class MainViewModel
         if (rows.Count == 0)
             return;
 
-        var selectAll = rows.Any(r => !r.IsSelected);
+        SetSelected(rows, rows.Any(r => !r.IsSelected));
+        RefreshSelectionState();
+    }
+
+    /// <summary>Ticks or clears many rows with the selection refresh held back, so a bulk change costs the caller's one pass instead of one per row.</summary>
+    private void SetSelected(IEnumerable<UpdateRowViewModel> rows, bool selected)
+    {
         _suppressSelectionRefresh = true;
         try
         {
             foreach (var row in rows)
-                row.IsSelected = selectAll;
+                row.IsSelected = selected;
         }
         finally
         {
             _suppressSelectionRefresh = false;
         }
-
-        RefreshSelectionState();
     }
 
     [RelayCommand]
@@ -908,18 +915,7 @@ public partial class MainViewModel
         if (installable.Count == 0)
             return;
 
-        var selectAll = installable.Any(u => !u.IsSelected);
-        _suppressSelectionRefresh = true;
-        try
-        {
-            foreach (var row in installable)
-                row.IsSelected = selectAll;
-        }
-        finally
-        {
-            _suppressSelectionRefresh = false;
-        }
-
+        SetSelected(installable, installable.Any(u => !u.IsSelected));
         RefreshSelectionState();
     }
 

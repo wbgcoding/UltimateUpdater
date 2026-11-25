@@ -28,7 +28,11 @@ public partial class MessageDialogWindow
         // button (CleanupWindow's Clean and CleanupHistoryWindow's ClearAll stay out of IsDefault for the same reason).
         if (viewModel.PrimaryIsDestructive)
         {
-            PrimaryButton.Appearance = ControlAppearance.Danger;
+            // The shared destructive style (App.xaml), not Appearance=Danger: WPF-UI's own Danger fill misses 4.5:1 in dark and flips the label near-black in light.
+            PrimaryButton.Style = (Style)FindResource("DangerButton");
+            var label = new System.Windows.Controls.TextBlock { Style = (Style)FindResource("DangerButtonLabel") };
+            label.SetBinding(System.Windows.Controls.TextBlock.TextProperty, new System.Windows.Data.Binding(nameof(MessageDialogViewModel.PrimaryText)));
+            PrimaryButton.Content = label;
             // A FOCUSED button clicks on Enter/Space even without IsDefault, so the destructive one must not
             // start with keyboard focus either: it goes to the safe choice instead.
             FocusManager.SetFocusedElement(this, viewModel.HasSecondary ? SecondaryButton : null);

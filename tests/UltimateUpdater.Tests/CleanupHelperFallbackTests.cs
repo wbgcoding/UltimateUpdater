@@ -165,5 +165,7 @@ public class CleanupHelperFallbackTests
 
         Assert.Equal(CleanupTargetState.Skipped, item.RunState);
         Assert.Equal(0, viewModel.FreedBytes);
+        Assert.Equal("CleanupTargetFailed", item.SkipReason?.Key);
+        Assert.Equal(item.SkipReason!.Text, item.DetailText);
     }
 }

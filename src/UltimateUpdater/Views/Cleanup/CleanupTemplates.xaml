@@ -6,7 +6,6 @@
                     xmlns:cleanup="clr-namespace:UltimateUpdater.Views.Cleanup"
                     xmlns:controls="clr-namespace:UltimateUpdater.Views.Controls"
                     xmlns:converters="clr-namespace:UltimateUpdater.Views.Converters">
-    <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
     <cleanup:CleanupGroupIconConverter x:Key="GroupIcon"/>
     <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility"/>
     <!-- The "show all categories" expander. -->
@@ -435,7 +434,7 @@
                     <!-- Where this target stands in the run, in one word, in the same quiet capsule shape as
                          the admin hint above. Colour is spent on exactly two of the five words, done
                          (success) and stopped (caution), and never on red, which stays reserved for genuine
-                         Windows Update severity, exactly as the risk dot above already does. -->
+                         Windows Update severity. -->
                     <Border Margin="8,0,0,0" Padding="6,1" CornerRadius="4"
                             Background="{DynamicResource ControlFillColorSecondaryBrush}"
                             Visibility="{Binding ShowsRunState, Converter={StaticResource BoolToVisibility}}">
@@ -467,7 +466,7 @@
                  Targets that cannot report a size in advance (Disk Cleanup decides for itself, a
                  repair pass deletes nothing) show NOTHING at all here. -->
             <!-- Collapsed rather than merely empty for a HasUnknownSize target (Disk Cleanup, system repair,
-                 defrag) once scanning and waiting are done: none of its four children ever show for that
+                 defrag) once scanning and waiting are done: none of its five children ever show for that
                  kind, and a reserved MinWidth would leave a small empty box beside the risk dot. -->
             <!-- Right margin 26: the size figures of a group header, its targets and their detail rows
                  all end on one vertical line (the group header's meta text ends 42px inside the card,
@@ -585,14 +584,13 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
-                                        <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
-                                                  Margin="0,0,8,0"
+                                        <CheckBox Grid.Row="0" Grid.Column="0" Style="{StaticResource CleanupCandidateCheckBox}"
                                                   IsChecked="{Binding IsSelected}"
-                                                  IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
                                                   AutomationProperties.Name="{Binding DisplayName}"/>
 
                                         <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
                                                    Text="{Binding DisplayName}" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}"
                                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
 
                                         <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SizeText}"
@@ -637,13 +635,13 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
-                                        <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
-                                                  Margin="0,0,8,0" IsChecked="{Binding IsSelected}"
-                                                  IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        <CheckBox Grid.Row="0" Grid.Column="0" Style="{StaticResource CleanupCandidateCheckBox}"
+                                                  IsChecked="{Binding IsSelected}"
                                                   AutomationProperties.Name="{Binding DisplayName}"/>
 
                                         <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
                                                    Text="{Binding DisplayName}" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}"
                                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
 
                                         <TextBlock Grid.Row="1" Grid.Column="1"
@@ -683,13 +681,13 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
-                                        <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
-                                                  Margin="0,0,8,0" IsChecked="{Binding IsSelected}"
-                                                  IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        <CheckBox Grid.Row="0" Grid.Column="0" Style="{StaticResource CleanupCandidateCheckBox}"
+                                                  IsChecked="{Binding IsSelected}"
                                                   AutomationProperties.Name="{Binding DisplayName}"/>
 
                                         <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
                                                    Text="{Binding DisplayName}" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayName}"
                                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
 
                                         <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SizeText}"
@@ -740,13 +738,13 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
-                                        <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
-                                                  Margin="0,0,8,0" IsChecked="{Binding IsSelected}"
-                                                  IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        <CheckBox Grid.Row="0" Grid.Column="0" Style="{StaticResource CleanupCandidateCheckBox}"
+                                                  IsChecked="{Binding IsSelected}"
                                                   AutomationProperties.Name="{Binding DisplayLabel}"/>
 
                                         <TextBlock Grid.Row="0" Grid.Column="1" VerticalAlignment="Center"
                                                    Text="{Binding DisplayLabel}" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding DisplayLabel}"
                                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
 
                                         <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SizeText}"
@@ -792,22 +790,22 @@
                          it is on. Monospaced so a path stays readable;
                          the full text is one hover away when it does not fit. -->
                     <TextBlock Text="{Binding DetailText}" FontSize="11" Margin="0,5,0,0"
-                               FontFamily="Consolas, Cascadia Mono, Courier New"
+                               FontFamily="{StaticResource MonoFontFamily}"
                                TextTrimming="CharacterEllipsis"
                                ToolTip="{Binding DetailText}"
                                Visibility="{Binding HasDetail, Converter={StaticResource BoolToVisibility}}"
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                 </StackPanel>
 
-                <!-- What this target could NOT remove because it was in use, so the
-                     row's figures add up. -->
-                <!-- Why a finished target freed nothing: admin rights missing, or the time limit. -->
+                <!-- Why a finished target freed nothing: admin rights missing, the time limit, or a failure. -->
                 <TextBlock Text="{Binding DetailText}" FontSize="11" Margin="0,4,12,0"
                            AutomationProperties.AutomationId="CleanupRowRunNote"
                            TextWrapping="Wrap"
                            Visibility="{Binding ShowsRunNote, Converter={StaticResource BoolToVisibility}}"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
 
+                <!-- What this target could NOT remove because it was in use, so the
+                     row's figures add up. -->
                 <TextBlock Text="{Binding SkippedText}" FontSize="11" Margin="0,4,12,0"
                            Visibility="{Binding HasSkipped, Converter={StaticResource BoolToVisibility}}"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
@@ -868,8 +866,8 @@
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                         </StackPanel>
                         <!-- Right margin keeps every row (and the group headers below) clear of the
-                             overlay scrollbar this ScrollViewer inherits from WPF-UI's theme, 14px
-                             track plus 4px air, not just cosmetic spacing (see the Border above). -->
+                             overlay scrollbar this ScrollViewer inherits from WPF-UI's theme; the
+                             clearance is the margin on the panel below, explained there. -->
                         <!-- Virtualized so a target with thousands of entries does not build every row's
                              visual tree the moment the expander opens. A plain ItemsControl only virtualizes
                              when a VirtualizingStackPanel sits DIRECTLY under a ScrollViewer with
@@ -979,11 +977,9 @@
                                              starts (selection can't change once it's running or done), and
                                              the mark only appears once it has. The name starts a flat 8px
                                              from the checkbox (its own right margin) either way. -->
-                                        <CheckBox Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
-                                                  Margin="0,0,8,0"
+                                        <CheckBox Grid.Row="0" Grid.Column="0" Style="{StaticResource CleanupCandidateCheckBox}"
                                                   Visibility="{Binding IsCheckboxVisible, Converter={StaticResource BoolToHiddenVisibility}}"
                                                   IsChecked="{Binding IsSelected}"
-                                                  IsEnabled="{Binding DataContext.CanEditDetails, RelativeSource={RelativeSource AncestorType=Window}}"
                                                   AutomationProperties.Name="{Binding DisplayName}"/>
 
                                         <Border Grid.Row="0" Grid.Column="0" Width="6" Height="6" CornerRadius="3"

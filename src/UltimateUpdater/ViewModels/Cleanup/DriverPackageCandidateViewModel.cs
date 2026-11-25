@@ -95,7 +95,7 @@ public sealed partial class DriverPackageCandidateViewModel : ObservableObject
             void Add(string label, string? value)
             {
                 if (!string.IsNullOrWhiteSpace(value))
-                    lines.Add($"{label}: {value}");
+                    lines.Add(LabelValue.Join(label, value));
             }
 
             Add(loc["CleanupDriverProviderLabel"], Provider);
