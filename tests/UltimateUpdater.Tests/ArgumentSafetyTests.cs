@@ -166,6 +166,34 @@ public class ArgumentSafetyTests
         }
     }
 
+    /// <summary>
+    /// A UNC or device path from vendor data must be refused before any file access: File.Exists on a share
+    /// would connect to the host with the user's credentials. The unreachable address makes a probe visible
+    /// as a long wait.
+    /// </summary>
+    [Theory]
+    [InlineData(@"\\192.0.2.1\share\a.exe")]
+    [InlineData("//192.0.2.1/share/a.exe")]
+    [InlineData(@"\\?\C:\Windows\explorer.exe")]
+    [InlineData(@"\\.\C:\Windows\explorer.exe")]
+    public void A_network_or_device_path_is_refused_without_touching_it(string target)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        Assert.False(UriLauncher.IsLaunchable(target));
+
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(1), "the path was probed");
+    }
+
+    [Fact]
+    public void A_drive_letter_path_is_launchable_and_an_own_folder_may_opt_in_to_a_device_form()
+    {
+        var explorer = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+
+        Assert.True(UriLauncher.IsLaunchable(explorer));
+        Assert.True(UriLauncher.IsLaunchable(@"\\?\" + explorer, allowNetworkPath: true));
+    }
+
     [Fact]
     public void An_absolute_path_is_launchable_only_when_it_exists()
     {
