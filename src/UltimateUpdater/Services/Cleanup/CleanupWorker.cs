@@ -212,7 +212,7 @@ public static class CleanupWorker
             using var quarantine = command.LeftoverSubject is { } subject && command.SelectedLeftovers.Count > 0
                 ? QuarantineSession.OpenMachine(subject.Name, logging)
                 : null;
-            Send(writer, jobId, await LeftoversResultAsync(command, remover, registry, backupFolder, cancellationToken, quarantine));
+            Send(writer, jobId, await LeftoversResultAsync(command, remover, registry, backupFolder, cancellationToken, quarantine, logging));
         }
         catch (OperationCanceledException)
         {
@@ -228,6 +228,18 @@ public static class CleanupWorker
         Send(writer, jobId, new CleanupWorkerMessage { Type = "done" });
     }
 
+    /// <summary>True when <paramref name="key"/> names an Uninstall key whose parent still lists it.</summary>
+    private static bool IsStillListed(IRegistryView registry, string key)
+    {
+        var split = key.LastIndexOf('\\');
+        if (split <= 0 || split == key.Length - 1)
+            return false;
+
+        var parent = key[..split];
+        var leaf = key[(split + 1)..];
+        return registry.SubKeyNames(parent).Contains(leaf, StringComparer.OrdinalIgnoreCase);
+    }
+
     /// <summary>The id the "result" of a "leftovers" command carries.</summary>
     internal const string LeftoversId = "leftovers";
 
@@ -240,12 +252,20 @@ public static class CleanupWorker
     /// </summary>
     internal static async Task<CleanupWorkerMessage> LeftoversResultAsync(
         CleanupCommand command, LeftoverRemover remover, IRegistryView registry, string backupFolder,
-        CancellationToken cancellationToken, QuarantineSession? quarantine = null)
+        CancellationToken cancellationToken, QuarantineSession? quarantine = null, LoggingService? logging = null)
     {
         if (command.LeftoverSubject is not { } subject || command.SelectedLeftovers.Count == 0)
             return new CleanupWorkerMessage { Type = "result", Id = LeftoversId };
 
-        var claims = LeftoverClaims.FromRegistry(registry, subject.Key)
+        // The subject comes over the pipe. A program the machine still lists is not a removed program, and
+        // leaving its own entry out of the claims would let its install folder pass as a leftover.
+        if (IsStillListed(registry, subject.Key))
+        {
+            logging?.Warn("Cleanup worker refused a leftover removal: the program's uninstall entry is still installed.");
+            return new CleanupWorkerMessage { Type = "result", Id = LeftoversId };
+        }
+
+        var claims = LeftoverClaims.FromRegistry(registry)
             .WithText(command.LeftoverClaimedNames, command.LeftoverClaimedPublishers, command.LeftoverClaimedPaths);
 
         var removal = await remover.RemoveAsync(

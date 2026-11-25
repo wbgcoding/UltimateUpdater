@@ -402,6 +402,57 @@ public sealed class LeftoverWorkerCommandTests
     }
 
     [Fact]
+    public async Task A_subject_that_the_machine_still_lists_removes_nothing_and_its_folder_stays()
+    {
+        using var tree = new LeftoverTree();
+        var installed = tree.Folder("Program Files", "Contoso", "Contoso Notes");
+        tree.Registry.Program(FakeUninstallRegistry.Hklm64, "Gone", "Contoso Notes")
+            .Set(LeftoverTree.RemovedKey, "InstallLocation", installed);
+        var recycled = new List<string>();
+        var remover = new LeftoverRemover(tree.Scanner(), tree.Roots, new LoggingService(), recycle: p =>
+        {
+            recycled.Add(p);
+            return true;
+        });
+        var command = new CleanupCommand
+        {
+            Command = "leftovers",
+            LeftoverSubject = new LeftoverSubject(LeftoverTree.RemovedKey, "Contoso Notes", "Contoso Ltd.", installed),
+            SelectedLeftovers = [new LeftoverSelectionDto { Kind = LeftoverKind.Folder, Path = installed }],
+        };
+
+        var message = await CleanupWorker.LeftoversResultAsync(command, remover, tree.Registry, "unused", CancellationToken.None);
+
+        Assert.Equal(0, message.Files);
+        Assert.Empty(recycled);
+        Assert.True(Directory.Exists(installed));
+    }
+
+    [Fact]
+    public async Task The_same_subject_with_its_key_gone_has_its_folder_removed()
+    {
+        using var tree = new LeftoverTree();
+        var installed = tree.Folder("Program Files", "Contoso", "Contoso Notes");
+        var recycled = new List<string>();
+        var remover = new LeftoverRemover(tree.Scanner(), tree.Roots, new LoggingService(), recycle: p =>
+        {
+            recycled.Add(p);
+            return true;
+        });
+        var command = new CleanupCommand
+        {
+            Command = "leftovers",
+            LeftoverSubject = new LeftoverSubject(LeftoverTree.RemovedKey, "Contoso Notes", "Contoso Ltd.", installed),
+            SelectedLeftovers = [new LeftoverSelectionDto { Kind = LeftoverKind.Folder, Path = installed }],
+        };
+
+        var message = await CleanupWorker.LeftoversResultAsync(command, remover, tree.Registry, "unused", CancellationToken.None);
+
+        Assert.Equal(1, message.Files);
+        Assert.Equal([installed], recycled);
+    }
+
+    [Fact]
     public async Task A_command_without_a_subject_or_selection_does_nothing()
     {
         using var tree = new LeftoverTree();
