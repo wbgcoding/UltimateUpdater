@@ -86,6 +86,53 @@ public class GitHubReleaseSourceTests
         Assert.Empty(items);
     }
 
+    /// <summary>A scan after the first asks "changed since?" with the stored ETag; the 304 that answers it
+    /// costs no rate-limit budget and still yields the same row from the stored release.</summary>
+    [Fact]
+    public async Task A_second_scan_sends_the_stored_etag_and_reuses_the_answer_on_a_304()
+    {
+        var handler = new ETagHandler();
+        using var httpClient = new HttpClient(handler);
+        var source = new GitHubReleaseSource(new LoggingService(), httpClient, ThingRegistry(), []);
+
+        var first = await ScanAsync(source);
+        var second = await ScanAsync(source);
+
+        Assert.Single(first);
+        Assert.Single(second);
+        Assert.Equal("2.0", second[0].AvailableVersion);
+        Assert.Equal([null, "\"x\""], handler.IfNoneMatchSeen);
+    }
+
+    private static async Task<List<UpdateItem>> ScanAsync(GitHubReleaseSource source)
+    {
+        var items = new List<UpdateItem>();
+        await foreach (var item in source.ScanAsync(CancellationToken.None))
+            items.Add(item);
+        return items;
+    }
+
+    private sealed class ETagHandler : HttpMessageHandler
+    {
+        public List<string?> IfNoneMatchSeen { get; } = [];
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var sent = request.Headers.TryGetValues("If-None-Match", out var values) ? values.Single() : null;
+            IfNoneMatchSeen.Add(sent);
+
+            if (sent == "\"x\"")
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.NotModified));
+
+            var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent("{\"tag_name\":\"2.0\",\"html_url\":\"https://github.com/someone/thing/releases/tag/2.0\"}"),
+            };
+            response.Headers.ETag = new System.Net.Http.Headers.EntityTagHeaderValue("\"x\"");
+            return Task.FromResult(response);
+        }
+    }
+
     private static FakeRegistry ThingRegistry() => new FakeRegistry()
         .Set(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\thing", "DisplayName", "Thing")
         .Set(@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\thing", "DisplayVersion", "1.0")

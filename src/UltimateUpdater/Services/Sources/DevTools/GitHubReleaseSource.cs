@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
@@ -30,6 +31,13 @@ public sealed class GitHubReleaseSource(
     /// <summary>Repos a dedicated <see cref="SelfUpdatingToolSource"/> already owns, never duplicate
     /// that row.</summary>
     private readonly HashSet<string> _ownedRepos = new(ownedRepos ?? [], StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The last answer per repository with its ETag, kept for the life of the source so a later scan
+    /// asks "changed since?" and a 304, which GitHub does not count against the anonymous hourly limit, reuses
+    /// the stored body. Bounded: past the cap the stored answers are simply dropped.</summary>
+    private readonly ConcurrentDictionary<string, (string ETag, string Body)> _answers = new(StringComparer.OrdinalIgnoreCase);
+
+    private const int MaxStoredAnswers = 64;
 
     public string Id => "github-release";
 
@@ -149,11 +157,32 @@ public sealed class GitHubReleaseSource(
     /// know or that has no release (404) is an answer; a refusal, an outage or no connection is a failure.</summary>
     private async Task<(UpdateItem? Row, RegistryFetch Fetch)> ResolveAsync(Candidate candidate, CancellationToken cancellationToken)
     {
+        _answers.TryGetValue(candidate.OwnerRepo, out var stored);
+
         var fetch = await RegistryEnrichment.FetchRawOutcomeAsync(
             httpClient, GitHubReleases.LatestUrl(candidate.OwnerRepo), logging, Id, candidate.OwnerRepo,
-            cancellationToken, GitHubReleases.Headers, timeout: ExternalCallTimeouts.Default);
+            cancellationToken, GitHubReleases.Headers, timeout: ExternalCallTimeouts.Default,
+            ifNoneMatch: stored.ETag);
 
-        return (fetch.Body is null ? null : ToRow(candidate, fetch.Body), fetch);
+        var body = fetch.Status == RegistryFetchStatus.NotModified ? stored.Body : fetch.Body;
+        Remember(candidate.OwnerRepo, fetch);
+
+        return (body is null ? null : ToRow(candidate, body), fetch);
+    }
+
+    private void Remember(string ownerRepo, RegistryFetch fetch)
+    {
+        if (fetch.Body is not null && fetch.ETag is { Length: > 0 } etag)
+        {
+            if (_answers.Count >= MaxStoredAnswers && !_answers.ContainsKey(ownerRepo))
+                _answers.Clear();
+
+            _answers[ownerRepo] = (etag, fetch.Body);
+        }
+        else if (fetch.Status is RegistryFetchStatus.NotFound or RegistryFetchStatus.Ok)
+        {
+            _answers.TryRemove(ownerRepo, out _);
+        }
     }
 
     private UpdateItem? ToRow(Candidate candidate, string json)

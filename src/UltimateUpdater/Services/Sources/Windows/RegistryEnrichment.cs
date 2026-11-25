@@ -15,6 +15,10 @@ internal enum RegistryFetchStatus
     /// package from a private index, a git install or a sideloaded extension, never a failure.</summary>
     NotFound,
 
+    /// <summary>The caller sent a validator (<c>If-None-Match</c>) and the registry answered 304: what the
+    /// caller stored is still current. An answer, never a failure.</summary>
+    NotModified,
+
     /// <summary>No usable answer: any other status (403 and 429 included), an oversized body, a connection
     /// error or a timeout.</summary>
     Failed,
@@ -43,7 +47,7 @@ internal sealed class RegistryRateLimitedException(string message, DateTimeOffse
 /// only; an internal timeout is recorded as a <see cref="TimeoutException"/>, never as an
 /// <see cref="OperationCanceledException"/>, because a cancellation reads as "the user stopped this source".
 /// </summary>
-internal readonly record struct RegistryFetch(string? Body, RegistryFetchStatus Status, Exception? Error)
+internal readonly record struct RegistryFetch(string? Body, RegistryFetchStatus Status, Exception? Error, string? ETag = null)
 {
     /// <summary>
     /// A source that asked a registry about every installed package and got no usable answer from ANY of
@@ -110,10 +114,10 @@ internal static class RegistryEnrichment
 
     /// <summary>
     /// A dedicated client with redirects OFF, used only by <see cref="HeadContentLengthAsync"/>; the
-    /// shared <see cref="HttpClient"/> everything else uses follows redirects on its own, which is exactly
-    /// what let a request reach a private address before this method could ever check where it landed
-    /// Never used for the enrichment GET, which has no SSRF exposure of its own (fixed,
-    /// hard-coded registry hosts).
+    /// shared <see cref="HttpClient"/> everything else uses has a handler that follows redirects itself
+    /// without the public-address check, so a request could reach a private address before this method
+    /// could check where it landed. Never used for the enrichment GET, which has no SSRF exposure of its
+    /// own (fixed, hard-coded registry hosts).
     /// </summary>
     internal static readonly HttpClient NoRedirectClient =
         // UseProxy = false: with a proxy, ConnectCallback would dial the proxy (refused when it sits on a
@@ -235,7 +239,10 @@ internal static class RegistryEnrichment
     /// client's own timeout stops at the headers and a body that stalls would otherwise never end. When it
     /// fires the outcome is a failure carrying a <see cref="TimeoutException"/>. Cancellation by
     /// <paramref name="cancellationToken"/> still propagates. <paramref name="maxContentBytes"/> raises the
-    /// size cap for the one caller that knowingly reads a very large document.
+    /// size cap for the one caller that knowingly reads a very large document. With
+    /// <paramref name="ifNoneMatch"/> set (an ETag stored from an earlier answer) the lookup is conditional: a
+    /// 304 ends as <see cref="RegistryFetchStatus.NotModified"/> with no body, and a fresh answer carries its
+    /// <see cref="RegistryFetch.ETag"/>.
     /// </summary>
     public static async Task<RegistryFetch> FetchRawOutcomeAsync(
         HttpClient httpClient,
@@ -246,13 +253,17 @@ internal static class RegistryEnrichment
         CancellationToken cancellationToken,
         IReadOnlyDictionary<string, string>? extraHeaders = null,
         TimeSpan? timeout = null,
-        long? maxContentBytes = null)
+        long? maxContentBytes = null,
+        string? ifNoneMatch = null)
     {
+        string? etag = null;
         var outcome = await FetchCoreAsync(
             httpClient, url, logging, sourceId, itemId, cancellationToken, extraHeaders, timeout, maxContentBytes,
             (response, cap, bounded) => ReadLimitedAsync(response, cap, logging, sourceId, itemId, bounded),
-            "is too large");
-        return new RegistryFetch(outcome.Value, outcome.Status, outcome.Error);
+            "is too large",
+            ifNoneMatch,
+            response => etag = response.IsSuccessStatusCode ? response.Headers.ETag?.ToString() : null);
+        return new RegistryFetch(outcome.Value, outcome.Status, outcome.Error, etag);
     }
 
     /// <summary>
@@ -299,7 +310,9 @@ internal static class RegistryEnrichment
         TimeSpan? timeout,
         long? maxContentBytes,
         Func<HttpResponseMessage, long, CancellationToken, Task<T?>> readBody,
-        string unusableBodyText) where T : class
+        string unusableBodyText,
+        string? ifNoneMatch = null,
+        Action<HttpResponseMessage>? onResponse = null) where T : class
     {
         var cap = maxContentBytes ?? MaxContentBytes;
 
@@ -315,10 +328,17 @@ internal static class RegistryEnrichment
                     request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
 
+            if (ifNoneMatch is not null)
+                request.Headers.TryAddWithoutValidation("If-None-Match", ifNoneMatch);
+
             using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, bounded.Token);
+            onResponse?.Invoke(response);
 
             if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Gone)
                 return (null, RegistryFetchStatus.NotFound, null);
+
+            if (response.StatusCode == HttpStatusCode.NotModified && ifNoneMatch is not null)
+                return (null, RegistryFetchStatus.NotModified, null);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -398,11 +418,10 @@ internal static class RegistryEnrichment
 
         try
         {
-            // A shared HttpClient follows redirects automatically; by the time a post-hoc check could
-            // look at where the request ended up, the request itself had already been SENT to whatever
-            // the redirect named, private address or not (checking after `SendAsync` returns proves
-            // nothing; the SSRF already happened). Each hop is followed by hand instead, with the
-            // SAME public-address check run before every single request, never only the first.
+            // The shared client's handler follows redirects itself without the public-address check, and a
+            // check after `SendAsync` returns comes too late: the request was already sent to whatever the
+            // redirect named, private address or not. Each hop is followed by hand instead, with the SAME
+            // public-address check run before every single request, never only the first.
             var current = uri;
             for (var redirects = 0; redirects <= 5; redirects++)
             {
