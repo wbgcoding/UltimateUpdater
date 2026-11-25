@@ -28,7 +28,7 @@ public class InstallWorkerTests
     public async Task A_source_that_does_not_need_elevation_is_rejected_per_item_and_never_resolved()
     {
         var (writer, buffer) = NewWriter();
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Items = [new InstallJobItem { SourceId = "pip", ItemId = "black", Name = "black" }],
         };
@@ -53,7 +53,7 @@ public class InstallWorkerTests
     public async Task A_source_id_absent_from_the_resolved_registry_is_rejected_rather_than_guessed()
     {
         var (writer, buffer) = NewWriter();
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Items = [new InstallJobItem { SourceId = "winget", ItemId = "git", Name = "git" }],
         };
@@ -75,7 +75,7 @@ public class InstallWorkerTests
     public async Task An_oversized_field_is_rejected_per_item_and_never_resolved()
     {
         var (writer, buffer) = NewWriter();
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Items = [new InstallJobItem { SourceId = "winget", ItemId = new string('a', 1000), Name = "x" }],
         };
@@ -102,7 +102,7 @@ public class InstallWorkerTests
             ItemId = nullField == "itemId" ? null! : "bad",
             Name = nullField == "name" ? null! : "bad",
         };
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Items = [new InstallJobItem { SourceId = "chocolatey", ItemId = "good", Name = "good" }, bad],
         };
@@ -124,7 +124,7 @@ public class InstallWorkerTests
     public async Task A_null_item_in_the_list_ends_the_job_with_done_only()
     {
         var (writer, buffer) = NewWriter();
-        var job = new InstallJobFile { Items = [null!] };
+        var job = new InstallJob { Items = [null!] };
 
         var stillConnected = await InstallWorker.RunJobAsync(job, writer, "job1", new LoggingService(), CancellationToken.None);
 
@@ -141,7 +141,7 @@ public class InstallWorkerTests
         var items = Enumerable.Range(0, 501)
             .Select(i => new InstallJobItem { SourceId = "winget", ItemId = $"pkg{i}", Name = "x" })
             .ToList();
-        var job = new InstallJobFile { Items = items };
+        var job = new InstallJob { Items = items };
 
         var stillConnected = await InstallWorker.RunJobAsync(job, writer, "job1", new LoggingService(), CancellationToken.None);
 
@@ -156,7 +156,7 @@ public class InstallWorkerTests
     {
         var (writer, _) = NewWriter();
         var source = new ConcurrencyTrackingSource("chocolatey", TimeSpan.FromMilliseconds(150));
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             MaxParallelInstalls = 5,
             Items =
@@ -178,7 +178,7 @@ public class InstallWorkerTests
     {
         var (writer, _) = NewWriter();
         var source = new ConcurrencyTrackingSource("winget", TimeSpan.FromMilliseconds(150));
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             MaxParallelInstalls = 2,
             Items =
@@ -200,7 +200,7 @@ public class InstallWorkerTests
     {
         var (writer, _) = NewWriter();
         var source = new ConcurrencyTrackingSource("winget", TimeSpan.FromMilliseconds(150));
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             MaxParallelInstalls = 999, // the worker must clamp this to 5, never trust it as-is
             Items = Enumerable.Range(0, 6)
@@ -224,7 +224,7 @@ public class InstallWorkerTests
     {
         var (writer, buffer) = NewWriter();
         var source = new FlakyMsiSource("winget", failFirstAttemptsOf: ["flaky"]);
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             MaxParallelInstalls = 2,
             Items =
@@ -255,7 +255,7 @@ public class InstallWorkerTests
     {
         var (writer, buffer) = NewWriter();
         var source = new FlakyMsiSource("winget", alwaysFailWith: ["stuck"]);
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             MaxParallelInstalls = 1,
             Items = [new InstallJobItem { SourceId = "winget", ItemId = "stuck", Name = "stuck" }],
@@ -289,7 +289,7 @@ public class InstallWorkerTests
         var itemCancellations = new System.Collections.Concurrent.ConcurrentDictionary<string, CancellationTokenSource>();
         var blockedSource = new BlockingSource("chocolatey");
         var fastSource = new FlakyMsiSource("winget");
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             MaxParallelInstalls = 2,
             Items =
@@ -401,7 +401,7 @@ public class InstallWorkerTests
 
         var (writer, buffer) = NewWriter();
         var source = new SlowLoggingSource("winget", TimeSpan.FromSeconds(3));
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Items = [new InstallJobItem { SourceId = "winget", ItemId = "slow", Name = "slow" }],
         };
@@ -437,7 +437,7 @@ public class InstallWorkerTests
         };
 
         Task Run(string jobId, string sourceId, string itemId) => ElevatedWorker.RunWithJobLogAsync(() => InstallWorker.RunJobAsync(
-            new InstallJobFile { Items = [new InstallJobItem { SourceId = sourceId, ItemId = itemId, Name = itemId }] },
+            new InstallJob { Items = [new InstallJobItem { SourceId = sourceId, ItemId = itemId, Name = itemId }] },
             writer, jobId, new LoggingService(), CancellationToken.None, sources));
 
         await Task.WhenAll(Run("jobA", "winget", "a"), Run("jobB", "chocolatey", "b"));
@@ -503,7 +503,7 @@ public class InstallWorkerTests
     {
         var (writer, buffer) = NewWriter();
         var source = new VersionRecheckSource("chocolatey", recheckedVersion);
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Items = [new InstallJobItem { SourceId = "chocolatey", ItemId = "git", Name = "git", InstalledVersion = "1.0", AvailableVersion = "2.0" }],
         };
@@ -522,7 +522,7 @@ public class InstallWorkerTests
     {
         var (writer, buffer) = NewWriter();
         var source = new VersionRecheckSource("chocolatey", "1.0", failIfAsked: true);
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Items = [new InstallJobItem { SourceId = "chocolatey", ItemId = "git", Name = "git", InstalledVersion = "1.0", AvailableVersion = "2.0" }],
         };
@@ -540,7 +540,7 @@ public class InstallWorkerTests
     {
         var (writer, buffer) = NewWriter();
         var source = new VersionRecheckSource("chocolatey", "1.0", failIfAsked: true);
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Action = InstallAction.Uninstall,
             Items = [new InstallJobItem { SourceId = "chocolatey", ItemId = "git", Name = "git", InstalledVersion = "1.0" }],

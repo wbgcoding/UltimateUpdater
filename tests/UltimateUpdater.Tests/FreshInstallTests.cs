@@ -86,7 +86,7 @@ public class FreshInstallTests
         }
     }
 
-    private static InstallJobFile FreshJob(params InstallJobItem[] items) =>
+    private static InstallJob FreshJob(params InstallJobItem[] items) =>
         new() { Action = InstallAction.FreshInstall, Items = [.. items] };
 
     private static InstallJobItem Widget(string sourceId = "winget", string id = "Example.Widget") =>
@@ -146,7 +146,7 @@ public class FreshInstallTests
         item.Scope = "machine";
 
         await InstallWorker.RunJobAsync(
-            new InstallJobFile { Action = InstallAction.Install, Items = [item] }, writer, "job1", new LoggingService(), CancellationToken.None, [source]);
+            new InstallJob { Action = InstallAction.Install, Items = [item] }, writer, "job1", new LoggingService(), CancellationToken.None, [source]);
 
         Assert.Empty(source.Calls);
         Assert.DoesNotContain("\"success\":true", ReadAll(buffer));
