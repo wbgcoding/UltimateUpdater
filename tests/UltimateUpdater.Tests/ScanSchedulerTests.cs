@@ -112,6 +112,26 @@ public class ScanSchedulerTests
             Assert.Equal(2, lines.Count(line => line.Contains("metered", StringComparison.OrdinalIgnoreCase)));
     }
 
+    /// <summary>The metered check is a COM call; on the UI thread a hung network stack would stall the window,
+    /// so it must run on a worker thread.</summary>
+    [Fact]
+    public async Task The_metered_check_runs_off_the_calling_thread()
+    {
+        var callerThread = Environment.CurrentManagedThreadId;
+        var probeThread = -1;
+        var scheduler = new ScanScheduler(NewSettings(), new LoggingService(), () => Task.FromResult(true),
+            isMetered: () =>
+            {
+                probeThread = Environment.CurrentManagedThreadId;
+                return false;
+            });
+
+        await scheduler.TickAsync();
+
+        Assert.NotEqual(-1, probeThread);
+        Assert.NotEqual(callerThread, probeThread);
+    }
+
     /// <summary>A due scan that stepped aside (an install was still running) did not scan, so the
     /// interval is not restarted: the next tick tries again instead of a whole interval later.</summary>
     [Fact]
