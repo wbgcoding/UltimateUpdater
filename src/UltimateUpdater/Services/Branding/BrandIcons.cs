@@ -68,6 +68,9 @@ internal static class BrandIcons
 {
     private static readonly ConcurrentDictionary<string, BrandMark?> Cache = new(StringComparer.Ordinal);
 
+    /// <summary>Number of resolved marks held; only real marks are cached.</summary>
+    internal static int CachedMarkCount => Cache.Count;
+
     /// <summary>Names that do not already equal their slug. Keys are normalised, as lookups are.</summary>
     private static readonly Dictionary<string, string> Aliases = new(StringComparer.Ordinal)
     {
@@ -197,15 +200,16 @@ internal static class BrandIcons
         if (string.IsNullOrEmpty(key))
             return null;
 
+        // A miss never touches the cache: the keys come from free row names, so remembering every miss would
+        // grow the dictionary with each distinct name seen, while a miss costs two dictionary lookups anyway.
         var slug = useAliases ? Aliases.GetValueOrDefault(key, key) : key;
+        if (!BrandIconData.Paths.ContainsKey(slug) || !BrandIconData.Colors.ContainsKey(slug))
+            return null;
+
         return Cache.GetOrAdd(slug, static markSlug =>
         {
-            if (!BrandIconData.Paths.TryGetValue(markSlug, out var data) ||
-                !BrandIconData.Colors.TryGetValue(markSlug, out var hex))
-            {
-                return null;
-            }
-
+            var data = BrandIconData.Paths[markSlug];
+            var hex = BrandIconData.Colors[markSlug];
             var geometry = Geometry.Parse(data);
             geometry.Freeze();   // crosses to the UI thread and is shared by every row that matches
             return new BrandMark(geometry, (Color)System.Windows.Media.ColorConverter.ConvertFromString(hex));
