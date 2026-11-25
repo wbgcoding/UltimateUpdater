@@ -122,12 +122,10 @@ public sealed class WingetBootstrapService(
             if (!trusted)
                 return WingetBootstrapOutcome.Failed("WingetBootstrapReasonNotSigned");
 
-            if (Security.MalwareScanner.ScanDownloads)
-            {
-                var outcome = await new Security.MalwareScanner(_logging).ScanFileAsync(target, cancellationToken);
-                if (outcome.IsThreat)
-                    return WingetBootstrapOutcome.Failed("WingetBootstrapReasonVirus", outcome.Detail);
-            }
+            // The scanner answers "not scanned" itself while the download scan is switched off.
+            var outcome = await new Security.MalwareScanner(_logging).ScanFileAsync(target, cancellationToken);
+            if (outcome.IsThreat)
+                return WingetBootstrapOutcome.Failed("WingetBootstrapReasonVirus", outcome.Detail);
 
             // A machine without the framework packages (typically an LTSC edition) cannot install the bundle alone.
             // A problem with the optional dependency archive only skips it; the bundle's own error then names what

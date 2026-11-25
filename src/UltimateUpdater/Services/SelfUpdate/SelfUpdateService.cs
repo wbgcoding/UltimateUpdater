@@ -359,7 +359,7 @@ public sealed partial class SelfUpdateService
             }
 
             // Second opinion from the installed antivirus, on the file the checksum just proved is the one
-            // the release published (opt-out, and fail-open: no scanner never blocks an update). A
+            // the release published (opt-in, off by default, and fail-open: no scanner never blocks an update). A
             // detection here means the published artifact itself is bad; refuse it (the finally releases the
             // handle and removes the file) so nothing unverified stays on disk.
             var scan = await new Security.MalwareScanner(_logging).ScanFileAsync(targetPath, cancellationToken);

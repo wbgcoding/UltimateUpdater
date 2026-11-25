@@ -202,7 +202,7 @@ public sealed class NvidiaDriverSource : IUpdateSource
             if (!TrustedBinary.IsSigned(target) || !IsNvidiaPublisher(target))
                 throw new InvalidOperationException("nvidia-driver: the downloaded installer is not NVIDIA-signed; refusing to run it.");
 
-            // Second opinion from the installed antivirus (opt-out). Fails open: only a positive
+            // Second opinion from the installed antivirus (opt-in, off by default). Fails open: only a positive
             // identification stops the install, a missing or silent scanner never does.
             await ScanBeforeRunAsync(target, item.Name, progress, cancellationToken);
 
