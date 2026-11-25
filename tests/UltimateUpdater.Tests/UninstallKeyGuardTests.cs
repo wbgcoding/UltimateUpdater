@@ -47,6 +47,29 @@ public class UninstallKeyGuardTests
     }
 
     [Fact]
+    public void The_stock_terminal_server_user_entry_of_the_uninstall_root_passes_on_a_desktop_edition_only()
+    {
+        var terminalServer = new SecurityIdentifier(WellKnownSidType.TerminalServerSid, null);
+        var acl = Acl(Admins, Allow(Admins, RegistryRights.FullControl), Allow(LocalSystem, RegistryRights.FullControl),
+            Allow(Users, RegistryRights.ReadKey),
+            Allow(terminalServer, RegistryRights.SetValue | RegistryRights.CreateSubKey | RegistryRights.Delete | RegistryRights.ReadKey));
+
+        Assert.True(RegistryUninstallKeyGuard.IsAdminOnly(acl, desktopEdition: true));
+        Assert.False(RegistryUninstallKeyGuard.IsAdminOnly(acl, desktopEdition: false));
+        Assert.False(RegistryUninstallKeyGuard.IsAdminOnly(acl));
+    }
+
+    [Fact]
+    public void A_desktop_edition_still_refuses_a_key_users_can_write()
+    {
+        var terminalServer = new SecurityIdentifier(WellKnownSidType.TerminalServerSid, null);
+        var acl = Acl(Admins, Allow(Admins, RegistryRights.FullControl), Allow(terminalServer, RegistryRights.SetValue),
+            Allow(Users, RegistryRights.SetValue));
+
+        Assert.False(RegistryUninstallKeyGuard.IsAdminOnly(acl, desktopEdition: true));
+    }
+
+    [Fact]
     public void A_key_owned_by_a_user_is_not_admin_only()
     {
         var acl = Acl(Users, Allow(Admins, RegistryRights.FullControl));
