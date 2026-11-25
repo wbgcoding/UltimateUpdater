@@ -1,5 +1,6 @@
 using System.IO;
 using UltimateUpdater.Services.Cleanup;
+using UltimateUpdater.Services.Processes;
 
 namespace UltimateUpdater.Tests;
 
@@ -26,6 +27,7 @@ public class CleanupReportingFixesTests : IDisposable
         DriverBackupStaging.ProgramDataRootOverride = null;
         DriverBackupStaging.StagingNameOverride = null;
         DriverCleanupExecutor.PnputilForTest.Value = null;
+        DriverCleanupExecutor.PnputilCallForTest.Value = null;
         CleanupCatalog.ProfileListForTest.Value = null;
         try { Directory.Delete(_root, recursive: true); } catch { }
     }
@@ -122,6 +124,68 @@ public class CleanupReportingFixesTests : IDisposable
         var outcome = await RunDrivers(inventory, [], ["oem20.inf"], _ => 0);
 
         Assert.Equal("2020-01-02_000000", outcome.DriverBackupFolderName);
+    }
+
+    [Fact]
+    public async Task A_driver_store_change_that_hits_its_limit_is_left_running_and_frees_nothing()
+    {
+        var calls = new List<DriverCleanupExecutor.PnputilCall>();
+        DriverCleanupExecutor.PnputilCallForTest.Value = call =>
+        {
+            calls.Add(call);
+            return Task.FromResult(call.Arguments[0] == "/delete-driver"
+                ? new ProcessResult(-1, "", "") { TimedOut = true }
+                : new ProcessResult(0, "", ""));
+        };
+        var inventory = new FakeInventory([], [Package("oem20.inf", 5000)]);
+
+        var outcome = await DriverCleanupExecutor.CleanAsync(
+            inventory, [], ["oem20.inf"], new LoggingService(), CancellationToken.None);
+
+        Assert.Equal(0, outcome.DeletedFiles);
+        Assert.Equal(1, outcome.SkippedFiles);
+        Assert.Equal(0, outcome.FreedBytes);
+        Assert.False(calls.Single(c => c.Arguments[0] == "/delete-driver").KillOnTimeout);
+        Assert.True(calls.Single(c => c.Arguments[0] == "/export-driver").KillOnTimeout);
+    }
+
+    [Fact]
+    public async Task A_device_removal_is_never_killed_at_its_limit()
+    {
+        var calls = new List<DriverCleanupExecutor.PnputilCall>();
+        DriverCleanupExecutor.PnputilCallForTest.Value = call =>
+        {
+            calls.Add(call);
+            return Task.FromResult(new ProcessResult(0, "", ""));
+        };
+        var inventory = new FakeInventory([OldDevice("ROOT\\GADGET\\0001", "oem20.inf")], []);
+
+        await DriverCleanupExecutor.CleanAsync(
+            inventory, ["ROOT\\GADGET\\0001"], [], new LoggingService(), CancellationToken.None);
+
+        Assert.All(calls.Where(c => c.Arguments[0] is "/remove-device" or "/delete-driver"), c => Assert.False(c.KillOnTimeout));
+        Assert.Contains(calls, c => c.Arguments[0] == "/remove-device");
+    }
+
+    [Fact]
+    public async Task A_big_package_gets_a_longer_export_limit_than_a_small_one()
+    {
+        var limits = new Dictionary<string, TimeSpan>();
+        DriverCleanupExecutor.PnputilCallForTest.Value = call =>
+        {
+            if (call.Arguments[0] == "/export-driver")
+                limits[call.Arguments[1]] = call.Timeout;
+            return Task.FromResult(new ProcessResult(0, "", ""));
+        };
+        var inventory = new FakeInventory([], [Package("oem20.inf", 10_000), Package("oem21.inf", 3L * 1024 * 1024 * 1024)]);
+
+        await DriverCleanupExecutor.CleanAsync(
+            inventory, [], ["oem20.inf", "oem21.inf"], new LoggingService(), CancellationToken.None);
+
+        Assert.Equal(TimeSpan.FromMinutes(3), limits["oem20.inf"]);
+        Assert.True(limits["oem21.inf"] > TimeSpan.FromMinutes(10));
+        Assert.Equal(TimeSpan.FromMinutes(30), DriverCleanupExecutor.ExportTimeout(long.MaxValue / 2));
+        Assert.Equal(TimeSpan.FromMinutes(2), DriverCleanupExecutor.ExportTimeout(0));
     }
 
     [Fact]

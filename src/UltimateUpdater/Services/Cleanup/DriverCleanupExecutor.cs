@@ -99,7 +99,7 @@ public static class DriverCleanupExecutor
                 }
 
                 if (!exported.Contains(device.PackageName)
-                    && !await ExportPackageAsync(pnputil, device.PackageName, staging, logging, CancellationToken.None))
+                    && !await ExportPackageAsync(pnputil, device.PackageName, staging, logging, CancellationToken.None, device.SizeBytes))
                 {
                     skipped++;
                     continue;
@@ -107,7 +107,7 @@ public static class DriverCleanupExecutor
 
                 exported.Add(device.PackageName);
 
-                var removed = await RunPnputilAsync(pnputil, ["/remove-device", device.InstanceId], logging, CancellationToken.None);
+                var removed = await RunPnputilAsync(pnputil, ["/remove-device", device.InstanceId], logging, CancellationToken.None, killOnTimeout: false);
                 if (!removed)
                 {
                     skipped++;
@@ -127,7 +127,7 @@ public static class DriverCleanupExecutor
                     .Any(d => !string.IsNullOrEmpty(d.InfPath)
                         && string.Equals(Path.GetFileName(d.InfPath), device.PackageName, StringComparison.OrdinalIgnoreCase));
 
-                if (!stillBound && await RunPnputilAsync(pnputil, ["/delete-driver", device.PackageName], logging, CancellationToken.None)
+                if (!stillBound && await RunPnputilAsync(pnputil, ["/delete-driver", device.PackageName], logging, CancellationToken.None, killOnTimeout: false)
                     && deletedPackages.Add(device.PackageName))
                 {
                     freed += device.SizeBytes;
@@ -156,7 +156,7 @@ public static class DriverCleanupExecutor
                 }
 
                 if (!exported.Contains(package.PackageName)
-                    && !await ExportPackageAsync(pnputil, package.PackageName, staging, logging, CancellationToken.None))
+                    && !await ExportPackageAsync(pnputil, package.PackageName, staging, logging, CancellationToken.None, package.SizeBytes))
                 {
                     skipped++;
                     continue;
@@ -166,7 +166,7 @@ public static class DriverCleanupExecutor
 
                 // No /force: a package a device still quietly depends on is reported by pnputil as skipped
                 // rather than being torn out from under it.
-                var removed = await RunPnputilAsync(pnputil, ["/delete-driver", package.PackageName], logging, CancellationToken.None);
+                var removed = await RunPnputilAsync(pnputil, ["/delete-driver", package.PackageName], logging, CancellationToken.None, killOnTimeout: false);
                 if (removed)
                 {
                     deleted++;
@@ -189,7 +189,7 @@ public static class DriverCleanupExecutor
 
     internal static async Task<bool> ExportPackageAsync(
         string pnputil, string packageName, DriverBackupStaging.StagingFolder staging, LoggingService logging,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, long sizeBytes = 0)
     {
         // The staging root itself, with its explicit ACL, was already created (and verified free of any
         // reparse point) by DriverBackupStaging.PrepareStagingRoot before the first row was ever attempted;
@@ -204,7 +204,22 @@ public static class DriverCleanupExecutor
 
         return await RunPnputilAsync(
             pnputil, ["/export-driver", packageName, staging.BackupRoot], logging, cancellationToken,
-            failureMessage: $"Driver cleanup: could not back up '{packageName}'; it was not removed.");
+            failureMessage: $"Driver cleanup: could not back up '{packageName}'; it was not removed.",
+            timeout: ExportTimeout(sizeBytes));
+    }
+
+    private static readonly TimeSpan PnputilBaseTimeout = TimeSpan.FromMinutes(2);
+
+    /// <summary>How long one export may run: two minutes plus one per started 200 MB of package, at most half an
+    /// hour. A big GPU package on a slow disk takes far longer than a small one; a fixed limit would kill the
+    /// copy and the row would be skipped for no reason. Ending an export at the limit is harmless: nothing is
+    /// removed without its backup.</summary>
+    internal static TimeSpan ExportTimeout(long sizeBytes)
+    {
+        const long Block = 200L * 1024 * 1024;
+        var blocks = sizeBytes <= 0 ? 0 : (sizeBytes + Block - 1) / Block;
+        var timeout = PnputilBaseTimeout + TimeSpan.FromMinutes(Math.Min(blocks, 30));
+        return timeout > TimeSpan.FromMinutes(30) ? TimeSpan.FromMinutes(30) : timeout;
     }
 
     /// <summary>pnputil passes the setup API's two "done, restart pending" codes through (3010
@@ -216,23 +231,43 @@ public static class DriverCleanupExecutor
     /// exit code for the given arguments. Per async flow, so parallel tests never see each other's.</summary>
     internal static readonly AsyncLocal<Func<IReadOnlyList<string>, Task<int>>?> PnputilForTest = new();
 
+    /// <summary>One pnputil launch as the runner is asked to make it.</summary>
+    internal readonly record struct PnputilCall(IReadOnlyList<string> Arguments, TimeSpan Timeout, bool KillOnTimeout);
+
+    /// <summary>Test seam for the whole launch, with its limit and kill rule visible; wins over
+    /// <see cref="PnputilForTest"/> when both are set. Per async flow.</summary>
+    internal static readonly AsyncLocal<Func<PnputilCall, Task<ProcessResult>>?> PnputilCallForTest = new();
+
     internal static async Task<bool> RunPnputilAsync(
         string pnputil, IReadOnlyList<string> arguments, LoggingService logging, CancellationToken cancellationToken,
-        string? failureMessage = null) =>
-        (await RunPnputilForCodeAsync(pnputil, arguments, logging, cancellationToken, failureMessage)) is { } code
+        string? failureMessage = null, TimeSpan? timeout = null, bool killOnTimeout = true) =>
+        (await RunPnputilForCodeAsync(pnputil, arguments, logging, cancellationToken, failureMessage, timeout, killOnTimeout)) is { } code
         && IsPnputilSuccess(code);
 
     /// <summary>The pnputil exit code, or null when the tool could not be run at all. A failing code is logged
     /// here, so a caller that only needs the code adds no log line of its own.</summary>
     internal static async Task<int?> RunPnputilForCodeAsync(
         string pnputil, IReadOnlyList<string> arguments, LoggingService logging, CancellationToken cancellationToken,
-        string? failureMessage = null)
+        string? failureMessage = null, TimeSpan? timeout = null, bool killOnTimeout = true)
     {
         try
         {
-            var result = PnputilForTest.Value is { } fake
-                ? new ProcessResult(await fake(arguments), "", "")
-                : await ProcessRunner.RunAsync(pnputil, arguments, TimeSpan.FromMinutes(2), cancellationToken);
+            var limit = timeout ?? PnputilBaseTimeout;
+            var result = PnputilCallForTest.Value is { } call
+                ? await call(new PnputilCall(arguments, limit, killOnTimeout))
+                : PnputilForTest.Value is { } fake
+                    ? new ProcessResult(await fake(arguments), "", "")
+                    : await ProcessRunner.RunAsync(pnputil, arguments, limit, cancellationToken, killOnTimeout: killOnTimeout);
+
+            // A change that is not killed gives no answer at the limit: the row counts as not confirmed, never as
+            // freed, and the still-running tool is not cut off half way through a driver-store change.
+            if (result.TimedOut)
+            {
+                logging.Warn($"Driver cleanup: pnputil {string.Join(' ', arguments)} did not finish within {limit.TotalMinutes:0} min; "
+                    + (killOnTimeout ? "it was stopped." : "it was left running and its result is not confirmed."));
+                return result.ExitCode;
+            }
+
             if (IsPnputilSuccess(result.ExitCode))
             {
                 if (result.ExitCode != 0)
