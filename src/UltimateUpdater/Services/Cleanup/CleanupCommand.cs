@@ -87,6 +87,20 @@ public sealed class CleanupCommand
     /// Only ever read to count, never to delete.</summary>
     public string? CallerProfilePath { get; set; }
 
+    /// <summary>The python and pip the unelevated app's PATH resolves to. The worker may run as another
+    /// account with another PATH; the old-Python scan never offers these interpreters. Only ever widens what
+    /// is kept.</summary>
+    public List<string> CallerPythonOnPath { get; set; } = new();
+
+    /// <summary>The unelevated app's protected known folders (profile, AppData, Windows, ...). The worker may
+    /// run as another account whose known folders differ; it refuses to empty these too. Only ever widens
+    /// what is refused, never names something to delete.</summary>
+    public List<string> CallerProtectedFolders { get; set; } = new();
+
+    /// <summary>The unelevated app's user-data folders (Documents, Desktop, Pictures, Music, Videos, Downloads):
+    /// the worker refuses to empty anything below them. Same one-way rule as <see cref="CallerProtectedFolders"/>.</summary>
+    public List<string> CallerUserDataFolders { get; set; } = new();
+
     /// <summary>The unelevated app's user SID. The worker may run as another account, whose own HKCU is
     /// not the signed-in user's; it compares this with its token user and leaves the per-user registry
     /// targets alone when they differ or this is missing.</summary>

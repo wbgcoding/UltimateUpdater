@@ -394,6 +394,57 @@ public class PythonCleanupDiscoveryTests : IDisposable
         Assert.Single(eligibleForElevatedWorker);
     }
 
+    [Fact]
+    public void The_callers_path_interpreter_is_kept_even_when_the_worker_path_names_another()
+    {
+        var older = CreateInterpreter("Python312");
+        var newer = CreateInterpreter("Python313");
+        var olderExe = Path.Combine(older, "python.exe");
+
+        var registry = new FakeRegistry()
+            .AddTag(HklmRoot, "3.12", olderExe)
+            .AddTag(HklmRoot, "3.13", Path.Combine(newer, "python.exe"))
+            .AddUninstallEntry(HklmUninstallRoot, "{python-3.12}", "Python 3.12.5 (64-bit)",
+                uninstallString: Path.Combine(older, "uninstall.exe"),
+                quietUninstallString: Path.Combine(older, "uninstall.exe") + " /quiet");
+
+        Assert.Single(PythonCleanupDiscovery.DiscoverOldVersions(registry, _ => null));
+
+        var caller = new PythonCallerView([olderExe], ForeignUser: true);
+        Assert.Empty(PythonCleanupDiscovery.DiscoverOldVersions(registry, _ => null, caller: caller));
+    }
+
+    [Fact]
+    public void A_foreign_accounts_per_user_interpreters_are_left_out_but_machine_wide_ones_stay()
+    {
+        var perUser = CreateInterpreter("Python310");
+        var machine = CreateInterpreter("Python311");
+        var newer = CreateInterpreter("Python313");
+        var perUserExe = Path.Combine(perUser, "python.exe");
+        var machineExe = Path.Combine(machine, "python.exe");
+
+        var registry = new FakeRegistry()
+            .AddTag(HkcuRoot, "3.10", perUserExe)
+            .AddTag(HklmRoot, "3.11", machineExe)
+            .AddTag(HklmRoot, "3.13", Path.Combine(newer, "python.exe"))
+            .AddUninstallEntry(HkcuUninstallRoot, "{python-3.10}", "Python 3.10.5 (64-bit)",
+                uninstallString: Path.Combine(perUser, "uninstall.exe"),
+                quietUninstallString: Path.Combine(perUser, "uninstall.exe") + " /quiet")
+            .AddUninstallEntry(HklmUninstallRoot, "{python-3.11}", "Python 3.11.5 (64-bit)",
+                uninstallString: Path.Combine(machine, "uninstall.exe"),
+                quietUninstallString: Path.Combine(machine, "uninstall.exe") + " /quiet");
+
+        Assert.Equal(2, PythonCleanupDiscovery.DiscoverOldVersions(registry, _ => null).Count);
+
+        var foreign = PythonCleanupDiscovery.DiscoverOldVersions(
+            registry, _ => null, caller: new PythonCallerView([], ForeignUser: true));
+        Assert.Equal(machineExe, Assert.Single(foreign).PythonExe);
+
+        var same = PythonCleanupDiscovery.DiscoverOldVersions(
+            registry, _ => null, caller: new PythonCallerView([], ForeignUser: false));
+        Assert.Equal(2, same.Count);
+    }
+
     // ---- virtual environments that still use an old interpreter ----
 
     private string MakeVenv(string parent, string name, string home)

@@ -47,6 +47,10 @@ public static class CleanupWorker
 
         LocalizationService.Instance.Apply(command.Language);
 
+        // Set for this command's async flow only (it unwinds when this method returns).
+        CleanupSafety.CallerFoldersForRun.Value =
+            CleanupSafety.CallerFolders.From(command.CallerProtectedFolders, command.CallerUserDataFolders);
+
         // Traces of a removed program in the machine-wide places: no catalogue target, its own safety gate.
         if (command.Command == "leftovers")
         {
@@ -94,6 +98,8 @@ public static class CleanupWorker
 
         var targets = ResolveElevatedTargets(command, logging.Warn);
         var workerSid = workerSidOverride ?? RecycleBinScanner.TryGetOwnSid();
+        service.PythonCaller = new PythonCallerView(
+            command.CallerPythonOnPath ?? [], IsForeignUser(command.CallerSid, workerSid));
 
         // A restore point before installs already exists (InstallWorker), and a cleaning run that
         // touches the registry, repairs Windows' own files, or removes a driver gets one too: those are
@@ -316,6 +322,11 @@ public static class CleanupWorker
         && target.RegistryCategories
             .SelectMany(RegistryCleanupScanner.RootKeys)
             .Any(root => root.StartsWith(@"HKCU\",StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>True unless both SIDs are known and equal (a missing SID fails closed, like the hive check).</summary>
+    internal static bool IsForeignUser(string? callerSid, string? workerSid) =>
+        string.IsNullOrWhiteSpace(callerSid) || string.IsNullOrWhiteSpace(workerSid)
+        || !string.Equals(callerSid, workerSid, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Why a target must not run in this worker, or null when it may. A per-user registry target runs only

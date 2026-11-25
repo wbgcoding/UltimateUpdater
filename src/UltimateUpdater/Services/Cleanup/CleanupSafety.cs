@@ -96,6 +96,67 @@ public static class CleanupSafety
         ProtectedFolders.Select(SafeFolderPath).OfType<string>().ToList();
 
     /// <summary>
+    /// The user's own folders, below which NOTHING may be emptied, whatever a segment of the path is called: a
+    /// project's own <c>Logs</c> or <c>tmp</c> folder inside Documents looks like a cache to the name rule but
+    /// is the user's work. (The folders in <see cref="ProtectedFolders"/> are only refused as themselves or as a
+    /// parent of one.)
+    /// </summary>
+    private static readonly Environment.SpecialFolder[] UserDataFolders =
+    [
+        Environment.SpecialFolder.MyDocuments,
+        Environment.SpecialFolder.MyPictures,
+        Environment.SpecialFolder.MyMusic,
+        Environment.SpecialFolder.MyVideos,
+        Environment.SpecialFolder.Desktop,
+        Environment.SpecialFolder.DesktopDirectory,
+    ];
+
+    private static List<string> ResolveUserDataFolders()
+    {
+        var folders = UserDataFolders.Select(SafeFolderPath).OfType<string>().ToList();
+        if (KnownFolderPaths.Downloads() is { } downloads && NormalizeFolder(downloads) is { } full)
+            folders.Add(full);
+
+        return folders;
+    }
+
+    private static bool IsDriveRootPath(string fullPath) =>
+        Path.GetPathRoot(fullPath) is { } root
+        && string.Equals(Path.TrimEndingDirectorySeparator(root), Path.TrimEndingDirectorySeparator(fullPath), StringComparison.OrdinalIgnoreCase);
+
+    private static string? NormalizeFolder(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !Path.IsPathFullyQualified(path))
+            return null;
+
+        try
+        {
+            return Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The known folders of the signed-in user, as the unelevated app resolves them: the elevated
+    /// worker may run as another administrator, whose own known folders say nothing about whose files these
+    /// are, so it also protects what the app names. The lists can only widen what is refused.</summary>
+    internal sealed record CallerFolders(IReadOnlyList<string> Protected, IReadOnlyList<string> UserData)
+    {
+        /// <summary>The lists as they arrive over the pipe: only full local paths are kept.</summary>
+        internal static CallerFolders From(IEnumerable<string>? protectedFolders, IEnumerable<string>? userDataFolders) => new(
+            (protectedFolders ?? []).Select(NormalizeFolder).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+            (userDataFolders ?? []).Select(NormalizeFolder).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToList());
+    }
+
+    /// <summary>This process's own view of the folders, to send to an elevated worker.</summary>
+    internal static CallerFolders ResolveOwnFolders() => new(ResolveProtectedFolders(), ResolveUserDataFolders());
+
+    /// <summary>Set for the async flow of one worker command: the caller's folders, on top of the worker's own.</summary>
+    internal static readonly AsyncLocal<CallerFolders?> CallerFoldersForRun = new();
+
+    /// <summary>
     /// The set of directories cleanup must not touch. The program's own folder is protected as a whole, unless
     /// that folder is so broad that protecting it would put the user's Temp and every cache below it off
     /// limits (an exe started from the profile root, a drive root or the local app data folder): then only the
@@ -273,17 +334,26 @@ public static class CleanupSafety
             return false;
         }
 
-        foreach (var special in ProtectedFolders)
+        var caller = CallerFoldersForRun.Value;
+        foreach (var protectedPath in ResolveProtectedFolders().Concat(caller?.Protected ?? []))
         {
-            var protectedPath = SafeFolderPath(special);
-            if (protectedPath is null)
-                continue;
-
             // exactly a protected folder, or an ancestor of one
             if (string.Equals(full, protectedPath, StringComparison.OrdinalIgnoreCase)
                 || protectedPath.StartsWith(full + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
             {
                 reason = $"a protected folder or the folder that holds one ({protectedPath})";
+                return false;
+            }
+        }
+
+        foreach (var userData in ResolveUserDataFolders().Concat(caller?.UserData ?? []))
+        {
+            // anything below the user's own folders; a drive-root "folder" (Documents moved to D:\) would put the
+            // whole drive off limits, so only a real folder counts here
+            if (!IsDriveRootPath(userData)
+                && full.StartsWith(userData + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            {
+                reason = $"inside a folder that holds the user's own files ({userData})";
                 return false;
             }
         }
@@ -393,12 +463,42 @@ public static class CleanupSafety
     /// the leaf misses a swapped parent entirely. Unreadable counts as "leads through a link": a path that
     /// cannot be inspected earns no benefit of the doubt.
     /// </summary>
-    public static bool AncestryLeadsThroughLink(string path)
+    public static bool AncestryLeadsThroughLink(string path) => AncestryLeadsThroughLink(path, stopAt: null);
+
+    /// <summary>
+    /// The same walk, but only the folders BELOW <paramref name="lockedRoot"/>: the root itself was locked for
+    /// use (opened without following a link, final path read) before anything under it is looked at, so the
+    /// part of the path above it is already settled, and a pass over thousands of subfolders would otherwise
+    /// repeat that walk to the drive root for every one of them. A path that is not under the root falls back
+    /// to the whole walk.
+    /// </summary>
+    internal static bool AncestryBelowLeadsThroughLink(string path, string lockedRoot)
+    {
+        try
+        {
+            var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(lockedRoot));
+            var full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+            return AncestryLeadsThroughLink(
+                full, full.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ? root : null);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return true;
+        }
+    }
+
+    private static bool AncestryLeadsThroughLink(string path, string? stopAt)
     {
         try
         {
             for (var dir = new DirectoryInfo(Path.GetFullPath(path)); dir is not null; dir = dir.Parent)
             {
+                if (stopAt is not null && string.Equals(
+                        Path.TrimEndingDirectorySeparator(dir.FullName), stopAt, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
                 if (dir.Exists && dir.LinkTarget is not null)
                     return true;
             }
@@ -709,8 +809,9 @@ public static class CleanupSafety
             return false;
         }
 
+        // A bin lives at the root of a local drive; a share that merely holds a folder of that name is not one.
         var root = Path.GetPathRoot(full);
-        if (string.IsNullOrEmpty(root))
+        if (string.IsNullOrEmpty(root) || root.Length != 3 || !char.IsAsciiLetter(root[0]) || root[1] != ':')
             return false;
 
         string ownBin;

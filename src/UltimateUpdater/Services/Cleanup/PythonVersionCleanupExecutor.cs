@@ -27,13 +27,14 @@ public static class PythonVersionCleanupExecutor
 {
     public static async Task<CleanupOutcome> CleanAsync(
         IRegistryView registry, IReadOnlyCollection<string> selectedPythonExePaths, LoggingService logging,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, PythonCallerView? caller = null)
     {
         if (selectedPythonExePaths.Count == 0)
             return new CleanupOutcome(0, 0, 0);
 
         var matched = PythonCleanupDiscovery.DiscoverOldVersions(
-                registry, measure: exe => selectedPythonExePaths.Contains(exe, StringComparer.OrdinalIgnoreCase))
+                registry, measure: exe => selectedPythonExePaths.Contains(exe, StringComparer.OrdinalIgnoreCase),
+                caller: caller)
             .Where(c => selectedPythonExePaths.Contains(c.PythonExe, StringComparer.OrdinalIgnoreCase))
             .ToList();
 

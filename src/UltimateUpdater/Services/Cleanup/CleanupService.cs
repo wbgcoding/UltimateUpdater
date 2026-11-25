@@ -31,7 +31,7 @@ public partial class CleanupService(LoggingService logging)
                     CleanupKind.LeftoverInstalls => ScanLeftovers(cancellationToken),
                     CleanupKind.DriverCleanup => ScanDrivers(cancellationToken),
                     CleanupKind.PipInstallLeftovers => ScanPipLeftovers(cancellationToken),
-                    CleanupKind.OldPythonVersions => ScanOldPythonVersions(CallerProfilePath, cancellationToken),
+                    CleanupKind.OldPythonVersions => ScanOldPythonVersions(CallerProfilePath, cancellationToken, PythonCaller),
                     // Disk Cleanup reports nothing before it runs, and guessing a figure would be a lie.
                     _ => new CleanupScanResult(0, 0, 0),
                 };
@@ -50,6 +50,10 @@ public partial class CleanupService(LoggingService logging)
     /// account); null in the app itself, where the own profile is the right one. Only used to count virtual
     /// environments for the old-Python rows.</summary>
     internal string? CallerProfilePath { get; set; }
+
+    /// <summary>Set only in the elevated worker: the signed-in user's PATH interpreters and whether this
+    /// account is a different one, so the old-Python rows judge by the caller, not the worker.</summary>
+    internal PythonCallerView? PythonCaller { get; set; }
 
     /// <summary>Test seam: what the caller asked for, readable from inside an overridden
     /// <see cref="ScanAsync(CleanupTarget, CancellationToken, int)"/> that stands in for the real walk.</summary>

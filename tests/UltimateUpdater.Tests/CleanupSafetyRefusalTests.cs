@@ -94,6 +94,112 @@ public sealed class CleanupSafetyRefusalTests : IDisposable
         Assert.Equal(string.Empty, reason);
     }
 
+    [Theory]
+    [InlineData(Environment.SpecialFolder.MyDocuments)]
+    [InlineData(Environment.SpecialFolder.Desktop)]
+    [InlineData(Environment.SpecialFolder.MyPictures)]
+    [InlineData(Environment.SpecialFolder.MyMusic)]
+    [InlineData(Environment.SpecialFolder.MyVideos)]
+    public void A_cache_looking_folder_below_a_user_data_folder_is_refused(Environment.SpecialFolder folder)
+    {
+        var known = Environment.GetFolderPath(folder);
+        if (string.IsNullOrEmpty(known))
+            return;
+
+        Assert.False(CleanupSafety.IsSafeToEmpty(Path.Combine(known, "project", "Temp"), out var reason));
+        Assert.Contains("user's own files", reason);
+    }
+
+    [Fact]
+    public void A_cache_looking_folder_below_a_folder_the_caller_names_is_refused_in_the_worker()
+    {
+        var documents = Path.Combine(_dir, "their-documents");
+        var logs = Path.Combine(documents, "project", "Logs");
+        Directory.CreateDirectory(logs);
+        Assert.True(CleanupSafety.IsSafeToEmpty(logs));
+
+        CleanupSafety.CallerFoldersForRun.Value = CleanupSafety.CallerFolders.From([], [documents, "not-a-full-path"]);
+        try
+        {
+            Assert.False(CleanupSafety.IsSafeToEmpty(logs, out var reason));
+            Assert.Contains("user's own files", reason);
+            Assert.True(CleanupSafety.IsSafeToEmpty(_dir));
+        }
+        finally
+        {
+            CleanupSafety.CallerFoldersForRun.Value = null;
+        }
+    }
+
+    [Fact]
+    public void A_folder_that_holds_a_folder_the_caller_protects_is_refused_in_the_worker()
+    {
+        var holder = Path.Combine(_dir, "holder-cache");
+        var inner = Path.Combine(holder, "keep");
+        Directory.CreateDirectory(inner);
+        Assert.True(CleanupSafety.IsSafeToEmpty(holder));
+
+        CleanupSafety.CallerFoldersForRun.Value = CleanupSafety.CallerFolders.From([inner], []);
+        try
+        {
+            Assert.False(CleanupSafety.IsSafeToEmpty(holder, out var reason));
+            Assert.Contains("protected folder", reason);
+        }
+        finally
+        {
+            CleanupSafety.CallerFoldersForRun.Value = null;
+        }
+    }
+
+    [Fact]
+    public void The_link_walk_below_a_locked_root_ignores_a_link_above_it_and_finds_one_below()
+    {
+        var real = Path.Combine(_dir, "real");
+        Directory.CreateDirectory(Path.Combine(real, "root", "a", "b"));
+        var viaLink = Path.Combine(_dir, "via-link");
+        MakeJunction(viaLink, real);
+        var root = Path.Combine(viaLink, "root");
+        var deep = Path.Combine(root, "a", "b");
+
+        var inner = Path.Combine(real, "root", "a", "jump");
+        try
+        {
+            // the whole walk sees the junction above the root, the bounded walk does not look that far up
+            Assert.True(CleanupSafety.AncestryLeadsThroughLink(deep));
+            Assert.False(CleanupSafety.AncestryBelowLeadsThroughLink(deep, root));
+
+            MakeJunction(inner, real);
+            Assert.True(CleanupSafety.AncestryBelowLeadsThroughLink(Path.Combine(root, "a", "jump"), root));
+            Assert.True(CleanupSafety.AncestryBelowLeadsThroughLink(Path.Combine(root, "a", "jump", "x"), root));
+
+            // a path that is not under the root gets the whole walk
+            Assert.True(CleanupSafety.AncestryBelowLeadsThroughLink(deep, Path.Combine(_dir, "elsewhere")));
+        }
+        finally
+        {
+            foreach (var link in new[] { inner, viaLink })
+            {
+                if (new DirectoryInfo(link).LinkTarget is not null)
+                    Directory.Delete(link);
+            }
+        }
+    }
+
+    private static void MakeJunction(string link, string target)
+    {
+        using var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        })!;
+        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
+        Assert.Equal(0, mklink.ExitCode);
+    }
+
     // ---- IsSafeToDeleteFile
 
     [Fact]

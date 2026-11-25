@@ -423,7 +423,8 @@ public partial class CleanupService
 
                 try
                 {
-                    if (CleanupSafety.AncestryLeadsThroughLink(subdirectory))
+                    // Only the folders below the locked root: the root's own ancestry was settled by the lock.
+                    if (CleanupSafety.AncestryBelowLeadsThroughLink(subdirectory, directory))
                         continue;
 
                     // Through a handle that is checked to lie inside the root, so a folder swapped for a
@@ -815,7 +816,7 @@ public partial class CleanupService
         return false;
     }
 
-    /// <summary>Test seam: called with the directory each time <see cref="EnumerateFiles"/> starts walking
+    /// <summary>Test seam: called with the directory each time <see cref="EnumerateFileDetails"/> starts walking
     /// one, so a test can prove a cleanup lists every directory once. Per async flow.</summary>
     internal static readonly AsyncLocal<Action<string>?> EnumerateFilesHookForTest = new();
 
@@ -824,66 +825,12 @@ public partial class CleanupService
     /// deleting. Per async flow.</summary>
     internal static readonly AsyncLocal<Action<string>?> BeforeFileDeleteForTest = new();
 
-    /// <summary>Enumerates lazily and tolerates an unreadable subtree, which a plain recursive call cannot.</summary>
-    private IEnumerable<string> EnumerateFiles(
-        string directory, IReadOnlyList<string> excluded, CancellationToken cancellationToken)
-    {
-        EnumerateFilesHookForTest.Value?.Invoke(directory);
-
-        var options = new EnumerationOptions
-        {
-            RecurseSubdirectories = true,
-            IgnoreInaccessible = true,
-            AttributesToSkip = FileAttributes.ReparsePoint,
-        };
-
-        IEnumerator<string> enumerator;
-        try
-        {
-            enumerator = Directory.EnumerateFiles(directory, "*", options).GetEnumerator();
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logging.Warn($"Cleanup: cannot enumerate '{directory}': {ex.Message}");
-            yield break;
-        }
-
-        using (enumerator)
-        {
-            while (true)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                string current;
-                try
-                {
-                    if (!enumerator.MoveNext())
-                        break;
-
-                    current = enumerator.Current;
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
-                    // A .NET file enumerator cannot be resumed once MoveNext has thrown, so this directory's
-                    // listing ends here. Said in the log, because the files after this point were not seen.
-                    logging.Warn($"Cleanup: the listing of '{directory}' stopped early: {ex.Message}");
-                    break;
-                }
-
-                if (IsExcluded(current, excluded))
-                    continue;
-
-                yield return current;
-            }
-        }
-    }
-
     /// <summary>One listed file with the facts the directory listing already carries.</summary>
     private readonly record struct ListedFile(string Path, long Length, DateTime LastWriteUtc, DateTime CreationUtc);
 
     /// <summary>
-    /// The same walk as <see cref="EnumerateFiles"/> (same options, same exclusion, same tolerance for an
-    /// unreadable subtree), but each file arrives with its length and write time taken from the listing, so
+    /// Lists every file below a folder, lazily, tolerating an unreadable subtree (which a plain recursive call
+    /// cannot) and never entering a link. Each file arrives with its length and times taken from the listing, so
     /// measuring needs no second call per file.
     /// </summary>
     private IEnumerable<ListedFile> EnumerateFileDetails(

@@ -1039,7 +1039,12 @@ public partial class CleanupViewModel
                 : [],
             CallerTempPaths = CleanupCatalog.OwnTempPaths().ToList(),
             CallerProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            CallerProtectedFolders = CleanupSafety.ResolveOwnFolders().Protected.ToList(),
+            CallerUserDataFolders = CleanupSafety.ResolveOwnFolders().UserData.ToList(),
             CallerSid = RecycleBinScanner.TryGetOwnSid(),
+            CallerPythonOnPath = targets.Any(t => t.Target.Kind == CleanupKind.OldPythonVersions)
+                ? new[] { "python", "pip" }.Select(ProcessRunner.Resolve).OfType<string>().ToList()
+                : [],
         };
 
         // "cleanup" for a scan and for file-deletion "clean"; "cleanup-repair", "cleanup-diskcleanup", "cleanup-defrag" and "cleanup-registry" only for a single-target "clean" of that kind, so each gets its own lane in the elevated worker.

@@ -84,7 +84,7 @@ public partial class CleanupService
                 return (false, 0);
             }
 
-            foreach (var file in EnumerateFiles(path, [], CancellationToken.None).ToList())
+            foreach (var file in EnumerateFileDetails(path, [], CancellationToken.None).Select(f => f.Path).ToList())
             {
                 try
                 {
@@ -159,10 +159,12 @@ public partial class CleanupService
     /// <summary>Every interpreter older than the newest of its own architecture, gathered fresh every scan;
     /// no byte total worth trusting across the whole target, the same reasoning as <see cref="ScanDrivers"/>,
     /// the per-row size is what the dialog actually shows.</summary>
-    internal static CleanupScanResult ScanOldPythonVersions(string? callerProfilePath, CancellationToken cancellationToken)
+    internal static CleanupScanResult ScanOldPythonVersions(
+        string? callerProfilePath, CancellationToken cancellationToken, PythonCallerView? caller = null)
     {
         var candidates = PythonCleanupDiscovery.CountVenvUses(
-            PythonCleanupDiscovery.DiscoverOldVersions(WindowsRegistryView.Instance), callerProfilePath, cancellationToken);
+            PythonCleanupDiscovery.DiscoverOldVersions(WindowsRegistryView.Instance, caller: caller),
+            callerProfilePath, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
         return new CleanupScanResult(candidates.Sum(c => c.SizeBytes), candidates.Count, 0)
@@ -183,6 +185,6 @@ public partial class CleanupService
             return new CleanupOutcome(0, 0, 0);
 
         return await PythonVersionCleanupExecutor.CleanAsync(
-            WindowsRegistryView.Instance, selectedPythonExePaths, logging, cancellationToken);
+            WindowsRegistryView.Instance, selectedPythonExePaths, logging, cancellationToken, PythonCaller);
     }
 }

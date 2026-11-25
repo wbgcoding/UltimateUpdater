@@ -9,6 +9,17 @@ namespace UltimateUpdater.Services.Cleanup;
 /// <see cref="PythonInterpreters.FindBrokenInstallLeftovers"/>).</summary>
 public sealed record PipLeftoverCandidate(string Path, long SizeBytes);
 
+/// <summary>What the elevated worker needs to know about the signed-in user when it runs as another
+/// account: the python and pip the caller's PATH resolves to (never removed), and whether the worker's own
+/// per-user registry is foreign to the caller (its per-user interpreters are then left out). Only ever
+/// widens what is kept, never names something to remove.</summary>
+public sealed record PythonCallerView(IReadOnlyList<string> PathHits, bool ForeignUser)
+{
+    /// <summary>The caller's PATH result for <c>python</c> or <c>pip</c>, null when it had none.</summary>
+    internal string? ResolveOnPath(string name) =>
+        PathHits.FirstOrDefault(hit => string.Equals(Path.GetFileNameWithoutExtension(hit), name, StringComparison.OrdinalIgnoreCase));
+}
+
 /// <summary>
 /// One installed Python interpreter older than the newest of its own architecture, offered for removal
 /// through its own registered uninstaller. Never built for: the newest interpreter of
@@ -32,7 +43,7 @@ public sealed record PythonVersionCandidate(
 /// </summary>
 public static class PythonCleanupDiscovery
 {
-    /// <summary>Bounds a size walk the same way <see cref="LeftoverInstallDiscovery"/> does: a size shown
+    /// <summary>Bounds a size walk: a size shown
     /// next to a checkbox is a hint, not an audited total, and a real site-packages tree can hold tens of
     /// thousands of small files (numpy alone ships hundreds).</summary>
     private const int MaxFilesScannedPerCandidate = 20000;
@@ -142,17 +153,28 @@ public static class PythonCleanupDiscovery
     /// command of the rows it was asked to remove.
     /// </summary>
     public static IReadOnlyList<PythonVersionCandidate> DiscoverOldVersions(
-        IRegistryView registry, Func<string, string?>? resolveOnPath = null, Func<string, bool>? measure = null)
+        IRegistryView registry, Func<string, string?>? resolveOnPath = null, Func<string, bool>? measure = null,
+        PythonCallerView? caller = null)
     {
         var resolve = resolveOnPath ?? ProcessRunner.Resolve;
         var interpreters = PythonInterpreters.Discover(registry);
-        var pathExe = ResolvePathInterpreter(interpreters, resolve);
+        var pathExes = new List<string>();
+        if (ResolvePathInterpreter(interpreters, resolve) is { } workerPathExe)
+            pathExes.Add(workerPathExe);
+        if (caller is { PathHits.Count: > 0 }
+            && ResolvePathInterpreter(interpreters, caller.ResolveOnPath) is { } callerPathExe)
+            pathExes.Add(callerPathExe);
 
         var candidates = new List<PythonVersionCandidate>();
 
         foreach (var interpreter in PythonInterpreters.FindOlderVersions(interpreters))
         {
-            if (pathExe is not null && PathsEqual(interpreter.PythonExe, pathExe))
+            if (pathExes.Any(exe => PathsEqual(interpreter.PythonExe, exe)))
+                continue;
+
+            // Read from an elevated account that is not the signed-in user, a per-user interpreter is that
+            // account's, never the caller's, and no uninstall from either side would remove it.
+            if (caller is { ForeignUser: true } && interpreter.PerUser)
                 continue;
 
             var command = PythonInterpreters.FindUninstallCommand(registry, interpreter);

@@ -593,6 +593,7 @@ public class CleanupSafetyTests
     [InlineData(@"C:\$Recycle.Bin\S-1-5-21-1111111111-2222222222-3333333333-1001\..\S-1-5-18\$RAAA.txt")]
     [InlineData(@"C:\$Recycle.Bin\S-1-5-21-1111111111-2222222222-3333333333-1002\$RAAA.txt")]
     [InlineData(@"C:\$Recycle.Bin\S-1-5-21-1111111111-2222222222-3333333333-10011\$RAAA.txt")]
+    [InlineData(@"\\srv\share\$Recycle.Bin\S-1-5-21-1111111111-2222222222-3333333333-1001\$RAAA.txt")]
     [InlineData("")]
     [InlineData("   ")]
     public void IsInsideOwnRecycleBin_refuses_everything_outside_this_users_own_bin(string path)
