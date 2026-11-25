@@ -475,7 +475,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <ui:SymbolIcon Grid.Column="0" Symbol="Apps24" Style="{StaticResource CardIcon}"/>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsSourcesHint]}">
                                     <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsSourcesGroup]}"/>
                                     <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsSourcesHint]}"/>
                                 </StackPanel>
@@ -1211,7 +1211,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="ArrowDownload24" Style="{StaticResource CardIcon}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding VersionAndStatus}">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsCheckUpdatesDesc]}"/>
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding VersionAndStatus}"/>
                         </StackPanel>
@@ -1238,7 +1238,7 @@
                         </Grid.ColumnDefinitions>
                         <ui:SymbolIcon Grid.Column="0" Symbol="ArrowReset24" Style="{StaticResource CardIcon}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" ToolTip="{Binding Loc[SettingsResetDesc]}">
                             <TextBlock Style="{StaticResource CardTitle}" Text="{Binding Loc[SettingsResetGroup]}"/>
                             <TextBlock Style="{StaticResource CardDesc}" Text="{Binding Loc[SettingsResetDesc]}"
                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>

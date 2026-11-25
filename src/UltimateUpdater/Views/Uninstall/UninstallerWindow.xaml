@@ -503,7 +503,7 @@
                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}"
                            IsEnabled="{Binding IsStopping, Converter={StaticResource InverseBool}}"/>
                 <ui:Button x:Name="UninstallButton" Command="{Binding UninstallSelectedCommand}" Style="{StaticResource DangerButton}" MinWidth="160"
-                           AutomationProperties.Name="{Binding Loc[UninstallerButton]}">
+                           ToolTip="{Binding Loc[UninstallerButton]}" AutomationProperties.Name="{Binding Loc[UninstallerButton]}">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <ui:SymbolIcon Symbol="Delete24" Style="{StaticResource DangerButtonIcon}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                         <TextBlock x:Name="UninstallButtonLabel" Style="{StaticResource DangerButtonLabel}" Text="{Binding Loc[UninstallerButton]}" VerticalAlignment="Center"/>
