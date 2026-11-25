@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.IO;
+using UltimateUpdater.Services.App;
+using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Elevation;
 using UltimateUpdater.Services.Processes;
 using UltimateUpdater.Services.Uninstall;
@@ -136,34 +138,157 @@ public class UninstallExecutionTests
     }
 
     [Fact]
+    public async Task An_idle_leftover_does_not_hold_the_wait_for_the_whole_timeout()
+    {
+        var info = new ProcessStartInfo
+        {
+            FileName = Path.Combine(Environment.SystemDirectory, "cmd.exe"),
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        info.ArgumentList.Add("/c");
+        info.ArgumentList.Add("start /b ping -n 40 127.0.0.1 >nul");
+
+        SuspendedChildProcess.TreeIdleGraceForTest.Value = TimeSpan.FromSeconds(1);
+        using var child = SuspendedChildProcess.Start(info, null, null);
+        try
+        {
+            var watch = Stopwatch.StartNew();
+            await child.WaitForExitAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(30));
+
+            await child.WaitForTreeAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(20));
+
+            Assert.True(watch.Elapsed < TimeSpan.FromSeconds(20), $"the wait took {watch.Elapsed}");
+            Assert.Equal(0, child.ExitCode);
+            Assert.True(child.ActiveJobProcesses > 0, "the long-lived leftover was gone already");
+        }
+        finally
+        {
+            SuspendedChildProcess.TreeIdleGraceForTest.Value = null;
+            child.Kill();
+        }
+    }
+
+    private sealed class ScratchDir : IDisposable
+    {
+        public string Path { get; } = System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "uu-temp-" + Guid.NewGuid().ToString("N"));
+
+        public ScratchDir() => Directory.CreateDirectory(Path);
+
+        public void Dispose()
+        {
+            try
+            {
+                Directory.Delete(Path, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Scratch only; the next run uses another name.
+            }
+        }
+    }
+
+    private static LoggingService QuietLog() => new(_ => { });
+
+    [Fact]
     public void An_administrator_run_gets_the_protected_system_temp_folder()
     {
-        var windows = Path.Combine(Path.GetTempPath(), "win");
+        using var windows = new ScratchDir();
+        Directory.CreateDirectory(Path.Combine(windows.Path, "SystemTemp"));
         var environment = new Dictionary<string, string> { ["UU_X"] = "1", ["temp"] = @"C:\Users\x\AppData\Local\Temp" };
 
-        var result = UninstallExecution.WithProtectedTemp(environment, windows, _ => true);
+        using var temp = UninstallExecution.AcquireProtectedTemp(QuietLog(), windows.Path, _ => true);
+        var result = UninstallExecution.WithProtectedTemp(environment, temp.Folder);
 
-        Assert.Equal(Path.Combine(windows, "SystemTemp"), result["TEMP"]);
-        Assert.Equal(Path.Combine(windows, "SystemTemp"), result["TMP"]);
+        Assert.Equal(Path.Combine(windows.Path, "SystemTemp"), result["TEMP"]);
+        Assert.Equal(Path.Combine(windows.Path, "SystemTemp"), result["TMP"]);
         Assert.Equal("1", result["UU_X"]);
         Assert.Equal(3, result.Count);
     }
 
     [Fact]
-    public void Without_a_protected_system_temp_folder_the_administrator_run_is_refused()
+    public void A_system_temp_folder_that_is_not_protected_refuses_the_administrator_run()
     {
+        using var windows = new ScratchDir();
+        Directory.CreateDirectory(Path.Combine(windows.Path, "SystemTemp"));
+
         Assert.Throws<InvalidOperationException>(
-            () => UninstallExecution.WithProtectedTemp(null, @"C:\Windows", _ => false));
+            () => UninstallExecution.AcquireProtectedTemp(QuietLog(), windows.Path, _ => false));
     }
 
     [Fact]
     public void The_system_temp_folder_of_this_windows_is_what_the_trust_check_judges()
     {
-        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        using var windows = new ScratchDir();
+        var systemTemp = Path.Combine(windows.Path, "SystemTemp");
+        Directory.CreateDirectory(systemTemp);
         var asked = new List<string>();
 
-        UninstallExecution.WithProtectedTemp(null, windows, folder => { asked.Add(folder); return true; });
+        using var temp = UninstallExecution.AcquireProtectedTemp(
+            QuietLog(), windows.Path, folder => { asked.Add(folder); return true; });
 
-        Assert.Equal([Path.Combine(windows, "SystemTemp")], asked);
+        Assert.Equal([systemTemp], asked);
+    }
+
+    [Fact]
+    public void Without_a_system_temp_folder_the_run_gets_an_administrator_only_folder_of_its_own()
+    {
+        using var windows = new ScratchDir();
+        using var programData = new ScratchDir();
+        DriverBackupStaging.ProgramDataRootOverride = programData.Path;
+        try
+        {
+            string folder;
+            var asked = new List<string>();
+            using (var temp = UninstallExecution.AcquireProtectedTemp(
+                QuietLog(), windows.Path, f => { asked.Add(f); return true; }))
+            {
+                folder = temp.Folder;
+                var environment = UninstallExecution.WithProtectedTemp(null, folder);
+
+                Assert.Equal(folder, environment["TEMP"]);
+                Assert.Equal(Path.Combine(programData.Path, "UltimateUpdater", "Temp"), Path.GetDirectoryName(folder));
+                Assert.Equal([folder], asked);
+                Assert.True(Directory.Exists(folder));
+
+                var sids = new DirectoryInfo(folder).GetAccessControl()
+                    .GetAccessRules(true, true, typeof(System.Security.Principal.SecurityIdentifier))
+                    .Cast<System.Security.AccessControl.FileSystemAccessRule>()
+                    .Select(rule => rule.IdentityReference.Value)
+                    .ToList();
+                Assert.NotEmpty(sids);
+                // Under the test root the unelevated test user owns the folder and is the one extra entry the
+                // staging allows; the production rules (an elevated owner) leave only these two.
+                var owner = System.Security.Principal.WindowsIdentity.GetCurrent().Owner?.Value;
+                Assert.All(sids, sid => Assert.Contains(sid, new[] { "S-1-5-18", "S-1-5-32-544", owner }));
+                Assert.Contains("S-1-5-18", sids);
+                Assert.Contains("S-1-5-32-544", sids);
+                Assert.DoesNotContain("S-1-5-32-545", sids);
+            }
+
+            Assert.False(Directory.Exists(folder), "the folder made for the run was left behind");
+        }
+        finally
+        {
+            DriverBackupStaging.ProgramDataRootOverride = null;
+        }
+    }
+
+    [Fact]
+    public void A_fallback_folder_that_fails_the_trust_check_refuses_the_run()
+    {
+        using var windows = new ScratchDir();
+        using var programData = new ScratchDir();
+        DriverBackupStaging.ProgramDataRootOverride = programData.Path;
+        try
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => UninstallExecution.AcquireProtectedTemp(QuietLog(), windows.Path, _ => false));
+        }
+        finally
+        {
+            DriverBackupStaging.ProgramDataRootOverride = null;
+        }
     }
 }

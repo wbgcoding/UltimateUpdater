@@ -229,7 +229,7 @@ internal static class ProgramUninstallWorker
 
         try
         {
-            var result = await UninstallExecution.RunAsync(plan, OnOutput, cancellationToken);
+            var result = await UninstallExecution.RunAsync(plan, OnOutput, cancellationToken, logging);
             var summary = ToolOutput.Summarize(result.StandardOutput, result.StandardError, result.ExitCode);
             logging.Info($"Elevated uninstall of an entry finished with exit code {result.ExitCode}.");
             Finish(writer, jobId, job.Key, result.ExitCode is 0 or 3010 or 1641, result.ExitCode, error: null, detail: summary,

@@ -1,4 +1,6 @@
 using System.IO;
+using UltimateUpdater.Services.App;
+using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Elevation;
 using UltimateUpdater.Services.Processes;
 using UltimateUpdater.Services.Security;
@@ -18,7 +20,8 @@ internal static class UninstallExecution
     /// <summary>A vendor window waits for a person, so the limit is long.</summary>
     internal static readonly TimeSpan InteractiveTimeout = TimeSpan.FromHours(2);
 
-    public static async Task<ProcessResult> RunAsync(UninstallPlan plan, Action<string> onOutput, CancellationToken cancellationToken)
+    public static async Task<ProcessResult> RunAsync(
+        UninstallPlan plan, Action<string> onOutput, CancellationToken cancellationToken, LoggingService? logging = null)
     {
         if (!plan.IsRunnable)
             throw new InvalidOperationException("A refused plan is never run.");
@@ -30,7 +33,8 @@ internal static class UninstallExecution
         var elevated = plan.Elevated || ElevationService.IsElevatedWorkerProcess;
 
         // An administrator run never uses the user's temp folder: a setup copies itself there and starts the copy.
-        var environment = elevated ? WithProtectedTemp(plan.Environment) : plan.Environment;
+        using var protectedTemp = elevated ? AcquireProtectedTemp(logging ?? new LoggingService(_ => { })) : null;
+        var environment = protectedTemp is null ? plan.Environment : WithProtectedTemp(plan.Environment, protectedTemp.Folder);
 
         // winget, msiexec and PowerShell resolve under the runner's own rules (signed, in a protected folder
         // when elevated); only a program named by a registry command needs the uninstaller rules below.
@@ -44,7 +48,13 @@ internal static class UninstallExecution
             throw new DeniedCommandException(reason);
 
         using var executable = ProcessRunner.ResolveUninstaller(plan.Executable, elevated);
-        return await RunCommandAsync(executable, plan.Arguments, timeout, elevated, environment, onOutput, cancellationToken);
+        var result = await RunCommandAsync(executable, plan.Arguments, timeout, elevated, environment, onOutput, cancellationToken);
+
+        // A program left running after the time is up keeps using its temp folder.
+        if (result.TimedOut)
+            protectedTemp?.Keep();
+
+        return result;
     }
 
     /// <summary>
@@ -63,22 +73,83 @@ internal static class UninstallExecution
             killOnTimeout: false, waitForTree: true);
 
     /// <summary>
-    /// TEMP and TMP of an administrator run: the system's own temp folder under the Windows folder, which only
-    /// administrators can write. Refused when it is missing or not protected, never replaced by a folder the user owns.
+    /// The environment with TEMP and TMP pointing at <paramref name="folder"/>, a folder only administrators can write.
     /// </summary>
     internal static IReadOnlyDictionary<string, string> WithProtectedTemp(
-        IReadOnlyDictionary<string, string>? environment, string? windowsDirectory = null,
-        Func<string, bool>? isTrustedDirectory = null)
-    {
-        var folder = Path.Combine(windowsDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SystemTemp");
-        if (!(isTrustedDirectory ?? ElevatedPathTrust.IsTrustedDirectory)(folder))
-            throw new InvalidOperationException("This Windows has no protected temp folder, so the removal is not run with administrator rights.");
-
-        var result = new Dictionary<string, string>(environment ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase)
+        IReadOnlyDictionary<string, string>? environment, string folder) =>
+        new Dictionary<string, string>(environment ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase)
         {
             ["TEMP"] = folder,
             ["TMP"] = folder,
         };
-        return result;
+
+    /// <summary>
+    /// The temp folder of an administrator run: the system's own temp folder under the Windows folder, which only
+    /// administrators can write. Windows 10 before the 2022 servicing has no such folder; there a fresh folder
+    /// under the ProgramData root is made the way the leftover quarantine root is (owner Administrators,
+    /// administrator-only ACL, inheritance off, pinned) and held to the same trust check. A system temp folder that
+    /// exists but is not protected is refused, and so is a fallback that fails any check: never a folder the user owns.
+    /// </summary>
+    internal static ProtectedTemp AcquireProtectedTemp(
+        LoggingService logging, string? windowsDirectory = null, Func<string, bool>? isTrustedDirectory = null)
+    {
+        var isTrusted = isTrustedDirectory ?? ElevatedPathTrust.IsTrustedDirectory;
+        var systemTemp = Path.Combine(windowsDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.Windows), "SystemTemp");
+        if (Directory.Exists(systemTemp))
+        {
+            if (!isTrusted(systemTemp))
+                throw new InvalidOperationException("The system temp folder of this Windows is not protected, so the removal is not run with administrator rights.");
+
+            return new ProtectedTemp(systemTemp, null);
+        }
+
+        var staging = DriverBackupStaging.PrepareStagingRoot(
+            logging, "Temp", usersCanRead: false, folderName: Guid.NewGuid().ToString("N"), label: "Uninstall temp");
+        if (staging is null)
+            throw new InvalidOperationException("This Windows has no protected temp folder and none could be made, so the removal is not run with administrator rights.");
+
+        if (!isTrusted(staging.BackupRoot))
+        {
+            staging.Dispose();
+            throw new InvalidOperationException("The temp folder made for the removal failed the trust check, so it is not run with administrator rights.");
+        }
+
+        logging.Info("This Windows has no system temp folder; the removal gets its own administrator-only temp folder.");
+        return new ProtectedTemp(staging.BackupRoot, staging);
+    }
+
+    /// <summary>The temp folder of one administrator run. A folder made for the run is removed again at the end.</summary>
+    internal sealed class ProtectedTemp(string folder, DriverBackupStaging.StagingFolder? staging) : IDisposable
+    {
+        private bool _keep;
+
+        public string Folder { get; } = folder;
+
+        /// <summary>Leaves a folder made for the run in place (a program started in it is still running).</summary>
+        public void Keep() => _keep = true;
+
+        public void Dispose()
+        {
+            if (staging is null)
+                return;
+
+            var path = staging.BackupRoot;
+            var safe = staging.IsStillSafe();
+            staging.Dispose();
+            if (!safe || _keep)
+                return;
+
+            try
+            {
+                Directory.Delete(path, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // A program that is still running keeps its files; the folder is administrator-only and harmless.
+                TryNote(ex);
+            }
+        }
+
+        private static void TryNote(Exception ex) => System.Diagnostics.Debug.WriteLine(ex.Message);
     }
 }

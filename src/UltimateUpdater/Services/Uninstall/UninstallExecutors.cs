@@ -85,7 +85,7 @@ public sealed class InProcessUninstallExecutor(LoggingService logging) : IUninst
 
         try
         {
-            var result = await UninstallExecution.RunAsync(plan, line => logging.Info($"uninstall: {line}"), cancellationToken);
+            var result = await UninstallExecution.RunAsync(plan, line => logging.Info($"uninstall: {line}"), cancellationToken, logging);
             return result.TimedOut
                 ? new UninstallExecutionResult(null, "The uninstaller did not finish in time.")
                 : new UninstallExecutionResult(

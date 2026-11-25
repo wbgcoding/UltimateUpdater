@@ -180,13 +180,52 @@ internal sealed class SuspendedChildProcess : IChildProcess
             ? (int)accounting.ActiveProcesses
             : -1;
 
+    /// <summary>How long the rest of the tree may do nothing after the root has exited before the wait ends.</summary>
+    internal static readonly TimeSpan TreeIdleGrace = TimeSpan.FromSeconds(60);
+
+    /// <summary>The processor time the rest of the tree must use within one grace window to count as working.</summary>
+    internal static readonly TimeSpan TreeBusyCpu = TimeSpan.FromSeconds(1);
+
+    /// <summary>Test seam: a shorter grace for the test's own async flow.</summary>
+    internal static readonly AsyncLocal<TimeSpan?> TreeIdleGraceForTest = new();
+
+    /// <summary>Processor time used so far by every process the job ever held, in 100 ns units (0 without a job).</summary>
+    private long JobCpuTicks =>
+        _job is { IsInvalid: false, IsClosed: false }
+        && QueryInformationJobObject(_job, JobObjectBasicAccountingInformationClass, out JobBasicAccountingInformation accounting,
+            (uint)Marshal.SizeOf<JobBasicAccountingInformation>(), IntPtr.Zero)
+            ? accounting.TotalUserTime + accounting.TotalKernelTime
+            : 0;
+
     /// <summary>An installer that copies itself elsewhere and exits (NSIS does) leaves the real work to a process
-    /// the root never waits for; it stays in the job, so the job says when the work is over.</summary>
+    /// the root never waits for; it stays in the job, so the job says when the work is over. A leftover that
+    /// does nothing (an uninstaller that opened a survey page in a fresh browser) must not hold the removal
+    /// until the timeout: when the rest of the tree uses almost no processor time for a whole grace window,
+    /// the wait ends and the root's own exit code is the result.</summary>
     public async Task WaitForTreeAsync(CancellationToken cancellationToken)
     {
         await WaitForExitAsync(cancellationToken);
+
+        var grace = TreeIdleGraceForTest.Value ?? TreeIdleGrace;
+        var windowStart = Stopwatch.GetTimestamp();
+        var baseline = JobCpuTicks;
         while (ActiveJobProcesses > 0)
+        {
             await Task.Delay(TreePollInterval, cancellationToken);
+            if (Stopwatch.GetElapsedTime(windowStart) < grace)
+                continue;
+
+            var now = JobCpuTicks;
+            if (now - baseline < TreeBusyCpu.Ticks)
+            {
+                ProcessRunner.Diagnostics?.Invoke(
+                    $"{ActiveJobProcesses} process(es) started by the program are still running but idle; not waiting for them.");
+                return;
+            }
+
+            baseline = now;
+            windowStart = Stopwatch.GetTimestamp();
+        }
     }
 
     public void Kill()
