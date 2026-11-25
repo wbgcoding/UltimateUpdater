@@ -4,10 +4,9 @@ using System.Text;
 namespace UltimateUpdater.Services.Cleanup;
 
 /// <summary>
-/// A real DISM run on the lab VM (German display language) did NOT write UTF-16LE once
-/// redirected, the shape <see cref="Utf16RedirectRecovery"/> already covers (an earlier finding,
-/// only ever checked against a fabricated fixture); it wrote the machine's own single-byte OEM code page
-/// (CP850 on that VM), one byte per accented label letter (ä, ö, ü, ß). <see cref="ProcessRunner"/>
+/// A real DISM run (German display language) does NOT write UTF-16LE once redirected, the shape
+/// <see cref="Utf16RedirectRecovery"/> already covers; it writes the machine's own single-byte OEM code page
+/// (CP850 on a German system), one byte per accented label letter (ä, ö, ü, ß). <see cref="ProcessRunner"/>
 /// otherwise decodes every external tool's stdout as UTF-8, and handed those OEM bytes, .NET's UTF-8 decoder
 /// replaces every one of them with U+FFFD: the original byte is gone for good at that point, so recovering
 /// it AFTER that decode (the way <see cref="Utf16RedirectRecovery"/> does for the UTF-16LE shape) is not
@@ -21,10 +20,6 @@ internal static class OemTextRecovery
 {
     [DllImport("kernel32.dll")]
     private static extern uint GetOEMCP();
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-    private static extern int MultiByteToWideChar(
-        uint codePage, uint flags, byte[] bytes, int byteCount, char[]? chars, int charCount);
 
     /// <summary>
     /// True once a Latin1-preserved capture holds at least one byte outside plain ASCII. Plain English
@@ -45,14 +40,6 @@ internal static class OemTextRecovery
     public static string Recover(string latin1PreservedText)
     {
         var bytes = Encoding.Latin1.GetBytes(latin1PreservedText);
-        var codePage = GetOEMCP();
-
-        var charCount = MultiByteToWideChar(codePage, 0, bytes, bytes.Length, null, 0);
-        if (charCount <= 0)
-            return latin1PreservedText;
-
-        var chars = new char[charCount];
-        var written = MultiByteToWideChar(codePage, 0, bytes, bytes.Length, chars, charCount);
-        return written <= 0 ? latin1PreservedText : new string(chars, 0, written);
+        return CodePageText.Decode(bytes, GetOEMCP(), () => latin1PreservedText);
     }
 }

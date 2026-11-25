@@ -21,7 +21,7 @@ public static class DriverPackageInfReader
     /// <summary>The app's own supported UI cultures (see <see cref="LocalizationService.Apply"/>), mapped
     /// to the hex LANGID a driver INF's own <c>[Strings.xxxx]</c> section uses for that same language. Used
     /// only as the SECOND priority behind the neutral <c>[Strings]</c> section, and only for the app's own
-    /// current language - never any other locale's section, so a %token% never surfaces text in a language
+    /// current language, never any other locale's section, so a %token% never surfaces text in a language
     /// the user never chose.</summary>
     private static readonly IReadOnlyDictionary<string, string> AppLanguageToInfLangId =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -43,10 +43,6 @@ public static class DriverPackageInfReader
     [DllImport("kernel32.dll")]
     private static extern uint GetACP();
 
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-    private static extern int MultiByteToWideChar(
-        uint codePage, uint flags, byte[] bytes, int byteCount, char[]? chars, int charCount);
-
     private static readonly Regex SectionHeader = new(@"^\s*\[(?<name>[^\]]+)\]\s*(;.*)?$", RegexOptions.Compiled);
     private static readonly Regex KeyValue = new(@"^\s*(?<key>[^;=\s][^=]*?)\s*=\s*(?<value>.*?)\s*$", RegexOptions.Compiled);
 
@@ -67,14 +63,7 @@ public static class DriverPackageInfReader
         if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
             return Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3);
 
-        var codePage = GetACP();
-        var charCount = MultiByteToWideChar(codePage, 0, bytes, bytes.Length, null, 0);
-        if (charCount <= 0)
-            return Encoding.Latin1.GetString(bytes);
-
-        var chars = new char[charCount];
-        var written = MultiByteToWideChar(codePage, 0, bytes, bytes.Length, chars, charCount);
-        return written <= 0 ? Encoding.Latin1.GetString(bytes) : new string(chars, 0, written);
+        return CodePageText.Decode(bytes, GetACP(), () => Encoding.Latin1.GetString(bytes));
     }
 
     /// <summary>
