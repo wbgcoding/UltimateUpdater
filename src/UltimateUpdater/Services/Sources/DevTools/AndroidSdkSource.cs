@@ -139,20 +139,16 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
         var (_, sdkRoot, useAndroidCli) = Resolved.Value;
 
         // android.exe needs no Java; only the .bat path does.
-        Dictionary<string, string>? environment = null;
-        if (!useAndroidCli)
+        if (!useAndroidCli && ResolvedJavaHome.Value is null)
         {
             // Reported the same way any other scan failure is: an exception before the tool ever runs,
             // rather than a low-level "exited with code -1" that would leave the developer guessing why
             // a tool that is clearly installed just did nothing.
-            if (ResolvedJavaHome.Value is not { } javaHome)
-                throw new InvalidOperationException(
-                    string.Format(LocalizationService.Instance["ScanFailedNoJava"], MinimumJavaMajor));
-
-            environment = new Dictionary<string, string> { ["JAVA_HOME"] = javaHome };
+            throw new InvalidOperationException(
+                string.Format(LocalizationService.Instance["ScanFailedNoJava"], MinimumJavaMajor));
         }
 
-        var result = await RunAsync(BuildScanArguments(useAndroidCli, sdkRoot), cancellationToken, environment);
+        var result = await RunAsync(BuildScanArguments(useAndroidCli, sdkRoot), cancellationToken, ProcessEnvironment);
         return BuildScanResult(result);
     }
 
@@ -359,13 +355,12 @@ public sealed class AndroidSdkSource(LoggingService logging, HttpClient httpClie
         progress.Report(new Models.InstallProgress { PercentComplete = 100, StatusText = item.Name });
     }
 
-    /// <summary>True when the listing is readable and no row of it starts with the package path.</summary>
+    /// <summary>True when the listing is readable and its "Installed packages:" section holds no row for the package.</summary>
     internal static bool IsGoneFromListing(ProcessResult listing, string packageId)
     {
         PackageManagerParsers.ParseSdkManagerList(listing.StandardOutput, out var recognized);
-        return recognized && !listing.StandardOutput
-            .Split('\n')
-            .Any(line => line.TrimStart().StartsWith(packageId + " ", StringComparison.Ordinal));
+        return recognized && !InstalledListParsers.ParseSdkManagerInstalled(listing.StandardOutput)
+            .Any(p => string.Equals(p.Id, packageId, StringComparison.Ordinal));
     }
 
     /// <summary>True when the listing is readable and the package no longer offers an update.</summary>
