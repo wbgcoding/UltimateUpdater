@@ -1,4 +1,5 @@
 using System.IO;
+using System.IO.Enumeration;
 
 namespace UltimateUpdater.Services.Cleanup;
 
@@ -21,6 +22,18 @@ internal static class SafeEnumerate
     internal static IEnumerable<string> Files(string directory, Action onError) =>
         Listing(() => Directory.EnumerateFiles(directory), onError);
 
+    /// <summary>The length of every file directly inside <paramref name="directory"/>, read from the listing
+    /// itself (one directory query, no per-file call). The same files as <see cref="Files(string)"/>: hidden and
+    /// system ones included, nothing filtered by attribute.</summary>
+    internal static IEnumerable<long> FileLengths(string directory) =>
+        Listing(() => new FileSystemEnumerable<long>(
+            directory,
+            static (ref FileSystemEntry entry) => entry.Length,
+            new EnumerationOptions { AttributesToSkip = 0, IgnoreInaccessible = false })
+        {
+            ShouldIncludePredicate = static (ref FileSystemEntry entry) => !entry.IsDirectory,
+        }, onError: null);
+
     /// <summary>The sub-folders directly inside <paramref name="directory"/>, never a junction or symlink
     /// (any reparse point): descending into one could leave the tree the caller was asked about.</summary>
     internal static IEnumerable<string> Directories(string directory) =>
@@ -39,9 +52,9 @@ internal static class SafeEnumerate
         IgnoreInaccessible = false,
     };
 
-    private static IEnumerable<string> Listing(Func<IEnumerable<string>> open, Action? onError)
+    private static IEnumerable<T> Listing<T>(Func<IEnumerable<T>> open, Action? onError)
     {
-        IEnumerator<string>? enumerator = null;
+        IEnumerator<T>? enumerator = null;
         try
         {
             enumerator = open().GetEnumerator();

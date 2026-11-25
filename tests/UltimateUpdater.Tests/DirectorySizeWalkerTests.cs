@@ -69,6 +69,22 @@ public class DirectorySizeWalkerTests : IDisposable
     }
 
     [Fact]
+    public void Hidden_and_system_files_count_like_any_other_in_the_listing_based_total()
+    {
+        WriteFile(Path.Combine(_root, "plain.bin"), 10);
+        var hidden = Path.Combine(_root, "sub", "hidden.bin");
+        WriteFile(hidden, 20);
+        File.SetAttributes(hidden, FileAttributes.Hidden);
+        var system = Path.Combine(_root, "sub", "system.bin");
+        WriteFile(system, 40);
+        File.SetAttributes(system, FileAttributes.Hidden | FileAttributes.System | FileAttributes.ReadOnly);
+
+        Assert.Equal(70, DirectorySizeWalker.Measure(_root, DirectorySizeWalker.DefaultMaxDepth, 20000));
+
+        File.SetAttributes(system, FileAttributes.Normal);
+    }
+
+    [Fact]
     public void The_file_cap_ends_the_walk()
     {
         for (var i = 0; i < 10; i++)

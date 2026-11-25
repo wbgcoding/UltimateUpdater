@@ -44,19 +44,14 @@ internal static class DirectorySizeWalker
             cancellationToken.ThrowIfCancellationRequested();
             var (directory, depth) = pending.Pop();
 
-            foreach (var file in SafeEnumerate.Files(directory))
+            // The length comes with the listing: one directory query per folder, not one more call per file.
+            // Best-effort measurement; a file that vanished or cannot be read simply contributes nothing.
+            foreach (var length in SafeEnumerate.FileLengths(directory))
             {
                 if (scanned++ >= maxFiles)
                     return total;
 
-                try
-                {
-                    total += new FileInfo(file).Length;
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
-                    // Best-effort measurement; a locked or vanished file simply contributes nothing.
-                }
+                total += length;
             }
 
             if (depth >= maxDepth)
