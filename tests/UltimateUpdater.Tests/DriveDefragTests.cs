@@ -188,7 +188,7 @@ public class DriveDefragTests
         finally
         {
             DriveMediaTypeReader.Log = _ => { };
-            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealQueryForTests;
+            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealMediaTypeQuery;
         }
     }
 
@@ -209,7 +209,7 @@ public class DriveDefragTests
         finally
         {
             DriveMediaTypeReader.Log = _ => { };
-            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealQueryForTests;
+            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealMediaTypeQuery;
         }
     }
 
@@ -241,7 +241,7 @@ public class DriveDefragTests
         finally
         {
             DriveMediaTypeReader.Log = _ => { };
-            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealQueryForTests;
+            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealMediaTypeQuery;
         }
     }
 
@@ -260,7 +260,7 @@ public class DriveDefragTests
         }
         finally
         {
-            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealQueryForTests;
+            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealMediaTypeQuery;
         }
     }
 
@@ -283,8 +283,8 @@ public class DriveDefragTests
         }
         finally
         {
-            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealQueryForTests;
-            DriveMediaTypeReader.QueryRawBusType = DriveMediaTypeReader.RealBusTypeQueryForTests;
+            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealMediaTypeQuery;
+            DriveMediaTypeReader.QueryRawBusType = DriveMediaTypeReader.RealBusTypeQuery;
         }
     }
 
@@ -303,7 +303,7 @@ public class DriveDefragTests
         }
         finally
         {
-            DriveMediaTypeReader.QueryRawBusType = DriveMediaTypeReader.RealBusTypeQueryForTests;
+            DriveMediaTypeReader.QueryRawBusType = DriveMediaTypeReader.RealBusTypeQuery;
         }
     }
 
@@ -327,7 +327,7 @@ public class DriveDefragTests
         finally
         {
             DriveMediaTypeReader.Log = _ => { };
-            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealQueryForTests;
+            DriveMediaTypeReader.QueryRawMediaType = DriveMediaTypeReader.RealMediaTypeQuery;
         }
     }
 

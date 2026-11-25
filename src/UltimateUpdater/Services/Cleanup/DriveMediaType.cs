@@ -64,7 +64,7 @@ public static class DriveMediaTypeReader
     /// <summary>The WMI query itself, swappable so a test can make it throw any exception kind
     /// without a real WMI call. Returns the raw, unmapped <c>MediaType</c> value, or null when no physical
     /// disk could be resolved for the drive letter at all. Default is the real query.</summary>
-    internal static Func<string, int?> QueryRawMediaType { get; set; } = RealQueryForTests;
+    internal static Func<string, int?> QueryRawMediaType { get; set; } = RealMediaTypeQuery;
 
     /// <summary>Best effort, drive letter WITHOUT a trailing separator (e.g. "C:"); <paramref name="volumeSize"/>
     /// (the drive's total size) tells two disks that took the same letter apart. Never throws.</summary>
@@ -109,31 +109,7 @@ public static class DriveMediaTypeReader
     /// <summary>The real WMI query, exposed so a test that replaces <see cref="QueryRawMediaType"/> can put
     /// it back exactly, rather than duplicating this logic or leaving a throwing stub behind for the next
     /// test that runs.</summary>
-    internal static int? RealQueryForTests(string driveLetter)
-    {
-        var physicalDiskIndex = FindPhysicalDiskIndex(driveLetter);
-        if (physicalDiskIndex is null)
-            return null;
-
-        var storageScope = new ManagementScope(@"root\Microsoft\Windows\Storage");
-        storageScope.Connect();
-
-        using var searcher = new ManagementObjectSearcher(
-            storageScope,
-            new ObjectQuery($"SELECT MediaType FROM MSFT_PhysicalDisk WHERE DeviceId = '{physicalDiskIndex}'"));
-
-        using var results = searcher.Get();
-        foreach (ManagementBaseObject disk in results)
-        {
-            using (disk)
-            {
-                if (disk["MediaType"] is { } rawMediaType)
-                    return Convert.ToInt32(rawMediaType);
-            }
-        }
-
-        return null;
-    }
+    internal static int? RealMediaTypeQuery(string driveLetter) => QueryPhysicalDiskProperty(driveLetter, "MediaType");
 
     /// <summary>
     /// A SECOND cached lookup, kept apart from <see cref="TryGetMediaType"/> rather than widening
@@ -144,7 +120,7 @@ public static class DriveMediaTypeReader
     /// </summary>
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> UsbCache = new(StringComparer.OrdinalIgnoreCase);
 
-    internal static Func<string, int?> QueryRawBusType { get; set; } = RealBusTypeQueryForTests;
+    internal static Func<string, int?> QueryRawBusType { get; set; } = RealBusTypeQuery;
 
     /// <summary>Keyed like <see cref="TryGetMediaType"/>; a read that failed or found no physical disk is not
     /// kept, so the next call asks again.</summary>
@@ -179,7 +155,13 @@ public static class DriveMediaTypeReader
         }
     }
 
-    internal static int? RealBusTypeQueryForTests(string driveLetter)
+    /// <summary>The real bus type query, exposed for the same reason as <see cref="RealMediaTypeQuery"/>.</summary>
+    internal static int? RealBusTypeQuery(string driveLetter) => QueryPhysicalDiskProperty(driveLetter, "BusType");
+
+    /// <summary>One integer property of the physical disk behind a drive letter (<c>MSFT_PhysicalDisk</c>), or
+    /// null when no physical disk resolves or it reports none. <paramref name="property"/> is only ever one of
+    /// the two literal names above, never text from outside.</summary>
+    private static int? QueryPhysicalDiskProperty(string driveLetter, string property)
     {
         var physicalDiskIndex = FindPhysicalDiskIndex(driveLetter);
         if (physicalDiskIndex is null)
@@ -190,15 +172,15 @@ public static class DriveMediaTypeReader
 
         using var searcher = new ManagementObjectSearcher(
             storageScope,
-            new ObjectQuery($"SELECT BusType FROM MSFT_PhysicalDisk WHERE DeviceId = '{physicalDiskIndex}'"));
+            new ObjectQuery($"SELECT {property} FROM MSFT_PhysicalDisk WHERE DeviceId = '{physicalDiskIndex}'"));
 
         using var results = searcher.Get();
         foreach (ManagementBaseObject disk in results)
         {
             using (disk)
             {
-                if (disk["BusType"] is { } rawBusType)
-                    return Convert.ToInt32(rawBusType);
+                if (disk[property] is { } raw)
+                    return Convert.ToInt32(raw);
             }
         }
 
