@@ -10,15 +10,20 @@ namespace UltimateUpdater.Services.Sources;
 /// process aborted rather than reporting an error on purpose, most often a native runtime mismatch
 /// underneath a wrapper script (Android's sdkmanager.bat aborting under a Java
 /// runtime older than its cmdline-tools require). Kept distinct from the generic scan-failed exception
-/// so the pill's tooltip can name the likely cause instead of a bare exit code number.
+/// so the pill's tooltip can name the likely cause instead of a bare exit code number. The
+/// <see cref="Exception.Message"/> is English like every scan exception (it reaches the log);
+/// <see cref="LocalizedMessage"/> is the sentence shown to the user.
 /// </summary>
 public sealed class ExternalToolCrashedException(string toolPath, int exitCode)
-    : Exception(string.Format(
-        LocalizationService.Instance["ScanFailedToolCrashed"], toolPath, $"0x{unchecked((uint)exitCode):X8}"))
+    : Exception($"'{toolPath}' crashed (0x{unchecked((uint)exitCode):X8}) instead of reporting a normal error.")
 {
     public string ToolPath { get; } = toolPath;
 
     public int ExitCode { get; } = exitCode;
+
+    /// <summary>The explanation in the current UI language, including the likely cause.</summary>
+    public string LocalizedMessage() => string.Format(
+        LocalizationService.Instance["ScanFailedToolCrashed"], ToolPath, $"0x{unchecked((uint)ExitCode):X8}");
 }
 
 /// <summary>
@@ -112,7 +117,7 @@ public abstract class CliUpdateSource : IUpdateSource
     }
 
     /// <summary>
-    /// The executable this item's install/retry runs through: the source's own by default. A source
+    /// The executable this item's install, removal, retry and version re-check run through: the source's own by default. A source
     /// overrides this for the rare case where the SAFE way to run a command differs by item, e.g. pip
     /// upgrading itself must run through the interpreter (`python -m pip`) rather than through its own
     /// locked launcher file.
@@ -213,7 +218,7 @@ public abstract class CliUpdateSource : IUpdateSource
 
         try
         {
-            var result = await ProcessRunner.RunAsync(Executable, arguments, ScanTimeout, cancellationToken);
+            var result = await ProcessRunner.RunAsync(ExecutableFor(item), arguments, ScanTimeout, cancellationToken);
             return result.TimedOut || result.ExitCode != 0 ? null : ParseInstalledVersion(result.StandardOutput, id);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -245,12 +250,13 @@ public abstract class CliUpdateSource : IUpdateSource
         progress.Report(new Models.InstallProgress { PercentComplete = 0, StatusText = item.Name });
 
         var result = await ProcessRunner.RunStreamingAsync(
-            Executable,
+            ExecutableFor(item),
             arguments,
             InstallTimeout,
             segment => ReportSegment(progress, item.Name, segment),
             cancellationToken,
-            ProcessEnvironment);
+            ProcessEnvironment,
+            stallWatch: StallWatchOptions.ForInstall);
 
         if (result.TimedOut)
             throw new InvalidOperationException($"{Id}: uninstall timed out for '{item.Id}'.");

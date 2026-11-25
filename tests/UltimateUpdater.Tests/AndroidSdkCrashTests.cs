@@ -10,6 +10,7 @@ namespace UltimateUpdater.Tests;
 /// bare "exited with code -1073740791" told the owner nothing; this must name the tool and hint at the
 /// real cause instead.
 /// </summary>
+[Collection("UiLanguage")]
 public class AndroidSdkCrashTests
 {
     private static ProcessResult Result(int exitCode) => new(exitCode, string.Empty, string.Empty);
@@ -25,6 +26,25 @@ public class AndroidSdkCrashTests
         Assert.Equal(-1073740791, ex.ExitCode);
         Assert.Contains("0xC0000409", ex.Message);
         Assert.DoesNotContain("-1073740791", ex.Message);
+    }
+
+    [Fact]
+    public void The_exception_message_stays_English_and_only_the_display_text_is_localized()
+    {
+        try
+        {
+            LocalizationService.Instance.Apply("de");
+
+            var ex = new ExternalToolCrashedException("sdkmanager.bat", unchecked((int)0xC0000135));
+
+            Assert.Contains("crashed (0xC0000135)", ex.Message);
+            Assert.Contains("abgestürzt", ex.LocalizedMessage());
+            Assert.Contains("0xC0000135", ex.LocalizedMessage());
+        }
+        finally
+        {
+            LocalizationService.Instance.Apply("en");
+        }
     }
 
     [Fact]
