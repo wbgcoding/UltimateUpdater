@@ -406,6 +406,31 @@ public sealed class DriverBackupStagingTests : IDisposable
     }
 
     [Fact]
+    public void PruneOldStagings_ranks_copied_folders_by_their_name_when_the_copy_reversed_the_creation_times()
+    {
+        // A data-folder move copies the backups one by one: creation times then run against the names.
+        MakeBackup("2020-01-01_000000", Epoch.AddDays(30));
+        MakeBackup("2020-01-02_000000", Epoch.AddDays(20));
+        MakeBackup("2020-01-03_000000", Epoch.AddDays(10));
+        MakeBackup("2020-01-09_000000", Epoch.AddDays(9));
+
+        DriverBackupStaging.PruneOldStagings(BackupsRoot, "2020-01-09_000000", 2, new LoggingService());
+
+        Assert.Equal(new List<string?> { "2020-01-03_000000", "2020-01-09_000000" }, Left());
+    }
+
+    [Fact]
+    public void A_name_in_the_future_ranks_by_the_creation_time_a_name_in_the_past_by_the_name()
+    {
+        var now = new DateTime(2026, 9, 26, 12, 0, 0, DateTimeKind.Local);
+        var past = MakeBackup("2020-01-01_000000", new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        var future = MakeBackup("2099-01-01_000000", new DateTime(2019, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal(new DateTime(2020, 1, 1, 0, 0, 0), DriverBackupStaging.RankMoment(past, now));
+        Assert.True(DriverBackupStaging.RankMoment(future, now).Year is 2018 or 2019);
+    }
+
+    [Fact]
     public void PruneOldStagings_with_the_acl_check_leaves_folders_this_tool_did_not_create()
     {
         for (var day = 1; day <= 7; day++)

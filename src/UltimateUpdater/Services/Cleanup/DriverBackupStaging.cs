@@ -231,8 +231,10 @@ internal static class DriverBackupStaging
     /// more than <paramref name="keepNewest"/> remain. <paramref name="keepName"/> (the running job's own
     /// folder) is never touched and counts as one of the kept ones. Only a plain folder whose name is exactly
     /// the timestamp shape is a candidate: a link, a file or anything with another name is left alone, and
-    /// a path that leads through a link is not entered. Folders are ranked by their creation time (a clock
-    /// that was wrong once cannot pin a slot through its name), empty ones neither count nor go, and nothing
+    /// a path that leads through a link is not entered. Folders are ranked by the moment in their name (a
+    /// copied or moved data folder resets creation times, which would make the newest backup look oldest),
+    /// except a name that lies in the future: a clock that ran ahead once must not pin a slot through its
+    /// name, so such a folder is ranked by its creation time. Empty ones neither count nor go, and nothing
     /// is pruned at all unless the running job's own folder holds something. With
     /// <paramref name="requireProtectedAcl"/> (the elevated side) a stale folder is deleted only when it is
     /// still exactly the folder this code creates: real directory, our own token owner, the protected
@@ -249,12 +251,13 @@ internal static class DriverBackupStaging
 
         try
         {
+            var now = DateTime.Now;
             // SafeEnumerate.Directories leaves out every reparse point, so a planted junction is never a candidate.
             var older = SafeEnumerate.Directories(backupsRoot)
                 .Where(d => StagingNamePattern.IsMatch(Path.GetFileName(d))
                     && !string.Equals(Path.GetFileName(d), keepName, StringComparison.OrdinalIgnoreCase))
                 .Where(HasContent)
-                .OrderByDescending(Directory.GetCreationTimeUtc)
+                .OrderByDescending(d => RankMoment(d, now))
                 .ThenByDescending(d => Path.GetFileName(d), StringComparer.Ordinal)
                 .ToList();
 
@@ -284,6 +287,21 @@ internal static class DriverBackupStaging
         {
             logging.Warn($"Driver cleanup: could not prune old backups in '{backupsRoot}': {ex.Message}");
         }
+    }
+
+    /// <summary>The moment a backup folder ranks by: the one in its name, or, when that lies more than a day
+    /// ahead of <paramref name="now"/> (or cannot be read), the folder's creation time.</summary>
+    internal static DateTime RankMoment(string folder, DateTime now)
+    {
+        if (DateTime.TryParseExact(
+                Path.GetFileName(folder), "yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture,
+                DateTimeStyles.None, out var named)
+            && named <= now.AddDays(1))
+        {
+            return named;
+        }
+
+        return Directory.GetCreationTime(folder);
     }
 
     /// <summary>The data-folder side of the retention, run after this run's copy arrived. Never from an
