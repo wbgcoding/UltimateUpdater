@@ -166,6 +166,42 @@ public class PauseAndStopTests
         Assert.Contains("Active.TryRemove(new KeyValuePair<string, JobControl>(job.Id, control));", source);
     }
 
+    [Fact]
+    public void A_stop_for_an_item_of_a_finished_job_is_dropped_and_keeps_nothing()
+    {
+        var control = new ElevatedWorker.JobControl();
+        Assert.Equal(ElevatedWorker.ItemStop.Remembered, control.RememberStop("winget:a"));
+        Assert.Single(control.ItemCancellations);
+
+        control.ReleaseItems();
+
+        Assert.Equal(ElevatedWorker.ItemStop.JobFinished, control.RememberStop("winget:b"));
+        Assert.Empty(control.ItemCancellations);
+    }
+
+    [Fact]
+    public void A_stop_for_an_item_that_registered_its_own_source_stops_that_source()
+    {
+        var control = new ElevatedWorker.JobControl();
+        using var own = new CancellationTokenSource();
+        control.ItemCancellations["winget:a"] = own;
+
+        Assert.Equal(ElevatedWorker.ItemStop.StoppedRunning, control.RememberStop("winget:a"));
+
+        Assert.True(own.IsCancellationRequested);
+        control.ReleaseItems();
+    }
+
+    [Theory]
+    [InlineData("install")]
+    [InlineData("anything")]
+    public void A_job_without_a_payload_is_not_a_windows_update_job(string kind)
+    {
+        var job = new ElevatedJob { Id = "1", Kind = kind, Payload = default };
+
+        Assert.False(ElevatedWorker.ContainsWindowsUpdateItem(job));
+    }
+
     private static string FindSourceFile(params string[] relativeParts)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

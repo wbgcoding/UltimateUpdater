@@ -270,7 +270,7 @@ public static class ElevatedWorker
     /// Whether an "install" job's own payload names the Windows Update source. Read from the job about to
     /// run, never from a separate field. A payload that fails to deserialize, or any other kind, answers false.
     /// </summary>
-    private static bool ContainsWindowsUpdateItem(ElevatedJob job)
+    internal static bool ContainsWindowsUpdateItem(ElevatedJob job)
     {
         if (job.Kind != "install")
             return false;
@@ -280,7 +280,7 @@ public static class ElevatedWorker
         {
             file = job.Payload.Deserialize<InstallJobFile>(JsonOptions);
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or KeyNotFoundException)
         {
             return false;
         }
@@ -326,7 +326,7 @@ public static class ElevatedWorker
     /// The stop switch and the hold of a running job, so a stop does not have to wait for every remaining
     /// package of an elevated batch.
     /// </summary>
-    private sealed class JobControl
+    internal sealed class JobControl
     {
         public CancellationTokenSource Cancellation { get; } = new();
 
@@ -339,7 +339,48 @@ public static class ElevatedWorker
         /// <see cref="Control"/>: the item may already have finished, which is a race, not an error.
         /// </summary>
         public System.Collections.Concurrent.ConcurrentDictionary<string, CancellationTokenSource> ItemCancellations { get; } = new();
+
+        private readonly object _itemGate = new();
+        private bool _finished;
+
+        /// <summary>Remembers a stop for an item that has not registered its own source yet, as an
+        /// already-cancelled entry the item picks up when it starts. GetOrAdd: the item may have registered its
+        /// source between the caller's look-up and here; then that one is stopped. Nothing is added once the job
+        /// has finished (the entry would never be disposed or removed).</summary>
+        internal ItemStop RememberStop(string key)
+        {
+            lock (_itemGate)
+            {
+                if (_finished)
+                    return ItemStop.JobFinished;
+
+                var stopped = new CancellationTokenSource();
+                stopped.Cancel();
+                var registered = ItemCancellations.GetOrAdd(key, stopped);
+                if (ReferenceEquals(registered, stopped))
+                    return ItemStop.Remembered;
+
+                stopped.Dispose();
+                registered.Cancel();
+                return ItemStop.StoppedRunning;
+            }
+        }
+
+        /// <summary>Releases every item source and refuses further stops; called once when the job ends.</summary>
+        internal void ReleaseItems()
+        {
+            lock (_itemGate)
+            {
+                _finished = true;
+                foreach (var itemCancellation in ItemCancellations.Values)
+                    itemCancellation.Dispose();
+
+                ItemCancellations.Clear();
+            }
+        }
     }
+
+    internal enum ItemStop { Remembered, StoppedRunning, JobFinished }
 
     private static readonly ConcurrentDictionary<string, JobControl> Active = new();
 
@@ -695,18 +736,15 @@ public static class ElevatedWorker
                         // as an already-cancelled entry, which the item picks up when it starts.
                         // GetOrAdd: the item may have registered its own source between the look-up above and
                         // here; then that one is the one to stop.
-                        var stopped = new CancellationTokenSource();
-                        stopped.Cancel();
-                        var registered = control.ItemCancellations.GetOrAdd($"{itemSourceId}:{itemId}", stopped);
-                        if (ReferenceEquals(registered, stopped))
+                        // A job that finished meanwhile has released its sources for good: the line is dropped.
+                        switch (control.RememberStop($"{itemSourceId}:{itemId}"))
                         {
-                            logging.Info($"Elevated item '{itemSourceId}/{itemId}' stopped before it started.");
-                        }
-                        else
-                        {
-                            stopped.Dispose();
-                            logging.Info($"Elevated item '{itemSourceId}/{itemId}' stopped on the app's request.");
-                            registered.Cancel();
+                            case ItemStop.Remembered:
+                                logging.Info($"Elevated item '{itemSourceId}/{itemId}' stopped before it started.");
+                                break;
+                            case ItemStop.StoppedRunning:
+                                logging.Info($"Elevated item '{itemSourceId}/{itemId}' stopped on the app's request.");
+                                break;
                         }
                     }
 
@@ -785,9 +823,7 @@ public static class ElevatedWorker
 
             // What a stop registered for an item that never started (and nothing else removed) is released
             // with the job.
-            foreach (var itemCancellation in control.ItemCancellations.Values)
-                itemCancellation.Dispose();
-            control.ItemCancellations.Clear();
+            control.ReleaseItems();
 
             if (held && lane is not null)
                 lane.Release();
@@ -823,7 +859,7 @@ public static class ElevatedWorker
         {
             file = job.Payload.Deserialize<InstallJobFile>(JsonOptions);
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or KeyNotFoundException)
         {
             file = null;
         }
@@ -853,7 +889,7 @@ public static class ElevatedWorker
         {
             file = job.Payload.Deserialize<InstallJobFile>(JsonOptions);
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or KeyNotFoundException)
         {
             file = null;
         }
@@ -869,7 +905,7 @@ public static class ElevatedWorker
         {
             command = job.Payload.Deserialize<CleanupCommand>(JsonOptions);
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or KeyNotFoundException)
         {
             command = null;
         }
