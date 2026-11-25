@@ -199,7 +199,7 @@ public static partial class RegistryBackupService
                 }
 
                 // The link check above proves what the path SAID a moment ago, not
-                // where THIS handle actually landed - a junction planted in the gap between that check and
+                // where THIS handle actually landed: a junction planted in the gap between that check and
                 // this CreateNew would still have let it succeed, just somewhere else entirely. Verifying
                 // the open handle's own resolved path is the only way to know where the bytes about to be
                 // written really are, so this is checked before a single byte of the export goes into it.
@@ -244,7 +244,7 @@ public static partial class RegistryBackupService
     }
 
     /// <summary>
-    /// A.reg file's header line must appear exactly once; every export after the first carries its own
+    /// A .reg file's header line must appear exactly once; every export after the first carries its own
     /// copy, which would otherwise corrupt the merged file. Pure and unit-tested on its own.
     /// </summary>
     internal static string MergeSections(IReadOnlyList<string> sections)

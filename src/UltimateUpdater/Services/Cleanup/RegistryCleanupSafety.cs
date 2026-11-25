@@ -97,10 +97,10 @@ public static partial class RegistryCleanupSafety
         }
 
         if (candidates.Count == 0)
-            return null; // no plausible executable boundary anywhere in the value - stay silent
+            return null; // no plausible executable boundary anywhere in the value: stay silent
 
         // Candidates were built shortest-first (left to right), so the first one that exists is also the
-        // FIRST in reading order, and the last one is the longest - exactly the two the contract asks for.
+        // FIRST in reading order, and the last one is the longest, exactly the two the contract asks for.
         return candidates.FirstOrDefault(fileExists) ?? candidates[^1];
     }
 

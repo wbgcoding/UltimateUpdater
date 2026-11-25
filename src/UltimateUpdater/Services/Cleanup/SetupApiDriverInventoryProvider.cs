@@ -151,8 +151,8 @@ public sealed class SetupApiDriverInventoryProvider : IDriverInventoryProvider
     /// own [Version] section (it is a byte-identical copy of the original inf's content) gives Provider/Class
     /// /DriverVer without ever touching pnputil's own localised enumeration text. <see
     /// cref="SetupGetInfDriverStoreLocation"/>, the real SetupAPI mapping from a published inf to its
-    /// DriverStore file, is what then finds the FileRepository folder for a size and the original file name
-    /// -  never a folder-name guess, and never pnputil text either. <see cref="DriverPackageInfo.PackageName"/>
+    /// DriverStore file, is what then finds the FileRepository folder for a size and the original file name,
+    /// never a folder-name guess, and never pnputil text either. <see cref="DriverPackageInfo.PackageName"/>
     /// stays the published <c>oem*.inf</c> name throughout: that is the only name pnputil's
     /// <c>/export-driver</c>/<c>/delete-driver</c> accept.
     /// </summary>

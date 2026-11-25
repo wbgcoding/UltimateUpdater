@@ -23,9 +23,7 @@ public static class ComponentStoreAnalysisParser
     private static readonly string[] SharedWithWindowsLabels =
     [
         "Shared with Windows",
-        // Real DISM output on the lab VM prints this word order, not "Für Windows freigegeben"
-        // as an earlier guess (never checked against a real run) had it; that wrong guess is why this
-        // field came back null on the VM even once the encoding bug below was also fixed.
+        // German DISM prints this word order.
         "Freigegeben für Windows",
     ];
 
