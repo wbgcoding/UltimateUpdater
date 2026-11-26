@@ -1,4 +1,4 @@
-# Guest side (run through the VM driver's script verb). Seeds outdated real packages so a scan has something to find:
+# Guest side (run through the VM test harness). Seeds outdated real packages so a scan has something to find:
 #   - a second per-user Python (3.11) next to the one already there, both with old pip packages (pip --user)
 #   - an older Git (the current one is recorded, removed and put back by unseed-packages.ps1)
 # Idempotent: every step checks its own result first. State goes to %USERPROFILE%\uu-seed\state.json.

@@ -33,7 +33,7 @@ def lock(key_path):
         return 1
 
     result = subprocess.run(
-        ["icacls", key_path, "/inheritance:r", "/grant:r", user + ":F"],
+        [os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "icacls.exe"), key_path, "/inheritance:r", "/grant:r", user + ":F"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,

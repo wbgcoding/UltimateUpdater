@@ -6,11 +6,22 @@
 param(
   [string]$OutDir = (Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) '.tmp\store-test'),
   [string[]]$Versions = @('1.0.0.0', '2.0.0.0'),
-  [string]$Kits = 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64'
+  [string]$Kits = ''
 )
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 
+if (-not $Kits) {
+  # the newest installed Windows SDK that carries both tools
+  $bin = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
+  $Kits = Get-ChildItem $bin -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match '^\d+(\.\d+){3}$' } |
+    Sort-Object { [version]$_.Name } -Descending |
+    ForEach-Object { Join-Path $_.FullName 'x64' } |
+    Where-Object { (Test-Path (Join-Path $_ 'makeappx.exe')) -and (Test-Path (Join-Path $_ 'signtool.exe')) } |
+    Select-Object -First 1
+  if (-not $Kits) { throw 'no Windows SDK with makeappx.exe and signtool.exe found; pass -Kits <bin folder>' }
+}
 $subject = 'CN=UUTestStore'
 $makeappx = Join-Path $Kits 'makeappx.exe'
 $signtool = Join-Path $Kits 'signtool.exe'
@@ -124,7 +135,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'signtool failed' }
     Remove-Item -Recurse -Force $stage
 
-    # one self-contained guest script per version: `vmctl script` is the only channel that needs no file copy
+    # one self-contained guest script per version: a script run through the VM test harness is the only channel that needs no file copy
     $b64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($msix))
     $cerB64 = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes((Join-Path $OutDir 'UUTestStore.cer')))
     # Add-AppxPackage fails with 0x80070005 (process lifetime manager) from an SSH session, so the package step

@@ -318,7 +318,7 @@ public class SettingsViewModelTests
     /// <summary>WPF's ComboBoxItem automation peer falls back to the bound object's ToString() for
     /// the item's accessible name whenever the item is not itself a string, without an override here,
     /// a screen reader announced the full ".NET type name" instead of the visible text (found live on
-    /// the VM via `vmctl items`, all four settings dropdowns backed by these three option types).
+    /// the VM with the UI Automation reader, all four settings dropdowns backed by these three option types).
     /// Before the fix this asserted the type name; ToString() had no override at all.</summary>
     [Fact]
     public void Option_types_used_as_combobox_items_have_their_display_text_as_ToString()
