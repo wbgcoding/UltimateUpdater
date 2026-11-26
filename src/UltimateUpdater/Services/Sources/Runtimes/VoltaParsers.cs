@@ -7,10 +7,8 @@ namespace UltimateUpdater.Services.Sources.Runtimes;
 public readonly record struct VoltaDefaultTool(string Kind, string Name, string Version);
 
 /// <summary>
-/// Pure text→data parsers for Volta and the feeds it is compared against. Formats below are captured
-/// from a real `volta 2.0.2` install on this dev box, `volta list all --format plain` has
-/// no example in Volta's own docs, so guessing it was not an option (this project's own "cargo
-/// install-update" lesson).
+/// Pure text→data parsers for Volta and the feeds it is compared against. The formats below are those of
+/// `volta 2.0.2` (`volta list all --format plain` has no example in Volta's own docs).
 /// </summary>
 public static partial class VoltaParsers
 {
@@ -42,14 +40,12 @@ public static partial class VoltaParsers
     }
 
     /// <summary>
-    /// Node's own release index (`https://nodejs.org/dist/index.json`, real shape fetched and confirmed
-    /// against a live response), a JSON array, newest release first, each entry carrying a "version" field like
+    /// Node's own release index (`https://nodejs.org/dist/index.json`), a JSON array, newest release first, each entry carrying a "version" field like
     /// "v26.5.1". The leading "v" is Node's own convention, not part of the version Volta compares against.
-    /// Restricted to the SAME major line as <paramref name="installedMajor"/>, the index's very first
-    /// entry is the newest release overall, which silently jumps a "runtime node@20 (default)" row to
-    /// whatever major Node currently ships (26 as of this writing) on one click. The pyenv-win source already
-    /// restricts itself to same-line patch bumps for exactly this reason; a major Node bump is a real decision a user should make deliberately, not something
-    /// this row's "Update" button does for them.
+    /// Only the same major line as <paramref name="installedMajor"/> is offered: the index's first entry is
+    /// the newest release overall, which would jump a "runtime node@20 (default)" row to whatever major
+    /// Node currently ships on one click. A major Node bump is the user's call, not something this row's
+    /// "Update" button does.
     /// </summary>
     public static string? ParseLatestNodeVersion(string? json, string installedMajor)
     {

@@ -67,7 +67,7 @@ public class WingetSourceJobTests
     public async Task The_worker_hands_the_source_on_to_the_install()
     {
         var source = new CapturingSource("winget");
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Items = [new InstallJobItem { SourceId = "winget", ItemId = "Git.Git", Name = "Git", PackageSource = "winget" }],
         };
@@ -82,7 +82,7 @@ public class WingetSourceJobTests
     public async Task The_worker_drops_a_source_name_that_is_not_plain()
     {
         var source = new CapturingSource("winget");
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Items = [new InstallJobItem { SourceId = "winget", ItemId = "Git.Git", Name = "Git", PackageSource = "--force" }],
         };

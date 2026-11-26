@@ -275,10 +275,10 @@ public static class ElevatedWorker
         if (job.Kind != "install")
             return false;
 
-        InstallJobFile? file;
+        InstallJob? file;
         try
         {
-            file = job.Payload.Deserialize<InstallJobFile>(JsonOptions);
+            file = job.Payload.Deserialize<InstallJob>(JsonOptions);
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or KeyNotFoundException)
         {
@@ -854,10 +854,10 @@ public static class ElevatedWorker
     /// </summary>
     private static void NotifyWaitingForCleanup(ElevatedJob job, StreamWriter writer)
     {
-        InstallJobFile? file;
+        InstallJob? file;
         try
         {
-            file = job.Payload.Deserialize<InstallJobFile>(JsonOptions);
+            file = job.Payload.Deserialize<InstallJob>(JsonOptions);
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or KeyNotFoundException)
         {
@@ -884,10 +884,10 @@ public static class ElevatedWorker
     private static async Task RunInstallAsync(
         ElevatedJob job, StreamWriter writer, LoggingService logging, JobControl control)
     {
-        InstallJobFile? file;
+        InstallJob? file;
         try
         {
-            file = job.Payload.Deserialize<InstallJobFile>(JsonOptions);
+            file = job.Payload.Deserialize<InstallJob>(JsonOptions);
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or KeyNotFoundException)
         {

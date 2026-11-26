@@ -25,7 +25,7 @@ public static class InstallWorker
     private const int MaxFieldLength = 512;
 
     /// <summary>Hard ceiling on the parallel-install budget, whatever the job claims (see <see
-    /// cref="InstallJobFile.MaxParallelInstalls"/>).</summary>
+    /// cref="InstallJob.MaxParallelInstalls"/>).</summary>
     private const int MaxParallelInstallsCap = 5;
 
     /// <summary>The source name from the job, kept only when it is a plain name: it lands on an elevated winget
@@ -62,7 +62,7 @@ public static class InstallWorker
     /// up; the whole-job token still works.
     /// </param>
     public static async Task<bool> RunJobAsync(
-        InstallJobFile? job, StreamWriter writer, string jobId, LoggingService logging,
+        InstallJob? job, StreamWriter writer, string jobId, LoggingService logging,
         CancellationToken cancellationToken, IReadOnlyList<IUpdateSource>? sources = null,
         ConcurrentDictionary<string, CancellationTokenSource>? itemCancellations = null)
     {
@@ -200,14 +200,14 @@ public static class InstallWorker
     }
 
     private sealed class JobRunState(
-        StreamWriter writer, string jobId, IReadOnlyList<IUpdateSource> sources, InstallJobFile job,
+        StreamWriter writer, string jobId, IReadOnlyList<IUpdateSource> sources, InstallJob job,
         LoggingService logging, CancellationToken cancellationToken,
         ConcurrentDictionary<string, CancellationTokenSource>? itemCancellations)
     {
         public StreamWriter Writer { get; } = writer;
         public string JobId { get; } = jobId;
         public IReadOnlyList<IUpdateSource> Sources { get; } = sources;
-        public InstallJobFile Job { get; } = job;
+        public InstallJob Job { get; } = job;
         public LoggingService Logging { get; } = logging;
         public CancellationToken CancellationToken { get; } = cancellationToken;
         public ConcurrentDictionary<string, CancellationTokenSource>? ItemCancellations { get; } = itemCancellations;
@@ -321,7 +321,7 @@ public static class InstallWorker
     private static string ItemCancellationKey(string sourceId, string itemId) => $"{sourceId}:{itemId}";
 
     private static async Task RunOneItemCoreAsync(
-        InstallJobItem jobItem, JobRunState state, StreamWriter writer, string jobId, InstallJobFile job,
+        InstallJobItem jobItem, JobRunState state, StreamWriter writer, string jobId, InstallJob job,
         LoggingService logging, CancellationToken cancellationToken, bool isRetry)
     {
         // Flushed before this item starts: an earlier item can still be mid-install when this one begins.

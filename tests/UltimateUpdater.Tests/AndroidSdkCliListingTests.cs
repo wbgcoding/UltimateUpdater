@@ -86,6 +86,16 @@ public class AndroidSdkCliListingTests
     }
 
     [Fact]
+    public void A_package_that_is_only_available_counts_as_gone_from_the_installed_section()
+    {
+        const string listing =
+            "Installed packages:\n  emulator  37.2.12  Android Emulator\nAvailable packages:\n  extras/google/auto  2.0.0  Auto\n";
+
+        Assert.True(AndroidSdkSource.IsGoneFromListing(new ProcessResult(0, listing, string.Empty), "extras/google/auto"));
+        Assert.False(AndroidSdkSource.IsGoneFromListing(new ProcessResult(0, listing, string.Empty), "emulator"));
+    }
+
+    [Fact]
     public void An_update_that_left_the_package_missing_is_not_confirmed()
     {
         var withoutEmulator = string.Join('\n', Listing.Split('\n').Where(l => !l.TrimStart().StartsWith("emulator ")));

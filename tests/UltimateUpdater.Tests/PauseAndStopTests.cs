@@ -99,7 +99,7 @@ public class PauseAndStopTests
                 id = "j1",
                 kind = "install",
                 exclusive = true,
-                payload = new InstallJobFile
+                payload = new InstallJob
                 {
                     CreateRestorePoint = false,
                     Language = "en",

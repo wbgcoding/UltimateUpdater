@@ -1,5 +1,6 @@
 using System.Net.Http;
 using UltimateUpdater.Models;
+using UltimateUpdater.Services.Sources.Shared;
 
 namespace UltimateUpdater.Services.Sources.DevTools;
 
@@ -81,14 +82,11 @@ public sealed class GhExtensionSource(LoggingService logging, HttpClient httpCli
         repo = string.Empty;
 
         var parts = id.Split('/');
-        if (parts.Length != 2 || !IsPlainToken(parts[0]) || !IsPlainToken(parts[1]))
+        if (parts.Length != 2 || !SafeToken.IsPlain(parts[0]) || !SafeToken.IsPlain(parts[1]))
             return false;
 
         owner = parts[0];
         repo = parts[1];
         return true;
     }
-
-    private static bool IsPlainToken(string value) =>
-        value.Length > 0 && value.All(c => char.IsLetterOrDigit(c) || c is '.' or '-' or '_');
 }

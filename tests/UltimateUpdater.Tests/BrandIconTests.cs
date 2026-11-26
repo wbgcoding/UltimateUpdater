@@ -216,6 +216,20 @@ public class BrandIconTests
         });
     }
 
+    /// <summary>Row names are free text, so a miss must not be remembered: the cache would grow with every
+    /// distinct name a scan ever shows.</summary>
+    [Fact]
+    public void A_name_without_a_mark_leaves_the_cache_unchanged()
+    {
+        BrandIcons.Resolve("Firefox", "winget", "Mozilla.Firefox");
+        var before = BrandIcons.CachedMarkCount;
+
+        for (var i = 0; i < 20; i++)
+            Assert.Null(BrandIcons.Resolve($"Internal Tool Number {i}", "chocolatey", $"acme-internal-{i}"));
+
+        Assert.Equal(before, BrandIcons.CachedMarkCount);
+    }
+
     private static UpdateItem Item(string name, string sourceId, string id) => new()
     {
         Id = id,

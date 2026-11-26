@@ -1,5 +1,6 @@
 using System.Net.Http;
 using UltimateUpdater.Models;
+using UltimateUpdater.Services.Sources.Shared;
 
 namespace UltimateUpdater.Services.Sources.DevTools;
 
@@ -142,14 +143,11 @@ public sealed class VsCodeExtensionSource(LoggingService logging, HttpClient htt
 
         var publisherPart = id[..dot];
         var extensionPart = id[(dot + 1)..];
-        if (!IsPlainToken(publisherPart) || !IsPlainToken(extensionPart))
+        if (!SafeToken.IsPlain(publisherPart) || !SafeToken.IsPlain(extensionPart))
             return false;
 
         publisher = publisherPart;
         extension = extensionPart;
         return true;
     }
-
-    private static bool IsPlainToken(string value) =>
-        value.Length > 0 && value.All(c => char.IsLetterOrDigit(c) || c is '.' or '-' or '_');
 }

@@ -62,6 +62,17 @@ public class DataFolderLiveSyncTests : IDisposable
     }
 
     [Fact]
+    public void Reports_are_left_alone_when_they_live_outside_the_data_folder()
+    {
+        Directory.CreateDirectory(Path.Combine(_destination, "reports"));
+        File.WriteAllText(Path.Combine(_destination, "reports", "kept.txt"), "x");
+
+        Assert.True(AppPaths.SyncLiveData(_source, _destination, includeSettings: false, includeReports: false));
+
+        Assert.True(File.Exists(Path.Combine(_destination, "reports", "kept.txt")));
+    }
+
+    [Fact]
     public void Other_files_in_the_new_folder_are_left_alone()
     {
         File.WriteAllText(Path.Combine(_destination, "update-check.json"), "cache");

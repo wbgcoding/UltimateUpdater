@@ -62,7 +62,7 @@ public sealed partial class InstallQueue
             _logging.Event(ActivityLog.Install, LocalizationService.Instance["ActivityRestorePointSkipped"]);
         }
 
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             Action = action,
             // a restore point belongs before an install; there is nothing to roll forward on a removal

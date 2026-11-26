@@ -259,7 +259,7 @@ public partial class App : Application
             logging.Info("Application starting.");
 
             // Started before the UI is built so a second launch in that window is handed over instead of reported as "already running".
-            SingleInstanceService.StartListening(RequestFocus);
+            SingleInstanceService.StartListening(RequestFocus, logging);
 
             StartUi(e, logging);
             logging.Info("Startup complete.");

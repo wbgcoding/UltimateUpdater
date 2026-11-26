@@ -84,8 +84,9 @@ public class IconSourceLookupTests : IDisposable
     private IconCacheService Cache(
         IReadOnlyList<string>? startMenu = null,
         DriverVendorTools? drivers = null,
-        IReadOnlyList<string>? path = null) =>
-        new(new LoggingService(), new StartMenuShortcuts(startMenu ?? []), drivers, path ?? []);
+        IReadOnlyList<string>? path = null,
+        Func<IReadOnlyList<IconCacheService.InstalledApp>>? installedApps = null) =>
+        new(new LoggingService(), new StartMenuShortcuts(startMenu ?? []), drivers, path ?? [], installedApps: installedApps);
 
     private object? Icon(IconCacheService cache, string sourceId, string itemId, string name)
     {
@@ -388,5 +389,91 @@ public class IconSourceLookupTests : IDisposable
         var drivers = new DriverVendorTools(_ => false, text => text, [Vendor("zqvendor", ["zqvendor"], @"C:\none.exe")]);
 
         Assert.Null(Icon(Cache(drivers: drivers), "windowsupdate", "zq-driver-guid-2", "ZqVendor - Display - 1.2.3"));
+    }
+
+    [Theory]
+    [InlineData(@"C:\Program Files\App\app.exe", true)]
+    [InlineData(@"d:/tools/app.exe", true)]
+    [InlineData(@"\\192.0.2.1\share\app.exe", false)]
+    [InlineData(@"\\?\C:\app.exe", false)]
+    [InlineData(@"app.exe", false)]
+    [InlineData(@"\app.exe", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void Only_a_path_on_a_drive_letter_counts_as_local(string? path, bool expected) =>
+        Assert.Equal(expected, IconCacheService.IsLocalDrivePath(path));
+
+    [Fact]
+    public void A_network_path_is_refused_without_any_file_access()
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        Assert.Null(IconCacheService.ParseIconValue(@"\\192.0.2.1\s\a.exe,0"));
+        Assert.Null(IconCacheService.IconSourceFromExecutable(@"\\192.0.2.1\s\a.exe"));
+
+        // An attempt to reach that address (a documentation range nobody answers on) would sit in an SMB timeout.
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2), $"took {watch.Elapsed}");
+    }
+
+    [Fact]
+    public void A_program_installed_after_a_miss_is_found_once_the_installed_list_is_reset()
+    {
+        var apps = new List<IconCacheService.InstalledApp>();
+        var cache = Cache(installedApps: () => apps.ToList());
+
+        Assert.Null(Icon(cache, "winget", "zq.reset.fixture", "Zq Reset Fixture App"));
+
+        apps.Add(new IconCacheService.InstalledApp("Zq Reset Fixture App", $"{ExeWithIcon},0", null));
+        Assert.Null(Icon(cache, "winget", "zq.reset.fixture", "Zq Reset Fixture App"));
+
+        cache.ResetInstalledApps();
+
+        Assert.NotNull(Icon(cache, "winget", "zq.reset.fixture", "Zq Reset Fixture App"));
+    }
+
+    [Fact]
+    public void A_cached_icon_written_long_ago_is_resolved_again_even_if_it_was_used_today()
+    {
+        var apps = new List<IconCacheService.InstalledApp> { new("Zq Stale Fixture App", $"{ExeWithIcon},0", null) };
+        var cache = Cache(installedApps: () => apps);
+        var path = Path.Combine(AppPaths.IconCacheDirectory, IconCacheService.CacheKey("winget", "zq.stale.fixture") + ".png");
+        _cachedIcons.Add(path);
+        Directory.CreateDirectory(AppPaths.IconCacheDirectory);
+        File.WriteAllBytes(path, GrayPng());
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddDays(-31));
+        File.SetLastAccessTimeUtc(path, DateTime.UtcNow);
+
+        Assert.NotNull(Icon(cache, "winget", "zq.stale.fixture", "Zq Stale Fixture App"));
+
+        Assert.True(File.GetLastWriteTimeUtc(path) > DateTime.UtcNow.AddDays(-1));
+    }
+
+    private static byte[] GrayPng()
+    {
+        var pixels = new byte[32 * 32 * 4];
+        Array.Fill(pixels, (byte)0x80);
+        var source = System.Windows.Media.Imaging.BitmapSource.Create(
+            32, 32, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, pixels, 32 * 4);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(source));
+        using var stream = new MemoryStream();
+        encoder.Save(stream);
+        return stream.ToArray();
+    }
+
+    [Fact]
+    public void Ids_that_differ_only_in_a_character_a_file_name_cannot_hold_get_different_cache_keys()
+    {
+        Assert.NotEqual(IconCacheService.CacheKey("scoop", "main/app"), IconCacheService.CacheKey("scoop", "main_app"));
+        Assert.NotEqual(IconCacheService.CacheKey("scoop", "a"), IconCacheService.CacheKey("chocolatey", "a"));
+    }
+
+    [Fact]
+    public void A_very_long_id_gives_a_short_cache_key_that_is_a_valid_file_name()
+    {
+        var key = IconCacheService.CacheKey("winget", new string('a', 400) + "/x");
+
+        Assert.True(key.Length < 100);
+        Assert.True(key.IndexOfAny(Path.GetInvalidFileNameChars()) < 0);
     }
 }

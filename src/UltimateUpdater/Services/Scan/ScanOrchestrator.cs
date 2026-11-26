@@ -579,7 +579,7 @@ public sealed class ScanOrchestrator
 
                 status.State = ProviderScanState.Error;
                 status.ErrorMessage = LocalizationService.Instance["ScanFailed"];
-                status.Detail = ex.Message;
+                status.Detail = ex is ExternalToolCrashedException crashed ? crashed.LocalizedMessage() : ex.Message;
                 Report(status, generation);
             }
             finally

@@ -257,6 +257,7 @@ public partial class MainViewModel
 
             // Programs installed or moved since the last scan must be found by "open folder" and the running-program check.
             _installLocations.Invalidate();
+            _iconCache.ResetInstalledApps();
         }
         finally
         {

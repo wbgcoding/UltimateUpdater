@@ -3,9 +3,9 @@ using System.Diagnostics;
 namespace UltimateUpdater.Services.Platform;
 
 /// <summary>
-/// Opens a vendor URI or launcher executable via the shell. This is the ONLY place
-/// the app uses ShellExecute, and it never passes user-supplied text; only the fixed targets the
-/// providers define.
+/// Opens a vendor URI or launcher executable via the shell. This is the only place a provider-defined
+/// target (URI or path) is handed to ShellExecute, and it never passes user-supplied text; only the fixed
+/// targets the providers define.
 /// </summary>
 public static class UriLauncher
 {
@@ -37,10 +37,11 @@ public static class UriLauncher
     /// <summary>
     /// Fire-and-forget launch for anything triggered from the UI. ShellExecute can hold the call for many
     /// seconds (a large application, a launcher client, a shell extension), which would freeze the window
-    /// on the UI thread, and nothing here needs the result.
+    /// on the UI thread, and nothing here needs the result. <paramref name="allowNetworkPath"/> is for a folder
+    /// of the app's own that the user may have put on a share; see <see cref="IsLaunchable"/>.
     /// </summary>
-    public static void LaunchDetached(string target, LoggingService logging) =>
-        _ = Task.Run(() => Launch(target, logging));
+    public static void LaunchDetached(string target, LoggingService logging, bool allowNetworkPath = false) =>
+        _ = Task.Run(() => Launch(target, logging, allowNetworkPath));
 
     /// <summary>
     /// Opens a folder of the app's own in Explorer, creating it first: Explorer answers a path that does not
@@ -50,7 +51,7 @@ public static class UriLauncher
     public static void OpenFolderDetached(string folder, string label, LoggingService logging)
     {
         EnsureFolder(folder, label, logging);
-        LaunchDetached(folder, logging);
+        LaunchDetached(folder, logging, allowNetworkPath: true);
     }
 
     internal static void EnsureFolder(string folder, string label, LoggingService logging)
@@ -65,11 +66,11 @@ public static class UriLauncher
         }
     }
 
-    public static bool Launch(string target, LoggingService logging)
+    public static bool Launch(string target, LoggingService logging, bool allowNetworkPath = false)
     {
         // A bare name would be resolved by ShellExecute's own search order, which includes the working directory,
         // so a planted file could be launched instead. Only a real URI or an existing absolute path is accepted.
-        if (!IsLaunchable(target))
+        if (!IsLaunchable(target, allowNetworkPath))
         {
             logging.Warn($"Refusing to open '{target}': not an allowed URI scheme, and not an existing path.");
             return false;
@@ -93,14 +94,29 @@ public static class UriLauncher
         }
     }
 
-    internal static bool IsLaunchable(string target)
+    /// <summary>
+    /// A URI on the allow list, or an existing fully qualified path. A target can stem from registry or vendor
+    /// data, so a UNC or device path (<c>\\host\share</c>, <c>\\?\</c>) is refused before any file access:
+    /// merely testing it would open an SMB session with the user's credentials. Only a folder of the app's own
+    /// opts in with <paramref name="allowNetworkPath"/>.
+    /// </summary>
+    internal static bool IsLaunchable(string target, bool allowNetworkPath = false)
     {
         if (string.IsNullOrWhiteSpace(target))
             return false;
 
         if (System.IO.Path.IsPathFullyQualified(target))
+        {
+            if (!allowNetworkPath && !IsDriveLetterPath(target))
+                return false;
+
             return System.IO.File.Exists(target) || System.IO.Directory.Exists(target);
+        }
 
         return IsAllowedUri(target);
     }
+
+    /// <summary>True for "X:\..." (or "X:/..."), the only fully qualified form that names a local or mapped drive.</summary>
+    internal static bool IsDriveLetterPath(string path) =>
+        path.Length >= 3 && char.IsAsciiLetter(path[0]) && path[1] == ':' && path[2] is '\\' or '/';
 }

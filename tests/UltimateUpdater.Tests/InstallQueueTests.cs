@@ -159,7 +159,7 @@ public class InstallQueueTests
     [Fact]
     public async Task RunJobAsync_treats_a_null_items_payload_as_an_empty_job()
     {
-        var job = JsonSerializer.Deserialize<InstallJobFile>("""{"action":0,"items":null}""", Json);
+        var job = JsonSerializer.Deserialize<InstallJob>("""{"action":0,"items":null}""", Json);
         var logging = new LoggingService();
         using var stream = new MemoryStream();
         await using var writer = new StreamWriter(stream) { AutoFlush = true };
@@ -1419,7 +1419,7 @@ public class InstallQueueTests
         var reader = new StreamReader(server, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
 
         // CreateRestorePoint stays FALSE: this runs on a real machine and must change nothing.
-        var job = new InstallJobFile
+        var job = new InstallJob
         {
             CreateRestorePoint = false,
             Language = "en",
@@ -1480,7 +1480,7 @@ public class InstallQueueTests
             id,
             kind = "install",
             exclusive = true,
-            payload = new InstallJobFile
+            payload = new InstallJob
             {
                 CreateRestorePoint = false,
                 Language = "en",
@@ -1543,7 +1543,7 @@ public class InstallQueueTests
                 id = "empty-1",
                 kind = "install",
                 exclusive = true,
-                payload = new InstallJobFile { CreateRestorePoint = false, Language = "en", Items = [] },
+                payload = new InstallJob { CreateRestorePoint = false, Language = "en", Items = [] },
             },
             Json));
 

@@ -168,6 +168,9 @@ public sealed class HistoryService
                 // index can briefly know a package the files no longer do, until the next start.
                 if (_rollbackIndex is { } index && QualifiesForRollback(entry))
                     index[RollbackKey(entry)] = entry;
+
+                if (_unchangedCounts is { } counts && IsUnchangedInstall(entry))
+                    counts.AddOrUpdate(UnchangedKey(entry.SourceId, entry.ItemId, entry.FromVersion, entry.ToVersion), 1, (_, n) => n + 1);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -208,7 +211,10 @@ public sealed class HistoryService
     public void InvalidateRollbackIndex()
     {
         lock (_lock)
+        {
             _rollbackIndex = null;
+            _unchangedCounts = null;
+        }
     }
 
     /// <summary>The index as it stands now, or null while nothing has built it yet. Never parses.</summary>
@@ -307,18 +313,62 @@ public sealed class HistoryService
     }
 
     /// <summary>How many earlier installs of this package ended "succeeded, version unchanged" for exactly
-    /// this from/to pair. Reads the whole history, so call it off the UI thread.</summary>
-    public int CountUnchangedInstalls(string sourceId, string itemId, string? fromVersion, string? toVersion) =>
-        CountUnchangedInstalls(Read(int.MaxValue), sourceId, itemId, fromVersion, toVersion);
+    /// this from/to pair. The first call reads the whole history (both files) once and tallies every pair;
+    /// later calls are a lookup, kept current by <see cref="Append"/>. Call it off the UI thread.</summary>
+    public int CountUnchangedInstalls(string sourceId, string itemId, string? fromVersion, string? toVersion)
+    {
+        var counts = _unchangedCounts;
+        if (counts is null)
+        {
+            lock (_lock)
+            {
+                counts = _unchangedCounts;
+                if (counts is null)
+                {
+                    counts = BuildUnchangedCounts(out var complete);
+                    if (complete)
+                        _unchangedCounts = counts;
+                }
+            }
+        }
 
-    internal static int CountUnchangedInstalls(
-        IEnumerable<HistoryEntry> entries, string sourceId, string itemId, string? fromVersion, string? toVersion) =>
-        entries.Count(e =>
-            e.Action == "install" && e.Success && e.VersionUnchanged
-            && string.Equals(e.SourceId, sourceId, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(e.ItemId, itemId, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(e.FromVersion, fromVersion, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(e.ToVersion, toVersion, StringComparison.OrdinalIgnoreCase));
+        return counts.TryGetValue(UnchangedKey(sourceId, itemId, fromVersion, toVersion), out var count) ? count : 0;
+    }
+
+    /// <summary>Test seam: how many times the files were read to tally the unchanged installs.</summary>
+    internal int UnchangedCountBuilds => Volatile.Read(ref _unchangedCountBuilds);
+
+    private int _unchangedCountBuilds;
+
+    /// <summary>Written only under <see cref="_lock"/>; null until the first count, and again after the history
+    /// is pruned or deleted. A tally from a failed read is handed to its caller but never kept.</summary>
+    private volatile ConcurrentDictionary<string, int>? _unchangedCounts;
+
+    private ConcurrentDictionary<string, int> BuildUnchangedCounts(out bool complete)
+    {
+        Interlocked.Increment(ref _unchangedCountBuilds);
+
+        var counts = new ConcurrentDictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        void Visit(HistoryEntry entry)
+        {
+            if (IsUnchangedInstall(entry))
+                counts.AddOrUpdate(UnchangedKey(entry.SourceId, entry.ItemId, entry.FromVersion, entry.ToVersion), 1, (_, n) => n + 1);
+        }
+
+        var failed = !ReadEach(_path + ".1", Visit);
+        failed |= !ReadEach(_path, Visit);
+
+        complete = !failed;
+        return counts;
+    }
+
+    private static bool IsUnchangedInstall(HistoryEntry entry) =>
+        entry.Action == "install" && entry.Success && entry.VersionUnchanged;
+
+    /// <summary>A missing version is told apart from an empty one; the dictionary compares case-insensitively.</summary>
+    private static string UnchangedKey(string sourceId, string itemId, string? fromVersion, string? toVersion) =>
+        $"{sourceId}\u001f{itemId}\u001f{fromVersion ?? "\u0001"}\u001f{toVersion ?? "\u0001"}";
 
     /// <summary>A real history line is a small JSON object; generous headroom over anything legitimate,
     /// tight enough that a corrupt file with no newlines at all cannot buffer arbitrarily.</summary>
@@ -467,6 +517,9 @@ public sealed class HistoryService
                         index[RollbackKey(entry)] = entry;
                     _rollbackIndex = index;
                 }
+
+                // Pruned rows leave the tally too; the next count reads the consolidated file once.
+                _unchangedCounts = null;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
             {

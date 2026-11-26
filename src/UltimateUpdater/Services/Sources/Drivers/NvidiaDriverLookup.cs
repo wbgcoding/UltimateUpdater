@@ -115,7 +115,9 @@ public static class NvidiaDriverLookup
         return false;
     }
 
-    /// <summary>Compares two "560.94"-style versions; true when <paramref name="latest"/> is newer.</summary>
+    /// <summary>Compares two "560.94"-style versions; true when <paramref name="latest"/> is newer. NVIDIA's
+    /// number is a decimal (release, then two digits), not a dotted triple, so it is read as one number and
+    /// kept apart from <see cref="PackageManagerParsers.IsNewer"/>, which would call "560.10" newer than "560.9".</summary>
     public static bool IsNewer(string? installed, string? latest)
     {
         var latestValue = ParseVersion(latest);

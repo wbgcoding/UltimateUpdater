@@ -695,7 +695,7 @@ public partial class SettingsViewModel : ObservableObject
             _logging.Warn($"Could not create the error reports folder: {ex.Message}");
         }
 
-        UriLauncher.LaunchDetached(ErrorReportBuilder.ReportsDirectory, _logging);
+        UriLauncher.LaunchDetached(ErrorReportBuilder.ReportsDirectory, _logging, allowNetworkPath: true);
     }
 
     /// <summary>The data folder itself; created first like the two above, though in practice it already exists.</summary>
@@ -711,7 +711,7 @@ public partial class SettingsViewModel : ObservableObject
             _logging.Warn($"Could not create the data folder: {ex.Message}");
         }
 
-        UriLauncher.LaunchDetached(AppPaths.DataDirectory, _logging);
+        UriLauncher.LaunchDetached(AppPaths.DataDirectory, _logging, allowNetworkPath: true);
     }
 
     /// <summary>Picks a new home for the data folder, validates it as the cleanup dialog does, copies everything across and records the location for the next launch. The folder in use is untouched until the restart.</summary>

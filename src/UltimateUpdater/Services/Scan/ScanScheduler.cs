@@ -81,8 +81,29 @@ public sealed class ScanScheduler : IDisposable
         if (_settings.Current.Scan.OnlyOnAc && !PowerStatus.IsOnAcPower())
             return;
 
+        // Both probes are COM (the metered check activates NetworkListManager), so they run off the dispatcher:
+        // a slow or hung network stack must not stall the window. The tick counts as running while they wait, so
+        // a probe slower than the next tick cannot start a second scan.
         // A scan the user starts by hand always runs regardless; this only gates the automatic tick.
-        if (_settings.Current.Scan.RespectMetered && _isMetered())
+        var respectMetered = _settings.Current.Scan.RespectMetered;
+        _isRunning = true;
+        bool metered;
+        bool online;
+        try
+        {
+            (metered, online) = await Task.Run(() =>
+            {
+                var isMetered = respectMetered && _isMetered();
+                return (isMetered, isMetered || _isOnline());
+            });
+        }
+        catch (Exception ex)
+        {
+            _logging.Warn($"Interval scan: the network probe failed ({ex.Message}); treated as online and unmetered.");
+            (metered, online) = (false, true);
+        }
+
+        if (metered)
         {
             // The scan stays due, so every tick lands here until the connection changes: say it once.
             // _lastRun is deliberately not moved, the scan must run as soon as the connection is unmetered.
@@ -92,6 +113,7 @@ public sealed class ScanScheduler : IDisposable
                 _meteredSkipLogged = true;
             }
 
+            _isRunning = false;
             return;
         }
 
@@ -99,20 +121,7 @@ public sealed class ScanScheduler : IDisposable
 
         // Right after resume from sleep the tick usually fires before the network is back: every network
         // source would fail, yet the run counted as done and the next try was a whole interval later. Like
-        // the metered skip, the scan stays due. The probe is COM, so it runs off the dispatcher; the tick
-        // counts as running while it waits, so a probe slower than the next tick cannot start a second scan.
-        _isRunning = true;
-        bool online;
-        try
-        {
-            online = await Task.Run(_isOnline);
-        }
-        catch (Exception ex)
-        {
-            _logging.Warn($"Interval scan: the network probe failed ({ex.Message}); treated as online.");
-            online = true;
-        }
-
+        // the metered skip, the scan stays due.
         if (!online)
         {
             if (!_offlineSkipLogged)

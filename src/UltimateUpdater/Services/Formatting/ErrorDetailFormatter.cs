@@ -6,9 +6,8 @@ namespace UltimateUpdater.Services.Formatting;
 
 /// <summary>
 /// Splits a failed install/uninstall's raw detail text into coloured segments for the error-detail
-/// dialog. Pure and read-only,
-/// the string itself is never touched (it is also written to history/log verbatim), only formatted at
-/// render time. Built around winget's own multi-rung <c>[label] winget install failed for '…'
+/// dialog. Pure and read-only: the string itself is never touched (it is also written to history/log
+/// verbatim), only formatted at render time. Built around winget's own multi-rung <c>[label] winget install failed for '…'
 /// (exit 0x…). …</c> shape, but degrades gracefully on the simpler <c>{source}: …</c> shape every
 /// other CLI source throws, and to one Plain segment for anything neither pattern matches.
 /// A tool-name segment deliberately does NOT carry the source's brand colour: this formatter only
@@ -30,9 +29,8 @@ public static class ErrorDetailFormatter
     public readonly record struct Segment(string Text, SegmentKind Kind);
 
     /// <summary>Only at the START of a line, a lookbehind for the line start plus optional indent, so
-    /// the bracket text itself (not the indent) is what gets highlighted. Otherwise any bracket pair a
-    /// foreign tool happened to print mid-sentence was marked as if it were one of THIS app's own rung
-    /// labels.</summary>
+    /// the bracket text itself (not the indent) is what gets highlighted. A bracket pair a foreign tool
+    /// prints mid-sentence is therefore not taken for one of this app's own rung labels.</summary>
     private static readonly Regex RungLabelPattern = new(
         @"(?<=^[ \t]*)\[[^\]\r\n]+\]", RegexOptions.Compiled | RegexOptions.Multiline);
 

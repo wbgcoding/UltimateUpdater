@@ -36,7 +36,7 @@ public sealed class IconCacheService
     /// older rule (a Python script launcher cached for a pip package) are never read again; they age
     /// out through <see cref="CleanupCache"/> like any other unused file.
     /// </summary>
-    internal const string CacheKeyVersion = "v4";
+    internal const string CacheKeyVersion = "v5";
 
     private int _writesSinceCleanup;
 
@@ -57,7 +57,9 @@ public sealed class IconCacheService
     /// The Uninstall keys are read once rather than per row: walking both hives for a few hundred rows would
     /// be tens of thousands of registry opens per scan.
     /// </summary>
-    private readonly Lazy<IReadOnlyList<InstalledApp>> _installedApps;
+    private volatile Lazy<IReadOnlyList<InstalledApp>> _installedApps;
+
+    private readonly Func<IReadOnlyList<InstalledApp>> _readInstalledApps;
 
     private readonly LoggingService _logging;
     private readonly StartMenuShortcuts _startMenu;
@@ -65,7 +67,7 @@ public sealed class IconCacheService
     private readonly PackagedAppLogos _packages;
     private readonly Lazy<IReadOnlyList<string>> _pathFolders;
 
-    private sealed record InstalledApp(string Name, string? IconValue, string? InstallLocation);
+    internal sealed record InstalledApp(string Name, string? IconValue, string? InstallLocation);
 
     /// <summary>A file to take an icon from: either an icon resource at an index, or a plain image.</summary>
     internal sealed record IconSource(string Path, int Index, bool IsImageFile, System.Windows.Media.Color? Plate = null);
@@ -82,14 +84,16 @@ public sealed class IconCacheService
         StartMenuShortcuts? startMenu,
         DriverVendorTools? driverTools,
         IReadOnlyList<string>? pathFolders,
-        PackagedAppLogos? packages = null)
+        PackagedAppLogos? packages = null,
+        Func<IReadOnlyList<InstalledApp>>? installedApps = null)
     {
         _logging = logging;
         _packages = packages ?? new PackagedAppLogos(WindowsRegistryView.Instance);
         _startMenu = startMenu ?? new StartMenuShortcuts(StartMenuShortcuts.DefaultFolders());
         _driverTools = driverTools ?? new DriverVendorTools();
         _pathFolders = new Lazy<IReadOnlyList<string>>(() => pathFolders ?? ReadPathFolders());
-        _installedApps = new Lazy<IReadOnlyList<InstalledApp>>(ReadInstalledApps);
+        _readInstalledApps = installedApps ?? ReadInstalledApps;
+        _installedApps = new Lazy<IReadOnlyList<InstalledApp>>(_readInstalledApps);
         CleanupCache();
     }
 
@@ -115,6 +119,22 @@ public sealed class IconCacheService
         _memoryCacheOrder.Enqueue(cacheKey);
         TrimMemoryCache();
         return resolved;
+    }
+
+    /// <summary>
+    /// Forgets what the Uninstall keys listed and every "no icon" answer, so a program installed or moved since
+    /// the last pass is found by the next lookup instead of showing the lettered tile until the app restarts.
+    /// Called when a scan starts; icons that were found stay cached.
+    /// </summary>
+    public void ResetInstalledApps()
+    {
+        _installedApps = new Lazy<IReadOnlyList<InstalledApp>>(_readInstalledApps);
+
+        foreach (var pair in _memoryCache)
+        {
+            if (pair.Value is null)
+                _memoryCache.TryRemove(pair);
+        }
     }
 
     /// <summary>Oldest-first eviction back down to the cap. Cheap, and good enough for a soft bound.</summary>
@@ -251,13 +271,15 @@ public sealed class IconCacheService
         if (_startMenu.Find(displayName) is not { } shortcut)
             return null;
 
-        if (shortcut.IconPath is { } iconPath && !IsScriptsLauncher(iconPath) && File.Exists(iconPath) && HasIconResource(iconPath, shortcut.IconIndex))
+        if (shortcut.IconPath is { } iconPath && IsLocalDrivePath(iconPath) && !IsScriptsLauncher(iconPath)
+            && File.Exists(iconPath) && HasIconResource(iconPath, shortcut.IconIndex))
         {
             var isImage = Path.GetExtension(iconPath) is ".png" or ".jpg" or ".jpeg" or ".bmp";
             return new IconSource(iconPath, shortcut.IconIndex, isImage);
         }
 
-        if (shortcut.TargetPath is { } target && !IsScriptsLauncher(target) && Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase)
+        if (shortcut.TargetPath is { } target && IsLocalDrivePath(target) && !IsScriptsLauncher(target)
+            && Path.GetExtension(target).Equals(".exe", StringComparison.OrdinalIgnoreCase)
             && File.Exists(target) && HasIconResource(target, 0))
         {
             return new IconSource(target, 0, IsImageFile: false);
@@ -303,7 +325,7 @@ public sealed class IconCacheService
         (Environment.GetEnvironmentVariable("PATH") ?? "")
             .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(f => f.Trim('"'))
-            .Where(f => f.Length > 0 && f.IndexOfAny(Path.GetInvalidPathChars()) < 0)
+            .Where(f => f.Length > 0 && f.IndexOfAny(Path.GetInvalidPathChars()) < 0 && IsLocalDrivePath(f))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
@@ -328,11 +350,18 @@ public sealed class IconCacheService
         }
     }
 
-    /// <summary>An icon straight from an executable (or image) path, when the path is real and rooted.</summary>
+    /// <summary>
+    /// True only for a path on a local or mapped drive ("C:\..."). A network path (\\host\share) is refused
+    /// before any file access: checking it opens a connection with the user's credentials on every scan, just
+    /// to draw an icon.
+    /// </summary>
+    internal static bool IsLocalDrivePath([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? path) =>
+        !string.IsNullOrWhiteSpace(path) && UriLauncher.IsDriveLetterPath(path.Trim());
+
+    /// <summary>An icon straight from an executable (or image) path, when the path is real and on a local drive.</summary>
     internal static IconSource? IconSourceFromExecutable(string? path)
     {
-        if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path) || IsScriptsLauncher(path) || !File.Exists(path)
-            || !HasIconResource(path, 0))
+        if (!IsLocalDrivePath(path) || IsScriptsLauncher(path) || !File.Exists(path) || !HasIconResource(path, 0))
         {
             return null;
         }
@@ -361,7 +390,7 @@ public sealed class IconCacheService
             text = text[..comma].Trim().Trim('"');
         }
 
-        if (IsScriptsLauncher(text) || !File.Exists(text) || !HasIconResource(text, index))
+        if (!IsLocalDrivePath(text) || IsScriptsLauncher(text) || !File.Exists(text) || !HasIconResource(text, index))
             return null;
 
         var isImage = Path.GetExtension(text) is ".png" or ".jpg" or ".jpeg" or ".bmp";
@@ -374,7 +403,7 @@ public sealed class IconCacheService
     /// </summary>
     private static string? MainExecutableIn(string? installLocation, string displayName)
     {
-        if (string.IsNullOrWhiteSpace(installLocation) || !Directory.Exists(installLocation))
+        if (!IsLocalDrivePath(installLocation) || !Directory.Exists(installLocation))
             return null;
 
         try
@@ -597,9 +626,14 @@ public sealed class IconCacheService
         }
     }
 
+    /// <summary>
+    /// A cached file written more than <see cref="MaxCacheAgeDays"/> ago counts as a miss and is written anew by
+    /// the caller. The access time cannot decide this: every hit refreshes it, so an app that changed its icon
+    /// would keep the old one for as long as its row keeps appearing.
+    /// </summary>
     internal static BitmapSource? TryLoadFromDisk(string path)
     {
-        if (!File.Exists(path))
+        if (!File.Exists(path) || File.GetLastWriteTimeUtc(path) < DateTime.UtcNow.AddDays(-MaxCacheAgeDays))
             return null;
 
         try
@@ -701,8 +735,24 @@ public sealed class IconCacheService
     private static void TryDelete(FileInfo file) => FileDeletion.TryDelete(file.FullName);
 
     /// <summary>The file name (without extension) the icon for one row is cached under.</summary>
-    internal static string CacheKey(string sourceId, string itemId) =>
-        SanitizeKey($"{CacheKeyVersion}_{sourceId}_{itemId}");
+    /// <summary>
+    /// A readable prefix for anyone looking in the folder, then a hash of the exact ids: two ids that differ only
+    /// in a character a file name cannot hold ("bucket/app", "bucket_app") get different files, and a very long
+    /// id stays a short path.
+    /// </summary>
+    internal static string CacheKey(string sourceId, string itemId)
+    {
+        var readable = SanitizeKey(itemId);
+        if (readable.Length > MaxReadableKeyChars)
+            readable = readable[..MaxReadableKeyChars];
+
+        var hash = Convert.ToHexString(
+            System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes($"{sourceId}\0{itemId}")));
+
+        return $"{CacheKeyVersion}_{SanitizeKey(sourceId)}_{readable}_{hash[..12]}".ToLowerInvariant();
+    }
+
+    private const int MaxReadableKeyChars = 40;
 
     private static string SanitizeKey(string key)
     {

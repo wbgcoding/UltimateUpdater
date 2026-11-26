@@ -31,7 +31,7 @@ public static class ChangelogUrlParsers
             && string.Equals(segments[2], "releases", StringComparison.OrdinalIgnoreCase)
             && string.Equals(segments[3], "latest", StringComparison.OrdinalIgnoreCase))
         {
-            return IsPlainToken(segments[0]) && IsPlainToken(segments[1])
+            return SafeToken.IsPlain(segments[0]) && SafeToken.IsPlain(segments[1])
                 ? new GitHubReleasePage(segments[0], segments[1], null)
                 : null;
         }
@@ -40,7 +40,7 @@ public static class ChangelogUrlParsers
             && string.Equals(segments[2], "releases", StringComparison.OrdinalIgnoreCase)
             && string.Equals(segments[3], "tag", StringComparison.OrdinalIgnoreCase))
         {
-            return IsPlainToken(segments[0]) && IsPlainToken(segments[1])
+            return SafeToken.IsPlain(segments[0]) && SafeToken.IsPlain(segments[1])
                 ? new GitHubReleasePage(segments[0], segments[1], segments[4])
                 : null;
         }
@@ -63,7 +63,7 @@ public static class ChangelogUrlParsers
         // at a fixed position; the namespace needs at least a group and a project before it.
         var marker = Array.IndexOf(segments, "-");
         if (marker >= 2
-            && segments[..marker].All(IsPlainToken)
+            && segments[..marker].All(s => SafeToken.IsPlain(s))
             && segments.Length == marker + 3
             && string.Equals(segments[marker + 1], "releases", StringComparison.OrdinalIgnoreCase))
         {
@@ -72,13 +72,6 @@ public static class ChangelogUrlParsers
 
         return null;
     }
-
-    /// <summary>
-    /// Letters, digits, '.', '-' and '_' only. Checked after decoding, so a link that smuggles "%2F" or a
-    /// space into an owner or repo is not a repository this app can address.
-    /// </summary>
-    private static bool IsPlainToken(string value) =>
-        value.Length > 0 && value.All(c => char.IsLetterOrDigit(c) || c is '.' or '-' or '_');
 
     /// <summary>
     /// https only (rejects http, javascript:, and everything else) and an exact, case-insensitive host

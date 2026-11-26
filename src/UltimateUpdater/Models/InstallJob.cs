@@ -4,9 +4,8 @@ namespace UltimateUpdater.Models;
 /// What the elevated worker receives: a plain list of item references, never live
 /// COM/object handles: the worker re-resolves each item from its own source.
 /// </summary>
-public sealed class InstallJobFile
+public sealed class InstallJob
 {
-    public int SchemaVersion { get; set; } = 1;
     public bool CreateRestorePoint { get; set; }
 
     /// <summary>Whether the worker installs or uninstalls the items. A restore point is only made for installs.</summary>

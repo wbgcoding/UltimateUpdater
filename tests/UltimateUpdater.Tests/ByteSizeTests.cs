@@ -52,6 +52,15 @@ public class ByteSizeTests
     }
 
     [Fact]
+    public void A_value_that_rounds_to_1024_steps_up_to_the_next_unit()
+    {
+        Assert.Equal("1.0 MB", ByteSize.FormatInvariant(1_048_535));
+        Assert.Equal("1023.9 KB", ByteSize.FormatInvariant(1_048_474));
+        Assert.Equal("1.0 KB", ByteSize.FormatInvariant(1024));
+        Assert.Equal("1023.0 B", ByteSize.FormatInvariant(1023));
+    }
+
+    [Fact]
     public void Format_climbs_units_up_to_terabytes()
     {
         LocalizationService.Instance.Apply("en");
