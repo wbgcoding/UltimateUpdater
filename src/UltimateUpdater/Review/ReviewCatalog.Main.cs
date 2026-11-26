@@ -107,11 +107,18 @@ internal static partial class ReviewCatalog
         await Task.Delay(800);
     }
 
-    private static ListBoxItem? FirstRow(MainWindow window) =>
-        window.Table.UpdatesListBox.ItemContainerGenerator.Items
-            .Select(item => window.Table.UpdatesListBox.ItemContainerGenerator.ContainerFromItem(item))
-            .OfType<ListBoxItem>()
-            .FirstOrDefault(c => c.IsVisible);
+    /// <summary>The list is grouped: the generator's own items are the groups, so rows are reached by index over the flat items.</summary>
+    private static ListBoxItem? FirstRow(MainWindow window)
+    {
+        var list = window.Table.UpdatesListBox;
+        for (var i = 0; i < list.Items.Count; i++)
+        {
+            if (list.ItemContainerGenerator.ContainerFromIndex(i) is ListBoxItem { IsVisible: true } row)
+                return row;
+        }
+
+        return null;
+    }
 
     private static Task<ReviewScene> MainScene(
         ReviewSession session,

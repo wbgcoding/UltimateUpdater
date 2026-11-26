@@ -59,7 +59,7 @@ internal static class ReviewMode
         }
         catch (Exception ex)
         {
-            problems.Add($"{ex.GetType().Name}: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+            problems.Add(ex.ToString());
             exitCode = 1;
         }
         finally

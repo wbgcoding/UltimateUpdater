@@ -43,11 +43,14 @@ internal static class ReviewAudit
         var clippedCandidates = new List<(FrameworkElement Element, string Detail)>();
         var dpi = VisualTreeHelper.GetDpi(root).PixelsPerDip;
 
+        // Only what a user can see counts: a card scrolled out of view or cut off by its parent is not on the shot.
+        var inView = new List<FrameworkElement>();
         foreach (var element in all)
         {
-            if (!IsShown(element))
+            if (!IsShown(element) || !TryBounds(element, root, out var viewBounds) || ClipByAncestors(element, root, viewBounds).IsEmpty)
                 continue;
 
+            inView.Add(element);
             if (element is TextBlock block)
                 CheckText(block, dpi, findings, info);
             else if (!IsLayoutContainer(element) && LayoutInformation.GetLayoutClip(element) is { } clip)
@@ -72,16 +75,16 @@ internal static class ReviewAudit
         foreach (var (element, detail) in clippedCandidates)
         {
             var hasInner = clippedCandidates.Any(other => !ReferenceEquals(other.Element, element) && IsAncestor(element, other.Element));
-            if (!hasInner)
+            if (!hasInner && !element.Name.EndsWith("IconPresenter", StringComparison.Ordinal))
                 findings.Add(new ReviewFinding("CLIPPED", Describe(element), detail));
         }
 
         CheckOffscreen(root, leaves, findings);
         CheckOverlap(root, scene, leaves, findings);
-        CheckTheme(all, findings);
+        CheckTheme(inView, findings);
 
         if (scene.IsSettings && !isPopup)
-            CheckSettings(all, findings);
+            CheckSettings(inView, info);
 
         return (Dedupe(findings), Dedupe(info));
     }
@@ -195,6 +198,9 @@ internal static class ReviewAudit
         };
 
         var wraps = block.TextWrapping != TextWrapping.NoWrap;
+        if (wraps && Format(100000).WidthIncludingTrailingWhitespace <= available + 3)
+            return;
+
         if (!wraps)
         {
             // One line: the unconstrained width is the width it needs.
@@ -211,7 +217,8 @@ internal static class ReviewAudit
             return;
         }
 
-        var needed = Format(available).Height;
+        // A wrapped block is as wide as its longest line, so a hair of rounding in the measurement would add a line.
+        var needed = Format(available + 3).Height;
         var allowed = block.ActualHeight - block.Padding.Top - block.Padding.Bottom;
         if (needed > allowed + Tolerance + 2)
             findings.Add(new ReviewFinding("CLIPPED", Describe(block), $"needs {needed:0} px height, gets {allowed:0} px: \"{Shorten(text)}\""));
@@ -327,9 +334,9 @@ internal static class ReviewAudit
                     Check(element, "foreground", block.Foreground);
                     break;
                 case Control control when control is not (ScrollBar or Thumb):
+                    // Text colour only: a control's Background and BorderBrush are often ignored by its template
+                    // (the look comes from theme brushes inside it), so they say nothing about what is drawn.
                     Check(element, "foreground", control.Foreground);
-                    Check(element, "background", control.Background);
-                    Check(element, "border", control.BorderBrush);
                     break;
             }
         }

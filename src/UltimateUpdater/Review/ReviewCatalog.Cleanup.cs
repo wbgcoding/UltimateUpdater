@@ -57,8 +57,8 @@ internal static partial class ReviewCatalog
                     Timestamp = now.AddHours(-2), FreedBytes = 4_800_000_000, SkippedFiles = 3, SkippedBytes = 120_000,
                     Areas =
                     [
-                        new CleanupHistoryArea { Id = "user-temp", TitleKey = "CleanupTargetUserTemp", FreedBytes = 1_200_000_000 },
-                        new CleanupHistoryArea { Id = "recycle", TitleKey = "CleanupTargetRecycleBin", FreedBytes = 3_600_000_000 },
+                        new CleanupHistoryArea { Id = "user-temp", TitleKey = "CleanupUserTemp", FreedBytes = 1_200_000_000 },
+                        new CleanupHistoryArea { Id = "recycle-bin", TitleKey = "CleanupRecycleBin", FreedBytes = 3_600_000_000 },
                     ],
                 });
                 history.Append(new CleanupHistoryEntry { Timestamp = now.AddDays(-9), FreedBytes = 0, Stopped = true });

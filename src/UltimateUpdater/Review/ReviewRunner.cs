@@ -82,7 +82,7 @@ internal static class ReviewRunner
                         }
                         catch (Exception ex)
                         {
-                            problems.Add($"{tag}: {ex.GetType().Name}: {ex.Message}");
+                            problems.Add($"{tag}: {ex}");
                         }
                     }
                 }

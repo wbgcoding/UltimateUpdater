@@ -13,7 +13,10 @@ namespace UltimateUpdater.Review;
 /// </summary>
 internal static partial class ReviewCatalog
 {
-    public static IReadOnlyList<ReviewSurface> All { get; } = Build();
+    private static IReadOnlyList<ReviewSurface>? _all;
+
+    /// <summary>Built on first use: the partial files hold static tables whose initialisation order is not defined.</summary>
+    public static IReadOnlyList<ReviewSurface> All => _all ??= Build();
 
     private static List<ReviewSurface> Build()
     {
