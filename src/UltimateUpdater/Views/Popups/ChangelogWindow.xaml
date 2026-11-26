@@ -67,7 +67,7 @@
                  applied at the control level because there is no ScrollViewer element here. -->
             <TextBox x:Name="ChangelogTextBox" Style="{x:Null}" Text="{Binding Text, Mode=OneWay}"
                      IsReadOnly="True" IsReadOnlyCaretVisible="False"
-                     FontSize="13" TextWrapping="Wrap" MaxHeight="373"
+                     FontSize="13" TextWrapping="Wrap" MaxHeight="350"
                      VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled"
                      Background="Transparent" BorderThickness="0" Padding="20,12"
                      Foreground="{DynamicResource TextFillColorPrimaryBrush}"

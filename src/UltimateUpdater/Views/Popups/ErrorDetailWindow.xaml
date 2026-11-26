@@ -123,7 +123,7 @@
                  together; clearing only the Template leaves the style's other setters fighting a template they no
                  longer match and blanks the text. Same idea as MainWindow's Style="{x:Null}" on a ScrollViewer,
                  applied at the control level because there is no ScrollViewer element here. -->
-            <RichTextBox x:Name="OutputBox" Style="{x:Null}" MaxHeight="300"
+            <RichTextBox x:Name="OutputBox" Style="{x:Null}" MaxHeight="190"
                          IsReadOnly="True" IsReadOnlyCaretVisible="False"
                          FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12"
                          VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled"
