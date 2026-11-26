@@ -568,6 +568,23 @@ end;", RegexOptions.Singleline);
     }
 
     /// <summary>
+    /// A fresh install offers the desktop icon ticked and autostart unticked. A reinstall or silent update still
+    /// replays the previous choice and the Run-key sync (Inno's default), which is why the defaults are plain flags.
+    /// </summary>
+    [Fact]
+    public void The_task_defaults_are_desktop_icon_on_and_autostart_off()
+    {
+        var tasks = Regex.Match(Script(), @"\[Tasks\]\r?\n(.*?)\r?\n\r?\n", RegexOptions.Singleline);
+        Assert.True(tasks.Success, "the [Tasks] section is gone");
+
+        var desktop = tasks.Groups[1].Value.Split('\n').Single(l => l.Contains("Name: \"desktopicon\"", StringComparison.Ordinal));
+        var autostart = tasks.Groups[1].Value.Split('\n').Single(l => l.Contains("Name: \"autostart\"", StringComparison.Ordinal));
+        Assert.DoesNotContain("unchecked", desktop);
+        Assert.Contains("Flags: unchecked", autostart);
+        Assert.DoesNotMatch(@"(?m)^UsePreviousTasks\s*=\s*no", Script());
+    }
+
+    /// <summary>
     /// Inno replays the previous task choice on a reinstall, which switched autostart back on after the user had
     /// turned it off in the app. The Tasks page therefore starts from the real state of the Run key.
     /// </summary>

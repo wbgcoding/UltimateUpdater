@@ -190,8 +190,8 @@ de.UninstallBusyDeclined=Die Deinstallation wurde angehalten, weil {#AppName} ge
 de.ElevatedCopyOpen={#AppName} läuft noch und hat sich nicht beendet, möglicherweise mit Administratorrechten. Bitte schließen Sie es und versuchen Sie es dann erneut.
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "autostart"; Description: "{cm:AutostartTask}"
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "autostart"; Description: "{cm:AutostartTask}"; Flags: unchecked
 
 [Files]
 ; The published single-file exe for the architecture being installed, taken from the build stage.
