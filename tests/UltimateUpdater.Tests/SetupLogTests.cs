@@ -18,6 +18,54 @@ public class SetupLogTests
         Assert.Contains("/SILENT", info.Arguments);
     }
 
+    /// <summary>The elevated Setup would create its log as administrator in a folder the user owns.</summary>
+    [Fact]
+    public void An_all_users_setup_gets_no_log_switch_even_when_a_path_is_given()
+    {
+        var path = SetupLog.PathFor(Logs, new DateTime(2026, 3, 4, 5, 6, 7));
+
+        var info = SelfUpdateService.BuildSetupStartInfo(@"C:\Temp\setup.exe", machineScope: true, path);
+
+        Assert.DoesNotContain("/LOG", info.Arguments);
+        Assert.Equal("runas", info.Verb);
+        Assert.Contains("/SILENT", info.Arguments);
+    }
+
+    [Fact]
+    public void An_all_users_setup_prepares_no_log_folder()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "uu-setuplog-" + Guid.NewGuid().ToString("N"));
+        var service = NewService(root);
+
+        Assert.Null(service.PrepareSetupLog(machineScope: true));
+        Assert.False(Directory.Exists(root));
+    }
+
+    /// <summary>Setup exits with code 1 and writes nothing when the folder of its log does not exist.</summary>
+    [Fact]
+    public void A_per_user_setup_gets_its_log_folder_made_before_it_starts()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "uu-setuplog-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var path = NewService(root).PrepareSetupLog(machineScope: false);
+
+            Assert.NotNull(path);
+            Assert.True(Directory.Exists(Path.GetDirectoryName(path)), "the log folder does not exist");
+            Assert.StartsWith(SetupLog.FolderFor(root), path, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("/LOG=", SelfUpdateService.BuildSetupStartInfo(@"C:\Temp\setup.exe", false, path).Arguments);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static SelfUpdateService NewService(string logsDirectory) =>
+        new(new System.Net.Http.HttpClient(), new LoggingService(_ => { }), new PublicUpdateChannel(new LoggingService(_ => { })),
+            setupLogsDirectory: logsDirectory);
+
     [Fact]
     public void Without_a_log_path_the_setup_arguments_carry_no_log_switch()
     {

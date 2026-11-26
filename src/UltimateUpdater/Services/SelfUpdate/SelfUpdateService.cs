@@ -527,8 +527,11 @@ public sealed partial class SelfUpdateService
         // only run that may close a busy app without asking.
         info.Arguments = "/SILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS /RELAUNCH=1 /FROMAPP";
         // /LOG: a silent update that fails would otherwise leave no trace at all. The path is built here, never
-        // taken from outside, and a path that cannot be quoted safely just means no log.
-        if (SetupLog.Argument(setupLogPath) is { } logArgument)
+        // taken from outside, and a path that cannot be quoted safely just means no log. Not for the elevated
+        // Setup: it would create and overwrite that file as administrator inside a folder this user owns, where
+        // a junction put in its place could redirect the write. It logs to its own default (SetupLogging=yes)
+        // in the temp folder of the elevated context.
+        if (!machineScope && SetupLog.Argument(setupLogPath) is { } logArgument)
             info.Arguments += " " + logArgument;
         // The elevated Setup runs from a staging folder under %TEMP%, which any process of this user can write
         // to. That is acceptable because the folder is fresh, randomly named and holds only the pinned,
@@ -539,10 +542,15 @@ public sealed partial class SelfUpdateService
             info.Verb = "runas";
     }
 
-    /// <summary>Makes room for this Setup's install log and returns its path; null when logging is off or the
-    /// folder cannot be made, which never stops the update.</summary>
-    private string? PrepareSetupLog()
+    /// <summary>Makes room for this Setup's install log and returns its path; null when logging is off, the
+    /// Setup runs elevated (<paramref name="machineScope"/>: it logs to its own default) or the folder cannot be
+    /// made, which never stops the update. The folder must exist before Setup starts: Setup exits with an error
+    /// and no log when the folder of <c>/LOG</c> is missing.</summary>
+    internal string? PrepareSetupLog(bool machineScope)
     {
+        if (machineScope)
+            return null;
+
         try
         {
             var logs = _setupLogsDirectory();
@@ -598,7 +606,7 @@ public sealed partial class SelfUpdateService
                 try
                 {
                     var setupInfo = new ProcessStartInfo { UseShellExecute = true };
-                    ConfigureSetupStartInfo(setupInfo, verifiedPath, machineScope, PrepareSetupLog());
+                    ConfigureSetupStartInfo(setupInfo, verifiedPath, machineScope, PrepareSetupLog(machineScope));
                     _startSetup(setupInfo)?.Dispose();
                 }
                 catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == ErrorCancelled)
