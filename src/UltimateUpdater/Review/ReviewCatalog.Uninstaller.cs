@@ -116,7 +116,8 @@ internal static partial class ReviewCatalog
         Add(list, "uninstaller.nomatch", UninstallerArea, "Uninstaller after a search that matches nothing", s =>
         {
             var viewModel = s.NewUninstallerViewModel(UninstallerInventory(), expandAll: true);
-            viewModel.SearchText = "no such program";
+            const string noMatchQuery = "no such program";
+            viewModel.SearchText = noMatchQuery;
             return Task.FromResult(new ReviewScene { Window = new UninstallerWindow(viewModel) });
         });
 
