@@ -25,21 +25,6 @@ public class CleanupVerifiedDeleteTests : IDisposable
         try { Directory.Delete(_outside, recursive: true); } catch (IOException) { }
     }
 
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
-    }
-
     private CleanupTarget TargetFor(string directory) =>
         new("test-target", "x", "y", CleanupKind.Directories, DefaultEnabled: true,
             RiskLevel: CleanupRiskLevel.Safe, ConsequenceKey: "x")
@@ -60,19 +45,7 @@ public class CleanupVerifiedDeleteTests : IDisposable
         var original = Path.Combine(_outside, "original.dat");
         File.WriteAllBytes(original, new byte[4096]);
         var link = Path.Combine(_root, "link.tmp");
-        using (var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /H \"{link}\" \"{original}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!)
-        {
-            Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-            Assert.Equal(0, mklink.ExitCode);
-        }
+        TestLinks.CreateHardLink(link, original);
 
         var outcome = await Clean(_root);
 
@@ -99,7 +72,7 @@ public class CleanupVerifiedDeleteTests : IDisposable
                 return;
 
             Directory.Delete(b, recursive: true);
-            CreateJunction(b, _outside);
+            TestLinks.CreateJunction(b, _outside);
         };
 
         var outcome = await Clean(_root);
@@ -124,7 +97,7 @@ public class CleanupVerifiedDeleteTests : IDisposable
                 return;
 
             Directory.Delete(path, recursive: true);
-            CreateJunction(path, _outside);
+            TestLinks.CreateJunction(path, _outside);
         };
 
         try
@@ -182,7 +155,7 @@ public class CleanupVerifiedDeleteTests : IDisposable
                 return;
 
             Directory.Delete(sub);
-            CreateJunction(sub, Path.Combine(_outside, "emptyfolder"));
+            TestLinks.CreateJunction(sub, Path.Combine(_outside, "emptyfolder"));
         };
 
         await Clean(_root);

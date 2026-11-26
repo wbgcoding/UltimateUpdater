@@ -108,18 +108,7 @@ public class CleanupWorkerBackupFolderTests : IDisposable
         var real = Path.Combine(_root, "real");
         Directory.CreateDirectory(real);
         var link = Path.Combine(_root, "link");
-        using (var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{real}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-        })!)
-        {
-            Assert.True(mklink.WaitForExit(60_000));
-            Assert.Equal(0, mklink.ExitCode);
-        }
+        TestLinks.CreateJunction(link, real);
 
         var fallback = Path.Combine(_root, "default");
 

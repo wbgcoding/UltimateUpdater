@@ -272,7 +272,7 @@ public class ElevatedPathTrustTests
     {
         var parent = Directory.CreateTempSubdirectory("wu-junction-").FullName;
         var link = Path.Combine(parent, "sys");
-        CreateJunction(link, Environment.GetFolderPath(Environment.SpecialFolder.System));
+        TestLinks.CreateJunction(link, Environment.GetFolderPath(Environment.SpecialFolder.System));
 
         try
         {
@@ -319,7 +319,7 @@ public class ElevatedPathTrustTests
     {
         var parent = Directory.CreateTempSubdirectory("wu-junction-dir-").FullName;
         var link = Path.Combine(parent, "sys");
-        CreateJunction(link, Environment.GetFolderPath(Environment.SpecialFolder.System));
+        TestLinks.CreateJunction(link, Environment.GetFolderPath(Environment.SpecialFolder.System));
 
         try
         {
@@ -429,20 +429,5 @@ public class ElevatedPathTrustTests
         {
             return null;
         }
-    }
-
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-        })!;
-        mklink.StandardOutput.ReadToEnd();
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
     }
 }

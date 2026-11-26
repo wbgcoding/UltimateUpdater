@@ -116,7 +116,7 @@ public class CleanupCallerTempTests : IDisposable
         var callerTemp = ProfileTemp("signedin");
         ProfileTemp("someoneelse");
         var link = Path.Combine(_usersRoot, "linked-temp");
-        CreateJunction(link, callerTemp);
+        TestLinks.CreateJunction(link, callerTemp);
 
         var directories = AllUsersTemp(new CleanupCommand { CallerTempPaths = [link] }, null, _usersRoot);
 
@@ -131,7 +131,7 @@ public class CleanupCallerTempTests : IDisposable
         Directory.CreateDirectory(elsewhere);
         var linkedLocal = Path.Combine(_usersRoot, "linked", "AppData", "Local");
         Directory.CreateDirectory(linkedLocal);
-        CreateJunction(Path.Combine(linkedLocal, "Temp"), elsewhere);
+        TestLinks.CreateJunction(Path.Combine(linkedLocal, "Temp"), elsewhere);
 
         var directories = AllUsersTemp(new CleanupCommand(), null, _usersRoot);
 
@@ -156,21 +156,6 @@ public class CleanupCallerTempTests : IDisposable
         Directory.CreateDirectory(profile);
 
         Assert.Equal(profile, PythonCleanupDiscovery.ResolveProfile(profile));
-    }
-
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
     }
 
     [Fact]

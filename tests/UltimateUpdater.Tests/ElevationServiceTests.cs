@@ -101,19 +101,7 @@ public class ElevationServiceTests
 
         try
         {
-            using (var mklink = Process.Start(new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = $"/c mklink /J \"{link}\" \"{real}\"",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-            })!)
-            {
-                Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-                Assert.Equal(0, mklink.ExitCode);
-            }
+            TestLinks.CreateJunction(link, real);
 
             ElevationService.ResetElevationRefusalForTests();
 

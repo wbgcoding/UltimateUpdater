@@ -158,17 +158,7 @@ public class LeftoverAgeWalkTests : IDisposable
         Directory.CreateDirectory(real);
         File.WriteAllBytes(Path.Combine(real, "a.bin"), new byte[10]);
         var link = Path.Combine(_root, "link");
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{real}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
+        TestLinks.CreateJunction(link, real);
 
         Assert.Equal(10, DirectorySizeWalker.Measure(real, 3, 100));
         Assert.Equal(0, DirectorySizeWalker.Measure(link, 3, 100));

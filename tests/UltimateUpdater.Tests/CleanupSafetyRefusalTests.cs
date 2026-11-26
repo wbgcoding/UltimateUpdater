@@ -157,7 +157,7 @@ public sealed class CleanupSafetyRefusalTests : IDisposable
         var real = Path.Combine(_dir, "real");
         Directory.CreateDirectory(Path.Combine(real, "root", "a", "b"));
         var viaLink = Path.Combine(_dir, "via-link");
-        MakeJunction(viaLink, real);
+        TestLinks.CreateJunction(viaLink, real);
         var root = Path.Combine(viaLink, "root");
         var deep = Path.Combine(root, "a", "b");
 
@@ -168,7 +168,7 @@ public sealed class CleanupSafetyRefusalTests : IDisposable
             Assert.True(CleanupSafety.AncestryLeadsThroughLink(deep));
             Assert.False(CleanupSafety.AncestryBelowLeadsThroughLink(deep, root));
 
-            MakeJunction(inner, real);
+            TestLinks.CreateJunction(inner, real);
             Assert.True(CleanupSafety.AncestryBelowLeadsThroughLink(Path.Combine(root, "a", "jump"), root));
             Assert.True(CleanupSafety.AncestryBelowLeadsThroughLink(Path.Combine(root, "a", "jump", "x"), root));
 
@@ -183,21 +183,6 @@ public sealed class CleanupSafetyRefusalTests : IDisposable
                     Directory.Delete(link);
             }
         }
-    }
-
-    private static void MakeJunction(string link, string target)
-    {
-        using var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
     }
 
     // ---- IsSafeToDeleteFile
@@ -309,8 +294,7 @@ public sealed class CleanupSafetyRefusalTests : IDisposable
         var target = Path.Combine(_dir, "target");
         Directory.CreateDirectory(target);
         var link = Path.Combine(_dir, "link");
-        if (!TryMakeJunction(link, target))
-            return; // junction creation unavailable on this machine: nothing to prove here
+        TestLinks.CreateJunction(link, target);
 
         try
         {
@@ -324,25 +308,4 @@ public sealed class CleanupSafetyRefusalTests : IDisposable
         }
     }
 
-    private static bool TryMakeJunction(string link, string target)
-    {
-        try
-        {
-            using var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = Path.Combine(Environment.SystemDirectory, "cmd.exe"),
-                Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-            });
-            process!.WaitForExit(15_000);
-            return Directory.Exists(link);
-        }
-        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or InvalidOperationException)
-        {
-            return false;
-        }
-    }
 }

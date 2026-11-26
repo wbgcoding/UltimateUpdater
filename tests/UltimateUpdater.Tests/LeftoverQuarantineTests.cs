@@ -141,7 +141,7 @@ public sealed class LeftoverQuarantineTests
         using var tree = new LeftoverTree();
         var real = tree.Folder("Elsewhere", "Contoso Notes");
         var link = Path.Combine(tree.AppData, "Linked");
-        LeftoverTestLinks.CreateJunction(link, Path.GetDirectoryName(real)!);
+        TestLinks.CreateJunction(link, Path.GetDirectoryName(real)!);
         try
         {
             using var session = QuarantineSession.OpenUser("Contoso Notes", new LoggingService(), QuarantineStore.UserRoot(tree.LocalAppData));
@@ -164,7 +164,7 @@ public sealed class LeftoverQuarantineTests
         var elsewhere = Path.Combine(tree.Root, "Elsewhere");
         Directory.CreateDirectory(elsewhere);
         var link = Path.Combine(tree.LocalAppData, "LinkedQuarantine");
-        LeftoverTestLinks.CreateJunction(link, elsewhere);
+        TestLinks.CreateJunction(link, elsewhere);
         try
         {
             Assert.Null(QuarantineSession.OpenUser("Contoso Notes", new LoggingService(), link));
@@ -325,9 +325,9 @@ public sealed class LeftoverQuarantineTests
         var outside = tree.Folder("Elsewhere", "precious");
         var now = new DateTime(2026, 11, 22, 12, 0, 0);
         var inner = Path.Combine(root, "2026-01-01_000000");
-        LeftoverTestLinks.CreateJunction(inner, outside);
+        TestLinks.CreateJunction(inner, outside);
         var linkedRoot = Path.Combine(tree.Root, "LinkedRoot");
-        LeftoverTestLinks.CreateJunction(linkedRoot, root);
+        TestLinks.CreateJunction(linkedRoot, root);
         try
         {
             QuarantineStore.Prune(root, now, new LoggingService());
@@ -352,7 +352,7 @@ public sealed class LeftoverQuarantineTests
         File.WriteAllText(Path.Combine(expired, "sub", "deeper", "a.txt"), "a");
         File.WriteAllText(Path.Combine(expired, "b.txt"), "b");
         File.SetAttributes(Path.Combine(expired, "b.txt"), FileAttributes.ReadOnly);
-        LeftoverTestLinks.CreateJunction(Path.Combine(expired, "link"), outside);
+        TestLinks.CreateJunction(Path.Combine(expired, "link"), outside);
 
         Assert.True(QuarantineTreeDelete.Delete(expired, new LoggingService()));
 
@@ -376,7 +376,7 @@ public sealed class LeftoverQuarantineTests
                 return;
 
             Directory.Delete(sub, recursive: true);
-            LeftoverTestLinks.CreateJunction(sub, outside);
+            TestLinks.CreateJunction(sub, outside);
         };
         try
         {
@@ -408,7 +408,7 @@ public sealed class LeftoverQuarantineTests
                 return;
 
             File.Delete(file);
-            LeftoverTestLinks.CreateJunction(file, outside);
+            TestLinks.CreateJunction(file, outside);
         };
         try
         {
@@ -430,7 +430,7 @@ public sealed class LeftoverQuarantineTests
         using var tree = new LeftoverTree();
         var outside = tree.Folder("Elsewhere", "precious");
         var link = Path.Combine(tree.Root, "2026-01-01_000000");
-        LeftoverTestLinks.CreateJunction(link, outside);
+        TestLinks.CreateJunction(link, outside);
         try
         {
             Assert.False(QuarantineTreeDelete.Delete(link, new LoggingService()));
@@ -490,9 +490,9 @@ public sealed class LeftoverQuarantineTests
         var target = Path.Combine(tree.Root, "Target", "2026-11-21_100000");
         Directory.CreateDirectory(target);
         var linkedFolder = Path.Combine(root, "2026-11-20_100000");
-        LeftoverTestLinks.CreateJunction(linkedFolder, target);
+        TestLinks.CreateJunction(linkedFolder, target);
         var linkedRoot = Path.Combine(tree.Root, "LinkedRoot");
-        LeftoverTestLinks.CreateJunction(linkedRoot, Path.GetDirectoryName(target)!);
+        TestLinks.CreateJunction(linkedRoot, Path.GetDirectoryName(target)!);
         try
         {
             Assert.Null(QuarantineStore.ResolveFolder(root, "2026-11-20_100000"));
@@ -664,7 +664,7 @@ public sealed class LeftoverQuarantineTests
         QuarantineMove.BeforeQuarantineMoveForTest.Value = _ =>
         {
             Directory.Move(roaming, moved);
-            LeftoverTestLinks.CreateJunction(roaming, decoy);
+            TestLinks.CreateJunction(roaming, decoy);
         };
         try
         {
@@ -694,7 +694,7 @@ public sealed class LeftoverQuarantineTests
         QuarantineMove.BeforeQuarantineMoveForTest.Value = _ =>
         {
             Directory.Delete(items);
-            LeftoverTestLinks.CreateJunction(items, outside);
+            TestLinks.CreateJunction(items, outside);
         };
         try
         {
@@ -727,7 +727,7 @@ public sealed class LeftoverQuarantineTests
         QuarantineMove.BeforeQuarantineMoveForTest.Value = _ =>
         {
             Directory.Move(items, moved);
-            LeftoverTestLinks.CreateJunction(items, decoy);
+            TestLinks.CreateJunction(items, decoy);
         };
         try
         {
@@ -759,7 +759,7 @@ public sealed class LeftoverQuarantineTests
         QuarantineMove.BeforeQuarantineMoveForTest.Value = _ =>
         {
             Directory.Move(roaming, roaming + ".moved");
-            LeftoverTestLinks.CreateJunction(roaming, outside);
+            TestLinks.CreateJunction(roaming, outside);
         };
         try
         {
@@ -985,7 +985,7 @@ public sealed class MachineQuarantineTests : IDisposable
         var elsewhere = Path.Combine(_tree.Root, "Elsewhere");
         Directory.CreateDirectory(elsewhere);
         var link = Path.Combine(_tree.ProgramData, "UltimateUpdater");
-        LeftoverTestLinks.CreateJunction(link, elsewhere);
+        TestLinks.CreateJunction(link, elsewhere);
         try
         {
             using var session = QuarantineSession.OpenMachine("Contoso Notes", new LoggingService());
@@ -1114,7 +1114,7 @@ public sealed class MachineQuarantineTests : IDisposable
         var root = QuarantineStore.MachineRoot();
         Directory.CreateDirectory(root);
         var link = Path.Combine(root, "2026-11-20_100000");
-        LeftoverTestLinks.CreateJunction(link, outside);
+        TestLinks.CreateJunction(link, outside);
         try
         {
             var lines = await RunAsync(link, _tree.Roots);
@@ -1142,7 +1142,7 @@ public sealed class MachineQuarantineTests : IDisposable
         var realRoot = Path.Combine(_tree.Root, "RealRoot");
         MakeQuarantine(realRoot, "2026-11-21_100000", original);
         var link = Path.Combine(_tree.ProgramData, "UltimateUpdater");
-        LeftoverTestLinks.CreateJunction(link, realRoot);
+        TestLinks.CreateJunction(link, realRoot);
         try
         {
             // ProgramData\UltimateUpdater\Quarantine now resolves through the junction to RealRoot\Quarantine.

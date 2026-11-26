@@ -27,28 +27,13 @@ public class DirectorySizeWalkerTests : IDisposable
         File.WriteAllBytes(path, new byte[bytes]);
     }
 
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
-    }
-
     [Fact]
     public void A_junction_back_to_the_parent_returns_the_plain_total_and_terminates()
     {
         WriteFile(Path.Combine(_root, "a.bin"), 10);
         WriteFile(Path.Combine(_root, "sub", "b.bin"), 5);
-        CreateJunction(Path.Combine(_root, "loop"), _root);
-        CreateJunction(Path.Combine(_root, "sub", "loop2"), _root);
+        TestLinks.CreateJunction(Path.Combine(_root, "loop"), _root);
+        TestLinks.CreateJunction(Path.Combine(_root, "sub", "loop2"), _root);
 
         var total = DirectorySizeWalker.Measure(_root, DirectorySizeWalker.DefaultMaxDepth, 20000);
 

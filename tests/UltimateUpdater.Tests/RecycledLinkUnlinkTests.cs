@@ -13,21 +13,6 @@ public class RecycledLinkUnlinkTests : IDisposable
 
     public void Dispose() => Directory.Delete(_root, recursive: true);
 
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
-    }
-
     private string MakeTarget()
     {
         var target = Path.Combine(_root, "target");
@@ -52,7 +37,7 @@ public class RecycledLinkUnlinkTests : IDisposable
         var recycled = Path.Combine(_root, "recycled");
         Directory.CreateDirectory(Path.Combine(recycled, "sub"));
         File.WriteAllText(Path.Combine(recycled, "sub", "own.txt"), "x");
-        CreateJunction(Path.Combine(recycled, "sub", "link"), target);
+        TestLinks.CreateJunction(Path.Combine(recycled, "sub", "link"), target);
 
         CleanupService.UnlinkReparsePoints(recycled);
 
@@ -70,7 +55,7 @@ public class RecycledLinkUnlinkTests : IDisposable
     {
         var target = MakeTarget();
         var link = Path.Combine(_root, "recycled-link");
-        CreateJunction(link, target);
+        TestLinks.CreateJunction(link, target);
 
         CleanupService.UnlinkReparsePoints(link);
 

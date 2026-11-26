@@ -66,19 +66,7 @@ public class PipLeftoverCleanupTests : IDisposable
         var precious = WriteFile(Path.Combine(outside, "precious.txt"), 10);
         var leftover = Path.Combine(_root, "~ip");
         WriteFile(Path.Combine(leftover, "a.py"), 100);
-        using (var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{Path.Combine(leftover, "link")}\" \"{outside}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!)
-        {
-            Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-            Assert.Equal(0, mklink.ExitCode);
-        }
+        TestLinks.CreateJunction(Path.Combine(leftover, "link"), outside);
 
         new CleanupService(new LoggingService()).DeletePipLeftoverTree(leftover);
 

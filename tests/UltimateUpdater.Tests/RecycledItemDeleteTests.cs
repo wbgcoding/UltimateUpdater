@@ -36,21 +36,6 @@ public class RecycledItemDeleteTests : IDisposable
 
     private bool Delete(string path) => _service.DeleteRecycledItem(EntryFor(path), Sid, AcceptAll);
 
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
-    }
-
     private string MakeOutside()
     {
         var outside = Path.Combine(_root, "outside");
@@ -100,7 +85,7 @@ public class RecycledItemDeleteTests : IDisposable
         var outside = MakeOutside();
         var content = Path.Combine(BinFolder, "$R3");
         Directory.CreateDirectory(content);
-        CreateJunction(Path.Combine(content, "link"), outside);
+        TestLinks.CreateJunction(Path.Combine(content, "link"), outside);
 
         Assert.True(Delete(content));
 
@@ -123,7 +108,7 @@ public class RecycledItemDeleteTests : IDisposable
                 return;
 
             Directory.Delete(path, recursive: true);
-            CreateJunction(path, outside);
+            TestLinks.CreateJunction(path, outside);
         };
 
         Assert.False(Delete(content));
@@ -146,7 +131,7 @@ public class RecycledItemDeleteTests : IDisposable
                 return;
 
             Directory.Delete(path, recursive: true);
-            CreateJunction(path, Path.Combine(outside, "$R2"));
+            TestLinks.CreateJunction(path, Path.Combine(outside, "$R2"));
         };
 
         Assert.False(Delete(content));
@@ -239,7 +224,7 @@ public class RecycledItemDeleteTests : IDisposable
         Directory.CreateDirectory(gone);
         var content = Path.Combine(BinFolder, "$R8");
         Directory.CreateDirectory(BinFolder);
-        CreateJunction(content, gone);
+        TestLinks.CreateJunction(content, gone);
         Directory.Delete(gone);
 
         Assert.True(Delete(content));
@@ -256,7 +241,7 @@ public class RecycledItemDeleteTests : IDisposable
         var outside = MakeOutside();
         var content = Path.Combine(BinFolder, "$R6");
         Directory.CreateDirectory(BinFolder);
-        CreateJunction(content, outside);
+        TestLinks.CreateJunction(content, outside);
 
         Delete(content);
 

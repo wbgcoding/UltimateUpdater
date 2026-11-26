@@ -70,7 +70,7 @@ public sealed class LeftoverTargetSafetyTests
         using var tree = new LeftoverTree();
         var target = tree.Folder("Elsewhere", "Contoso Notes");
         var link = Path.Combine(tree.AppData, "Linked");
-        LeftoverTestLinks.CreateJunction(link, target);
+        TestLinks.CreateJunction(link, target);
         try
         {
             Assert.False(LeftoverTargetSafety.IsSafeFolder(link, tree.Roots, out _));
@@ -288,6 +288,7 @@ public sealed class LeftoverRemoverTests
         Assert.Empty(recorder.Recycled);
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public void A_real_current_user_key_is_removed_with_its_subkeys_and_the_publisher_key_stays()
     {
@@ -314,6 +315,7 @@ public sealed class LeftoverRemoverTests
         }
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public void A_key_path_that_fails_the_safety_check_is_not_deleted_at_all()
     {

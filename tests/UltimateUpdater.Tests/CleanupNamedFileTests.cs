@@ -38,21 +38,6 @@ public class CleanupNamedFileTests : IDisposable
         return path;
     }
 
-    private static void RunCmd(string arguments)
-    {
-        using var process = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = "/c " + arguments,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(process.WaitForExit(60_000), "cmd did not finish");
-        Assert.Equal(0, process.ExitCode);
-    }
-
     [Fact]
     public async Task An_old_dump_file_is_counted_and_deleted()
     {
@@ -94,7 +79,7 @@ public class CleanupNamedFileTests : IDisposable
         File.SetCreationTimeUtc(inner, DateTime.UtcNow.AddDays(-3));
         File.SetLastWriteTimeUtc(inner, DateTime.UtcNow.AddDays(-3));
         var link = Path.Combine(_root, "MEMORY.DMP");
-        RunCmd($"mklink /J \"{link}\" \"{elsewhere}\"");
+        TestLinks.CreateJunction(link, elsewhere);
         var target = FileTarget(CleanupCatalog.CacheMinFileAge, link);
 
         var scan = await _service.ScanAsync(target, CancellationToken.None);

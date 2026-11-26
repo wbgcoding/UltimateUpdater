@@ -475,7 +475,7 @@ public class CleanupDeveloperCacheTests : IDisposable
         var realBin = Folder(_root, "realbin");
         File.WriteAllText(Path.Combine(realBin, "uv.exe"), "stub");
         Folder(_profile, ".local");
-        RunCmd($"mklink /J \"{Path.Combine(_profile, ".local", "bin")}\" \"{realBin}\"");
+        TestLinks.CreateJunction(Path.Combine(_profile, ".local", "bin"), realBin);
         var tool = new FakeTool();
 
         await ServiceWith(tool, resolved: null).CleanAsync(UvTarget(uv), progress: null, CancellationToken.None);
@@ -609,18 +609,4 @@ public class CleanupDeveloperCacheTests : IDisposable
         Assert.Contains(inner, result.ExcludedDirectories, StringComparer.OrdinalIgnoreCase);
     }
 
-    private static void RunCmd(string arguments)
-    {
-        using var process = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = "/c " + arguments,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(process.WaitForExit(60_000), "cmd did not finish");
-        Assert.Equal(0, process.ExitCode);
-    }
 }

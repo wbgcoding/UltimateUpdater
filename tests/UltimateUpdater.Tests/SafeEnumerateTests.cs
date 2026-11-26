@@ -41,17 +41,7 @@ public class SafeEnumerateTests : IDisposable
     public void A_junction_is_never_listed_as_a_directory()
     {
         Directory.CreateDirectory(Path.Combine(_root, "real"));
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{Path.Combine(_root, "link")}\" \"{Path.Combine(_root, "real")}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
+        TestLinks.CreateJunction(Path.Combine(_root, "link"), Path.Combine(_root, "real"));
 
         Assert.Equal([Path.Combine(_root, "real")], SafeEnumerate.Directories(_root));
     }
