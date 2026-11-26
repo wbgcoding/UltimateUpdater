@@ -85,6 +85,29 @@ public class InstallerScriptTests
     /// The elevated PowerShell inherits Setup's environment. A command planted in a user PATH folder or a
     /// .NET profiler variable would run as admin, so Setup resets both before every PowerShell call.
     /// </summary>
+    /// <summary>
+    /// A caption set from code with a raw setup message shows the [name] placeholder as typed in every language
+    /// (the wizard expands it only for its own pages). Code that copies a message goes through the expanding
+    /// helper.
+    /// </summary>
+    [Fact]
+    public void No_caption_is_set_from_a_raw_setup_message()
+    {
+        var script = Script();
+
+        Assert.DoesNotMatch(@"(Caption|Text|Hint)\s*:=\s*SetupMessage\(", script);
+        Assert.Contains("SelectDirLabel.Caption := ExpandedSetupMessage(msgSelectDirDesc);", script);
+
+        var helper = Regex.Match(script, @"function ExpandedSetupMessage.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(helper.Success, "ExpandedSetupMessage is gone");
+        Assert.Contains("StringChangeEx(Result, '[name]',", helper.Value);
+        Assert.Contains("StringChangeEx(Result, '[name/ver]',", helper.Value);
+
+        // Every other use of SetupMessage is inside the helper itself.
+        var rest = script.Replace(helper.Value, "");
+        Assert.DoesNotMatch(@"(?<!Expanded)SetupMessage\(", rest);
+    }
+
     [Fact]
     public void Elevated_PowerShell_starts_with_a_Windows_only_environment()
     {
@@ -100,6 +123,7 @@ public class InstallerScriptTests
         Assert.Contains("SetEnvironmentVariable('PSModulePath', Sys + '\\WindowsPowerShell\\v1.0\\Modules');", prepare.Value);
         Assert.Contains("ClearCodeLoadingVariablesFrom('Environment');", prepare.Value);
         Assert.Contains("ClearCodeLoadingVariablesFrom('Volatile Environment');", prepare.Value);
+        Assert.Contains("ClearCodeLoadingVariablesFromSubkeys('Volatile Environment');", prepare.Value);
         foreach (var name in new[] { "COR_ENABLE_PROFILING", "COR_PROFILER", "COR_PROFILER_PATH" })
             Assert.Contains($"ClearEnvironmentVariable('{name}', 0);", prepare.Value);
 
@@ -123,7 +147,6 @@ public class InstallerScriptTests
     public void A_silent_upgrade_keeps_the_apps_own_autostart_setting()
     {
         var script = Script();
-        Assert.Contains("ClearCodeLoadingVariablesFromSubkeys('Volatile Environment');", prepare.Value);
 
         var init = Regex.Match(script, @"function InitializeSetup.*?\r?\nend;", RegexOptions.Singleline);
         Assert.True(init.Success, "InitializeSetup is gone");

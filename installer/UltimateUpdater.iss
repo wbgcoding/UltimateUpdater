@@ -264,7 +264,7 @@ Filename: "{win}\explorer.exe"; Parameters: """{code:GetAppExePath}"""; Flags: n
 ; Creates nothing: the app writes the value itself (see [Run]). This entry exists only so uninstalling
 ; takes it away again. [UninstallRun] cannot do the same job: it has no runasoriginaluser flag, so it
 ; would look at the elevating account's hive rather than the user's. Uninstalling from the same account
-; that installed: the ordinary case, therefore removes the value cleanly; an uninstall approved with a
+; that installed (the ordinary case) therefore removes the value cleanly; an uninstall approved with a
 ; different administrator account may leave it, and the app's own autostart switch clears it.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; \
     ValueName: "UltimateUpdater"; Flags: uninsdeletevalue; Check: not IsPortableMode
@@ -648,6 +648,15 @@ end;
   suggests the folder an existing installation already uses, and Program Files only when there is
   none. Rewritten only when the mode changed, so going Back and Next again never throws away a folder
   the user browsed to or typed. }
+{ A Setup message as caption text. The wizard's own pages expand the [name] and [name/ver] placeholders of a
+  message themselves; a caption set from SetupMessage in code does not, and would show them as typed. }
+function ExpandedSetupMessage(const Id: TSetupMessageID): String;
+begin
+  Result := SetupMessage(Id);
+  StringChangeEx(Result, '[name/ver]', '{#AppName} {#AppVersion}', True);
+  StringChangeEx(Result, '[name]', '{#AppName}', True);
+end;
+
 procedure CurPageChanged(CurPageID: Integer);
 var
   Mode: Integer;
@@ -703,7 +712,7 @@ begin
     end
     else
     begin
-      WizardForm.SelectDirLabel.Caption := SetupMessage(msgSelectDirDesc);
+      WizardForm.SelectDirLabel.Caption := ExpandedSetupMessage(msgSelectDirDesc);
       WizardForm.DirEdit.Text := ExpandConstant('{autopf}\{#AppName}');
     end;
   end;
@@ -775,15 +784,6 @@ begin
         ClearEnvironmentVariable(Names[I], 0);
 end;
 
-{ PowerShell runs elevated here but starts with the user's environment, which any program of that user can
-  change: a command planted in a PATH folder wins over the Windows cmdlets, a module in the Documents folder
-  shadows CimCmdlets, and the .NET profiler variables load a DLL before the script starts. Setup's own
-  environment is therefore reduced to Windows folders before every PowerShell call, and the script pins its
-  module path once more. }
-procedure PrepareElevatedPowerShell;
-var
-  Sys: String;
-begin
 { The per-session subkeys below the key (HKCU\Volatile Environment\<SessionId>): Windows loads their values into
   a new process's environment as well, and the user can write them like the key itself. }
 procedure ClearCodeLoadingVariablesFromSubkeys(const Key: String);
@@ -796,6 +796,15 @@ begin
       ClearCodeLoadingVariablesFrom(Key + '\' + Subkeys[I]);
 end;
 
+{ PowerShell runs elevated here but starts with the user's environment, which any program of that user can
+  change: a command planted in a PATH folder wins over the Windows cmdlets, a module in the Documents folder
+  shadows CimCmdlets, and the .NET profiler variables load a DLL before the script starts. Setup's own
+  environment is therefore reduced to Windows folders before every PowerShell call, and the script pins its
+  module path once more. }
+procedure PrepareElevatedPowerShell;
+var
+  Sys: String;
+begin
   Sys := ExpandConstant('{sys}');
   SetEnvironmentVariable('Path', Sys + ';' + Sys + '\Wbem;' + Sys + '\WindowsPowerShell\v1.0');
   SetEnvironmentVariable('PSModulePath', Sys + '\WindowsPowerShell\v1.0\Modules');
@@ -807,6 +816,7 @@ end;
   SetEnvironmentVariable('PATHEXT', '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC');
   ClearCodeLoadingVariablesFrom('Environment');
   ClearCodeLoadingVariablesFrom('Volatile Environment');
+  ClearCodeLoadingVariablesFromSubkeys('Volatile Environment');
   ClearEnvironmentVariable('COR_ENABLE_PROFILING', 0);
   ClearEnvironmentVariable('COR_PROFILER', 0);
   ClearEnvironmentVariable('COR_PROFILER_PATH', 0);
@@ -816,7 +826,6 @@ end;
   ClearEnvironmentVariable('COMPlus_Version', 0);
 end;
 
-  ClearCodeLoadingVariablesFromSubkeys('Volatile Environment');
 function PowerShellArgs(const Script: String): String;
 begin
   PrepareElevatedPowerShell;
