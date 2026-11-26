@@ -272,7 +272,9 @@ public static class ElevationService
 
         // Scrubbing this process is not enough: the runas child gets a fresh block built from the machine key
         // plus the user's own HKCU\Environment, which the unelevated user can write. A planted profiler or
-        // startup hook there would load into the administrator process before the worker can refuse it.
+        // startup hook there would load into the administrator process before the worker can refuse it. The
+        // block is built only after the consent prompt, so this look cannot see a value written while the
+        // prompt is open (accepted residual, see INVARIANTS); the worker's own check then refuses with exit code 6.
         var planted = NativeLoadEnvironment.FindSetInUserRegistry();
         if (planted.Count > 0)
         {

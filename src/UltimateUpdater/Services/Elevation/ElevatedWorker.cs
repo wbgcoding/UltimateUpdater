@@ -481,7 +481,9 @@ public static class ElevatedWorker
         if (loadVariables.Count > 0)
         {
             logging.Error(
-                $"The environment of this elevated worker sets runtime load variables ({string.Join(", ", loadVariables)}); refusing to run jobs.");
+                $"The environment of this elevated worker sets runtime load variables ({string.Join(", ", loadVariables)}); "
+                + "the runtime reads them before any code of the worker runs, so a profiler or hook they name may already be "
+                + "loaded in this process. The elevation is refused (exit code 6) and no job is run.");
             logging.Flush();
             return 6;
         }

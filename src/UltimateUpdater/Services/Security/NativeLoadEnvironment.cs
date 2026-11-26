@@ -44,7 +44,7 @@ internal static class NativeLoadEnvironment
     ];
 
     /// <summary>Keys below HKCU whose values Windows copies into the environment of a new process. Both are
-    /// writable by the unelevated user.</summary>
+    /// writable by the unelevated user, and so are the per-session subkeys of the volatile one.</summary>
     internal static readonly string[] UserEnvironmentKeys = ["Environment", "Volatile Environment"];
 
     /// <summary>Whole families that are debugging hooks of the runtime and never legitimate for the helper.</summary>
@@ -65,29 +65,38 @@ internal static class NativeLoadEnvironment
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-    /// <summary>Reads the user's registry environment (<see cref="UserEnvironmentKeys"/>) without expanding
-    /// anything; an unreadable key counts as empty because the helper checks its own block again.</summary>
-    internal static IReadOnlyList<string> FindSetInUserRegistry()
+    /// <summary>Reads the user's registry environment (<see cref="UserEnvironmentKeys"/> and every per-session
+    /// subkey of the volatile one, <c>Volatile Environment\&lt;SessionId&gt;</c>, which Windows loads into a new
+    /// process's block as well) without expanding anything; an unreadable key counts as empty because the
+    /// helper checks its own block again. <paramref name="root"/> replaces HKCU for a test.</summary>
+    internal static IReadOnlyList<string> FindSetInUserRegistry(Microsoft.Win32.RegistryKey? root = null)
     {
+        root ??= Microsoft.Win32.Registry.CurrentUser;
         var values = new List<KeyValuePair<string, string?>>();
         foreach (var keyName in UserEnvironmentKeys)
         {
             try
             {
-                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(keyName);
+                using var key = root.OpenSubKey(keyName);
                 if (key is null)
                     continue;
 
-                foreach (var name in key.GetValueNames())
+                ReadValues(key, values);
+                if (!keyName.StartsWith("Volatile", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                foreach (var sessionName in key.GetSubKeyNames())
                 {
-                    var value = key.GetValue(name, null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames);
-                    values.Add(new(name, value switch
+                    try
                     {
-                        string text => text,
-                        string[] lines => string.Join(' ', lines),
-                        null => null,
-                        _ => "<binary>",
-                    }));
+                        using var session = key.OpenSubKey(sessionName);
+                        if (session is not null)
+                            ReadValues(session, values);
+                    }
+                    catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+                    {
+                        // One unreadable session key must not hide the others.
+                    }
                 }
             }
             catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
@@ -97,6 +106,21 @@ internal static class NativeLoadEnvironment
         }
 
         return FindSetIn(values);
+    }
+
+    private static void ReadValues(Microsoft.Win32.RegistryKey key, List<KeyValuePair<string, string?>> values)
+    {
+        foreach (var name in key.GetValueNames())
+        {
+            var value = key.GetValue(name, null, Microsoft.Win32.RegistryValueOptions.DoNotExpandEnvironmentNames);
+            values.Add(new(name, value switch
+            {
+                string text => text,
+                string[] lines => string.Join(' ', lines),
+                null => null,
+                _ => "<binary>",
+            }));
+        }
     }
 
     /// <summary>The variables from <see cref="Names"/> that currently hold a non-empty value.</summary>

@@ -123,6 +123,7 @@ public class InstallerScriptTests
     public void A_silent_upgrade_keeps_the_apps_own_autostart_setting()
     {
         var script = Script();
+        Assert.Contains("ClearCodeLoadingVariablesFromSubkeys('Volatile Environment');", prepare.Value);
 
         var init = Regex.Match(script, @"function InitializeSetup.*?\r?\nend;", RegexOptions.Singleline);
         Assert.True(init.Success, "InitializeSetup is gone");

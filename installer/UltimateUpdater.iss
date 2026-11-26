@@ -784,6 +784,18 @@ procedure PrepareElevatedPowerShell;
 var
   Sys: String;
 begin
+{ The per-session subkeys below the key (HKCU\Volatile Environment\<SessionId>): Windows loads their values into
+  a new process's environment as well, and the user can write them like the key itself. }
+procedure ClearCodeLoadingVariablesFromSubkeys(const Key: String);
+var
+  Subkeys: TArrayOfString;
+  I: Integer;
+begin
+  if RegGetSubkeyNames(HKEY_CURRENT_USER, Key, Subkeys) then
+    for I := 0 to GetArrayLength(Subkeys) - 1 do
+      ClearCodeLoadingVariablesFrom(Key + '\' + Subkeys[I]);
+end;
+
   Sys := ExpandConstant('{sys}');
   SetEnvironmentVariable('Path', Sys + ';' + Sys + '\Wbem;' + Sys + '\WindowsPowerShell\v1.0');
   SetEnvironmentVariable('PSModulePath', Sys + '\WindowsPowerShell\v1.0\Modules');
@@ -804,6 +816,7 @@ begin
   ClearEnvironmentVariable('COMPlus_Version', 0);
 end;
 
+  ClearCodeLoadingVariablesFromSubkeys('Volatile Environment');
 function PowerShellArgs(const Script: String): String;
 begin
   PrepareElevatedPowerShell;

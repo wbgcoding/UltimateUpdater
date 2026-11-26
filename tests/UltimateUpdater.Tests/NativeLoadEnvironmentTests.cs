@@ -110,6 +110,71 @@ public class NativeLoadEnvironmentTests
         Assert.Equal(["Environment", "Volatile Environment"], NativeLoadEnvironment.UserEnvironmentKeys);
     }
 
+    /// <summary>Builds a scratch tree that stands in for HKCU and runs the registry check on it.</summary>
+    private static IReadOnlyList<string> CheckScratchRegistry(Action<Microsoft.Win32.RegistryKey> plant)
+    {
+        var relative = @"Software\WuNativeLoad" + Guid.NewGuid().ToString("N");
+        try
+        {
+            using (var scratch = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(relative))
+                plant(scratch);
+
+            using var root = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(relative)!;
+            return NativeLoadEnvironment.FindSetInUserRegistry(root);
+        }
+        finally
+        {
+            Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(relative, throwOnMissingSubKey: false);
+        }
+    }
+
+    [Fact]
+    public void A_clean_user_registry_environment_reports_nothing()
+    {
+        var found = CheckScratchRegistry(root =>
+        {
+            using var env = root.CreateSubKey("Environment");
+            env.SetValue("Path", @"C:\Tools");
+            using var session = root.CreateSubKey(@"Volatile Environment\1");
+            session.SetValue("SESSIONNAME", "Console");
+        });
+
+        Assert.Empty(found);
+    }
+
+    [Theory]
+    [InlineData("Environment")]
+    [InlineData("Volatile Environment")]
+    public void A_profiler_planted_in_a_user_environment_key_is_found(string keyName)
+    {
+        var found = CheckScratchRegistry(root =>
+        {
+            using var key = root.CreateSubKey(keyName);
+            key.SetValue("CORECLR_PROFILER_PATH", @"C:\planted\evil.dll");
+        });
+
+        Assert.Equal(["CORECLR_PROFILER_PATH"], found);
+    }
+
+    /// <summary>Windows also loads HKCU\Volatile Environment\&lt;SessionId&gt; into a new process's block, and
+    /// the user can write it, so a value planted there reaches the runas worker like any other.</summary>
+    [Theory]
+    [InlineData("CORECLR_ENABLE_PROFILING")]
+    [InlineData("DOTNET_STARTUP_HOOKS")]
+    [InlineData("COR_PROFILER_PATH")]
+    public void A_profiler_or_startup_hook_planted_in_a_session_subkey_is_found(string name)
+    {
+        var found = CheckScratchRegistry(root =>
+        {
+            using (var clean = root.CreateSubKey(@"Volatile Environment\1"))
+                clean.SetValue("SESSIONNAME", "Console");
+            using var session = root.CreateSubKey(@"Volatile Environment\2");
+            session.SetValue(name, "planted");
+        });
+
+        Assert.Equal([name], found);
+    }
+
     [Fact]
     public void The_registry_check_runs_before_the_elevated_start()
     {
@@ -121,6 +186,23 @@ public class NativeLoadEnvironmentTests
         var launch = source.IndexOf("Process.Start(startInfo)", start, StringComparison.Ordinal);
 
         Assert.True(start >= 0 && check > start && launch > check);
+    }
+
+    /// <summary>A value written while the consent prompt is open is only seen by the worker itself, after the
+    /// runtime may have loaded it; the worker's refusal then says so in the log the app merges.</summary>
+    [Fact]
+    public void The_worker_logs_the_cause_when_it_refuses_with_exit_code_6()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            RepoRoot(), "src", "UltimateUpdater", "Services", "Elevation", "ElevatedWorker.cs"));
+        var check = source.IndexOf("NativeLoadEnvironment.FindSet()", StringComparison.Ordinal);
+        var exit = source.IndexOf("return 6;", check, StringComparison.Ordinal);
+
+        Assert.True(check >= 0 && exit > check);
+        var block = source[check..exit];
+        Assert.Contains("may already be", block);
+        Assert.Contains("exit code 6", block);
+        Assert.Contains("logging.Flush();", block);
     }
 
     [Fact]
