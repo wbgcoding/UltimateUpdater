@@ -206,7 +206,12 @@ public class PseudoConsoleTests
         var run = ProcessRunner.RunStreamingAsync(
             Cmd, ["/c", "ping -n 60 127.0.0.1"], TimeSpan.FromMinutes(5), _ => { }, cts.Token, pseudoConsole: true);
 
-        await Task.Delay(1500);
+        // Cancel once the shell's ping really runs (not after a guessed pause), so the child is always there to be killed.
+        var started = DateTime.UtcNow.AddSeconds(30);
+        while (NewPingIds(before).Count == 0 && DateTime.UtcNow < started && !run.IsCompleted)
+            await Task.Delay(20);
+        Assert.True(NewPingIds(before).Count > 0, "the console run never started its ping");
+        clock.Restart();
         await cts.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => run);
