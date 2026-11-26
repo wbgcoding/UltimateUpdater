@@ -163,6 +163,8 @@ Each of these hosts sees your IP address, as with any download. When the Windows
 retried without it and the log notes that. Settings, history, logs and crash dumps stay on your PC, and the log
 redacts user paths and anything shaped like a credential. Uninstalling programs adds no host: it only runs the programs' own uninstallers and reads the
 registry and the Windows package lists on your PC.
+The uninstaller reads when you last started each program from the usage records Windows keeps for your account (and from Steam's own game files) to suggest large programs you have not used for a long time, and none of it leaves your PC.
+It keeps its list of installed programs in `uninstall-cache.json` in the logs and caches folder so the window opens on filled rows, and you can delete that file at any time.
 
 ## Where it keeps things
 
