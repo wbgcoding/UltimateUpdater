@@ -60,7 +60,7 @@ if errorlevel 1 (
 )
 if errorlevel 1 goto :error
 
-rem The sources as they are when the build proper starts. -Save refuses to record the build as fresh when they
+rem The sources as they are when the build proper starts. Saving the stamp is refused when they
 rem changed while it ran (a file edited mid-build would otherwise be stamped as built).
 set "BSFP="
 if exist "%BS%" for /f "usebackq delims=" %%A in (`powershell -NoProfile -ExecutionPolicy RemoteSigned -File "%BS%" -Fingerprint -Project "%~dp0." -Key "%BSKEY%" -Extra "%BSEXTRA%"`) do set "BSFP=%%A"

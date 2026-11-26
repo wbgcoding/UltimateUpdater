@@ -565,7 +565,7 @@ end;", RegexOptions.Singleline);
 
     /// <summary>
     /// A spaced hyphen between two words stands in for a dash. Subtraction in the Pascal code is not prose and
-    /// is left out by the " div " check.
+    /// is left out: such a line holds an assignment, a "div" or continues with a plus.
     /// </summary>
     [Fact]
     public void The_installer_files_use_no_spaced_hyphen_as_a_dash()
@@ -579,13 +579,18 @@ end;", RegexOptions.Singleline);
             var lines = File.ReadAllLines(Path.Combine(root, relative));
             for (var i = 0; i < lines.Length; i++)
             {
-                if (!lines[i].Contains(" div ", StringComparison.Ordinal) && pattern.IsMatch(lines[i]))
+                if (!IsArithmetic(lines[i]) && pattern.IsMatch(lines[i]))
                     findings.Add($"{relative}:{i + 1}: {lines[i].Trim()}");
             }
         }
 
         Assert.True(findings.Count == 0, "spaced hyphen found:" + Environment.NewLine + string.Join(Environment.NewLine, findings));
     }
+
+    private static bool IsArithmetic(string line) =>
+        line.Contains(" div ", StringComparison.Ordinal)
+        || line.Contains(":=", StringComparison.Ordinal)
+        || line.TrimEnd().EndsWith('+');
 
     private static string RepoRootForScripts()
     {
