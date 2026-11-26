@@ -743,9 +743,25 @@ public class CleanupServiceTests : IDisposable
         Assert.True(plan.UseShellEmpty);
         Assert.Equal(3, plan.FoundCount);
         Assert.Equal([a, b, c], plan.FallbackEntries!.Select(e => e.Path).Order());
-        Assert.True(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: true, itemsNow: 3));
-        Assert.False(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: true, itemsNow: 4));
-        Assert.False(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: false, itemsNow: 0));
+        Assert.True(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: true, itemsNow: 3, bytesNow: 300));
+        Assert.False(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: true, itemsNow: 4, bytesNow: 400));
+        Assert.False(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: false, itemsNow: 0, bytesNow: 0));
+        Assert.Equal(300, plan.FoundBytes);
+    }
+
+    /// <summary>One item restored and another recycled in its place keeps the count: only the byte total
+    /// shows the swap, and the whole-bin call must not be taken then.</summary>
+    [Fact]
+    public void The_whole_bin_call_is_refused_when_the_count_holds_but_the_byte_total_changed()
+    {
+        const string a = @"C:\$Recycle.Bin\S-1-5-21-1-2-3-1001\$RAAA.txt";
+        CleanupEntry[] fresh = [RecycledFile(a, @"C:\Users\x\a.txt", 100)];
+        RecycleBinDriveSummary[] drives = [new(@"C:\", @"C:\", 1, 1, 100, 100, DetailsAvailable: true)];
+
+        var plan = Assert.Single(CleanupService.PlanRecycleBinEmpty(fresh, drives, null));
+
+        Assert.True(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: true, itemsNow: 1, bytesNow: 100));
+        Assert.False(CleanupService.ShellEmptyStillMatchesPlan(plan, queried: true, itemsNow: 1, bytesNow: 250));
     }
 
     /// <summary>Nothing confirmed means nothing deleted, however much the bin holds now.</summary>

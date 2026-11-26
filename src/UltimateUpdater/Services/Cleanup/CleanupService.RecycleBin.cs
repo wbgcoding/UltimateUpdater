@@ -227,16 +227,18 @@ public partial class CleanupService
     /// <summary>How one drive's bin is emptied: the shell's whole-bin call, or exactly these rows.</summary>
     /// <param name="FoundCount">How many items the bin held when the plan was made; the whole-bin call needs
     /// the bin to still hold exactly that many.</param>
+    /// <param name="FoundBytes">The byte total of those items; an item restored and another recycled in its
+    /// place keeps the count, so the total has to match as well.</param>
     /// <param name="FallbackEntries">The rows to delete one by one when the whole-bin call is no longer safe.</param>
     internal readonly record struct RecycleBinDrivePlan(
         string Root, string Label, bool UseShellEmpty, IReadOnlyList<CleanupEntry> Entries,
-        int FoundCount = 0, IReadOnlyList<CleanupEntry>? FallbackEntries = null);
+        int FoundCount = 0, IReadOnlyList<CleanupEntry>? FallbackEntries = null, long FoundBytes = 0);
 
     /// <summary>The shell's whole-bin call destroys everything in the bin, including an item recycled after
-    /// the plan was made, so it is only taken while a fresh count still equals the planned one. A failed
+    /// the plan was made, so it is only taken while a fresh count AND byte total still equal the planned ones. A failed
     /// query proves nothing and counts as a mismatch.</summary>
-    internal static bool ShellEmptyStillMatchesPlan(RecycleBinDrivePlan plan, bool queried, int itemsNow) =>
-        queried && itemsNow == plan.FoundCount;
+    internal static bool ShellEmptyStillMatchesPlan(RecycleBinDrivePlan plan, bool queried, int itemsNow, long bytesNow) =>
+        queried && itemsNow == plan.FoundCount && bytesNow == plan.FoundBytes;
 
     /// <summary>
     /// Which drives are emptied and how. The shell's fast path is only taken for a drive where every listed
@@ -304,7 +306,7 @@ public partial class CleanupService
                 && drive.FoundCount == drive.ListedCount && selected.Count == drive.ListedCount
                 && (confirmedOnDrive is null || confirmedOnDrive == drive.FoundCount);
             plans.Add(new RecycleBinDrivePlan(
-                drive.Root, drive.Label, complete, complete ? [] : selected, drive.FoundCount, selected));
+                drive.Root, drive.Label, complete, complete ? [] : selected, drive.FoundCount, selected, drive.FoundBytes));
         }
 
         return plans;
@@ -359,7 +361,7 @@ public partial class CleanupService
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var queried = TryQueryDrive(plan.Root, out var driveBytesBefore, out var driveItemsBefore);
-                if (!ShellEmptyStillMatchesPlan(plan, queried, driveItemsBefore))
+                if (!ShellEmptyStillMatchesPlan(plan, queried, driveItemsBefore, driveBytesBefore))
                 {
                     // Something arrived since the plan (or the count is unreadable): the whole-bin call would
                     // take it unseen, so only the planned rows go.
