@@ -35,25 +35,76 @@ public class UninstallStallTests
     }
 
     [Fact]
-    public async Task A_stop_ends_a_running_winget_style_removal_through_its_tree()
+    public async Task A_stop_ends_a_removal_whose_tree_sits_idle_and_says_it_waited_for_input()
     {
         var child = new InstallStallWatchTests.HangingChild();
         ProcessRunner.ChildFactoryForTest.Value = () => child;
+        ProcessRunner.TreeSamplerForTest.Value = _ => new TreeActivity(TimeSpan.FromSeconds(10), 100, 3, true);
         try
         {
             using var executable = new ResolvedExecutable(Environment.ProcessPath!, null);
             using var stop = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
 
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => ProcessRunner.RunResolvedAsync(
-                executable, [], TimeSpan.FromMinutes(30), stop.Token, null, null, null, null, elevated: false)
+            // The window is far away: only the stop can end it.
+            var thrown = await Assert.ThrowsAsync<InstallerStalledException>(() => ProcessRunner.RunResolvedAsync(
+                executable, [], TimeSpan.FromMinutes(30), CancellationToken.None, null, null, null, null,
+                elevated: false, scrubEnvironment: null, stallWatch: Quick with { Window = TimeSpan.MaxValue },
+                stallIsUninstall: true, stopWhenIdle: stop.Token)
                 .WaitAsync(TimeSpan.FromSeconds(30)));
 
             Assert.Equal(1, child.KillCalls);
+            Assert.True(thrown.IsUninstall);
         }
         finally
         {
             ProcessRunner.ChildFactoryForTest.Value = null;
+            ProcessRunner.TreeSamplerForTest.Value = null;
         }
+    }
+
+    [Fact]
+    public async Task A_stop_leaves_a_removal_that_is_still_working_running()
+    {
+        var child = new InstallStallWatchTests.HangingChild();
+        ProcessRunner.ChildFactoryForTest.Value = () => child;
+        ulong io = 0;
+        ProcessRunner.TreeSamplerForTest.Value = _ => new TreeActivity(TimeSpan.FromSeconds(10), io += 1000, 3, true);
+        try
+        {
+            using var executable = new ResolvedExecutable(Environment.ProcessPath!, null);
+            using var stop = new CancellationTokenSource();
+            using var hard = new CancellationTokenSource();
+
+            var run = ProcessRunner.RunResolvedAsync(
+                executable, [], TimeSpan.FromMinutes(30), hard.Token, null, null, null, null,
+                elevated: false, scrubEnvironment: null, stallWatch: Quick with { Window = TimeSpan.MaxValue },
+                stallIsUninstall: true, stopWhenIdle: stop.Token);
+            await stop.CancelAsync();
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            Assert.False(run.IsCompleted, "a stop must not end a removal that still does I/O");
+            Assert.Equal(0, child.KillCalls);
+
+            await hard.CancelAsync();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => run.WaitAsync(TimeSpan.FromSeconds(30)));
+        }
+        finally
+        {
+            ProcessRunner.ChildFactoryForTest.Value = null;
+            ProcessRunner.TreeSamplerForTest.Value = null;
+        }
+    }
+
+    [Fact]
+    public void A_tree_counts_as_idle_for_a_stop_from_its_last_sign_of_life()
+    {
+        var detector = new StallDetector(Quick);
+        detector.Observe(0, new TreeActivity(TimeSpan.FromSeconds(1), 10, 2, true));
+        detector.Observe(100, new TreeActivity(TimeSpan.FromSeconds(1), 10, 2, true));
+
+        Assert.Equal(TimeSpan.FromMilliseconds(100), detector.IdleFor(100));
+        Assert.Equal(TimeSpan.FromMilliseconds(150), Quick.StopIdle);
+        Assert.Equal(TimeSpan.MaxValue, StallWatchOptions.StopOnly.Window);
     }
 
     [Fact]

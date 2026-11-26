@@ -180,7 +180,7 @@ public sealed class UninstallerBackend(
     private sealed class UnavailableExecutor : IUninstallExecutor
     {
         public Task<UninstallExecutionResult> RunAsync(
-            InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken) =>
+            InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken, CancellationToken stopWhenIdle) =>
             Task.FromResult(new UninstallExecutionResult(null, "The elevated helper is not available."));
     }
 }

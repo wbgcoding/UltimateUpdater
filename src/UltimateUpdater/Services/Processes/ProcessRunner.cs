@@ -119,9 +119,10 @@ public static class ProcessRunner
         StallWatchOptions? stallWatch = null,
         bool pseudoConsole = false,
         Encoding? outputEncoding = null,
-        bool stallIsUninstall = false) =>
+        bool stallIsUninstall = false,
+        CancellationToken stopWhenIdle = default) =>
         ExecuteAsync(fileName, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding, stallWatch,
-            pseudoConsole: pseudoConsole, stallIsUninstall: stallIsUninstall);
+            pseudoConsole: pseudoConsole, stallIsUninstall: stallIsUninstall, stopWhenIdle: stopWhenIdle);
 
     private static async Task<ProcessResult> ExecuteAsync(
         string fileName,
@@ -135,7 +136,8 @@ public static class ProcessRunner
         StallWatchOptions? stallWatch = null,
         bool killOnTimeout = true,
         bool pseudoConsole = false,
-        bool stallIsUninstall = false)
+        bool stallIsUninstall = false,
+        CancellationToken stopWhenIdle = default)
     {
         // Defense in depth, checked before anything else and regardless of elevation or caller
         // (Security.CommandDenyList); every current caller only issues package-manager commands.
@@ -156,7 +158,8 @@ public static class ProcessRunner
 
         return await RunResolvedAsync(
             executable, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding, elevated,
-            scrubEnvironment, stallWatch, killOnTimeout, pseudoConsole, stallIsUninstall: stallIsUninstall);
+            scrubEnvironment, stallWatch, killOnTimeout, pseudoConsole, stallIsUninstall: stallIsUninstall,
+            stopWhenIdle: stopWhenIdle);
     }
 
     /// <summary>The launch and the wait for an already resolved executable. Separate from
@@ -176,8 +179,8 @@ public static class ProcessRunner
         bool killOnTimeout = true,
         bool pseudoConsole = false,
         bool waitForTree = false,
-        bool killOnCancel = false,
-        bool stallIsUninstall = false)
+        bool stallIsUninstall = false,
+        CancellationToken stopWhenIdle = default)
     {
         var startInfo = BuildStartInfo(executable, arguments, environment, outputEncoding, elevated, scrubEnvironment: scrubEnvironment);
 
@@ -218,7 +221,7 @@ public static class ProcessRunner
         // installer that prints nothing for minutes but works is alive.
         var stallTriggered = false;
         var stallWatchTask = stallWatch is { } stall
-            ? WatchForStallAsync(stall, process.ProcessId, () => stallTriggered = true, timeoutCts, idleWatchStopCts.Token)
+            ? WatchForStallAsync(stall, process.ProcessId, () => stallTriggered = true, timeoutCts, idleWatchStopCts.Token, stopWhenIdle)
             : Task.CompletedTask;
 
         try
@@ -234,9 +237,7 @@ public static class ProcessRunner
             }
             catch (OperationCanceledException)
             {
-                // killOnCancel: a stop ends the tool and everything it started, even where a timeout leaves it running.
-                if (!killOnTimeout && !idleTriggered && !stallTriggered
-                    && !(killOnCancel && cancellationToken.IsCancellationRequested))
+                if (!killOnTimeout && !idleTriggered && !stallTriggered)
                 {
                     // Out of time or asked to stop: the tool keeps running and the pumps keep draining so it never
                     // blocks on a full pipe.
@@ -592,12 +593,13 @@ public static class ProcessRunner
 
     /// <summary>
     /// Looks at the tool's whole process tree every sample interval; once <see cref="StallDetector"/> says
-    /// it has shown no life for the whole window, marks it and cancels <paramref name="timeoutCts"/> so the
+    /// it has shown no life for the whole window (or <paramref name="stopWhenIdle"/> was cancelled and it has shown none
+    /// for <see cref="StallWatchOptions.StopIdle"/>), marks it and cancels <paramref name="timeoutCts"/> so the
     /// tree is stopped instead of running to the full install deadline.
     /// </summary>
     private static async Task WatchForStallAsync(
         StallWatchOptions options, int rootId, Action markStalled, CancellationTokenSource timeoutCts,
-        CancellationToken stopToken)
+        CancellationToken stopToken, CancellationToken stopWhenIdle)
     {
         var detector = new StallDetector(options);
         var sampler = TreeSamplerForTest.Value ?? ProcessTreeSampler.Sample;
@@ -607,7 +609,12 @@ public static class ProcessRunner
             do
             {
                 var activity = await Task.Run(() => sampler(rootId), CancellationToken.None);
-                if (!detector.Observe(Environment.TickCount64, activity))
+                var now = Environment.TickCount64;
+                var stalled = detector.Observe(now, activity);
+
+                // A stop by the person ends only a tree that is waiting right now: a removal that is still working
+                // is left to finish (ending it halfway leaves a program neither installed nor gone).
+                if (!stalled && !(stopWhenIdle.IsCancellationRequested && detector.IdleFor(now) >= options.StopIdle))
                     continue;
 
                 markStalled();

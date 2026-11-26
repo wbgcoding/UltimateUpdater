@@ -128,7 +128,7 @@ public class UninstallerViewModelTests
 
         private sealed class Executor(FakeBackend owner) : IUninstallExecutor
         {
-            public Task<UninstallExecutionResult> RunAsync(InstalledProgramEntry entry, UninstallPlan plan, CancellationToken ct)
+            public Task<UninstallExecutionResult> RunAsync(InstalledProgramEntry entry, UninstallPlan plan, CancellationToken ct, CancellationToken stopWhenIdle)
             {
                 lock (owner.Started)
                     owner.Started.Add(entry.Name);

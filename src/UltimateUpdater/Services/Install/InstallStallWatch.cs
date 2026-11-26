@@ -37,6 +37,14 @@ public sealed record StallWatchOptions(TimeSpan Window, double CpuFraction, Time
     /// <summary>The options every removal passes along (the same window: a removal with no CPU and no I/O
     /// for it is waiting for a person).</summary>
     public static StallWatchOptions ForUninstall => OverrideForTest.Value ?? Standard;
+
+    /// <summary>The options of a removal that is only ever ended by a stop (the window never runs out): a program
+    /// named by a registry command may show a vendor window to a person for as long as it takes.</summary>
+    public static StallWatchOptions StopOnly => (OverrideForTest.Value ?? Standard) with { Window = TimeSpan.MaxValue };
+
+    /// <summary>How long a tree must have shown no life before a stop by the person ends it as one that waits for input
+    /// (a few samples, so a pause between two bursts of work is not taken for a wait).</summary>
+    public TimeSpan StopIdle => SampleInterval * 3;
 }
 
 /// <summary>One reading of a whole process tree. <paramref name="Complete"/> is false when some process in
@@ -55,6 +63,9 @@ public sealed class StallDetector(StallWatchOptions options)
     private long _previousAtMs;
     private TreeActivity _previous;
     private long _lastLifeAtMs;
+
+    /// <summary>How long the tree has shown no life, as of the last <see cref="Observe"/>.</summary>
+    public TimeSpan IdleFor(long nowMs) => TimeSpan.FromMilliseconds(Math.Max(0, nowMs - _lastLifeAtMs));
 
     /// <summary>True once the tree has shown no life for <see cref="StallWatchOptions.Window"/>.</summary>
     public bool Observe(long nowMs, TreeActivity activity)

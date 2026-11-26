@@ -22,7 +22,8 @@ internal static class UninstallExecution
     internal static readonly TimeSpan InteractiveTimeout = TimeSpan.FromHours(2);
 
     public static async Task<ProcessResult> RunAsync(
-        UninstallPlan plan, Action<string> onOutput, CancellationToken cancellationToken, LoggingService? logging = null)
+        UninstallPlan plan, Action<string> onOutput, CancellationToken cancellationToken, LoggingService? logging = null,
+        CancellationToken stopWhenIdle = default)
     {
         if (!plan.IsRunnable)
             throw new InvalidOperationException("A refused plan is never run.");
@@ -43,18 +44,20 @@ internal static class UninstallExecution
         {
             // winget starts a vendor uninstaller without a silent switch when the manifest offers none; its window is
             // invisible in an elevated session, so the run would sit still until the timeout. A tree with no CPU and no
-            // I/O for the stall window is ended with an explained failure instead (a stop ends the tree as well).
+            // I/O for the stall window is ended with an explained failure instead, and so is one that is idle when
+            // the person presses Stop (a working removal is left to finish).
             var stallWatch = plan.Method == UninstallMethod.Winget ? StallWatchOptions.ForUninstall : null;
             return await ProcessRunner.RunStreamingAsync(
                 plan.Executable, plan.Arguments, timeout, onOutput, cancellationToken, environment,
-                stallWatch: stallWatch, stallIsUninstall: stallWatch is not null);
+                stallWatch: stallWatch, stallIsUninstall: stallWatch is not null, stopWhenIdle: stopWhenIdle);
         }
 
         if (CommandDenyList.IsDenied(plan.Executable, plan.Arguments, out var reason))
             throw new DeniedCommandException(reason);
 
         using var executable = ProcessRunner.ResolveUninstaller(plan.Executable, elevated);
-        var result = await RunCommandAsync(executable, plan.Arguments, timeout, elevated, environment, onOutput, cancellationToken);
+        var result = await RunCommandAsync(
+            executable, plan.Arguments, timeout, elevated, environment, onOutput, cancellationToken, stopWhenIdle);
 
         // A program left running after the time is up keeps using its temp folder.
         if (result.TimedOut)
@@ -66,18 +69,20 @@ internal static class UninstallExecution
     /// <summary>
     /// The run of a program named by a registry command. It is not killed when the time is up (ending a removal
     /// halfway leaves a program neither installed nor gone); it is left running and the result says it timed out.
-    /// A stop by the person does end it, with everything it started: a window nobody can see must not outlive the
-    /// run. The wait is for the whole tree: a setup that hands its work to a copy of itself and exits has not
-    /// finished when its first process has.
+    /// A stop by the person ends it only while its whole tree sits idle (a window waiting for input that nobody can
+    /// see); one that is still working finishes. The wait is for the whole tree: a setup that hands its work to a copy
+    /// of itself and exits has not finished when its first process has.
     /// </summary>
     internal static Task<ProcessResult> RunCommandAsync(
         ResolvedExecutable executable, IReadOnlyList<string> arguments, TimeSpan timeout, bool elevated,
-        IReadOnlyDictionary<string, string>? environment, Action<string> onOutput, CancellationToken cancellationToken) =>
+        IReadOnlyDictionary<string, string>? environment, Action<string> onOutput, CancellationToken cancellationToken,
+        CancellationToken stopWhenIdle = default) =>
         ProcessRunner.RunResolvedAsync(
             executable, arguments, timeout, cancellationToken, environment, onOutput,
             idleTimeout: null, outputEncoding: null, elevated,
             scrubEnvironment: elevated || ElevationService.IsElevated,
-            killOnTimeout: false, waitForTree: true, killOnCancel: true);
+            stallWatch: StallWatchOptions.StopOnly, killOnTimeout: false, waitForTree: true,
+            stallIsUninstall: true, stopWhenIdle: stopWhenIdle);
 
     /// <summary>
     /// The environment with TEMP and TMP pointing at <paramref name="folder"/>, a folder only administrators can write.

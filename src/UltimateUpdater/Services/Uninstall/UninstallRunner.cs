@@ -29,7 +29,9 @@ public sealed record UninstallExecutionResult(
 /// <summary>Where a removal runs: the elevated worker for machine entries, this process for the rest.</summary>
 public interface IUninstallExecutor
 {
-    Task<UninstallExecutionResult> RunAsync(InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken);
+    /// <param name="stopWhenIdle">Cancelled by a stop of the run: ends a removal that is waiting for input, never one that works.</param>
+    Task<UninstallExecutionResult> RunAsync(
+        InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken, CancellationToken stopWhenIdle);
 }
 
 /// <summary>The end of one entry: what happened and, for a failure, why in the user's words.</summary>
@@ -43,8 +45,9 @@ public sealed record UninstallEntryUpdate(InstalledProgramEntry Entry, Uninstall
 /// One run for every ticked entry. Machine-scope entries and user-scope setups run one at a time through one shared
 /// gate (Windows Installer holds one machine-wide lock that a per-user MSI takes as well, and most setups collide),
 /// each kind in its own order; Store apps run up to three at a time beside them. A removal that shows the vendor's own
-/// window is held back until every silent one has finished and then runs alone, one at a time. A stop ends the
-/// running removals (with everything they started) and starts no further entry.
+/// window is held back until every silent one has finished and then runs alone, one at a time. A stop lets the
+/// running removals finish, except one that sits idle waiting for input (ended with its whole process tree and
+/// reported as such), and starts no further entry.
 /// After each removal the entry is looked up again: the program being gone is the truth, the exit code only
 /// explains a failure. An entry the planner refused fails at once with its reason and never reaches an executor.
 /// </summary>
@@ -87,20 +90,18 @@ public sealed class UninstallRunner
 
     public bool StopRequested => _stopRequested;
 
-    /// <summary>No new entry starts and the running removals are ended, each with its whole process tree. The entries
-    /// not started come back as NotStarted, the ended ones as failed (cancelled).</summary>
+    /// <summary>No new entry starts; the ones running finish, except a removal waiting for input, which is ended with its
+    /// whole process tree. The entries not started come back as NotStarted.</summary>
     public void Stop()
     {
         _stopRequested = true;
         _stop.Cancel();
     }
 
-    /// <param name="cancellationToken">Ends the running removals too (the app shuts down); so does <see cref="Stop"/>.</param>
+    /// <param name="hardToken">Ends the running removals too (the app shuts down); a normal stop uses <see cref="Stop"/>.</param>
     public async Task<IReadOnlyList<UninstallEntryResult>> RunAsync(
-        IReadOnlyList<InstalledProgramEntry> entries, Action<UninstallEntryUpdate>? onUpdate, CancellationToken cancellationToken)
+        IReadOnlyList<InstalledProgramEntry> entries, Action<UninstallEntryUpdate>? onUpdate, CancellationToken hardToken)
     {
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _stop.Token);
-        var hardToken = linked.Token;
         var results = new UninstallEntryResult?[entries.Count];
         var plans = new UninstallPlan[entries.Count];
         var machine = new List<int>();
@@ -197,7 +198,7 @@ public sealed class UninstallRunner
         UninstallExecutionResult run;
         try
         {
-            run = await (plan.Elevated ? _machineExecutor : _userExecutor).RunAsync(entry, plan, hardToken);
+            run = await (plan.Elevated ? _machineExecutor : _userExecutor).RunAsync(entry, plan, hardToken, _stop.Token);
         }
         catch (OperationCanceledException)
         {

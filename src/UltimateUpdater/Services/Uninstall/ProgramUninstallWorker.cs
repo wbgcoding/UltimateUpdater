@@ -138,7 +138,8 @@ internal static class ProgramUninstallWorker
     /// <param name="createRestorePoint">Makes the system restore point (description, log); a test replaces it, the worker uses Windows'.</param>
     public static async Task RunJobAsync(
         JsonElement payload, StreamWriter writer, string jobId, LoggingService logging, CancellationToken cancellationToken,
-        Func<string, LoggingService, bool>? createRestorePoint = null, IDriverInventoryProvider? driverInventory = null)
+        Func<string, LoggingService, bool>? createRestorePoint = null, IDriverInventoryProvider? driverInventory = null,
+        CancellationToken stopWhenIdle = default)
     {
         UninstallProgramJob? job;
         try
@@ -229,7 +230,7 @@ internal static class ProgramUninstallWorker
 
         try
         {
-            var result = await UninstallExecution.RunAsync(plan, OnOutput, cancellationToken, logging);
+            var result = await UninstallExecution.RunAsync(plan, OnOutput, cancellationToken, logging, stopWhenIdle);
             var summary = ToolOutput.Summarize(result.StandardOutput, result.StandardError, result.ExitCode);
             logging.Info($"Elevated uninstall of an entry finished with exit code {result.ExitCode}.");
             Finish(writer, jobId, job.Key, result.ExitCode is 0 or 3010 or 1641, result.ExitCode, error: null, detail: summary,

@@ -22,7 +22,7 @@ public sealed class ElevatedUninstallExecutor(ElevatedHost host, LoggingService 
         error?.Contains(InstallerStalledException.UninstallWaitedMarker, StringComparison.Ordinal) == true;
 
     public async Task<UninstallExecutionResult> RunAsync(
-        InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken)
+        InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken, CancellationToken stopWhenIdle)
     {
         var job = new UninstallProgramJob
         {
@@ -66,7 +66,7 @@ public sealed class ElevatedUninstallExecutor(ElevatedHost host, LoggingService 
             return true;
         }
 
-        var ok = await host.RunAsync("uninstall-program", job, OnLine, cancellationToken);
+        var ok = await host.RunAsync("uninstall-program", job, OnLine, cancellationToken, stopWhenIdle: stopWhenIdle);
         if (cancellationToken.IsCancellationRequested)
             return new UninstallExecutionResult(exitCode, detail, Cancelled: true);
 
@@ -85,7 +85,7 @@ public sealed class ElevatedUninstallExecutor(ElevatedHost host, LoggingService 
 public sealed class InProcessUninstallExecutor(LoggingService logging) : IUninstallExecutor
 {
     public async Task<UninstallExecutionResult> RunAsync(
-        InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken)
+        InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken, CancellationToken stopWhenIdle)
     {
         // The machine lane owns every plan that needs elevation; an unelevated launch of one would simply fail
         // half way, so it is refused here instead.
@@ -94,7 +94,8 @@ public sealed class InProcessUninstallExecutor(LoggingService logging) : IUninst
 
         try
         {
-            var result = await UninstallExecution.RunAsync(plan, line => logging.Info($"uninstall: {line}"), cancellationToken, logging);
+            var result = await UninstallExecution.RunAsync(
+                plan, line => logging.Info($"uninstall: {line}"), cancellationToken, logging, stopWhenIdle);
             return result.TimedOut
                 ? new UninstallExecutionResult(null, "The uninstaller did not finish in time.")
                 : new UninstallExecutionResult(
