@@ -174,6 +174,16 @@ public partial class App : Application
         if (SuppressRealStartupForTests)
             return;
 
+#if DEBUG
+        // Review harness: opens every window and state with fake data and shoots it. Debug builds only.
+        if (Review.ReviewMode.IsRequested(e.Args))
+        {
+            AddTitleBarHover();
+            await Review.ReviewMode.RunAsync(this, e.Args);
+            return;
+        }
+#endif
+
         // Decided before anything else: the worker must stay headless even when it crashes, otherwise
         // a dialog nobody can see would block its shutdown, and it must not open a log file, because
         // every directory it could log into belongs to the unelevated user.

@@ -58,6 +58,11 @@
   </ItemGroup>
 
 
+  <!-- The review harness (Review folder) is a Debug-only tool: a Release build never compiles it. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <Compile Remove="Review\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="UltimateUpdater.Tests" />
   </ItemGroup>
