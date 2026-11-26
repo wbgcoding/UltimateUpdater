@@ -97,7 +97,11 @@ public class ColumnChooserTests
         WpfHarness.OnUiThread(() =>
         {
             var original = ColumnChooser.IsAnyMouseButtonPressed;
+            var originalLimit = ColumnChooser.ReleaseWaitLimit;
             var pressed = true;
+            // The production wait gives up after five seconds; a machine starved that long mid-test would hand
+            // hit-testing back while the stubbed button is still down, so this test lifts the limit.
+            ColumnChooser.ReleaseWaitLimit = TimeSpan.FromMinutes(10);
             ColumnChooser.IsAnyMouseButtonPressed = () => pressed;
             try
             {
@@ -121,6 +125,7 @@ public class ColumnChooserTests
             finally
             {
                 ColumnChooser.IsAnyMouseButtonPressed = original;
+                ColumnChooser.ReleaseWaitLimit = originalLimit;
             }
         });
     }
