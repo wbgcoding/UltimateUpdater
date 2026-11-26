@@ -17,7 +17,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>   <!-- title bar -->
             <RowDefinition Height="Auto"/>   <!-- what failed -->
-            <RowDefinition Height="*"/>      <!-- raw tool output: takes what the capped window leaves, so a long output never pushes the actions out -->
+            <RowDefinition Height="Auto"/>   <!-- raw tool output, capped by the box's own MaxHeight -->
             <RowDefinition Height="Auto"/>   <!-- actions -->
         </Grid.RowDefinitions>
 
@@ -111,11 +111,12 @@
         <Border x:Name="OutputBoxBorder" Grid.Row="2" MinHeight="140" BorderThickness="0,1,0,1"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 Background="{DynamicResource ControlFillColorDefaultBrush}">
-            <!-- The row is a star row inside a window that sizes to its content and is capped in height: a short
-                 one-line failure still sizes the window to its real content (no empty band), MinHeight gives
-                 it a sensible floor so it shows a real box rather than a sliver, and a long output takes only
-                 the height the cap leaves after the header and the action row, scrolling inside the box, so
-                 the buttons below always stay on screen. The RichTextBox's MaxHeight bounds the growth. -->
+            <!-- The row is Auto (same approach ChangelogWindow's own text box uses), not a star row: a star
+                 row would stretch the RichTextBox into the leftover space and leave an empty band below a
+                 short one-line failure. The box sizes to its real
+                 content, MinHeight below gives it a sensible floor so a one-line failure still shows a real
+                 box rather than a sliver, and the RichTextBox's own MaxHeight below is the cap that makes a
+                 long output scroll internally instead of growing the row without limit. -->
             <!-- Visible, not Auto, so the scrollbar is shown from the start. WPF-UI's implicit TextBox style
                  hosts an overlay scrollbar that stays invisible whatever VerticalScrollBarVisibility says.
                  Style="{x:Null}" reverts the whole control to the framework's default style and template
