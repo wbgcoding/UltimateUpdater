@@ -78,6 +78,11 @@ public class UninstallerViewModelTests
 
         public void RecordRemoved(InstalledProgramEntry entry) => Recorded.Add(entry);
 
+        /// <summary>What the icon read returns for an entry; none by default. Runs on the reading thread.</summary>
+        public Func<InstalledProgramEntry, System.Windows.Media.Imaging.BitmapSource?> Icon { get; set; } = _ => null;
+
+        public System.Windows.Media.Imaging.BitmapSource? ResolveIcon(InstalledProgramEntry entry) => Icon(entry);
+
         public Task<IReadOnlyList<UninstallLeftoverGroup>> FindLeftoversAsync(
             IReadOnlyList<InstalledProgramEntry> removed, CancellationToken cancellationToken)
         {

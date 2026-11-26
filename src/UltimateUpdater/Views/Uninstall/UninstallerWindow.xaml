@@ -143,35 +143,48 @@
                                    AutomationProperties.Name="{Binding UnavailableReason}"
                                    Visibility="{Binding Selectable, Converter={StaticResource InverseBoolToVisibility}}"/>
 
-                    <StackPanel Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding Name}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                        <!-- Launcher and install folder: always for an entry from a launcher and for look-alike names. -->
-                        <TextBlock Text="{Binding OriginText}" FontSize="11" TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding FolderPath}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                   Visibility="{Binding HasOrigin, Converter={StaticResource BoolToVisibility}}"/>
-                        <!-- Why a greyed row cannot be removed (a driver a device uses), or that a Steam game's folder is empty. -->
-                        <TextBlock Text="{Binding NoteText}" FontSize="11" TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding NoteText}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                   Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="{Binding StateText}" FontSize="11" TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding StateText}"
-                                   Visibility="{Binding ShowsState, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding State}" Value="Removed">
-                                            <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding State}" Value="Failed">
-                                            <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
+                    <!-- The name cell: a 20 px icon (the app's own once resolved off the UI thread, else a symbol for the kind of entry) and the text lines. -->
+                    <Grid Grid.Column="1" Margin="0,0,10,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Image Grid.Column="0" Width="20" Height="20" Source="{Binding Icon}" VerticalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibility}}"/>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="{Binding KindSymbol}" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Visibility="{Binding HasIcon, Converter={StaticResource InverseBoolToVisibility}}"/>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding Name}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                            <!-- Launcher and install folder: always for an entry from a launcher and for look-alike names. -->
+                            <TextBlock Text="{Binding OriginText}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding FolderPath}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Visibility="{Binding HasOrigin, Converter={StaticResource BoolToVisibility}}"/>
+                            <!-- Why a greyed row cannot be removed (a driver a device uses), or that a Steam game's folder is empty. -->
+                            <TextBlock Text="{Binding NoteText}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding NoteText}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}"/>
+                            <TextBlock Text="{Binding StateText}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding StateText}"
+                                       Visibility="{Binding ShowsState, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding State}" Value="Removed">
+                                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding State}" Value="Failed">
+                                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Grid>
 
                     <TextBlock Grid.Column="2" Text="{Binding Publisher}" FontSize="12" TextTrimming="CharacterEllipsis"
                                ToolTip="{Binding Publisher, Converter={StaticResource EmptyToNull}}" VerticalAlignment="Center" Margin="0,0,10,0"

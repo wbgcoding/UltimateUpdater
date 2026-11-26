@@ -190,6 +190,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
         _logging.Info($"uninstaller preview: {_all.Count} rows from cache");
         Refresh();
         UpdateSelectionState();
+        ResolveIcons();
     }
 
     /// <summary>The recheck's verdict: rows it no longer lists vanish, the others become selectable.</summary>
@@ -241,6 +242,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
         _all = merged;
         Refresh();
         UpdateSelectionState();
+        ResolveIcons();
     }
 
     /// <summary>Saves the entries as the listing of the last full read; a failure is the backend's to log, never ours to show.</summary>
@@ -265,6 +267,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
         _all = listings.Select(listing => new UninstallRowViewModel(listing, OnRowSelectionChanged)).ToList();
         Refresh();
         UpdateSelectionState();
+        ResolveIcons();
     }
 
     internal static UninstallSection SectionOf(UninstallRowViewModel row) => row.Entry.Kind switch

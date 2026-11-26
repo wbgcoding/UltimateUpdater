@@ -103,7 +103,7 @@ public partial class MainViewModel
         {
             _uninstallerViewModel?.Discard();
             _uninstallerViewModel = new UninstallerViewModel(
-                UninstallerBackendOverride?.Invoke() ?? new UninstallerBackend(_logging, _elevated, _settings, _history, UninstallPrefetch),
+                UninstallerBackendOverride?.Invoke() ?? new UninstallerBackend(_logging, _elevated, _settings, _history, UninstallPrefetch, _iconCache),
                 _logging);
         }
 

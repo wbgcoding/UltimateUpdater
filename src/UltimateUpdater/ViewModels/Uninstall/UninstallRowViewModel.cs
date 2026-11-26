@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Formatting;
@@ -41,6 +42,22 @@ public sealed partial class UninstallRowViewModel : ObservableObject
     public InstalledProgramEntry Entry => Listing.Entry;
 
     public string Name => Entry.Name;
+
+    /// <summary>The app's own icon once the background read resolved it; null until then or when the entry has none (the row then shows <see cref="KindSymbol"/>).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasIcon))]
+    private BitmapSource? icon;
+
+    public bool HasIcon => Icon is not null;
+
+    /// <summary>The Fluent symbol drawn in the icon's place: one per kind of entry.</summary>
+    public Wpf.Ui.Controls.SymbolRegular KindSymbol => UninstallKindSymbol.For(Entry.Kind);
+
+    /// <summary>Only programs and Store apps carry an icon of their own; the other kinds always show their symbol.</summary>
+    internal bool WantsIcon => Entry.Kind is UninstallEntryKind.Program or UninstallEntryKind.StoreApp;
+
+    /// <summary>True once the owner queued this row's icon read, so a later merge does not read it again.</summary>
+    internal bool IconRequested { get; set; }
 
     public string Publisher => Entry.Publisher;
 
@@ -173,6 +190,13 @@ public sealed partial class UninstallRowViewModel : ObservableObject
         if (Equals(Listing, listing))
             return;
 
+        // A changed icon source (a new DisplayIcon or folder after an update) means the icon is read again.
+        if (!string.Equals(Entry.DisplayIcon, listing.Entry.DisplayIcon, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(Entry.InstallLocation, listing.Entry.InstallLocation, StringComparison.OrdinalIgnoreCase))
+        {
+            IconRequested = false;
+        }
+
         Listing = listing;
         foreach (var name in DerivedProperties)
             OnPropertyChanged(name);
@@ -183,7 +207,7 @@ public sealed partial class UninstallRowViewModel : ObservableObject
 
     private static readonly string[] DerivedProperties =
     [
-        nameof(Listing), nameof(Entry), nameof(Name), nameof(Publisher), nameof(Version), nameof(SizeBytes), nameof(InstallDate),
+        nameof(Listing), nameof(Entry), nameof(Name), nameof(KindSymbol), nameof(Publisher), nameof(Version), nameof(SizeBytes), nameof(InstallDate),
         nameof(SizeText), nameof(InstalledText), nameof(RiskLevel), nameof(Selectable), nameof(IsRisky), nameof(RiskLevelText),
         nameof(ReasonText), nameof(RiskTooltip), nameof(MethodText), nameof(NoteText), nameof(HasNote), nameof(UnavailableReason), nameof(SortName),
         nameof(SourceLabel), nameof(FolderText), nameof(FolderPath), nameof(OriginText), nameof(HasOrigin),
