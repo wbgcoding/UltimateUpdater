@@ -448,8 +448,6 @@ public class RegistryBackupServiceTests
     /// "the key does not exist" from "the export genuinely failed and left nothing to back up".
     /// </summary>
     [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
     [Fact]
     public void KeyExists_is_true_for_a_real_key_and_false_once_removed()
     {
@@ -478,8 +476,6 @@ public class RegistryBackupServiceTests
     /// a program can repair an entry in the real wall-clock time between scan and delete, while the user
     /// reviews the confirmation dialog.
     /// </summary>
-    [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
     [Trait("Layer", "Integration")]
     [Fact]
     public void Delete_skips_an_App_Paths_entry_that_was_repaired_since_the_scan()
@@ -513,8 +509,6 @@ public class RegistryBackupServiceTests
     }
 
     [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
     [Fact]
     public void Delete_removes_an_App_Paths_entry_that_is_still_broken()
     {
@@ -541,8 +535,6 @@ public class RegistryBackupServiceTests
         }
     }
 
-    [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
     [Trait("Layer", "Integration")]
     [Fact]
     public void Delete_with_a_cancelled_token_deletes_nothing_and_does_not_throw()
@@ -585,8 +577,6 @@ public class RegistryCleanupScannerMsiEntryTests
     private const string ProductsRoot = @"SOFTWARE\Microsoft\Installer\Products";
 
     [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
     [Fact]
     public void An_msi_entry_with_a_registered_product_code_is_kept()
     {
@@ -613,8 +603,6 @@ public class RegistryCleanupScannerMsiEntryTests
         }
     }
 
-    [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
     [Trait("Layer", "Integration")]
     [Fact]
     public void An_msi_entry_with_an_unregistered_product_code_and_no_install_location_is_reported()
@@ -643,8 +631,6 @@ public class RegistryCleanupScannerMsiEntryTests
     /// <summary>Existence anywhere means keep: an unregistered product code is still not broken when the
     /// entry's own InstallLocation still points somewhere, the same "one field still confirms it" rule
     /// the file-path side already follows.</summary>
-    [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
     [Trait("Layer", "Integration")]
     [Fact]
     public void An_msi_entry_with_an_unregistered_product_code_but_a_present_install_location_is_kept()
@@ -738,8 +724,6 @@ public class RegistryCleanupExistenceTests : IDisposable
 
     /// <summary>A file the account may not even look at: <c>File.Exists</c> says false (it reads access
     /// denied as "no"), the probe must say it exists so the entry is kept.</summary>
-    [Trait("Layer", "Integration")]
-    [Trait("Layer", "Integration")]
     [Trait("Layer", "Integration")]
     [Fact]
     public void A_file_in_an_acl_denied_folder_counts_as_existing()
