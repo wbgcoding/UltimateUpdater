@@ -100,7 +100,7 @@ public class WindowsUpdateInstallTests
     public void Offered_rows_whose_guid_is_installed_are_dropped_from_the_scan()
     {
         var offered = new List<UpdateItem> { Row(Guid1), Row("22222222-2222-2222-2222-222222222222", 7) };
-        var installed = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { Guid1.ToUpperInvariant() };
+        var installed = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { [Guid1.ToUpperInvariant()] = 1 };
 
         var kept = WindowsUpdateSource.DropInstalled(offered, installed, out var dropped);
 
@@ -108,6 +108,19 @@ public class WindowsUpdateInstallTests
         Assert.Equal($"{Guid1}:1", dropped[0].Id);
         Assert.Single(kept);
         Assert.Equal("22222222-2222-2222-2222-222222222222:7", kept[0].Id);
+    }
+
+    /// <summary>Defender definitions keep their GUID and raise the revision: the new one must stay offered.</summary>
+    [Fact]
+    public void A_newer_revision_of_an_installed_guid_stays_offered()
+    {
+        var offered = new List<UpdateItem> { Row(Guid1, 200) };
+        var installed = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { [Guid1] = 199 };
+
+        var kept = WindowsUpdateSource.DropInstalled(offered, installed, out var dropped);
+
+        Assert.Empty(dropped);
+        Assert.Single(kept);
     }
 
     [Fact]

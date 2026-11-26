@@ -104,16 +104,20 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
         }
     }
 
-    /// <summary>The GUIDs Windows Update lists as installed. A failing lookup is no answer: it returns an
-    /// empty set so the scan keeps every offered row (the install itself then settles it).</summary>
-    private HashSet<string> ReadInstalledIds(CancellationToken cancellationToken)
+    /// <summary>The GUIDs Windows Update lists as installed, each with its highest installed revision. A failing
+    /// lookup is no answer: it returns an empty map so the scan keeps every offered row (the install itself then
+    /// settles it).</summary>
+    private Dictionary<string, int> ReadInstalledIds(CancellationToken cancellationToken)
     {
-        var ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         try
         {
             using var installed = _api.Search(InstalledCriteria, cancellationToken);
             foreach (var update in installed.Updates)
-                ids.Add(update.UpdateId);
+            {
+                if (!ids.TryGetValue(update.UpdateId, out var known) || update.Revision > known)
+                    ids[update.UpdateId] = update.Revision;
+            }
         }
         catch (Exception ex) when (ex is COMException or InvalidOperationException)
         {
@@ -124,11 +128,15 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
         return ids;
     }
 
-    /// <summary>Splits off the offered rows whose update GUID (the row id without its revision) is in
-    /// <paramref name="installedIds"/>.</summary>
-    internal static List<UpdateItem> DropInstalled(List<UpdateItem> offered, HashSet<string> installedIds, out List<UpdateItem> dropped)
+    /// <summary>Splits off the offered rows whose update GUID is installed at the offered revision or a newer one.
+    /// A newer revision of an installed GUID stays offered: Defender definitions, for one, keep their GUID and only
+    /// raise the revision, so a GUID-only match would hide every new definition update.</summary>
+    internal static List<UpdateItem> DropInstalled(List<UpdateItem> offered, IReadOnlyDictionary<string, int> installedIds, out List<UpdateItem> dropped)
     {
-        dropped = offered.Where(i => installedIds.Contains(ExtractUpdateId(i.Id))).ToList();
+        dropped = offered.Where(i =>
+            installedIds.TryGetValue(ExtractUpdateId(i.Id), out var installedRevision)
+            && ExtractRevision(i.Id) is { } offeredRevision
+            && installedRevision >= offeredRevision).ToList();
         return dropped.Count == 0 ? offered : offered.Except(dropped).ToList();
     }
 
