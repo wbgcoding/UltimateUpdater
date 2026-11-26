@@ -11,6 +11,13 @@ versioning: [SemVer](https://semver.org).
   ticked ones. Entries rated Risky are never ticked by Select all and need an extra confirmation.
   Afterwards it lists what the removed programs left behind (folders, registry keys, shortcuts) and
   removes the ticked ones; only a certain match starts ticked, and a run ends with a one-line summary.
+- The uninstall window opens with the last known list at once and refreshes it live; the list is read in
+  the background after start. Rows show the program icon (or a symbol for the kind), Store apps their
+  real name and publisher, and games installed twice say where each copy comes from (Steam, EA app).
+  Installed Windows updates are listed without an administrator prompt. A Suggestions card proposes large
+  programs unused for a long time, games installed twice and entries without files; each can be hidden.
+- Windows updates: an update that is already installed counts as done instead of failing, an install
+  job searches once instead of once per update, and Stop ends a running download or install.
 - Uninstalling can create a system restore point first (Settings, Install, Backup before uninstalling:
   Automatic, Always or Off). It is shared with the 24 hour limit of the install restore point, asks
   before going on without one, and every removed program is written to the history.
