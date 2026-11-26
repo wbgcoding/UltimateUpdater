@@ -171,7 +171,10 @@ public class CleanupComponentStoreAutoTests
 
     private static async Task WaitUntil(Func<bool> condition, string what)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(20);
+        // A polled condition returns the moment it holds, so a long budget costs nothing when green. The late
+        // pass chains a dispatcher hop, a pipe-free fake worker call and a view-model update; on a machine busy
+        // with other builds 20 s was not always enough, which showed as a flaky timeout.
+        var deadline = DateTime.UtcNow.AddSeconds(60);
         while (!condition() && DateTime.UtcNow < deadline)
             await Task.Delay(10);
         Assert.True(condition(), what);
