@@ -74,6 +74,13 @@ public sealed class PackagedApps
 
     public Package? Find(string displayName) => FindAll(displayName).FirstOrDefault();
 
+    /// <summary>The installed packages of one package family (the name Windows itself gives a package), newest first.
+    /// A family is exact: no display name is involved.</summary>
+    public IEnumerable<Package> FindAllByFamily(string familyName) =>
+        familyName.Length == 0
+            ? []
+            : Packages().Where(p => string.Equals(p.FamilyName, familyName, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>
     /// The packages behind a winget row, newest first. A display name alone is not enough: a classic install
     /// can carry the very name of a Store app. winget's own <c>MSIX\&lt;package full name&gt;</c> id names the

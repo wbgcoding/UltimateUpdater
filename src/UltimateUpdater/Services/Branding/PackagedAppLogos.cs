@@ -44,9 +44,12 @@ internal sealed class PackagedAppLogos
         _hasIcon = hasIcon ?? (path => IconCacheService.HasIconResource(path, 0));
     }
 
-    public Logo? Find(string displayName)
+    /// <summary>The logo of the app. With a package family name the package is found by it alone (a display name is
+    /// not unique: a classic program can carry the name of a Store app); without one the display name decides.</summary>
+    public Logo? Find(string displayName, string? familyName = null)
     {
-        foreach (var package in _apps.FindAll(displayName))
+        var candidates = familyName is { Length: > 0 } ? _apps.FindAllByFamily(familyName) : _apps.FindAll(displayName);
+        foreach (var package in candidates)
         {
             // The app's own executable carries the icon the vendor made for it, finished and opaque; the
             // manifest logo is only a white mark that needs a plate. So the executable wins when it has one.

@@ -254,6 +254,16 @@ public class PackagedAppLogoTests : IDisposable
     }
 
     [Fact]
+    public void With_a_package_family_the_package_is_found_by_it_and_a_matching_display_name_alone_is_not_enough()
+    {
+        var logos = Logos(WhiteMarkPackage());
+
+        Assert.NotNull(logos.Find("Some Other Name", "Zq.Chat_0123456789abc"));
+        Assert.Null(logos.Find(PackageName, "Other.Family_0123456789abc"));
+        Assert.NotNull(logos.Find(PackageName));
+    }
+
+    [Fact]
     public void The_cache_key_changes_so_icons_cached_with_a_plate_are_never_read_again()
     {
         Assert.NotEqual("v3", IconCacheService.CacheKeyVersion);

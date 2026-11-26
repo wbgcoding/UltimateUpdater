@@ -118,12 +118,17 @@ public sealed class IconCacheService
     /// then (a Steam game) Steam's cached icon. Null (never throws) when none is found; the row shows its kind's symbol.
     /// Reads files and the registry, so call it off the UI thread.
     /// </summary>
-    public BitmapSource? GetEntryIcon(string entryKey, string name, string? displayIcon, string? installLocation, bool isStoreApp, string? steamAppId = null) =>
-        Resolve(CacheKey("uninstall", entryKey), () => FindEntryIconSource(name, displayIcon, installLocation, isStoreApp, steamAppId));
+    public BitmapSource? GetEntryIcon(
+        string entryKey, string name, string? displayIcon, string? installLocation, bool isStoreApp, string? steamAppId = null,
+        string? packageFamilyName = null) =>
+        Resolve(
+            CacheKey("uninstall", entryKey),
+            () => FindEntryIconSource(name, displayIcon, installLocation, isStoreApp, steamAppId, packageFamilyName));
 
-    internal IconSource? FindEntryIconSource(string name, string? displayIcon, string? installLocation, bool isStoreApp, string? steamAppId)
+    internal IconSource? FindEntryIconSource(
+        string name, string? displayIcon, string? installLocation, bool isStoreApp, string? steamAppId, string? packageFamilyName = null)
     {
-        if (isStoreApp && _packages.Find(name) is { } packaged)
+        if (isStoreApp && _packages.Find(name, packageFamilyName) is { } packaged)
             return new IconSource(packaged.Path, 0, IsImageFile: !packaged.IsExecutable, packaged.Plate);
 
         if (ParseIconValue(displayIcon) is { } declared)
