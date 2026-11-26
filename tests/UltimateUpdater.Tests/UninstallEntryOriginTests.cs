@@ -160,6 +160,25 @@ public class UninstallEntryOriginTests
     }
 
     [Fact]
+    public void A_folder_holding_only_hidden_or_system_files_is_not_empty()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "uu-origin-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(root);
+            var hidden = Path.Combine(root, "save.dat");
+            File.WriteAllText(hidden, "x");
+            File.SetAttributes(hidden, FileAttributes.Hidden | FileAttributes.System);
+
+            Assert.False(UninstallEntryOrigin.IsEmptyFolder(root));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void An_empty_steam_folder_shows_the_note_and_the_row_stays_removable()
     {
         LocalizationService.Instance.Apply("en");

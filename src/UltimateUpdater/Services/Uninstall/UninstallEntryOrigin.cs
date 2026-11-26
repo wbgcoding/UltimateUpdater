@@ -139,13 +139,13 @@ public static class UninstallEntryOrigin
         }
     }
 
-    /// <summary>True when the folder exists and no file lies anywhere under it. A folder that cannot be read counts as not empty.</summary>
+    /// <summary>True when the folder exists and no file lies anywhere under it (hidden and system files count as files). A folder that cannot be read counts as not empty.</summary>
     public static bool IsEmptyFolder(string path)
     {
         try
         {
             return Directory.Exists(path)
-                   && !Directory.EnumerateFiles(path, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = false })
+                   && !Directory.EnumerateFiles(path, "*", new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = false, AttributesToSkip = 0 })
                        .Any();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
