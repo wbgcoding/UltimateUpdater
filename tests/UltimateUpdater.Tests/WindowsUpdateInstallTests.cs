@@ -128,7 +128,7 @@ public class WindowsUpdateInstallTests
     {
         var offered = new List<UpdateItem> { Row(Guid1) };
 
-        var kept = WindowsUpdateSource.DropInstalled(offered, [], out var dropped);
+        var kept = WindowsUpdateSource.DropInstalled(offered, new Dictionary<string, int>(), out var dropped);
 
         Assert.Empty(dropped);
         Assert.Same(offered, kept);
