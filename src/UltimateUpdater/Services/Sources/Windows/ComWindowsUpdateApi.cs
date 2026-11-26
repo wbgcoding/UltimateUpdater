@@ -5,7 +5,8 @@ namespace UltimateUpdater.Services.Sources.Windows;
 
 /// <summary>
 /// The real <see cref="IWindowsUpdateApi"/>: the in-box WUApiLib COM objects, late-bound through IDispatch
-/// like the rest of <see cref="WindowsUpdateSource"/>.
+/// like the rest of <see cref="WindowsUpdateSource"/>. Download and install run as WUA's asynchronous
+/// <c>Begin*</c>/<c>End*</c> pair, polled through <see cref="WuAsyncRunner"/>, so a Stop can abort them.
 /// </summary>
 internal sealed class ComWindowsUpdateApi(LoggingService logging) : IWindowsUpdateApi
 {
@@ -92,7 +93,7 @@ internal sealed class ComWindowsUpdateApi(LoggingService logging) : IWindowsUpda
 
         // Checked like the install result: a failed download (network, WSUS refusal) would otherwise go on to
         // Install and surface as a misleading install-stage code instead of the download's own HRESULT.
-        var downloadResult = com.Track(Invoke(downloader, "Download"))
+        var downloadResult = com.Track(RunOperation(downloader, "BeginDownload", "EndDownload", "Download", com, cancellationToken))
             ?? throw new InvalidOperationException("Windows Update download returned no result.");
         VerifySucceeded(downloadResult, com, "download");
     }
@@ -115,11 +116,64 @@ internal sealed class ComWindowsUpdateApi(LoggingService logging) : IWindowsUpda
         if (GetProperty(installer, "RebootRequiredBeforeInstallation") is true)
             throw new InvalidOperationException("A restart is pending before this update can install.");
 
-        var installResult = com.Track(Invoke(installer, "Install"))
+        var installResult = com.Track(RunOperation(installer, "BeginInstall", "EndInstall", "Install", com, cancellationToken))
             ?? throw new InvalidOperationException("Windows Update install returned no result.");
 
         VerifySucceeded(installResult, com, "install");
 
         return new WuInstallOutcome(GetProperty(installResult, "RebootRequired") is true);
+    }
+
+    /// <summary>
+    /// Starts the operation asynchronously (no callback objects: the job's own <c>IsCompleted</c> is polled)
+    /// and drives it through <see cref="WuAsyncRunner"/>. Should the late-bound begin call be refused, the
+    /// synchronous call runs instead, exactly as before: a Stop then only lands between stages, which beats
+    /// failing the install over the way it is polled.
+    /// </summary>
+    private object? RunOperation(object operation, string beginMethod, string endMethod, string syncMethod,
+        ComScope com, CancellationToken cancellationToken)
+    {
+        var job = TryBegin(operation, beginMethod);
+        if (job is null)
+            return Invoke(operation, syncMethod);
+
+        com.Track(job);
+        return WuAsyncRunner.Run(new ComAsyncJob(operation, endMethod, job), cancellationToken, log: logging.Info);
+    }
+
+    private object? TryBegin(object operation, string beginMethod)
+    {
+        // Two spellings of "no callback": a typed null interface pointer first (what the IUnknown parameters
+        // want), a plain null second.
+        object?[][] attempts =
+        [
+            [new UnknownWrapper(null), new UnknownWrapper(null), null],
+            [null, null, null],
+        ];
+
+        foreach (var args in attempts)
+        {
+            try
+            {
+                if (Invoke(operation, beginMethod, args) is { } job)
+                    return job;
+            }
+            catch (Exception ex) when (ex is COMException or ArgumentException or MissingMethodException or NotSupportedException)
+            {
+                logging.Info($"windowsupdate: {beginMethod} refused a call form ({ex.GetType().Name} 0x{ex.HResult:X8}).");
+            }
+        }
+
+        logging.Warn($"windowsupdate: {beginMethod} is unavailable, using the blocking call (a Stop lands between stages only).");
+        return null;
+    }
+
+    private sealed class ComAsyncJob(object operation, string endMethod, object job) : IWuAsyncJob
+    {
+        public bool IsCompleted => GetProperty(job, "IsCompleted") is true;
+
+        public void RequestAbort() => Invoke(job, "RequestAbort");
+
+        public object? End() => Invoke(operation, endMethod, job);
     }
 }
