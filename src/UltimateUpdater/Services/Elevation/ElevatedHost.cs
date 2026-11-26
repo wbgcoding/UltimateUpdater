@@ -515,7 +515,8 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
     /// </param>
     public async Task<bool> RunAsync(
         string kind, object payload, Func<string, bool> onLine, CancellationToken cancellationToken,
-        bool exclusive = true, ElevatedJobHandle? handle = null, bool allowStart = true)
+        bool exclusive = true, ElevatedJobHandle? handle = null, bool allowStart = true,
+        CancellationToken stopWhenIdle = default)
     {
         // A job that may not start the helper never enters the start sequence: if the helper ended right after
         // the check, that sequence would launch it and raise the prompt this flag prevents. A drop after the
@@ -576,6 +577,9 @@ public sealed class ElevatedHost(LoggingService logging) : IAsyncDisposable
             // handle can send a "pause" straight away, so it carries the same risk as the stop below.
             handle?.Attach(this, id);
             using var stopOnCancel = cancellationToken.Register(() => _ = Background.Run(SendControlAsync(id, "cancel"), logging, "cancel control send"));
+
+            // A softer stop: the worker ends the job only if its process tree is waiting for input right now.
+            using var stopIdle = stopWhenIdle.Register(() => _ = Background.Run(SendControlAsync(id, "stop-idle"), logging, "stop-idle control send"));
 
             // The wait itself stays un-cancellable. The worker owns what it was handed and always answers; walking
             // away would leave its replies with nobody to read them. Stopping means telling it to stop, above, and

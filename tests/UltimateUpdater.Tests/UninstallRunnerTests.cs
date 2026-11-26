@@ -39,12 +39,17 @@ public class UninstallRunnerTests
 
         public int MaxConcurrent { get; private set; }
 
+        /// <summary>The "end it if it waits for input" token the last run was given.</summary>
+        public CancellationToken StopWhenIdle { get; private set; }
+
         public List<string> Started { get; } = [];
 
-        public async Task<UninstallExecutionResult> RunAsync(InstalledProgramEntry entry, UninstallPlan plan, CancellationToken ct)
+        public async Task<UninstallExecutionResult> RunAsync(
+            InstalledProgramEntry entry, UninstallPlan plan, CancellationToken ct, CancellationToken stopWhenIdle)
         {
             lock (_gate)
             {
+                StopWhenIdle = stopWhenIdle;
                 _current++;
                 MaxConcurrent = Math.Max(MaxConcurrent, _current);
                 Started.Add(entry.Name);
@@ -261,7 +266,7 @@ public class UninstallRunnerTests
     }
 
     [Fact]
-    public async Task A_stop_lets_the_running_removal_finish_and_starts_no_other_entry()
+    public async Task A_stop_during_a_removal_that_still_finishes_starts_no_other_entry()
     {
         var h = new Harness();
         h.Add("A", MachinePlan()).Add("B", MachinePlan()).Add("C", MachinePlan()).Add("Win", InteractivePlan());
@@ -283,6 +288,50 @@ public class UninstallRunnerTests
             Assert.Equal(UninstallOutcome.NotStarted, r.Outcome);
             Assert.Equal("UninstallNotStarted", r.Reason);
         });
+    }
+
+    [Fact]
+    public async Task A_stop_leaves_a_working_removal_running_to_its_end_but_tells_it_to_stop_if_it_waits()
+    {
+        var h = new Harness();
+        h.Add("A", MachinePlan()).Add("B", MachinePlan());
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var hardCancelled = false;
+        h.Machine.Handler = async (_, ct) =>
+        {
+            started.SetResult();
+            await release.Task;
+            hardCancelled = ct.IsCancellationRequested;
+            return new UninstallExecutionResult(0);
+        };
+
+        var run = h.RunAsync(null, default, "A", "B");
+        await started.Task.WaitAsync(Patience);
+        Assert.False(h.Machine.StopWhenIdle.IsCancellationRequested);
+        h.Runner.Stop();
+
+        Assert.True(h.Machine.StopWhenIdle.IsCancellationRequested, "a stop must reach the removal as the end-if-idle signal");
+        release.SetResult();
+        var results = await run.WaitAsync(Patience);
+
+        Assert.False(hardCancelled, "a stop must not cancel a removal that is still working");
+        Assert.Equal(UninstallOutcome.Removed, results[0].Outcome);
+        Assert.Equal(UninstallOutcome.NotStarted, results[1].Outcome);
+        Assert.Equal(["A"], h.Machine.Started);
+    }
+
+    [Fact]
+    public async Task A_removal_that_sat_waiting_for_input_fails_with_that_reason_and_is_not_looked_up_as_gone()
+    {
+        var h = new Harness().Add("A", MachinePlan(), gone: false);
+        h.Machine.Handler = (_, _) => Task.FromResult(new UninstallExecutionResult(null, "tool: stopped", Stalled: true));
+
+        var result = Assert.Single(await h.RunAsync(null, default, "A"));
+
+        Assert.Equal(UninstallOutcome.Failed, result.Outcome);
+        Assert.Equal("UninstallWaitedForInput", result.Reason);
+        Assert.Equal(0, h.GoneChecks);
     }
 
     [Fact]

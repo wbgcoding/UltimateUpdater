@@ -2473,6 +2473,9 @@ Continue with admin rights?</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>The uninstaller finished, but the program is still installed.</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>The uninstaller waited for input and was stopped. Run it from Programs and Features instead.</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>The uninstall was cancelled.</value>
   </data>

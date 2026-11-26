@@ -364,7 +364,7 @@ public class UninstallDriverTests : IDisposable
 
     private sealed class NoopExecutor : IUninstallExecutor
     {
-        public Task<UninstallExecutionResult> RunAsync(InstalledProgramEntry entry, UninstallPlan plan, CancellationToken ct) =>
+        public Task<UninstallExecutionResult> RunAsync(InstalledProgramEntry entry, UninstallPlan plan, CancellationToken ct, CancellationToken stopWhenIdle) =>
             Task.FromResult(new UninstallExecutionResult(0));
     }
 }

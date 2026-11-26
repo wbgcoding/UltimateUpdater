@@ -22,12 +22,16 @@ public enum UninstallEntryState
 
 /// <summary>What running one removal reported: the program's exit code (null when it never ran to an exit) and the
 /// tool's own output tail for the details view.</summary>
-public sealed record UninstallExecutionResult(int? ExitCode, string? Detail = null, bool Cancelled = false);
+/// <param name="Stalled">The removal sat still for the whole stall window (a vendor window waiting for input) and was ended.</param>
+public sealed record UninstallExecutionResult(
+    int? ExitCode, string? Detail = null, bool Cancelled = false, bool Stalled = false);
 
 /// <summary>Where a removal runs: the elevated worker for machine entries, this process for the rest.</summary>
 public interface IUninstallExecutor
 {
-    Task<UninstallExecutionResult> RunAsync(InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken);
+    /// <param name="stopWhenIdle">Cancelled by a stop of the run: ends a removal that is waiting for input, never one that works.</param>
+    Task<UninstallExecutionResult> RunAsync(
+        InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken, CancellationToken stopWhenIdle);
 }
 
 /// <summary>The end of one entry: what happened and, for a failure, why in the user's words.</summary>
@@ -42,7 +46,8 @@ public sealed record UninstallEntryUpdate(InstalledProgramEntry Entry, Uninstall
 /// gate (Windows Installer holds one machine-wide lock that a per-user MSI takes as well, and most setups collide),
 /// each kind in its own order; Store apps run up to three at a time beside them. A removal that shows the vendor's own
 /// window is held back until every silent one has finished and then runs alone, one at a time. A stop lets the
-/// running removals finish and starts no further entry.
+/// running removals finish, except one that sits idle waiting for input (ended with its whole process tree and
+/// reported as such), and starts no further entry.
 /// After each removal the entry is looked up again: the program being gone is the truth, the exit code only
 /// explains a failure. An entry the planner refused fails at once with its reason and never reaches an executor.
 /// </summary>
@@ -59,6 +64,7 @@ public sealed class UninstallRunner
     private readonly TimeSpan _lateRemovalWindow;
     private readonly TimeSpan _lateRemovalPoll;
     private volatile bool _stopRequested;
+    private readonly CancellationTokenSource _stop = new();
 
     /// <summary>How long a setup recognised by its files (or shown to a person) is given, after it has ended, to
     /// finish removing the entry: some hand the work to a process the first one does not wait for.</summary>
@@ -84,8 +90,13 @@ public sealed class UninstallRunner
 
     public bool StopRequested => _stopRequested;
 
-    /// <summary>No new entry starts; the ones running finish. The entries not started come back as NotStarted.</summary>
-    public void Stop() => _stopRequested = true;
+    /// <summary>No new entry starts; the ones running finish, except a removal waiting for input, which is ended with its
+    /// whole process tree. The entries not started come back as NotStarted.</summary>
+    public void Stop()
+    {
+        _stopRequested = true;
+        _stop.Cancel();
+    }
 
     /// <param name="hardToken">Ends the running removals too (the app shuts down); a normal stop uses <see cref="Stop"/>.</param>
     public async Task<IReadOnlyList<UninstallEntryResult>> RunAsync(
@@ -187,7 +198,7 @@ public sealed class UninstallRunner
         UninstallExecutionResult run;
         try
         {
-            run = await (plan.Elevated ? _machineExecutor : _userExecutor).RunAsync(entry, plan, hardToken);
+            run = await (plan.Elevated ? _machineExecutor : _userExecutor).RunAsync(entry, plan, hardToken, _stop.Token);
         }
         catch (OperationCanceledException)
         {
@@ -198,6 +209,9 @@ public sealed class UninstallRunner
         {
             return new UninstallEntryResult(entry, UninstallOutcome.Failed, _lookup("UninstallCouldNotStart"), ex.Message);
         }
+
+        if (run.Stalled)
+            return new UninstallEntryResult(entry, UninstallOutcome.Failed, _lookup("UninstallWaitedForInput"), run.Detail, run.ExitCode);
 
         if (run.Cancelled)
             return new UninstallEntryResult(entry, UninstallOutcome.Failed, _lookup("UninstallCancelled"), run.Detail, run.ExitCode);

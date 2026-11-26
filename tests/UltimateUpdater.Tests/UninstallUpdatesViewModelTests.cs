@@ -241,7 +241,7 @@ public class UninstallUpdatesViewModelTests
 
     private sealed class NeverExecutor : IUninstallExecutor
     {
-        public Task<UninstallExecutionResult> RunAsync(InstalledProgramEntry entry, UninstallPlan plan, CancellationToken ct) =>
+        public Task<UninstallExecutionResult> RunAsync(InstalledProgramEntry entry, UninstallPlan plan, CancellationToken ct, CancellationToken stopWhenIdle) =>
             throw new NotSupportedException();
     }
 

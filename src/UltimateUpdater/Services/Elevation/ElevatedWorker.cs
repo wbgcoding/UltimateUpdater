@@ -330,6 +330,10 @@ public static class ElevatedWorker
     {
         public CancellationTokenSource Cancellation { get; } = new();
 
+        /// <summary>Tripped by the app's "stop-idle" control: a removal whose process tree is waiting for input is
+        /// ended; one that works is left alone.</summary>
+        public CancellationTokenSource StopWhenIdle { get; } = new();
+
         public PauseGate Pause { get; } = new();
 
         /// <summary>
@@ -618,6 +622,7 @@ public static class ElevatedWorker
             {
                 logging.Warn($"Elevated worker received a second job under a running id ('{job.Kind}'); ending the session.");
                 control.Cancellation.Dispose();
+                control.StopWhenIdle.Dispose();
                 break;
             }
 
@@ -713,6 +718,11 @@ public static class ElevatedWorker
                     control.Cancellation.Cancel();
                     break;
 
+                case "stop-idle":
+                    logging.Info("Elevated job asked to end if it is waiting for input.");
+                    control.StopWhenIdle.Cancel();
+                    break;
+
                 case "pause":
                     control.Pause.Pause();
                     break;
@@ -792,7 +802,8 @@ public static class ElevatedWorker
             if (job.Kind == "install")
                 await RunInstallAsync(job, writer, logging, control);
             else if (job.Kind == "uninstall-program")
-                await ProgramUninstallWorker.RunJobAsync(job.Payload, writer, job.Id, logging, control.Cancellation.Token);
+                await ProgramUninstallWorker.RunJobAsync(
+                    job.Payload, writer, job.Id, logging, control.Cancellation.Token, stopWhenIdle: control.StopWhenIdle.Token);
             else if (job.Kind == "uninstall-restore")
                 await QuarantineRestoreWorker.RunJobAsync(job.Payload, writer, job.Id, logging, control.Cancellation.Token);
             else
@@ -820,6 +831,7 @@ public static class ElevatedWorker
             // the gate for the rest of the session.
             control.Pause.Resume();
             control.Cancellation.Dispose();
+            control.StopWhenIdle.Dispose();
 
             // What a stop registered for an item that never started (and nothing else removed) is released
             // with the job.

@@ -2473,6 +2473,9 @@ Continuare con privilegi di amministratore?</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>Il programma di disinstallazione è terminato, ma il programma risulta ancora installato.</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>Il programma di disinstallazione attendeva un'azione ed è stato interrotto. Avvialo da Programmi e funzionalità.</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>La disinstallazione è stata annullata.</value>
   </data>

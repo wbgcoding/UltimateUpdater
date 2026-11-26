@@ -71,7 +71,7 @@ public class InstallStallWatchTests
     }
 
     /// <summary>A child that runs until it is killed, then ends and closes its pipes, like a real tree stop.</summary>
-    private sealed class HangingChild : IChildProcess
+    internal sealed class HangingChild : IChildProcess
     {
         private readonly TaskCompletionSource _killed = new(TaskCreationOptions.RunContinuationsAsynchronously);
 

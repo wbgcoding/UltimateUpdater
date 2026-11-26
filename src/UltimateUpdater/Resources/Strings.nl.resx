@@ -2473,6 +2473,9 @@ Doorgaan met beheerdersrechten?</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>Het verwijderprogramma is klaar, maar het programma staat nog steeds geïnstalleerd.</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>Het verwijderprogramma wachtte op invoer en is gestopt. Voer het uit via Programma's en onderdelen.</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>Het verwijderen is geannuleerd.</value>
   </data>

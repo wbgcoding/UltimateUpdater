@@ -2473,6 +2473,9 @@ Continuați cu drepturi de administrator?</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>Programul de dezinstalare s-a încheiat, dar programul este încă instalat.</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>Programul de dezinstalare aștepta o acțiune și a fost oprit. Rulează-l din Programe și caracteristici.</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>Dezinstalarea a fost anulată.</value>
   </data>

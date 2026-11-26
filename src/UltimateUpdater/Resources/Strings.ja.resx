@@ -2473,6 +2473,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>アンインストーラーは終了しましたが、プログラムはまだインストールされています。</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>アンインストーラーが入力を待っていたため停止しました。代わりに「プログラムと機能」から実行してください。</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>アンインストールはキャンセルされました。</value>
   </data>
