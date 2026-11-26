@@ -74,6 +74,9 @@ public sealed partial class UninstallRowViewModel : ObservableObject
 
     public bool HasNote => NoteText.Length > 0;
 
+    /// <summary>Why the row cannot be ticked (the hover on its lock); empty for a selectable row.</summary>
+    public string UnavailableReason => UninstallRowText.Unavailable(this);
+
     /// <summary>The game launcher the entry came through (Steam, EA app, Epic Games, GOG, Ubisoft Connect, Battle.net), empty when none.</summary>
     public string SourceLabel => UninstallEntryOrigin.Label(Entry) ?? string.Empty;
 
@@ -161,6 +164,7 @@ public sealed partial class UninstallRowViewModel : ObservableObject
 
         IsVerified = true;
         OnPropertyChanged(nameof(Selectable));
+        OnPropertyChanged(nameof(UnavailableReason));
     }
 
     /// <summary>Takes a fresh read's data over, keeping the row itself. A ticked row that stops being selectable is unticked.</summary>
@@ -181,7 +185,7 @@ public sealed partial class UninstallRowViewModel : ObservableObject
     [
         nameof(Listing), nameof(Entry), nameof(Name), nameof(Publisher), nameof(Version), nameof(SizeBytes), nameof(InstallDate),
         nameof(SizeText), nameof(InstalledText), nameof(RiskLevel), nameof(Selectable), nameof(IsRisky), nameof(RiskLevelText),
-        nameof(ReasonText), nameof(RiskTooltip), nameof(MethodText), nameof(NoteText), nameof(HasNote), nameof(SortName),
+        nameof(ReasonText), nameof(RiskTooltip), nameof(MethodText), nameof(NoteText), nameof(HasNote), nameof(UnavailableReason), nameof(SortName),
         nameof(SourceLabel), nameof(FolderText), nameof(FolderPath), nameof(OriginText), nameof(HasOrigin),
     ];
 
@@ -193,6 +197,7 @@ public sealed partial class UninstallRowViewModel : ObservableObject
         OnPropertyChanged(nameof(RiskTooltip));
         OnPropertyChanged(nameof(MethodText));
         OnPropertyChanged(nameof(NoteText));
+        OnPropertyChanged(nameof(UnavailableReason));
         OnPropertyChanged(nameof(StateText));
         OnPropertyChanged(nameof(SizeText));
         OnPropertyChanged(nameof(InstalledText));
@@ -218,6 +223,23 @@ internal static class UninstallRowText
         UninstallRefusal.UpdateNotRemovable => LocalizationService.Instance["UninstallerUpdateKept"],
         _ => entry.InstallFolderEmpty ? LocalizationService.Instance["UninstallerSteamFolderEmpty"] : string.Empty,
     };
+
+    /// <summary>Why a row cannot be ticked: not confirmed yet, the risk rating bars it (this app), the plan refused it (a driver in use, an update Windows keeps), or
+    /// there is simply no way to remove it. Empty when the row is selectable.</summary>
+    internal static string Unavailable(UninstallRowViewModel row)
+    {
+        if (row.Selectable)
+            return string.Empty;
+
+        var loc = LocalizationService.Instance;
+        if (!row.IsVerified)
+            return loc["UninstallerUnavailableChecking"];
+
+        if (!row.Listing.Risk.Selectable)
+            return row.ReasonText;
+
+        return row.HasNote ? row.NoteText : loc["UninstallerUnavailableNoMethod"];
+    }
 
     internal static string MethodKey(UninstallPlan plan) => plan.Method switch
     {

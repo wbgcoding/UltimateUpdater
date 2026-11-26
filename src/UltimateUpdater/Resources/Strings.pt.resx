@@ -2797,4 +2797,10 @@ Continuar com direitos de administrador?</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Mostra um lembrete na janela principal quando a última limpeza foi há muito tempo.</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Ainda a verificar se esta entrada está instalada</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>Não existe uma forma automática de remover esta entrada</value>
+  </data>
 </root>

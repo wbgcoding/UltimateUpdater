@@ -2797,4 +2797,10 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Son temizlik uzun zaman önce yapıldıysa ana pencerede bir hatırlatma gösterir.</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Bu girdinin kurulu olup olmadığı hâlâ denetleniyor</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>Bu girdiyi kaldırmanın otomatik bir yolu yok</value>
+  </data>
 </root>

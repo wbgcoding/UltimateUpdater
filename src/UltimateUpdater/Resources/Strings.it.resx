@@ -2797,4 +2797,10 @@ Continuare con privilegi di amministratore?</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Mostra un promemoria nella finestra principale quando l'ultima pulizia risale a molto tempo fa.</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Verifica in corso: questa voce è installata?</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>Non esiste un modo automatico per rimuovere questa voce</value>
+  </data>
 </root>

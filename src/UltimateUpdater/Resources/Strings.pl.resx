@@ -2797,4 +2797,10 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Pokazuje przypomnienie w głównym oknie, gdy ostatnie czyszczenie było dawno temu.</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Trwa sprawdzanie, czy ten wpis jest zainstalowany</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>Nie ma automatycznego sposobu usunięcia tego wpisu</value>
+  </data>
 </root>

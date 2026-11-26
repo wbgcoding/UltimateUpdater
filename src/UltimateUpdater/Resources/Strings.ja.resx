@@ -2797,4 +2797,10 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>前回のクリーンアップから長い時間がたつと、メインウィンドウにお知らせを表示します。</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>このエントリがインストールされているか確認中です</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>このエントリを自動で削除する方法はありません</value>
+  </data>
 </root>

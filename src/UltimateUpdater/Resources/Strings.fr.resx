@@ -2797,4 +2797,10 @@ Continuer avec les droits administrateur ?</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Affiche un rappel dans la fenêtre principale lorsque le dernier nettoyage est ancien.</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Vérification en cours : cette entrée est-elle installée ?</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>Il n'existe aucun moyen automatique de supprimer cette entrée</value>
+  </data>
 </root>

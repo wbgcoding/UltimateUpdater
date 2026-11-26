@@ -2797,4 +2797,10 @@ Continuați cu drepturi de administrator?</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Afișează un memento în fereastra principală când ultima curățare a fost demult.</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Se verifică încă dacă această intrare este instalată</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>Nu există o cale automată de a elimina această intrare</value>
+  </data>
 </root>

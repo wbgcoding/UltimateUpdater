@@ -2797,4 +2797,10 @@ Doorgaan met beheerdersrechten?</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Toont een herinnering in het hoofdvenster als de laatste opruiming lang geleden is.</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Er wordt nog gecontroleerd of dit item is geïnstalleerd</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>Er is geen automatische manier om dit item te verwijderen</value>
+  </data>
 </root>

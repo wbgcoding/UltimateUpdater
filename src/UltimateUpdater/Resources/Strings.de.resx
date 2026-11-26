@@ -2797,4 +2797,10 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Zeigt im Hauptfenster einen Hinweis, wenn die letzte Bereinigung lange zurückliegt.</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Es wird noch geprüft, ob dieser Eintrag installiert ist</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>Für diesen Eintrag gibt es keinen automatischen Weg zum Entfernen</value>
+  </data>
 </root>

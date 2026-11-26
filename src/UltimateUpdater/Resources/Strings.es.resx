@@ -2797,4 +2797,10 @@ Esto no se puede deshacer.</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Muestra un aviso en la ventana principal cuando la última limpieza fue hace mucho.</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Aún se está comprobando si esta entrada está instalada</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>No hay una forma automática de quitar esta entrada</value>
+  </data>
 </root>

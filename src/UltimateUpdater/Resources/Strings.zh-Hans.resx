@@ -2797,4 +2797,10 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>距上次清理很久时，在主窗口显示提醒。</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>仍在检查此条目是否已安装</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>无法自动移除此条目</value>
+  </data>
 </root>

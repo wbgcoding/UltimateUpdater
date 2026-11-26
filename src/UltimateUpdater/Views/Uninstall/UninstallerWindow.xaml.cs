@@ -9,9 +9,6 @@ public partial class UninstallerWindow
 {
     private readonly UninstallerViewModel _viewModel;
 
-    /// <summary>The row of the last plain checkbox click, where a Shift+click range starts.</summary>
-    private UninstallRowViewModel? _anchor;
-
     public UninstallerWindow(UninstallerViewModel viewModel)
     {
         InitializeComponent();
@@ -41,32 +38,25 @@ public partial class UninstallerWindow
     }
 
     /// <summary>
-    /// Shift+click on a row's checkbox ticks the range from the last clicked row (Risky rows excepted, they are only
-    /// ever ticked by their own click); a plain click remembers its row as the next range's start and ticks normally.
+    /// A left click anywhere on a row (the box, the name, the empty space) toggles its tick; Shift+click ticks the range
+    /// from the last click. Left unhandled, so the list still highlights the row for Space and Ctrl/Shift selection.
     /// </summary>
-    private void OnRowCheckBoxMouseDown(object sender, MouseButtonEventArgs e)
+    private void OnRowListMouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not FrameworkElement { DataContext: UninstallRowViewModel row })
+        if (sender is not System.Windows.Controls.ListBox list || e.OriginalSource is not DependencyObject source)
             return;
 
-        if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0 && _anchor is not null)
-        {
-            var section = _viewModel.Sections.FirstOrDefault(s => s.Rows.Contains(row) && s.Rows.Contains(_anchor));
-            if (section is not null)
-            {
-                _viewModel.SelectRange(section.Rows, _anchor, row);
-                e.Handled = true;
-                return;
-            }
-        }
+        var item = ItemsControl.ContainerFromElement(list, source) as ListBoxItem;
+        if (item?.DataContext is not UninstallRowViewModel row)
+            return;
 
-        _anchor = row;
+        _viewModel.ClickRow(row, list.Items.OfType<UninstallRowViewModel>().ToList(), (Keyboard.Modifiers & ModifierKeys.Shift) != 0);
     }
 
     /// <summary>Space ticks or unticks the highlighted rows together (one row: like its own checkbox).</summary>
     private void OnRowListKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key != Key.Space || sender is not System.Windows.Controls.ListBox list || e.OriginalSource is System.Windows.Controls.CheckBox)
+        if (e.Key != Key.Space || sender is not System.Windows.Controls.ListBox list)
             return;
 
         _viewModel.ToggleRows(list.SelectedItems.OfType<UninstallRowViewModel>().ToList());

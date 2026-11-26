@@ -2797,4 +2797,10 @@ Continue with admin rights?</value>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Shows a reminder in the main window when the last cleanup was a long time ago.</value>
   </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Still checking whether this entry is installed</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>There is no automatic way to remove this entry</value>
+  </data>
 </root>
