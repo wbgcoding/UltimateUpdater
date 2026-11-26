@@ -21,7 +21,7 @@ internal sealed class ComWindowsUpdateApi(LoggingService logging) : IWindowsUpda
         public void Dispose() => com.Dispose();
     }
 
-    public IWuSearchResult Search(string criteria, CancellationToken cancellationToken)
+    public IWuSearchResult Search(string criteria, CancellationToken cancellationToken, bool offline = false)
     {
         var com = new ComScope();
         try
@@ -31,6 +31,11 @@ internal sealed class ComWindowsUpdateApi(LoggingService logging) : IWindowsUpda
 
             var searcher = com.Track(Invoke(session, "CreateUpdateSearcher"))
                 ?? throw new InvalidOperationException("Windows Update searcher unavailable.");
+
+            // Online = false: the search reads the local datastore instead of asking the update service, so a
+            // question about installed updates neither waits for the network nor hits the service.
+            if (offline)
+                SetProperty(searcher, "Online", false);
 
             var searchResult = com.Track(Invoke(searcher, "Search", criteria))
                 ?? throw new InvalidOperationException("Windows Update search failed.");

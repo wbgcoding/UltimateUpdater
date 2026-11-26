@@ -22,8 +22,10 @@ internal interface IWuSearchResult : IDisposable
 /// </summary>
 internal interface IWindowsUpdateApi
 {
-    /// <summary>One search with the given criteria. A broken service throws, an empty answer returns an empty list.</summary>
-    IWuSearchResult Search(string criteria, CancellationToken cancellationToken);
+    /// <summary>One search with the given criteria. A broken service throws, an empty answer returns an empty list.
+    /// <paramref name="offline"/> answers from the local datastore only (no contact with the update service), which
+    /// is all a question about what is already installed needs.</summary>
+    IWuSearchResult Search(string criteria, CancellationToken cancellationToken, bool offline = false);
 
     /// <summary>Best effort: a licence that cannot be accepted is logged, the install goes on.</summary>
     void AcceptEula(WuUpdateRef update);

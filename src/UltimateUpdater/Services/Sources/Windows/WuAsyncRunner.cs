@@ -14,6 +14,19 @@ internal interface IWuAsyncJob
 }
 
 /// <summary>
+/// A Stop whose abort the agent did not honour in time: the job is given up and goes on in the background, so the
+/// update may still change state after the Stop. It is a cancellation (callers that only care about "stopped" catch
+/// <see cref="OperationCanceledException"/>) but a distinct one, so the source can tell it from a clean abort.
+/// </summary>
+internal sealed class WuOperationStillRunningException : OperationCanceledException
+{
+    public WuOperationStillRunningException(CancellationToken token)
+        : base("The Windows Update operation did not stop in time and is still finishing in the background.", token)
+    {
+    }
+}
+
+/// <summary>
 /// Drives a <see cref="IWuAsyncJob"/> to its end. The synchronous WUA calls cannot be interrupted, so a Stop
 /// pressed during a long download only took effect after it; this polls with the token instead and, on a
 /// cancel, asks the agent to abort and collects the job, all within a bounded time so the elevated worker
@@ -31,7 +44,8 @@ internal static class WuAsyncRunner
     /// Returns the job's result once it completed. When <paramref name="cancellationToken"/> fires first:
     /// <c>RequestAbort</c>, wait up to <paramref name="abortGrace"/> for the job to finish, then <c>End</c>
     /// it (skipped when it never finished, since ending an unfinished job blocks) and throw
-    /// <see cref="OperationCanceledException"/>.
+    /// <see cref="OperationCanceledException"/>; a job that outlived the grace throws the distinct
+    /// <see cref="WuOperationStillRunningException"/> instead.
     /// </summary>
     public static object? Run(IWuAsyncJob job, CancellationToken cancellationToken,
         TimeSpan? pollInterval = null, TimeSpan? abortGrace = null, Action<string>? log = null)
@@ -43,7 +57,9 @@ internal static class WuAsyncRunner
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                Abort(job, poll, grace, log);
+                if (!Abort(job, poll, grace, log))
+                    throw new WuOperationStillRunningException(cancellationToken);
+
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
@@ -68,7 +84,8 @@ internal static class WuAsyncRunner
         }
     }
 
-    private static void Abort(IWuAsyncJob job, TimeSpan poll, TimeSpan grace, Action<string>? log)
+    /// <summary>Asks for the abort and waits the grace out. False = the job is still running and left to the agent.</summary>
+    private static bool Abort(IWuAsyncJob job, TimeSpan poll, TimeSpan grace, Action<string>? log)
     {
         try
         {
@@ -88,7 +105,7 @@ internal static class WuAsyncRunner
         if (!CompletedAfterAbort(job))
         {
             log?.Invoke($"windowsupdate: the aborted operation did not end within {grace.TotalSeconds:0} s, it is left to finish in the background.");
-            return;
+            return false;
         }
 
         try
@@ -100,5 +117,7 @@ internal static class WuAsyncRunner
             // The result of an aborted job carries nothing the caller needs; the abort itself is the answer.
             log?.Invoke($"windowsupdate: ending the aborted operation reported: {ex.Message}");
         }
+
+        return true;
     }
 }

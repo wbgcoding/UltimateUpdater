@@ -87,8 +87,9 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
         // do. Only when something is offered is the installed list read, a local lookup.
         if (offered.Count > 0)
         {
-            var installedIds = await Task.Run(() => ReadInstalledIds(cancellationToken), cancellationToken)
-                .WaitAsync(cancellationToken);
+            // No WaitAsync here, unlike the main search: this lookup is local, the COM calls check the token
+            // between them, and an abandoned task would keep a COM session alive behind a finished scan.
+            var installedIds = await Task.Run(() => ReadInstalledIds(cancellationToken), cancellationToken);
             offered = DropInstalled(offered, installedIds, out var dropped);
             if (dropped.Count > 0)
             {
@@ -107,12 +108,12 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
     /// <summary>The GUIDs Windows Update lists as installed, each with its highest installed revision. A failing
     /// lookup is no answer: it returns an empty map so the scan keeps every offered row (the install itself then
     /// settles it).</summary>
-    private Dictionary<string, int> ReadInstalledIds(CancellationToken cancellationToken)
+    internal Dictionary<string, int> ReadInstalledIds(CancellationToken cancellationToken)
     {
         var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            using var installed = _api.Search(InstalledCriteria, cancellationToken);
+            using var installed = _api.Search(InstalledCriteria, cancellationToken, offline: true);
             foreach (var update in installed.Updates)
             {
                 if (!ids.TryGetValue(update.UpdateId, out var known) || update.Revision > known)
@@ -409,7 +410,7 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
         return separatorIndex < 0 ? itemId : itemId[..separatorIndex];
     }
 
-    /// <summary>The revision the original scan saw, for the "moved to a different revision" log line only.</summary>
+    /// <summary>The revision the original scan saw: the "moved to a different revision" log line and the "already installed" rule use it.</summary>
     private static int? ExtractRevision(string itemId)
     {
         var separatorIndex = itemId.LastIndexOf(':');
@@ -432,6 +433,15 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
         try
         {
             InstallLocked(item, progress, cancellationToken);
+        }
+        catch (WuOperationStillRunningException)
+        {
+            // The agent still works on the update the cached search handed out. The next install of the batch
+            // must not reuse that search: it searches afresh and sees the state the agent ends up in. The old
+            // result is dropped without being disposed, the background job still holds its COM objects and
+            // the finalizers release them once it ends.
+            _searchCache = null;
+            throw;
         }
         finally
         {
@@ -463,7 +473,7 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
         {
             // Gone from the offer is not always a failure: an update that finished a moment ago (an earlier
             // run, a stale row, another tool) is simply installed, which is what the user wanted.
-            if (IsAlreadyInstalled(wantedUpdateId, cancellationToken))
+            if (IsAlreadyInstalled(wantedUpdateId, ExtractRevision(item.Id), cancellationToken))
             {
                 _logging.Info($"windowsupdate: '{wantedUpdateId}' is already installed, nothing to do.");
                 progress.Report(new Models.InstallProgress { PercentComplete = 100, StatusText = item.Name });
@@ -532,15 +542,18 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
         return fresh;
     }
 
-    /// <summary>Whether Windows Update itself lists the update as installed. A search that fails here is not
-    /// an answer: it counts as "not installed" so the caller keeps its original failure.</summary>
-    private bool IsAlreadyInstalled(string updateId, CancellationToken cancellationToken)
+    /// <summary>Whether Windows Update itself lists the update as installed at the wanted revision or a newer one
+    /// (an older installed revision of the same GUID is not the update the row asked for). A row without a
+    /// revision falls back to the GUID alone. A search that fails here is not an answer: it counts as "not
+    /// installed" so the caller keeps its original failure.</summary>
+    private bool IsAlreadyInstalled(string updateId, int? wantedRevision, CancellationToken cancellationToken)
     {
         try
         {
-            using var installed = _api.Search(InstalledCriteria, cancellationToken);
+            using var installed = _api.Search(InstalledCriteria, cancellationToken, offline: true);
             return WindowsUpdateMatching.PickInstallTarget(
-                updateId, installed.Updates.Select(c => (c.UpdateId, c.Revision)).ToList()) is not null;
+                updateId, installed.Updates.Select(c => (c.UpdateId, c.Revision)).ToList()) is { } installedRevision
+                && (wantedRevision is not { } wanted || installedRevision >= wanted);
         }
         catch (Exception ex) when (ex is COMException or InvalidOperationException)
         {

@@ -48,6 +48,38 @@ public class WindowsUpdateSearchCacheTests
     }
 
     [Fact]
+    public void An_install_given_up_while_the_agent_still_runs_it_drops_the_cached_search()
+    {
+        var api = new FakeWindowsUpdateApi();
+        api.Offer(Offer, (A, 1), (B, 1));
+        var source = new WindowsUpdateSource(new LoggingService(), api, new Clock());
+        api.OnDownload = (_, ct) => throw new WuOperationStillRunningException(ct);
+
+        Assert.Throws<WuOperationStillRunningException>(() => Run(source, A));
+        api.OnDownload = null;
+        Run(source, B);
+
+        // The second install did not reuse the search the unfinished one was made from.
+        Assert.Equal([Offer, Offer], api.SearchCriteria);
+        Assert.Contains("install:" + B, api.Calls);
+    }
+
+    [Fact]
+    public void A_clean_cancellation_keeps_the_cached_search()
+    {
+        var api = new FakeWindowsUpdateApi();
+        api.Offer(Offer, (A, 1), (B, 1));
+        var source = new WindowsUpdateSource(new LoggingService(), api, new Clock());
+        api.OnDownload = (_, _) => throw new OperationCanceledException();
+
+        Assert.Throws<OperationCanceledException>(() => Run(source, A));
+        api.OnDownload = null;
+        Run(source, B);
+
+        Assert.Equal([Offer], api.SearchCriteria);
+    }
+
+    [Fact]
     public void A_miss_in_the_cached_search_triggers_exactly_one_new_search()
     {
         var api = new FakeWindowsUpdateApi();

@@ -13,6 +13,9 @@ internal sealed class FakeWindowsUpdateApi : IWindowsUpdateApi
 
     public List<string> SearchCriteria { get; } = [];
 
+    /// <summary>The criteria of the searches that asked for the local datastore only.</summary>
+    public List<string> OfflineSearches { get; } = [];
+
     public List<string> Calls { get; } = [];
 
     /// <summary>How many search results were disposed (their COM objects released).</summary>
@@ -37,10 +40,13 @@ internal sealed class FakeWindowsUpdateApi : IWindowsUpdateApi
             _failures[criteria] = failure;
     }
 
-    public IWuSearchResult Search(string criteria, CancellationToken cancellationToken)
+    public IWuSearchResult Search(string criteria, CancellationToken cancellationToken, bool offline = false)
     {
         cancellationToken.ThrowIfCancellationRequested();
         SearchCriteria.Add(criteria);
+        if (offline)
+            OfflineSearches.Add(criteria);
+
         if (_failures.TryGetValue(criteria, out var failure))
             throw failure;
 

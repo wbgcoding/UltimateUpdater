@@ -83,7 +83,7 @@ public class WuAsyncRunnerTests
         cts.CancelAfter(TimeSpan.FromMilliseconds(50));
 
         var sw = Stopwatch.StartNew();
-        Assert.Throws<OperationCanceledException>(() =>
+        Assert.Throws<WuOperationStillRunningException>(() =>
             WuAsyncRunner.Run(job, cts.Token, Poll, TimeSpan.FromMilliseconds(300), log.Add));
 
         Assert.InRange(sw.ElapsedMilliseconds, 250, 2500);

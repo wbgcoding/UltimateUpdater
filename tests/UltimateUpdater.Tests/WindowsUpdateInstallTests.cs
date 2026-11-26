@@ -41,6 +41,49 @@ public class WindowsUpdateInstallTests
     }
 
     [Fact]
+    public void The_installed_lookups_ask_the_local_datastore_only()
+    {
+        var api = new FakeWindowsUpdateApi();
+        api.Offer(Offer);
+        api.Offer(Installed, (Guid1, 1));
+
+        SourceOver(api).Install(Row(Guid1), new RecordingProgress(), CancellationToken.None);
+        SourceOver(api).ReadInstalledIds(CancellationToken.None);
+
+        Assert.Equal([Installed, Installed], api.OfflineSearches);
+        Assert.Equal([Offer, Installed, Installed], api.SearchCriteria);
+    }
+
+    [Fact]
+    public void An_older_installed_revision_is_not_the_update_the_row_asked_for()
+    {
+        var api = new FakeWindowsUpdateApi();
+        api.Offer(Offer);
+        api.Offer(Installed, (Guid1, 1));
+
+        // The row was scanned at revision 2; revision 1 on the PC is the previous state of the update.
+        var row = Row(Guid1, 2);
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            SourceOver(api).Install(row, new RecordingProgress(), CancellationToken.None));
+
+        Assert.Contains("is no longer offered", ex.Message);
+    }
+
+    [Fact]
+    public void A_newer_installed_revision_counts_as_the_update_being_installed()
+    {
+        var api = new FakeWindowsUpdateApi();
+        api.Offer(Offer);
+        api.Offer(Installed, (Guid1, 3));
+        var progress = new RecordingProgress();
+
+        SourceOver(api).Install(Row(Guid1, 2), progress, CancellationToken.None);
+
+        Assert.Equal(100, progress.Reports[^1].PercentComplete);
+        Assert.Empty(api.Calls);
+    }
+
+    [Fact]
     public void An_update_absent_from_the_offer_and_the_installed_list_keeps_the_no_longer_offered_error()
     {
         var api = new FakeWindowsUpdateApi();
