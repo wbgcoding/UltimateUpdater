@@ -86,9 +86,9 @@ public sealed class RegistryUninstallKeyGuard : IUninstallKeyGuard
     private static bool IsTrusted(SecurityIdentifier sid) =>
         sid.Equals(Administrators) || sid.Equals(LocalSystem) || sid.Equals(TrustedInstaller);
 
-    /// <summary>True when no remote desktop logon can exist on this machine: remote users are off (TSUserEnabled is
-    /// DWORD 0), the edition is not the multi-session one (EditionID ServerRdsh) and the product type is WinNT. Any
-    /// missing, unreadable or other value counts as untrusted.</summary>
+    /// <summary>True when no logon token carries S-1-5-13 (the Terminal Server User SID) on this machine: TSUserEnabled is
+    /// DWORD 0 (remote desktop itself stays possible), the edition is not the multi-session one (EditionID ServerRdsh)
+    /// and the product type is WinNT. Any missing, unreadable or other value counts as untrusted.</summary>
     internal bool TrustsTerminalServerUser()
     {
         var values = _readGate();
