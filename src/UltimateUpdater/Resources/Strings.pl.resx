@@ -2752,14 +2752,8 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="UninstallerUpdateServicingStack" xml:space="preserve">
     <value>Aktualizacja stosu obsługi</value>
   </data>
-  <data name="UninstallerUpdatesLoading" xml:space="preserve">
-    <value>Odczytywanie zainstalowanych aktualizacji. System Windows może poprosić o zgodę.</value>
-  </data>
-  <data name="UninstallerUpdatesFailed" xml:space="preserve">
-    <value>Nie można odczytać zainstalowanych aktualizacji.</value>
-  </data>
-  <data name="UninstallerUpdatesNone" xml:space="preserve">
-    <value>Nie znaleziono aktualizacji do usunięcia.</value>
+  <data name="UninstallerUpdateDotNetRollup" xml:space="preserve">
+    <value>Aktualizacja zbiorcza .NET Framework</value>
   </data>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>System Windows nie mógł usunąć aktualizacji (kod {0}).</value>

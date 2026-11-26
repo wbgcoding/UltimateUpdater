@@ -2752,14 +2752,8 @@ Doorgaan met beheerdersrechten?</value>
   <data name="UninstallerUpdateServicingStack" xml:space="preserve">
     <value>Update van de servicestack</value>
   </data>
-  <data name="UninstallerUpdatesLoading" xml:space="preserve">
-    <value>De geïnstalleerde updates worden gelezen. Windows kan om toestemming vragen.</value>
-  </data>
-  <data name="UninstallerUpdatesFailed" xml:space="preserve">
-    <value>De geïnstalleerde updates konden niet worden gelezen.</value>
-  </data>
-  <data name="UninstallerUpdatesNone" xml:space="preserve">
-    <value>Geen verwijderbare updates gevonden.</value>
+  <data name="UninstallerUpdateDotNetRollup" xml:space="preserve">
+    <value>Cumulatieve update voor .NET Framework</value>
   </data>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows kon de update niet verwijderen (code {0}).</value>

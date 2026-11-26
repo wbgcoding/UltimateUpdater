@@ -2752,14 +2752,8 @@ Esto no se puede deshacer.</value>
   <data name="UninstallerUpdateServicingStack" xml:space="preserve">
     <value>Actualización de la pila de mantenimiento</value>
   </data>
-  <data name="UninstallerUpdatesLoading" xml:space="preserve">
-    <value>Leyendo las actualizaciones instaladas. Windows puede pedir permiso.</value>
-  </data>
-  <data name="UninstallerUpdatesFailed" xml:space="preserve">
-    <value>No se pudieron leer las actualizaciones instaladas.</value>
-  </data>
-  <data name="UninstallerUpdatesNone" xml:space="preserve">
-    <value>No se encontraron actualizaciones que se puedan quitar.</value>
+  <data name="UninstallerUpdateDotNetRollup" xml:space="preserve">
+    <value>Actualización acumulativa de .NET Framework</value>
   </data>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows no pudo quitar la actualización (código {0}).</value>

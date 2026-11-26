@@ -372,10 +372,6 @@
                                         </Expander.Header>
                                         <!-- Several rows can be highlighted (Ctrl, Shift); Space ticks them together. The list never scrolls itself: the card's scrollbar does. -->
                                         <StackPanel>
-                                            <!-- A section read on demand says what it is doing or why it is empty. -->
-                                            <TextBlock Text="{Binding StatusText}" FontSize="13" Margin="16,6,16,10" TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                                       Visibility="{Binding HasStatus, Converter={StaticResource BoolToVisibility}}"/>
                                             <ListBox ItemsSource="{Binding Rows}" SelectionMode="Extended" BorderThickness="0" Background="Transparent"
                                                      ItemContainerStyle="{StaticResource UninstallRowItem}"
                                                      ItemTemplate="{StaticResource UninstallRowTemplate}"

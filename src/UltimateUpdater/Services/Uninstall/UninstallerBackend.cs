@@ -11,11 +11,6 @@ public interface IUninstallerBackend
     /// <summary>Every installed entry with its plan and rating. Slow (registry, winget, Store packages): never called on the UI thread.</summary>
     Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken);
 
-    /// <summary>The installed Windows updates, each rated; null when they could not be read (the elevated helper was
-    /// declined or DISM failed). Read on demand, not with <see cref="ListAsync"/>: it needs the elevated helper and
-    /// so can raise the elevation prompt. Slow: never called on the UI thread.</summary>
-    Task<IReadOnlyList<UninstallListing>?> ListUpdatesAsync(CancellationToken cancellationToken);
-
     /// <summary>The runner for one batch; the plan is the one <see cref="ListAsync"/> showed.</summary>
     UninstallRunner CreateRunner(Func<InstalledProgramEntry, UninstallPlan> plan);
 
@@ -96,25 +91,26 @@ public sealed class UninstallerBackend(
     public Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
+            // The hotfix list (WMI, names the update rows) is the slowest single read: it runs beside the rest.
+            var fixes = Task.Run(() => new WindowsUpdateLister(logging).ReadQuickFixes(cancellationToken), cancellationToken);
             var inventory = new InstalledProgramInventory(
                 WindowsRegistryView.Instance, new AppxPackageReader(), new WingetListReader());
             var entries = await inventory.ReadAsync(cancellationToken);
-            entries = [.. entries, .. DriverEntries(new SetupApiDriverInventoryProvider(logging.Warn), cancellationToken)];
+            entries =
+            [
+                .. entries,
+                .. DriverEntries(new SetupApiDriverInventoryProvider(logging.Warn), cancellationToken),
+                .. UpdateEntries(WindowsRegistryView.Instance, await fixes, key => LocalizationService.Instance[key]),
+            ];
             return Rate(entries, new FileSystemUninstallProbe(), Environment.GetFolderPath(Environment.SpecialFolder.Windows));
         },
         cancellationToken);
 
-    public async Task<IReadOnlyList<UninstallListing>?> ListUpdatesAsync(CancellationToken cancellationToken)
-    {
-        var lister = new WindowsUpdateLister(elevated, logging);
-        var rows = await lister.ReadRowsAsync(cancellationToken);
-        if (rows is null)
-            return null;
-
-        var fixes = await Task.Run(() => lister.ReadQuickFixes(cancellationToken), cancellationToken);
-        var entries = WindowsUpdateDiscovery.ToEntries(rows, fixes, key => LocalizationService.Instance[key]);
-        return Rate(entries, new FileSystemUninstallProbe(), Environment.GetFolderPath(Environment.SpecialFolder.Windows));
-    }
+    /// <summary>The installed Windows updates as entries, read from the registry (no elevation, no DISM). The elevated
+    /// worker checks permanence before it removes one.</summary>
+    internal static IReadOnlyList<InstalledProgramEntry> UpdateEntries(
+        IRegistryView registry, IReadOnlyList<QuickFix> quickFixes, Func<string, string> text) =>
+        WindowsUpdateDiscovery.ToEntries(WindowsUpdateRegistryReader.Read(registry), quickFixes, text);
 
     /// <summary>The third-party driver packages as entries. A driver inventory that cannot be read lists no driver at
     /// all (never a guess about which are in use).</summary>

@@ -3,8 +3,8 @@ using UltimateUpdater.ViewModels.Uninstall;
 
 namespace UltimateUpdater.Tests;
 
-/// <summary>The uninstaller's Windows updates section: read only when opened, greyed rows for what Windows keeps,
-/// a failed read that can be retried, the runner's failure texts, and the worker rows' JSON.</summary>
+/// <summary>The uninstaller's Windows updates section: listed with the rest, greyed rows for what Windows keeps, and the
+/// runner's failure texts for a removal.</summary>
 [Collection("UiLanguage")]
 public class UninstallUpdatesViewModelTests
 {
@@ -36,44 +36,31 @@ public class UninstallUpdatesViewModelTests
         vm.Sections.Single(section => section.Kind == UninstallSection.Updates);
 
     [Fact]
-    public async Task The_updates_are_not_read_until_the_section_is_opened()
+    public async Task The_updates_are_listed_with_the_rest_and_the_section_counts_them()
     {
-        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync(UninstallerViewModelTests.Listing("Alpha"));
-        backend.Updates = UpdateListings;
+        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync(
+            [UninstallerViewModelTests.Listing("Alpha"), .. UpdateListings()]);
         var section = UpdatesOf(vm);
 
-        Assert.Equal(0, backend.UpdateCalls);
+        Assert.Equal(1, backend.ListCalls);
         Assert.True(section.IsVisible);
-        Assert.False(section.HasRows);
-        Assert.Equal(section.Title, section.Header);
-
-        await vm.LoadUpdatesAsync();
-
-        Assert.Equal(1, backend.UpdateCalls);
-        Assert.Equal(UninstallSectionLoad.Loaded, section.Load);
         Assert.Equal(2, section.Rows.Count);
         Assert.EndsWith("(2)", section.Header);
     }
 
     [Fact]
-    public async Task Opening_the_section_starts_the_read()
+    public async Task Without_an_update_the_section_is_hidden()
     {
-        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync(UninstallerViewModelTests.Listing("Alpha"));
-        backend.Updates = UpdateListings;
-        var section = UpdatesOf(vm);
+        var (vm, _) = await UninstallerViewModelTests.LoadedAsync(UninstallerViewModelTests.Listing("Alpha"));
 
-        section.IsExpanded = true;
-        await WaitAsync(() => section.Load == UninstallSectionLoad.Loaded);
-
-        Assert.Equal(1, backend.UpdateCalls);
+        Assert.False(UpdatesOf(vm).IsVisible);
+        Assert.Equal(UpdatesOf(vm).Title + " (0)", UpdatesOf(vm).Header);
     }
 
     [Fact]
     public async Task A_removable_update_can_be_ticked_and_one_windows_keeps_is_greyed_with_the_reason()
     {
-        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync();
-        backend.Updates = UpdateListings;
-        await vm.LoadUpdatesAsync();
+        var (vm, _) = await UninstallerViewModelTests.LoadedAsync([.. UpdateListings()]);
 
         var removable = vm.AllRows.Single(row => row.Entry.Key.Contains("KB5031234", StringComparison.Ordinal));
         var kept = vm.AllRows.Single(row => row.Entry.Key.Contains("RollupFix", StringComparison.Ordinal));
@@ -90,9 +77,7 @@ public class UninstallUpdatesViewModelTests
     [Fact]
     public async Task The_german_note_for_a_kept_update_is_the_specified_text()
     {
-        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync();
-        backend.Updates = UpdateListings;
-        await vm.LoadUpdatesAsync();
+        var (vm, _) = await UninstallerViewModelTests.LoadedAsync([.. UpdateListings()]);
         LocalizationService.Instance.Apply("de");
         try
         {
@@ -106,99 +91,9 @@ public class UninstallUpdatesViewModelTests
     }
 
     [Fact]
-    public async Task A_failed_read_says_so_and_the_next_open_tries_again()
-    {
-        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync();
-        backend.Updates = () => null;
-        var section = UpdatesOf(vm);
-
-        await vm.LoadUpdatesAsync();
-
-        Assert.Equal(UninstallSectionLoad.Failed, section.Load);
-        Assert.True(section.IsVisible);
-        Assert.True(section.HasStatus);
-        Assert.Equal(LocalizationService.Instance["UninstallerUpdatesFailed"], section.StatusText);
-        Assert.DoesNotContain("(", section.Header);
-
-        backend.Updates = UpdateListings;
-        await vm.LoadUpdatesAsync();
-
-        Assert.Equal(2, backend.UpdateCalls);
-        Assert.Equal(UninstallSectionLoad.Loaded, section.Load);
-        Assert.False(section.HasStatus);
-    }
-
-    [Fact]
-    public async Task A_read_that_throws_is_a_failed_read()
-    {
-        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync();
-        backend.Updates = () => throw new InvalidOperationException("boom");
-        await vm.LoadUpdatesAsync();
-
-        Assert.Equal(UninstallSectionLoad.Failed, UpdatesOf(vm).Load);
-    }
-
-    [Fact]
-    public async Task Nothing_to_list_says_so_and_is_not_read_again()
-    {
-        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync();
-        var section = UpdatesOf(vm);
-
-        await vm.LoadUpdatesAsync();
-        await vm.LoadUpdatesAsync();
-
-        Assert.Equal(UninstallSectionLoad.Empty, section.Load);
-        Assert.Equal(1, backend.UpdateCalls);
-        Assert.Equal(LocalizationService.Instance["UninstallerUpdatesNone"], section.StatusText);
-    }
-
-    [Fact]
-    public async Task A_reload_forgets_the_updates_and_reads_them_again_while_the_section_is_open()
-    {
-        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync();
-        backend.Updates = UpdateListings;
-        var section = UpdatesOf(vm);
-        section.IsExpanded = true;
-        await WaitAsync(() => section.Load == UninstallSectionLoad.Loaded);
-
-        await vm.LoadAsync();
-        await WaitAsync(() => backend.UpdateCalls == 2 && section.Load == UninstallSectionLoad.Loaded);
-
-        Assert.Equal(2, section.Rows.Count);
-    }
-
-    [Fact]
-    public async Task A_reload_with_the_section_closed_leaves_the_updates_unread()
-    {
-        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync();
-        backend.Updates = UpdateListings;
-        await vm.LoadUpdatesAsync();
-
-        await vm.LoadAsync();
-
-        Assert.Equal(UninstallSectionLoad.NotLoaded, UpdatesOf(vm).Load);
-        Assert.Empty(vm.AllRows);
-        Assert.Equal(1, backend.UpdateCalls);
-    }
-
-    [Fact]
-    public async Task Other_sections_never_show_a_status_line()
-    {
-        var (vm, _) = await UninstallerViewModelTests.LoadedAsync();
-
-        Assert.All(vm.Sections.Where(section => section.Kind != UninstallSection.Updates), section =>
-        {
-            Assert.False(section.HasStatus);
-            Assert.False(section.IsVisible);
-        });
-    }
-
-    [Fact]
     public async Task A_removed_update_row_leaves_no_program_leftover_scan()
     {
-        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync();
-        backend.Updates = UpdateListings;
-        await vm.LoadUpdatesAsync();
+        var (vm, backend) = await UninstallerViewModelTests.LoadedAsync([.. UpdateListings()]);
 
         vm.AllRows.Single(row => row.Entry.Key.Contains("KB5031234", StringComparison.Ordinal)).IsSelected = true;
         vm.Confirm = (_, _, _) => true;
@@ -243,33 +138,5 @@ public class UninstallUpdatesViewModelTests
     {
         public Task<UninstallExecutionResult> RunAsync(InstalledProgramEntry entry, UninstallPlan plan, CancellationToken ct, CancellationToken stopWhenIdle) =>
             throw new NotSupportedException();
-    }
-
-    [Fact]
-    public void The_workers_rows_survive_the_wire_and_garbage_is_no_list()
-    {
-        var json = System.Text.Json.JsonSerializer.Serialize(
-            new[] { new WindowsUpdateRow { Identity = Removable, ReleaseType = "Update", InstalledOn = new DateOnly(2025, 1, 2), Removable = true } },
-            new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
-
-        var rows = WindowsUpdateLister.ParseRows(json);
-
-        Assert.NotNull(rows);
-        Assert.Equal(Removable, rows[0].Identity);
-        Assert.True(rows[0].Removable);
-        Assert.Equal(new DateOnly(2025, 1, 2), rows[0].InstalledOn);
-        Assert.Null(WindowsUpdateLister.ParseRows("not json"));
-        Assert.Null(WindowsUpdateLister.ParseRows(null));
-        Assert.Null(WindowsUpdateLister.ParseRows(" "));
-    }
-
-    private static async Task WaitAsync(Func<bool> condition)
-    {
-        var until = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-        while (!condition())
-        {
-            Assert.True(DateTime.UtcNow < until, "the condition was not reached in time");
-            await Task.Delay(10);
-        }
     }
 }

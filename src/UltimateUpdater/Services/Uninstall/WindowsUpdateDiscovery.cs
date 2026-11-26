@@ -7,8 +7,9 @@ namespace UltimateUpdater.Services.Uninstall;
 /// <summary>One line of <c>dism /online /get-packages /format:table</c>.</summary>
 public sealed record DismPackage(string Identity, string State, string ReleaseType, DateTime? InstallTime);
 
-/// <summary>An installed Windows update as the elevated worker reports it to the app: the package identity, the date and
-/// whether Windows lets it be removed. The worker works this out itself; the app only shows it.</summary>
+/// <summary>An installed Windows update: the package identity, the date and whether Windows lets it be removed. The app reads
+/// it from the registry (<see cref="WindowsUpdateRegistryReader"/>) to show it; the elevated worker works it out again
+/// from DISM before it removes anything.</summary>
 public sealed record WindowsUpdateRow
 {
     public string Identity { get; init; } = string.Empty;
@@ -42,13 +43,14 @@ public static partial class WindowsUpdateDiscovery
     /// <summary>The key of an update entry in the uninstaller list.</summary>
     internal const string KeyPrefix = "update:";
 
-    private const int InstalledPackageState = 0x70;
+    internal const int InstalledPackageState = 0x70;
 
-    private const string CbsPackagesKey = @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\Packages";
+    internal const string CbsPackagesKey = @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\Packages";
 
-    /// <summary>A package identity a Windows update wraps itself in: the KB package, the cumulative rollup and the
-    /// servicing stack. Nothing else is ever listed (a language pack, a feature or a driver package is not an update).</summary>
-    [GeneratedRegex(@"^Package_for_(?<kind>KB(?<kb>\d{5,8})|RollupFix|ServicingStack(_\d+)?)~[A-Za-z0-9._~\-]+$")]
+    /// <summary>A package identity a Windows update wraps itself in: the KB package, the cumulative rollup, the
+    /// .NET Framework rollup and the servicing stack. Nothing else is ever listed (a language pack, a feature or a driver
+    /// package is not an update).</summary>
+    [GeneratedRegex(@"^Package_for_(?<kind>KB(?<kb>\d{5,8})|RollupFix|DotNetRollup(_\d+)?|ServicingStack(_\d+)?)~[A-Za-z0-9._~\-]+$")]
     private static partial Regex WrapperRegex();
 
     /// <summary>The characters a package identity may have, so it can be put into an argument and a registry path as it is.</summary>
@@ -242,7 +244,9 @@ public static partial class WindowsUpdateDiscovery
                 ? (string.IsNullOrWhiteSpace(fix?.Description) ? kb : $"{kb} ({fix!.Description.Trim()})")
                 : row.Identity.StartsWith("Package_for_RollupFix", StringComparison.Ordinal)
                     ? string.Format(text("UninstallerUpdateCumulative"), RollupBuildRegex().Match(row.Identity) is { Success: true } build ? build.Groups["build"].Value : "?")
-                    : text("UninstallerUpdateServicingStack");
+                    : row.Identity.StartsWith("Package_for_DotNetRollup", StringComparison.Ordinal)
+                        ? text("UninstallerUpdateDotNetRollup")
+                        : text("UninstallerUpdateServicingStack");
 
             entries.Add(new InstalledProgramEntry
             {

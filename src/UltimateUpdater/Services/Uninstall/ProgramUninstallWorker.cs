@@ -179,14 +179,7 @@ internal static class ProgramUninstallWorker
             return;
         }
 
-        // Windows updates are DISM packages, not registry entries: a list job (read only) and a removal job, each
-        // checked and planned by the worker itself.
-        if (job?.Method == WindowsUpdateWorker.ListMethod)
-        {
-            await RunUpdateListAsync(writer, jobId, logging, cancellationToken);
-            return;
-        }
-
+        // A Windows update is a DISM package, not a registry entry: the removal is checked and planned by the worker itself.
         if (job?.Method == nameof(UninstallMethod.WindowsUpdate))
         {
             await RunUpdateAsync(job, writer, jobId, logging, cancellationToken);
@@ -251,31 +244,6 @@ internal static class ProgramUninstallWorker
         {
             logging.Warn($"Elevated uninstall could not run: {ex.Message}");
             Finish(writer, jobId, job.Key, success: false, exitCode: null, error: ex.Message, detail: null);
-        }
-    }
-
-    /// <summary>Reads the installed updates (DISM needs the elevated worker) and returns them as JSON in the result's
-    /// detail; the app only shows them and the removal job derives everything again.</summary>
-    private static async Task RunUpdateListAsync(
-        StreamWriter writer, string jobId, LoggingService logging, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var rows = await WindowsUpdateWorker.ListAsync(WindowsRegistryView.Instance, logging, cancellationToken);
-            Finish(
-                writer, jobId, null, success: rows is not null, exitCode: null,
-                error: rows is null ? "the installed updates could not be read" : null,
-                detail: rows is null ? null : JsonSerializer.Serialize(rows, JsonOptions));
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception or InvalidOperationException
-                                       or UnauthorizedAccessException)
-        {
-            logging.Warn($"Elevated update list could not run: {ex.Message}");
-            Finish(writer, jobId, null, success: false, exitCode: null, error: ex.Message, detail: null);
         }
     }
 
