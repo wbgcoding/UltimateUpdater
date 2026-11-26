@@ -2605,9 +2605,6 @@ Esto no se puede deshacer.</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>Instalado</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>Método</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>Riesgo</value>
   </data>
@@ -2802,5 +2799,11 @@ Esto no se puede deshacer.</value>
   </data>
   <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
     <value>No hay una forma automática de quitar esta entrada</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>Los programas, apps de la Tienda, paquetes, controladores y actualizaciones aparecen aquí en cuanto el equipo los tenga.</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>Prueba con otro nombre o editor, o borra la búsqueda para ver todo de nuevo.</value>
   </data>
 </root>

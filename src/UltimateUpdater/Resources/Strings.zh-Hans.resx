@@ -2605,9 +2605,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>安装日期</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>方式</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>风险</value>
   </data>
@@ -2802,5 +2799,11 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
     <value>无法自动移除此条目</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>电脑上一旦有程序、应用商店应用、软件包、驱动程序或更新，就会显示在这里。</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>请尝试其他名称或发布者，或清除搜索以重新显示全部内容。</value>
   </data>
 </root>

@@ -60,7 +60,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
     [ObservableProperty]
     private string searchText = string.Empty;
 
-    /// <summary>The column the table is sorted by: name, publisher, version, size, installed, risk or method.</summary>
+    /// <summary>The column the table is sorted by: name, publisher, version, size, installed or risk.</summary>
     [ObservableProperty]
     private string sortColumn = "name";
 
@@ -81,6 +81,11 @@ public sealed partial class UninstallerViewModel : ObservableObject
     private bool _loadFailed;
 
     public string EmptyText => Loc[_all.Count > 0 ? "UninstallerNoMatch" : _loadFailed ? "UninstallerLoadFailed" : "UninstallerEmpty"];
+
+    /// <summary>The short explanation under the empty line: what would fill the table, or how to get the search results back; none after a failed read (that line already says to reload).</summary>
+    public string EmptyHint => _all.Count > 0 ? Loc["UninstallerNoMatchHint"] : _loadFailed ? string.Empty : Loc["UninstallerEmptyHint"];
+
+    public bool HasEmptyHint => EmptyHint.Length > 0;
 
     partial void OnSearchTextChanged(string value) => Refresh();
 
@@ -291,6 +296,8 @@ public sealed partial class UninstallerViewModel : ObservableObject
         OnPropertyChanged(nameof(VisibleCount));
         OnPropertyChanged(nameof(ShowsEmptyText));
         OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(EmptyHint));
+        OnPropertyChanged(nameof(HasEmptyHint));
     }
 
     /// <summary>Tells every row whether another visible row has its name, so look-alike entries always show where they come from.</summary>
@@ -363,7 +370,6 @@ public sealed partial class UninstallerViewModel : ObservableObject
         "size" => row.SizeBytes ?? 0L,
         "installed" => row.InstallDate ?? DateOnly.MinValue,
         "risk" => (int)row.RiskLevel,
-        "method" => row.MethodText,
         _ => row.SortName,
     };
 
@@ -377,6 +383,8 @@ public sealed partial class UninstallerViewModel : ObservableObject
             section.RefreshText();
 
         OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(EmptyHint));
+        OnPropertyChanged(nameof(HasEmptyHint));
         OnPropertyChanged(nameof(PreviewNote));
         RefreshLeftoverText();
     }

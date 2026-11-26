@@ -45,6 +45,18 @@ public sealed partial class UninstallSectionViewModel : ObservableObject
     /// <summary>The title with the row count.</summary>
     public string Header => $"{Title} ({Rows.Count})";
 
+    /// <summary>The space the section's rows take together, for the header; empty when no row has a known size.</summary>
+    public string TotalSizeText
+    {
+        get
+        {
+            var total = Rows.Sum(row => row.SizeBytes ?? 0);
+            return total > 0 ? Services.Formatting.ByteSize.Format(total) : string.Empty;
+        }
+    }
+
+    public bool HasTotalSize => TotalSizeText.Length > 0;
+
     [ObservableProperty]
     private bool isExpanded;
 
@@ -82,6 +94,8 @@ public sealed partial class UninstallSectionViewModel : ObservableObject
         OnPropertyChanged(nameof(HasRows));
         OnPropertyChanged(nameof(IsVisible));
         OnPropertyChanged(nameof(Header));
+        OnPropertyChanged(nameof(TotalSizeText));
+        OnPropertyChanged(nameof(HasTotalSize));
     }
 
     public void RefreshText()

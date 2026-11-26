@@ -2605,9 +2605,6 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>インストール日</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>方法</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>リスク</value>
   </data>
@@ -2802,5 +2799,11 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   </data>
   <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
     <value>このエントリを自動で削除する方法はありません</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>プログラム、ストアアプリ、パッケージ、ドライバー、更新プログラムは、PC にあればここに表示されます。</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>別の名前や発行元を試すか、検索を消去してすべて表示してください。</value>
   </data>
 </root>

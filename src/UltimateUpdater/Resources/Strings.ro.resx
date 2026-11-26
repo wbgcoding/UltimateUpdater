@@ -2605,9 +2605,6 @@ Continuați cu drepturi de administrator?</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>Instalat</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>Metodă</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>Risc</value>
   </data>
@@ -2802,5 +2799,11 @@ Continuați cu drepturi de administrator?</value>
   </data>
   <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
     <value>Nu există o cale automată de a elimina această intrare</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>Programele, aplicațiile din Store, pachetele, driverele și actualizările apar aici de îndată ce PC-ul le are.</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>Încearcă alt nume sau alt editor, ori șterge căutarea ca să vezi din nou totul.</value>
   </data>
 </root>

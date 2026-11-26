@@ -2605,9 +2605,6 @@ Continuare con privilegi di amministratore?</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>Installato</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>Metodo</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>Rischio</value>
   </data>
@@ -2802,5 +2799,11 @@ Continuare con privilegi di amministratore?</value>
   </data>
   <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
     <value>Non esiste un modo automatico per rimuovere questa voce</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>Programmi, app dello Store, pacchetti, driver e aggiornamenti compaiono qui non appena il PC ne ha.</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>Prova un altro nome o editore, oppure svuota la ricerca per vedere di nuovo tutto.</value>
   </data>
 </root>

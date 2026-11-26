@@ -2605,9 +2605,6 @@ Continue with admin rights?</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>Installed</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>Method</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>Risk</value>
   </data>
@@ -2802,5 +2799,11 @@ Continue with admin rights?</value>
   </data>
   <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
     <value>There is no automatic way to remove this entry</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>Programs, Store apps, packages, drivers and updates show up here as soon as the PC has some.</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>Try another name or publisher, or clear the search to see everything again.</value>
   </data>
 </root>

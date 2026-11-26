@@ -2605,9 +2605,6 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>Zainstalowano</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>Sposób</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>Ryzyko</value>
   </data>
@@ -2802,5 +2799,11 @@ Kontynuować z uprawnieniami administratora?</value>
   </data>
   <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
     <value>Nie ma automatycznego sposobu usunięcia tego wpisu</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>Programy, aplikacje ze Sklepu, pakiety, sterowniki i aktualizacje pojawią się tutaj, gdy tylko komputer je ma.</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>Spróbuj innej nazwy lub wydawcy albo wyczyść wyszukiwanie, aby znów zobaczyć wszystko.</value>
   </data>
 </root>

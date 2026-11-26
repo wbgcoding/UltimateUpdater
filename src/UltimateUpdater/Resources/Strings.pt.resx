@@ -2605,9 +2605,6 @@ Continuar com direitos de administrador?</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>Instalado</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>Método</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>Risco</value>
   </data>
@@ -2802,5 +2799,11 @@ Continuar com direitos de administrador?</value>
   </data>
   <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
     <value>Não existe uma forma automática de remover esta entrada</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>Programas, apps da Loja, pacotes, controladores e atualizações aparecem aqui assim que o PC os tiver.</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>Experimente outro nome ou editor, ou limpe a pesquisa para ver tudo novamente.</value>
   </data>
 </root>

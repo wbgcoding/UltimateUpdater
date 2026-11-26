@@ -74,7 +74,7 @@ public partial class WindowLayoutTests
             Assert.False(ownRow.IsSelected);
             Assert.Equal(ownRow.UnavailableReason, VisualDescendants<Grid>(own).First().ToolTip);
             Assert.NotEmpty(ownRow.UnavailableReason);
-            Assert.Null(VisualDescendants<Grid>(firefox).First().ToolTip);
+            Assert.Equal(row.MethodText, VisualDescendants<Grid>(firefox).First().ToolTip);
         });
     }
 }

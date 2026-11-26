@@ -132,5 +132,41 @@ internal sealed class ReviewUninstallerBackend(IReadOnlyList<UninstallListing> l
     public void RecordRemoved(InstalledProgramEntry entry)
     {
     }
+
+    /// <summary>A flat tile in a colour taken from the name, for every program but the ones named "Legacy", so the shots show both the icon and the symbol fallback. Built from raw pixels: safe off the UI thread.</summary>
+    public System.Windows.Media.Imaging.BitmapSource? ResolveIcon(InstalledProgramEntry entry)
+    {
+        if (entry.Name.StartsWith("Legacy", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        const int size = 32;
+        var hash = entry.Name.Aggregate(17, (acc, ch) => acc * 31 + ch);
+        var red = (byte)(60 + (hash & 0x7F));
+        var green = (byte)(60 + ((hash >> 7) & 0x7F));
+        var blue = (byte)(60 + ((hash >> 14) & 0x7F));
+        var pixels = new byte[size * size * 4];
+        for (var y = 0; y < size; y++)
+        {
+            for (var x = 0; x < size; x++)
+            {
+                // Rounded corners: leave the pixels outside a radius-6 corner transparent.
+                var dx = Math.Max(0, Math.Max(6 - x, x - (size - 7)));
+                var dy = Math.Max(0, Math.Max(6 - y, y - (size - 7)));
+                if (dx * dx + dy * dy > 36)
+                    continue;
+
+                var at = (y * size + x) * 4;
+                pixels[at] = blue;
+                pixels[at + 1] = green;
+                pixels[at + 2] = red;
+                pixels[at + 3] = 255;
+            }
+        }
+
+        var icon = System.Windows.Media.Imaging.BitmapSource.Create(
+            size, size, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, pixels, size * 4);
+        icon.Freeze();
+        return icon;
+    }
 }
 #endif

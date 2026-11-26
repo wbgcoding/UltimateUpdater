@@ -2605,9 +2605,6 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>Yüklendi</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>Yöntem</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>Risk</value>
   </data>
@@ -2802,5 +2799,11 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
     <value>Bu girdiyi kaldırmanın otomatik bir yolu yok</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>Programlar, Mağaza uygulamaları, paketler, sürücüler ve güncellemeler bilgisayarda olur olmaz burada görünür.</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>Başka bir ad veya yayımcı deneyin ya da her şeyi yeniden görmek için aramayı temizleyin.</value>
   </data>
 </root>

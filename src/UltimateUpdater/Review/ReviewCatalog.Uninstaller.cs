@@ -22,7 +22,8 @@ internal static partial class ReviewCatalog
         bool selectable = true,
         string? key = null,
         string location = "",
-        bool folderEmpty = false) =>
+        bool folderEmpty = false,
+        bool interactive = false) =>
         new(
             new InstalledProgramEntry
             {
@@ -39,7 +40,7 @@ internal static partial class ReviewCatalog
                 InstallDate = new DateOnly(2026, 3, 14),
             },
             runnable
-                ? new UninstallPlan { Method = UninstallMethod.QuietString, Executable = @"C:\Program Files\Acme\unins000.exe", Elevated = true }
+                ? new UninstallPlan { Method = interactive ? UninstallMethod.Interactive : UninstallMethod.QuietString, Executable = @"C:\Program Files\Acme\unins000.exe", Elevated = true }
                 : new UninstallPlan { Method = UninstallMethod.Refused, Refusal = UninstallRefusal.NoCommand },
             new UninstallRisk(level, reason, selectable));
 
@@ -49,6 +50,7 @@ internal static partial class ReviewCatalog
         Listing("Discord", size: 310_000_000, version: "1.0.9248", publisher: "Discord Inc."),
         Listing("Visual Studio Build Tools 2022 with a very long display name that cannot fit", size: 4_200_000_000, version: "17.10.5", publisher: "Microsoft Corporation", level: CleanupRiskLevel.Considered, reason: UninstallRiskReason.DevRuntime),
         Listing("NVIDIA Graphics Driver 560.94", size: 880_000_000, version: "560.94", publisher: "NVIDIA Corporation", level: CleanupRiskLevel.Risky, reason: UninstallRiskReason.Driver),
+        Listing("Old Setup Suite", size: 64_000_000, version: "3.1", publisher: "Contoso", interactive: true),
         Listing("Legacy Tool", size: null, version: "0.9", publisher: string.Empty, runnable: false, level: CleanupRiskLevel.Considered, reason: UninstallRiskReason.Incomplete),
         Listing("Microsoft.WindowsCalculator", UninstallEntryKind.StoreApp, size: 12_000_000, version: "11.2405.1.0", publisher: "Microsoft Corporation"),
         Listing("left-pad", UninstallEntryKind.Package, size: 4_000, version: "1.3.0", publisher: "npm"),
@@ -95,6 +97,13 @@ internal static partial class ReviewCatalog
                 return Task.CompletedTask;
             };
             return Task.FromResult(scene);
+        });
+
+        Add(list, "uninstaller.nomatch", UninstallerArea, "Uninstaller after a search that matches nothing", s =>
+        {
+            var viewModel = s.NewUninstallerViewModel(UninstallerInventory(), expandAll: true);
+            viewModel.SearchText = "no such program";
+            return Task.FromResult(new ReviewScene { Window = new UninstallerWindow(viewModel) });
         });
 
         Add(list, "uninstaller.empty", UninstallerArea, "Uninstaller with nothing installed", s =>

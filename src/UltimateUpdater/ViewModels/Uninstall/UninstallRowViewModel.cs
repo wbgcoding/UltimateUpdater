@@ -105,13 +105,22 @@ public sealed partial class UninstallRowViewModel : ObservableObject
     /// <summary>True while another visible row has the same name: the row then always shows where it comes from. Set by the owner.</summary>
     public bool SharesNameWithVisibleRow { get; private set; }
 
-    /// <summary>The line under the name that tells look-alike entries apart: the launcher, then the install folder. Shown for an entry with a
-    /// launcher, and for any entry that shares its name with another visible row; empty otherwise.</summary>
-    public string OriginText => SourceLabel.Length > 0 || SharesNameWithVisibleRow
-        ? string.Join(" \u00B7 ", new[] { SourceLabel, FolderText }.Where(part => part.Length > 0))
-        : string.Empty;
+    /// <summary>The line under the details that tells look-alike entries apart: the install folder. Shown for an entry with a launcher, and for
+    /// any entry that shares its name with another visible row; empty otherwise. (The launcher itself is part of <see cref="DetailText"/>.)</summary>
+    public string OriginText => SourceLabel.Length > 0 || SharesNameWithVisibleRow ? FolderText : string.Empty;
 
     public bool HasOrigin => OriginText.Length > 0;
+
+    /// <summary>The quiet second line: publisher, launcher and version, whichever the entry has, joined with a middle dot.</summary>
+    public string DetailText => string.Join(" \u00B7 ", new[] { Publisher, SourceLabel, Version }.Where(part => !string.IsNullOrWhiteSpace(part)));
+
+    public bool HasDetail => DetailText.Length > 0;
+
+    /// <summary>True for an uninstaller that opens its own window and cannot run unattended: the only method worth a tag on the row.</summary>
+    public bool ShowsMethodTag => Listing.Plan.Method == UninstallMethod.Interactive;
+
+    /// <summary>The hover on the row: why it cannot be ticked, otherwise how it is removed.</summary>
+    public string RowTooltip => Selectable ? MethodText : UnavailableReason;
 
     internal void SetSharesNameWithVisibleRow(bool shares)
     {
@@ -182,6 +191,7 @@ public sealed partial class UninstallRowViewModel : ObservableObject
         IsVerified = true;
         OnPropertyChanged(nameof(Selectable));
         OnPropertyChanged(nameof(UnavailableReason));
+        OnPropertyChanged(nameof(RowTooltip));
     }
 
     /// <summary>Takes a fresh read's data over, keeping the row itself. A ticked row that stops being selectable is unticked.</summary>
@@ -211,6 +221,7 @@ public sealed partial class UninstallRowViewModel : ObservableObject
         nameof(SizeText), nameof(InstalledText), nameof(RiskLevel), nameof(Selectable), nameof(IsRisky), nameof(RiskLevelText),
         nameof(ReasonText), nameof(RiskTooltip), nameof(MethodText), nameof(NoteText), nameof(HasNote), nameof(UnavailableReason), nameof(SortName),
         nameof(SourceLabel), nameof(FolderText), nameof(FolderPath), nameof(OriginText), nameof(HasOrigin),
+        nameof(DetailText), nameof(HasDetail), nameof(ShowsMethodTag), nameof(RowTooltip),
     ];
 
     /// <summary>Re-reads every localized text after a language change.</summary>
@@ -222,6 +233,7 @@ public sealed partial class UninstallRowViewModel : ObservableObject
         OnPropertyChanged(nameof(MethodText));
         OnPropertyChanged(nameof(NoteText));
         OnPropertyChanged(nameof(UnavailableReason));
+        OnPropertyChanged(nameof(RowTooltip));
         OnPropertyChanged(nameof(StateText));
         OnPropertyChanged(nameof(SizeText));
         OnPropertyChanged(nameof(InstalledText));

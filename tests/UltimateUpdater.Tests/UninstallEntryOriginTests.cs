@@ -194,7 +194,7 @@ public class UninstallEntryOriginTests
         var row = Assert.Single(vm.AllRows);
 
         Assert.Equal("Steam", row.SourceLabel);
-        Assert.Equal("Steam \u00B7 \u2026\\common\\Apex Legends", row.OriginText);
+        Assert.Equal("\u2026\\common\\Apex Legends", row.OriginText);
         Assert.Equal(@"D:\SteamLibrary\steamapps\common\Apex Legends", row.FolderPath);
         Assert.True(row.HasOrigin);
     }
@@ -218,8 +218,8 @@ public class UninstallEntryOriginTests
 
         var rows = vm.AllRows.ToList();
 
-        Assert.Equal("Steam \u00B7 D:\\Steam\\apex", rows[0].OriginText);
-        Assert.Equal("EA app \u00B7 D:\\EA Games\\Apex", rows[1].OriginText);
+        Assert.Equal(@"D:\Steam\apex", rows[0].OriginText);
+        Assert.Equal(@"D:\EA Games\Apex", rows[1].OriginText);
         Assert.Equal(@"C:\Tools\A", rows[2].OriginText);
         Assert.Equal(@"C:\Other\A", rows[3].OriginText);
     }

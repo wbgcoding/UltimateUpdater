@@ -2605,9 +2605,6 @@ Doorgaan met beheerdersrechten?</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>Geïnstalleerd</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>Methode</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>Risico</value>
   </data>
@@ -2802,5 +2799,11 @@ Doorgaan met beheerdersrechten?</value>
   </data>
   <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
     <value>Er is geen automatische manier om dit item te verwijderen</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>Programma's, Store-apps, pakketten, stuurprogramma's en updates verschijnen hier zodra de pc ze heeft.</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>Probeer een andere naam of uitgever, of wis de zoekopdracht om weer alles te zien.</value>
   </data>
 </root>
