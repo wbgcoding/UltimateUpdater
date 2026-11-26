@@ -9,8 +9,8 @@
 
 ## Build and test
 
-You need Windows 10 or 11, the .NET 10 SDK, Python with Pillow and, for the installer,
-Inno Setup 6.
+You need Windows 10 or 11, the .NET 10 SDK, Python 3 (the `py` launcher) with Pillow and, for the
+installer, Inno Setup 6. Only signing a release also needs `py -3 -m pip install cryptography`.
 
 ```bat
 dotnet build UltimateUpdater.slnx -c Release
@@ -25,9 +25,21 @@ dotnet test tests\UltimateUpdater.Tests\UltimateUpdater.Tests.csproj -c Release 
 
 `build.bat` runs the full pipeline into `dist\`.
 
+## Helper scripts
+
+- `tools\make-third-party-notices.py` rewrites `THIRD-PARTY-NOTICES.txt` from the NuGet package cache;
+  run it after a package update (a test fails when the file is out of date).
+- `tools\coverage-report.py <coverage.cobertura.xml>` lists the classes with the lowest line coverage
+  (collect with `dotnet test --collect:"XPlat Code Coverage"`).
+- `tools\vm\` holds the scripts that prepare a Windows VM for the Store and package-manager tests
+  (a signed test package, a local winget source, seeded outdated packages). They run in a disposable
+  virtual machine, never on your own PC.
+
 ## Guidelines
 
-- **Read `docs/INVARIANTS.md` first.** Several entries there are security-critical.
+- **Mind the security-critical code.** Elevated launches, the named pipe to the elevated helper, the
+  self-update signature check and Setup's elevated PowerShell are the places where a small change
+  can open a hole; touch them only with a test and say so in the pull request.
 - **A source only reads.** Checking for updates never installs, downloads or self-updates a tool;
   a missing tool means the source shows no rows.
 - **No invented versions.** A row shows a version only when it is really known.

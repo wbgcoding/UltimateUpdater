@@ -118,7 +118,7 @@ public sealed class SetupAssetNameTests
         Assert.True(signed > 0 && signed < copied && copied < sums && sums < signatures);
 
         // checksums and signatures cover every exe in dist, so both names get a line and a .sig
-        Assert.Contains("Get-ChildItem -Path '%DIST%\\*.exe'", build);
+        Assert.Contains("Get-ChildItem -LiteralPath $d -Filter '*.exe'", build);
         Assert.Contains("sign-release.py", build);
 
         // no ARM64 portable lands in dist: only the x64 exe is copied there

@@ -38,6 +38,11 @@ versioning: [SemVer](https://semver.org).
 - After a crash a small memory dump is saved next to the logs (the newest three are kept, nothing is
   uploaded), and the crash window has a button that opens the log folder. Reset everything also removes
   the local folder.
+- Setup takes its language from Windows and no longer asks for one, and its window comes to the front
+  when it starts. The Setup that the app starts for a self-update writes an install log into the logs
+  folder (the newest five are kept), so a failed update can be traced.
+- The licence texts of the bundled components are included: THIRD-PARTY-NOTICES.txt sits beside the
+  portable program and in the install folder.
 
 ## [1.2.0] - 2026-11-15
 

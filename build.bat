@@ -6,7 +6,8 @@ rem A double-click run (Explorer starts it as cmd /c) gets a small window that c
 rem successful build. Automated runs (WU_NOPAUSE=1: CI and the autobuild hook) are never resized or held.
 set INTERACTIVE=
 if not "%WU_NOPAUSE%"=="1" (
-    echo %CMDCMDLINE% | findstr /i /c:"/c" >nul && set INTERACTIVE=1
+    set "CMDLINE=!CMDCMDLINE!"
+    if not "!CMDLINE: /c =!"=="!CMDLINE!" set INTERACTIVE=1
 )
 if defined INTERACTIVE mode con cols=100 lines=25
 
@@ -59,6 +60,11 @@ if errorlevel 1 (
 )
 if errorlevel 1 goto :error
 
+rem The sources as they are when the build proper starts. Saving the stamp is refused when they
+rem changed while it ran (a file edited mid-build would otherwise be stamped as built).
+set "BSFP="
+if exist "%BS%" for /f "usebackq delims=" %%A in (`powershell -NoProfile -ExecutionPolicy RemoteSigned -File "%BS%" -Fingerprint -Project "%~dp0." -Key "%BSKEY%" -Extra "%BSEXTRA%"`) do set "BSFP=%%A"
+
 echo.
 echo === build === [%time:~0,8%]
 dotnet build "%ROOT%UltimateUpdater.slnx" -c %CONFIG%
@@ -83,7 +89,7 @@ set "SNAPWAITS=0"
 
 echo.
 echo === test === [%time:~0,8%]
-rem Delayed expansion eats the "!" in the filter, and the whole suite ran instead of the gate - so this
+rem Delayed expansion eats the "!" in the filter, and the whole suite ran instead of the gate: so this
 rem one command runs with it switched off. endlocal keeps the errorlevel, which is all that is needed here.
 rem LiveButtonContrastTests is excluded alongside WindowLayoutTests: it renders through the SAME WpfHarness
 rem (ApplicationThemeManager.Apply loads a WPF-UI theme dictionary via a "pack:" URI), so it is exposed to
@@ -108,7 +114,7 @@ echo Version: %VERSION%
 
 rem Inlined rather than a CALL'd subroutine: CALL to a label defined later in the file proved
 rem unreliable in this exact script after the tasklist/version FOR /F loops above it (a known
-rem cmd.exe quirk around CALL following command-substitution FOR /F) - GOTO :error, used
+rem cmd.exe quirk around CALL following command-substitution FOR /F): GOTO :error, used
 rem everywhere else in this file, is unaffected and keeps working normally.
 rem A copy started from dist\ or build\publish\ keeps its exe locked: Windows refuses to delete a
 rem running image but allows renaming it. So whatever cannot be deleted is moved into build\stale\
@@ -133,7 +139,7 @@ for %%a in (x64 arm64) do (
     echo.
     echo === publish win-%%a === [!time:~0,8!]
     rem Self-contained single file: no runtime prerequisite on the target machine.
-    rem PublishTrimmed is deliberately NOT used - WPF does not support it.
+    rem PublishTrimmed is deliberately NOT used: WPF does not support it.
     rem IncludeNativeLibrariesForSelfExtract is REQUIRED for the portable exe: without it WPF's native DLLs stay next to
     rem the exe and the "portable" exe dies with DllNotFoundException as soon as it is moved alone.
     rem
@@ -147,7 +153,7 @@ for %%a in (x64 arm64) do (
     rem
     rem EnableCompressionInSingleFile is deliberately NOT used, so the exe is never mistaken for malware.
     rem It deflate-compresses the whole payload into the exe, which leaves a
-    rem file with no readable strings and the entropy profile of a packer - exactly what the generic
+    rem file with no readable strings and the entropy profile of a packer, exactly what the generic
     rem machine-learning detections (Trojan:Win64/Lazy!MTB and friends) are built to catch, and the single
     rem most reported cause of false positives on self-contained .NET apps. The exe gets larger; the
     rem installer barely changes, because Inno compresses its payload with LZMA2 itself. Startup is also
@@ -209,7 +215,7 @@ rem Signing is what actually stops a scanner from treating this as an unknown bi
 rem measure that works for every user rather than only for the ones who click through the warning. It is
 rem opt-in because it needs a certificate: set WU_SIGN_THUMBPRINT to the SHA1 thumbprint of a code signing
 rem certificate in the current user's store and every artifact is signed and timestamped. Nothing about the
-rem certificate is ever written into the repository - the thumbprint alone selects it, the private key never
+rem certificate is ever written into the repository: the thumbprint alone selects it, the private key never
 rem leaves the store, and no password appears on a command line.
 rem
 rem Without it the build carries on and says so: an unsigned build is still a correct build, and refusing to
@@ -235,16 +241,25 @@ rem payloads rather than wrapping unsigned ones.
 "%SIGNTOOL%" sign /sha1 %WU_SIGN_THUMBPRINT% /fd SHA256 /td SHA256 /tr "%WU_SIGN_TIMESTAMP_URL%" "%STAGE%\win-x64\UltimateUpdater.exe" "%STAGE%\win-arm64\UltimateUpdater.exe" "%STAGE%\installer-win-x64\UltimateUpdater.exe" "%STAGE%\installer-win-arm64\UltimateUpdater.exe"
 if errorlevel 1 goto :error
 
-rem dist\ took its copy inside the publish loop, before this ran - refresh it so the shipped portable
+rem dist\ took its copy inside the publish loop, before this ran: refresh it so the shipped portable
 rem executable is the signed one.
 copy /y "%STAGE%\win-x64\UltimateUpdater.exe" "%DIST%\UltimateUpdater.exe" >nul
 if errorlevel 1 goto :error
 goto :signdone
 
 :nosign
-echo No WU_SIGN_THUMBPRINT set - artifacts stay unsigned.
+echo No WU_SIGN_THUMBPRINT set: artifacts stay unsigned.
 
 :signdone
+
+rem The licence texts of everything bundled in the exe travel beside the portable exe; the installer
+rem carries the same file into the install folder from the repository root.
+if not exist "%ROOT%THIRD-PARTY-NOTICES.txt" (
+    echo ERROR: THIRD-PARTY-NOTICES.txt is missing from the repository root.
+    goto :error
+)
+copy /y "%ROOT%THIRD-PARTY-NOTICES.txt" "%DIST%\THIRD-PARTY-NOTICES.txt" >nul
+if errorlevel 1 goto :error
 
 echo.
 echo === installer === [%time:~0,8%]
@@ -266,7 +281,7 @@ if not defined ISCC (
     rem No Setup in dist means the build is incomplete: no freshness stamp is saved below, so the next plain run
     rem builds again once Inno Setup is installed instead of reporting "up to date".
     set "NOSETUP=1"
-    echo WARNING: Inno Setup ^(ISCC.exe^) not found - skipping the installer and not marking this build up to date.
+    echo WARNING: Inno Setup ^(ISCC.exe^) not found: skipping the installer and not marking this build up to date.
 ) else (
     echo Using "%ISCC%"
     rem Compiled outside dist and moved in finished: anything that opens a new exe the moment it
@@ -304,8 +319,10 @@ rem One SHA256SUMS.txt over every shipped artifact; the self-updater verifies ag
 rem Get-FileHash is used rather than certutil, whose output is localized and would break parsing.
 rem The first line names the version. The file is signed, so the app can tell this release's digests from an
 rem older signed release re-published under a newer tag.
+set "UU_SUMS_DIST=%DIST%"
+set "UU_SUMS_VERSION=%VERSION%"
 powershell -NoProfile -Command ^
-    "$l = @('# version %VERSION%'); $l += Get-ChildItem -Path '%DIST%\*.exe' | ForEach-Object { '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name }; $l | Set-Content -Path '%DIST%\SHA256SUMS.txt' -Encoding ascii"
+    "$d = $env:UU_SUMS_DIST; $l = @('# version ' + $env:UU_SUMS_VERSION); $l += Get-ChildItem -LiteralPath $d -Filter '*.exe' | Where-Object { $_.Extension -eq '.exe' } | ForEach-Object { '{0}  {1}' -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name }; $l | Set-Content -LiteralPath (Join-Path $d 'SHA256SUMS.txt') -Encoding ascii"
 if errorlevel 1 goto :error
 if not exist "%DIST%\SHA256SUMS.txt" (
     echo ERROR: no checksum file was produced.
@@ -325,7 +342,7 @@ if not exist "%SIGNKEY%" (
         echo ERROR: WU_RELEASE=1 but no release key was found at %SIGNKEY%, so this build could not be shipped.
         goto :error
     )
-    echo WARNING: Unsigned build - no release key found, so the app will refuse this build as an update.
+    echo WARNING: Unsigned build: no release key found, so the app will refuse this build as an update.
     goto :releasesigndone
 )
 where py >nul 2>nul
@@ -348,7 +365,7 @@ if errorlevel 1 (
 rem The snapshot runs only read the test project's output, so publishing and the installer go ahead while
 rem they render; they are collected here, at the end.
 rem No parenthesised if-block here: one of those once swallowed the section after it and the build
-rem silently produced a Setup with an empty version in its name. GOTO instead - the same reason this file
+rem silently produced a Setup with an empty version in its name. GOTO instead: the same reason this file
 rem avoids CALL throughout: a called label runs in its own scope, and an errorlevel set inside it does not
 rem reliably reach the caller. ping is the wait because timeout.exe refuses to run with redirected input,
 rem which every automated run has.
@@ -372,7 +389,7 @@ findstr /x /c:"ok" "%SNAP%-2.rc" >nul
 if not errorlevel 1 goto :snapshots_done
 :snapshots_warn
 echo.
-echo WARNING: the UI snapshot/live-style renders did not pass - that part was NOT verified this run.
+echo WARNING: the UI snapshot/live-style renders did not pass: that part was NOT verified this run.
 echo          The build continues; look at tests\...\ui-snapshots\ or re-run to check the UI.
 :snapshots_done
 rem errorlevel survives until something else sets it, so a failed snapshot run would make the NEXT
@@ -386,9 +403,11 @@ type "%DIST%\SHA256SUMS.txt"
 echo.
 rem === build freshness: save (every final file in dist: exes, signatures, checksums) ===
 set "BSART=dist\UltimateUpdater.exe"
-for %%f in ("%DIST%\*.exe" "%DIST%\*.sig" "%DIST%\SHA256SUMS.txt") do if /i not "%%~nxf"=="UltimateUpdater.exe" set "BSART=!BSART!,dist\%%~nxf"
-if not defined NOSETUP if exist "%BS%" powershell -NoProfile -ExecutionPolicy RemoteSigned -File "%BS%" -Save -Project "%~dp0." -Key "%BSKEY%" -Extra "%BSEXTRA%" -Artifact "!BSART!" >nul 2>&1
-echo BUILD OK - artifacts are in dist\.
+for %%f in ("%DIST%\*.exe" "%DIST%\*.sig" "%DIST%\SHA256SUMS.txt" "%DIST%\THIRD-PARTY-NOTICES.txt") do if /i not "%%~nxf"=="UltimateUpdater.exe" set "BSART=!BSART!,dist\%%~nxf"
+set "BSEXPECT="
+if defined BSFP set "BSEXPECT=-Expect !BSFP!"
+if not defined NOSETUP if exist "%BS%" powershell -NoProfile -ExecutionPolicy RemoteSigned -File "%BS%" -Save -Project "%~dp0." -Key "%BSKEY%" -Extra "%BSEXTRA%" -Artifact "!BSART!" !BSEXPECT! >nul 2>&1
+echo BUILD OK: artifacts are in dist\.
 if defined INTERACTIVE "%SystemRoot%\System32\timeout.exe" /t 10
 endlocal
 exit /b 0

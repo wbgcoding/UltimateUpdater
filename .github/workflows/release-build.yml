@@ -36,9 +36,11 @@ jobs:
 
       - name: Test
         run: |
-          dotnet test tests/UltimateUpdater.Tests/UltimateUpdater.Tests.csproj -c Release --filter "FullyQualifiedName!~WindowLayoutTests&FullyQualifiedName!~LiveButtonContrastTests&FullyQualifiedName!~PressedPixelTests" --logger "trx;LogFileName=tests.trx"
+          dotnet test tests/UltimateUpdater.Tests/UltimateUpdater.Tests.csproj -c Release --no-build --blame-hang --blame-hang-timeout 10m --filter "FullyQualifiedName!~WindowLayoutTests&FullyQualifiedName!~LiveButtonContrastTests&FullyQualifiedName!~PressedPixelTests" --logger "trx;LogFileName=tests.trx"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      # Releases are built and signed on the maintainer's own machine, so this run proves a clean build
+      # and test pass only and makes no build provenance attestation.
       # No publish, signing, release upload or secret of any kind here, and nothing above is wired
       # up as a required check or a branch protection rule: a run that fails, or never runs because
       # the minutes are gone, changes nothing about committing, building or releasing locally.

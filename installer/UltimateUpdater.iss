@@ -3,7 +3,7 @@
 ;
 ; There are two ways to end up with the app, chosen on the mode page right after Welcome: a standard
 ; installation (per-machine or per-user, Start menu entry, uninstaller, updates in place) or a
-; portable copy - one self-contained file dropped into a folder the user picks, with nothing else
+; portable copy: one self-contained file dropped into a folder the user picks, with nothing else
 ; written to this PC. Everything downstream reads IsPortableMode in [Code].
 
 ; The elevated Setup runs from a temp folder; that is safe only with the DLL preloading
@@ -13,7 +13,7 @@
 #endif
 
 #ifndef AppVersion
-  #define AppVersion "1.2.0"
+  #error AppVersion is not set: compile through build.bat, which passes /DAppVersion
 #endif
 
 #define AppName "Ultimate Updater"
@@ -80,11 +80,11 @@ DisableProgramGroupPage=yes
 AllowNoIcons=yes
 
 ; Always show the folder page. The default (auto) SKIPS it once a previous install is detected and
-; reuses that folder - which is exactly why picking a folder for a portable copy appeared to do nothing
+; reuses that folder, which is exactly why picking a folder for a portable copy appeared to do nothing
 ; after the app had been installed once. Portable must always be able to choose where its file goes.
 DisableDirPage=no
 
-; Reuse the folder of an existing installation when Setup runs with no wizard at all - the app's own
+; Reuse the folder of an existing installation when Setup runs with no wizard at all: the app's own
 ; self-updater runs it silently, so nothing else can supply the folder there.
 UsePreviousAppDir=yes
 
@@ -125,7 +125,7 @@ UninstallDisplaySize={#PayloadSize}
 #endif
 
 ; Highest preset Inno offers, and solid so the two architectures' shared bytes are stored once. The
-; payload exes are already single-file compressed, so the further gain here is small - but this squeezes
+; payload exes are already single-file compressed, so the further gain here is small, but this squeezes
 ; out what remains without dropping either architecture or the self-contained runtime (compression only, no features cut).
 ; Eight block threads compress the payload in parallel: about a third of the single-thread compile time for
 ; a Setup well under one percent larger.
@@ -135,15 +135,19 @@ LZMANumBlockThreads=8
 SolidCompression=yes
 WizardStyle=modern
 
+; Setup writes an install log, so a failed (silent) install leaves a trace. The self-updater names the
+; file itself with /LOG; a run without it logs to "Setup Log <date> #NNN.txt" in the temp folder.
+SetupLogging=yes
+
 ; Refuse to install on anything older than Windows 10 1809.
 MinVersion=10.0.17763
 ArchitecturesAllowed=x64compatible arm64
 ArchitecturesInstallIn64BitMode=x64compatible arm64
 
-; Updating over a running copy is the normal case - the self-updater does exactly that. Setup closes
+; Updating over a running copy is the normal case: the self-updater does exactly that. Setup closes
 ; the running app through the Restart Manager so the file replacement works without a reboot.
 CloseApplications=yes
-CloseApplicationsFilter=*.exe
+CloseApplicationsFilter=*.exe,*.dll
 ; Must stay "no": the Restart Manager would restart the closed app as soon as the files are copied, before
 ; the Finish page. The app comes back only through the Finish page's checkbox or the self-updater's
 ; explicit /RELAUNCH=1.
@@ -195,7 +199,7 @@ Name: "autostart"; Description: "{cm:AutostartTask}"
 ; from build\publish\ instead of from dist\ (build.bat). The name it lands under depends on the mode
 ; chosen on the early wizard page (see GetExeName in [Code]): the installed copy keeps the plain exe
 ; name, the portable copy gets the same fixed, recognisable name the standalone download uses. In
-; portable mode this one file is the entire installation - it goes straight into the chosen folder,
+; portable mode this one file is the entire installation: it goes straight into the chosen folder,
 ; with no subfolder and no uninstaller (Uninstallable above).
 ;
 ; Install mode takes the non-extracting publish: the exe plus WPF's native DLLs beside it, so nothing is
@@ -214,6 +218,9 @@ Source: "..\build\publish\installer-win-arm64\UltimateUpdater.exe"; DestDir: "{a
     Check: (not IsPortableMode) and IsArm64; Flags: ignoreversion; AfterInstall: WriteInstalledMarker
 Source: "..\build\publish\installer-win-arm64\*.dll"; DestDir: "{app}"; \
     Check: (not IsPortableMode) and IsArm64; Flags: ignoreversion
+; The licence texts of the bundled components. An installed copy keeps them beside the exe; a portable copy
+; stays one file and gets them from the download page next to the exe instead.
+Source: "..\THIRD-PARTY-NOTICES.txt"; DestDir: "{app}"; Check: not IsPortableMode; Flags: ignoreversion
 
 [Icons]
 ; Portable mode skips the whole Tasks page (ShouldSkipPage), so neither task is ever selected there -
@@ -225,7 +232,7 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{code:GetAppExePath}"; Tasks: deskt
 [Run]
 ; Autostart is written by the APP, not from here. Setup's own HKCU is the hive of whatever account
 ; approved the elevation prompt, which on a machine with a separate administrator account is not the
-; person installing - their Run key would stay empty while a stranger's filled up. runasoriginaluser
+; person installing: their Run key would stay empty while a stranger's filled up. runasoriginaluser
 ; puts the app back in the installing user's context, where its own HKCU is the right one. It writes
 ; the value and exits; nothing is shown. Never in portable mode: a portable copy leaves nothing behind.
 ; Not on a self-update (/RELAUNCH=1) and not on any other silent upgrade (WasUpgrade): Inno reuses the
@@ -246,7 +253,7 @@ Filename: "{code:GetAppExePath}"; Description: "{cm:LaunchAfter}"; \
 ; The self-updater replaced a copy that was running and has to put it back. The Restart Manager
 ; offers to do that and does not do it reliably, so the app asks for it explicitly with /RELAUNCH=1.
 ; For an all-users install the app starts this Setup already elevated (Verb=runas), so Setup has no
-; unelevated "original user" and runasoriginaluser would bring the app back as administrator - possibly
+; unelevated "original user" and runasoriginaluser would bring the app back as administrator, possibly
 ; as a different admin account with its own %APPDATA%. Starting it through explorer.exe hands the launch to
 ; the signed-in user's own, unelevated shell instead.
 Filename: "{code:GetAppExePath}"; Flags: nowait runasoriginaluser; Check: WantsRelaunch and (not IsAdminInstallMode)
@@ -254,24 +261,24 @@ Filename: "{win}\explorer.exe"; Parameters: """{code:GetAppExePath}"""; Flags: n
     Check: WantsRelaunch and IsAdminInstallMode
 
 [Registry]
-; Creates nothing - the app writes the value itself (see [Run]). This entry exists only so uninstalling
+; Creates nothing: the app writes the value itself (see [Run]). This entry exists only so uninstalling
 ; takes it away again. [UninstallRun] cannot do the same job: it has no runasoriginaluser flag, so it
 ; would look at the elevating account's hive rather than the user's. Uninstalling from the same account
-; that installed - the ordinary case - therefore removes the value cleanly; an uninstall approved with a
+; that installed: the ordinary case, therefore removes the value cleanly; an uninstall approved with a
 ; different administrator account may leave it, and the app's own autostart switch clears it.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; \
     ValueName: "UltimateUpdater"; Flags: uninsdeletevalue; Check: not IsPortableMode
 
 [UninstallDelete]
 ; The marker file, and nothing else. A standard installation keeps its data in %APPDATA% (AppPaths
-; decides that from the marker), so it never creates {app}\data at all - while an installation into a
+; decides that from the marker), so it never creates {app}\data at all, while an installation into a
 ; folder that already existed (D:\Tools, say) may well find someone else's "data" folder there.
 ; Removing that on uninstall would be silent data loss for a folder this installer never wrote.
 Type: files; Name: "{app}\.installed"
 
 [Code]
 const
-  { Where Inno records a standard installation of this AppId - it appends "_is1" to the AppId. Read
+  { Where Inno records a standard installation of this AppId: it appends "_is1" to the AppId. Read
     to find out whether the app is already installed and, if so, where. Kept as a plain literal:
     nothing expands constants in it, so the braces are just characters. }
   UninstallKeyName =
@@ -282,7 +289,7 @@ var
   { The mode page, shown right after Welcome and before the directory page: everything downstream
     (default folder, whether Tasks/Icons/registry/marker happen, the installed file name, whether an
     uninstaller is built at all) reads the radio buttons rather than a Task, because a Task is only
-    chosen AFTER the directory page in Inno's fixed page order - far too late to steer it. }
+    chosen AFTER the directory page in Inno's fixed page order, far too late to steer it. }
   ModePage: TWizardPage;
   InstallRadio, PortableRadio: TNewRadioButton;
   { Kept so the block can be re-centred once the page is actually shown: InitializeWizard runs before the
@@ -299,9 +306,10 @@ var
   { True when the standard installation of this scope was already there when Setup started, read once in
     InitializeSetup before anything is written. }
   WasUpgrade: Boolean;
+  AutostartTaskSynced: Boolean;
 
 { Windows refuses SetForegroundWindow to a process that is not already in front, which is exactly the
-  position Setup is in when it is launched from a browser, Explorer or another app - so the call alone is
+  position Setup is in when it is launched from a browser, Explorer or another app, so the call alone is
   not enough and the window has to be held on top until it really has the focus.
 
   Observed: fsStayOnTop + BringToFront + a bare SetForegroundWindow call, launched from an
@@ -343,14 +351,14 @@ const
 
 { The actual fix: SetForegroundWindow's own refusal is keyed to which THREAD last received user
   input, not which process. Temporarily attaching Setup's UI thread to the current foreground
-  window's input state removes that restriction for the duration of the attachment - the standard
+  window's input state removes that restriction for the duration of the attachment: the standard
   Win32 workaround for exactly this refusal, stronger than relying on WS_EX_TOPMOST alone. Detaching
   again immediately after is required: leaving two threads attached would make them share input
   state (focus, key state, caret) for as long as both live, which is not something Setup should be
   doing to some other, unrelated foreground process for its whole run.
 
   On a test VM the AttachThreadInput trick above still lost
-  on the very FIRST page (ModePage, no elevation involved yet) - GetForegroundWindow still named
+  on the very FIRST page (ModePage, no elevation involved yet): GetForegroundWindow still named
   something else right after SetForegroundWindow returned. SwitchToThisWindow does not go through
   the same foreground-lock check user32 applies to SetForegroundWindow, so it is tried as a second
   attempt only when the first one measurably failed; the TOPMOST/NOTOPMOST toggle then forces the
@@ -399,7 +407,7 @@ begin
   Result := (PortableRadio <> nil) and PortableRadio.Checked;
 end;
 
-{ The file name for whichever mode is currently chosen - one function so [Files], [Icons], [Run] and
+{ The file name for whichever mode is currently chosen: one function so [Files], [Icons], [Run] and
   UninstallDisplayIcon all agree on what was actually written to the install folder. }
 function GetExeName(Param: String): String;
 begin
@@ -450,6 +458,21 @@ end;
 function KeepsAutostartSetting: Boolean;
 begin
   Result := WizardSilent and WasUpgrade;
+end;
+
+{ An interactive reinstall would also replay the old task choice, so the box could come back ticked after the
+  user turned autostart off in the app. The Tasks page therefore starts from what the Run key says now.
+  Done once, so going Back and Next never undoes a change made on the page. Under another administrator
+  account the key read is that account's, and the box is simply left for the user to set. }
+procedure SyncAutostartTask;
+begin
+  if AutostartTaskSynced or (not WasUpgrade) then
+    Exit;
+  AutostartTaskSynced := True;
+  if RegValueExists(HKEY_CURRENT_USER, 'Software\Microsoft\Windows\CurrentVersion\Run', 'UltimateUpdater') then
+    WizardSelectTasks('autostart')
+  else
+    WizardSelectTasks('!autostart');
 end;
 
 function AddModeRadio(const Title: String; const ALeft, AWidth: Integer): TNewRadioButton;
@@ -612,7 +635,7 @@ begin
     WizardActivated(nil);
 end;
 
-{ Portable mode skips the whole Tasks page - neither task (desktop icon, autostart) means anything for
+{ Portable mode skips the whole Tasks page: neither task (desktop icon, autostart) means anything for
   a copy that is meant to leave nothing behind on the machine. }
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
@@ -630,7 +653,7 @@ var
   Mode: Integer;
   Existing: String;
 begin
-  { The first page that actually appears is where Setup can first be seen - and where it was being
+  { The first page that actually appears is where Setup can first be seen, and where it was being
     left behind whatever window started it, so it asks for the foreground here.
 
     NOT keyed to wpWelcome, because Inno's default
@@ -639,6 +662,9 @@ begin
     BringWizardToFront stops for good once the wizard really is the foreground window; until then every
     page change tries again. }
   BringWizardToFront;
+
+  if CurPageID = wpSelectTasks then
+    SyncAutostartTask;
 
   { The mode page: centre the two choices now that the surface has its real height, and pull the header's
     description text out to the same left edge as the page title, instead of the indent Inno gives it. }
@@ -761,6 +787,12 @@ begin
   Sys := ExpandConstant('{sys}');
   SetEnvironmentVariable('Path', Sys + ';' + Sys + '\Wbem;' + Sys + '\WindowsPowerShell\v1.0');
   SetEnvironmentVariable('PSModulePath', Sys + '\WindowsPowerShell\v1.0\Modules');
+  { Also user-writable through HKCU\Environment: a changed windir or SystemRoot is a known way to steer
+    elevated Windows code to a folder of the user's choosing. }
+  SetEnvironmentVariable('SystemRoot', ExpandConstant('{win}'));
+  SetEnvironmentVariable('windir', ExpandConstant('{win}'));
+  SetEnvironmentVariable('ComSpec', Sys + '\cmd.exe');
+  SetEnvironmentVariable('PATHEXT', '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC');
   ClearCodeLoadingVariablesFrom('Environment');
   ClearCodeLoadingVariablesFrom('Volatile Environment');
   ClearEnvironmentVariable('COR_ENABLE_PROFILING', 0);
@@ -999,7 +1031,7 @@ end;
 
   Closed by PATH, not by image name. taskkill /IM matches every process with that name anywhere on
   the machine, so removing an installed copy also shot down a portable copy running from a stick or
-  another folder - possibly in the middle of its own install or cleanup run. Only a copy inside the
+  another folder, possibly in the middle of its own install or cleanup run. Only a copy inside the
   installation folder can hold this uninstall's files, and that is the only one closed. Both names
   are covered because that folder may hold either (portable first, then installed over). }
 function InitializeUninstall: Boolean;

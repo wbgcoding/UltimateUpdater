@@ -25,7 +25,7 @@ public class NoDashesTests
     /// explicitly not gated here: failing the build over a dash in a private planning file is a
     /// trap, not a safety net.
     /// </summary>
-    private static readonly string[] ScannedRootFiles = ["README.md", "CHANGELOG.md", "NOTICE-brand-icons.md", "LICENSE"];
+    private static readonly string[] ScannedRootFiles = ["README.md", "CHANGELOG.md", "NOTICE-brand-icons.md", "NOTICE-dependencies.md", "THIRD-PARTY-NOTICES.txt", "CONTRIBUTING.md", "SECURITY.md", "LICENSE"];
 
     [Fact]
     public void No_shipped_text_file_contains_an_em_dash_or_en_dash()

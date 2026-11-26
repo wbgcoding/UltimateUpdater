@@ -36,7 +36,7 @@ You decide which sources are enabled and what gets installed, and you are respon
 
 The cleanup deletes the contents of temporary directories and caches, empties the recycle bin if you ask it to, removes orphaned registry entries, and starts Windows' own tools (Disk Cleanup, sfc, DISM). You decide before every run which areas are included.
 
-Deleted data is gone for good. The one exception is leftover program folders, which are moved to the recycle bin. Before registry entries are removed, a backup of the affected areas is written; no guarantee is given that it is complete or that a restore will succeed.
+Deleted data is gone for good. The one exception is the leftovers of an uninstalled program: its folders and shortcuts are first moved to a quarantine folder, from which the history can restore them for 14 days (an item that cannot be moved there goes to the recycle bin), and its registry keys are exported before they are removed. Before other registry entries are removed, a backup of the affected areas is written; no guarantee is given that it is complete or that a restore will succeed.
 
 Back up anything you care about before starting a cleanup. No liability is accepted for deleted files, lost settings, programs that no longer start or no longer work correctly after a cleanup, the effects of the registry cleanup, or the consequences of the repair and cleanup steps Windows itself performs.
 
@@ -44,6 +44,6 @@ Back up anything you care about before starting a cleanup. No liability is accep
 
 This software is provided "as is", without warranty of any kind. There is no assurance that it is free of defects or fit for any particular purpose.
 
-To the extent permitted by law, no liability is accepted for damages, data loss, lost profits or any other disadvantage arising from the use of this program - including updates, installations, uninstallations and cleanups triggered through it.
+To the extent permitted by law, no liability is accepted for damages, data loss, lost profits or any other disadvantage arising from the use of this program, including updates, installations, uninstallations and cleanups triggered through it.
 
 You use it at your own risk.

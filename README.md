@@ -187,8 +187,9 @@ leaves behind as well.
 <details>
 <summary><strong>Building from source</strong></summary>
 
-Requirements: the .NET 10 SDK, Python with Pillow (app icon) and
-[Inno Setup](https://jrsoftware.org/isinfo.php) (installer). The version number lives only in
+Requirements: the .NET 10 SDK, Python 3 with Pillow (app icon), started through the `py` launcher, and
+[Inno Setup](https://jrsoftware.org/isinfo.php) (installer). Signing a release also needs the Python
+`cryptography` package (`py -3 -m pip install cryptography`). The version number lives only in
 `src/UltimateUpdater/UltimateUpdater.csproj`.
 
 ```
@@ -203,7 +204,9 @@ self-contained executables for x64 and ARM64, the installer and checksums. `dist
 | `UltimateUpdater.exe` | portable build (x64) |
 | `UltimateUpdater-Setup-<version>.exe` | installer with both architectures |
 | `Setup-UltimateUpdater-<version>.exe` | identical copy under the old installer name, so installed older versions still find the update |
-| `SHA256SUMS.txt` | checksums for both |
+| `SHA256SUMS.txt` | checksums for every exe |
+| `*.sig` | detached release signatures of every exe and of `SHA256SUMS.txt` (only with a release key), checked by the self-update |
+| `THIRD-PARTY-NOTICES.txt` | licence texts of the bundled components, also installed beside the app |
 
 A second run with nothing changed reports "Build is up to date" and exits; `build.bat --force` (or `FORCE=1`) rebuilds anyway.
 
@@ -238,7 +241,8 @@ dotnet publish src\UltimateUpdater\UltimateUpdater.csproj -c Release -r win-x64 
 
 Open an [issue](https://github.com/wbgcoding/UltimateUpdater/issues) with what you expected and what
 happened, the app version (Settings, About), portable or installed, the source involved and the relevant
-log lines. The log sits in the data folder and already redacts paths and credentials.
+log lines. The log sits in `%LOCALAPPDATA%\UltimateUpdater\logs` (a portable copy: `data\logs` next to the
+exe) and already redacts paths and credentials.
 
 ## Disclaimer
 
