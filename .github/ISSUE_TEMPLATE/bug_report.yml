@@ -34,5 +34,5 @@ body:
     id: log
     attributes:
       label: Log lines
-      description: The relevant lines from the log in the data folder. It already hides paths and anything shaped like a password.
+      description: The relevant lines from the log (installed: %LOCALAPPDATA%\UltimateUpdater\logs, portable: the data\logs folder next to the exe). It already hides paths and anything shaped like a password.
       render: text
