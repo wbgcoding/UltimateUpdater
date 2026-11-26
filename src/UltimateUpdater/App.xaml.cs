@@ -367,6 +367,7 @@ public partial class App : Application
             notifications, selfUpdate, sources, _elevated, wingetBootstrap: wingetBootstrap);
         _mainViewModel = mainViewModel;
         mainViewModel.CleanupPrescanAllowed = !IsUnattended;
+        mainViewModel.UninstallPrefetchAllowed = !IsUnattended;
         var mainWindow = new MainWindow(mainViewModel, themeService, settings, logging);
 
         MainWindow = mainWindow;
@@ -695,6 +696,7 @@ public partial class App : Application
         AppPaths.SyncPendingDataFolder();
 
         _mainViewModel?.DiscardUnstartedSelfUpdate();
+        _mainViewModel?.CancelUninstallPrefetch();
 
         _scheduler?.Dispose();
         _tray?.Dispose();

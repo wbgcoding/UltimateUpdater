@@ -54,7 +54,8 @@ public interface IUninstallerBackend
 
 /// <summary>The real machine behind <see cref="IUninstallerBackend"/>.</summary>
 public sealed class UninstallerBackend(
-    LoggingService logging, ElevatedHost? elevated, SettingsService? settings = null, HistoryService? history = null) : IUninstallerBackend
+    LoggingService logging, ElevatedHost? elevated, SettingsService? settings = null, HistoryService? history = null,
+    UninstallListingPrefetch? prefetch = null) : IUninstallerBackend
 {
     private readonly UninstallLeftoverService _leftovers = new(
         logging, elevated, settings is { } current ? () => current.Current.RegistryCleanup : null);
@@ -137,6 +138,10 @@ public sealed class UninstallerBackend(
         });
 
     private static string WindowsDirectory => Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+
+    /// <summary>The background read of this session when it is running or fresh, else a read of its own.</summary>
+    public async Task<IReadOnlyList<UninstallListing>> ListForOpenAsync(CancellationToken cancellationToken) =>
+        (prefetch is null ? null : await prefetch.TryTakeAsync(cancellationToken)) ?? await ListAsync(cancellationToken);
 
     public Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>

@@ -376,6 +376,7 @@ public partial class MainViewModel
             _rowUninstallInventory?.Invalidate();
             ScanCompleted?.Invoke();
             StartCleanupPrescanIfWanted();
+            StartUninstallPrefetchIfWanted();
         }
 
         // Fire and forget after the scan UI settled: it may show a dialog and do network I/O, which the scan should not wait on. A no-op once winget is present or this session already asked (WingetBootstrapService.NeedsOffer). A mock session (--mock-sources) must never ask: NeedsOffer probes the real winget.exe, and "yes" would install real software in a session meant to touch nothing (same rule as InstallQueue's elevation routing). The offer is modal and needs someone at the screen; with the gate closed the question is not used up and the next scan asks.

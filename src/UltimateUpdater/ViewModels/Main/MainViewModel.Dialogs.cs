@@ -103,7 +103,8 @@ public partial class MainViewModel
         {
             _uninstallerViewModel?.Discard();
             _uninstallerViewModel = new UninstallerViewModel(
-                UninstallerBackendOverride?.Invoke() ?? new UninstallerBackend(_logging, _elevated, _settings, _history), _logging);
+                UninstallerBackendOverride?.Invoke() ?? new UninstallerBackend(_logging, _elevated, _settings, _history, UninstallPrefetch),
+                _logging);
         }
 
         ShowOwned(new UninstallerWindow(_uninstallerViewModel), openStarted: openStarted, independent: true);
@@ -113,6 +114,42 @@ public partial class MainViewModel
 
     /// <summary>Lets a test open the window on a fake machine.</summary>
     internal Func<IUninstallerBackend>? UninstallerBackendOverride { get; set; }
+
+    /// <summary>Set by the app once the session is a real, attended one. Off by default so a view model built in a test never reads the machine it runs on.</summary>
+    internal bool UninstallPrefetchAllowed { get; set; }
+
+    /// <summary>The once-per-session background read of the uninstaller listing, or null before it was started.</summary>
+    internal UninstallListingPrefetch? UninstallPrefetch { get; private set; }
+
+    private bool _uninstallPrefetchStarted;
+
+    /// <summary>
+    /// After the first finished update scan, while nothing is being installed, reads the uninstaller listing in the
+    /// background (unelevated, low priority) and saves it, so the window opens on fresh rows. Once per session: a scan
+    /// that ends while work is running leaves the chance for the next one.
+    /// </summary>
+    internal void StartUninstallPrefetchIfWanted()
+    {
+        if (_uninstallPrefetchStarted)
+            return;
+
+        if (!UninstallPrefetchAllowed || _installQueue.IsMockSession)
+        {
+            _uninstallPrefetchStarted = true;
+            return;
+        }
+
+        if (WorkIsRunning)
+            return;
+
+        _uninstallPrefetchStarted = true;
+        var reader = UninstallerBackendOverride?.Invoke() ?? new UninstallerBackend(_logging, elevated: null, _settings, _history);
+        UninstallPrefetch = new UninstallListingPrefetch(reader, _logging);
+        UninstallPrefetch.Start();
+    }
+
+    /// <summary>The app is exiting: a read still going is cancelled.</summary>
+    internal void CancelUninstallPrefetch() => UninstallPrefetch?.Cancel();
 
     /// <summary>The view model the dialog opens on. Busy, not merely cleaning: a dialog reopened while still measuring must reuse it, or its scan would race the old one over the same folders. Whatever is still going is picked back up; only a finished dialog, or none, starts fresh. A prescanned one is kept while its result is fresh and untouched, so opening it costs no new measuring (the admin targets the prescan left out are measured on open).</summary>
     internal CleanupViewModel EnsureCleanupViewModel()
