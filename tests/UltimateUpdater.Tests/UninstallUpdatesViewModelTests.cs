@@ -67,7 +67,10 @@ public class UninstallUpdatesViewModelTests
 
         Assert.True(removable.Selectable);
         Assert.True(removable.IsRisky);
-        Assert.False(removable.HasNote);
+
+        // The registry does not say whether an update is permanent, so a removable one carries the "may refuse" note.
+        Assert.True(removable.HasNote);
+        Assert.Equal("Windows may refuse to remove this update", removable.NoteText);
 
         Assert.False(kept.Selectable);
         Assert.True(kept.HasNote);
@@ -83,6 +86,9 @@ public class UninstallUpdatesViewModelTests
         {
             var kept = vm.AllRows.Single(row => row.Entry.Key.Contains("RollupFix", StringComparison.Ordinal));
             Assert.Equal("Windows erlaubt das Entfernen dieses Updates nicht", UninstallRowText.Note(kept.Listing.Plan, kept.Entry));
+
+            var removable = vm.AllRows.Single(row => row.Entry.Key.Contains("KB5031234", StringComparison.Ordinal));
+            Assert.Equal("Windows lehnt das Entfernen dieses Updates möglicherweise ab", UninstallRowText.Note(removable.Listing.Plan, removable.Entry));
         }
         finally
         {

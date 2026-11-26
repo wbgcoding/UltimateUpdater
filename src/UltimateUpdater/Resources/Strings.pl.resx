@@ -2746,6 +2746,9 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>System Windows nie pozwala usunąć tej aktualizacji</value>
   </data>
+  <data name="UninstallerUpdateMayRefuse" xml:space="preserve">
+    <value>System Windows może odmówić usunięcia tej aktualizacji</value>
+  </data>
   <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
     <value>Folder jest pusty, gra prawdopodobnie nie jest już zainstalowana</value>
   </data>

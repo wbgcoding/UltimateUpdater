@@ -2746,6 +2746,9 @@ Esto no se puede deshacer.</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows no permite quitar esta actualización</value>
   </data>
+  <data name="UninstallerUpdateMayRefuse" xml:space="preserve">
+    <value>Windows puede negarse a quitar esta actualización</value>
+  </data>
   <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
     <value>Carpeta vacía, el juego probablemente ya no está instalado</value>
   </data>

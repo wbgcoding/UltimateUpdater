@@ -2746,6 +2746,9 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows erlaubt das Entfernen dieses Updates nicht</value>
   </data>
+  <data name="UninstallerUpdateMayRefuse" xml:space="preserve">
+    <value>Windows lehnt das Entfernen dieses Updates möglicherweise ab</value>
+  </data>
   <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
     <value>Ordner leer, Spiel vermutlich nicht mehr installiert</value>
   </data>

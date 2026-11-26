@@ -2746,6 +2746,9 @@ Continuați cu drepturi de administrator?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows nu permite eliminarea acestei actualizări</value>
   </data>
+  <data name="UninstallerUpdateMayRefuse" xml:space="preserve">
+    <value>Windows poate refuza eliminarea acestei actualizări</value>
+  </data>
   <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
     <value>Dosar gol, jocul probabil nu mai este instalat</value>
   </data>

@@ -2746,6 +2746,9 @@ Doorgaan met beheerdersrechten?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows staat het verwijderen van deze update niet toe</value>
   </data>
+  <data name="UninstallerUpdateMayRefuse" xml:space="preserve">
+    <value>Windows weigert het verwijderen van deze update mogelijk</value>
+  </data>
   <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
     <value>Map leeg, spel waarschijnlijk niet meer geïnstalleerd</value>
   </data>

@@ -261,7 +261,12 @@ internal static class UninstallRowText
         UninstallRefusal.DriverInUse => string.Format(
             LocalizationService.Instance["UninstallerDriverInUse"], entry.InUseBy),
         UninstallRefusal.UpdateNotRemovable => LocalizationService.Instance["UninstallerUpdateKept"],
-        _ => entry.InstallFolderEmpty ? LocalizationService.Instance["UninstallerSteamFolderEmpty"] : string.Empty,
+        _ when entry.InstallFolderEmpty => LocalizationService.Instance["UninstallerSteamFolderEmpty"],
+
+        // The listing reads the component store's registry keys, which do not say whether an update is permanent: a
+        // removable-looking KB update can still be refused by Windows, so the row says so up front.
+        _ when entry.Kind == UninstallEntryKind.WindowsUpdate && plan.IsRunnable => LocalizationService.Instance["UninstallerUpdateMayRefuse"],
+        _ => string.Empty,
     };
 
     /// <summary>Why a row cannot be ticked: not confirmed yet, the risk rating bars it (this app), the plan refused it (a driver in use, an update Windows keeps), or
