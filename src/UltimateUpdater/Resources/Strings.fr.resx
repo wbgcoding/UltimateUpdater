@@ -2785,6 +2785,9 @@ Continuer avec les droits administrateur ?</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>Il ne sera plus possible de revenir aux versions de composants remplacées.</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>Les mises à jour Windows installées ne pourront ensuite plus être désinstallées.</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>Nombre de sources vérifiées en même temps. Plus de sources va plus vite mais sollicite davantage le processeur et le réseau.</value>
   </data>

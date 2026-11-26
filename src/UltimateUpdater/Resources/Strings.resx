@@ -2785,6 +2785,9 @@ Continue with admin rights?</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>Superseded component versions can no longer be rolled back to.</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>Installed Windows updates can no longer be uninstalled afterwards.</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>How many sources are checked at once. More is faster but uses more processor and network.</value>
   </data>

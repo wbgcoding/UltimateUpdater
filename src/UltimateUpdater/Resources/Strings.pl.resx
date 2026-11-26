@@ -2785,6 +2785,9 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>Nie będzie już można wrócić do zastąpionych wersji składników.</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>Zainstalowanych aktualizacji Windows nie będzie już można odinstalować.</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>Ile źródeł jest sprawdzanych jednocześnie. Więcej działa szybciej, ale mocniej obciąża procesor i sieć.</value>
   </data>

@@ -2785,6 +2785,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>置き換えられたコンポーネントのバージョンには、元に戻せなくなります。</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>インストール済みの Windows 更新プログラムは、その後アンインストールできなくなります。</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>同時にチェックするソースの数です。多いほど速くなりますが、プロセッサとネットワークの負荷が増えます。</value>
   </data>

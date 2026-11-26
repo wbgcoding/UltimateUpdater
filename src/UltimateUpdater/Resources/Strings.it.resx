@@ -2785,6 +2785,9 @@ Continuare con privilegi di amministratore?</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>Non sarà più possibile tornare alle versioni dei componenti sostituite.</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>Gli aggiornamenti di Windows installati non potranno più essere disinstallati.</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>Quante fonti vengono controllate contemporaneamente. Più fonti è più veloce, ma usa più processore e rete.</value>
   </data>

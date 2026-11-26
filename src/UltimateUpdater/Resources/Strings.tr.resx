@@ -2785,6 +2785,9 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>Yerine geçilen bileşen sürümlerine artık geri dönülemez.</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>Yüklü Windows güncellemeleri artık kaldırılamaz.</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>Aynı anda kaç kaynağın denetlendiği. Daha fazlası daha hızlıdır ama işlemciyi ve ağı daha çok kullanır.</value>
   </data>

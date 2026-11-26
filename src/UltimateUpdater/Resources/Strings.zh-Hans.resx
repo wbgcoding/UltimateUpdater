@@ -2785,6 +2785,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>将无法再回退到已被取代的组件版本。</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>安装的 Windows 更新之后将无法卸载。</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>同时检查的来源数量。数量越多速度越快，但会占用更多处理器和网络资源。</value>
   </data>

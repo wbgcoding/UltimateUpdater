@@ -286,7 +286,7 @@ public static class CleanupCatalog
             new CleanupTarget(
                 "component-resetbase", "CleanupComponentResetBase", "CleanupComponentResetBaseDesc",
                 CleanupKind.SystemRepair, DefaultEnabled: false,
-                RiskLevel: CleanupRiskLevel.Risky, ConsequenceKey: "CleanupComponentResetBaseDesc", NeedsElevation: true)
+                RiskLevel: CleanupRiskLevel.Risky, ConsequenceKey: "CleanupComponentResetBaseConsequence", NeedsElevation: true)
             {
                 RepairSteps =
                 [

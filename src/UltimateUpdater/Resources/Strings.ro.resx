@@ -2785,6 +2785,9 @@ Continuați cu drepturi de administrator?</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>Nu se va mai putea reveni la versiunile de componente înlocuite.</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>Actualizările Windows instalate nu vor mai putea fi dezinstalate după aceea.</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>Câte surse sunt verificate simultan. Mai multe merg mai repede, dar folosesc mai mult procesorul și rețeaua.</value>
   </data>

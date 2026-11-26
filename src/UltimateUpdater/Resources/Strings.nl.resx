@@ -2785,6 +2785,9 @@ Doorgaan met beheerdersrechten?</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>Vervangen onderdeelversies kunnen niet meer worden hersteld.</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>Geïnstalleerde Windows-updates kunnen daarna niet meer worden verwijderd.</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>Hoeveel bronnen tegelijk worden gecontroleerd. Meer is sneller, maar kost meer processor en netwerk.</value>
   </data>

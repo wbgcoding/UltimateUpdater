@@ -2785,6 +2785,9 @@ Esto no se puede deshacer.</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>Ya no se podrá volver a las versiones de componentes reemplazadas.</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>Las actualizaciones de Windows instaladas ya no se podrán desinstalar después.</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>Cuántas fuentes se comprueban a la vez. Más es más rápido, pero usa más procesador y red.</value>
   </data>

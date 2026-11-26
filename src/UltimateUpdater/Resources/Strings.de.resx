@@ -2785,6 +2785,9 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="CleanupComponentCleanupConsequence" xml:space="preserve">
     <value>Auf ersetzte Komponentenversionen kann nicht mehr zurückgegangen werden.</value>
   </data>
+  <data name="CleanupComponentResetBaseConsequence" xml:space="preserve">
+    <value>Installierte Windows-Updates lassen sich danach nicht mehr deinstallieren.</value>
+  </data>
   <data name="SettingsParallelScansDesc" xml:space="preserve">
     <value>Wie viele Quellen gleichzeitig geprüft werden. Mehr geht schneller, braucht aber mehr Prozessor und Netzwerk.</value>
   </data>
