@@ -29,14 +29,32 @@ public interface IWingetListSource
 public sealed class AppxPackageReader : IAppxPackageSource
 {
     /// <summary>
+    /// Packages that are dropped before their manifest is read (it costs a call per package under one 90 s limit):
+    /// frameworks, resource packages, bundles, packages Windows marks non-removable and packages signed by the system.
+    /// </summary>
+    internal const string PackageFilter =
+        "-not $_.IsFramework -and -not $_.IsResourcePackage -and -not $_.IsBundle -and -not $_.NonRemovable " +
+        "-and [string]$_.SignatureKind -ne 'System'";
+
+    /// <summary>
+    /// True when the manifest in <c>$m</c> has an application a person could open. The AppListEntry attribute sits on the
+    /// application's VisualElements child (uap:VisualElements, or m2/m3 in older manifests), not on Application itself;
+    /// PowerShell addresses that child by its local name whatever its namespace prefix is. An application without
+    /// VisualElements (a background task host) has nothing to open either.
+    /// </summary>
+    internal const string VisibleAppExpression =
+        "@($m.Package.Applications.Application | Where-Object { $_ -and $_.VisualElements " +
+        "-and $_.VisualElements.AppListEntry -ne 'none' }).Count -gt 0";
+
+    /// <summary>
     /// One object per package. The manifest is read per package inside its own try, so a package whose manifest cannot be
     /// read still lists (the three manifest fields stay empty) instead of dropping the whole result.
     /// </summary>
     internal const string Script =
-        "Get-AppxPackage | ForEach-Object { $p = $_; $d = $null; $b = $null; $v = $null; " +
+        "Get-AppxPackage | Where-Object { " + PackageFilter + " } | ForEach-Object { $p = $_; $d = $null; $b = $null; $v = $null; " +
         "try { $m = Get-AppxPackageManifest -Package $p; $d = [string]$m.Package.Properties.DisplayName; " +
         "$b = [string]$m.Package.Properties.PublisherDisplayName; " +
-        "$v = @($m.Package.Applications.Application | Where-Object { $_ -and $_.AppListEntry -ne 'none' }).Count -gt 0 } catch { }; " +
+        "$v = " + VisibleAppExpression + " } catch { }; " +
         "[pscustomobject]@{ Name = $p.Name; PackageFullName = $p.PackageFullName; PackageFamilyName = $p.PackageFamilyName; " +
         "Publisher = $p.Publisher; Version = $p.Version; IsFramework = $p.IsFramework; IsResourcePackage = $p.IsResourcePackage; " +
         "IsBundle = $p.IsBundle; NonRemovable = $p.NonRemovable; SignatureKind = $p.SignatureKind; " +
