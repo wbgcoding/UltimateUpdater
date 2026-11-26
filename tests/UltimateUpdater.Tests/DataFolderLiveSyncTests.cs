@@ -165,7 +165,7 @@ public class DataFolderLiveSyncTests : IDisposable
         Directory.CreateDirectory(outside);
         File.WriteAllText(Path.Combine(outside, "keep.txt"), "mine");
         var link = Path.Combine(_destination, "reports");
-        CreateJunction(link, outside);
+        TestLinks.CreateJunction(link, outside);
         Directory.CreateDirectory(Path.Combine(_source, "reports"));
         File.WriteAllText(Path.Combine(_source, "reports", "new.txt"), "y");
 
@@ -180,20 +180,5 @@ public class DataFolderLiveSyncTests : IDisposable
         {
             Directory.Delete(link);
         }
-    }
-
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
     }
 }

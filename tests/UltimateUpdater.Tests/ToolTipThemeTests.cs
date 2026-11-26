@@ -12,6 +12,7 @@ namespace UltimateUpdater.Tests;
 /// paints is dark with light text.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class ToolTipThemeTests
 {
     [Fact]

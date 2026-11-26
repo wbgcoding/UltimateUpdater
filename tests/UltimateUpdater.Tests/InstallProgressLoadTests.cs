@@ -12,6 +12,7 @@ namespace UltimateUpdater.Tests;
 /// progress tick, shows up as a number instead of as an owned window that lags during an install.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class InstallProgressLoadTests(Xunit.Abstractions.ITestOutputHelper output)
 {
     private const int RowCount = 6;

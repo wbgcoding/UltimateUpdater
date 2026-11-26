@@ -11,6 +11,7 @@ namespace UltimateUpdater.Tests;
 /// against the shared test-process <c>Application</c> proved unsafe, see that seam's own doc comment).
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class RebootDialogTests
 {
     private static MainViewModel Create()

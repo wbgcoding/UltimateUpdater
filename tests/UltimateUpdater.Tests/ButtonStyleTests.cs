@@ -13,6 +13,7 @@ namespace UltimateUpdater.Tests;
 /// and failed in the full run, the contract that actually matters is "the property is set, and the style is
 /// derived correctly", and that lives in the file.
 /// </summary>
+[Trait("Layer", "UI")]
 public class ButtonStyleTests
 {
     private static readonly XNamespace Presentation =

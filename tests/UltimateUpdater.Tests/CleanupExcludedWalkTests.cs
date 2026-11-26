@@ -4,6 +4,7 @@ namespace UltimateUpdater.Tests;
 
 /// <summary>A discovered cache root that is itself excluded (or lies inside an excluded folder) is never
 /// listed: every file in it would be dropped one by one, so the whole walk is wasted.</summary>
+[Trait("Layer", "Integration")]
 public class CleanupExcludedWalkTests : IDisposable
 {
     public CleanupExcludedWalkTests() => CleanupService.EnumerateFilesHookForTest.Value = null;

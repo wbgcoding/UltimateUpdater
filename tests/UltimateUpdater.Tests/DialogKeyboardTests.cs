@@ -13,6 +13,7 @@ namespace UltimateUpdater.Tests;
 /// raising its own event is just itself, so that is not needed) rather than only reading the source.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class DialogKeyboardTests
 {
     /// <summary>Never shown, never sized, exists only so <see cref="KeyEventArgs"/>'s constructor has a

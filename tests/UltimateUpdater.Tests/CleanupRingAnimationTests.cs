@@ -21,6 +21,7 @@ namespace UltimateUpdater.Tests;
 /// these tests seek the storyboard (which applies immediately) and drive the time manager by hand.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class CleanupRingAnimationTests : IDisposable
 {
     /// <summary>The sweep only runs with Windows animations on, which a build server often has off.</summary>

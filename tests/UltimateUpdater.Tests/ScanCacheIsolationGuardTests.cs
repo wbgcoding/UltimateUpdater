@@ -23,6 +23,7 @@ namespace UltimateUpdater.Tests;
 /// silently reaching the real files or another test's leftovers.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class ScanCacheIsolationGuardTests
 {
     [Fact]

@@ -10,6 +10,7 @@ namespace UltimateUpdater.Tests;
 /// Exercised directly against a <see cref="StringReader"/> rather than a real process: deterministic and
 /// does not need to actually generate 10 MB of process output to prove the cap.
 /// </summary>
+[Trait("Layer", "Integration")]
 public class ProcessRunnerStreamingTests
 {
     [Fact]

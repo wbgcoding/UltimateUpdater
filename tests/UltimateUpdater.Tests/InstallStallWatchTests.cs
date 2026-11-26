@@ -121,6 +121,7 @@ public class InstallStallWatchTests
         }
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task A_silent_idle_installer_is_stopped_after_the_window_and_reported_as_stalled()
     {
@@ -149,6 +150,7 @@ public class InstallStallWatchTests
         }
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task A_busy_installer_is_left_alone_until_it_ends()
     {

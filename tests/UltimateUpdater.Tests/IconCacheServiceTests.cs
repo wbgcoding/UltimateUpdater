@@ -6,6 +6,7 @@ namespace UltimateUpdater.Tests;
 /// split out as pure static helpers precisely so this does not need to touch the real, shared cache
 /// directory under <see cref="AppPaths.IconCacheDirectory"/>).
 /// </summary>
+[Trait("Layer", "UI")]
 public class IconCacheServiceTests
 {
     private static FileInfo TempFile(string directory, string name, long bytes, DateTime lastAccess)

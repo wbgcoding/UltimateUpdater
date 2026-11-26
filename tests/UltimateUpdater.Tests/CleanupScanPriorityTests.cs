@@ -11,6 +11,7 @@ namespace UltimateUpdater.Tests;
 /// runs lifts the targets that have not started yet.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public class CleanupScanPriorityTests
 {
     /// <summary>Records, per target, what priority the view model asked for. Optionally holds every scan

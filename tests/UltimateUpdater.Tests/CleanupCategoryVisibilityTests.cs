@@ -11,6 +11,7 @@ namespace UltimateUpdater.Tests;
 /// promise that a hidden category is display-only and never excluded from scanning or selection, is covered
 /// on its own.
 /// </summary>
+[Trait("Layer", "UI")]
 public class CleanupCategoryVisibilityTests
 {
     private static CleanupTarget Target(bool defaultVisible = true, bool defaultEnabled = true) => new(

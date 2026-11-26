@@ -75,6 +75,7 @@ public class PauseAndStopTests
     /// had) is a race, not an error: it is dropped and the session carries on serving jobs. Anything else
     /// would let a late stop take the whole elevated helper down with it.
     /// </summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task An_unmatched_control_line_does_not_end_the_session()
     {

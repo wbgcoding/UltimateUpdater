@@ -84,6 +84,7 @@ public class SingleInstanceServiceTests
         }
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public void A_mutex_that_already_exists_means_another_instance_runs()
     {
@@ -101,6 +102,7 @@ public class SingleInstanceServiceTests
         }
     }
 
+    [Trait("Layer", "Integration")]
     [Theory]
     [InlineData("S-1-5-21-1-2-3-500")]
     [InlineData(null)]
@@ -122,6 +124,7 @@ public class SingleInstanceServiceTests
         }
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public void The_owner_read_route_recognises_a_mutex_created_by_this_user()
     {
@@ -208,6 +211,7 @@ public class SingleInstanceServiceTests
         }
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task An_oversized_request_gets_no_answer_and_does_not_raise_the_window()
     {
@@ -259,6 +263,7 @@ public class SingleInstanceServiceTests
         Assert.Equal(TimeSpan.FromSeconds(30), SingleInstanceService.NextRetryDelay(int.MaxValue, baseDelay));
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task A_pipe_name_that_is_taken_is_logged_once_and_the_recovery_is_logged_too()
     {

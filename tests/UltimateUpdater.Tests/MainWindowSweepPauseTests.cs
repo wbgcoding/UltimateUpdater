@@ -13,6 +13,7 @@ namespace UltimateUpdater.Tests;
 /// WindowState/IsVisible change, which a window never Show()-n in a test cannot exercise faithfully.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class MainWindowSweepPauseTests : IDisposable
 {
     /// <summary>The sweep only runs with Windows animations on, which a build server often has off.</summary>

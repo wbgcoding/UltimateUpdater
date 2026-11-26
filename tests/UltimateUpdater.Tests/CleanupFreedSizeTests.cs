@@ -70,19 +70,7 @@ public class CleanupFreedSizeTests : IDisposable
         var original = Path.Combine(_outside, "original.dat");
         File.WriteAllBytes(original, new byte[4096]);
         var link = Path.Combine(_root, "link.tmp");
-        using (var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /H \"{link}\" \"{original}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!)
-        {
-            Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-            Assert.Equal(0, mklink.ExitCode);
-        }
+        TestLinks.CreateHardLink(link, original);
 
         var outcome = await Clean(_root, recycle: true);
 

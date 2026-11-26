@@ -541,19 +541,7 @@ public class PythonCleanupDiscoveryTests : IDisposable
         var outside = Path.Combine(_root, "outside");
         MakeVenv(outside, ".venv", older);
         var link = Path.Combine(_root, "linked-root");
-        using (var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{outside}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!)
-        {
-            Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-            Assert.Equal(0, mklink.ExitCode);
-        }
+        TestLinks.CreateJunction(link, outside);
 
         try
         {
@@ -576,19 +564,7 @@ public class PythonCleanupDiscoveryTests : IDisposable
         var outside = Path.Combine(_root, "outside");
         MakeVenv(outside, ".venv", older);
         Directory.CreateDirectory(profile);
-        using (var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{Path.Combine(profile, "link")}\" \"{outside}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!)
-        {
-            Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-            Assert.Equal(0, mklink.ExitCode);
-        }
+        TestLinks.CreateJunction(Path.Combine(profile, "link"), outside);
 
         try
         {
@@ -703,7 +679,7 @@ public class PythonCleanupDiscoveryTests : IDisposable
         File.WriteAllText(Path.Combine(target, "keep.txt"), "x");
         MakeStale(target);
         var link = Path.Combine(sitePackages, "~ip");
-        CreateJunction(link, target);
+        TestLinks.CreateJunction(link, target);
 
         // A clock three days ahead makes the junction itself old enough, so only the link rule can keep it.
         var later = DateTime.UtcNow.AddDays(3);
@@ -720,7 +696,7 @@ public class PythonCleanupDiscoveryTests : IDisposable
         Directory.CreateDirectory(target);
         File.WriteAllText(Path.Combine(target, "keep.txt"), "x");
         MakeStale(target);
-        CreateJunction(Path.Combine(sitePackages, "~ip"), target);
+        TestLinks.CreateJunction(Path.Combine(sitePackages, "~ip"), target);
 
         var registry = new FakeRegistry().AddTag(HkcuRoot, "3.13", Path.Combine(interpreterRoot, "python.exe"));
 
@@ -738,23 +714,8 @@ public class PythonCleanupDiscoveryTests : IDisposable
         Directory.CreateDirectory(real);
         MakeStale(real);
         Directory.CreateDirectory(Path.Combine(roaming, "Python"));
-        CreateJunction(Path.Combine(roaming, "Python", "Python313"), Path.Combine(_root, "realpython"));
+        TestLinks.CreateJunction(Path.Combine(roaming, "Python", "Python313"), Path.Combine(_root, "realpython"));
 
         Assert.Empty(PythonCleanupDiscovery.DiscoverPipLeftovers(new FakeRegistry(), roamingAppData: roaming));
-    }
-
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
     }
 }

@@ -279,21 +279,6 @@ public class CleanupSafetyTests
     // .gradle\caches (this relies on the whole-segment "cache" match).
     // ---- junction detection: a link anywhere in the ancestry chain, not just the checked leaf ----
 
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
-    }
-
     /// <summary>
     /// Before the fix, only the LEAF directory handed to <c>IsSafeToEmpty</c> was checked for being a
     /// reparse point, a junction one level further up went undetected entirely, because path resolution
@@ -309,7 +294,7 @@ public class CleanupSafetyTests
         Directory.CreateDirectory(target);
         try
         {
-            CreateJunction(link, target);
+            TestLinks.CreateJunction(link, target);
             var leafUnderLink = Path.Combine(link, "cache");
 
             Assert.True(CleanupSafety.AncestryLeadsThroughLink(leafUnderLink));
@@ -357,7 +342,7 @@ public class CleanupSafetyTests
         Directory.CreateDirectory(target);
         try
         {
-            CreateJunction(link, target);
+            TestLinks.CreateJunction(link, target);
 
             Assert.Null(CleanupSafety.TryLockForUse(link));
         }
@@ -383,7 +368,7 @@ public class CleanupSafetyTests
             CleanupSafety.BeforeLockOpenForTest.Value = path =>
             {
                 Directory.Delete(path);
-                CreateJunction(path, outside);
+                TestLinks.CreateJunction(path, outside);
             };
 
             Assert.Null(CleanupSafety.TryLockForUse(root));
@@ -408,7 +393,7 @@ public class CleanupSafetyTests
         Directory.CreateDirectory(Path.Combine(real, "root"));
         try
         {
-            CreateJunction(link, real);
+            TestLinks.CreateJunction(link, real);
 
             using var handle = OpenDirectoryForTest(Path.Combine(link, "root"));
             Assert.False(handle.IsInvalid);

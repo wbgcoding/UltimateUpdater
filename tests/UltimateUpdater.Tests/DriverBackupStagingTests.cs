@@ -101,7 +101,7 @@ public sealed class DriverBackupStagingTests : IDisposable
         var backups = Path.Combine(_root, "UltimateUpdater", "driver-backups");
         Directory.CreateDirectory(backups);
         var child = Path.Combine(backups, name);
-        CreateJunction(child, elsewhere);
+        TestLinks.CreateJunction(child, elsewhere);
 
         try
         {
@@ -167,7 +167,6 @@ public sealed class DriverBackupStagingTests : IDisposable
         Assert.False(staging.IsStillSafe(), "an unpinned folder is no longer vouched for");
         Assert.True(Directory.Exists(backupRoot));
     }
-
 
     private static readonly SecurityIdentifier UsersSid = new(WellKnownSidType.BuiltinUsersSid, null);
     private static readonly SecurityIdentifier AdminsSid = new(WellKnownSidType.BuiltinAdministratorsSid, null);
@@ -246,7 +245,7 @@ public sealed class DriverBackupStagingTests : IDisposable
         var elsewhere = Path.Combine(Path.GetTempPath(), "wu-driverstaging-app-" + Guid.NewGuid());
         Directory.CreateDirectory(elsewhere);
         var appRoot = Path.Combine(_root, "UltimateUpdater");
-        CreateJunction(appRoot, elsewhere);
+        TestLinks.CreateJunction(appRoot, elsewhere);
 
         try
         {
@@ -260,21 +259,6 @@ public sealed class DriverBackupStagingTests : IDisposable
             try { Directory.Delete(appRoot); } catch { }
             try { Directory.Delete(elsewhere, recursive: true); } catch { }
         }
-    }
-
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
     }
 
     /// <summary>
@@ -292,7 +276,7 @@ public sealed class DriverBackupStagingTests : IDisposable
         // Replace the plain override directory with a junction pointing elsewhere: PrepareStagingRoot must
         // detect this at the FIRST existing ancestor of the target path, not just at a leaf it creates.
         Directory.Delete(_root);
-        CreateJunction(_root, realTarget);
+        TestLinks.CreateJunction(_root, realTarget);
 
         try
         {
@@ -557,18 +541,7 @@ public sealed class DriverBackupStagingTests : IDisposable
             MakeBackup($"2020-01-0{day}_000000", Epoch.AddDays(day));
 
         var link = Path.Combine(BackupsRoot, "2019-12-31_000000");
-        using (var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{outside}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-        })!)
-        {
-            Assert.True(mklink.WaitForExit(60_000));
-            Assert.Equal(0, mklink.ExitCode);
-        }
+        TestLinks.CreateJunction(link, outside);
 
         DriverBackupStaging.PruneOldStagings(BackupsRoot, "2020-01-06_000000", DriverBackupStaging.KeepNewest, new LoggingService());
 

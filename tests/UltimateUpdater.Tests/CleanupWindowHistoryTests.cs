@@ -5,6 +5,7 @@ using Xunit;
 namespace UltimateUpdater.Tests;
 
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class CleanupWindowHistoryTests
 {
     /// <summary>The history button and the report button open the same window: asking again, by either

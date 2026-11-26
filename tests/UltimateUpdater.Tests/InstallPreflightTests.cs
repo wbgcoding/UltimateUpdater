@@ -11,6 +11,7 @@ namespace UltimateUpdater.Tests;
 /// happens to be running on the machine that runs these tests.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class InstallPreflightTests
 {
     private static UpdateItem Item(string id, string name, string sourceId, long? downloadSize = null) => new()

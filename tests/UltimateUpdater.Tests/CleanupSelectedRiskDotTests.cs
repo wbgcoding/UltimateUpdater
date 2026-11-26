@@ -12,6 +12,7 @@ namespace UltimateUpdater.Tests;
 /// among what is ticked underneath, live, and show nothing (never green) while that is Safe.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public class CleanupSelectedRiskDotTests
 {
     /// <summary>Every target answers with a Safe cache row, plus a crash-report row (level Considered) for

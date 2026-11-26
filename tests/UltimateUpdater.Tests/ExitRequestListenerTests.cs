@@ -95,6 +95,12 @@ public class ExitRequestListenerTests
 
         listener.Dispose();
 
+        // The thread pool drops its own duplicate of the event handle asynchronously after the wait is
+        // unregistered, so the name goes away a moment after Dispose returns: poll for it, bounded.
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (Exists(listener.Name) && DateTime.UtcNow < deadline)
+            Thread.Sleep(5);
+
         Assert.False(Exists(listener.Name));
         Assert.False(listener.IsListening);
     }
@@ -186,6 +192,7 @@ public class ExitRequestListenerTests
 
     /// <summary>Somebody created the name first, with a default DACL they or others can signal: the app must not
     /// listen on an object it did not make, and the squatter's signal must do nothing.</summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public void A_squatted_event_name_is_never_listened_on()
     {
@@ -202,6 +209,7 @@ public class ExitRequestListenerTests
         Assert.Equal(0, calls);
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public void A_squatter_of_another_object_kind_does_not_crash_the_start()
     {
@@ -214,6 +222,7 @@ public class ExitRequestListenerTests
         Assert.False(listener.IsListening);
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public void A_name_that_is_free_again_can_be_used_by_the_next_start()
     {

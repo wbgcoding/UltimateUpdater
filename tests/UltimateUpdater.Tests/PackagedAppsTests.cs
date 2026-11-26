@@ -155,12 +155,7 @@ public class PackagedAppsTests : IDisposable
         Directory.CreateDirectory(outside);
         File.WriteAllText(Path.Combine(outside, "evil.exe"), "x");
         var link = Path.Combine(root, "linked");
-        using (var process = Process.Start(new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{link}\" \"{outside}\"")
-               { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true })!)
-        {
-            process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-        }
+        TestLinks.CreateJunction(link, outside);
 
         Assert.True(Directory.Exists(link), "the junction could not be created");
         var apps = Apps(root);

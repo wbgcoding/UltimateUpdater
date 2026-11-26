@@ -15,6 +15,7 @@ namespace UltimateUpdater.Tests;
 /// deterministically fast (an unparsable process id, in <c>App.OnStartup</c>'s own arg check) without
 /// needing a real elevated pipe partner.
 /// </summary>
+[Trait("Layer", "Integration")]
 public class AppPathsWorkerStartupTests
 {
     [Fact]

@@ -12,6 +12,7 @@ namespace UltimateUpdater.Tests;
 /// are asserted here, it has to grow for the three-way case, and it must NOT grow for an ordinary one.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class MessageDialogLayoutTests(Xunit.Abstractions.ITestOutputHelper output)
 {
     // Fixture text only, standing in for a realistically long German headline/body: these tests exercise

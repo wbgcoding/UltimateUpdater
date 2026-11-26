@@ -9,6 +9,7 @@ namespace UltimateUpdater.Tests;
 /// <summary>The accent decision (fixed Windows blue unless the user opts into the Windows accent), its
 /// persistence, and the settings switch that drives it.</summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class SystemAccentTests
 {
     private static readonly Color WindowsBlue = Color.FromRgb(0x00, 0x78, 0xD4);

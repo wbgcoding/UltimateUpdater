@@ -367,6 +367,7 @@ public class CleanupServiceTests : IDisposable
     /// with a real broken App Paths entry present that a live scan of this exact category WOULD find,
     /// proving CleanAsync never falls back to scanning for itself.
     /// </summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task CleanAsync_with_no_registry_findings_touches_nothing_even_if_a_live_scan_would_find_something()
     {
@@ -400,6 +401,7 @@ public class CleanupServiceTests : IDisposable
     /// CleanAsync cleans ONLY the findings it was given, never "everything broken in the category", a
     /// second, equally broken entry the caller did not pass in must survive.
     /// </summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task CleanAsync_cleans_only_the_given_registry_findings_not_every_broken_entry_in_the_category()
     {
@@ -444,10 +446,11 @@ public class CleanupServiceTests : IDisposable
     /// category must therefore never touch a finding that belongs to another one, it would be gone before
     /// its own target had a chance to back it up, and which of the two lost is decided by catalogue order.
     /// </summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task CleanAsync_never_deletes_a_registry_finding_belonging_to_another_category()
     {
-        const string ownName = "wu-test-scope-own.exe";
+        var ownName = "wu-test-scope-own-" + Guid.NewGuid().ToString("N")[..8] + ".exe";
         const string appPathsRoot = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
         var ownKeyPath = $@"HKCU\{appPathsRoot}\{ownName}";
 
@@ -498,13 +501,14 @@ public class CleanupServiceTests : IDisposable
     /// entry end to end, proving a single scan of the merged row genuinely aggregates more than one
     /// underlying category rather than only ever reporting whichever came first.
     /// </summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task ScanAsync_on_the_merged_orphaned_references_target_reports_findings_from_more_than_one_category()
     {
         const string appPathsRoot = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
         const string autostartRoot = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-        const string exeName = "wu-test-item95-apppaths.exe";
-        const string valueName = "wu-test-item95-autostart";
+        var exeName = "wu-test-item95-apppaths-" + Guid.NewGuid().ToString("N")[..8] + ".exe";
+        var valueName = "wu-test-item95-autostart-" + Guid.NewGuid().ToString("N")[..8];
 
         using (var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey($@"{appPathsRoot}\{exeName}"))
             key!.SetValue(string.Empty, @"C:\this-path-does-not-exist-item95-a.exe");
@@ -539,13 +543,14 @@ public class CleanupServiceTests : IDisposable
 
     /// <summary>Cleaning the merged row must delete findings from every category it covers in one pass,
     /// backed up together, never just the first category it happens to see.</summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task CleanAsync_on_the_merged_orphaned_references_target_deletes_findings_from_more_than_one_category()
     {
         const string appPathsRoot = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
         const string autostartRoot = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-        const string exeName = "wu-test-item95-clean-apppaths.exe";
-        const string valueName = "wu-test-item95-clean-autostart";
+        var exeName = "wu-test-item95-clean-apppaths-" + Guid.NewGuid().ToString("N")[..8] + ".exe";
+        var valueName = "wu-test-item95-clean-autostart-" + Guid.NewGuid().ToString("N")[..8];
         var appPathsKeyPath = $@"HKCU\{appPathsRoot}\{exeName}";
 
         using (var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey($@"{appPathsRoot}\{exeName}"))
@@ -585,11 +590,12 @@ public class CleanupServiceTests : IDisposable
     /// Unticking a registry row, for this run, or permanently through the context menu, which also
     /// lowers the count the dialog shows, decides what is cleaned exactly as it does for a file row.
     /// </summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task CleanAsync_leaves_an_excluded_registry_finding_untouched()
     {
-        const string keptName = "wu-test-excluded-kept.exe";
-        const string cleanedName = "wu-test-excluded-cleaned.exe";
+        var keptName = "wu-test-excluded-kept-" + Guid.NewGuid().ToString("N")[..8] + ".exe";
+        var cleanedName = "wu-test-excluded-cleaned-" + Guid.NewGuid().ToString("N")[..8] + ".exe";
         const string appPathsRoot = @"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths";
         var keptKeyPath = $@"HKCU\{appPathsRoot}\{keptName}";
         var cleanedKeyPath = $@"HKCU\{appPathsRoot}\{cleanedName}";
@@ -1073,6 +1079,7 @@ public class CleanupServiceTests : IDisposable
 
     /// <summary>The scan side of the same rule: ScanAsync's result must carry the actual registry findings,
     /// not just their count, so the caller has something to hand back to CleanAsync later.</summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task ScanAsync_carries_the_actual_registry_findings_not_just_a_count()
     {

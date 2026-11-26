@@ -163,6 +163,7 @@ public class AppExecutionAliasTests
         Assert.False(AppExecutionAlias.IsWingetLink(Parse(Real())!, [string.Empty]));
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public void A_plain_file_is_not_an_alias()
     {
@@ -183,13 +184,10 @@ public class AppExecutionAliasTests
         }
     }
 
-    [Fact]
+    [WingetHostFact]
     public void The_real_alias_on_this_machine_reads_and_verifies_against_the_known_roots()
     {
-        var alias = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WindowsApps", "winget.exe");
-        if (!File.Exists(alias))
-            return;   // winget is not installed on this machine
+        var alias = WingetHostFactAttribute.AliasPath;
 
         using var handle = AppExecutionAlias.TryOpen(alias, out var buffer);
 
@@ -198,13 +196,10 @@ public class AppExecutionAliasTests
         Assert.True(AppExecutionAlias.IsWingetLink(link!, AppExecutionAlias.PackageRoots()));
     }
 
-    [Fact]
+    [WingetHostFact]
     public async Task The_real_alias_still_launches_while_its_handle_is_held_open()
     {
-        var alias = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WindowsApps", "winget.exe");
-        if (!File.Exists(alias))
-            return;   // winget is not installed on this machine
+        var alias = WingetHostFactAttribute.AliasPath;
 
         // The handle that keeps the checked content from being swapped must not block the launch itself.
         using var handle = AppExecutionAlias.TryOpen(alias, out _);

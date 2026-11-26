@@ -13,6 +13,7 @@ namespace UltimateUpdater.Tests;
 /// exactly that leak and proves the harness helper cleans it up.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class ThemeIsolationTests
 {
     /// <summary>The exact opaque colour <c>ThemeService</c>'s own dark palette writes into

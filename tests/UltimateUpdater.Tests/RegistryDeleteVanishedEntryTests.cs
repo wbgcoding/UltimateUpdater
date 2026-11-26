@@ -5,6 +5,7 @@ namespace UltimateUpdater.Tests;
 
 /// <summary>An entry that disappears between the last check and the delete call was not deleted by this run
 /// and must not be counted as freed.</summary>
+[Trait("Layer", "Integration")]
 public class RegistryDeleteVanishedEntryTests : IDisposable
 {
     private const string Broken = @"C:\wu-no-such-folder\app.exe";

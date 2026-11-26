@@ -4,25 +4,6 @@ using UltimateUpdater.Services.Uninstall;
 
 namespace UltimateUpdater.Tests;
 
-/// <summary>Makes a directory junction for the link tests.</summary>
-internal static class LeftoverTestLinks
-{
-    internal static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
-    }
-}
-
 /// <summary>The temp tree and fake registry every leftover test points the scanner at.</summary>
 internal sealed class LeftoverTree : IDisposable
 {
@@ -272,7 +253,7 @@ public sealed class LeftoverScannerTests
         using var tree = new LeftoverTree();
         var target = tree.Folder("Elsewhere", "Contoso Notes");
         var link = Path.Combine(tree.AppData, "Contoso Notes");
-        LeftoverTestLinks.CreateJunction(link, target);
+        TestLinks.CreateJunction(link, target);
         try
         {
             Assert.Empty(Scan(tree, Notes));

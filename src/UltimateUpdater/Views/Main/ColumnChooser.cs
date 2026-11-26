@@ -87,6 +87,9 @@ public static class ColumnChooser
         System.Windows.Input.Mouse.LeftButton == System.Windows.Input.MouseButtonState.Pressed
         || System.Windows.Input.Mouse.RightButton == System.Windows.Input.MouseButtonState.Pressed;
 
+    /// <summary>How long the anchor waits for a button-up before taking its hit-testing back anyway. Seam for tests.</summary>
+    internal static TimeSpan ReleaseWaitLimit = TimeSpan.FromSeconds(5);
+
     /// <summary>Gives <paramref name="anchor"/> its hit-testing back once no mouse button is held, checked
     /// every 30 ms; at most 5 s, so a lost button-up can never leave the anchor dead.</summary>
     internal static void RestoreHitTestingAfterRelease(FrameworkElement anchor)
@@ -105,7 +108,7 @@ public static class ColumnChooser
         };
         timer.Tick += (_, _) =>
         {
-            if (IsAnyMouseButtonPressed() && DateTime.UtcNow - started < TimeSpan.FromSeconds(5))
+            if (IsAnyMouseButtonPressed() && DateTime.UtcNow - started < ReleaseWaitLimit)
                 return;
             timer.Stop();
             anchor.IsHitTestVisible = true;

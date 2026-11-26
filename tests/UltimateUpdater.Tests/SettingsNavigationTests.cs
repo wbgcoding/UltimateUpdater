@@ -8,6 +8,7 @@ namespace UltimateUpdater.Tests;
 /// <summary>The section list beside the settings page follows the scroll position; a click that
 /// scrolls nowhere must not leave it waiting for an arrival that never comes.</summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class SettingsNavigationTests
 {
     private static SettingsWindow CreateWindow()

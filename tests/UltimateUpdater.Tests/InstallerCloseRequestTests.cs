@@ -152,6 +152,7 @@ public class InstallerCloseRequestTests
 
     /// <summary>Another object of a different kind already uses the name: raising the signal must not throw
     /// (it runs on the UI timer), and it works again once the name is free.</summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public void A_squatted_busy_signal_name_does_not_crash_and_recovers_when_freed()
     {

@@ -11,20 +11,6 @@ namespace UltimateUpdater.Tests;
 /// </summary>
 public class RegistryBackupHandleVerificationTests
 {
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
-    }
 
     /// <summary>
     /// A file created through a junction path physically lands under the junction's REAL target, not under
@@ -42,7 +28,7 @@ public class RegistryBackupHandleVerificationTests
 
         try
         {
-            CreateJunction(link, target);
+            TestLinks.CreateJunction(link, target);
 
             var filePath = Path.Combine(link, "backup.reg");
             using var file = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
@@ -98,7 +84,7 @@ public class RegistryBackupHandleVerificationTests
 
         try
         {
-            CreateJunction(link, target);
+            TestLinks.CreateJunction(link, target);
 
             var filePath = Path.Combine(expectedFolder, "backup.reg");
             using var file = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
@@ -158,7 +144,7 @@ public class RegistryBackupHandleVerificationTests
 
         try
         {
-            CreateJunction(link, target);
+            TestLinks.CreateJunction(link, target);
             var victim = Path.Combine(target, "keep.reg");
             File.WriteAllText(victim, "x");
 

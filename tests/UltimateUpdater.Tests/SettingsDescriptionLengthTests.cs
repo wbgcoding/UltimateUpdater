@@ -7,6 +7,7 @@ namespace UltimateUpdater.Tests;
 /// A settings row shows one short line under its title; the long explanation lives in a tooltip. The
 /// German text is the longest locale, so it sets the cap for every description the page binds.
 /// </summary>
+[Trait("Layer", "UI")]
 public class SettingsDescriptionLengthTests
 {
     private const int MaxChars = 55;

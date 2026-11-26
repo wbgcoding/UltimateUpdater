@@ -175,7 +175,7 @@ public sealed class AppDataLeftoverDiscoveryTests : IDisposable
     {
         var target = OldFolder(_tree.Documents, "Precious");
         var link = Path.Combine(_tree.AppData, "Xyzzy Link");
-        LeftoverTestLinks.CreateJunction(link, target);
+        TestLinks.CreateJunction(link, target);
 
         var verdicts = AppDataLeftoverDiscovery.Judge(_tree.Roots, new LeftoverEvidence(), Now, CancellationToken.None);
 

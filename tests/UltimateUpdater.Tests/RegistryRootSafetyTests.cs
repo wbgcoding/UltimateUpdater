@@ -9,6 +9,7 @@ namespace UltimateUpdater.Tests;
 
 /// <summary>HKCU backup roots are opened one segment at a time; a linked root is skipped and nothing under
 /// it is ever deleted. The link verdict comes from the detector seam (a live link needs NtCreateKey).</summary>
+[Trait("Layer", "Integration")]
 public class RegistryRootSafetyTests : IDisposable
 {
     private const uint RegLinkType = 6;

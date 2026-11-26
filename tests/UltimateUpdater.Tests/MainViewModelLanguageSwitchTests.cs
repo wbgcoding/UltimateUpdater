@@ -6,6 +6,7 @@ namespace UltimateUpdater.Tests;
 /// <summary>Settings is non-modal and switches the language live: the main window's banners that build
 /// their text in code must follow, not keep the language they were shown in.</summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class MainViewModelLanguageSwitchTests
 {
     [Fact]

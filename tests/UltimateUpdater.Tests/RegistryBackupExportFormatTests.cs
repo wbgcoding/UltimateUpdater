@@ -17,6 +17,7 @@ namespace UltimateUpdater.Tests;
 /// created under HKCU, exported for real with reg.exe to get the reference text, then deleted, and the two
 /// texts are compared.
 /// </summary>
+[Trait("Layer", "Integration")]
 public class RegistryBackupExportFormatTests
 {
     [Fact]

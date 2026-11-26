@@ -24,6 +24,7 @@ namespace UltimateUpdater.Tests;
 /// MouseBinding already carries (<see cref="KeyboardActivation"/>), no second,
 /// divergeable command wiring.
 /// </summary>
+[Trait("Layer", "UI")]
 public class KeyboardOperabilityTests
 {
     private sealed class RecordingRowActions : IRowActions

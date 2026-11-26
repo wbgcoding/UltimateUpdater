@@ -24,6 +24,7 @@ namespace UltimateUpdater.Tests;
 /// against every other class that touches the redirected cache/history files, closing that window.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class ScanCacheIntegrationTests
 {
     private static string CachePath => ScanResultCache.EffectivePath;

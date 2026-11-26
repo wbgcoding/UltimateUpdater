@@ -7,6 +7,7 @@ namespace UltimateUpdater.Tests;
 /// <c>Process.MainModule</c> throws. A suspended child stands in for that moment deterministically:
 /// its loader never ran.
 /// </summary>
+[Trait("Layer", "Integration")]
 public class ProcessImageTests
 {
     [Fact]

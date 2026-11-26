@@ -24,6 +24,7 @@ namespace UltimateUpdater.Tests;
 /// human to turn Windows high contrast on and look.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class ContrastSweepTests
 {
     private sealed record Pair(string Foreground, string Background, double MinRatio, string Description);

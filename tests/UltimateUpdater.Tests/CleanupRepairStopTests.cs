@@ -12,6 +12,7 @@ namespace UltimateUpdater.Tests;
 /// keeps running to its end and says so.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public class CleanupRepairStopTests
 {
     /// <summary>

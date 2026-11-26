@@ -441,6 +441,7 @@ public class ReleaseSignatureTests
         }
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public void The_lock_mode_refuses_a_missing_key_file()
     {

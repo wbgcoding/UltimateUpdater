@@ -44,21 +44,6 @@ public class DataFolderTests
         return dir;
     }
 
-    private static void CreateJunction(string link, string target)
-    {
-        using var mklink = Process.Start(new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = $"/c mklink /J \"{link}\" \"{target}\"",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        })!;
-        Assert.True(mklink.WaitForExit(60_000), "mklink did not finish");
-        Assert.Equal(0, mklink.ExitCode);
-    }
-
     [Fact]
     public void An_ordinary_writable_folder_is_accepted()
     {
@@ -82,7 +67,7 @@ public class DataFolderTests
     {
         var real = NewTempDir("junction-target");
         var link = Path.Combine(Path.GetTempPath(), "wu-datafolder-junction-link-" + Guid.NewGuid());
-        CreateJunction(link, real);
+        TestLinks.CreateJunction(link, real);
 
         try
         {
@@ -605,7 +590,7 @@ public class DataFolderTests
         var elsewhere = NewTempDir("rollback-link-elsewhere");
         File.WriteAllText(Path.Combine(elsewhere, "precious.txt"), "keep");
         var target = Path.Combine(parent, "UltimateUpdater");
-        CreateJunction(target, elsewhere);
+        TestLinks.CreateJunction(target, elsewhere);
 
         try
         {
@@ -1023,7 +1008,7 @@ public class DataFolderTests
         File.WriteAllText(Path.Combine(source, "settings.json"), "{}");
         File.WriteAllText(Path.Combine(outside, "secret.txt"), "not part of the data");
         var link = Path.Combine(source, "linked");
-        CreateJunction(link, outside);
+        TestLinks.CreateJunction(link, outside);
         var destination = Path.Combine(TestRoot, "wu-datafolder-junction-dest-" + Guid.NewGuid());
 
         try
@@ -1052,7 +1037,7 @@ public class DataFolderTests
         var outside = NewTempDir("junction-move-outside");
         File.WriteAllText(Path.Combine(outside, "secret.txt"), "not part of the data");
         var link = Path.Combine(source, "linked");
-        CreateJunction(link, outside);
+        TestLinks.CreateJunction(link, outside);
         var destination = Path.Combine(TestRoot, "wu-datafolder-junction-move-dest-" + Guid.NewGuid());
 
         try

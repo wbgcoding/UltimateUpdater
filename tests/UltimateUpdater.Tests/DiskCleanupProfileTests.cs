@@ -81,6 +81,7 @@ public class DiskCleanupProfileLifetimeTests
         Assert.Equal(1, removed);
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task A_profile_that_could_not_be_written_skips_the_run_and_still_clears_what_was_set()
     {

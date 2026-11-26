@@ -17,7 +17,8 @@ namespace UltimateUpdater.Tests;
 /// at. The assertions catch a window that comes up blank or throws while laying out; the PNGs in
 /// bin\...\ui-snapshots are there to be inspected by eye.
 /// </summary>
-[Collection("wpf")]
+[Collection(WpfRenderCollection.Name)]
+[Trait("Layer", "UI")]
 public partial class WindowLayoutTests
 {
     /// <summary>Anything below this is a flat rectangle, i.e. nothing rendered.</summary>
