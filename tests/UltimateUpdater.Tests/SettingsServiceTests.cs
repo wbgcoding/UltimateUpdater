@@ -385,6 +385,17 @@ public class SettingsServiceTests : IDisposable
         Assert.Equal([@"C:\Temp\A"], service.Current.CleanupPermanentlyExcludedPaths);
     }
 
+    /// <summary>The hidden uninstaller suggestions are looked up on every list load: a null list or a blank key must not survive loading.</summary>
+    [Fact]
+    public void The_dismissed_uninstaller_suggestions_survive_null_and_blank_entries()
+    {
+        File.WriteAllText(SettingsPath, """{ "uninstallSuggestionsDismissed": ["dup:apex legends", null, "  "] }""");
+        Assert.Equal(["dup:apex legends"], new SettingsService(_logging, SettingsPath).Current.UninstallSuggestionsDismissed);
+
+        File.WriteAllText(SettingsPath, """{ "uninstallSuggestionsDismissed": null }""");
+        Assert.Empty(new SettingsService(_logging, SettingsPath).Current.UninstallSuggestionsDismissed);
+    }
+
     /// <summary>A null inside the ignore list is a key nothing can look up; it is dropped on load.</summary>
     [Fact]
     public void A_null_entry_in_the_ignore_list_is_dropped()
@@ -581,6 +592,7 @@ public class SettingsServiceTests : IDisposable
         service.Current.CleanupPrescanAtStartup = false;
         service.Current.HistoryRetentionDays = 365;
         service.Current.CleanupPermanentlyExcludedPaths.Add(@"C:\keep-me");
+        service.Current.UninstallSuggestionsDismissed.Add("empty:some key");
 
         service.Reset();
 
@@ -605,6 +617,7 @@ public class SettingsServiceTests : IDisposable
         Assert.True(service.Current.CleanupPrescanAtStartup);
         Assert.Equal(defaults.HistoryRetentionDays, service.Current.HistoryRetentionDays);
         Assert.Empty(service.Current.CleanupPermanentlyExcludedPaths);
+        Assert.Empty(service.Current.UninstallSuggestionsDismissed);
     }
 
     /// <summary>

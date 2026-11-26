@@ -78,6 +78,11 @@ public class UninstallerViewModelTests
 
         public void RecordRemoved(InstalledProgramEntry entry) => Recorded.Add(entry);
 
+        /// <summary>What the icon read returns for an entry; none by default. Runs on the reading thread.</summary>
+        public Func<InstalledProgramEntry, System.Windows.Media.Imaging.BitmapSource?> Icon { get; set; } = _ => null;
+
+        public System.Windows.Media.Imaging.BitmapSource? ResolveIcon(InstalledProgramEntry entry) => Icon(entry);
+
         public Task<IReadOnlyList<UninstallLeftoverGroup>> FindLeftoversAsync(
             IReadOnlyList<InstalledProgramEntry> removed, CancellationToken cancellationToken)
         {
@@ -342,6 +347,70 @@ public class UninstallerViewModelTests
         vm.ToggleRows([Row(vm, "B")]);
 
         Assert.True(Row(vm, "B").IsSelected);
+    }
+
+    [Fact]
+    public async Task A_click_on_a_row_toggles_its_tick_a_risky_row_included()
+    {
+        var (vm, _) = await LoadedAsync(Listing("A"), Listing("B", CleanupRiskLevel.Risky, UninstallRiskReason.Hardware));
+        var shown = vm.Sections[0].Rows.ToList();
+
+        vm.ClickRow(Row(vm, "B"), shown, extendRange: false);
+        Assert.True(Row(vm, "B").IsSelected);
+        Assert.Equal(1, vm.SelectedCount);
+
+        vm.ClickRow(Row(vm, "B"), shown, extendRange: false);
+        Assert.False(Row(vm, "B").IsSelected);
+        Assert.Equal(0, vm.SelectedCount);
+    }
+
+    [Fact]
+    public async Task A_click_on_a_row_that_cannot_be_removed_changes_nothing()
+    {
+        var (vm, _) = await LoadedAsync(Listing("NoWay", runnable: false), Listing("Own", selectable: false));
+        var shown = vm.Sections[0].Rows.ToList();
+
+        vm.ClickRow(Row(vm, "NoWay"), shown, extendRange: false);
+        vm.ClickRow(Row(vm, "Own"), shown, extendRange: false);
+
+        Assert.Equal(0, vm.SelectedCount);
+    }
+
+    [Fact]
+    public async Task A_shift_click_ticks_the_range_from_the_last_plain_click()
+    {
+        var (vm, _) = await LoadedAsync(
+            Listing("A"), Listing("B", CleanupRiskLevel.Risky, UninstallRiskReason.Hardware), Listing("C"), Listing("D"));
+        var shown = vm.Sections[0].Rows.ToList();
+
+        vm.ClickRow(shown[0], shown, extendRange: false);
+        vm.ClickRow(shown[2], shown, extendRange: true);
+
+        Assert.Equal(["A", "C"], vm.SelectedRows.Select(row => row.Name).Order());
+    }
+
+    [Fact]
+    public async Task A_shift_click_with_no_earlier_click_just_toggles_the_row()
+    {
+        var (vm, _) = await LoadedAsync(Listing("A"), Listing("B"), Listing("C"));
+        var shown = vm.Sections[0].Rows.ToList();
+
+        vm.ClickRow(shown[2], shown, extendRange: true);
+
+        Assert.Equal(["C"], vm.SelectedRows.Select(row => row.Name));
+    }
+
+    [Fact]
+    public async Task Every_row_that_cannot_be_ticked_says_why()
+    {
+        var (vm, _) = await LoadedAsync(
+            Listing("Own", selectable: false, reason: UninstallRiskReason.Own),
+            Listing("NoWay", runnable: false),
+            Listing("Fine"));
+
+        Assert.Equal(LocalizationService.Instance["UninstallRiskOwn"], Row(vm, "Own").UnavailableReason);
+        Assert.Equal(LocalizationService.Instance["UninstallerUnavailableNoMethod"], Row(vm, "NoWay").UnavailableReason);
+        Assert.Equal(string.Empty, Row(vm, "Fine").UnavailableReason);
     }
 
     [Fact]

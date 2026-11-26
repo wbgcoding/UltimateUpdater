@@ -31,6 +31,16 @@ public static class UninstallEntryOrigin
         return label is not null && LauncherClients.Contains(entry.Name) ? null : label;
     }
 
+    /// <summary>The Steam app id of a game entry (its key is named "Steam App &lt;id&gt;"); null for every other entry.</summary>
+    public static string? SteamAppId(InstalledProgramEntry entry)
+    {
+        var leaf = KeyLeaf(entry.Key);
+        const string prefix = "Steam App ";
+        return leaf.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && leaf.Length > prefix.Length && leaf[prefix.Length..].All(char.IsAsciiDigit)
+            ? leaf[prefix.Length..]
+            : null;
+    }
+
     private static readonly HashSet<string> LauncherClients = new(StringComparer.OrdinalIgnoreCase)
     {
         "Steam", "Epic Games Launcher", "GOG GALAXY", "Ubisoft Connect", "Ubisoft Game Launcher", "Battle.net", "EA app", "EA Desktop", "Origin",

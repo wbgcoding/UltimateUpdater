@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Formatting;
@@ -42,6 +43,22 @@ public sealed partial class UninstallRowViewModel : ObservableObject
 
     public string Name => Entry.Name;
 
+    /// <summary>The app's own icon once the background read resolved it; null until then or when the entry has none (the row then shows <see cref="KindSymbol"/>).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasIcon))]
+    private BitmapSource? icon;
+
+    public bool HasIcon => Icon is not null;
+
+    /// <summary>The Fluent symbol drawn in the icon's place: one per kind of entry.</summary>
+    public Wpf.Ui.Controls.SymbolRegular KindSymbol => UninstallKindSymbol.For(Entry.Kind);
+
+    /// <summary>Only programs and Store apps carry an icon of their own; the other kinds always show their symbol.</summary>
+    internal bool WantsIcon => Entry.Kind is UninstallEntryKind.Program or UninstallEntryKind.StoreApp;
+
+    /// <summary>True once the owner queued this row's icon read, so a later merge does not read it again.</summary>
+    internal bool IconRequested { get; set; }
+
     public string Publisher => Entry.Publisher;
 
     public string Version => Entry.Version;
@@ -74,6 +91,9 @@ public sealed partial class UninstallRowViewModel : ObservableObject
 
     public bool HasNote => NoteText.Length > 0;
 
+    /// <summary>Why the row cannot be ticked (the hover on its lock); empty for a selectable row.</summary>
+    public string UnavailableReason => UninstallRowText.Unavailable(this);
+
     /// <summary>The game launcher the entry came through (Steam, EA app, Epic Games, GOG, Ubisoft Connect, Battle.net), empty when none.</summary>
     public string SourceLabel => UninstallEntryOrigin.Label(Entry) ?? string.Empty;
 
@@ -85,13 +105,22 @@ public sealed partial class UninstallRowViewModel : ObservableObject
     /// <summary>True while another visible row has the same name: the row then always shows where it comes from. Set by the owner.</summary>
     public bool SharesNameWithVisibleRow { get; private set; }
 
-    /// <summary>The line under the name that tells look-alike entries apart: the launcher, then the install folder. Shown for an entry with a
-    /// launcher, and for any entry that shares its name with another visible row; empty otherwise.</summary>
-    public string OriginText => SourceLabel.Length > 0 || SharesNameWithVisibleRow
-        ? string.Join(" \u00B7 ", new[] { SourceLabel, FolderText }.Where(part => part.Length > 0))
-        : string.Empty;
+    /// <summary>The line under the details that tells look-alike entries apart: the install folder. Shown for an entry with a launcher, and for
+    /// any entry that shares its name with another visible row; empty otherwise. (The launcher itself is part of <see cref="DetailText"/>.)</summary>
+    public string OriginText => SourceLabel.Length > 0 || SharesNameWithVisibleRow ? FolderText : string.Empty;
 
     public bool HasOrigin => OriginText.Length > 0;
+
+    /// <summary>The quiet second line: publisher, launcher and version, whichever the entry has, joined with a middle dot.</summary>
+    public string DetailText => string.Join(" \u00B7 ", new[] { Publisher, SourceLabel, Version }.Where(part => !string.IsNullOrWhiteSpace(part)));
+
+    public bool HasDetail => DetailText.Length > 0;
+
+    /// <summary>True for an uninstaller that opens its own window and cannot run unattended: the only method worth a tag on the row.</summary>
+    public bool ShowsMethodTag => Listing.Plan.Method == UninstallMethod.Interactive;
+
+    /// <summary>The hover on the row: why it cannot be ticked, otherwise how it is removed.</summary>
+    public string RowTooltip => Selectable ? MethodText : UnavailableReason;
 
     internal void SetSharesNameWithVisibleRow(bool shares)
     {
@@ -135,6 +164,10 @@ public sealed partial class UninstallRowViewModel : ObservableObject
     [ObservableProperty]
     private bool isSelected;
 
+    /// <summary>True for a few seconds after a suggestion's "Show" pointed at this row, so the eye finds it in the list.</summary>
+    [ObservableProperty]
+    private bool isHighlighted;
+
     partial void OnIsSelectedChanged(bool value)
     {
         if (value && !Selectable)
@@ -161,6 +194,8 @@ public sealed partial class UninstallRowViewModel : ObservableObject
 
         IsVerified = true;
         OnPropertyChanged(nameof(Selectable));
+        OnPropertyChanged(nameof(UnavailableReason));
+        OnPropertyChanged(nameof(RowTooltip));
     }
 
     /// <summary>Takes a fresh read's data over, keeping the row itself. A ticked row that stops being selectable is unticked.</summary>
@@ -168,6 +203,13 @@ public sealed partial class UninstallRowViewModel : ObservableObject
     {
         if (Equals(Listing, listing))
             return;
+
+        // A changed icon source (a new DisplayIcon or folder after an update) means the icon is read again.
+        if (!string.Equals(Entry.DisplayIcon, listing.Entry.DisplayIcon, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(Entry.InstallLocation, listing.Entry.InstallLocation, StringComparison.OrdinalIgnoreCase))
+        {
+            IconRequested = false;
+        }
 
         Listing = listing;
         foreach (var name in DerivedProperties)
@@ -179,10 +221,11 @@ public sealed partial class UninstallRowViewModel : ObservableObject
 
     private static readonly string[] DerivedProperties =
     [
-        nameof(Listing), nameof(Entry), nameof(Name), nameof(Publisher), nameof(Version), nameof(SizeBytes), nameof(InstallDate),
+        nameof(Listing), nameof(Entry), nameof(Name), nameof(KindSymbol), nameof(Publisher), nameof(Version), nameof(SizeBytes), nameof(InstallDate),
         nameof(SizeText), nameof(InstalledText), nameof(RiskLevel), nameof(Selectable), nameof(IsRisky), nameof(RiskLevelText),
-        nameof(ReasonText), nameof(RiskTooltip), nameof(MethodText), nameof(NoteText), nameof(HasNote), nameof(SortName),
+        nameof(ReasonText), nameof(RiskTooltip), nameof(MethodText), nameof(NoteText), nameof(HasNote), nameof(UnavailableReason), nameof(SortName),
         nameof(SourceLabel), nameof(FolderText), nameof(FolderPath), nameof(OriginText), nameof(HasOrigin),
+        nameof(DetailText), nameof(HasDetail), nameof(ShowsMethodTag), nameof(RowTooltip),
     ];
 
     /// <summary>Re-reads every localized text after a language change.</summary>
@@ -193,6 +236,8 @@ public sealed partial class UninstallRowViewModel : ObservableObject
         OnPropertyChanged(nameof(RiskTooltip));
         OnPropertyChanged(nameof(MethodText));
         OnPropertyChanged(nameof(NoteText));
+        OnPropertyChanged(nameof(UnavailableReason));
+        OnPropertyChanged(nameof(RowTooltip));
         OnPropertyChanged(nameof(StateText));
         OnPropertyChanged(nameof(SizeText));
         OnPropertyChanged(nameof(InstalledText));
@@ -218,6 +263,23 @@ internal static class UninstallRowText
         UninstallRefusal.UpdateNotRemovable => LocalizationService.Instance["UninstallerUpdateKept"],
         _ => entry.InstallFolderEmpty ? LocalizationService.Instance["UninstallerSteamFolderEmpty"] : string.Empty,
     };
+
+    /// <summary>Why a row cannot be ticked: not confirmed yet, the risk rating bars it (this app), the plan refused it (a driver in use, an update Windows keeps), or
+    /// there is simply no way to remove it. Empty when the row is selectable.</summary>
+    internal static string Unavailable(UninstallRowViewModel row)
+    {
+        if (row.Selectable)
+            return string.Empty;
+
+        var loc = LocalizationService.Instance;
+        if (!row.IsVerified)
+            return loc["UninstallerUnavailableChecking"];
+
+        if (!row.Listing.Risk.Selectable)
+            return row.ReasonText;
+
+        return row.HasNote ? row.NoteText : loc["UninstallerUnavailableNoMethod"];
+    }
 
     internal static string MethodKey(UninstallPlan plan) => plan.Method switch
     {

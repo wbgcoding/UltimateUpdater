@@ -103,8 +103,12 @@ public partial class MainViewModel
         {
             _uninstallerViewModel?.Discard();
             _uninstallerViewModel = new UninstallerViewModel(
-                UninstallerBackendOverride?.Invoke() ?? new UninstallerBackend(_logging, _elevated, _settings, _history, UninstallPrefetch),
-                _logging);
+                UninstallerBackendOverride?.Invoke() ?? new UninstallerBackend(_logging, _elevated, _settings, _history, UninstallPrefetch, _iconCache),
+                _logging)
+            {
+                Settings = _settings,
+                UsageReader = UninstallerBackendOverride is null ? ProgramUsageReader.Read : null,
+            };
         }
 
         ShowOwned(new UninstallerWindow(_uninstallerViewModel), openStarted: openStarted, independent: true);

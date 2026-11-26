@@ -2605,9 +2605,6 @@ Continuar com direitos de administrador?</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>Instalado</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>Método</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>Risco</value>
   </data>
@@ -2796,5 +2793,50 @@ Continuar com direitos de administrador?</value>
   </data>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Mostra um lembrete na janela principal quando a última limpeza foi há muito tempo.</value>
+  </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Ainda a verificar se esta entrada está instalada</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>Não existe uma forma automática de remover esta entrada</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>Programas, apps da Loja, pacotes, controladores e atualizações aparecem aqui assim que o PC os tiver.</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>Experimente outro nome ou editor, ou limpe a pesquisa para ver tudo novamente.</value>
+  </data>
+  <data name="UninstallerSuggestTitle" xml:space="preserve">
+    <value>Sugestões</value>
+  </data>
+  <data name="UninstallerSuggestDuplicate" xml:space="preserve">
+    <value>Instalado duas vezes ({0})</value>
+  </data>
+  <data name="UninstallerSuggestDuplicateMany" xml:space="preserve">
+    <value>Instalado {0} vezes ({1})</value>
+  </data>
+  <data name="UninstallerSuggestEmpty" xml:space="preserve">
+    <value>Entrada sem ficheiros do jogo</value>
+  </data>
+  <data name="UninstallerSuggestUnused" xml:space="preserve">
+    <value>Sem utilização desde {0}</value>
+  </data>
+  <data name="UninstallerSuggestSelect" xml:space="preserve">
+    <value>Selecionar</value>
+  </data>
+  <data name="UninstallerSuggestShow" xml:space="preserve">
+    <value>Mostrar</value>
+  </data>
+  <data name="UninstallerSuggestDismiss" xml:space="preserve">
+    <value>Ocultar</value>
+  </data>
+  <data name="UninstallerSuggestSelectFor" xml:space="preserve">
+    <value>Selecionar {0}</value>
+  </data>
+  <data name="UninstallerSuggestShowFor" xml:space="preserve">
+    <value>Mostrar {0}</value>
+  </data>
+  <data name="UninstallerSuggestDismissFor" xml:space="preserve">
+    <value>Ocultar a sugestão para {0}</value>
   </data>
 </root>

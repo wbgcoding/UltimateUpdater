@@ -67,6 +67,10 @@ public sealed class AppSettings
     /// what the scan reports, so a stale entry is simply never matched.</summary>
     public List<string> CleanupPermanentlyExcludedPaths { get; set; } = [];
 
+    /// <summary>Uninstaller suggestions the user hid with "Dismiss": the suggestion's stable key ("dup:", "empty:" or "unused:"
+    /// plus a name or entry key), case-insensitive. A listed key is never suggested again; a stale one is simply never matched.</summary>
+    public List<string> UninstallSuggestionsDismissed { get; set; } = [];
+
     /// <summary>How many days may pass since the last cleanup (or since the app was set up, if
     /// none ever ran) before the main window's quiet reminder banner offers one.</summary>
     public int CleanupReminderDays { get; set; } = 90;

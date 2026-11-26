@@ -1,5 +1,6 @@
 using System.IO;
 using UltimateUpdater.Models.Settings;
+using UltimateUpdater.Services.Branding;
 using UltimateUpdater.Services.Cleanup;
 namespace UltimateUpdater.Services.Uninstall;
 
@@ -50,13 +51,21 @@ public interface IUninstallerBackend
 
     /// <summary>Writes the history line of an entry the run removed.</summary>
     void RecordRemoved(InstalledProgramEntry entry);
+
+    /// <summary>The icon of an entry (its app's, its Store logo), or null when it has none and the row shows its kind's symbol. Reads files: never called on the UI thread.</summary>
+    System.Windows.Media.Imaging.BitmapSource? ResolveIcon(InstalledProgramEntry entry) => null;
 }
 
 /// <summary>The real machine behind <see cref="IUninstallerBackend"/>.</summary>
 public sealed class UninstallerBackend(
     LoggingService logging, ElevatedHost? elevated, SettingsService? settings = null, HistoryService? history = null,
-    UninstallListingPrefetch? prefetch = null) : IUninstallerBackend
+    UninstallListingPrefetch? prefetch = null, IconCacheService? icons = null) : IUninstallerBackend
 {
+    public System.Windows.Media.Imaging.BitmapSource? ResolveIcon(InstalledProgramEntry entry) =>
+        icons?.GetEntryIcon(
+            entry.Key, entry.Name, entry.DisplayIcon, entry.InstallLocation, entry.Kind == UninstallEntryKind.StoreApp,
+            UninstallEntryOrigin.SteamAppId(entry));
+
     private readonly UninstallLeftoverService _leftovers = new(
         logging, elevated, settings is { } current ? () => current.Current.RegistryCleanup : null);
 

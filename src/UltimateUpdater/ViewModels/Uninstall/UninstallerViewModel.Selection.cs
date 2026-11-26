@@ -117,6 +117,29 @@ public sealed partial class UninstallerViewModel
             SetTicked(eligible, !eligible.All(row => row.IsSelected));
     }
 
+    /// <summary>The row of the last plain click, where a Shift+click range starts.</summary>
+    private UninstallRowViewModel? _clickAnchor;
+
+    /// <summary>
+    /// A mouse click on a row, wherever on it: toggles the row's tick (a row that cannot be removed ignores it). With
+    /// <paramref name="extendRange"/> (Shift) and an earlier click in the same list, ticks the range from there instead,
+    /// Risky rows excepted. <paramref name="shown"/> is the list the row sits in.
+    /// </summary>
+    public void ClickRow(UninstallRowViewModel row, IReadOnlyList<UninstallRowViewModel> shown, bool extendRange)
+    {
+        if (IsRunning || !row.Selectable)
+            return;
+
+        if (extendRange && _clickAnchor is not null && shown.Contains(_clickAnchor) && shown.Contains(row))
+        {
+            SelectRange(shown, _clickAnchor, row);
+            return;
+        }
+
+        _clickAnchor = row;
+        row.IsSelected = !row.IsSelected;
+    }
+
     /// <summary>The ticked rows that need the extra acknowledgement before a run.</summary>
     public IReadOnlyList<UninstallRowViewModel> SelectedRiskyRows => SelectedRows.Where(row => row.IsRisky).ToList();
 }

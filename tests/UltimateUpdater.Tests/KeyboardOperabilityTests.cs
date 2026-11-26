@@ -351,8 +351,8 @@ public class KeyboardOperabilityTests
         {
             ("CleanupWindow.xaml", "OnHeaderDrag"),
             ("MainWindow.xaml", "OnQueueRowMouseDown"),
-            // Only the Shift+click range extension; every row's own checkbox and the whole list tick by Space.
-            ("UninstallerWindow.xaml", "OnRowCheckBoxMouseDown"),
+            // The row click that ticks the row (and Shift+click the range); the list itself ticks by Space.
+            ("UninstallerWindow.xaml", "OnRowListMouseDown"),
         };
 
         var found = new HashSet<(string File, string Handler)>();

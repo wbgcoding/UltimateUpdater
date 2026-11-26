@@ -2605,9 +2605,6 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>Yüklendi</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>Yöntem</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>Risk</value>
   </data>
@@ -2796,5 +2793,50 @@ Yönetici haklarıyla devam edilsin mi?</value>
   </data>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>Son temizlik uzun zaman önce yapıldıysa ana pencerede bir hatırlatma gösterir.</value>
+  </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>Bu girdinin kurulu olup olmadığı hâlâ denetleniyor</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>Bu girdiyi kaldırmanın otomatik bir yolu yok</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>Programlar, Mağaza uygulamaları, paketler, sürücüler ve güncellemeler bilgisayarda olur olmaz burada görünür.</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>Başka bir ad veya yayımcı deneyin ya da her şeyi yeniden görmek için aramayı temizleyin.</value>
+  </data>
+  <data name="UninstallerSuggestTitle" xml:space="preserve">
+    <value>Öneriler</value>
+  </data>
+  <data name="UninstallerSuggestDuplicate" xml:space="preserve">
+    <value>İki kez yüklenmiş ({0})</value>
+  </data>
+  <data name="UninstallerSuggestDuplicateMany" xml:space="preserve">
+    <value>{0} kez yüklenmiş ({1})</value>
+  </data>
+  <data name="UninstallerSuggestEmpty" xml:space="preserve">
+    <value>Oyun dosyası olmayan kayıt</value>
+  </data>
+  <data name="UninstallerSuggestUnused" xml:space="preserve">
+    <value>{0} tarihinden beri kullanılmadı</value>
+  </data>
+  <data name="UninstallerSuggestSelect" xml:space="preserve">
+    <value>Seç</value>
+  </data>
+  <data name="UninstallerSuggestShow" xml:space="preserve">
+    <value>Göster</value>
+  </data>
+  <data name="UninstallerSuggestDismiss" xml:space="preserve">
+    <value>Gizle</value>
+  </data>
+  <data name="UninstallerSuggestSelectFor" xml:space="preserve">
+    <value>{0} öğesini seç</value>
+  </data>
+  <data name="UninstallerSuggestShowFor" xml:space="preserve">
+    <value>{0} öğesini göster</value>
+  </data>
+  <data name="UninstallerSuggestDismissFor" xml:space="preserve">
+    <value>{0} önerisini gizle</value>
   </data>
 </root>

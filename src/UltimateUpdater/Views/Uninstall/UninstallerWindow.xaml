@@ -21,12 +21,9 @@
 
             <!-- Column widths shared by the header and every row, so the cells line up. -->
             <GridLength x:Key="CheckColumn">36</GridLength>
-            <GridLength x:Key="PublisherColumn">150</GridLength>
-            <GridLength x:Key="VersionColumn">92</GridLength>
-            <GridLength x:Key="SizeColumn">84</GridLength>
-            <GridLength x:Key="InstalledColumn">92</GridLength>
-            <GridLength x:Key="MethodColumn">184</GridLength>
-            <GridLength x:Key="RiskColumn">96</GridLength>
+            <GridLength x:Key="SizeColumn">96</GridLength>
+            <GridLength x:Key="InstalledColumn">104</GridLength>
+            <GridLength x:Key="RiskColumn">136</GridLength>
 
             <Style x:Key="UninstallSectionCard" TargetType="Expander">
                 <Setter Property="Template">
@@ -93,7 +90,8 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ListBoxItem">
-                            <Border x:Name="Hit" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <Border x:Name="Hit" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"
+                                    BorderThickness="1" BorderBrush="Transparent">
                                 <ContentPresenter/>
                             </Border>
                             <ControlTemplate.Triggers>
@@ -103,6 +101,9 @@
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter TargetName="Hit" Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}"/>
                                 </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Hit" Property="BorderBrush" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
@@ -110,98 +111,146 @@
             </Style>
 
             <DataTemplate x:Key="UninstallRowTemplate">
-                <Grid Margin="8,6,8,6" MinHeight="24">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="{StaticResource CheckColumn}"/>
-                        <ColumnDefinition Width="*" MinWidth="160"/>
-                        <ColumnDefinition Width="{StaticResource PublisherColumn}"/>
-                        <ColumnDefinition Width="{StaticResource VersionColumn}"/>
-                        <ColumnDefinition Width="{StaticResource SizeColumn}"/>
-                        <ColumnDefinition Width="{StaticResource InstalledColumn}"/>
-                        <ColumnDefinition Width="{StaticResource MethodColumn}"/>
-                        <ColumnDefinition Width="{StaticResource RiskColumn}"/>
-                    </Grid.ColumnDefinitions>
+                <Grid MinHeight="54" Background="Transparent"
+                      ToolTip="{Binding RowTooltip, Converter={StaticResource EmptyToNull}}">
                     <Grid.Style>
                         <Style TargetType="Grid">
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Selectable}" Value="False">
-                                    <Setter Property="Opacity" Value="0.5"/>
+                                    <Setter Property="Opacity" Value="0.55"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Grid.Style>
 
-                    <!-- No checkbox on a row that cannot be removed; the cell stays so the columns keep their place. -->
-                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" MinWidth="0"
-                              PreviewMouseLeftButtonDown="OnRowCheckBoxMouseDown"
-                              AutomationProperties.Name="{Binding Name}"
-                              Visibility="{Binding Selectable, Converter={StaticResource BoolToHiddenVisibility}}"/>
+                    <!-- A ticked row is tinted with the accent, so the choice reads from across the list in both themes. -->
+                    <Border Background="{DynamicResource AccentFillColorDefaultBrush}" Opacity="0.14" IsHitTestVisible="False"
+                            Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibility}}"/>
+                    <!-- A row a suggestion's "Show" pointed at: an accent outline for a few seconds. -->
+                    <Border BorderBrush="{DynamicResource AccentTextFillColorPrimaryBrush}" BorderThickness="2" CornerRadius="4" IsHitTestVisible="False"
+                            Visibility="{Binding IsHighlighted, Converter={StaticResource BoolToVisibility}}"/>
 
-                    <StackPanel Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding Name}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                        <!-- Launcher and install folder: always for an entry from a launcher and for look-alike names. -->
-                        <TextBlock Text="{Binding OriginText}" FontSize="11" TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding FolderPath}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                   Visibility="{Binding HasOrigin, Converter={StaticResource BoolToVisibility}}"/>
-                        <!-- Why a greyed row cannot be removed (a driver a device uses), or that a Steam game's folder is empty. -->
-                        <TextBlock Text="{Binding NoteText}" FontSize="11" TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding NoteText}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                   Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="{Binding StateText}" FontSize="11" TextTrimming="CharacterEllipsis"
-                                   ToolTip="{Binding StateText}"
-                                   Visibility="{Binding ShowsState, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding State}" Value="Removed">
-                                            <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding State}" Value="Failed">
-                                            <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
+                    <Grid Margin="8,8,8,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{StaticResource CheckColumn}"/>
+                            <ColumnDefinition Width="*" MinWidth="240"/>
+                            <ColumnDefinition Width="{StaticResource SizeColumn}"/>
+                            <ColumnDefinition Width="{StaticResource InstalledColumn}"/>
+                            <ColumnDefinition Width="{StaticResource RiskColumn}"/>
+                        </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="2" Text="{Binding Publisher}" FontSize="12" TextTrimming="CharacterEllipsis"
-                               ToolTip="{Binding Publisher, Converter={StaticResource EmptyToNull}}" VerticalAlignment="Center" Margin="0,0,10,0"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock Grid.Column="3" Text="{Binding Version}" FontSize="12" TextTrimming="CharacterEllipsis"
-                               ToolTip="{Binding Version, Converter={StaticResource EmptyToNull}}" VerticalAlignment="Center" Margin="0,0,10,0"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock Grid.Column="4" Text="{Binding SizeText}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"
-                               Style="{StaticResource TabularNumberText}" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock Grid.Column="5" Text="{Binding InstalledText}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"
-                               Style="{StaticResource TabularNumberText}" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock Grid.Column="6" Text="{Binding MethodText}" FontSize="12" TextTrimming="CharacterEllipsis"
-                               ToolTip="{Binding MethodText}" VerticalAlignment="Center" Margin="0,0,10,0"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        <!-- The tick is drawn here but clicked on the row (OnRowListMouseDown), so one path serves a click on the box and on the row.
+                             A row that cannot be removed shows a lock instead; the row's hover says why. -->
+                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" MinWidth="0"
+                                  IsHitTestVisible="False" IsTabStop="False" Focusable="False"
+                                  AutomationProperties.Name="{Binding Name}"
+                                  Visibility="{Binding Selectable, Converter={StaticResource BoolToHiddenVisibility}}"/>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="LockClosed16" FontSize="14" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="3,0,0,0"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       AutomationProperties.Name="{Binding UnavailableReason}"
+                                       Visibility="{Binding Selectable, Converter={StaticResource InverseBoolToVisibility}}"/>
 
-                    <!-- The risk badge: the cleanup window's dot (green, amber, red) with the level's word; the hover names the reason. -->
-                    <StackPanel Grid.Column="7" Orientation="Horizontal" VerticalAlignment="Center"
+                        <!-- The name cell: a 20 px icon (the app's own once resolved off the UI thread, else a symbol for the kind of entry) and the text lines. -->
+                        <Grid Grid.Column="1" Margin="0,0,12,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="24"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Image Grid.Column="0" Width="20" Height="20" Source="{Binding Icon}" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibility}}"/>
+                            <ui:SymbolIcon Grid.Column="0" Symbol="{Binding KindSymbol}" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Visibility="{Binding HasIcon, Converter={StaticResource InverseBoolToVisibility}}"/>
+                            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Name}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                    <!-- Only an uninstaller that is not automatic gets a tag; the usual quiet method is not worth a column. -->
+                                    <Border Grid.Column="1" Margin="8,0,0,0" Padding="6,0,6,1" CornerRadius="4" VerticalAlignment="Center"
+                                            Background="{DynamicResource SystemFillColorCautionBackgroundBrush}"
+                                            ToolTip="{Binding MethodText}" AutomationProperties.Name="{Binding MethodText}"
+                                            Visibility="{Binding ShowsMethodTag, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="{Binding MethodText}" FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                    </Border>
+                                </Grid>
+                                <TextBlock Text="{Binding DetailText}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,1,0,0"
+                                           ToolTip="{Binding DetailText}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                           Visibility="{Binding HasDetail, Converter={StaticResource BoolToVisibility}}"/>
+                                <!-- The install folder: for an entry from a launcher and for look-alike names. -->
+                                <TextBlock Text="{Binding OriginText}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding FolderPath}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                           Visibility="{Binding HasOrigin, Converter={StaticResource BoolToVisibility}}"/>
+                                <!-- Why a greyed row cannot be removed (a driver a device uses), or that a Steam game's folder is empty. -->
+                                <TextBlock Text="{Binding NoteText}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding NoteText}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                           Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}"/>
+                                <TextBlock Text="{Binding StateText}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding StateText}"
+                                           Visibility="{Binding ShowsState, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding State}" Value="Removed">
+                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding State}" Value="Failed">
+                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Grid.Column="2" Text="{Binding SizeText}" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0"
+                                   Style="{StaticResource TabularNumberText}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock Grid.Column="3" Text="{Binding InstalledText}" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0"
+                                   Style="{StaticResource TabularNumberText}" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+
+                        <!-- The risk pill: a tinted capsule with the cleanup window's dot (green, amber, red) and the level's word; the hover names the reason. -->
+                        <Border Grid.Column="4" HorizontalAlignment="Left" VerticalAlignment="Center" Padding="8,3,10,3" CornerRadius="11"
                                 ToolTip="{Binding RiskTooltip}" AutomationProperties.Name="{Binding RiskTooltip}">
-                        <Border Width="8" Height="8" CornerRadius="4" VerticalAlignment="Center">
                             <Border.Style>
                                 <Style TargetType="Border">
-                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBackgroundBrush}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding RiskLevel}" Value="Considered">
-                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBackgroundBrush}"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding RiskLevel}" Value="Risky">
-                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBackgroundBrush}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </Border.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="8" Height="8" CornerRadius="4" VerticalAlignment="Center">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding RiskLevel}" Value="Considered">
+                                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding RiskLevel}" Value="Risky">
+                                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                </Border>
+                                <TextBlock Text="{Binding RiskLevelText}" FontSize="12" Margin="6,0,0,0" TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                            </StackPanel>
                         </Border>
-                        <TextBlock Text="{Binding RiskLevelText}" FontSize="12" Margin="6,0,0,0" TextTrimming="CharacterEllipsis"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                    </StackPanel>
+                    </Grid>
                 </Grid>
             </DataTemplate>
         </ResourceDictionary>
@@ -227,12 +276,13 @@
 
         <Grid Grid.Row="1" Margin="24,8,24,10">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <ui:TextBox x:Name="SearchBox" Grid.Column="0" MaxWidth="460" HorizontalAlignment="Left" Width="460"
+            <ui:TextBox x:Name="SearchBox" Grid.Column="0" Width="420"
                         PlaceholderText="{Binding Loc[UninstallerSearchPlaceholder]}"
                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                         AutomationProperties.Name="{Binding Loc[UninstallerSearchPlaceholder]}"
@@ -241,7 +291,7 @@
                        Content="{Binding Loc[UninstallerSelectAll]}"/>
             <ui:Button Grid.Column="2" Command="{Binding ClearSelectionCommand}" Appearance="Secondary" Margin="8,0,0,0"
                        Content="{Binding Loc[UninstallerSelectNone]}"/>
-            <ui:Button x:Name="RefreshButton" Grid.Column="3" Command="{Binding ReloadCommand}" Appearance="Secondary" Margin="8,0,0,0"
+            <ui:Button x:Name="RefreshButton" Grid.Column="4" Command="{Binding ReloadCommand}" Appearance="Secondary" Margin="8,0,0,0"
                        Icon="{ui:SymbolIcon ArrowClockwise24}" Content="{Binding Loc[UninstallerRefresh]}"/>
         </Grid>
 
@@ -259,98 +309,88 @@
                     <Grid Margin="8,8,22,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{StaticResource CheckColumn}"/>
-                            <ColumnDefinition Width="*" MinWidth="160"/>
-                            <ColumnDefinition Width="{StaticResource PublisherColumn}"/>
-                            <ColumnDefinition Width="{StaticResource VersionColumn}"/>
+                            <ColumnDefinition Width="*" MinWidth="240"/>
                             <ColumnDefinition Width="{StaticResource SizeColumn}"/>
                             <ColumnDefinition Width="{StaticResource InstalledColumn}"/>
-                            <ColumnDefinition Width="{StaticResource MethodColumn}"/>
                             <ColumnDefinition Width="{StaticResource RiskColumn}"/>
                         </Grid.ColumnDefinitions>
-                        <Button Grid.Column="1" Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="name">
-                            <TextBlock FontSize="12" FontWeight="SemiBold">
-                                <Run Text="{Binding Loc[UninstallerColName], Mode=OneWay}"/><Run>
-                                    <Run.Text>
-                                        <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="name" Mode="OneWay">
-                                            <Binding Path="SortColumn"/>
-                                            <Binding Path="SortDescending"/>
-                                        </MultiBinding>
-                                    </Run.Text>
-                                </Run>
-                            </TextBlock>
-                        </Button>
-                        <Button Grid.Column="2" Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="publisher">
-                            <TextBlock FontSize="12" FontWeight="SemiBold">
-                                <Run Text="{Binding Loc[UninstallerColPublisher], Mode=OneWay}"/><Run>
-                                    <Run.Text>
-                                        <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="publisher" Mode="OneWay">
-                                            <Binding Path="SortColumn"/>
-                                            <Binding Path="SortDescending"/>
-                                        </MultiBinding>
-                                    </Run.Text>
-                                </Run>
-                            </TextBlock>
-                        </Button>
-                        <Button Grid.Column="3" Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="version">
-                            <TextBlock FontSize="12" FontWeight="SemiBold">
-                                <Run Text="{Binding Loc[UninstallerColVersion], Mode=OneWay}"/><Run>
-                                    <Run.Text>
-                                        <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="version" Mode="OneWay">
-                                            <Binding Path="SortColumn"/>
-                                            <Binding Path="SortDescending"/>
-                                        </MultiBinding>
-                                    </Run.Text>
-                                </Run>
-                            </TextBlock>
-                        </Button>
-                        <Button Grid.Column="4" Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="size">
-                            <TextBlock FontSize="12" FontWeight="SemiBold">
-                                <Run Text="{Binding Loc[UninstallerColSize], Mode=OneWay}"/><Run>
-                                    <Run.Text>
-                                        <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="size" Mode="OneWay">
-                                            <Binding Path="SortColumn"/>
-                                            <Binding Path="SortDescending"/>
-                                        </MultiBinding>
-                                    </Run.Text>
-                                </Run>
-                            </TextBlock>
-                        </Button>
-                        <Button Grid.Column="5" Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="installed">
-                            <TextBlock FontSize="12" FontWeight="SemiBold">
-                                <Run Text="{Binding Loc[UninstallerColInstalled], Mode=OneWay}"/><Run>
-                                    <Run.Text>
-                                        <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="installed" Mode="OneWay">
-                                            <Binding Path="SortColumn"/>
-                                            <Binding Path="SortDescending"/>
-                                        </MultiBinding>
-                                    </Run.Text>
-                                </Run>
-                            </TextBlock>
-                        </Button>
-                        <Button Grid.Column="6" Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="method">
-                            <TextBlock FontSize="12" FontWeight="SemiBold">
-                                <Run Text="{Binding Loc[UninstallerColMethod], Mode=OneWay}"/><Run>
-                                    <Run.Text>
-                                        <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="method" Mode="OneWay">
-                                            <Binding Path="SortColumn"/>
-                                            <Binding Path="SortDescending"/>
-                                        </MultiBinding>
-                                    </Run.Text>
-                                </Run>
-                            </TextBlock>
-                        </Button>
-                        <Button Grid.Column="7" Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="risk">
-                            <TextBlock FontSize="12" FontWeight="SemiBold">
-                                <Run Text="{Binding Loc[UninstallerColRisk], Mode=OneWay}"/><Run>
-                                    <Run.Text>
-                                        <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="risk" Mode="OneWay">
-                                            <Binding Path="SortColumn"/>
-                                            <Binding Path="SortDescending"/>
-                                        </MultiBinding>
-                                    </Run.Text>
-                                </Run>
-                            </TextBlock>
-                        </Button>
+                        <!-- The name cell sorts by name, publisher or version: the three things its two lines show. -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="32,0,0,0">
+                            <Button Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="name">
+                                <TextBlock FontSize="12" FontWeight="SemiBold">
+                                    <Run Text="{Binding Loc[UninstallerColName], Mode=OneWay}"/><Run>
+                                        <Run.Text>
+                                            <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="name" Mode="OneWay">
+                                                <Binding Path="SortColumn"/>
+                                                <Binding Path="SortDescending"/>
+                                            </MultiBinding>
+                                        </Run.Text>
+                                    </Run>
+                                </TextBlock>
+                            </Button>
+                            <TextBlock Text="&#183;" FontSize="12" Margin="8,0,8,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                            <Button Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="publisher">
+                                <TextBlock FontSize="12" FontWeight="SemiBold">
+                                    <Run Text="{Binding Loc[UninstallerColPublisher], Mode=OneWay}"/><Run>
+                                        <Run.Text>
+                                            <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="publisher" Mode="OneWay">
+                                                <Binding Path="SortColumn"/>
+                                                <Binding Path="SortDescending"/>
+                                            </MultiBinding>
+                                        </Run.Text>
+                                    </Run>
+                                </TextBlock>
+                            </Button>
+                            <TextBlock Text="&#183;" FontSize="12" Margin="8,0,8,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                            <Button Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="version">
+                                <TextBlock FontSize="12" FontWeight="SemiBold">
+                                    <Run Text="{Binding Loc[UninstallerColVersion], Mode=OneWay}"/><Run>
+                                        <Run.Text>
+                                            <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="version" Mode="OneWay">
+                                                <Binding Path="SortColumn"/>
+                                                <Binding Path="SortDescending"/>
+                                            </MultiBinding>
+                                        </Run.Text>
+                                    </Run>
+                                </TextBlock>
+                            </Button>
+                        </StackPanel>
+                        <Button Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="size" Grid.Column="2" HorizontalContentAlignment="Right" Margin="0,0,10,0">
+                                <TextBlock FontSize="12" FontWeight="SemiBold">
+                                    <Run Text="{Binding Loc[UninstallerColSize], Mode=OneWay}"/><Run>
+                                        <Run.Text>
+                                            <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="size" Mode="OneWay">
+                                                <Binding Path="SortColumn"/>
+                                                <Binding Path="SortDescending"/>
+                                            </MultiBinding>
+                                        </Run.Text>
+                                    </Run>
+                                </TextBlock>
+                            </Button>
+                        <Button Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="installed" Grid.Column="3">
+                                <TextBlock FontSize="12" FontWeight="SemiBold">
+                                    <Run Text="{Binding Loc[UninstallerColInstalled], Mode=OneWay}"/><Run>
+                                        <Run.Text>
+                                            <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="installed" Mode="OneWay">
+                                                <Binding Path="SortColumn"/>
+                                                <Binding Path="SortDescending"/>
+                                            </MultiBinding>
+                                        </Run.Text>
+                                    </Run>
+                                </TextBlock>
+                            </Button>
+                        <Button Style="{StaticResource UninstallHeaderButton}" Command="{Binding SortByCommand}" CommandParameter="risk" Grid.Column="4">
+                                <TextBlock FontSize="12" FontWeight="SemiBold">
+                                    <Run Text="{Binding Loc[UninstallerColRisk], Mode=OneWay}"/><Run>
+                                        <Run.Text>
+                                            <MultiBinding Converter="{StaticResource SortGlyph}" ConverterParameter="risk" Mode="OneWay">
+                                                <Binding Path="SortColumn"/>
+                                                <Binding Path="SortDescending"/>
+                                            </MultiBinding>
+                                        </Run.Text>
+                                    </Run>
+                                </TextBlock>
+                            </Button>
                     </Grid>
                 </Border>
 
@@ -364,18 +404,86 @@
                         <TextBlock Text="{Binding Loc[UninstallerLoading]}" FontSize="14" Margin="0,28,0,0" HorizontalAlignment="Center"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    Visibility="{Binding ShowsLoadingText, Converter={StaticResource BoolToVisibility}}"/>
-                        <TextBlock Text="{Binding EmptyText}" FontSize="14" Margin="0,28,0,0" HorizontalAlignment="Center"
-                                   TextWrapping="Wrap" MaxWidth="420"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                   Visibility="{Binding ShowsEmptyText, Converter={StaticResource BoolToVisibility}}"/>
+                        <StackPanel Margin="0,36,0,12" HorizontalAlignment="Center" MaxWidth="440"
+                                    Visibility="{Binding ShowsEmptyText, Converter={StaticResource BoolToVisibility}}">
+                            <ui:SymbolIcon Symbol="Box24" FontSize="32" HorizontalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                            <TextBlock Text="{Binding EmptyText}" FontSize="14" FontWeight="SemiBold" Margin="0,10,0,0" HorizontalAlignment="Center"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="{Binding EmptyHint}" FontSize="12" Margin="0,4,0,0" HorizontalAlignment="Center"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Visibility="{Binding HasEmptyHint, Converter={StaticResource BoolToVisibility}}"/>
+                        </StackPanel>
+                        <!-- The suggestions card: a few entries worth a look, above the sections. Hidden when there are none. -->
+                        <Expander Style="{StaticResource UninstallSectionCard}" IsExpanded="{Binding SuggestionsExpanded, Mode=TwoWay}"
+                                  AutomationProperties.Name="{Binding SuggestionsTitle}"
+                                  Visibility="{Binding HasSuggestions, Converter={StaticResource BoolToVisibility}}">
+                            <Expander.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Lightbulb24" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding SuggestionsTitle}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                </StackPanel>
+                            </Expander.Header>
+                            <ItemsControl ItemsSource="{Binding Suggestions}" IsTabStop="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid MinHeight="54" Margin="8,6,8,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="36"/>
+                                                <ColumnDefinition Width="*" MinWidth="200"/>
+                                                <ColumnDefinition Width="92"/>
+                                                <ColumnDefinition Width="Auto" MinWidth="104"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Image Grid.Column="0" Width="24" Height="24" Source="{Binding Row.Icon}" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                   Margin="8,0,0,0" RenderOptions.BitmapScalingMode="HighQuality"
+                                                   Visibility="{Binding Row.HasIcon, Converter={StaticResource BoolToVisibility}}"/>
+                                            <ui:SymbolIcon Grid.Column="0" Symbol="{Binding Row.KindSymbol}" FontSize="22" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                           Margin="8,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                           Visibility="{Binding Row.HasIcon, Converter={StaticResource InverseBoolToVisibility}}"/>
+                                            <StackPanel Grid.Column="1" Margin="8,0,12,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                           ToolTip="{Binding Name}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                                <TextBlock Text="{Binding ReasonText}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,1,0,0"
+                                                           ToolTip="{Binding ReasonText}" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding SizeText}" FontSize="13" Margin="0,0,16,0" VerticalAlignment="Center" TextAlignment="Right"
+                                                       Style="{StaticResource TabularNumberText}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                                       Visibility="{Binding HasSize, Converter={StaticResource BoolToVisibility}}"/>
+                                            <ui:Button Grid.Column="3" Appearance="Secondary" HorizontalAlignment="Stretch" Content="{Binding ActionText}"
+                                                       Command="{Binding DataContext.SelectSuggestionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                       CommandParameter="{Binding}"
+                                                       AutomationProperties.Name="{Binding ActionAutomationName}"/>
+                                            <ui:Button Grid.Column="4" Appearance="Transparent" Content="{Binding DismissText}" Margin="6,0,0,0"
+                                                       Command="{Binding DataContext.DismissSuggestionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                       CommandParameter="{Binding}"
+                                                       AutomationProperties.Name="{Binding DismissAutomationName}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Expander>
                         <ItemsControl ItemsSource="{Binding Sections}" IsTabStop="False">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Expander Style="{StaticResource UninstallSectionCard}" IsExpanded="{Binding IsExpanded, Mode=TwoWay}"
                                               Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}">
                                         <Expander.Header>
-                                            <TextBlock Text="{Binding Header}" FontSize="13" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Header}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding TotalSizeText}" FontSize="12" Margin="12,0,0,0" VerticalAlignment="Center"
+                                                           Style="{StaticResource TabularNumberText}" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                           Visibility="{Binding HasTotalSize, Converter={StaticResource BoolToVisibility}}"/>
+                                            </Grid>
                                         </Expander.Header>
                                         <!-- Several rows can be highlighted (Ctrl, Shift); Space ticks them together. The list never scrolls itself: the card's scrollbar does. -->
                                         <StackPanel>
@@ -385,7 +493,8 @@
                                                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                                      behaviors:BubbleScroll.Enabled="True"
-                                                     PreviewKeyDown="OnRowListKeyDown"/>
+                                                     PreviewKeyDown="OnRowListKeyDown"
+                                                     PreviewMouseLeftButtonDown="OnRowListMouseDown"/>
                                         </StackPanel>
                                     </Expander>
                                 </DataTemplate>

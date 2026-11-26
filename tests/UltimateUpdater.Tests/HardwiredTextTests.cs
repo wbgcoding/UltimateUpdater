@@ -55,6 +55,8 @@ public class HardwiredTextTests
         // measuring state already shows elsewhere in this window (built in code, so this scan never saw
         // it there), punctuation, not a language-dependent word.
         "CleanupWindow.xaml: Text=\"…\"",
+        // The middle dot between a row's publisher, source and version, a separator glyph read the same in every locale.
+        "UninstallerWindow.xaml: Text=\"&#183;\"",
     ];
 
     [Fact]

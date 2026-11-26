@@ -2605,9 +2605,6 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="UninstallerColInstalled" xml:space="preserve">
     <value>安装日期</value>
   </data>
-  <data name="UninstallerColMethod" xml:space="preserve">
-    <value>方式</value>
-  </data>
   <data name="UninstallerColRisk" xml:space="preserve">
     <value>风险</value>
   </data>
@@ -2796,5 +2793,50 @@ Ultimate Updater 无法撤销此操作。</value>
   </data>
   <data name="SettingsCleanupReminderDesc" xml:space="preserve">
     <value>距上次清理很久时，在主窗口显示提醒。</value>
+  </data>
+  <data name="UninstallerUnavailableChecking" xml:space="preserve">
+    <value>仍在检查此条目是否已安装</value>
+  </data>
+  <data name="UninstallerUnavailableNoMethod" xml:space="preserve">
+    <value>无法自动移除此条目</value>
+  </data>
+  <data name="UninstallerEmptyHint" xml:space="preserve">
+    <value>电脑上一旦有程序、应用商店应用、软件包、驱动程序或更新，就会显示在这里。</value>
+  </data>
+  <data name="UninstallerNoMatchHint" xml:space="preserve">
+    <value>请尝试其他名称或发布者，或清除搜索以重新显示全部内容。</value>
+  </data>
+  <data name="UninstallerSuggestTitle" xml:space="preserve">
+    <value>建议</value>
+  </data>
+  <data name="UninstallerSuggestDuplicate" xml:space="preserve">
+    <value>已安装两次 ({0})</value>
+  </data>
+  <data name="UninstallerSuggestDuplicateMany" xml:space="preserve">
+    <value>已安装 {0} 次 ({1})</value>
+  </data>
+  <data name="UninstallerSuggestEmpty" xml:space="preserve">
+    <value>没有游戏文件的条目</value>
+  </data>
+  <data name="UninstallerSuggestUnused" xml:space="preserve">
+    <value>自 {0} 起未使用</value>
+  </data>
+  <data name="UninstallerSuggestSelect" xml:space="preserve">
+    <value>选择</value>
+  </data>
+  <data name="UninstallerSuggestShow" xml:space="preserve">
+    <value>显示</value>
+  </data>
+  <data name="UninstallerSuggestDismiss" xml:space="preserve">
+    <value>隐藏</value>
+  </data>
+  <data name="UninstallerSuggestSelectFor" xml:space="preserve">
+    <value>选择 {0}</value>
+  </data>
+  <data name="UninstallerSuggestShowFor" xml:space="preserve">
+    <value>显示 {0}</value>
+  </data>
+  <data name="UninstallerSuggestDismissFor" xml:space="preserve">
+    <value>隐藏 {0} 的建议</value>
   </data>
 </root>

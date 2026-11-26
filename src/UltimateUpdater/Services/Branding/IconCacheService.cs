@@ -109,11 +109,39 @@ public sealed class IconCacheService
             return null;
 
         var cacheKey = CacheKey(sourceId, itemId);
+        return Resolve(cacheKey, () => FindIconSource(sourceId, itemId, displayName, executableHint));
+    }
+
+    /// <summary>
+    /// The icon of one entry of the uninstaller list, from what that entry itself names: the Store logo of a packaged app,
+    /// then its Uninstall entry's icon (<paramref name="displayIcon"/>), then the main executable in its install folder,
+    /// then (a Steam game) Steam's cached icon. Null (never throws) when none is found; the row shows its kind's symbol.
+    /// Reads files and the registry, so call it off the UI thread.
+    /// </summary>
+    public BitmapSource? GetEntryIcon(string entryKey, string name, string? displayIcon, string? installLocation, bool isStoreApp, string? steamAppId = null) =>
+        Resolve(CacheKey("uninstall", entryKey), () => FindEntryIconSource(name, displayIcon, installLocation, isStoreApp, steamAppId));
+
+    internal IconSource? FindEntryIconSource(string name, string? displayIcon, string? installLocation, bool isStoreApp, string? steamAppId)
+    {
+        if (isStoreApp && _packages.Find(name) is { } packaged)
+            return new IconSource(packaged.Path, 0, IsImageFile: !packaged.IsExecutable, packaged.Plate);
+
+        if (ParseIconValue(displayIcon) is { } declared)
+            return declared;
+
+        if (MainExecutableIn(installLocation, name) is { } executable && HasIconResource(executable, 0))
+            return new IconSource(executable, 0, IsImageFile: false);
+
+        return steamAppId is { Length: > 0 } ? SteamGameIcon(steamAppId) : null;
+    }
+
+    private BitmapSource? Resolve(string cacheKey, Func<IconSource?> find)
+    {
         if (_memoryCache.TryGetValue(cacheKey, out var cached))
             return cached;
 
         var diskPath = Path.Combine(AppPaths.IconCacheDirectory, cacheKey + ".png");
-        var resolved = TryLoadFromDisk(diskPath) ?? ExtractAndCache(sourceId, itemId, displayName, executableHint, diskPath);
+        var resolved = TryLoadFromDisk(diskPath) ?? ExtractAndCache(find, diskPath);
 
         _memoryCache[cacheKey] = resolved;
         _memoryCacheOrder.Enqueue(cacheKey);
@@ -144,9 +172,9 @@ public sealed class IconCacheService
             _memoryCache.TryRemove(oldest, out _);
     }
 
-    private BitmapSource? ExtractAndCache(string sourceId, string itemId, string displayName, string? executableHint, string diskPath)
+    private BitmapSource? ExtractAndCache(Func<IconSource?> find, string diskPath)
     {
-        var source = FindIconSource(sourceId, itemId, displayName, executableHint);
+        var source = find();
         if (source is null)
             return null;
 
