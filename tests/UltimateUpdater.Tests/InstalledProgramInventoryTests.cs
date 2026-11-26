@@ -279,7 +279,7 @@ public class InstalledProgramInventoryTests
         Assert.Equal("appx:Contoso.Notes_2.1.0.0_x64__8wekyb3d8bbwe", notes.Key);
         Assert.Equal("Contoso.Notes_8wekyb3d8bbwe", notes.PackageFamilyName);
         Assert.Equal("2.1.0.0", notes.Version);
-        Assert.Equal("CN=Contoso", notes.Publisher);
+        Assert.Equal("Contoso", notes.Publisher);
         Assert.Equal("3.4.5.6", entries[1].Version);
     }
 

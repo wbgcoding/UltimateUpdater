@@ -10,17 +10,15 @@ namespace UltimateUpdater.Services.Uninstall;
 internal sealed record UpdateRemovalOutcome(int? ExitCode, string? Detail, string? Refusal);
 
 /// <summary>
-/// The Windows update branches of the "uninstall-program" job inside the elevated worker, both through DISM at its
-/// absolute System32 path. Listing is read only (<c>get-packages</c>, <c>get-packageinfo</c>). Removal takes only the
+/// The Windows update branch of the "uninstall-program" job inside the elevated worker, through DISM at its
+/// absolute System32 path. The app lists the installed updates itself from the registry without elevation; only a
+/// removal reaches this worker. It reads (<c>get-packages</c>, <c>get-packageinfo</c>) before it removes. Removal takes only the
 /// package identity from the wire: the worker lists the installed updates itself, finds the identity there, works out
 /// whether Windows allows its removal and plans the command again, so no path, name or switch from the pipe ever
 /// reaches DISM, and a package that is no installed removable update is refused.
 /// </summary>
 internal static class WindowsUpdateWorker
 {
-    /// <summary>The job method that lists the installed updates instead of removing one.</summary>
-    internal const string ListMethod = "ListWindowsUpdates";
-
     private const int PackageInfoParallelism = 4;
 
     /// <summary>Test seam: replaces the DISM process. Per async flow, so parallel tests never see each other's.</summary>

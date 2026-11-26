@@ -2644,6 +2644,9 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>Yüklü programlar okunuyor…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>{0} tarihli durum, güncelleniyor</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>Yüklü bir şey bulunamadı.</value>
   </data>
@@ -2746,20 +2749,17 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows bu güncelleştirmenin kaldırılmasına izin vermiyor</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>Klasör boş, oyun büyük olasılıkla artık yüklü değil</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>Toplu güncelleştirme (derleme {0})</value>
   </data>
   <data name="UninstallerUpdateServicingStack" xml:space="preserve">
     <value>Hizmet yığını güncelleştirmesi</value>
   </data>
-  <data name="UninstallerUpdatesLoading" xml:space="preserve">
-    <value>Yüklü güncelleştirmeler okunuyor. Windows izin isteyebilir.</value>
-  </data>
-  <data name="UninstallerUpdatesFailed" xml:space="preserve">
-    <value>Yüklü güncelleştirmeler okunamadı.</value>
-  </data>
-  <data name="UninstallerUpdatesNone" xml:space="preserve">
-    <value>Kaldırılabilir güncelleştirme bulunamadı.</value>
+  <data name="UninstallerUpdateDotNetRollup" xml:space="preserve">
+    <value>.NET Framework toplu güncelleştirmesi</value>
   </data>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows güncelleştirmeyi kaldıramadı (kod {0}).</value>

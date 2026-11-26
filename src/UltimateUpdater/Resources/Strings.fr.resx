@@ -2644,6 +2644,9 @@ Continuer avec les droits administrateur ?</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>Lecture des programmes installés…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>État du {0}, mise à jour en cours</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>Aucun élément installé n'a été trouvé.</value>
   </data>
@@ -2746,20 +2749,17 @@ Continuer avec les droits administrateur ?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows ne permet pas de supprimer cette mise à jour</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>Dossier vide, le jeu n'est probablement plus installé</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>Mise à jour cumulative (build {0})</value>
   </data>
   <data name="UninstallerUpdateServicingStack" xml:space="preserve">
     <value>Mise à jour de la pile de maintenance</value>
   </data>
-  <data name="UninstallerUpdatesLoading" xml:space="preserve">
-    <value>Lecture des mises à jour installées. Windows peut demander une autorisation.</value>
-  </data>
-  <data name="UninstallerUpdatesFailed" xml:space="preserve">
-    <value>Les mises à jour installées n'ont pas pu être lues.</value>
-  </data>
-  <data name="UninstallerUpdatesNone" xml:space="preserve">
-    <value>Aucune mise à jour supprimable trouvée.</value>
+  <data name="UninstallerUpdateDotNetRollup" xml:space="preserve">
+    <value>Mise à jour cumulative de .NET Framework</value>
   </data>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows n'a pas pu supprimer la mise à jour (code {0}).</value>

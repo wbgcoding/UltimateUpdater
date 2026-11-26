@@ -32,7 +32,11 @@ public sealed partial class UninstallRowViewModel : ObservableObject
         _selectionChanged = selectionChanged;
     }
 
-    public UninstallListing Listing { get; }
+    /// <summary>What the row shows. Replaced in place by <see cref="Update"/> when a fresh read changes the entry, so the row (its tick, its place in the list) survives.</summary>
+    public UninstallListing Listing { get; private set; }
+
+    /// <summary>False for a row taken from the saved listing that the cheap recheck has not confirmed yet: shown, but greyed and not tickable.</summary>
+    public bool IsVerified { get; private set; } = true;
 
     public InstalledProgramEntry Entry => Listing.Entry;
 
@@ -53,7 +57,7 @@ public sealed partial class UninstallRowViewModel : ObservableObject
     public CleanupRiskLevel RiskLevel => Listing.Risk.Level;
 
     /// <summary>False for the entries the window shows greyed and without a checkbox (this app itself, entries with no safe way to remove).</summary>
-    public bool Selectable => Listing.Risk.Selectable && Listing.Plan.IsRunnable;
+    public bool Selectable => IsVerified && Listing.Risk.Selectable && Listing.Plan.IsRunnable;
 
     public bool IsRisky => RiskLevel == CleanupRiskLevel.Risky;
 
@@ -69,6 +73,36 @@ public sealed partial class UninstallRowViewModel : ObservableObject
     public string NoteText => UninstallRowText.Note(Listing.Plan, Entry);
 
     public bool HasNote => NoteText.Length > 0;
+
+    /// <summary>The game launcher the entry came through (Steam, EA app, Epic Games, GOG, Ubisoft Connect, Battle.net), empty when none.</summary>
+    public string SourceLabel => UninstallEntryOrigin.Label(Entry) ?? string.Empty;
+
+    /// <summary>The install folder shortened for the row; the whole path is the tooltip (<see cref="FolderPath"/>).</summary>
+    public string FolderText => UninstallEntryOrigin.ShortFolder(Entry);
+
+    public string FolderPath => Entry.Kind == UninstallEntryKind.Program ? Entry.InstallLocation : string.Empty;
+
+    /// <summary>True while another visible row has the same name: the row then always shows where it comes from. Set by the owner.</summary>
+    public bool SharesNameWithVisibleRow { get; private set; }
+
+    /// <summary>The line under the name that tells look-alike entries apart: the launcher, then the install folder. Shown for an entry with a
+    /// launcher, and for any entry that shares its name with another visible row; empty otherwise.</summary>
+    public string OriginText => SourceLabel.Length > 0 || SharesNameWithVisibleRow
+        ? string.Join(" \u00B7 ", new[] { SourceLabel, FolderText }.Where(part => part.Length > 0))
+        : string.Empty;
+
+    public bool HasOrigin => OriginText.Length > 0;
+
+    internal void SetSharesNameWithVisibleRow(bool shares)
+    {
+        if (SharesNameWithVisibleRow == shares)
+            return;
+
+        SharesNameWithVisibleRow = shares;
+        OnPropertyChanged(nameof(SharesNameWithVisibleRow));
+        OnPropertyChanged(nameof(OriginText));
+        OnPropertyChanged(nameof(HasOrigin));
+    }
 
     /// <summary>The name that sorts and matches: the row's own, case-insensitive, never empty.</summary>
     public string SortName => Name;
@@ -112,6 +146,45 @@ public sealed partial class UninstallRowViewModel : ObservableObject
         _selectionChanged?.Invoke(this);
     }
 
+    /// <summary>A row of the saved listing, not yet confirmed by the recheck: greyed, no checkbox.</summary>
+    internal UninstallRowViewModel AsUnverified()
+    {
+        IsVerified = false;
+        return this;
+    }
+
+    /// <summary>The recheck (or the full read) confirmed the row: it becomes selectable.</summary>
+    internal void MarkVerified()
+    {
+        if (IsVerified)
+            return;
+
+        IsVerified = true;
+        OnPropertyChanged(nameof(Selectable));
+    }
+
+    /// <summary>Takes a fresh read's data over, keeping the row itself. A ticked row that stops being selectable is unticked.</summary>
+    internal void Update(UninstallListing listing)
+    {
+        if (Equals(Listing, listing))
+            return;
+
+        Listing = listing;
+        foreach (var name in DerivedProperties)
+            OnPropertyChanged(name);
+
+        if (IsSelected && !Selectable)
+            IsSelected = false;
+    }
+
+    private static readonly string[] DerivedProperties =
+    [
+        nameof(Listing), nameof(Entry), nameof(Name), nameof(Publisher), nameof(Version), nameof(SizeBytes), nameof(InstallDate),
+        nameof(SizeText), nameof(InstalledText), nameof(RiskLevel), nameof(Selectable), nameof(IsRisky), nameof(RiskLevelText),
+        nameof(ReasonText), nameof(RiskTooltip), nameof(MethodText), nameof(NoteText), nameof(HasNote), nameof(SortName),
+        nameof(SourceLabel), nameof(FolderText), nameof(FolderPath), nameof(OriginText), nameof(HasOrigin),
+    ];
+
     /// <summary>Re-reads every localized text after a language change.</summary>
     public void RefreshText()
     {
@@ -136,14 +209,14 @@ internal static class UninstallRowText
         _ => "CleanupRiskRisky",
     };
 
-    /// <summary>The note under a row the plan refused for a reason worth saying: a driver in use, an update Windows does not let go. Empty otherwise
-    /// (the method column already says "cannot remove").</summary>
+    /// <summary>The note under a row: why the plan refused it when that is worth saying (a driver in use, an update Windows does not let go), or that
+    /// a Steam game's folder is empty. Empty otherwise (the method column already says "cannot remove").</summary>
     internal static string Note(UninstallPlan plan, InstalledProgramEntry entry) => plan.Refusal switch
     {
         UninstallRefusal.DriverInUse => string.Format(
             LocalizationService.Instance["UninstallerDriverInUse"], entry.InUseBy),
         UninstallRefusal.UpdateNotRemovable => LocalizationService.Instance["UninstallerUpdateKept"],
-        _ => string.Empty,
+        _ => entry.InstallFolderEmpty ? LocalizationService.Instance["UninstallerSteamFolderEmpty"] : string.Empty,
     };
 
     internal static string MethodKey(UninstallPlan plan) => plan.Method switch

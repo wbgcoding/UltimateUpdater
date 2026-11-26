@@ -99,25 +99,57 @@ public class UninstallerViewModelTests
         /// <summary>When set, the installed-programs read throws it.</summary>
         public Exception? ListThrows { get; set; }
 
-        public Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken)
+        /// <summary>What the next full read returns; starts as the constructor's listings.</summary>
+        public IReadOnlyList<UninstallListing> Current { get; set; } = listings;
+
+        /// <summary>When set, the full read waits for it (a read that is still running while the window shows saved rows).</summary>
+        public Task? ListGate { get; set; }
+
+        /// <summary>Runs as the full read starts, on the thread that runs it.</summary>
+        public Action? OnList { get; set; }
+
+        public async Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken)
         {
             ListCalls++;
+            OnList?.Invoke();
+            if (ListGate is { } gate)
+                await gate.WaitAsync(cancellationToken);
+
             if (ListThrows is { } failure)
                 throw failure;
 
-            return Task.FromResult<IReadOnlyList<UninstallListing>>(listings);
+            return Current;
         }
 
-        /// <summary>What the installed Windows updates read gives; null is a read that failed. Empty by default.</summary>
-        public Func<IReadOnlyList<UninstallListing>?> Updates { get; set; } = () => [];
+        /// <summary>The saved listing the window finds on open; none by default.</summary>
+        public UninstallCachedListing? Cached { get; set; }
 
-        /// <summary>How often the installed updates were read.</summary>
-        public int UpdateCalls { get; private set; }
+        /// <summary>The recheck's verdict on the saved rows; keeps them all by default.</summary>
+        public Func<IReadOnlyList<UninstallListing>, IReadOnlyList<UninstallListing>> Recheck { get; set; } = cached => cached;
 
-        public Task<IReadOnlyList<UninstallListing>?> ListUpdatesAsync(CancellationToken cancellationToken)
+        /// <summary>When set, the recheck waits for it.</summary>
+        public Task? RecheckGate { get; set; }
+
+        /// <summary>What was saved, in order, as entries.</summary>
+        public List<IReadOnlyList<InstalledProgramEntry>> Saved { get; } = [];
+
+        public Task<UninstallCachedListing?> LoadCacheAsync(CancellationToken cancellationToken) => Task.FromResult(Cached);
+
+        public async Task<IReadOnlyList<UninstallListing>> RecheckAsync(
+            IReadOnlyList<UninstallListing> cached, CancellationToken cancellationToken)
         {
-            UpdateCalls++;
-            return Task.FromResult(Updates());
+            if (RecheckGate is { } gate)
+                await gate.WaitAsync(cancellationToken);
+
+            return Recheck(cached);
+        }
+
+        public Task SaveCacheAsync(IReadOnlyList<InstalledProgramEntry> entries)
+        {
+            lock (Saved)
+                Saved.Add(entries);
+
+            return Task.CompletedTask;
         }
 
         public UninstallRunner CreateRunner(Func<InstalledProgramEntry, UninstallPlan> plan)

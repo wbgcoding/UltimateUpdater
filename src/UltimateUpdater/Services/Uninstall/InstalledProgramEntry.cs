@@ -56,4 +56,8 @@ public sealed record InstalledProgramEntry
     /// <summary>Windows updates only: false when Windows does not allow removing the package (permanent, the servicing
     /// stack, a cumulative update, or any doubt). The default leaves every other entry kind unaffected.</summary>
     public bool WindowsAllowsRemoval { get; init; } = true;
+
+    /// <summary>Steam entries only: the install folder exists but holds no file, so the game is most likely not installed any more.
+    /// Set by the read (<see cref="UninstallEntryOrigin.MarkEmptyFolders"/>); false for every other entry.</summary>
+    public bool InstallFolderEmpty { get; init; }
 }

@@ -18,7 +18,6 @@ public sealed partial class UninstallerViewModel : ObservableObject
     private readonly LoggingService _logging;
     private List<UninstallRowViewModel> _all = [];
     private CancellationTokenSource? _loadCts;
-    private CancellationTokenSource? _updatesCts;
 
     public UninstallerViewModel(IUninstallerBackend backend, LoggingService logging)
     {
@@ -29,15 +28,8 @@ public sealed partial class UninstallerViewModel : ObservableObject
             new(UninstallSection.Programs, "UninstallerSectionPrograms", expanded: true),
             new(UninstallSection.Packages, "UninstallerSectionPackages", expanded: false),
             new(UninstallSection.Drivers, "UninstallerSectionDrivers", expanded: false),
-            new(UninstallSection.Updates, "UninstallerSectionUpdates", expanded: false, lazy: true),
+            new(UninstallSection.Updates, "UninstallerSectionUpdates", expanded: false),
         ];
-
-        // The installed updates are read when their section is opened: it needs the elevated helper.
-        Sections[^1].PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(UninstallSectionViewModel.IsExpanded) && Sections[^1].IsExpanded)
-                _ = LoadUpdatesAsync();
-        };
     }
 
     public LocalizationService Loc => LocalizationService.Instance;
@@ -47,8 +39,23 @@ public sealed partial class UninstallerViewModel : ObservableObject
     public ObservableCollection<UninstallSectionViewModel> Sections { get; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowsEmptyText))]
+    [NotifyPropertyChangedFor(nameof(ShowsEmptyText), nameof(ShowsLoadingText))]
     private bool isLoading;
+
+    /// <summary>When the rows on show were read, while they come from the saved listing and the real read is still running; null otherwise.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewNote), nameof(HasPreviewNote), nameof(ShowsLoadingText))]
+    private DateTimeOffset? previewSavedAt;
+
+    /// <summary>"As of ..., updating": the header note over rows taken from the saved listing.</summary>
+    public string PreviewNote => PreviewSavedAt is { } at
+        ? string.Format(Loc["UninstallerPreviewNote"], at.LocalDateTime.ToString("g", System.Globalization.CultureInfo.CurrentCulture))
+        : string.Empty;
+
+    public bool HasPreviewNote => PreviewSavedAt is not null;
+
+    /// <summary>The plain "Loading" line: while a read runs and no saved rows are on show instead.</summary>
+    public bool ShowsLoadingText => IsLoading && !HasPreviewNote;
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -82,7 +89,6 @@ public sealed partial class UninstallerViewModel : ObservableObject
     {
         _loadCts?.Cancel();
         var cts = _loadCts = new CancellationTokenSource();
-        ResetUpdates();
         IsLoading = true;
         try
         {
@@ -92,6 +98,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
 
             _loadFailed = false;
             SetListings(listings);
+            await SaveCacheAsync(listings);
         }
         catch (OperationCanceledException)
         {
@@ -106,76 +113,147 @@ public sealed partial class UninstallerViewModel : ObservableObject
         finally
         {
             if (ReferenceEquals(_loadCts, cts))
+                IsLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Fills the table when the window opens: the saved listing at once (greyed, not tickable) with a note, then the
+    /// cheap recheck that drops what is certainly gone and lets the rest be ticked, then the full read merged into the
+    /// same rows. Without a saved listing it is a plain <see cref="LoadAsync"/>.
+    /// </summary>
+    public async Task OpenAsync()
+    {
+        _loadCts?.Cancel();
+        var cts = _loadCts = new CancellationTokenSource();
+        IsLoading = true;
+        try
+        {
+            if (_all.Count == 0 && await _backend.LoadCacheAsync(cts.Token) is { Listings.Count: > 0 } cached)
+            {
+                if (cts.IsCancellationRequested)
+                    return;
+
+                ShowPreview(cached);
+                var kept = await _backend.RecheckAsync(cached.Listings, cts.Token);
+                if (cts.IsCancellationRequested)
+                    return;
+
+                ConfirmPreview(kept);
+            }
+
+            var listings = await _backend.ListForOpenAsync(cts.Token);
+            if (cts.IsCancellationRequested)
+                return;
+
+            _loadFailed = false;
+            if (_all.Count == 0 && PreviewSavedAt is null)
+                SetListings(listings);
+            else
+                MergeListings(listings);
+
+            PreviewSavedAt = null;
+            await SaveCacheAsync(listings);
+        }
+        catch (OperationCanceledException)
+        {
+            // replaced by a newer load or the window went away
+        }
+        catch (Exception ex)
+        {
+            _logging.Warn($"Uninstaller list failed: {ex.Message}");
+
+            // Saved rows that passed the recheck stay usable; with nothing on show the table says the read failed.
+            if (_all.Count == 0)
+            {
+                _loadFailed = true;
+                SetListings([]);
+            }
+
+            PreviewSavedAt = null;
+        }
+        finally
+        {
+            if (ReferenceEquals(_loadCts, cts))
             {
                 IsLoading = false;
-                if (UpdatesSection.IsExpanded)
-                    _ = LoadUpdatesAsync();
+                PreviewSavedAt = null;
             }
         }
     }
 
-    private UninstallSectionViewModel UpdatesSection => Sections.First(section => section.Kind == UninstallSection.Updates);
-
-    /// <summary>Forgets the installed updates: a reload starts over (the section reads them again when it is open).</summary>
-    private void ResetUpdates()
+    /// <summary>Shows the saved rows, greyed until the recheck confirms them.</summary>
+    private void ShowPreview(UninstallCachedListing cached)
     {
-        _updatesCts?.Cancel();
-        _updatesCts = null;
-        UpdatesSection.Load = UninstallSectionLoad.NotLoaded;
+        _all = cached.Listings.Select(listing => new UninstallRowViewModel(listing, OnRowSelectionChanged).AsUnverified()).ToList();
+        PreviewSavedAt = cached.SavedAt;
+        _logging.Info($"uninstaller preview: {_all.Count} rows from cache");
+        Refresh();
+        UpdateSelectionState();
+    }
+
+    /// <summary>The recheck's verdict: rows it no longer lists vanish, the others become selectable.</summary>
+    private void ConfirmPreview(IReadOnlyList<UninstallListing> kept)
+    {
+        var keptKeys = kept.Select(listing => listing.Entry.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        _all = _all.Where(row => keptKeys.Contains(row.Entry.Key)).ToList();
+        foreach (var row in _all)
+            row.MarkVerified();
+
+        Refresh();
+        UpdateSelectionState();
     }
 
     /// <summary>
-    /// Reads the installed Windows updates (elevated helper, so this can raise the elevation prompt) and adds them to
-    /// the table. Skipped while a run is on, while the first list is still loading, or when the updates are already
-    /// read or being read; a failed read can be tried again.
+    /// Brings the table to a fresh full read without replacing it: a row whose key is still there keeps its object
+    /// (tick, place in the list) and takes the new data, a new key adds a row, a key that vanished removes its row.
+    /// Skipped while a run or a leftover step is working, whose rows (including the removed ones the summary counts)
+    /// must stay as they are.
     /// </summary>
-    internal async Task LoadUpdatesAsync()
+    internal void MergeListings(IReadOnlyList<UninstallListing> listings)
     {
-        var section = UpdatesSection;
-        if (IsBusy || IsLoading || section.Load is UninstallSectionLoad.Loading or UninstallSectionLoad.Loaded or UninstallSectionLoad.Empty)
+        if (IsBusy)
+        {
+            _logging.Info("uninstaller: fresh read not merged, a run is in progress");
             return;
+        }
 
-        _updatesCts?.Cancel();
-        var cts = _updatesCts = new CancellationTokenSource();
-        section.Load = UninstallSectionLoad.Loading;
-        IReadOnlyList<UninstallListing>? listings;
+        var existing = new Dictionary<string, UninstallRowViewModel>(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in _all)
+            existing.TryAdd(row.Entry.Key, row);
+
+        var used = new HashSet<UninstallRowViewModel>(ReferenceEqualityComparer.Instance);
+        var merged = new List<UninstallRowViewModel>(listings.Count);
+        foreach (var listing in listings)
+        {
+            if (existing.TryGetValue(listing.Entry.Key, out var row) && used.Add(row))
+            {
+                row.Update(listing);
+                row.MarkVerified();
+                merged.Add(row);
+            }
+            else
+            {
+                merged.Add(new UninstallRowViewModel(listing, OnRowSelectionChanged));
+            }
+        }
+
+        _all = merged;
+        Refresh();
+        UpdateSelectionState();
+    }
+
+    /// <summary>Saves the entries as the listing of the last full read; a failure is the backend's to log, never ours to show.</summary>
+    private async Task SaveCacheAsync(IEnumerable<UninstallListing> listings)
+    {
         try
         {
-            listings = await _backend.ListUpdatesAsync(cts.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
+            await _backend.SaveCacheAsync([.. listings.Select(listing => listing.Entry)]);
         }
         catch (Exception ex)
         {
-            _logging.Warn($"Windows update list failed: {ex.Message}");
-            listings = null;
+            _logging.Warn($"Uninstaller: saving the listing failed: {ex.Message}");
         }
-
-        if (cts.IsCancellationRequested || IsBusy)
-        {
-            // a reload or a run came in meanwhile: the answer is dropped and the next open reads again
-            if (ReferenceEquals(_updatesCts, cts) && section.Load == UninstallSectionLoad.Loading)
-                section.Load = UninstallSectionLoad.NotLoaded;
-
-            return;
-        }
-
-        if (listings is null)
-        {
-            section.Load = UninstallSectionLoad.Failed;
-            return;
-        }
-
-        var rows = listings
-            .Where(listing => listing.Entry.Kind == UninstallEntryKind.WindowsUpdate)
-            .Select(listing => new UninstallRowViewModel(listing, OnRowSelectionChanged))
-            .ToList();
-        _all = [.. _all.Where(row => row.Entry.Kind != UninstallEntryKind.WindowsUpdate), .. rows];
-        section.Load = rows.Count == 0 ? UninstallSectionLoad.Empty : UninstallSectionLoad.Loaded;
-        Refresh();
-        UpdateSelectionState();
     }
 
     [RelayCommand]
@@ -202,6 +280,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
     {
         var query = SearchText.Trim();
         var visible = _all.Where(row => Matches(row, query)).ToList();
+        MarkSharedNames(visible);
 
         foreach (var section in Sections)
             section.Replace(Sort(visible.Where(row => SectionOf(row) == section.Kind)));
@@ -209,6 +288,18 @@ public sealed partial class UninstallerViewModel : ObservableObject
         OnPropertyChanged(nameof(VisibleCount));
         OnPropertyChanged(nameof(ShowsEmptyText));
         OnPropertyChanged(nameof(EmptyText));
+    }
+
+    /// <summary>Tells every row whether another visible row has its name, so look-alike entries always show where they come from.</summary>
+    private void MarkSharedNames(List<UninstallRowViewModel> visible)
+    {
+        var shared = visible.GroupBy(row => row.Name.Trim(), StringComparer.CurrentCultureIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .SelectMany(group => group)
+            .ToHashSet();
+
+        foreach (var row in _all)
+            row.SetSharesNameWithVisibleRow(shared.Contains(row));
     }
 
     private static bool Matches(UninstallRowViewModel row, string query) =>
@@ -283,6 +374,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
             section.RefreshText();
 
         OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(PreviewNote));
         RefreshLeftoverText();
     }
 
@@ -290,6 +382,5 @@ public sealed partial class UninstallerViewModel : ObservableObject
     public void Discard()
     {
         _loadCts?.Cancel();
-        _updatesCts?.Cancel();
     }
 }

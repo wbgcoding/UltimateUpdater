@@ -76,6 +76,7 @@ internal sealed class ReviewSession : IDisposable
             elevated: null, changelogFetcher: (_, _) => Task.FromResult<string?>(null),
             canShowWingetOffer: () => false);
         viewModel.CleanupPrescanAllowed = false;
+        viewModel.UninstallPrefetchAllowed = false;
         return viewModel;
     }
 

@@ -2644,6 +2644,9 @@ Continuați cu drepturi de administrator?</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>Se citesc programele instalate…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>Stare din {0}, se actualizează</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>Nu a fost găsit nimic instalat.</value>
   </data>
@@ -2746,20 +2749,17 @@ Continuați cu drepturi de administrator?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows nu permite eliminarea acestei actualizări</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>Dosar gol, jocul probabil nu mai este instalat</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>Actualizare cumulativă (versiunea {0})</value>
   </data>
   <data name="UninstallerUpdateServicingStack" xml:space="preserve">
     <value>Actualizare a stivei de servisare</value>
   </data>
-  <data name="UninstallerUpdatesLoading" xml:space="preserve">
-    <value>Se citesc actualizările instalate. Windows poate cere permisiunea.</value>
-  </data>
-  <data name="UninstallerUpdatesFailed" xml:space="preserve">
-    <value>Actualizările instalate nu au putut fi citite.</value>
-  </data>
-  <data name="UninstallerUpdatesNone" xml:space="preserve">
-    <value>Nu s-au găsit actualizări care pot fi eliminate.</value>
+  <data name="UninstallerUpdateDotNetRollup" xml:space="preserve">
+    <value>Actualizare cumulativă pentru .NET Framework</value>
   </data>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows nu a putut elimina actualizarea (cod {0}).</value>

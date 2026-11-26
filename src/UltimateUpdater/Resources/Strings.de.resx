@@ -2644,6 +2644,9 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>Installierte Programme werden gelesen…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>Stand vom {0}, wird aktualisiert</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>Es wurde nichts Installiertes gefunden.</value>
   </data>
@@ -2746,20 +2749,17 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows erlaubt das Entfernen dieses Updates nicht</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>Ordner leer, Spiel vermutlich nicht mehr installiert</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>Kumulatives Update (Build {0})</value>
   </data>
   <data name="UninstallerUpdateServicingStack" xml:space="preserve">
     <value>Update des Wartungsstapels</value>
   </data>
-  <data name="UninstallerUpdatesLoading" xml:space="preserve">
-    <value>Die installierten Updates werden gelesen. Windows fragt eventuell nach einer Berechtigung.</value>
-  </data>
-  <data name="UninstallerUpdatesFailed" xml:space="preserve">
-    <value>Die installierten Updates konnten nicht gelesen werden.</value>
-  </data>
-  <data name="UninstallerUpdatesNone" xml:space="preserve">
-    <value>Keine entfernbaren Updates gefunden.</value>
+  <data name="UninstallerUpdateDotNetRollup" xml:space="preserve">
+    <value>Kumulatives Update für .NET Framework</value>
   </data>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows konnte das Update nicht entfernen (Code {0}).</value>

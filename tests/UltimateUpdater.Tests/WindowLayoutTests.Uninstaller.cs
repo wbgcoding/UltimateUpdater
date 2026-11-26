@@ -14,9 +14,6 @@ public partial class WindowLayoutTests
     {
         public Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken) => Task.FromResult(listings);
 
-        public Task<IReadOnlyList<UninstallListing>?> ListUpdatesAsync(CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<UninstallListing>?>([]);
-
         public UninstallRunner CreateRunner(Func<InstalledProgramEntry, UninstallPlan> plan) =>
             throw new NotSupportedException();
 

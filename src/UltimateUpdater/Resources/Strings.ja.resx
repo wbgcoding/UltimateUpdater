@@ -2644,6 +2644,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>インストール済みのプログラムを読み込み中…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>{0} 時点の情報です。更新しています</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>インストール済みの項目は見つかりませんでした。</value>
   </data>
@@ -2746,20 +2749,17 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>この更新プログラムは Windows で削除できません</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>フォルダーが空です。ゲームはおそらくインストールされていません</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>累積更新プログラム (ビルド {0})</value>
   </data>
   <data name="UninstallerUpdateServicingStack" xml:space="preserve">
     <value>サービススタック更新プログラム</value>
   </data>
-  <data name="UninstallerUpdatesLoading" xml:space="preserve">
-    <value>インストール済みの更新プログラムを読み込んでいます。Windows が許可を求める場合があります。</value>
-  </data>
-  <data name="UninstallerUpdatesFailed" xml:space="preserve">
-    <value>インストール済みの更新プログラムを読み込めませんでした。</value>
-  </data>
-  <data name="UninstallerUpdatesNone" xml:space="preserve">
-    <value>削除できる更新プログラムは見つかりませんでした。</value>
+  <data name="UninstallerUpdateDotNetRollup" xml:space="preserve">
+    <value>.NET Framework 累積更新プログラム</value>
   </data>
   <data name="UninstallDismFailed" xml:space="preserve">
     <value>Windows は更新プログラムを削除できませんでした (コード {0})。</value>

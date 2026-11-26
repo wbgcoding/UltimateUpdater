@@ -13,7 +13,7 @@ public partial class MainViewModelTests
     /// <summary>A main view model whose cleanup measuring is a recording stand-in, so nothing here reads the
     /// machine it runs on. The prescan is allowed by default, as in the real app.</summary>
     private static PrescanRig CreatePrescanRig(
-        bool settingOn = true, bool onAc = true, bool allowed = true)
+        bool settingOn = true, bool onAc = true, bool allowed = true, bool mock = false)
     {
         ElevationService.IsElevatedForTest.Value = false;
         Dialogs.SuppressInteractiveDialogs = true;
@@ -31,7 +31,7 @@ public partial class MainViewModelTests
 
         var viewModel = new MainViewModel(
             settings, logging, new ThemeService(), new ScanOrchestrator(sources, logging),
-            new IconCacheService(logging), new InstallQueue(sources, settings, history, logging), history,
+            new IconCacheService(logging), new InstallQueue(sources, settings, history, logging, isMockSession: mock), history,
             new AutostartService(logging), new NotificationService(settings, logging),
             new SelfUpdateService(new HttpClient(), logging, new PublicUpdateChannel(logging)), sources)
         {
