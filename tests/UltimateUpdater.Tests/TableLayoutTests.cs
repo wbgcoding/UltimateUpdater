@@ -14,7 +14,7 @@ namespace UltimateUpdater.Tests;
 /// side); these tests are about the persisted state alone: hide/show, sort, and an unknown id being
 /// dropped rather than kept around or thrown on.
 /// </summary>
-public class TableLayoutTests
+public partial class TableLayoutTests
 {
     // English pinned: a view model built on "system" applies the OS language process-wide, which would leak
     // into whichever test runs next.

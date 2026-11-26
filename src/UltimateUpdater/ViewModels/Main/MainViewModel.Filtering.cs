@@ -617,6 +617,67 @@ public partial class MainViewModel
     public bool IsMainColumnHidden(string columnId) =>
         _hiddenMainColumns.Contains(columnId) || _autoHiddenMainColumns.Contains(columnId);
 
+    /// <summary>Columns collapsed only because the table is too narrow to leave the Name column its minimum. Derived from the table width, never persisted and never shown in the chooser (it keeps the user's own choice).</summary>
+    private readonly HashSet<string> _narrowHiddenMainColumns = new(StringComparer.Ordinal);
+
+    /// <summary>The header grid's width as last reported by the view; 0 until the table is laid out, which collapses nothing.</summary>
+    private double _mainTableWidth;
+
+    /// <summary>The widths of the lanes that never collapse (check 44, icon 36, action 176); in step with the ColWidth resources in App.xaml.</summary>
+    internal const double MainFixedLaneWidth = 44 + 36 + 176;
+
+    /// <summary>The Name column's width below which Publisher collapses.</summary>
+    internal const double NameWidthBeforePublisherCollapses = 180;
+
+    /// <summary>The Name column's width below which Date collapses too (after Publisher).</summary>
+    internal const double NameWidthBeforeDateCollapses = 140;
+
+    /// <summary>Which of the shown columns the narrow rule collapses for a table <paramref name="tableWidth"/> wide: Publisher while Name would get under 180 px, then Date while it would still get under 140 px. Pure; <paramref name="isShown"/> answers the user and auto-empty reasons only, so the result depends on the width alone and a widening window brings the columns back.</summary>
+    internal static IReadOnlySet<string> NarrowHiddenColumns(double tableWidth, Func<string, bool> isShown)
+    {
+        var collapsed = new HashSet<string>(StringComparer.Ordinal);
+        if (tableWidth <= 0)
+            return collapsed;
+
+        double NameWidth()
+        {
+            var fixedWidth = MainFixedLaneWidth;
+            foreach (var (id, width) in MainColumnDefaultWidths)
+            {
+                if (isShown(id) && !collapsed.Contains(id))
+                    fixedWidth += width;
+            }
+
+            return tableWidth - fixedWidth;
+        }
+
+        if (isShown("publisher") && NameWidth() < NameWidthBeforePublisherCollapses)
+            collapsed.Add("publisher");
+
+        if (isShown("date") && NameWidth() < NameWidthBeforeDateCollapses)
+            collapsed.Add("date");
+
+        return collapsed;
+    }
+
+    /// <summary>The view reports the header grid's width (SizeChanged). Cheap: the columns are only rewritten when the collapsed set actually changes.</summary>
+    public void SetMainTableWidth(double width)
+    {
+        if (Math.Abs(width - _mainTableWidth) < 0.5)
+            return;
+
+        _mainTableWidth = width;
+        RecomputeNarrowHiddenMainColumns();
+    }
+
+    private void RecomputeNarrowHiddenMainColumns()
+    {
+        if (NarrowHiddenColumns(_mainTableWidth, id => !IsMainColumnHidden(id)).SetEquals(_narrowHiddenMainColumns))
+            return;
+
+        ApplyMainColumnWidths();
+    }
+
     /// <summary>Wired to the chooser button in MainWindow.xaml. Ticking a column pins it (shown even when empty); unticking one, pinned or not, unpins it and hides it as the user's choice.</summary>
     public void SetMainColumnHidden(string columnId, bool hidden)
     {
@@ -693,18 +754,27 @@ public partial class MainViewModel
             RecomputeAutoHiddenMainColumns();
     }
 
-    /// <summary>Writes the hidden set into the shared App.xaml GridLength resources: 0 for a hidden column, its normal width otherwise. DynamicResource on the header Grid and every row template picks it up at once; a StaticResource would only see the value from first load. No-op outside a running app (unit tests).</summary>
+    /// <summary>Writes the hidden sets (user, auto-empty, narrow) into the shared App.xaml GridLength resources: 0 for a hidden column, its normal width otherwise. DynamicResource on the header Grid and every row template picks it up at once; a StaticResource would only see the value from first load. No-op outside a running app (unit tests).</summary>
     private void ApplyMainColumnWidths()
     {
+        // The narrow set follows the user and auto-empty sets, so every path that changes those lands here.
+        var narrow = NarrowHiddenColumns(_mainTableWidth, id => !IsMainColumnHidden(id));
+        _narrowHiddenMainColumns.Clear();
+        _narrowHiddenMainColumns.UnionWith(narrow);
+
         if (Application.Current is not { } app)
             return;
 
         foreach (var (columnId, resourceKey) in MainColumnResourceKeys)
         {
-            var width = IsMainColumnHidden(columnId) ? 0 : MainColumnDefaultWidths[columnId];
+            var width = IsMainColumnCollapsed(columnId) ? 0 : MainColumnDefaultWidths[columnId];
             app.Resources[resourceKey] = new GridLength(width);
         }
     }
+
+    /// <summary>Whether the column takes no width right now: hidden by the user, empty, or squeezed out by a narrow table. The chooser uses <see cref="IsMainColumnHidden"/> instead and ignores the narrow reason.</summary>
+    public bool IsMainColumnCollapsed(string columnId) =>
+        IsMainColumnHidden(columnId) || _narrowHiddenMainColumns.Contains(columnId);
 
     /// <summary>Read once at construction; an unknown id (a removed column, a hand-edited settings.json) is dropped instead of written back. Starts from <see cref="DefaultHiddenMainColumns"/> so a saved state that predates a default-hidden column leaves it where a fresh install has it; only <see cref="TableLayoutState.ShownColumns"/> can override that.</summary>
     private void LoadMainTableLayout()

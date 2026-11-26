@@ -206,7 +206,7 @@
             <!-- Widths stay attached to their content, not their position: the wider lane (for
                  "1.2.3 → 1.2.4") sits under Version, the narrower one under the shorter size text.
                  The column resources in App.xaml hold the numbers. -->
-            <Grid Grid.Row="0" Margin="12,4,26,5" MinHeight="30">
+            <Grid x:Name="MainTableHeader" Grid.Row="0" Margin="12,4,26,5" MinHeight="30" SizeChanged="OnHeaderSizeChanged">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="{StaticResource ColWidthCheck}"/>
                     <ColumnDefinition Width="{StaticResource ColWidthIcon}"/>
@@ -684,7 +684,7 @@
                                                Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
                                     <!-- Both marks sit to the RIGHT of the name: the
                                          critical badge first, then the ignored mark. -->
-                                    <Border Grid.Column="1" Margin="8,0,0,0" Padding="8,2" CornerRadius="5"
+                                    <Border x:Name="RowCriticalBadge" Grid.Column="1" Margin="8,0,0,0" Padding="8,2" CornerRadius="5"
                                             VerticalAlignment="Center"
                                             Background="{DynamicResource SystemFillColorCriticalBackgroundBrush}"
                                             Visibility="{Binding IsCritical, Converter={StaticResource BoolToVisibility}}">
@@ -1039,7 +1039,7 @@
                                  matching how the rest of this row leaves an unknown fact out rather
                                  than marking it. Text is the shortened form (Services/PublisherShortener.cs);
                                  the tooltip keeps the full, unshortened name for whenever it differs. -->
-                            <TextBlock Grid.Column="3" Text="{Binding PublisherDisplay}" FontSize="12"
+                            <TextBlock x:Name="RowPublisherText" Grid.Column="3" Text="{Binding PublisherDisplay}" FontSize="12"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"
                                        TextTrimming="CharacterEllipsis"
                                        ToolTip="{Binding Publisher}"

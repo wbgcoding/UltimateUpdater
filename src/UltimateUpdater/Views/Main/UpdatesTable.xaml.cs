@@ -16,6 +16,13 @@ public partial class UpdatesTable
         InitializeComponent();
     }
 
+    /// <summary>The header grid shares its width with every row's lane grid; the view model collapses Publisher, then Date, while Name would get too narrow. Width changes only (the columns never resize this grid), so there is no layout loop.</summary>
+    private void OnHeaderSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (e.WidthChanged && DataContext is MainViewModel viewModel)
+            viewModel.SetMainTableWidth(e.NewSize.Width);
+    }
+
     /// <summary>The language-independent identity of a group; see <see cref="UpdateRowViewModel.CategoryKey"/>. The view groups by the translated CategoryDisplay text, so the first row's key answers for the whole group.</summary>
     private static string? StableGroupKey(CollectionViewGroup group) =>
         group.Items.Count > 0 && group.Items[0] is UpdateRowViewModel row ? row.CategoryKey : group.Name as string;
