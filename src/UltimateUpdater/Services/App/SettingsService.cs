@@ -105,6 +105,7 @@ public sealed class SettingsService
             Current.PersistentFailures.Clear();
             Current.CleanupSelection.Clear();
             Current.CleanupPermanentlyExcludedPaths.Clear();
+            Current.UninstallSuggestionsDismissed.Clear();
         }
     }
 
@@ -436,6 +437,7 @@ public sealed class SettingsService
         // A null here would reach the cleanup dialog's constructor and every scan's ApplyPermanentExclusions.
         settings.CleanupSelection ??= defaults.CleanupSelection;
         settings.CleanupPermanentlyExcludedPaths ??= defaults.CleanupPermanentlyExcludedPaths;
+        settings.UninstallSuggestionsDismissed ??= defaults.UninstallSuggestionsDismissed;
 
         // The two strings are compared against known values everywhere; null is not one of them.
         settings.Ui.Theme ??= defaults.Ui.Theme;
@@ -488,6 +490,7 @@ public sealed class SettingsService
 
         // Same reasoning: a blank entry is compared against a real path on every scan and can never match.
         settings.CleanupPermanentlyExcludedPaths.RemoveAll(string.IsNullOrWhiteSpace);
+        settings.UninstallSuggestionsDismissed.RemoveAll(string.IsNullOrWhiteSpace);
 
         // Swept here too, not only on lookup: an install closed past a snooze's due date must not resurrect it
         // when the app is opened days later.

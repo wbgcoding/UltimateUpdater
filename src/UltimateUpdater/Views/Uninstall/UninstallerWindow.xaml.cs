@@ -34,7 +34,43 @@ public partial class UninstallerWindow
             }
         };
 
+        viewModel.RowsRevealRequested += OnRowsReveal;
+        Closed += (_, _) => viewModel.RowsRevealRequested -= OnRowsReveal;
+
         DialogKeyboard.CloseOnEscape(this);
+    }
+
+    /// <summary>A suggestion's button asked to see rows: scroll the first one into view once the section that holds it has opened and laid out.</summary>
+    private void OnRowsReveal(IReadOnlyList<UninstallRowViewModel> rows)
+    {
+        Dispatcher.InvokeAsync(
+            () =>
+            {
+                foreach (var row in rows)
+                {
+                    if (FindContainer(this, row) is { } item)
+                    {
+                        item.BringIntoView();
+                        return;
+                    }
+                }
+            },
+            System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    private static ListBoxItem? FindContainer(DependencyObject parent, UninstallRowViewModel row)
+    {
+        for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is System.Windows.Controls.ListBox list && list.ItemContainerGenerator.ContainerFromItem(row) is ListBoxItem item)
+                return item;
+
+            if (FindContainer(child, row) is { } found)
+                return found;
+        }
+
+        return null;
     }
 
     /// <summary>

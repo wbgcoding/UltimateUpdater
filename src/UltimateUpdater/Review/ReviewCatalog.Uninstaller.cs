@@ -74,6 +74,20 @@ internal static partial class ReviewCatalog
             return Task.FromResult(new ReviewScene { Window = new UninstallerWindow(viewModel) });
         });
 
+        Add(list, "uninstaller.suggestions", UninstallerArea, "Uninstaller with the suggestions card: a duplicate install, an entry without files and a large program unused for over a year", s =>
+        {
+            IReadOnlyList<UninstallListing> listings =
+            [
+                .. UninstallerLookalikes(),
+                Listing("Old Game Collection", size: 38_000_000_000, version: "2.0", publisher: "Contoso Games"),
+            ];
+            var viewModel = s.NewUninstallerViewModel(
+                listings,
+                expandAll: false,
+                (entries, _) => entries.Where(entry => entry.Name == "Old Game Collection").ToDictionary(entry => entry.Key, _ => DateTime.UtcNow.AddDays(-420)));
+            return Task.FromResult(new ReviewScene { Window = new UninstallerWindow(viewModel) });
+        });
+
         Add(list, "uninstaller.default", UninstallerArea, "Uninstaller as it opens: programs section open, others collapsed", s =>
         {
             var viewModel = s.NewUninstallerViewModel(UninstallerInventory(), expandAll: false);

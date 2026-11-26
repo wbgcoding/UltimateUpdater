@@ -2806,4 +2806,37 @@ Continuare con privilegi di amministratore?</value>
   <data name="UninstallerNoMatchHint" xml:space="preserve">
     <value>Prova un altro nome o editore, oppure svuota la ricerca per vedere di nuovo tutto.</value>
   </data>
+  <data name="UninstallerSuggestTitle" xml:space="preserve">
+    <value>Suggerimenti</value>
+  </data>
+  <data name="UninstallerSuggestDuplicate" xml:space="preserve">
+    <value>Installato due volte ({0})</value>
+  </data>
+  <data name="UninstallerSuggestDuplicateMany" xml:space="preserve">
+    <value>Installato {0} volte ({1})</value>
+  </data>
+  <data name="UninstallerSuggestEmpty" xml:space="preserve">
+    <value>Voce senza file del gioco</value>
+  </data>
+  <data name="UninstallerSuggestUnused" xml:space="preserve">
+    <value>Non usato dal {0}</value>
+  </data>
+  <data name="UninstallerSuggestSelect" xml:space="preserve">
+    <value>Seleziona</value>
+  </data>
+  <data name="UninstallerSuggestShow" xml:space="preserve">
+    <value>Mostra</value>
+  </data>
+  <data name="UninstallerSuggestDismiss" xml:space="preserve">
+    <value>Nascondi</value>
+  </data>
+  <data name="UninstallerSuggestSelectFor" xml:space="preserve">
+    <value>Seleziona {0}</value>
+  </data>
+  <data name="UninstallerSuggestShowFor" xml:space="preserve">
+    <value>Mostra {0}</value>
+  </data>
+  <data name="UninstallerSuggestDismissFor" xml:space="preserve">
+    <value>Nascondi il suggerimento per {0}</value>
+  </data>
 </root>

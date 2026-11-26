@@ -126,6 +126,9 @@
                     <!-- A ticked row is tinted with the accent, so the choice reads from across the list in both themes. -->
                     <Border Background="{DynamicResource AccentFillColorDefaultBrush}" Opacity="0.14" IsHitTestVisible="False"
                             Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibility}}"/>
+                    <!-- A row a suggestion's "Show" pointed at: an accent outline for a few seconds. -->
+                    <Border BorderBrush="{DynamicResource AccentTextFillColorPrimaryBrush}" BorderThickness="2" CornerRadius="4" IsHitTestVisible="False"
+                            Visibility="{Binding IsHighlighted, Converter={StaticResource BoolToVisibility}}"/>
 
                     <Grid Margin="8,8,8,8">
                         <Grid.ColumnDefinitions>
@@ -413,6 +416,57 @@
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                        Visibility="{Binding HasEmptyHint, Converter={StaticResource BoolToVisibility}}"/>
                         </StackPanel>
+                        <!-- The suggestions card: a few entries worth a look, above the sections. Hidden when there are none. -->
+                        <Expander Style="{StaticResource UninstallSectionCard}" IsExpanded="{Binding SuggestionsExpanded, Mode=TwoWay}"
+                                  AutomationProperties.Name="{Binding SuggestionsTitle}"
+                                  Visibility="{Binding HasSuggestions, Converter={StaticResource BoolToVisibility}}">
+                            <Expander.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Lightbulb24" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                   Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding SuggestionsTitle}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                </StackPanel>
+                            </Expander.Header>
+                            <ItemsControl ItemsSource="{Binding Suggestions}" IsTabStop="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid MinHeight="54" Margin="8,6,8,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="36"/>
+                                                <ColumnDefinition Width="*" MinWidth="200"/>
+                                                <ColumnDefinition Width="92"/>
+                                                <ColumnDefinition Width="Auto" MinWidth="104"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Image Grid.Column="0" Width="24" Height="24" Source="{Binding Row.Icon}" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                   Margin="8,0,0,0" RenderOptions.BitmapScalingMode="HighQuality"
+                                                   Visibility="{Binding Row.HasIcon, Converter={StaticResource BoolToVisibility}}"/>
+                                            <ui:SymbolIcon Grid.Column="0" Symbol="{Binding Row.KindSymbol}" FontSize="22" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                                           Margin="8,0,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                           Visibility="{Binding Row.HasIcon, Converter={StaticResource InverseBoolToVisibility}}"/>
+                                            <StackPanel Grid.Column="1" Margin="8,0,12,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                           ToolTip="{Binding Name}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                                <TextBlock Text="{Binding ReasonText}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,1,0,0"
+                                                           ToolTip="{Binding ReasonText}" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding SizeText}" FontSize="13" Margin="0,0,16,0" VerticalAlignment="Center" TextAlignment="Right"
+                                                       Style="{StaticResource TabularNumberText}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                                       Visibility="{Binding HasSize, Converter={StaticResource BoolToVisibility}}"/>
+                                            <ui:Button Grid.Column="3" Appearance="Secondary" HorizontalAlignment="Stretch" Content="{Binding ActionText}"
+                                                       Command="{Binding DataContext.SelectSuggestionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                       CommandParameter="{Binding}"
+                                                       AutomationProperties.Name="{Binding ActionAutomationName}"/>
+                                            <ui:Button Grid.Column="4" Appearance="Transparent" Content="{Binding DismissText}" Margin="6,0,0,0"
+                                                       Command="{Binding DataContext.DismissSuggestionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                       CommandParameter="{Binding}"
+                                                       AutomationProperties.Name="{Binding DismissAutomationName}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Expander>
                         <ItemsControl ItemsSource="{Binding Sections}" IsTabStop="False">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>

@@ -248,6 +248,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
         Refresh();
         UpdateSelectionState();
         ResolveIcons();
+        RefreshSuggestions();
     }
 
     /// <summary>Saves the entries as the listing of the last full read; a failure is the backend's to log, never ours to show.</summary>
@@ -273,6 +274,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
         Refresh();
         UpdateSelectionState();
         ResolveIcons();
+        RefreshSuggestions();
     }
 
     internal static UninstallSection SectionOf(UninstallRowViewModel row) => row.Entry.Kind switch
@@ -386,6 +388,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
         OnPropertyChanged(nameof(EmptyHint));
         OnPropertyChanged(nameof(HasEmptyHint));
         OnPropertyChanged(nameof(PreviewNote));
+        RefreshSuggestionText();
         RefreshLeftoverText();
     }
 
@@ -393,5 +396,6 @@ public sealed partial class UninstallerViewModel : ObservableObject
     public void Discard()
     {
         _loadCts?.Cancel();
+        _highlightCts?.Cancel();
     }
 }

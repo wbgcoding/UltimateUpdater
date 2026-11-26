@@ -101,10 +101,14 @@ internal sealed class ReviewSession : IDisposable
         return viewModel;
     }
 
-    public UninstallerViewModel NewUninstallerViewModel(IReadOnlyList<UninstallListing> listings, bool expandAll)
+    public UninstallerViewModel NewUninstallerViewModel(
+        IReadOnlyList<UninstallListing> listings,
+        bool expandAll,
+        Func<IReadOnlyList<InstalledProgramEntry>, CancellationToken, IReadOnlyDictionary<string, DateTime>>? usageReader = null)
     {
-        var viewModel = new UninstallerViewModel(new ReviewUninstallerBackend(listings), Logging);
+        var viewModel = new UninstallerViewModel(new ReviewUninstallerBackend(listings), Logging) { UsageReader = usageReader };
         ReviewPump.Wait(viewModel.LoadAsync());
+        ReviewPump.Wait(viewModel.SuggestionsReady);
         if (expandAll)
         {
             foreach (var section in viewModel.Sections)

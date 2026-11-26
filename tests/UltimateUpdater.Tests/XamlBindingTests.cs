@@ -62,7 +62,8 @@ public class XamlBindingTests
             typeof(UninstallSectionViewModel),
             typeof(UninstallRowViewModel),
             typeof(UninstallLeftoverGroupViewModel),
-            typeof(UninstallLeftoverItemViewModel));
+            typeof(UninstallLeftoverItemViewModel),
+            typeof(UninstallSuggestionViewModel));
 
     [Fact]
     public void CleanupHistoryWindow_bindings_all_exist() =>

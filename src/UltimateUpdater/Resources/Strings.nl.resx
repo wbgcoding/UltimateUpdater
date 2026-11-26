@@ -2806,4 +2806,37 @@ Doorgaan met beheerdersrechten?</value>
   <data name="UninstallerNoMatchHint" xml:space="preserve">
     <value>Probeer een andere naam of uitgever, of wis de zoekopdracht om weer alles te zien.</value>
   </data>
+  <data name="UninstallerSuggestTitle" xml:space="preserve">
+    <value>Suggesties</value>
+  </data>
+  <data name="UninstallerSuggestDuplicate" xml:space="preserve">
+    <value>Twee keer geïnstalleerd ({0})</value>
+  </data>
+  <data name="UninstallerSuggestDuplicateMany" xml:space="preserve">
+    <value>{0} keer geïnstalleerd ({1})</value>
+  </data>
+  <data name="UninstallerSuggestEmpty" xml:space="preserve">
+    <value>Item zonder spelbestanden</value>
+  </data>
+  <data name="UninstallerSuggestUnused" xml:space="preserve">
+    <value>Niet gebruikt sinds {0}</value>
+  </data>
+  <data name="UninstallerSuggestSelect" xml:space="preserve">
+    <value>Selecteren</value>
+  </data>
+  <data name="UninstallerSuggestShow" xml:space="preserve">
+    <value>Tonen</value>
+  </data>
+  <data name="UninstallerSuggestDismiss" xml:space="preserve">
+    <value>Verbergen</value>
+  </data>
+  <data name="UninstallerSuggestSelectFor" xml:space="preserve">
+    <value>{0} selecteren</value>
+  </data>
+  <data name="UninstallerSuggestShowFor" xml:space="preserve">
+    <value>{0} tonen</value>
+  </data>
+  <data name="UninstallerSuggestDismissFor" xml:space="preserve">
+    <value>Suggestie voor {0} verbergen</value>
+  </data>
 </root>

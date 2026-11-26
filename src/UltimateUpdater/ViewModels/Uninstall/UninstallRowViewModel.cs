@@ -164,6 +164,10 @@ public sealed partial class UninstallRowViewModel : ObservableObject
     [ObservableProperty]
     private bool isSelected;
 
+    /// <summary>True for a few seconds after a suggestion's "Show" pointed at this row, so the eye finds it in the list.</summary>
+    [ObservableProperty]
+    private bool isHighlighted;
+
     partial void OnIsSelectedChanged(bool value)
     {
         if (value && !Selectable)
