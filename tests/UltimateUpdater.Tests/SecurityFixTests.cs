@@ -239,6 +239,7 @@ public class SecurityFixTests
     /// trying to connect, so any process running as this user could serve it and hand an elevated
     /// worker its own list of packages. The worker checks who is serving before it reads a job.
     /// </summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task The_worker_refuses_a_pipe_served_by_someone_else()
     {

@@ -15,6 +15,7 @@ namespace UltimateUpdater.Tests;
 /// collapsed and the page back at its closed height, and that the About card shows the app logo.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class SettingsExpanderTests : IDisposable
 {
     public SettingsExpanderTests()

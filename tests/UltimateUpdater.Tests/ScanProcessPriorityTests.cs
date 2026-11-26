@@ -95,6 +95,7 @@ public class ScanProcessPriorityTests
         Assert.Equal(Process.GetCurrentProcess().PriorityClass.ToString(), outside);
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task A_suspended_alias_child_started_inside_the_scope_runs_below_normal()
     {

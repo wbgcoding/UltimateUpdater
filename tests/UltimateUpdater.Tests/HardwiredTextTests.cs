@@ -11,6 +11,7 @@ namespace UltimateUpdater.Tests;
 /// string appears anywhere, forcing a deliberate decision (translate it, or add it here with a reason)
 /// instead of a silent slip.
 /// </summary>
+[Trait("Layer", "UI")]
 public class HardwiredTextTests
 {
     /// <summary>Attributes that render literal text to the user. Not scanned: Style/converter/resource

@@ -27,6 +27,7 @@ namespace UltimateUpdater.Tests;
 /// rule; see <see cref="Wait_indicators_carry_a_stable_automation_id"/> for what they gained instead.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class AccessibilityWalkTests
 {
     [Fact]

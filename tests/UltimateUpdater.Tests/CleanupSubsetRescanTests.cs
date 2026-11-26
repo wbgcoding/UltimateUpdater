@@ -10,6 +10,7 @@ namespace UltimateUpdater.Tests;
 /// pass over the chosen rows only, and is refused whenever the full rescan is.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public class CleanupSubsetRescanTests
 {
     /// <summary>Answers each target with a figure that grows by one step per call, so a test can tell the

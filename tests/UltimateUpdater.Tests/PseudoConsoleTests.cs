@@ -161,6 +161,7 @@ public class PseudoConsoleTests
         public void Dispose() => ProcessRunner.Diagnostics = null;
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task A_console_command_runs_through_the_pseudo_console_with_its_output_and_exit_code()
     {
@@ -179,6 +180,7 @@ public class PseudoConsoleTests
         Assert.Contains(segments, s => s.Contains("hello from the console", StringComparison.Ordinal));
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task Umlauts_survive_the_console()
     {
@@ -192,6 +194,7 @@ public class PseudoConsoleTests
         Assert.Contains("Prüfung läuft", result.StandardOutput);
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task A_cancel_ends_a_console_run_and_its_children_promptly()
     {
@@ -243,6 +246,7 @@ public class PseudoConsoleTests
         return alive;
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task A_silent_console_run_is_stopped_by_the_idle_timeout()
     {

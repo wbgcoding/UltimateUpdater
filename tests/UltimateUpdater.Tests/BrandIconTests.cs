@@ -11,6 +11,7 @@ namespace UltimateUpdater.Tests;
 /// logo on a row is worse than no logo. These cover both directions, the matches that must work,
 /// and the rows that must stay without one.
 /// </summary>
+[Trait("Layer", "UI")]
 public class BrandIconTests
 {
     [Theory]

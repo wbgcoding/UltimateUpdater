@@ -12,6 +12,7 @@ namespace UltimateUpdater.Tests;
 /// the raw collection, or rows nobody could see would be installed with admin rights.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public partial class MainViewModelTests
 {
     [Fact]

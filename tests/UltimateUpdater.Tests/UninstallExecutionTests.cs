@@ -112,6 +112,7 @@ public class UninstallExecutionTests
         }
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task A_job_tells_when_a_process_the_first_one_started_is_still_running()
     {
@@ -137,6 +138,7 @@ public class UninstallExecutionTests
         Assert.Equal(0, child.ActiveJobProcesses);
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public async Task An_idle_leftover_does_not_hold_the_wait_for_the_whole_timeout()
     {

@@ -20,6 +20,7 @@ namespace UltimateUpdater.Tests;
 /// environment dependency and build.bat runs it in the warning-only step rather than as a gate.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class PressedPixelTests
 {
     /// <summary>Anything darker than this counts as "black", deep enough to exclude ordinary dark text

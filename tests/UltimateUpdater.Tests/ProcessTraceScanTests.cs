@@ -131,6 +131,7 @@ public class ProcessTraceScanTests
         Assert.Equal(["personal name"], Findings("// \u0042en's hard limit: at least 2.4 s"));
     }
 
+    [Trait("Layer", "Integration")]
     [Theory]
     [InlineData("// A normal comment explaining the current behavior.")]
     [InlineData("// Fixed a race: a stale pump must still release it.")]

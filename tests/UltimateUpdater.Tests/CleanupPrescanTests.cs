@@ -9,6 +9,7 @@ namespace UltimateUpdater.Tests;
 /// opened afterwards does with its result.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public class CleanupPrescanTests
 {
     /// <summary>Records which targets were measured in-process and answers at once.</summary>

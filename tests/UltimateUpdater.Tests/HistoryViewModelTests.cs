@@ -7,6 +7,7 @@ namespace UltimateUpdater.Tests;
 /// feature; the clipboard call itself is not something a headless test can assert on.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public class HistoryViewModelTests
 {
     private static HistoryRowViewModel Row(

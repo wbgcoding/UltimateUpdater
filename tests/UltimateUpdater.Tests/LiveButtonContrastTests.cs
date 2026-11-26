@@ -21,6 +21,7 @@ namespace UltimateUpdater.Tests;
 /// from the gating test step, run separately as warning-only.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class LiveButtonContrastTests
 {
     [Theory]

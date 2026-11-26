@@ -3,6 +3,7 @@ using UltimateUpdater.Services.Uninstall;
 namespace UltimateUpdater.Tests;
 
 /// <summary>A removal that waits for input nobody can give (a vendor window in an elevated session) is ended and explained.</summary>
+[Trait("Layer", "Integration")]
 public class UninstallStallTests
 {
     private static readonly StallWatchOptions Quick =

@@ -14,6 +14,7 @@ namespace UltimateUpdater.Tests;
 /// here installs anything real, the sources are stubs and the elevated worker is driven over a pipe
 /// inside the test process.
 /// </summary>
+[Trait("Layer", "UI")]
 public class InstallQueueTests
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };

@@ -5,6 +5,7 @@ namespace UltimateUpdater.Tests;
 
 /// <summary>A run must start exactly once however often it is asked while a scan unwinds, and a scan that
 /// was superseded by a newer one must not write its numbers or its "finished" state over the newer one.</summary>
+[Trait("Layer", "UI")]
 public class CleanupRunScanRaceTests
 {
     /// <summary>Scans block on a gate and ignore cancellation, the way a slow directory walk does; the first

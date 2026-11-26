@@ -6,6 +6,7 @@ namespace UltimateUpdater.Tests;
 /// <summary>Renders the two pieces of the startup prescan a person sees: the switch in the settings window
 /// and the "As of" stamp in the cleanup window.</summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class CleanupPrescanRenderTests
 {
     private const int MinimumDistinctColours = 20;

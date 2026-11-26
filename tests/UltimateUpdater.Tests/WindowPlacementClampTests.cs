@@ -7,6 +7,7 @@ namespace UltimateUpdater.Tests;
 /// entirely off it (monitor removed/resized since the position was saved), <see cref="MainWindow.ClampToVisible"/>
 /// pulls it fully back onto the screen instead of restoring it verbatim.
 /// </summary>
+[Trait("Layer", "UI")]
 public class WindowPlacementClampTests
 {
     private static readonly Rect VirtualScreen = new(0, 0, 1920, 1080);
@@ -143,6 +144,7 @@ public class WindowPlacementClampTests
 /// MinHeight taller than the work area made WPF grow the window back past the clamp.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class MainWindowStartupPlacementTests
 {
     [Fact]

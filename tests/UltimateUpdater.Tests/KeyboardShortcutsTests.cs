@@ -9,6 +9,7 @@ namespace UltimateUpdater.Tests;
 /// than to the table's own good intentions.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class KeyboardShortcutsTests
 {
     [Fact]

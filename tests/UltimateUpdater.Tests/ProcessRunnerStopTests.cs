@@ -6,6 +6,7 @@ namespace UltimateUpdater.Tests;
 /// A stop or timeout must return even when a descendant that escaped the kill still holds the inherited
 /// write end of the output pipe, so the pumps never see EOF.
 /// </summary>
+[Trait("Layer", "Integration")]
 public class ProcessRunnerStopTests
 {
     /// <summary>A stream that yields one chunk, then blocks every read, ignoring cancellation like a pipe

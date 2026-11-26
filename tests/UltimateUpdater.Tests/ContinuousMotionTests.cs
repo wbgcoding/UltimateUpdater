@@ -11,6 +11,7 @@ namespace UltimateUpdater.Tests;
 /// cannot pass as "off".
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class ContinuousMotionTests : IDisposable
 {
     public void Dispose() => MotionPreference.AnimationsEnabledForTest = null;

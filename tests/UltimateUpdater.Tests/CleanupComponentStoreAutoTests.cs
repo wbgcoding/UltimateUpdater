@@ -14,6 +14,7 @@ namespace UltimateUpdater.Tests;
 /// jobs reach it; the view model lives on the harness's UI thread, like the real one.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public class CleanupComponentStoreAutoTests
 {
     private sealed record Call(string Command, string[] TargetIds, bool BackgroundPriority);

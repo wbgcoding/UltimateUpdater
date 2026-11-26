@@ -59,6 +59,7 @@ public class AppDataCleanerLeftoverTests : IDisposable
         Assert.True(File.Exists(other));
     }
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public void The_autostart_entry_is_removed()
     {

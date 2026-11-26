@@ -13,6 +13,7 @@ namespace UltimateUpdater.Tests;
 /// ACE, never against a real elevated worker or a real UAC prompt: the ACL is always restored and
 /// the key always removed in <c>finally</c>.
 /// </summary>
+[Trait("Layer", "Integration")]
 public class RegistryCleanupScannerDeleteRightsTests
 {
     private static SecurityIdentifier CurrentUserSid => WindowsIdentity.GetCurrent().User!;

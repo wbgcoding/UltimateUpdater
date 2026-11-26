@@ -12,6 +12,7 @@ namespace UltimateUpdater.Tests;
 /// <see cref="RebootDialogTests"/> already uses for a banner-adjacent feature.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class CleanupReminderTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 18, 12, 0, 0, TimeSpan.Zero);

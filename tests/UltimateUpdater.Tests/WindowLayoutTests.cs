@@ -18,6 +18,7 @@ namespace UltimateUpdater.Tests;
 /// bin\...\ui-snapshots are there to be inspected by eye.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public partial class WindowLayoutTests
 {
     /// <summary>Anything below this is a flat rectangle, i.e. nothing rendered.</summary>

@@ -8,6 +8,7 @@ namespace UltimateUpdater.Tests;
 
 /// <summary>The key-tree delete opens everything first and deletes through the held handles; these prove
 /// the two refusals (a link below, a child that appeared since) and the depth rule for the classes mount.</summary>
+[Trait("Layer", "Integration")]
 public class RegistryTreeDeleteTests : IDisposable
 {
     private const uint RegLinkType = 6;

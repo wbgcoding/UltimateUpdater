@@ -11,6 +11,7 @@ namespace UltimateUpdater.Tests;
 /// gone before it dropped counts once, not twice, in the run total.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public class CleanupHelperFallbackTests
 {
     /// <summary>The local pass: reports a live figure, then returns its own outcome (or throws).</summary>

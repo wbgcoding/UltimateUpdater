@@ -12,6 +12,7 @@ namespace UltimateUpdater.Tests;
 /// on ordinary scratch keys and let the detector seam decide whether the marker counts as a real link.
 /// What is proven is the decision around a link, not the kernel's link detection itself.
 /// </summary>
+[Trait("Layer", "Integration")]
 public class RegistryLinkSafetyTests : IDisposable
 {
     private const uint RegLinkType = 6;

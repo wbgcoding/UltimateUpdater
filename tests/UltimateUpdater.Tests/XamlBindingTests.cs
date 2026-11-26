@@ -9,6 +9,7 @@ namespace UltimateUpdater.Tests;
 /// stays empty. Renaming a view-model property and missing one XAML reference therefore ships a blank
 /// button with a green build. Every binding in every window is checked against the real types here.
 /// </summary>
+[Trait("Layer", "UI")]
 public class XamlBindingTests
 {
     private static readonly string ViewsDirectory = FindViewsDirectory();

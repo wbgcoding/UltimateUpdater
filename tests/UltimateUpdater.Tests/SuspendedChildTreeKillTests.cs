@@ -11,6 +11,7 @@ namespace UltimateUpdater.Tests;
 /// Git setup spinning at full CPU after its winget was gone, and the retry started a second one beside it.
 /// The grandchild here breaks away the same way: created under the child, with the breakaway flag.
 /// </summary>
+[Trait("Layer", "Integration")]
 public class SuspendedChildTreeKillTests
 {
     [Fact]

@@ -5,6 +5,7 @@ namespace UltimateUpdater.Tests;
 /// <summary>An open scan whose helper never delivers must not leave the admin rows showing their old
 /// figure as if it were just measured.</summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public class CleanupHelperDropScanTests
 {
     private sealed class QuietCleanupService(LoggingService logging) : CleanupService(logging)

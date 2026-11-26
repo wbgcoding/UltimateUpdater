@@ -39,6 +39,7 @@ public class RegistryBackupCancellationTests : IDisposable
     /// <summary>The cancel arrives while the walk is already inside the tree (the link detector runs when
     /// k1 is opened, after the root's own check passed), so only a check per key can stop it: a single
     /// check at the top of the export would let the whole tree through.</summary>
+    [Trait("Layer", "Integration")]
     [Fact]
     public void A_cancel_that_arrives_mid_walk_stops_the_export_at_the_next_key()
     {

@@ -133,6 +133,7 @@ public class SecretScanTests
     // Joined into the path at run time, so this file itself carries no real-looking profile path.
     private const string RealLooking = "mmustermann";
 
+    [Trait("Layer", "Integration")]
     [Fact]
     public void A_real_looking_profile_path_is_still_caught()
     {

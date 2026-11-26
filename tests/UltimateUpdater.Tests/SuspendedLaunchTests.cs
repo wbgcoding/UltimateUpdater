@@ -10,6 +10,7 @@ namespace UltimateUpdater.Tests;
 /// target, resumed only on a match. The generic tests use cmd.exe as a stand-in image; the host test runs
 /// the real winget alias through the same code.
 /// </summary>
+[Trait("Layer", "Integration")]
 public class SuspendedLaunchTests
 {
     private static readonly string Cmd = Path.Combine(Environment.SystemDirectory, "cmd.exe");

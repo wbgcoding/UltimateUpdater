@@ -15,6 +15,7 @@ namespace UltimateUpdater.Tests;
 /// mouse-down never reaches it as a press to complete into a Click at all.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class ColumnChooserTests
 {
     private static readonly IReadOnlyList<ColumnDescriptor> OneColumn =

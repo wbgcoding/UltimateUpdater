@@ -10,6 +10,7 @@ namespace UltimateUpdater.Tests;
 /// (ERROR_FILE_NOT_FOUND = 2) is used rather than asserting exact wording, which would tie the test to
 /// one specific Windows build/locale.
 /// </summary>
+[Trait("Layer", "UI")]
 public class ErrorDetailViewModelTests
 {
     private static ErrorDetailViewModel Build(string detail, string? explanation = null) =>

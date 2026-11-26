@@ -9,6 +9,7 @@ namespace UltimateUpdater.Tests;
 /// through implicit application styles, including the menus built in code, which no window resource reaches.
 /// </summary>
 [Collection("wpf")]
+[Trait("Layer", "UI")]
 public class AppMenuStyleTests
 {
     private static T? FindNamed<T>(DependencyObject root, string name)

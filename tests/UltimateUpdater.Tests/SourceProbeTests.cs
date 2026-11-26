@@ -20,6 +20,7 @@ namespace UltimateUpdater.Tests;
 /// then throws, because that is a real defect: the table would show a red error pill.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "Integration")]
 public class SourceProbeTests(ITestOutputHelper output)
 {
     private static readonly TimeSpan PerSourceCap = TimeSpan.FromMinutes(3);

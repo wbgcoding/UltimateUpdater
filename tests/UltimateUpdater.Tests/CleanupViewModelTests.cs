@@ -9,6 +9,7 @@ namespace UltimateUpdater.Tests;
 /// default is a safety decision that must survive no matter what was checked last time.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public partial class CleanupViewModelTests
 {
     private static CleanupViewModel Create(

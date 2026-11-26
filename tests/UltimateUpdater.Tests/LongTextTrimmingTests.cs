@@ -3,6 +3,7 @@ using System.Xml.Linq;
 namespace UltimateUpdater.Tests;
 
 /// <summary>Text that can outgrow its lane (a long wording in another language, a long program or device name) ends in an ellipsis and shows in full on hover, instead of being cut at the edge or spilling over its neighbour.</summary>
+[Trait("Layer", "UI")]
 public class LongTextTrimmingTests
 {
     private static readonly XNamespace Wpf = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";

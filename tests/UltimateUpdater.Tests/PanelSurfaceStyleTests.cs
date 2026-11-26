@@ -14,6 +14,7 @@ namespace UltimateUpdater.Tests;
 /// shared test Application, while the contract that actually matters, "this Border uses the shared tone",
 /// lives in the markup itself.
 /// </summary>
+[Trait("Layer", "UI")]
 public class PanelSurfaceStyleTests
 {
     private static readonly XNamespace Presentation =

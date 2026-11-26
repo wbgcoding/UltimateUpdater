@@ -3,6 +3,7 @@ using System.Xml.Linq;
 namespace UltimateUpdater.Tests;
 
 /// <summary>Every setting explains itself on hover: each card of the settings page carries a tooltip on its title block or on something inside its own row.</summary>
+[Trait("Layer", "UI")]
 public class SettingsTooltipTests
 {
     private static readonly XNamespace Wpf = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";

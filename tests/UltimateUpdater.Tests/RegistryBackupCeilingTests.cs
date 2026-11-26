@@ -6,6 +6,7 @@ namespace UltimateUpdater.Tests;
 
 /// <summary>The registry backup runs elevated over keys the unprivileged user writes, so neither one value
 /// nor the whole export may grow without a ceiling; past either the backup fails and nothing is deleted.</summary>
+[Trait("Layer", "Integration")]
 public class RegistryBackupCeilingTests : IDisposable
 {
     private readonly string _relativeRoot = @"Software\WuBackupCeiling" + Guid.NewGuid().ToString("N");

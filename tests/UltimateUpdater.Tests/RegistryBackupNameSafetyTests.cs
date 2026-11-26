@@ -6,6 +6,7 @@ namespace UltimateUpdater.Tests;
 
 /// <summary>A key or value name with a control character cannot be written into a REGEDIT5 line without
 /// breaking the line, so the whole backup fails closed instead of producing a malformed file.</summary>
+[Trait("Layer", "Integration")]
 public class RegistryBackupNameSafetyTests : IDisposable
 {
     private readonly string _relativeRoot = @"Software\WuNameSafety" + Guid.NewGuid().ToString("N");
