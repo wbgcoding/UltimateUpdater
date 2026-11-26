@@ -124,8 +124,10 @@ public sealed partial class UninstallerViewModel : ObservableObject
 
     /// <summary>
     /// Fills the table when the window opens: the saved listing at once (greyed, not tickable) with a note, then the
-    /// cheap recheck that drops what is certainly gone and lets the rest be ticked, then the full read merged into the
-    /// same rows. Without a saved listing it is a plain <see cref="LoadAsync"/>.
+    /// cheap recheck that drops what is certainly gone, then the full read merged into the same rows, which is what
+    /// makes them tickable (the recheck only proves a program is not gone, not that its plan and rating still hold).
+    /// Without a saved listing it is a plain <see cref="LoadAsync"/>. The full read saves the listing (the backend's
+    /// part), so a window open writes it once.
     /// </summary>
     public async Task OpenAsync()
     {
@@ -158,7 +160,6 @@ public sealed partial class UninstallerViewModel : ObservableObject
                 MergeListings(listings);
 
             PreviewSavedAt = null;
-            await SaveCacheAsync(listings);
         }
         catch (OperationCanceledException)
         {
@@ -168,8 +169,9 @@ public sealed partial class UninstallerViewModel : ObservableObject
         {
             _logging.Warn($"Uninstaller list failed: {ex.Message}");
 
-            // Saved rows that passed the recheck stay usable; with nothing on show the table says the read failed.
-            if (_all.Count == 0)
+            // Saved rows were never confirmed by a full read, so they are not left on show (greyed for good, or worse
+            // ticked): the table says the read failed, like a window without a saved listing.
+            if (_all.Count == 0 || _all.Any(row => !row.IsVerified))
             {
                 _loadFailed = true;
                 SetListings([]);
@@ -198,14 +200,11 @@ public sealed partial class UninstallerViewModel : ObservableObject
         ResolveIcons();
     }
 
-    /// <summary>The recheck's verdict: rows it no longer lists vanish, the others become selectable.</summary>
+    /// <summary>The recheck's verdict: rows it no longer lists vanish. The others stay greyed until the full read merged.</summary>
     private void ConfirmPreview(IReadOnlyList<UninstallListing> kept)
     {
         var keptKeys = kept.Select(listing => listing.Entry.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         _all = _all.Where(row => keptKeys.Contains(row.Entry.Key)).ToList();
-        foreach (var row in _all)
-            row.MarkVerified();
-
         Refresh();
         UpdateSelectionState();
     }

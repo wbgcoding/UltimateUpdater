@@ -18,6 +18,7 @@ public sealed class UninstallListingPrefetch(IUninstallerBackend backend, Loggin
     private readonly object _gate = new();
     private Task<IReadOnlyList<UninstallListing>>? _task;
     private DateTime? _finishedAt;
+    private bool _disposed;
 
     /// <summary>The read in flight or finished, or null when none was started.</summary>
     public Task<IReadOnlyList<UninstallListing>>? Current
@@ -29,21 +30,38 @@ public sealed class UninstallListingPrefetch(IUninstallerBackend backend, Loggin
         }
     }
 
-    /// <summary>Starts the read once; later calls change nothing. Returns false when it was already started.</summary>
+    /// <summary>Starts the read once; later calls change nothing. Returns false when it was already started or the app is exiting.</summary>
     public bool Start()
     {
         lock (_gate)
         {
-            if (_task is not null)
+            if (_task is not null || _disposed)
                 return false;
 
             var token = _cts.Token;
 
-            // Task.Run keeps the read off the caller's (UI) thread; the thread that starts it runs below normal priority for
-            // the synchronous stretch before the read's first await, then goes back, because a pool thread left lowered would
-            // slow whatever work it takes next.
-            _task = Task.Run(() => RunAsync(token), token);
+            // Task.Run keeps the read off the caller's (UI) thread. The pool thread that runs it drops to below normal
+            // priority for the synchronous stretch before the read's first await, then goes back, because a pool thread
+            // left lowered would slow whatever work it takes next.
+            var task = _task = Task.Run(() => RunAsync(token), token);
+
+            // Nobody may ever ask for the result (a window that never opens): a failure is already logged by the read, so
+            // it is marked as seen here, and the token source is released once the read has ended.
+            task.ContinueWith(Finished, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             return true;
+        }
+    }
+
+    private void Finished(Task<IReadOnlyList<UninstallListing>> task)
+    {
+        _ = task.Exception;
+        lock (_gate)
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            _cts.Dispose();
         }
     }
 
@@ -116,6 +134,22 @@ public sealed class UninstallListingPrefetch(IUninstallerBackend backend, Loggin
         }
     }
 
-    /// <summary>Stops a read in flight; the app is exiting.</summary>
-    public void Cancel() => _cts.Cancel();
+    /// <summary>Stops a read in flight; the app is exiting. No read starts afterwards.</summary>
+    public void Cancel()
+    {
+        lock (_gate)
+        {
+            if (_disposed)
+                return;
+
+            _cts.Cancel();
+
+            // A read in flight releases the source when it ends; with none started it is released now.
+            if (_task is null)
+            {
+                _disposed = true;
+                _cts.Dispose();
+            }
+        }
+    }
 }

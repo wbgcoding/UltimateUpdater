@@ -106,6 +106,52 @@ public class UninstallListingPrefetchTests
     }
 
     [Fact]
+    public async Task Cancelling_before_the_start_means_no_read_ever_starts()
+    {
+        var backend = new FakeBackend(Listing("A"));
+        var prefetch = Prefetch(backend);
+
+        prefetch.Cancel();
+
+        Assert.False(prefetch.Start());
+        Assert.Null(prefetch.Current);
+        Assert.Null(await prefetch.TryTakeAsync(CancellationToken.None));
+        Assert.Equal(0, backend.ListCalls);
+    }
+
+    [Fact]
+    public async Task Cancelling_after_the_read_ended_is_harmless_and_the_result_stays_takeable()
+    {
+        var prefetch = Prefetch(new FakeBackend(Listing("A")));
+        prefetch.Start();
+        await prefetch.Current!.WaitAsync(Patience);
+
+        prefetch.Cancel();
+        prefetch.Cancel();
+
+        Assert.Single((await prefetch.TryTakeAsync(CancellationToken.None))!);
+    }
+
+    [Fact]
+    public async Task A_window_open_saves_the_listing_once_whether_the_prefetch_or_its_own_read_supplied_it()
+    {
+        var reader = new FakeBackend(Listing("A"));
+        var prefetch = Prefetch(reader);
+        prefetch.Start();
+        await prefetch.Current!.WaitAsync(Patience);
+        var window = new UninstallerBackend(new LoggingService(), elevated: null, prefetch: prefetch);
+
+        await window.ListForOpenAsync(CancellationToken.None);
+
+        Assert.Single(reader.Saved);
+
+        var plain = new FakeBackend(Listing("A"));
+        await ((IUninstallerBackend)plain).ListForOpenAsync(CancellationToken.None);
+
+        Assert.Single(plain.Saved);
+    }
+
+    [Fact]
     public async Task A_window_that_is_closed_while_waiting_stops_waiting_without_stopping_the_prefetch()
     {
         var gate = new TaskCompletionSource();

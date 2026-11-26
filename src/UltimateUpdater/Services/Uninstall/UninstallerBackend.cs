@@ -18,9 +18,15 @@ public interface IUninstallerBackend
 
     /// <summary>
     /// The listing for opening the window: <see cref="ListAsync"/>, or the result of a read the app already did in the
-    /// background a moment ago. A reload button always asks <see cref="ListAsync"/>, for a fresh read.
+    /// background a moment ago. Either way the listing is saved by the time it returns (once per open). A reload button
+    /// asks <see cref="ListAsync"/>, for a fresh read.
     /// </summary>
-    Task<IReadOnlyList<UninstallListing>> ListForOpenAsync(CancellationToken cancellationToken) => ListAsync(cancellationToken);
+    async Task<IReadOnlyList<UninstallListing>> ListForOpenAsync(CancellationToken cancellationToken)
+    {
+        var listings = await ListAsync(cancellationToken);
+        await SaveCacheAsync([.. listings.Select(listing => listing.Entry)]);
+        return listings;
+    }
 
     /// <summary>The saved listing of the last full read, or null when there is none or it cannot be read. Never throws.</summary>
     Task<UninstallCachedListing?> LoadCacheAsync(CancellationToken cancellationToken) => Task.FromResult<UninstallCachedListing?>(null);
@@ -64,7 +70,7 @@ public sealed class UninstallerBackend(
     public System.Windows.Media.Imaging.BitmapSource? ResolveIcon(InstalledProgramEntry entry) =>
         icons?.GetEntryIcon(
             entry.Key, entry.Name, entry.DisplayIcon, entry.InstallLocation, entry.Kind == UninstallEntryKind.StoreApp,
-            UninstallEntryOrigin.SteamAppId(entry));
+            UninstallEntryOrigin.SteamAppId(entry), entry.PackageFamilyName);
 
     private readonly UninstallLeftoverService _leftovers = new(
         logging, elevated, settings is { } current ? () => current.Current.RegistryCleanup : null);
@@ -148,15 +154,26 @@ public sealed class UninstallerBackend(
 
     private static string WindowsDirectory => Environment.GetFolderPath(Environment.SpecialFolder.Windows);
 
-    /// <summary>The background read of this session when it is running or fresh, else a read of its own.</summary>
-    public async Task<IReadOnlyList<UninstallListing>> ListForOpenAsync(CancellationToken cancellationToken) =>
-        (prefetch is null ? null : await prefetch.TryTakeAsync(cancellationToken)) ?? await ListAsync(cancellationToken);
+    /// <summary>The background read of this session when it is running or fresh (it saved the listing itself), else a read of its own, saved here.</summary>
+    public async Task<IReadOnlyList<UninstallListing>> ListForOpenAsync(CancellationToken cancellationToken)
+    {
+        if (prefetch is not null && await prefetch.TryTakeAsync(cancellationToken) is { } taken)
+            return taken;
+
+        var listings = await ListAsync(cancellationToken);
+        await SaveCacheAsync([.. listings.Select(listing => listing.Entry)]);
+        return listings;
+    }
 
     public Task<IReadOnlyList<UninstallListing>> ListAsync(CancellationToken cancellationToken) => Task.Run(
         async () =>
         {
             // The hotfix list (WMI, names the update rows) is the slowest single read: it runs beside the rest.
             var fixes = Task.Run(() => new WindowsUpdateLister(logging).ReadQuickFixes(cancellationToken), cancellationToken);
+
+            // When the rest of the read fails first the hotfix read is never awaited: its failure must not go unobserved.
+            _ = fixes.ContinueWith(
+                finished => _ = finished.Exception, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             var inventory = new InstalledProgramInventory(
                 WindowsRegistryView.Instance, new AppxPackageReader(), new WingetListReader());
             var entries = UninstallEntryOrigin.MarkEmptyFolders(await inventory.ReadAsync(cancellationToken), UninstallEntryOrigin.IsEmptyFolder);

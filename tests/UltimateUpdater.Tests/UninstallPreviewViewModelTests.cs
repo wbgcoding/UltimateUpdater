@@ -55,13 +55,14 @@ public class UninstallPreviewViewModelTests
     {
         var recheck = new TaskCompletionSource();
         var read = new TaskCompletionSource();
-        var (vm, backend) = Open([Listing("A"), Listing("B")], Listing("A"), Listing("B"));
+        var (vm, backend) = Open([Listing("A"), Listing("B"), Listing("Gone")], Listing("A"), Listing("B"));
+        backend.Recheck = cached => [.. cached.Where(listing => listing.Entry.Name != "Gone")];
         backend.RecheckGate = recheck.Task;
         backend.ListGate = read.Task;
 
         var open = vm.OpenAsync();
 
-        Assert.Equal(["A", "B"], vm.AllRows.Select(row => row.Name));
+        Assert.Equal(["A", "B", "Gone"], vm.AllRows.Select(row => row.Name));
         Assert.True(vm.HasPreviewNote);
         Assert.False(vm.ShowsLoadingText);
         Assert.Equal("As of " + SavedAt.LocalDateTime.ToString("g", CultureInfo.CurrentCulture) + ", updating", vm.PreviewNote);
@@ -70,15 +71,20 @@ public class UninstallPreviewViewModelTests
         Row(vm, "A").IsSelected = true;
         Assert.False(Row(vm, "A").IsSelected);
 
+        // The recheck only proves a row is not gone: the rows stay greyed (and refuse a tick) until the full read merged.
         recheck.SetResult();
-        await WaitUntilAsync(() => Row(vm, "A").Selectable);
-        Assert.All(vm.AllRows, row => Assert.True(row.Selectable));
+        await WaitUntilAsync(() => vm.AllRows.Count == 2);
+        Assert.All(vm.AllRows, row => Assert.False(row.Selectable));
+        Row(vm, "A").IsSelected = true;
+        Assert.False(Row(vm, "A").IsSelected);
         Assert.True(vm.HasPreviewNote);
 
         read.SetResult();
         await open.WaitAsync(Patience);
+        Assert.All(vm.AllRows, row => Assert.True(row.Selectable));
         Assert.False(vm.HasPreviewNote);
         Assert.False(vm.IsLoading);
+        Assert.Single(backend.Saved);
     }
 
     [Fact]
@@ -115,10 +121,11 @@ public class UninstallPreviewViewModelTests
         var open = vm.OpenAsync();
 
         Assert.Equal(["A"], vm.AllRows.Select(row => row.Name));
-        Assert.True(Row(vm, "A").Selectable);
+        Assert.False(Row(vm, "A").Selectable);
 
         read.SetResult();
         await open.WaitAsync(Patience);
+        Assert.True(Row(vm, "A").Selectable);
     }
 
     [Fact]
@@ -132,7 +139,6 @@ public class UninstallPreviewViewModelTests
         var open = vm.OpenAsync();
         var a = Row(vm, "A");
         var b = Row(vm, "B");
-        b.IsSelected = true;
 
         read.SetResult();
         await open.WaitAsync(Patience);
@@ -140,6 +146,13 @@ public class UninstallPreviewViewModelTests
         Assert.Same(a, Row(vm, "A"));
         Assert.Same(b, Row(vm, "B"));
         Assert.Equal("2.0", a.Version);
+
+        // A tick set after the merge survives the next merge of the same rows.
+        b.IsSelected = true;
+        vm.MergeListings([Listing("A", version: "3.0"), Listing("B", version: "1.0")]);
+
+        Assert.Same(b, Row(vm, "B"));
+        Assert.Equal("3.0", a.Version);
         Assert.True(b.IsSelected);
         Assert.Equal(1, vm.SelectedCount);
     }
@@ -165,14 +178,11 @@ public class UninstallPreviewViewModelTests
     [Fact]
     public async Task A_row_that_stops_being_removable_loses_its_tick()
     {
-        var read = new TaskCompletionSource();
-        var (vm, backend) = Open([Listing("A")], Listing("A", runnable: false));
-        backend.ListGate = read.Task;
-        var open = vm.OpenAsync();
+        var (vm, _) = await LoadedAsync(Listing("A"));
         Row(vm, "A").IsSelected = true;
+        Assert.True(Row(vm, "A").IsSelected);
 
-        read.SetResult();
-        await open.WaitAsync(Patience);
+        vm.MergeListings([Listing("A", runnable: false)]);
 
         Assert.False(Row(vm, "A").IsSelected);
         Assert.Equal(0, vm.SelectedCount);
@@ -217,18 +227,17 @@ public class UninstallPreviewViewModelTests
     }
 
     [Fact]
-    public async Task A_failed_full_read_keeps_the_rechecked_saved_rows_and_drops_the_note()
+    public async Task A_failed_full_read_does_not_leave_the_unconfirmed_saved_rows_on_show()
     {
         var (vm, backend) = Open([Listing("A")], Listing("A"));
         backend.ListThrows = new IOException("boom");
 
         await vm.OpenAsync().WaitAsync(Patience);
 
-        Assert.Equal(["A"], vm.AllRows.Select(row => row.Name));
-        Assert.True(Row(vm, "A").Selectable);
+        Assert.Empty(vm.AllRows);
         Assert.False(vm.HasPreviewNote);
         Assert.False(vm.IsLoading);
-        Assert.False(vm.LoadFailed);
+        Assert.True(vm.LoadFailed);
         Assert.Empty(backend.Saved);
     }
 
