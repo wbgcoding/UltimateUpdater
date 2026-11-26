@@ -1,3 +1,4 @@
+using System.IO;
 using UltimateUpdater.Services.Uninstall;
 
 namespace UltimateUpdater.Tests;
@@ -107,6 +108,50 @@ public class ProgramUsageReaderTests
         Assert.Empty(used);
     }
 
+
+    [Fact]
+    public void A_program_started_by_a_run_key_under_its_folder_has_an_autostart()
+    {
+        var entries = new[]
+        {
+            Program("sync", @"C:\Program Files\Sync"),
+            Program("quoted", @"C:\Tools\Quoted\"),
+            Program("other", @"C:\Program Files\Other"),
+            Program("lookalike", @"C:\Program Files\Syn"),
+            Program("none", string.Empty),
+        };
+        var commands = new[]
+        {
+            "\"C:\\Program Files\\Sync\\sync.exe\" --background",
+            "c:\\tools\\quoted\\agent.exe /min",
+        };
+
+        var autostart = ProgramUsageReader.AutostartKeys(entries, commands);
+
+        Assert.Equal(["quoted", "sync"], autostart.Order(StringComparer.Ordinal).ToArray());
+    }
+
+    [Fact]
+    public void A_manifest_larger_than_the_cap_is_not_read()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "uu-manifest-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var small = Path.Combine(folder, "appmanifest_1.acf");
+            var big = Path.Combine(folder, "appmanifest_2.acf");
+            File.WriteAllText(small, "\"LastPlayed\" \"1750000000\"");
+            File.WriteAllText(big, new string('x', (int)ProgramUsageReader.MaxManifestBytes + 1));
+
+            Assert.Contains("LastPlayed", ProgramUsageReader.ReadManifestText(small));
+            Assert.Null(ProgramUsageReader.ReadManifestText(big));
+            Assert.Null(ProgramUsageReader.ReadManifestText(Path.Combine(folder, "missing.acf")));
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
     [Fact]
     public void A_steam_game_finds_its_manifest_beside_the_common_folder()
     {

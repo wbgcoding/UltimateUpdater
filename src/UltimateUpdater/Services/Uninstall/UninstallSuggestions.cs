@@ -143,6 +143,11 @@ public static class UninstallSuggestions
             if (entry.InstallFolderEmpty || entry.SizeBytes is not { } bytes || bytes < UnusedMinBytes)
                 continue;
 
+            // A game of another launcher starts through that launcher, so no start under its folder is logged:
+            // its usage data would call a played game unused. Only Steam's own manifest stamp is a real signal.
+            if (UninstallEntryOrigin.Label(entry) is { } origin && !string.Equals(origin, UninstallEntryOrigin.Steam, StringComparison.Ordinal))
+                continue;
+
             // No usage data: the program may well be in daily use, so it is never called unused.
             if (!lastUsedByKey.TryGetValue(entry.Key, out var lastUsed) || lastUsed >= limit)
                 continue;

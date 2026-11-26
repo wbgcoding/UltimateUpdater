@@ -42,7 +42,8 @@ public static partial class ProgramUsageReader
 
             try
             {
-                if (ParseSteamLastPlayed(File.ReadAllText(manifest)) is { } played
+                if (ReadManifestText(manifest) is { } text
+                    && ParseSteamLastPlayed(text) is { } played
                     && (!result.TryGetValue(entry.Key, out var known) || played > known))
                 {
                     result[entry.Key] = played;
@@ -54,7 +55,81 @@ public static partial class ProgramUsageReader
             }
         }
 
+        // A program that starts with Windows runs without any start Explorer logs: without data it is never called unused.
+        foreach (var key in AutostartKeys(entries, ReadRunCommands(cancellationToken)))
+            result.Remove(key);
+
         return result;
+    }
+
+    /// <summary>The Run keys whose values start a program at sign-in, per user and per machine (both registry views).</summary>
+    private static readonly (RegistryHive Hive, RegistryView View)[] RunKeyHives =
+    [
+        (RegistryHive.CurrentUser, RegistryView.Default),
+        (RegistryHive.LocalMachine, RegistryView.Registry64),
+        (RegistryHive.LocalMachine, RegistryView.Registry32),
+    ];
+
+    /// <summary>The largest Steam manifest that is read: a real one is a few KB, anything bigger is not one.</summary>
+    internal const long MaxManifestBytes = 1024 * 1024;
+
+    /// <summary>The text of a manifest, or null when it is missing or larger than <see cref="MaxManifestBytes"/>.</summary>
+    internal static string? ReadManifestText(string path)
+    {
+        var info = new FileInfo(path);
+        return info.Exists && info.Length <= MaxManifestBytes ? File.ReadAllText(path) : null;
+    }
+
+    /// <summary>Every command line the Run keys hold, read once. An unreadable key adds nothing.</summary>
+    private static List<string> ReadRunCommands(CancellationToken cancellationToken)
+    {
+        var commands = new List<string>();
+        foreach (var (hive, view) in RunKeyHives)
+        {
+            try
+            {
+                using var root = RegistryKey.OpenBaseKey(hive, view);
+                using var key = root.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+                if (key is null)
+                    continue;
+
+                foreach (var name in key.GetValueNames())
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (key.GetValue(name) is string command && !string.IsNullOrWhiteSpace(command))
+                        commands.Add(command);
+                }
+            }
+            catch (Exception ex) when (ex is System.Security.SecurityException or IOException or UnauthorizedAccessException)
+            {
+                // an unreadable key: its programs just keep their usage data
+            }
+        }
+
+        return commands;
+    }
+
+    /// <summary>
+    /// The keys of the programs that start at sign-in: a Run command whose program lies under the entry's install folder.
+    /// Such a program runs without a start Explorer would log, so its usage data says nothing about whether it is used.
+    /// </summary>
+    public static IReadOnlySet<string> AutostartKeys(IReadOnlyList<InstalledProgramEntry> entries, IReadOnlyList<string> runCommands)
+    {
+        var expanded = runCommands
+            .Select(command => Environment.ExpandEnvironmentVariables(command.Trim().TrimStart('"')))
+            .ToList();
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in entries)
+        {
+            if (entry.Kind != UninstallEntryKind.Program || string.IsNullOrWhiteSpace(entry.InstallLocation))
+                continue;
+
+            var folder = entry.InstallLocation.Trim().Trim('"').TrimEnd('\\', '/') + "\\";
+            if (expanded.Any(command => command.StartsWith(folder, StringComparison.OrdinalIgnoreCase)))
+                keys.Add(entry.Key);
+        }
+
+        return keys;
     }
 
     private static List<UserAssistRecord> ReadUserAssist(CancellationToken cancellationToken)

@@ -122,6 +122,18 @@ public class UninstallSuggestionsTests
         Assert.Single(Suggest([Listing("Big Tool", size: 500 * MB)], new Dictionary<string, DateTime> { [Listing("Big Tool").Entry.Key] = Now.AddDays(-900) }));
     }
 
+
+    [Fact]
+    public void A_game_of_a_launcher_other_than_steam_is_never_called_unused()
+    {
+        var ea = Ea("Old Shooter", 40 * GB);
+        var steam = Steam("Old Shooter Two", 40 * GB, appId: 2);
+
+        var suggestions = Suggest([ea, steam], LastUsed(ea, 900).Concat(LastUsed(steam, 900)).ToDictionary(pair => pair.Key, pair => pair.Value));
+
+        var unused = Assert.Single(suggestions);
+        Assert.Equal("Old Shooter Two", unused.Name);
+    }
     [Fact]
     public void Without_usage_data_nothing_is_unused()
     {
