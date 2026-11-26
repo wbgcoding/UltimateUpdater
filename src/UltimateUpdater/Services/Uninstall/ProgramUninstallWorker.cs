@@ -338,21 +338,25 @@ internal static class ProgramUninstallWorker
         StreamWriter writer, string jobId, LoggingService logging, Func<string, LoggingService, bool> create)
     {
         logging.Info("Creating a restore point before uninstalling.");
+        var watch = System.Diagnostics.Stopwatch.StartNew();
         try
         {
             if (create("Ultimate Updater, before uninstalling programs", logging))
             {
+                logging.Info($"Restore point created in {watch.Elapsed.TotalSeconds:0.0} s.");
                 Send(writer, jobId, new InstallProgressMessage
                 {
                     Type = "restorePointCreated", RestorePointCreatedAt = DateTimeOffset.UtcNow,
                 });
                 return true;
             }
+
+            logging.Warn($"Restore point not created, Windows answered after {watch.Elapsed.TotalSeconds:0.0} s.");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // A damaged WMI repository throws past TryCreate's own catch.
-            logging.Warn($"Restore point could not be created: {ex.Message}");
+            logging.Warn($"Restore point could not be created after {watch.Elapsed.TotalSeconds:0.0} s: {ex.Message}");
         }
 
         return false;

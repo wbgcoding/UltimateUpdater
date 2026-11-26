@@ -3,6 +3,7 @@ using UltimateUpdater.Models;
 using UltimateUpdater.Models.Settings;
 using UltimateUpdater.Services.Elevation;
 using UltimateUpdater.Services.Install;
+using UltimateUpdater.Services.Sources.Windows;
 
 namespace UltimateUpdater.Services.Uninstall;
 
@@ -53,6 +54,7 @@ public sealed class UninstallRestorePointService
     private readonly Action<DateTimeOffset> _writeLast;
     private readonly RestorePointReservation _reservation;
     private readonly Func<DateTimeOffset> _now;
+    private readonly Func<string?> _unavailableReason;
 
     public UninstallRestorePointService(LoggingService logging, ElevatedHost? host)
         : this(
@@ -61,19 +63,24 @@ public sealed class UninstallRestorePointService
             () => RestorePointThrottle.TryReadLastCreated(logging),
             at => RestorePointThrottle.TryWriteCreated(logging, at),
             RestorePointReservation.Shared,
-            () => DateTimeOffset.UtcNow)
+            () => DateTimeOffset.UtcNow,
+            () => SystemRestoreAvailability.UnavailableReason(WindowsRegistryView.Instance))
     {
     }
 
     /// <param name="create">Makes the restore point; the time it was made, null when it could not be.</param>
+    /// <param name="unavailableReason">Why no restore point can be made right now (System Restore off), null when nothing
+    /// says so; asked before the helper is started so the person is not kept waiting for a refusal that is known.</param>
     internal UninstallRestorePointService(
         LoggingService logging,
         Func<CancellationToken, Task<DateTimeOffset?>> create,
         Func<DateTimeOffset?> readLast,
         Action<DateTimeOffset> writeLast,
         RestorePointReservation reservation,
-        Func<DateTimeOffset> now)
+        Func<DateTimeOffset> now,
+        Func<string?>? unavailableReason = null)
     {
+        _unavailableReason = unavailableReason ?? (() => null);
         _logging = logging;
         _create = create;
         _readLast = readLast;
@@ -92,13 +99,43 @@ public sealed class UninstallRestorePointService
             return new UninstallRestorePointResult(UninstallRestorePointOutcome.Reused, _readLast());
         }
 
-        var created = await _create(cancellationToken);
-        if (created is not { } at)
+        if (_unavailableReason() is { } reason)
+        {
+            _logging.Warn($"Restore point before uninstalling not attempted: {reason}.");
             return new UninstallRestorePointResult(UninstallRestorePointOutcome.Failed);
+        }
+
+        _logging.Info("Restore point before uninstalling: started.");
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        DateTimeOffset? created;
+        try
+        {
+            created = await _create(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            _logging.Info($"Restore point before uninstalling: cancelled after {Seconds(watch)}.");
+            throw;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            _logging.Warn($"Restore point before uninstalling: failed after {Seconds(watch)}: {ex.Message}");
+            throw;
+        }
+
+        if (created is not { } at)
+        {
+            _logging.Warn($"Restore point before uninstalling: not created, gave up after {Seconds(watch)}.");
+            return new UninstallRestorePointResult(UninstallRestorePointOutcome.Failed);
+        }
 
         _writeLast(at);
+        _logging.Info($"Restore point before uninstalling: created in {Seconds(watch)}.");
         return new UninstallRestorePointResult(UninstallRestorePointOutcome.Created, at);
     }
+
+    private static string Seconds(System.Diagnostics.Stopwatch watch) =>
+        watch.Elapsed.TotalSeconds.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " s";
 
     private static async Task<DateTimeOffset?> RunHelperJobAsync(
         ElevatedHost? host, LoggingService logging, CancellationToken cancellationToken)
