@@ -630,9 +630,9 @@ public partial class MainViewModel
     internal const double NameWidthBeforePublisherCollapses = 180;
 
     /// <summary>The Name column's width below which Date collapses too (after Publisher).</summary>
-    internal const double NameWidthBeforeDateCollapses = 140;
+    internal const double NameWidthBeforeDateCollapses = 180;
 
-    /// <summary>Which of the shown columns the narrow rule collapses for a table <paramref name="tableWidth"/> wide: Publisher while Name would get under 180 px, then Date while it would still get under 140 px. Pure; <paramref name="isShown"/> answers the user and auto-empty reasons only, so the result depends on the width alone and a widening window brings the columns back.</summary>
+    /// <summary>Which of the shown columns the narrow rule collapses for a table <paramref name="tableWidth"/> wide: Publisher while Name would get under 180 px, then Date while it would still get under 180 px. Pure; <paramref name="isShown"/> answers the user and auto-empty reasons only, so the result depends on the width alone and a widening window brings the columns back.</summary>
     internal static IReadOnlySet<string> NarrowHiddenColumns(double tableWidth, Func<string, bool> isShown)
     {
         var collapsed = new HashSet<string>(StringComparer.Ordinal);

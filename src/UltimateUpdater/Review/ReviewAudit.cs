@@ -118,6 +118,14 @@ internal static class ReviewAudit
         {
             if (current is UIElement { Opacity: < 0.02 })
                 return false;
+
+            // A cell in a column collapsed to zero width (a hidden table column) draws nothing: layout clips the content away.
+            if (current is FrameworkElement { Parent: Grid grid } cell)
+            {
+                var column = Grid.GetColumn(cell);
+                if (column < grid.ColumnDefinitions.Count && grid.ColumnDefinitions[column].ActualWidth <= 0.5)
+                    return false;
+            }
         }
 
         return true;

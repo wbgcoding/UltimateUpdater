@@ -22,7 +22,7 @@ public partial class WindowLayoutTests
         return (left, width);
     }
 
-    /// <summary>At the window's minimum width the fixed lanes (check, icon, date, version, size, action, publisher) used to leave the starred Name column a few pixels, so the critical badge sat on top of the publisher. Now Publisher gives up its lane (and Date too if Name would still get under 140 px): Name keeps its minimum, nothing overlaps.</summary>
+    /// <summary>At the window's minimum width the fixed lanes (check, icon, date, version, size, action, publisher) used to leave the starred Name column a few pixels, so the critical badge sat on top of the publisher. Now Publisher gives up its lane, and Date too while Name would still get under 180 px: Name keeps its minimum, nothing overlaps.</summary>
     [Theory]
     [InlineData("en")]
     [InlineData("de")]
@@ -31,6 +31,7 @@ public partial class WindowLayoutTests
         RenderResult? result = null;
         double nameWidth = 0;
         double publisherWidth = 0;
+        double dateWidth = 0;
         double badgeRight = 0;
         double nameCellRight = 0;
         double headerNameWidth = 0;
@@ -53,6 +54,7 @@ public partial class WindowLayoutTests
                 var (left, width) = ColumnLanes(row);
                 nameWidth = width[2];
                 publisherWidth = width[3];
+                dateWidth = width[4];
                 nameCellRight = left[2] + width[2];
 
                 var badge = FindByName<Border>(row, "RowCriticalBadge");
@@ -71,6 +73,7 @@ public partial class WindowLayoutTests
         Assert.True(nameWidth >= minimum, $"Name column is {nameWidth:0} px wide at minimum width (needs at least {minimum:0}).");
         Assert.Equal(nameWidth, headerNameWidth, 1);
         Assert.Equal(0, publisherWidth, 1);
+        Assert.Equal(0, dateWidth, 1);
         Assert.True(badgeRight <= nameCellRight + 1,
             $"the critical badge ends at {badgeRight:0} px, past the Name column's edge at {nameCellRight:0} px.");
     }

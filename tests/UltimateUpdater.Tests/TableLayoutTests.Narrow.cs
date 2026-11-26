@@ -27,8 +27,8 @@ public partial class TableLayoutTests
     [InlineData(1100, false, false)] // wide: everything shows
     [InlineData(924, false, false)]  // Name gets exactly 180
     [InlineData(923, true, false)]   // one px less: Publisher goes
-    [InlineData(764, true, false)]   // Name 140 without Publisher: Date stays
-    [InlineData(763, true, true)]    // under 140: Date goes too
+    [InlineData(804, true, false)]   // Name 180 without Publisher: Date stays
+    [InlineData(803, true, true)]    // under 180: Date goes too
     [InlineData(600, true, true)]
     public void Publisher_then_date_collapse_as_the_name_column_runs_short(double width, bool publisherGone, bool dateGone)
     {
@@ -74,8 +74,8 @@ public partial class TableLayoutTests
         var viewModel = BuildMainViewModelWithRows(out _);
         viewModel.SetMainColumnHidden("publisher", true);
 
-        // Without Publisher the Name column gets 800 - 624 = 176: enough, so Date stays.
-        viewModel.SetMainTableWidth(800);
+        // Without Publisher the Name column gets 810 - 624 = 186: enough, so Date stays.
+        viewModel.SetMainTableWidth(810);
 
         Assert.False(viewModel.IsMainColumnCollapsed("date"));
         Assert.True(viewModel.IsMainColumnHidden("publisher"));
