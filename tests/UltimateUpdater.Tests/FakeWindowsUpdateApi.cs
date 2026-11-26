@@ -15,6 +15,9 @@ internal sealed class FakeWindowsUpdateApi : IWindowsUpdateApi
 
     public List<string> Calls { get; } = [];
 
+    /// <summary>How many search results were disposed (their COM objects released).</summary>
+    public int DisposedResults { get; private set; }
+
     public Func<WuUpdateRef, CancellationToken, WuInstallOutcome>? OnInstall { get; set; }
 
     public Action<WuUpdateRef, CancellationToken>? OnDownload { get; set; }
@@ -25,7 +28,14 @@ internal sealed class FakeWindowsUpdateApi : IWindowsUpdateApi
     public void Offer(string criteria, params (string Id, int Revision)[] updates) =>
         _answers[criteria] = updates.Select(u => new WuUpdateRef(u.Id, u.Revision, u)).ToList();
 
-    public void FailSearch(string criteria, Exception failure) => _failures[criteria] = failure;
+    /// <summary>Makes searches with this criteria throw; null lifts the failure again.</summary>
+    public void FailSearch(string criteria, Exception? failure)
+    {
+        if (failure is null)
+            _failures.Remove(criteria);
+        else
+            _failures[criteria] = failure;
+    }
 
     public IWuSearchResult Search(string criteria, CancellationToken cancellationToken)
     {
@@ -34,7 +44,7 @@ internal sealed class FakeWindowsUpdateApi : IWindowsUpdateApi
         if (_failures.TryGetValue(criteria, out var failure))
             throw failure;
 
-        return new Result(_answers.GetValueOrDefault(criteria) ?? []);
+        return new Result(_answers.GetValueOrDefault(criteria) ?? [], this);
     }
 
     public void AcceptEula(WuUpdateRef update) => Calls.Add("eula:" + update.UpdateId);
@@ -51,13 +61,11 @@ internal sealed class FakeWindowsUpdateApi : IWindowsUpdateApi
         return OnInstall?.Invoke(update, cancellationToken) ?? new WuInstallOutcome(false);
     }
 
-    private sealed class Result(List<WuUpdateRef> updates) : IWuSearchResult
+    private sealed class Result(List<WuUpdateRef> updates, FakeWindowsUpdateApi owner) : IWuSearchResult
     {
         public IReadOnlyList<WuUpdateRef> Updates { get; } = updates;
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() => owner.DisposedResults++;
     }
 }
 

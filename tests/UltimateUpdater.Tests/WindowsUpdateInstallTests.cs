@@ -20,7 +20,8 @@ public class WindowsUpdateInstallTests
         Name = "Some update " + guid[..4],
     };
 
-    private static WindowsUpdateSource SourceOver(FakeWindowsUpdateApi api) => new(new LoggingService(), api);
+    private static WindowsUpdateSource SourceOver(FakeWindowsUpdateApi api, TimeProvider? time = null) =>
+        new(new LoggingService(), api, time ?? TimeProvider.System);
 
     [Fact]
     public void An_update_that_left_the_offer_but_is_installed_counts_as_success()

@@ -24,18 +24,33 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
     /// <summary>The same search the other way round: what Windows Update itself counts as installed.</summary>
     private const string InstalledCriteria = "IsInstalled=1";
 
+    /// <summary>How long one install search is reused. One batch of installs runs back to back, so a short
+    /// window covers it without a hook into the worker; the search itself took 20 to 90 s per update in
+    /// real logs, and the install lane starts every item of a batch within seconds of the last.</summary>
+    internal static readonly TimeSpan SearchCacheLifetime = TimeSpan.FromMinutes(5);
+
     private readonly LoggingService _logging;
     private readonly IWindowsUpdateApi _api;
+    private readonly TimeProvider _time;
+
+    /// <summary>Installs of this source never overlap (the worker's install lane, and the one system-wide
+    /// Windows Update installer), and the cached search owns COM objects an overlapping install must not
+    /// see released, so the whole install is one critical section.</summary>
+    private readonly SemaphoreSlim _installGate = new(1, 1);
+
+    /// <summary>The install search kept for the next item of the batch, with the moment it was made.</summary>
+    private (DateTimeOffset At, IWuSearchResult Result)? _searchCache;
 
     public WindowsUpdateSource(LoggingService logging)
-        : this(logging, new ComWindowsUpdateApi(logging))
+        : this(logging, new ComWindowsUpdateApi(logging), TimeProvider.System)
     {
     }
 
-    internal WindowsUpdateSource(LoggingService logging, IWindowsUpdateApi api)
+    internal WindowsUpdateSource(LoggingService logging, IWindowsUpdateApi api, TimeProvider time)
     {
         _logging = logging;
         _api = api;
+        _time = time;
     }
 
     public string Id => "windowsupdate";
@@ -405,15 +420,36 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
     /// the public path is <see cref="InstallAsync"/>, which insists on elevation first.</summary>
     internal void Install(UpdateItem item, IProgress<Models.InstallProgress> progress, CancellationToken cancellationToken)
     {
+        _installGate.Wait(cancellationToken);
+        try
+        {
+            InstallLocked(item, progress, cancellationToken);
+        }
+        finally
+        {
+            _installGate.Release();
+        }
+    }
+
+    private void InstallLocked(UpdateItem item, IProgress<Models.InstallProgress> progress, CancellationToken cancellationToken)
+    {
         var wantedUpdateId = ExtractUpdateId(item.Id);
 
-        using var search = _api.Search(SearchCriteria, cancellationToken);
+        // One search serves every update of a batch (see SearchForInstall). Windows Update re-evaluates
+        // continuously, so the revision it reports can differ from the one the scan saw a moment ago without
+        // the update actually being gone (WindowsUpdateMatching). Matching stays on the GUID alone; only its
+        // absence means the update is gone from the offer.
+        var search = SearchForInstall(forceFresh: false, cancellationToken, out var fromCache);
+        var chosenRevision = PickRevision(search, wantedUpdateId);
 
-        // Windows Update re-evaluates continuously, so the revision it reports here can differ from the
-        // one the scan saw a moment ago without the update actually being gone (WindowsUpdateMatching).
-        // Matching stays on the GUID alone; only its absence means the update is gone from the offer.
-        var chosenRevision = WindowsUpdateMatching.PickInstallTarget(
-            wantedUpdateId, search.Updates.Select(c => (c.UpdateId, c.Revision)).ToList());
+        // A miss in a REUSED search may only mean the offer changed since it ran: look again once, fresh.
+        // A miss in a search that was just made is final.
+        if (chosenRevision is null && fromCache)
+        {
+            _logging.Info($"windowsupdate: '{wantedUpdateId}' is not in the cached search, searching again.");
+            search = SearchForInstall(forceFresh: true, cancellationToken, out _);
+            chosenRevision = PickRevision(search, wantedUpdateId);
+        }
 
         if (chosenRevision is null)
         {
@@ -459,6 +495,33 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
             StatusText = item.Name,
             RebootRequired = outcome.RebootRequired,
         });
+    }
+
+    private static int? PickRevision(IWuSearchResult search, string wantedUpdateId) =>
+        WindowsUpdateMatching.PickInstallTarget(wantedUpdateId, search.Updates.Select(c => (c.UpdateId, c.Revision)).ToList());
+
+    /// <summary>
+    /// The install search, reused for <see cref="SearchCacheLifetime"/> so a batch of updates pays for ONE
+    /// search instead of one per update. The cache owns the result (and its COM objects): they are released
+    /// when a fresh search replaces them, never while an install can still hold an update from them
+    /// (<see cref="_installGate"/>). A failing search leaves the old cache as it was.
+    /// </summary>
+    private IWuSearchResult SearchForInstall(bool forceFresh, CancellationToken cancellationToken, out bool fromCache)
+    {
+        var now = _time.GetUtcNow();
+        if (!forceFresh && _searchCache is { } cached && now - cached.At < SearchCacheLifetime)
+        {
+            fromCache = true;
+            return cached.Result;
+        }
+
+        var fresh = _api.Search(SearchCriteria, cancellationToken);
+        var previous = _searchCache;
+        _searchCache = (now, fresh);
+        previous?.Result.Dispose();
+
+        fromCache = false;
+        return fresh;
     }
 
     /// <summary>Whether Windows Update itself lists the update as installed. A search that fails here is not
