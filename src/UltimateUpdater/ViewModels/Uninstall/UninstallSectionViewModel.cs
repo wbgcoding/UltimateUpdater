@@ -48,11 +48,31 @@ public sealed partial class UninstallSectionViewModel : ObservableObject
     [ObservableProperty]
     private bool isExpanded;
 
+    /// <summary>
+    /// Brings the shown rows to the given list by removing, moving and inserting only what differs, so the rows that stay
+    /// keep their place (and the table its scroll position) while a fresh read is merged in.
+    /// </summary>
     internal void Replace(IEnumerable<UninstallRowViewModel> rows)
     {
-        Rows.Clear();
-        foreach (var row in rows)
-            Rows.Add(row);
+        var target = rows.ToList();
+        var keep = new HashSet<UninstallRowViewModel>(target, ReferenceEqualityComparer.Instance);
+        for (var i = Rows.Count - 1; i >= 0; i--)
+        {
+            if (!keep.Contains(Rows[i]))
+                Rows.RemoveAt(i);
+        }
+
+        for (var i = 0; i < target.Count; i++)
+        {
+            if (i < Rows.Count && ReferenceEquals(Rows[i], target[i]))
+                continue;
+
+            var at = Rows.IndexOf(target[i]);
+            if (at > i)
+                Rows.Move(at, i);
+            else
+                Rows.Insert(i, target[i]);
+        }
 
         RaiseState();
     }

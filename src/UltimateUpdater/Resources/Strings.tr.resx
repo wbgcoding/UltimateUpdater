@@ -2644,6 +2644,9 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>Yüklü programlar okunuyor…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>{0} tarihli durum, güncelleniyor</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>Yüklü bir şey bulunamadı.</value>
   </data>

@@ -2644,6 +2644,9 @@ Continuer avec les droits administrateur ?</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>Lecture des programmes installés…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>État du {0}, mise à jour en cours</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>Aucun élément installé n'a été trouvé.</value>
   </data>

@@ -2644,6 +2644,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>インストール済みのプログラムを読み込み中…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>{0} 時点の情報です。更新しています</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>インストール済みの項目は見つかりませんでした。</value>
   </data>

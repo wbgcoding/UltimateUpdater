@@ -2644,6 +2644,9 @@ Continue with admin rights?</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>Reading installed programs…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>As of {0}, updating</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>Nothing installed was found.</value>
   </data>

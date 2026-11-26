@@ -39,8 +39,23 @@ public sealed partial class UninstallerViewModel : ObservableObject
     public ObservableCollection<UninstallSectionViewModel> Sections { get; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowsEmptyText))]
+    [NotifyPropertyChangedFor(nameof(ShowsEmptyText), nameof(ShowsLoadingText))]
     private bool isLoading;
+
+    /// <summary>When the rows on show were read, while they come from the saved listing and the real read is still running; null otherwise.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewNote), nameof(HasPreviewNote), nameof(ShowsLoadingText))]
+    private DateTimeOffset? previewSavedAt;
+
+    /// <summary>"As of ..., updating": the header note over rows taken from the saved listing.</summary>
+    public string PreviewNote => PreviewSavedAt is { } at
+        ? string.Format(Loc["UninstallerPreviewNote"], at.LocalDateTime.ToString("g", System.Globalization.CultureInfo.CurrentCulture))
+        : string.Empty;
+
+    public bool HasPreviewNote => PreviewSavedAt is not null;
+
+    /// <summary>The plain "Loading" line: while a read runs and no saved rows are on show instead.</summary>
+    public bool ShowsLoadingText => IsLoading && !HasPreviewNote;
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -83,6 +98,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
 
             _loadFailed = false;
             SetListings(listings);
+            await SaveCacheAsync(listings);
         }
         catch (OperationCanceledException)
         {
@@ -98,6 +114,145 @@ public sealed partial class UninstallerViewModel : ObservableObject
         {
             if (ReferenceEquals(_loadCts, cts))
                 IsLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Fills the table when the window opens: the saved listing at once (greyed, not tickable) with a note, then the
+    /// cheap recheck that drops what is certainly gone and lets the rest be ticked, then the full read merged into the
+    /// same rows. Without a saved listing it is a plain <see cref="LoadAsync"/>.
+    /// </summary>
+    public async Task OpenAsync()
+    {
+        _loadCts?.Cancel();
+        var cts = _loadCts = new CancellationTokenSource();
+        IsLoading = true;
+        try
+        {
+            if (_all.Count == 0 && await _backend.LoadCacheAsync(cts.Token) is { Listings.Count: > 0 } cached)
+            {
+                if (cts.IsCancellationRequested)
+                    return;
+
+                ShowPreview(cached);
+                var kept = await _backend.RecheckAsync(cached.Listings, cts.Token);
+                if (cts.IsCancellationRequested)
+                    return;
+
+                ConfirmPreview(kept);
+            }
+
+            var listings = await _backend.ListForOpenAsync(cts.Token);
+            if (cts.IsCancellationRequested)
+                return;
+
+            _loadFailed = false;
+            if (_all.Count == 0 && PreviewSavedAt is null)
+                SetListings(listings);
+            else
+                MergeListings(listings);
+
+            PreviewSavedAt = null;
+            await SaveCacheAsync(listings);
+        }
+        catch (OperationCanceledException)
+        {
+            // replaced by a newer load or the window went away
+        }
+        catch (Exception ex)
+        {
+            _logging.Warn($"Uninstaller list failed: {ex.Message}");
+
+            // Saved rows that passed the recheck stay usable; with nothing on show the table says the read failed.
+            if (_all.Count == 0)
+            {
+                _loadFailed = true;
+                SetListings([]);
+            }
+
+            PreviewSavedAt = null;
+        }
+        finally
+        {
+            if (ReferenceEquals(_loadCts, cts))
+            {
+                IsLoading = false;
+                PreviewSavedAt = null;
+            }
+        }
+    }
+
+    /// <summary>Shows the saved rows, greyed until the recheck confirms them.</summary>
+    private void ShowPreview(UninstallCachedListing cached)
+    {
+        _all = cached.Listings.Select(listing => new UninstallRowViewModel(listing, OnRowSelectionChanged).AsUnverified()).ToList();
+        PreviewSavedAt = cached.SavedAt;
+        _logging.Info($"uninstaller preview: {_all.Count} rows from cache");
+        Refresh();
+        UpdateSelectionState();
+    }
+
+    /// <summary>The recheck's verdict: rows it no longer lists vanish, the others become selectable.</summary>
+    private void ConfirmPreview(IReadOnlyList<UninstallListing> kept)
+    {
+        var keptKeys = kept.Select(listing => listing.Entry.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        _all = _all.Where(row => keptKeys.Contains(row.Entry.Key)).ToList();
+        foreach (var row in _all)
+            row.MarkVerified();
+
+        Refresh();
+        UpdateSelectionState();
+    }
+
+    /// <summary>
+    /// Brings the table to a fresh full read without replacing it: a row whose key is still there keeps its object
+    /// (tick, place in the list) and takes the new data, a new key adds a row, a key that vanished removes its row.
+    /// Skipped while a run or a leftover step is working, whose rows (including the removed ones the summary counts)
+    /// must stay as they are.
+    /// </summary>
+    internal void MergeListings(IReadOnlyList<UninstallListing> listings)
+    {
+        if (IsBusy)
+        {
+            _logging.Info("uninstaller: fresh read not merged, a run is in progress");
+            return;
+        }
+
+        var existing = new Dictionary<string, UninstallRowViewModel>(StringComparer.OrdinalIgnoreCase);
+        foreach (var row in _all)
+            existing.TryAdd(row.Entry.Key, row);
+
+        var used = new HashSet<UninstallRowViewModel>(ReferenceEqualityComparer.Instance);
+        var merged = new List<UninstallRowViewModel>(listings.Count);
+        foreach (var listing in listings)
+        {
+            if (existing.TryGetValue(listing.Entry.Key, out var row) && used.Add(row))
+            {
+                row.Update(listing);
+                row.MarkVerified();
+                merged.Add(row);
+            }
+            else
+            {
+                merged.Add(new UninstallRowViewModel(listing, OnRowSelectionChanged));
+            }
+        }
+
+        _all = merged;
+        Refresh();
+        UpdateSelectionState();
+    }
+
+    /// <summary>Saves the entries as the listing of the last full read; a failure is the backend's to log, never ours to show.</summary>
+    private async Task SaveCacheAsync(IEnumerable<UninstallListing> listings)
+    {
+        try
+        {
+            await _backend.SaveCacheAsync([.. listings.Select(listing => listing.Entry)]);
+        }
+        catch (Exception ex)
+        {
+            _logging.Warn($"Uninstaller: saving the listing failed: {ex.Message}");
         }
     }
 
@@ -206,6 +361,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
             section.RefreshText();
 
         OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(PreviewNote));
         RefreshLeftoverText();
     }
 

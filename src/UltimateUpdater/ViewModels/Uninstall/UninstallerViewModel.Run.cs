@@ -159,6 +159,10 @@ public sealed partial class UninstallerViewModel
             RunFinished = true;
         }
 
+        // The next start's head start: what is still installed after this run, not the rows the run just removed.
+        await SaveCacheAsync(
+            _all.Where(row => row.State is not (UninstallRowState.Removed or UninstallRowState.NeedsRestart)).Select(row => row.Listing));
+
         // A driver package or a Windows update leaves no program folders or keys to look for.
         await ScanLeftoversAsync([.. rows.Where(row => row.State == UninstallRowState.Removed
             && row.Entry.Kind is not (UninstallEntryKind.Driver or UninstallEntryKind.WindowsUpdate))]);

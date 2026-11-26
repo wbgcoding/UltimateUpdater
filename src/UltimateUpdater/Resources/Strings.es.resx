@@ -2644,6 +2644,9 @@ Esto no se puede deshacer.</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>Leyendo los programas instalados…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>Estado del {0}, actualizando</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>No se encontró nada instalado.</value>
   </data>

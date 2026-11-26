@@ -32,7 +32,11 @@ public sealed partial class UninstallRowViewModel : ObservableObject
         _selectionChanged = selectionChanged;
     }
 
-    public UninstallListing Listing { get; }
+    /// <summary>What the row shows. Replaced in place by <see cref="Update"/> when a fresh read changes the entry, so the row (its tick, its place in the list) survives.</summary>
+    public UninstallListing Listing { get; private set; }
+
+    /// <summary>False for a row taken from the saved listing that the cheap recheck has not confirmed yet: shown, but greyed and not tickable.</summary>
+    public bool IsVerified { get; private set; } = true;
 
     public InstalledProgramEntry Entry => Listing.Entry;
 
@@ -53,7 +57,7 @@ public sealed partial class UninstallRowViewModel : ObservableObject
     public CleanupRiskLevel RiskLevel => Listing.Risk.Level;
 
     /// <summary>False for the entries the window shows greyed and without a checkbox (this app itself, entries with no safe way to remove).</summary>
-    public bool Selectable => Listing.Risk.Selectable && Listing.Plan.IsRunnable;
+    public bool Selectable => IsVerified && Listing.Risk.Selectable && Listing.Plan.IsRunnable;
 
     public bool IsRisky => RiskLevel == CleanupRiskLevel.Risky;
 
@@ -111,6 +115,44 @@ public sealed partial class UninstallRowViewModel : ObservableObject
 
         _selectionChanged?.Invoke(this);
     }
+
+    /// <summary>A row of the saved listing, not yet confirmed by the recheck: greyed, no checkbox.</summary>
+    internal UninstallRowViewModel AsUnverified()
+    {
+        IsVerified = false;
+        return this;
+    }
+
+    /// <summary>The recheck (or the full read) confirmed the row: it becomes selectable.</summary>
+    internal void MarkVerified()
+    {
+        if (IsVerified)
+            return;
+
+        IsVerified = true;
+        OnPropertyChanged(nameof(Selectable));
+    }
+
+    /// <summary>Takes a fresh read's data over, keeping the row itself. A ticked row that stops being selectable is unticked.</summary>
+    internal void Update(UninstallListing listing)
+    {
+        if (Equals(Listing, listing))
+            return;
+
+        Listing = listing;
+        foreach (var name in DerivedProperties)
+            OnPropertyChanged(name);
+
+        if (IsSelected && !Selectable)
+            IsSelected = false;
+    }
+
+    private static readonly string[] DerivedProperties =
+    [
+        nameof(Listing), nameof(Entry), nameof(Name), nameof(Publisher), nameof(Version), nameof(SizeBytes), nameof(InstallDate),
+        nameof(SizeText), nameof(InstalledText), nameof(RiskLevel), nameof(Selectable), nameof(IsRisky), nameof(RiskLevelText),
+        nameof(ReasonText), nameof(RiskTooltip), nameof(MethodText), nameof(NoteText), nameof(HasNote), nameof(SortName),
+    ];
 
     /// <summary>Re-reads every localized text after a language change.</summary>
     public void RefreshText()

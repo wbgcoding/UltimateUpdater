@@ -2644,6 +2644,9 @@ Doorgaan met beheerdersrechten?</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>Geïnstalleerde programma's worden gelezen…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>Stand van {0}, wordt bijgewerkt</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>Er is niets geïnstalleerds gevonden.</value>
   </data>

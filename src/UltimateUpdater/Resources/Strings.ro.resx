@@ -2644,6 +2644,9 @@ Continuați cu drepturi de administrator?</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>Se citesc programele instalate…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>Stare din {0}, se actualizează</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>Nu a fost găsit nimic instalat.</value>
   </data>

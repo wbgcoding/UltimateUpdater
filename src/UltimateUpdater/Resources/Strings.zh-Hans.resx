@@ -2644,6 +2644,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="UninstallerLoading" xml:space="preserve">
     <value>正在读取已安装的程序…</value>
   </data>
+  <data name="UninstallerPreviewNote" xml:space="preserve">
+    <value>截至 {0} 的状态，正在更新</value>
+  </data>
   <data name="UninstallerEmpty" xml:space="preserve">
     <value>未找到已安装的项目。</value>
   </data>
