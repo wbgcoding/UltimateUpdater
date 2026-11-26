@@ -1,5 +1,7 @@
 MIT-Lizenz
 
+Unverbindliche Übersetzung; rechtlich maßgeblich ist der englische Text (LICENSE).
+
 © 2026 BGCoding
 
 Hiermit wird jeder Person, die eine Kopie dieser Software und der zugehörigen
@@ -39,7 +41,7 @@ Sie entscheiden, welche Quellen aktiv sind und was installiert wird, und sind se
 
 Die Bereinigung löscht Inhalte temporärer Verzeichnisse und Zwischenspeicher, leert auf Wunsch den Papierkorb, entfernt verwaiste Registry-Einträge und startet Windows-eigene Werkzeuge (Datenträgerbereinigung, sfc, DISM). Sie bestimmen vor jedem Lauf, welche Bereiche einbezogen werden.
 
-Gelöschte Daten sind unwiederbringlich verloren. Eine Ausnahme sind gefundene Programmreste: diese werden in den Papierkorb verschoben. Vor dem Entfernen von Registry-Einträgen wird eine Sicherung der betroffenen Bereiche angelegt; eine Gewähr für deren Vollständigkeit oder für eine erfolgreiche Wiederherstellung besteht nicht.
+Gelöschte Daten sind unwiederbringlich verloren. Eine Ausnahme sind die Reste eines deinstallierten Programms: Ordner und Verknüpfungen werden zuerst in einen Quarantäne-Ordner verschoben, aus dem der Verlauf sie 14 Tage lang wiederherstellen kann (ein Element, das dorthin nicht verschoben werden kann, kommt in den Papierkorb), und seine Registry-Schlüssel werden vor dem Entfernen exportiert. Vor dem Entfernen anderer Registry-Einträge wird eine Sicherung der betroffenen Bereiche angelegt; eine Gewähr für deren Vollständigkeit oder für eine erfolgreiche Wiederherstellung besteht nicht.
 
 Sichern Sie wichtige Daten, bevor Sie eine Bereinigung starten. Es wird keine Haftung übernommen für gelöschte Dateien, verlorene Einstellungen, Programme, die nach einer Bereinigung nicht mehr oder nicht mehr richtig starten, Auswirkungen der Registry-Bereinigung sowie für Folgen der von Windows selbst ausgeführten Reparatur- und Bereinigungsschritte.
 
@@ -47,6 +49,6 @@ Sichern Sie wichtige Daten, bevor Sie eine Bereinigung starten. Es wird keine Ha
 
 Die Software wird "wie besehen" und ohne jede Gewährleistung bereitgestellt. Es wird nicht zugesichert, dass sie fehlerfrei arbeitet oder für einen bestimmten Zweck geeignet ist.
 
-Soweit gesetzlich zulässig, wird keine Haftung übernommen für Schäden, Datenverlust, entgangenen Gewinn oder sonstige Nachteile, die aus der Nutzung dieses Programms entstehen - einschließlich Updates, Installationen, Deinstallationen und Bereinigungen, die über dieses Programm ausgelöst werden.
+Soweit gesetzlich zulässig, wird keine Haftung übernommen für Schäden, Datenverlust, entgangenen Gewinn oder sonstige Nachteile, die aus der Nutzung dieses Programms entstehen, einschließlich Updates, Installationen, Deinstallationen und Bereinigungen, die über dieses Programm ausgelöst werden.
 
 Die Nutzung erfolgt auf eigene Verantwortung.

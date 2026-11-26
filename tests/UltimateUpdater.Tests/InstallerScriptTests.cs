@@ -103,6 +103,12 @@ public class InstallerScriptTests
         foreach (var name in new[] { "COR_ENABLE_PROFILING", "COR_PROFILER", "COR_PROFILER_PATH" })
             Assert.Contains($"ClearEnvironmentVariable('{name}', 0);", prepare.Value);
 
+        // HKCU\Environment can also redirect Windows' own lookups; these four are pinned to Windows values.
+        Assert.Contains("SetEnvironmentVariable('SystemRoot', ExpandConstant('{win}'));", prepare.Value);
+        Assert.Contains("SetEnvironmentVariable('windir', ExpandConstant('{win}'));", prepare.Value);
+        Assert.Contains("SetEnvironmentVariable('ComSpec', Sys + '\\cmd.exe');", prepare.Value);
+        Assert.Contains("SetEnvironmentVariable('PATHEXT', '.COM;.EXE;", prepare.Value);
+
         var prefixes = Regex.Match(script, @"function IsCodeLoadingVariable.*?\r?\nend;", RegexOptions.Singleline);
         Assert.True(prefixes.Success, "IsCodeLoadingVariable is gone");
         foreach (var prefix in new[] { "COR_", "CORECLR_", "COMPLUS_", "DOTNET_" })
@@ -521,5 +527,73 @@ end;", RegexOptions.Singleline);
         var save = build.IndexOf("-Save", StringComparison.Ordinal);
         var saveLine = build[build.LastIndexOf('\n', save)..save];
         Assert.Contains("if not defined NOSETUP", saveLine);
+    }
+
+    [Fact]
+    public void Setup_logs_closes_dlls_too_and_refuses_to_compile_without_a_version()
+    {
+        var script = Script();
+
+        Assert.Matches(@"(?m)^SetupLogging=yes\r?$", script);
+        Assert.Matches(@"(?m)^CloseApplicationsFilter=\*\.exe,\*\.dll\r?$", script);
+
+        var guard = Regex.Match(script, @"#ifndef AppVersion\r?\n(.*?)#endif", RegexOptions.Singleline);
+        Assert.True(guard.Success, "the AppVersion guard is gone");
+        Assert.Contains("#error", guard.Groups[1].Value);
+        Assert.DoesNotContain("#define", guard.Groups[1].Value);
+    }
+
+    /// <summary>
+    /// Inno replays the previous task choice on a reinstall, which switched autostart back on after the user had
+    /// turned it off in the app. The Tasks page therefore starts from the real state of the Run key.
+    /// </summary>
+    [Fact]
+    public void An_interactive_reinstall_starts_the_autostart_box_from_the_real_run_key()
+    {
+        var script = Script();
+
+        var sync = Regex.Match(script, @"procedure SyncAutostartTask;.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(sync.Success, "SyncAutostartTask is gone");
+        Assert.Contains("RegValueExists(HKEY_CURRENT_USER, 'Software\\Microsoft\\Windows\\CurrentVersion\\Run', 'UltimateUpdater')", sync.Value);
+        Assert.Contains("WizardSelectTasks('autostart')", sync.Value);
+        Assert.Contains("WizardSelectTasks('!autostart')", sync.Value);
+
+        var page = Regex.Match(script, @"procedure CurPageChanged\(CurPageID: Integer\);.*?\r?\nend;", RegexOptions.Singleline);
+        Assert.True(page.Success, "CurPageChanged is gone");
+        Assert.Matches(@"if CurPageID = wpSelectTasks then\s+SyncAutostartTask;", page.Value);
+    }
+
+    /// <summary>
+    /// A spaced hyphen between two words stands in for a dash. Subtraction in the Pascal code is not prose and
+    /// is left out by the " div " check.
+    /// </summary>
+    [Fact]
+    public void The_installer_files_use_no_spaced_hyphen_as_a_dash()
+    {
+        var root = RepoRootForScripts();
+        var pattern = new Regex(@"(?<=[A-Za-z)]) - (?=[A-Za-z(])");
+        var findings = new List<string>();
+
+        foreach (var relative in new[] { @"installer\UltimateUpdater.iss", "build.bat", @"installer\license.en.txt", @"installer\license.de.txt" })
+        {
+            var lines = File.ReadAllLines(Path.Combine(root, relative));
+            for (var i = 0; i < lines.Length; i++)
+            {
+                if (!lines[i].Contains(" div ", StringComparison.Ordinal) && pattern.IsMatch(lines[i]))
+                    findings.Add($"{relative}:{i + 1}: {lines[i].Trim()}");
+            }
+        }
+
+        Assert.True(findings.Count == 0, "spaced hyphen found:" + Environment.NewLine + string.Join(Environment.NewLine, findings));
+    }
+
+    private static string RepoRootForScripts()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "UltimateUpdater.slnx")))
+            directory = directory.Parent;
+
+        Assert.True(directory is not null, "the repository root is not above the test binaries any more");
+        return directory!.FullName;
     }
 }
