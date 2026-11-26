@@ -2749,6 +2749,9 @@ Continuar com direitos de administrador?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>O Windows não permite remover esta atualização</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>Pasta vazia, o jogo provavelmente já não está instalado</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>Atualização cumulativa (compilação {0})</value>
   </data>

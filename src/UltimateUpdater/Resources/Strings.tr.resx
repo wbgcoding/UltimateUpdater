@@ -2749,6 +2749,9 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows bu güncelleştirmenin kaldırılmasına izin vermiyor</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>Klasör boş, oyun büyük olasılıkla artık yüklü değil</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>Toplu güncelleştirme (derleme {0})</value>
   </data>

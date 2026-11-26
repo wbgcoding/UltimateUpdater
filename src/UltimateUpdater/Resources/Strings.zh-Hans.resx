@@ -2749,6 +2749,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows 不允许删除此更新</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>文件夹为空，游戏可能已不再安装</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>累积更新（版本 {0}）</value>
   </data>

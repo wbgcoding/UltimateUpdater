@@ -280,6 +280,7 @@ public sealed partial class UninstallerViewModel : ObservableObject
     {
         var query = SearchText.Trim();
         var visible = _all.Where(row => Matches(row, query)).ToList();
+        MarkSharedNames(visible);
 
         foreach (var section in Sections)
             section.Replace(Sort(visible.Where(row => SectionOf(row) == section.Kind)));
@@ -287,6 +288,18 @@ public sealed partial class UninstallerViewModel : ObservableObject
         OnPropertyChanged(nameof(VisibleCount));
         OnPropertyChanged(nameof(ShowsEmptyText));
         OnPropertyChanged(nameof(EmptyText));
+    }
+
+    /// <summary>Tells every row whether another visible row has its name, so look-alike entries always show where they come from.</summary>
+    private void MarkSharedNames(List<UninstallRowViewModel> visible)
+    {
+        var shared = visible.GroupBy(row => row.Name.Trim(), StringComparer.CurrentCultureIgnoreCase)
+            .Where(group => group.Count() > 1)
+            .SelectMany(group => group)
+            .ToHashSet();
+
+        foreach (var row in _all)
+            row.SetSharesNameWithVisibleRow(shared.Contains(row));
     }
 
     private static bool Matches(UninstallRowViewModel row, string query) =>

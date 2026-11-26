@@ -140,7 +140,11 @@
                     <StackPanel Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                    ToolTip="{Binding Name}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
-                        <!-- Why a greyed row cannot be removed (a driver a device uses). -->
+                        <!-- Launcher and install folder: always for an entry from a launcher and for look-alike names. -->
+                        <TextBlock Text="{Binding OriginText}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding FolderPath}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Visibility="{Binding HasOrigin, Converter={StaticResource BoolToVisibility}}"/>
+                        <!-- Why a greyed row cannot be removed (a driver a device uses), or that a Steam game's folder is empty. -->
                         <TextBlock Text="{Binding NoteText}" FontSize="11" TextTrimming="CharacterEllipsis"
                                    ToolTip="{Binding NoteText}" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                    Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}"/>

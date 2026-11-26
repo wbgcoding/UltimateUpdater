@@ -2749,6 +2749,9 @@ Continuare con privilegi di amministratore?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>Windows non consente di rimuovere questo aggiornamento</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>Cartella vuota, il gioco probabilmente non è più installato</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>Aggiornamento cumulativo (build {0})</value>
   </data>

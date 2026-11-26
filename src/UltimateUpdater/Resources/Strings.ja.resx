@@ -2749,6 +2749,9 @@ Ultimate Updater ではこの操作を元に戻せません。</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>この更新プログラムは Windows で削除できません</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>フォルダーが空です。ゲームはおそらくインストールされていません</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>累積更新プログラム (ビルド {0})</value>
   </data>

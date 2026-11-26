@@ -2749,6 +2749,9 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="UninstallerUpdateKept" xml:space="preserve">
     <value>System Windows nie pozwala usunąć tej aktualizacji</value>
   </data>
+  <data name="UninstallerSteamFolderEmpty" xml:space="preserve">
+    <value>Folder jest pusty, gra prawdopodobnie nie jest już zainstalowana</value>
+  </data>
   <data name="UninstallerUpdateCumulative" xml:space="preserve">
     <value>Aktualizacja zbiorcza (kompilacja {0})</value>
   </data>

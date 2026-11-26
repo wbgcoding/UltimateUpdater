@@ -19,13 +19,18 @@ internal static partial class ReviewCatalog
         string version = "1.0.0",
         string publisher = "Acme Software",
         bool runnable = true,
-        bool selectable = true) =>
+        bool selectable = true,
+        string? key = null,
+        string location = "",
+        bool folderEmpty = false) =>
         new(
             new InstalledProgramEntry
             {
-                Key = kind == UninstallEntryKind.StoreApp
+                Key = key ?? (kind == UninstallEntryKind.StoreApp
                     ? $"appx:{name}"
-                    : $@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{name}",
+                    : $@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{name}"),
+                InstallLocation = location,
+                InstallFolderEmpty = folderEmpty,
                 Kind = kind,
                 Name = name,
                 Publisher = publisher,
@@ -51,8 +56,22 @@ internal static partial class ReviewCatalog
         Listing("KB5039212", UninstallEntryKind.WindowsUpdate, size: null, version: string.Empty, publisher: "Microsoft Corporation"),
     ];
 
+    private static IReadOnlyList<UninstallListing> UninstallerLookalikes() =>
+    [
+        Listing("Apex Legends", size: 72_000_000_000, key: @"HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 1172470", location: @"D:\Steam\steamapps\common\Apex Legends", publisher: "Respawn"),
+        Listing("Apex Legends", size: 104_000_000_000, key: @"HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{D7FBF176-1111-2222-3333-444455556666}", location: @"D:\EA Games\Apex", publisher: "Electronic Arts"),
+        Listing("skate.", size: 0, key: @"HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 1222670", location: @"D:\Steam\steamapps\common\skate", folderEmpty: true, publisher: "Electronic Arts"),
+        Listing("7-Zip", size: 5_600_000, version: "24.09", publisher: "Igor Pavlov"),
+    ];
+
     private static void AddUninstaller(List<ReviewSurface> list)
     {
+        Add(list, "uninstaller.lookalike", UninstallerArea, "Uninstaller with two same-named games from different launchers and a Steam game with an empty folder", s =>
+        {
+            var viewModel = s.NewUninstallerViewModel(UninstallerLookalikes(), expandAll: true);
+            return Task.FromResult(new ReviewScene { Window = new UninstallerWindow(viewModel) });
+        });
+
         Add(list, "uninstaller.default", UninstallerArea, "Uninstaller as it opens: programs section open, others collapsed", s =>
         {
             var viewModel = s.NewUninstallerViewModel(UninstallerInventory(), expandAll: false);

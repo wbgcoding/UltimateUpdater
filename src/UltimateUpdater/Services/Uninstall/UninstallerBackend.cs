@@ -150,7 +150,7 @@ public sealed class UninstallerBackend(
             var fixes = Task.Run(() => new WindowsUpdateLister(logging).ReadQuickFixes(cancellationToken), cancellationToken);
             var inventory = new InstalledProgramInventory(
                 WindowsRegistryView.Instance, new AppxPackageReader(), new WingetListReader());
-            var entries = await inventory.ReadAsync(cancellationToken);
+            var entries = UninstallEntryOrigin.MarkEmptyFolders(await inventory.ReadAsync(cancellationToken), UninstallEntryOrigin.IsEmptyFolder);
             entries =
             [
                 .. entries,
