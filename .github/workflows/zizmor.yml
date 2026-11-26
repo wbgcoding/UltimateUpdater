@@ -1,14 +1,14 @@
 name: Workflow audit
 
-# Audits the workflow files with zizmor and reports findings in code scanning.
+# Audits the workflow files and the Dependabot config with zizmor and reports findings in code scanning.
 on:
   push:
     branches: [main]
     paths:
-      - ".github/workflows/**"
+      - ".github/**"
   pull_request:
     paths:
-      - ".github/workflows/**"
+      - ".github/**"
 
 permissions: {}
 
@@ -31,7 +31,7 @@ jobs:
       - name: Audit workflows
         env:
           GH_TOKEN: ${{ github.token }}
-        run: zizmor --format sarif .github/workflows > results.sarif
+        run: zizmor --format sarif .github > results.sarif
 
       - name: Upload to code scanning
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
