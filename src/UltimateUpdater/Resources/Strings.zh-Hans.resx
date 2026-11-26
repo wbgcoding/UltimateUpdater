@@ -2473,6 +2473,9 @@ Ultimate Updater 无法撤销此操作。</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>卸载程序已结束，但该程序仍已安装。</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>卸载程序在等待输入，已被停止。请改从“程序和功能”运行它。</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>卸载已取消。</value>
   </data>

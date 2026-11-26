@@ -2473,6 +2473,9 @@ Kontynuować z uprawnieniami administratora?</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>Dezinstalator zakończył pracę, ale program nadal jest zainstalowany.</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>Dezinstalator czekał na odpowiedź i został zatrzymany. Uruchom go z Programy i funkcje.</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>Odinstalowanie zostało anulowane.</value>
   </data>

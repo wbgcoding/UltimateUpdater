@@ -118,9 +118,10 @@ public static class ProcessRunner
         TimeSpan? idleTimeout = null,
         StallWatchOptions? stallWatch = null,
         bool pseudoConsole = false,
-        Encoding? outputEncoding = null) =>
+        Encoding? outputEncoding = null,
+        bool stallIsUninstall = false) =>
         ExecuteAsync(fileName, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding, stallWatch,
-            pseudoConsole: pseudoConsole);
+            pseudoConsole: pseudoConsole, stallIsUninstall: stallIsUninstall);
 
     private static async Task<ProcessResult> ExecuteAsync(
         string fileName,
@@ -133,7 +134,8 @@ public static class ProcessRunner
         Encoding? outputEncoding = null,
         StallWatchOptions? stallWatch = null,
         bool killOnTimeout = true,
-        bool pseudoConsole = false)
+        bool pseudoConsole = false,
+        bool stallIsUninstall = false)
     {
         // Defense in depth, checked before anything else and regardless of elevation or caller
         // (Security.CommandDenyList); every current caller only issues package-manager commands.
@@ -154,7 +156,7 @@ public static class ProcessRunner
 
         return await RunResolvedAsync(
             executable, arguments, timeout, cancellationToken, environment, onOutput, idleTimeout, outputEncoding, elevated,
-            scrubEnvironment, stallWatch, killOnTimeout, pseudoConsole);
+            scrubEnvironment, stallWatch, killOnTimeout, pseudoConsole, stallIsUninstall: stallIsUninstall);
     }
 
     /// <summary>The launch and the wait for an already resolved executable. Separate from
@@ -173,7 +175,9 @@ public static class ProcessRunner
         StallWatchOptions? stallWatch = null,
         bool killOnTimeout = true,
         bool pseudoConsole = false,
-        bool waitForTree = false)
+        bool waitForTree = false,
+        bool killOnCancel = false,
+        bool stallIsUninstall = false)
     {
         var startInfo = BuildStartInfo(executable, arguments, environment, outputEncoding, elevated, scrubEnvironment: scrubEnvironment);
 
@@ -230,7 +234,9 @@ public static class ProcessRunner
             }
             catch (OperationCanceledException)
             {
-                if (!killOnTimeout && !idleTriggered && !stallTriggered)
+                // killOnCancel: a stop ends the tool and everything it started, even where a timeout leaves it running.
+                if (!killOnTimeout && !idleTriggered && !stallTriggered
+                    && !(killOnCancel && cancellationToken.IsCancellationRequested))
                 {
                     // Out of time or asked to stop: the tool keeps running and the pumps keep draining so it never
                     // blocks on a full pipe.
@@ -255,7 +261,7 @@ public static class ProcessRunner
                     throw new ProcessIdleTimeoutException(idleTimeout!.Value);
 
                 if (stallTriggered)
-                    throw new InstallerStalledException(Path.GetFileNameWithoutExtension(executable.Path));
+                    throw new InstallerStalledException(Path.GetFileNameWithoutExtension(executable.Path), stallIsUninstall);
 
                 return new ProcessResult(-1, ReadSink(stdout), ReadSink(stderr)) { TimedOut = true };
             }

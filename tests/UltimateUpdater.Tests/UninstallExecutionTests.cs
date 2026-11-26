@@ -67,7 +67,7 @@ public class UninstallExecutionTests
     }
 
     [Fact]
-    public async Task A_hard_cancel_ends_the_wait_but_not_the_uninstaller()
+    public async Task A_cancel_ends_the_wait_and_the_uninstaller_with_everything_it_started()
     {
         var child = new LingeringChild();
         ProcessRunner.ChildFactoryForTest.Value = () => child;
@@ -78,7 +78,7 @@ public class UninstallExecutionTests
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => RunCommand(TimeSpan.FromSeconds(60), cancel.Token).WaitAsync(TimeSpan.FromSeconds(30)));
 
-            Assert.Equal(0, child.KillCalls);
+            Assert.Equal(1, child.KillCalls);
             child.Exit();
             await child.Disposed.WaitAsync(TimeSpan.FromSeconds(30));
         }

@@ -2473,6 +2473,9 @@ Mit Admin-Rechten fortfahren?</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>Das Deinstallationsprogramm ist durchgelaufen, aber das Programm ist weiterhin installiert.</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>Das Deinstallationsprogramm hat auf eine Eingabe gewartet und wurde beendet. Starte es stattdessen über Programme und Features.</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>Die Deinstallation wurde abgebrochen.</value>
   </data>

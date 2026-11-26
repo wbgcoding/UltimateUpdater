@@ -162,6 +162,8 @@ public static class InstallErrorExplainer
 
         // Our own stall watch (ProcessRunner) and rustup's own-file failure are matched by their wording:
         // neither carries a code of its own.
+        if (outputText.Contains(InstallerStalledException.UninstallWaitedMarker, StringComparison.Ordinal))
+            return UninstallWaitedExplanation;
         if (outputText.Contains(StalledMarker, StringComparison.Ordinal))
             return StalledExplanation;
         if (RustupSource.IsInitMetadataFailure(outputText))
@@ -511,6 +513,9 @@ public static class InstallErrorExplainer
 
     private static readonly InstallErrorExplanation StalledExplanation = new(
         "InstallStalled", [], "", [], InstallErrorClassification.Recoverable, UseAsRowText: true);
+
+    private static readonly InstallErrorExplanation UninstallWaitedExplanation = new(
+        "UninstallWaitedForInput", [], "", [], InstallErrorClassification.ManualWork, UseAsRowText: true);
 
     private static readonly InstallErrorExplanation PackageSourceStaleExplanation = new(
         "InstallPackageSourceStale", [], "", [], InstallErrorClassification.Recoverable,

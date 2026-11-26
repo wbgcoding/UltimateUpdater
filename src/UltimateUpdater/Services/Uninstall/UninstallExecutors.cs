@@ -2,6 +2,7 @@ using System.IO;
 using System.Text.Json;
 using UltimateUpdater.Models;
 using UltimateUpdater.Services.Elevation;
+using UltimateUpdater.Services.Install;
 using UltimateUpdater.Services.Processes;
 using UltimateUpdater.Services.Sources.Windows;
 
@@ -15,6 +16,10 @@ namespace UltimateUpdater.Services.Uninstall;
 public sealed class ElevatedUninstallExecutor(ElevatedHost host, LoggingService logging) : IUninstallExecutor
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
+    /// <summary>True when the worker's error says it ended the removal for sitting still. The text only picks a message.</summary>
+    internal static bool ReportsStall(string? error) =>
+        error?.Contains(InstallerStalledException.UninstallWaitedMarker, StringComparison.Ordinal) == true;
 
     public async Task<UninstallExecutionResult> RunAsync(
         InstalledProgramEntry entry, UninstallPlan plan, CancellationToken cancellationToken)
@@ -65,6 +70,10 @@ public sealed class ElevatedUninstallExecutor(ElevatedHost host, LoggingService 
         if (cancellationToken.IsCancellationRequested)
             return new UninstallExecutionResult(exitCode, detail, Cancelled: true);
 
+        // The worker ended a removal that sat still; it says so in the error's own words (data, only picks a message).
+        if (ReportsStall(error))
+            return new UninstallExecutionResult(null, error, Stalled: true);
+
         if (!ok || !reachedDone)
             return new UninstallExecutionResult(null, "The elevated helper is not available.");
 
@@ -90,6 +99,10 @@ public sealed class InProcessUninstallExecutor(LoggingService logging) : IUninst
                 ? new UninstallExecutionResult(null, "The uninstaller did not finish in time.")
                 : new UninstallExecutionResult(
                     result.ExitCode, ToolOutput.Summarize(result.StandardOutput, result.StandardError, result.ExitCode));
+        }
+        catch (InstallerStalledException ex)
+        {
+            return new UninstallExecutionResult(null, ex.Message, Stalled: true);
         }
         catch (Exception ex) when (ex is UntrustedToolException or Security.DeniedCommandException)
         {

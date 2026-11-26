@@ -2473,6 +2473,9 @@ Continuer avec les droits administrateur ?</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>Le désinstalleur s'est terminé, mais le programme est toujours installé.</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>Le désinstalleur attendait une réponse et a été arrêté. Lancez-le depuis Programmes et fonctionnalités.</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>La désinstallation a été annulée.</value>
   </data>

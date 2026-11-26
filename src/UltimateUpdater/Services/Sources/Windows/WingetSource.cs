@@ -603,7 +603,9 @@ public sealed class WingetSource : IUpdateSource, IFreshInstallSource, IScanNote
             UninstallArguments(item.Id),
             InstallTimeout,
             segment => Report(progress, item.Name, segment),
-            cancellationToken);
+            cancellationToken,
+            stallWatch: StallWatchOptions.ForUninstall,
+            stallIsUninstall: true);
 
         if (result.TimedOut)
             throw new InvalidOperationException($"winget uninstall timed out for '{item.Id}'.");

@@ -2473,6 +2473,9 @@ Yönetici haklarıyla devam edilsin mi?</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>Kaldırıcı tamamlandı ancak program hâlâ yüklü.</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>Kaldırıcı bir girdi bekliyordu ve durduruldu. Bunun yerine Programlar ve Özellikler'den çalıştırın.</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>Kaldırma işlemi iptal edildi.</value>
   </data>

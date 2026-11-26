@@ -2,6 +2,7 @@ using System.IO;
 using UltimateUpdater.Services.App;
 using UltimateUpdater.Services.Cleanup;
 using UltimateUpdater.Services.Elevation;
+using UltimateUpdater.Services.Install;
 using UltimateUpdater.Services.Processes;
 using UltimateUpdater.Services.Security;
 
@@ -40,8 +41,13 @@ internal static class UninstallExecution
         // when elevated); only a program named by a registry command needs the uninstaller rules below.
         if (plan.Method is UninstallMethod.Winget or UninstallMethod.Msi or UninstallMethod.StoreApp)
         {
+            // winget starts a vendor uninstaller without a silent switch when the manifest offers none; its window is
+            // invisible in an elevated session, so the run would sit still until the timeout. A tree with no CPU and no
+            // I/O for the stall window is ended with an explained failure instead (a stop ends the tree as well).
+            var stallWatch = plan.Method == UninstallMethod.Winget ? StallWatchOptions.ForUninstall : null;
             return await ProcessRunner.RunStreamingAsync(
-                plan.Executable, plan.Arguments, timeout, onOutput, cancellationToken, environment);
+                plan.Executable, plan.Arguments, timeout, onOutput, cancellationToken, environment,
+                stallWatch: stallWatch, stallIsUninstall: stallWatch is not null);
         }
 
         if (CommandDenyList.IsDenied(plan.Executable, plan.Arguments, out var reason))
@@ -58,10 +64,11 @@ internal static class UninstallExecution
     }
 
     /// <summary>
-    /// The run of a program named by a registry command. It is not killed when the time is up or a stop comes
-    /// (ending a removal halfway leaves a program neither installed nor gone); it is left running and the result
-    /// says it timed out. The wait is for the whole tree: a setup that hands its work to a copy of itself and
-    /// exits has not finished when its first process has.
+    /// The run of a program named by a registry command. It is not killed when the time is up (ending a removal
+    /// halfway leaves a program neither installed nor gone); it is left running and the result says it timed out.
+    /// A stop by the person does end it, with everything it started: a window nobody can see must not outlive the
+    /// run. The wait is for the whole tree: a setup that hands its work to a copy of itself and exits has not
+    /// finished when its first process has.
     /// </summary>
     internal static Task<ProcessResult> RunCommandAsync(
         ResolvedExecutable executable, IReadOnlyList<string> arguments, TimeSpan timeout, bool elevated,
@@ -70,7 +77,7 @@ internal static class UninstallExecution
             executable, arguments, timeout, cancellationToken, environment, onOutput,
             idleTimeout: null, outputEncoding: null, elevated,
             scrubEnvironment: elevated || ElevationService.IsElevated,
-            killOnTimeout: false, waitForTree: true);
+            killOnTimeout: false, waitForTree: true, killOnCancel: true);
 
     /// <summary>
     /// The environment with TEMP and TMP pointing at <paramref name="folder"/>, a folder only administrators can write.

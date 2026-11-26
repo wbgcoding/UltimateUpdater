@@ -2473,6 +2473,9 @@ Continuar com direitos de administrador?</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>O desinstalador terminou, mas o programa continua instalado.</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>O desinstalador estava à espera de uma resposta e foi parado. Execute-o a partir de Programas e Funcionalidades.</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>A desinstalação foi cancelada.</value>
   </data>

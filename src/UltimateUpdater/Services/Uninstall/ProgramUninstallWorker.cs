@@ -239,6 +239,11 @@ internal static class ProgramUninstallWorker
         {
             throw;
         }
+        catch (InstallerStalledException ex)
+        {
+            logging.Warn($"Elevated uninstall stopped: {ex.Message}");
+            Finish(writer, jobId, job.Key, success: false, exitCode: null, error: ex.Message, detail: null);
+        }
         catch (Exception ex) when (ex is UntrustedToolException or Security.DeniedCommandException
                                        or System.ComponentModel.Win32Exception or IOException
                                        or InvalidOperationException or TimeoutException)

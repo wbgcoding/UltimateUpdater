@@ -7,9 +7,17 @@ namespace UltimateUpdater.Services.Install;
 /// started or ended anywhere below the tool. Thrown by <see cref="ProcessRunner"/> after the tool's tree is
 /// stopped, so the row can say what happened instead of waiting out the full install timeout.
 /// </summary>
-public sealed class InstallerStalledException(string tool)
-    : Exception($"{tool}: the installer stopped responding and was stopped.")
+public sealed class InstallerStalledException(string tool, bool uninstall = false)
+    : Exception(uninstall
+        ? $"{tool}: {UninstallWaitedMarker}."
+        : $"{tool}: the installer stopped responding and was stopped.")
 {
+    /// <summary>The wording of a removal that sat still for the whole stall window: almost always a vendor
+    /// window nobody can see (winget starts the uninstaller without a silent switch).</summary>
+    public const string UninstallWaitedMarker = "the uninstaller waited for input and was stopped";
+
+    /// <summary>True when the stopped run was a removal, not an installation.</summary>
+    public bool IsUninstall { get; } = uninstall;
 }
 
 /// <summary>How a running installer is judged to be hung. <paramref name="CpuFraction"/> is the share of ONE
@@ -25,6 +33,10 @@ public sealed record StallWatchOptions(TimeSpan Window, double CpuFraction, Time
 
     /// <summary>The options every install call passes along.</summary>
     public static StallWatchOptions ForInstall => OverrideForTest.Value ?? Standard;
+
+    /// <summary>The options every removal passes along (the same window: a removal with no CPU and no I/O
+    /// for it is waiting for a person).</summary>
+    public static StallWatchOptions ForUninstall => OverrideForTest.Value ?? Standard;
 }
 
 /// <summary>One reading of a whole process tree. <paramref name="Complete"/> is false when some process in

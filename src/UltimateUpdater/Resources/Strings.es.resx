@@ -2473,6 +2473,9 @@ Esto no se puede deshacer.</value>
   <data name="UninstallStillPresent" xml:space="preserve">
     <value>El desinstalador terminó, pero el programa sigue instalado.</value>
   </data>
+  <data name="UninstallWaitedForInput" xml:space="preserve">
+    <value>El desinstalador esperaba una respuesta y se detuvo. Ejecútalo desde Programas y características.</value>
+  </data>
   <data name="UninstallCancelled" xml:space="preserve">
     <value>Se canceló la desinstalación.</value>
   </data>
