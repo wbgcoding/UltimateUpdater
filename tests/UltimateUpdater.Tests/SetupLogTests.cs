@@ -45,7 +45,7 @@ public class SetupLogTests
     [Fact]
     public void A_path_with_spaces_stays_one_quoted_argument()
     {
-        Assert.Equal(@"/LOG=""C:\Users\A B\logs\setup\setup-1.log""", SetupLog.Argument(@"C:\Users\A B\logs\setup\setup-1.log"));
+        Assert.Equal(@"/LOG=""C:\Users\Someone\My Logs\setup\setup-1.log""", SetupLog.Argument(@"C:\Users\Someone\My Logs\setup\setup-1.log"));
     }
 
     [Fact]
