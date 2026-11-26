@@ -17,7 +17,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>   <!-- title bar -->
             <RowDefinition Height="Auto"/>   <!-- name + version -->
-            <RowDefinition Height="Auto"/>   <!-- changelog text -->
+            <RowDefinition Height="*"/>      <!-- changelog text: takes what the capped window leaves, so the actions keep their margin -->
             <RowDefinition Height="Auto"/>   <!-- actions -->
         </Grid.RowDefinitions>
 

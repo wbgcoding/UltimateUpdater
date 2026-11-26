@@ -22,7 +22,7 @@ public sealed class CleanupGroupIconConverter : IValueConverter
         CleanupGroupKey.RecycleBin => SymbolRegular.Delete24,
         CleanupGroupKey.SystemRepair => SymbolRegular.Wrench24,
         CleanupGroupKey.Registry => SymbolRegular.Settings24,
-        CleanupGroupKey.Drivers => SymbolRegular.HardDrive24,
+        CleanupGroupKey.Drivers => SymbolRegular.DeveloperBoard24,
         _ => SymbolRegular.Broom24,
     };
 

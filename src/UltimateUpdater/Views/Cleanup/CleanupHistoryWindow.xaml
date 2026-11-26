@@ -4,7 +4,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:controls="clr-namespace:UltimateUpdater.Views.Controls"
         Title="{Binding Loc[CleanupHistoryTitle]}"
-        Width="760" MinWidth="560" MinHeight="420"
+        Width="760" MinWidth="700" MinHeight="420"
         SizeToContent="Height" MaxHeight="700"
         WindowStartupLocation="CenterOwner"
         ExtendsContentIntoTitleBar="True"
