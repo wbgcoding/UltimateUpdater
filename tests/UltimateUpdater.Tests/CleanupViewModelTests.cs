@@ -55,11 +55,30 @@ public partial class CleanupViewModelTests
     /// sit close to count * delay; running them with bounded parallelism must land well under that.</summary>
     private sealed class DelayedCleanupService(LoggingService logging, TimeSpan delay) : CleanupService(logging)
     {
+        private int _inFlight;
+        private int _peak;
+
+        /// <summary>The most scans that were in flight at the same moment.</summary>
+        public int PeakConcurrency => Volatile.Read(ref _peak);
+
         public override async Task<CleanupScanResult> ScanAsync(
             CleanupTarget target, CancellationToken cancellationToken, int recycleBinMinAgeDays = 0)
         {
-            await Task.Delay(delay, cancellationToken);
-            return new CleanupScanResult(0, 0, 0);
+            var now = Interlocked.Increment(ref _inFlight);
+            int seen;
+            while ((seen = Volatile.Read(ref _peak)) < now && Interlocked.CompareExchange(ref _peak, now, seen) != seen)
+            {
+            }
+
+            try
+            {
+                await Task.Delay(delay, cancellationToken);
+                return new CleanupScanResult(0, 0, 0);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _inFlight);
+            }
         }
     }
 
@@ -178,26 +197,28 @@ public partial class CleanupViewModelTests
     {
         var logging = new LoggingService();
         var delay = TimeSpan.FromMilliseconds(200);
-        var viewModel = Create(CreateSettings(), service: new DelayedCleanupService(logging, delay));
+        var service = new DelayedCleanupService(logging, delay);
+        var viewModel = Create(CreateSettings(), service: service);
         // No elevated host is wired up (elevated: null), so every item scans through this fake service,
         // the same "continue unelevated" fallback a declined or unavailable prompt takes in production.
         var unelevatedCount = viewModel.Items.Count;
         Assert.True(unelevatedCount >= 4, "the catalogue must offer enough targets for this to be meaningful");
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         await viewModel.StartScanAsync();
-        stopwatch.Stop();
 
-        // The scan runs min(4, cores) targets at once. A two-core build server can at best halve the serial
-        // time, so the bound leaves room for overhead while still failing a scan that runs one at a time.
+        // The scan runs min(4, cores) targets at once. Counting how many were in flight together proves that
+        // directly, with no wall-clock bound a loaded machine can stretch: more than one means it was not
+        // serial, and never more than the cap means it stayed bounded.
         var degree = Math.Max(1, Math.Min(4, Environment.ProcessorCount));
         if (degree < 2)
             return;
 
-        var limit = delay * unelevatedCount * 0.75;
         Assert.True(
-            stopwatch.Elapsed < limit,
-            $"expected under {limit.TotalMilliseconds} ms (three quarters of the serial time) for {unelevatedCount} targets, took {stopwatch.ElapsedMilliseconds} ms");
+            service.PeakConcurrency >= 2,
+            $"the scan ran its {unelevatedCount} targets one at a time (peak concurrency {service.PeakConcurrency})");
+        Assert.True(
+            service.PeakConcurrency <= degree,
+            $"the scan ran {service.PeakConcurrency} targets at once, above its cap of {degree}");
     }
 
     [Fact]
