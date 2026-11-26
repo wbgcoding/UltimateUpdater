@@ -8,6 +8,7 @@ namespace UltimateUpdater.Tests;
 /// on exactly the sum of the finished targets' outcomes.
 /// </summary>
 [Collection("UiLanguage")]
+[Trait("Layer", "UI")]
 public class CleanupLiveFreedTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "wu-live-freed-" + Guid.NewGuid());
@@ -130,25 +131,36 @@ public class CleanupLiveFreedTests : IDisposable
             await Task.Delay(10);
     }
 
-    [Fact]
-    public async Task The_total_climbs_with_progress_before_the_target_ends_and_lands_on_the_outcome()
+    /// <summary>A cleanup run whose only target has reported 1 000 freed bytes and now waits to be released.</summary>
+    private sealed record LiveRun(
+        CleanupViewModel ViewModel, CleanupItemViewModel Item, TaskCompletionSource Release, Task Run);
+
+    private static async Task<LiveRun> StartRunShowingLiveFigureAsync(long finalBytes, bool fail = false)
     {
         var release = new TaskCompletionSource();
-        var service = new SlowCleanService(new LoggingService(), 1_000, 1_500, release.Task);
+        var service = new SlowCleanService(new LoggingService(), 1_000, finalBytes, release.Task, fail);
         var (viewModel, item) = CreateRun(service);
         await viewModel.StartScanAsync().WaitAsync(TimeSpan.FromSeconds(30));
 
         var run = viewModel.RunCleanupAsync();
         await service.Reported.Task.WaitAsync(TimeSpan.FromSeconds(15));
         await WaitUntil(() => viewModel.FreedBytes == 1_000);
+        return new LiveRun(viewModel, item, release, run);
+    }
+
+    [Fact]
+    public async Task The_total_climbs_with_progress_before_the_target_ends_and_lands_on_the_outcome()
+    {
+        var live = await StartRunShowingLiveFigureAsync(1_500);
+        var (viewModel, item) = (live.ViewModel, live.Item);
 
         // The target is still working, and the figure already shows what is gone.
         Assert.True(item.IsCleaning);
         Assert.Equal(1_000, viewModel.FreedBytes);
         Assert.Equal(CleanupViewModel.FormatFreed(1_000), viewModel.FreedText);
 
-        release.SetResult();
-        await run.WaitAsync(TimeSpan.FromSeconds(30));
+        live.Release.SetResult();
+        await live.Run.WaitAsync(TimeSpan.FromSeconds(30));
 
         Assert.Equal(1_500, viewModel.FreedBytes);
         Assert.Equal(1_500, item.FreedBytes);
@@ -157,53 +169,35 @@ public class CleanupLiveFreedTests : IDisposable
     [Fact]
     public async Task A_target_that_fails_after_progress_adds_nothing_as_before()
     {
-        var release = new TaskCompletionSource();
-        var service = new SlowCleanService(new LoggingService(), 1_000, 0, release.Task, fail: true);
-        var (viewModel, _) = CreateRun(service);
-        await viewModel.StartScanAsync().WaitAsync(TimeSpan.FromSeconds(30));
+        var live = await StartRunShowingLiveFigureAsync(0, fail: true);
 
-        var run = viewModel.RunCleanupAsync();
-        await service.Reported.Task.WaitAsync(TimeSpan.FromSeconds(15));
-        await WaitUntil(() => viewModel.FreedBytes == 1_000);
-        release.SetResult();
-        await run.WaitAsync(TimeSpan.FromSeconds(30));
+        live.Release.SetResult();
+        await live.Run.WaitAsync(TimeSpan.FromSeconds(30));
 
-        Assert.Equal(0, viewModel.FreedBytes);
+        Assert.Equal(0, live.ViewModel.FreedBytes);
     }
 
     [Fact]
     public async Task The_live_figure_does_not_step_back_when_a_failed_target_takes_its_part_out()
     {
-        var release = new TaskCompletionSource();
-        var service = new SlowCleanService(new LoggingService(), 1_000, 0, release.Task, fail: true);
-        var (viewModel, _) = CreateRun(service);
-        await viewModel.StartScanAsync().WaitAsync(TimeSpan.FromSeconds(30));
+        var live = await StartRunShowingLiveFigureAsync(0, fail: true);
+        var shown = live.ViewModel.LiveFreedText;
 
-        var run = viewModel.RunCleanupAsync();
-        await service.Reported.Task.WaitAsync(TimeSpan.FromSeconds(15));
-        await WaitUntil(() => viewModel.FreedBytes == 1_000);
-        var shown = viewModel.LiveFreedText;
-        release.SetResult();
-        await run.WaitAsync(TimeSpan.FromSeconds(30));
+        live.Release.SetResult();
+        await live.Run.WaitAsync(TimeSpan.FromSeconds(30));
 
-        Assert.Equal(0, viewModel.FreedBytes);
-        Assert.Equal(shown, viewModel.LiveFreedText);
+        Assert.Equal(0, live.ViewModel.FreedBytes);
+        Assert.Equal(shown, live.ViewModel.LiveFreedText);
     }
 
     [Fact]
     public async Task A_stopped_target_keeps_what_its_progress_confirmed()
     {
-        var release = new TaskCompletionSource();
-        var service = new SlowCleanService(new LoggingService(), 1_000, 0, release.Task);
-        var (viewModel, _) = CreateRun(service);
-        await viewModel.StartScanAsync().WaitAsync(TimeSpan.FromSeconds(30));
+        var live = await StartRunShowingLiveFigureAsync(0);
 
-        var run = viewModel.RunCleanupAsync();
-        await service.Reported.Task.WaitAsync(TimeSpan.FromSeconds(15));
-        await WaitUntil(() => viewModel.FreedBytes == 1_000);
-        viewModel.StopCommand.Execute(null);
-        await run.WaitAsync(TimeSpan.FromSeconds(30));
+        live.ViewModel.StopCommand.Execute(null);
+        await live.Run.WaitAsync(TimeSpan.FromSeconds(30));
 
-        Assert.Equal(1_000, viewModel.FreedBytes);
+        Assert.Equal(1_000, live.ViewModel.FreedBytes);
     }
 }
