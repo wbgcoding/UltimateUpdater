@@ -48,7 +48,7 @@ public class LayerTraitTests
     {
         var missing = TestClasses()
             .Where(t => t.GetCustomAttributesData().Any(a =>
-                a.AttributeType == typeof(CollectionAttribute) && (string?)a.ConstructorArguments[0].Value == "wpf"))
+                a.AttributeType == typeof(CollectionAttribute) && ((string?)a.ConstructorArguments[0].Value is "wpf" or WpfRenderCollection.Name)))
             .Where(t => !LayerValues(t).Contains("UI"))
             .Select(t => t.Name)
             .ToList();

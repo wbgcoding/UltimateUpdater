@@ -3,6 +3,7 @@
 // collide and produced failures that only appeared in a full run. The whole suite takes a few
 // seconds, so serialising it costs nothing worth having.
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
+[assembly: TestCollectionOrderer("UltimateUpdater.Tests.RenderLastCollectionOrderer", "UltimateUpdater.Tests")]
 
 namespace UltimateUpdater.Tests;
 
