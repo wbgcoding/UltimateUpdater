@@ -21,11 +21,36 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
 {
     private const string SearchCriteria = "IsInstalled=0 and IsHidden=0";
 
+    /// <summary>The same search the other way round: what Windows Update itself counts as installed.</summary>
+    private const string InstalledCriteria = "IsInstalled=1";
+
+    /// <summary>How long one install search is reused. One batch of installs runs back to back, so a short
+    /// window covers it without a hook into the worker; the search itself took 20 to 90 s per update in
+    /// real logs, and the install lane starts every item of a batch within seconds of the last.</summary>
+    internal static readonly TimeSpan SearchCacheLifetime = TimeSpan.FromMinutes(5);
+
     private readonly LoggingService _logging;
+    private readonly IWindowsUpdateApi _api;
+    private readonly TimeProvider _time;
+
+    /// <summary>Installs of this source never overlap (the worker's install lane, and the one system-wide
+    /// Windows Update installer), and the cached search owns COM objects an overlapping install must not
+    /// see released, so the whole install is one critical section.</summary>
+    private readonly SemaphoreSlim _installGate = new(1, 1);
+
+    /// <summary>The install search kept for the next item of the batch, with the moment it was made.</summary>
+    private (DateTimeOffset At, IWuSearchResult Result)? _searchCache;
 
     public WindowsUpdateSource(LoggingService logging)
+        : this(logging, new ComWindowsUpdateApi(logging), TimeProvider.System)
+    {
+    }
+
+    internal WindowsUpdateSource(LoggingService logging, IWindowsUpdateApi api, TimeProvider time)
     {
         _logging = logging;
+        _api = api;
+        _time = time;
     }
 
     public string Id => "windowsupdate";
@@ -57,11 +82,62 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
                 ? "WindowsUpdateRestartPendingNoteOne" : "WindowsUpdateRestartPendingNote"], waiting.Count);
         }
 
+        // The search can still list an update Windows Update itself already counts as installed (the offer
+        // lags behind a finished install), and the table then offers it for an install that has nothing to
+        // do. Only when something is offered is the installed list read, a local lookup.
+        if (offered.Count > 0)
+        {
+            var installedIds = await Task.Run(() => ReadInstalledIds(cancellationToken), cancellationToken)
+                .WaitAsync(cancellationToken);
+            offered = DropInstalled(offered, installedIds, out var dropped);
+            if (dropped.Count > 0)
+            {
+                _logging.Info($"windowsupdate: {dropped.Count} offered update(s) are already installed and not shown: "
+                    + string.Join(", ", dropped.Select(i => i.Name)));
+            }
+        }
+
         foreach (var item in offered)
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return item;
         }
+    }
+
+    /// <summary>The GUIDs Windows Update lists as installed, each with its highest installed revision. A failing
+    /// lookup is no answer: it returns an empty map so the scan keeps every offered row (the install itself then
+    /// settles it).</summary>
+    private Dictionary<string, int> ReadInstalledIds(CancellationToken cancellationToken)
+    {
+        var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            using var installed = _api.Search(InstalledCriteria, cancellationToken);
+            foreach (var update in installed.Updates)
+            {
+                if (!ids.TryGetValue(update.UpdateId, out var known) || update.Revision > known)
+                    ids[update.UpdateId] = update.Revision;
+            }
+        }
+        catch (Exception ex) when (ex is COMException or InvalidOperationException)
+        {
+            _logging.Warn($"windowsupdate: could not read the installed updates, offered rows are kept: {ex.Message}");
+            ids.Clear();
+        }
+
+        return ids;
+    }
+
+    /// <summary>Splits off the offered rows whose update GUID is installed at the offered revision or a newer one.
+    /// A newer revision of an installed GUID stays offered: Defender definitions, for one, keep their GUID and only
+    /// raise the revision, so a GUID-only match would hide every new definition update.</summary>
+    internal static List<UpdateItem> DropInstalled(List<UpdateItem> offered, IReadOnlyDictionary<string, int> installedIds, out List<UpdateItem> dropped)
+    {
+        dropped = offered.Where(i =>
+            installedIds.TryGetValue(ExtractUpdateId(i.Id), out var installedRevision)
+            && ExtractRevision(i.Id) is { } offeredRevision
+            && installedRevision >= offeredRevision).ToList();
+        return dropped.Count == 0 ? offered : offered.Except(dropped).ToList();
     }
 
     /// <summary>Localized note about the last scan: how many installed updates only wait for a restart.</summary>
@@ -348,51 +424,54 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
     /// <summary>orcSucceededWithErrors; an AGGREGATE verdict over the batch, not a per-update one.</summary>
     private const int OperationResultSucceededWithErrors = 3;
 
-    private void Install(UpdateItem item, IProgress<Models.InstallProgress> progress, CancellationToken cancellationToken)
+    /// <summary>Internal so a test can drive the install logic through a fake <see cref="IWindowsUpdateApi"/>;
+    /// the public path is <see cref="InstallAsync"/>, which insists on elevation first.</summary>
+    internal void Install(UpdateItem item, IProgress<Models.InstallProgress> progress, CancellationToken cancellationToken)
     {
-        // Every RCW created here, released in reverse order; see Search.
-        using var com = new ComScope();
-
-        var session = com.Track(CreateComObject("Microsoft.Update.Session"))
-            ?? throw new InvalidOperationException("Windows Update session unavailable.");
-
-        var searcher = com.Track(Invoke(session, "CreateUpdateSearcher"))
-            ?? throw new InvalidOperationException("Windows Update searcher unavailable.");
-
-        var searchResult = com.Track(Invoke(searcher, "Search", SearchCriteria))
-            ?? throw new InvalidOperationException("Windows Update search failed.");
-
-        var updates = com.Track(GetProperty(searchResult, "Updates"));
-        var count = Convert.ToInt32(GetProperty(updates, "Count") ?? 0);
-
-        var collection = com.Track(CreateComObject("Microsoft.Update.UpdateColl"))
-            ?? throw new InvalidOperationException("Could not create update collection.");
-
-        var candidates = new List<(string UpdateId, int Revision, object Update)>();
-
-        for (var i = 0; i < count; i++)
+        _installGate.Wait(cancellationToken);
+        try
         {
-            var update = com.Track(InvokeGetItem(updates, i));
-            if (update is null)
-                continue;
+            InstallLocked(item, progress, cancellationToken);
+        }
+        finally
+        {
+            _installGate.Release();
+        }
+    }
 
-            var identity = com.Track(GetProperty(update, "Identity"));
-            var updateId = GetProperty(identity, "UpdateID") as string;
-            var revision = Convert.ToInt32(GetProperty(identity, "RevisionNumber") ?? 0);
+    private void InstallLocked(UpdateItem item, IProgress<Models.InstallProgress> progress, CancellationToken cancellationToken)
+    {
+        var wantedUpdateId = ExtractUpdateId(item.Id);
 
-            if (updateId is not null)
-                candidates.Add((updateId, revision, update));
+        // One search serves every update of a batch (see SearchForInstall). Windows Update re-evaluates
+        // continuously, so the revision it reports can differ from the one the scan saw a moment ago without
+        // the update actually being gone (WindowsUpdateMatching). Matching stays on the GUID alone; only its
+        // absence means the update is gone from the offer.
+        var search = SearchForInstall(forceFresh: false, cancellationToken, out var fromCache);
+        var chosenRevision = PickRevision(search, wantedUpdateId);
+
+        // A miss in a REUSED search may only mean the offer changed since it ran: look again once, fresh.
+        // A miss in a search that was just made is final.
+        if (chosenRevision is null && fromCache)
+        {
+            _logging.Info($"windowsupdate: '{wantedUpdateId}' is not in the cached search, searching again.");
+            search = SearchForInstall(forceFresh: true, cancellationToken, out _);
+            chosenRevision = PickRevision(search, wantedUpdateId);
         }
 
-        // Windows Update re-evaluates continuously, so the revision it reports here can differ from the
-        // one the scan saw a moment ago without the update actually being gone (WindowsUpdateMatching).
-        // Matching stays on the GUID alone; only its absence means the update is gone from the offer.
-        var wantedUpdateId = ExtractUpdateId(item.Id);
-        var chosenRevision = WindowsUpdateMatching.PickInstallTarget(
-            wantedUpdateId, candidates.Select(c => (c.UpdateId, c.Revision)).ToList());
-
         if (chosenRevision is null)
+        {
+            // Gone from the offer is not always a failure: an update that finished a moment ago (an earlier
+            // run, a stale row, another tool) is simply installed, which is what the user wanted.
+            if (IsAlreadyInstalled(wantedUpdateId, cancellationToken))
+            {
+                _logging.Info($"windowsupdate: '{wantedUpdateId}' is already installed, nothing to do.");
+                progress.Report(new Models.InstallProgress { PercentComplete = 100, StatusText = item.Name });
+                return;
+            }
+
             throw new InvalidOperationException($"Update '{item.Id}' is no longer offered.");
+        }
 
         var scannedRevision = ExtractRevision(item.Id);
         if (chosenRevision != scannedRevision)
@@ -402,49 +481,72 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
                 $"to {chosenRevision} between scan and install, installing the current revision.");
         }
 
-        var chosen = candidates.First(c =>
+        var chosen = search.Updates.First(c =>
             string.Equals(c.UpdateId, wantedUpdateId, StringComparison.OrdinalIgnoreCase)
             && c.Revision == chosenRevision);
 
-        AcceptEulaIfNeeded(chosen.Update);
-        Invoke(collection, "Add", chosen.Update);
+        _api.AcceptEula(chosen);
 
         cancellationToken.ThrowIfCancellationRequested();
         progress.Report(new Models.InstallProgress { PercentComplete = 10, StatusText = item.Name });
 
-        var downloader = com.Track(Invoke(session, "CreateUpdateDownloader"))
-            ?? throw new InvalidOperationException("Windows Update downloader unavailable.");
-        SetProperty(downloader, "Updates", collection);
-        // Checked like the install result: a failed download (network, WSUS refusal) would otherwise go on to
-        // Install and surface as a misleading install-stage code instead of the download's own HRESULT.
-        var downloadResult = com.Track(Invoke(downloader, "Download"))
-            ?? throw new InvalidOperationException("Windows Update download returned no result.");
-        VerifySucceeded(downloadResult, com, "download");
+        _api.Download(chosen, cancellationToken);
 
         cancellationToken.ThrowIfCancellationRequested();
         progress.Report(new Models.InstallProgress { PercentComplete = 60, StatusText = item.Name });
 
-        var installer = com.Track(Invoke(session, "CreateUpdateInstaller"))
-            ?? throw new InvalidOperationException("Windows Update installer unavailable.");
-        SetProperty(installer, "Updates", collection);
+        var outcome = _api.Install(chosen, cancellationToken);
 
-        WaitWhileBusy(installer, cancellationToken);
-
-        if (GetProperty(installer, "RebootRequiredBeforeInstallation") is true)
-            throw new InvalidOperationException("A restart is pending before this update can install.");
-
-        var installResult = com.Track(Invoke(installer, "Install"))
-            ?? throw new InvalidOperationException("Windows Update install returned no result.");
-
-        VerifySucceeded(installResult, com, "install");
-
-        var rebootRequired = GetProperty(installResult, "RebootRequired") is true;
         progress.Report(new Models.InstallProgress
         {
             PercentComplete = 100,
             StatusText = item.Name,
-            RebootRequired = rebootRequired,
+            RebootRequired = outcome.RebootRequired,
         });
+    }
+
+    private static int? PickRevision(IWuSearchResult search, string wantedUpdateId) =>
+        WindowsUpdateMatching.PickInstallTarget(wantedUpdateId, search.Updates.Select(c => (c.UpdateId, c.Revision)).ToList());
+
+    /// <summary>
+    /// The install search, reused for <see cref="SearchCacheLifetime"/> so a batch of updates pays for ONE
+    /// search instead of one per update. The cache owns the result (and its COM objects): they are released
+    /// when a fresh search replaces them, never while an install can still hold an update from them
+    /// (<see cref="_installGate"/>). A failing search leaves the old cache as it was.
+    /// </summary>
+    private IWuSearchResult SearchForInstall(bool forceFresh, CancellationToken cancellationToken, out bool fromCache)
+    {
+        var now = _time.GetUtcNow();
+        if (!forceFresh && _searchCache is { } cached && now - cached.At < SearchCacheLifetime)
+        {
+            fromCache = true;
+            return cached.Result;
+        }
+
+        var fresh = _api.Search(SearchCriteria, cancellationToken);
+        var previous = _searchCache;
+        _searchCache = (now, fresh);
+        previous?.Result.Dispose();
+
+        fromCache = false;
+        return fresh;
+    }
+
+    /// <summary>Whether Windows Update itself lists the update as installed. A search that fails here is not
+    /// an answer: it counts as "not installed" so the caller keeps its original failure.</summary>
+    private bool IsAlreadyInstalled(string updateId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var installed = _api.Search(InstalledCriteria, cancellationToken);
+            return WindowsUpdateMatching.PickInstallTarget(
+                updateId, installed.Updates.Select(c => (c.UpdateId, c.Revision)).ToList()) is not null;
+        }
+        catch (Exception ex) when (ex is COMException or InvalidOperationException)
+        {
+            _logging.Warn($"windowsupdate: could not check whether '{updateId}' is already installed: {ex.Message}");
+            return false;
+        }
     }
 
     /// <summary>
@@ -479,7 +581,7 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
     /// (raw text and exceptions stay English); InstallErrorExplainer builds the translated summary line
     /// from this same text.
     /// </summary>
-    private static void VerifySucceeded(object? operationResult, ComScope com, string stage)
+    internal static void VerifySucceeded(object? operationResult, ComScope com, string stage)
     {
         var resultCode = Convert.ToInt32(GetProperty(operationResult, "ResultCode") ?? 0);
         if (resultCode == OperationResultSucceeded)
@@ -591,20 +693,7 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
         }
     }
 
-    private void AcceptEulaIfNeeded(object update)
-    {
-        try
-        {
-            if (GetProperty(update, "EulaAccepted") is bool accepted && !accepted)
-                Invoke(update, "AcceptEula");
-        }
-        catch (COMException ex)
-        {
-            _logging.Info($"windowsupdate: AcceptEula failed, install continues unaccepted: {ex.Message}");
-        }
-    }
-
-    private static object? CreateComObject(string progId)
+    internal static object? CreateComObject(string progId)
     {
         var type = Type.GetTypeFromProgID(progId);
         return type is null ? null : Activator.CreateInstance(type);
@@ -613,17 +702,17 @@ public sealed class WindowsUpdateSource : IUpdateSource, IScanNoteSource
     // InvokeMember reports an exception thrown by the COM callee wrapped in a TargetInvocationException.
     // Every catch (COMException) below is written for the COM error itself, so the wrapper is removed here,
     // once, and any other wrapped exception keeps propagating unchanged.
-    private static object? Invoke(object target, string method, params object?[] args) =>
+    internal static object? Invoke(object target, string method, params object?[] args) =>
         Unwrapped(() => target.GetType().InvokeMember(method, BindingFlags.InvokeMethod, null, target, args));
 
-    private static object? GetProperty(object? target, string property) =>
+    internal static object? GetProperty(object? target, string property) =>
         target is null ? null : Unwrapped(() => target.GetType().InvokeMember(property, BindingFlags.GetProperty, null, target, null));
 
-    private static void SetProperty(object target, string property, object value) =>
+    internal static void SetProperty(object target, string property, object value) =>
         Unwrapped(() => target.GetType().InvokeMember(property, BindingFlags.SetProperty, null, target, [value]));
 
     /// <summary>WUApiLib collections expose an indexer named "Item".</summary>
-    private static object? InvokeGetItem(object? collection, int index) =>
+    internal static object? InvokeGetItem(object? collection, int index) =>
         collection is null ? null : Unwrapped(() => collection.GetType().InvokeMember("Item", BindingFlags.GetProperty, null, collection, [index]));
 
     private static object? Unwrapped(Func<object?> lateBoundCall)
