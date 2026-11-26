@@ -111,12 +111,19 @@ public sealed partial class SelfUpdateService
     /// launched.</summary>
     private readonly Func<ProcessStartInfo, Process?> _startSetup;
 
+    /// <summary>The app's logs folder, whose <c>setup</c> subfolder takes the install log of the Setup this
+    /// service starts; null means no log. A test that replaces the Setup start never writes to the real
+    /// folder.</summary>
+    private readonly Func<string?> _setupLogsDirectory;
+
     public SelfUpdateService(
         HttpClient httpClient, LoggingService logging, IUpdateChannel channel, Func<string?>? currentImagePath = null,
-        string? publicKeyPem = null, Func<bool>? isInstalled = null, Func<ProcessStartInfo, Process?>? startSetup = null)
+        string? publicKeyPem = null, Func<bool>? isInstalled = null, Func<ProcessStartInfo, Process?>? startSetup = null,
+        string? setupLogsDirectory = null)
     {
         _isInstalled = isInstalled ?? (() => AppPaths.IsInstalled);
         _startSetup = startSetup ?? Process.Start;
+        _setupLogsDirectory = () => setupLogsDirectory ?? (startSetup is null ? AppPaths.LogsDirectory : null);
         _httpClient = httpClient;
         _logging = logging;
         _channel = channel;
@@ -501,14 +508,15 @@ public sealed partial class SelfUpdateService
     /// the verified file is still pinned, so Setup never has to start its own file again by path to get
     /// elevation. A per-user install needs no elevation.
     /// </summary>
-    internal static ProcessStartInfo BuildSetupStartInfo(string verifiedPath, bool machineScope)
+    internal static ProcessStartInfo BuildSetupStartInfo(string verifiedPath, bool machineScope, string? setupLogPath = null)
     {
         var info = new ProcessStartInfo { UseShellExecute = true };
-        ConfigureSetupStartInfo(info, verifiedPath, machineScope);
+        ConfigureSetupStartInfo(info, verifiedPath, machineScope, setupLogPath);
         return info;
     }
 
-    private static void ConfigureSetupStartInfo(ProcessStartInfo info, string verifiedPath, bool machineScope)
+    private static void ConfigureSetupStartInfo(
+        ProcessStartInfo info, string verifiedPath, bool machineScope, string? setupLogPath)
     {
         info.FileName = verifiedPath;
         // SILENT, not VERYSILENT: Setup shows its own progress window, so the seconds after this app has
@@ -518,6 +526,10 @@ public sealed partial class SelfUpdateService
         // reliably, so it is asked for explicitly. FROMAPP tells Setup the app itself started it, which is the
         // only run that may close a busy app without asking.
         info.Arguments = "/SILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS /RELAUNCH=1 /FROMAPP";
+        // /LOG: a silent update that fails would otherwise leave no trace at all. The path is built here, never
+        // taken from outside, and a path that cannot be quoted safely just means no log.
+        if (SetupLog.Argument(setupLogPath) is { } logArgument)
+            info.Arguments += " " + logArgument;
         // The elevated Setup runs from a staging folder under %TEMP%, which any process of this user can write
         // to. That is acceptable because the folder is fresh, randomly named and holds only the pinned,
         // signature-verified file, and because Inno Setup 6 protects its Setup against DLL preloading (6.3
@@ -525,6 +537,27 @@ public sealed partial class SelfUpdateService
         // Nothing else is trusted to be in that folder.
         if (machineScope)
             info.Verb = "runas";
+    }
+
+    /// <summary>Makes room for this Setup's install log and returns its path; null when logging is off or the
+    /// folder cannot be made, which never stops the update.</summary>
+    private string? PrepareSetupLog()
+    {
+        try
+        {
+            var logs = _setupLogsDirectory();
+            if (logs is null)
+                return null;
+
+            Directory.CreateDirectory(SetupLog.FolderFor(logs));
+            SetupLog.Prune(logs, SetupLog.KeepCount - 1);
+            return SetupLog.PathFor(logs, DateTime.Now);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            _logging.Warn($"Self-update: the install log folder is not available: {ex.Message}");
+            return null;
+        }
     }
 
     /// <summary>
@@ -565,7 +598,7 @@ public sealed partial class SelfUpdateService
                 try
                 {
                     var setupInfo = new ProcessStartInfo { UseShellExecute = true };
-                    ConfigureSetupStartInfo(setupInfo, verifiedPath, machineScope);
+                    ConfigureSetupStartInfo(setupInfo, verifiedPath, machineScope, PrepareSetupLog());
                     _startSetup(setupInfo)?.Dispose();
                 }
                 catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == ErrorCancelled)
