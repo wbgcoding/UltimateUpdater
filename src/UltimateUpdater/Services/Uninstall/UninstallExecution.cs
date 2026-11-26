@@ -57,13 +57,19 @@ internal static class UninstallExecution
 
         using var executable = ProcessRunner.ResolveUninstaller(plan.Executable, elevated);
         var result = await RunCommandAsync(
-            executable, plan.Arguments, timeout, elevated, environment, onOutput, cancellationToken, stopWhenIdle);
+            executable, plan.Arguments, timeout, elevated, environment, onOutput, cancellationToken, stopWhenIdle,
+            interactive: plan.Interactive);
 
-        // A program left running after the time is up keeps using its temp folder.
-        if (result.TimedOut)
-            protectedTemp?.Keep();
-
+        KeepTempWhileRunning(protectedTemp, result);
         return result;
+    }
+
+    /// <summary>A program left running keeps using its temp folder: after the time is up, and also when the wait
+    /// gave up on an idle leftover (an NSIS copy of the uninstaller lives in that folder).</summary>
+    internal static void KeepTempWhileRunning(ProtectedTemp? protectedTemp, ProcessResult result)
+    {
+        if (result.TimedOut || result.TreeLeftRunning)
+            protectedTemp?.Keep();
     }
 
     /// <summary>
@@ -71,18 +77,20 @@ internal static class UninstallExecution
     /// halfway leaves a program neither installed nor gone); it is left running and the result says it timed out.
     /// A stop by the person ends it only while its whole tree sits idle (a window waiting for input that nobody can
     /// see); one that is still working finishes. The wait is for the whole tree: a setup that hands its work to a copy
-    /// of itself and exits has not finished when its first process has.
+    /// of itself and exits has not finished when its first process has. A leftover that sits idle does not hold
+    /// a silent removal for the whole timeout; an interactive one (a vendor window a person reads) is waited for
+    /// until it is gone, the timeout or a stop.
     /// </summary>
     internal static Task<ProcessResult> RunCommandAsync(
         ResolvedExecutable executable, IReadOnlyList<string> arguments, TimeSpan timeout, bool elevated,
         IReadOnlyDictionary<string, string>? environment, Action<string> onOutput, CancellationToken cancellationToken,
-        CancellationToken stopWhenIdle = default) =>
+        CancellationToken stopWhenIdle = default, bool interactive = false) =>
         ProcessRunner.RunResolvedAsync(
             executable, arguments, timeout, cancellationToken, environment, onOutput,
             idleTimeout: null, outputEncoding: null, elevated,
             scrubEnvironment: elevated || ElevationService.IsElevated,
             stallWatch: StallWatchOptions.StopOnly, killOnTimeout: false, waitForTree: true,
-            stallIsUninstall: true, stopWhenIdle: stopWhenIdle);
+            stallIsUninstall: true, stopWhenIdle: stopWhenIdle, endTreeWhenIdle: !interactive);
 
     /// <summary>
     /// The environment with TEMP and TMP pointing at <paramref name="folder"/>, a folder only administrators can write.

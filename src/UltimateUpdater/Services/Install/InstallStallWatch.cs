@@ -55,7 +55,8 @@ public readonly record struct TreeActivity(TimeSpan Cpu, ulong IoBytes, int Proc
 /// The decision, apart from the clock and the system: fed one <see cref="TreeActivity"/> per sample, it says
 /// whether the tree has been idle for the whole window. Any I/O byte, any change in the number of processes
 /// or a CPU share of the configured size counts as life and restarts the window; a reading that is not
-/// complete counts as life too, since a tree that cannot be seen is never declared dead.
+/// complete counts as life too, since a tree that cannot be seen is never declared dead. Work outside the
+/// tree that the tree waits for (the Windows Installer service) is reported by the caller as external life.
 /// </summary>
 public sealed class StallDetector(StallWatchOptions options)
 {
@@ -67,8 +68,9 @@ public sealed class StallDetector(StallWatchOptions options)
     /// <summary>How long the tree has shown no life, as of the last <see cref="Observe"/>.</summary>
     public TimeSpan IdleFor(long nowMs) => TimeSpan.FromMilliseconds(Math.Max(0, nowMs - _lastLifeAtMs));
 
-    /// <summary>True once the tree has shown no life for <see cref="StallWatchOptions.Window"/>.</summary>
-    public bool Observe(long nowMs, TreeActivity activity)
+    /// <summary>True once the tree has shown no life for <see cref="StallWatchOptions.Window"/>.
+    /// <paramref name="externalLife"/> marks work the tree started elsewhere that is still going on.</summary>
+    public bool Observe(long nowMs, TreeActivity activity, bool externalLife = false)
     {
         if (!_hasPrevious)
         {
@@ -82,7 +84,8 @@ public sealed class StallDetector(StallWatchOptions options)
         var elapsedMs = nowMs - _previousAtMs;
         var cpuMs = (activity.Cpu - _previous.Cpu).TotalMilliseconds;
 
-        var alive = !activity.Complete
+        var alive = externalLife
+            || !activity.Complete
             || !_previous.Complete
             || activity.IoBytes != _previous.IoBytes
             || activity.ProcessCount != _previous.ProcessCount

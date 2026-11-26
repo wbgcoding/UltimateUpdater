@@ -26,8 +26,13 @@ internal interface IChildProcess : IDisposable
     Task WaitForExitAsync(CancellationToken cancellationToken);
 
     /// <summary>Waits until the child and everything it started that stayed with it are gone. A launch that cannot
-    /// tell (no job) waits for the child alone.</summary>
-    Task WaitForTreeAsync(CancellationToken cancellationToken) => WaitForExitAsync(cancellationToken);
+    /// tell (no job) waits for the child alone. With <paramref name="endWhenIdle"/> a leftover that does nothing
+    /// for a whole grace window ends the wait; without it the wait lasts until the tree is gone (a vendor window
+    /// that waits for a person is such a leftover).</summary>
+    Task WaitForTreeAsync(CancellationToken cancellationToken, bool endWhenIdle = true) => WaitForExitAsync(cancellationToken);
+
+    /// <summary>The processes of the tree still alive, -1 when the launch cannot tell.</summary>
+    int ActiveJobProcesses => -1;
 
     /// <summary>Ends the child and everything it started. Never throws: it may already be gone.</summary>
     void Kill();
@@ -173,7 +178,7 @@ internal sealed class SuspendedChildProcess : IChildProcess
     internal static readonly TimeSpan TreePollInterval = TimeSpan.FromMilliseconds(250);
 
     /// <summary>The processes still alive in the child's job (the child included), -1 when there is no job to ask.</summary>
-    internal int ActiveJobProcesses =>
+    public int ActiveJobProcesses =>
         _job is { IsInvalid: false, IsClosed: false }
         && QueryInformationJobObject(_job, JobObjectBasicAccountingInformationClass, out JobBasicAccountingInformation accounting,
             (uint)Marshal.SizeOf<JobBasicAccountingInformation>(), IntPtr.Zero)
@@ -201,8 +206,9 @@ internal sealed class SuspendedChildProcess : IChildProcess
     /// the root never waits for; it stays in the job, so the job says when the work is over. A leftover that
     /// does nothing (an uninstaller that opened a survey page in a fresh browser) must not hold the removal
     /// until the timeout: when the rest of the tree uses almost no processor time for a whole grace window,
-    /// the wait ends and the root's own exit code is the result.</summary>
-    public async Task WaitForTreeAsync(CancellationToken cancellationToken)
+    /// the wait ends and the root's own exit code is the result. A caller that knows a person may be reading a
+    /// window of the leftover passes <c>endWhenIdle: false</c>: such a tree is waited for until it is gone.</summary>
+    public async Task WaitForTreeAsync(CancellationToken cancellationToken, bool endWhenIdle = true)
     {
         await WaitForExitAsync(cancellationToken);
 
@@ -212,7 +218,7 @@ internal sealed class SuspendedChildProcess : IChildProcess
         while (ActiveJobProcesses > 0)
         {
             await Task.Delay(TreePollInterval, cancellationToken);
-            if (Stopwatch.GetElapsedTime(windowStart) < grace)
+            if (!endWhenIdle || Stopwatch.GetElapsedTime(windowStart) < grace)
                 continue;
 
             var now = JobCpuTicks;

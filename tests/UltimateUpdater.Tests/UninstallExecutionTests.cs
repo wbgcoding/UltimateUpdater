@@ -27,11 +27,21 @@ public class UninstallExecutionTests
 
         public int KillCalls { get; private set; }
 
+        /// <summary>What the tree wait was asked: false for a wait that must not give up on an idle leftover.</summary>
+        public bool? EndWhenIdleAsked { get; private set; }
+
+        /// <summary>What the child reports as still alive when its tree wait has returned.</summary>
+        public int ActiveJobProcesses { get; set; }
+
         public void TreeEnds() => _tree.TrySetResult();
 
         public Task WaitForExitAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-        public Task WaitForTreeAsync(CancellationToken cancellationToken) => _tree.Task.WaitAsync(cancellationToken);
+        public Task WaitForTreeAsync(CancellationToken cancellationToken, bool endWhenIdle = true)
+        {
+            EndWhenIdleAsked = endWhenIdle;
+            return _tree.Task.WaitAsync(cancellationToken);
+        }
 
         public void Kill() => KillCalls++;
 
@@ -109,6 +119,113 @@ public class UninstallExecutionTests
         finally
         {
             ProcessRunner.ChildFactoryForTest.Value = null;
+        }
+    }
+
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public async Task Only_an_interactive_removal_is_waited_for_past_an_idle_leftover(bool interactive, bool expectedEndWhenIdle)
+    {
+        var child = new TreeChild();
+        child.TreeEnds();
+        ProcessRunner.ChildFactoryForTest.Value = () => child;
+        try
+        {
+            var executable = new ResolvedExecutable(Environment.ProcessPath!, null);
+
+            await UninstallExecution.RunCommandAsync(
+                executable, [], TimeSpan.FromSeconds(60), elevated: false, null, _ => { }, CancellationToken.None,
+                interactive: interactive).WaitAsync(TimeSpan.FromSeconds(30));
+
+            Assert.Equal(expectedEndWhenIdle, child.EndWhenIdleAsked);
+        }
+        finally
+        {
+            ProcessRunner.ChildFactoryForTest.Value = null;
+        }
+    }
+
+    [Theory]
+    [InlineData(2, true)]
+    [InlineData(0, false)]
+    [InlineData(-1, false)]
+    public async Task A_run_says_when_its_tree_was_still_alive_at_the_end_of_the_wait(int alive, bool expectedLeftRunning)
+    {
+        var child = new TreeChild { ActiveJobProcesses = alive };
+        child.TreeEnds();
+        ProcessRunner.ChildFactoryForTest.Value = () => child;
+        try
+        {
+            var result = await RunCommand(TimeSpan.FromSeconds(60), CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(30));
+
+            Assert.False(result.TimedOut);
+            Assert.Equal(expectedLeftRunning, result.TreeLeftRunning);
+        }
+        finally
+        {
+            ProcessRunner.ChildFactoryForTest.Value = null;
+        }
+    }
+
+    [Theory]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    [InlineData(false, false, false)]
+    public void The_administrator_temp_folder_stays_while_a_program_still_runs_in_it(bool timedOut, bool treeLeftRunning, bool kept)
+    {
+        using var windows = new ScratchDir();
+        using var programData = new ScratchDir();
+        DriverBackupStaging.ProgramDataRootOverride = programData.Path;
+        try
+        {
+            string folder;
+            using (var temp = UninstallExecution.AcquireProtectedTemp(QuietLog(), windows.Path, _ => true))
+            {
+                folder = temp.Folder;
+                UninstallExecution.KeepTempWhileRunning(
+                    temp, new ProcessResult(0, "", "") { TimedOut = timedOut, TreeLeftRunning = treeLeftRunning });
+            }
+
+            Assert.Equal(kept, Directory.Exists(folder));
+            if (kept)
+                Directory.Delete(folder, recursive: true);
+        }
+        finally
+        {
+            DriverBackupStaging.ProgramDataRootOverride = null;
+        }
+    }
+
+    [Trait("Layer", "Integration")]
+    [Fact]
+    public async Task An_interactive_tree_is_waited_for_although_its_leftover_sits_idle()
+    {
+        var info = new ProcessStartInfo
+        {
+            FileName = Path.Combine(Environment.SystemDirectory, "cmd.exe"),
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        info.ArgumentList.Add("/c");
+        info.ArgumentList.Add("start /b ping -n 7 127.0.0.1 >nul");
+
+        SuspendedChildProcess.TreeIdleGraceForTest.Value = TimeSpan.FromSeconds(1);
+        using var child = SuspendedChildProcess.Start(info, null, null);
+        try
+        {
+            await child.WaitForExitAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(30));
+            var watch = Stopwatch.StartNew();
+
+            await child.WaitForTreeAsync(CancellationToken.None, endWhenIdle: false).WaitAsync(TimeSpan.FromSeconds(60));
+
+            Assert.True(watch.Elapsed > TimeSpan.FromSeconds(3), $"the wait gave up on the idle leftover after {watch.Elapsed}");
+            Assert.Equal(0, child.ActiveJobProcesses);
+        }
+        finally
+        {
+            SuspendedChildProcess.TreeIdleGraceForTest.Value = null;
+            child.Kill();
         }
     }
 

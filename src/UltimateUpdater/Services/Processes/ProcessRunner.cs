@@ -180,7 +180,8 @@ public static class ProcessRunner
         bool pseudoConsole = false,
         bool waitForTree = false,
         bool stallIsUninstall = false,
-        CancellationToken stopWhenIdle = default)
+        CancellationToken stopWhenIdle = default,
+        bool endTreeWhenIdle = true)
     {
         var startInfo = BuildStartInfo(executable, arguments, environment, outputEncoding, elevated, scrubEnvironment: scrubEnvironment);
 
@@ -221,14 +222,15 @@ public static class ProcessRunner
         // installer that prints nothing for minutes but works is alive.
         var stallTriggered = false;
         var stallWatchTask = stallWatch is { } stall
-            ? WatchForStallAsync(stall, process.ProcessId, () => stallTriggered = true, timeoutCts, idleWatchStopCts.Token, stopWhenIdle)
+            ? WatchForStallAsync(stall, process.ProcessId, () => stallTriggered = true, timeoutCts, idleWatchStopCts.Token, stopWhenIdle,
+                watchInstallerService: stallIsUninstall)
             : Task.CompletedTask;
 
         try
         {
             try
             {
-                await (waitForTree ? process.WaitForTreeAsync(timeoutCts.Token) : process.WaitForExitAsync(timeoutCts.Token));
+                await (waitForTree ? process.WaitForTreeAsync(timeoutCts.Token, endTreeWhenIdle) : process.WaitForExitAsync(timeoutCts.Token));
 
                 // WaitForExitAsync does not drain the pumps; EOF must flush the last segment of each before the
                 // output is read. Bounded: EOF never arrives if a grandchild (an MSI custom action, a vendor updater,
@@ -267,7 +269,10 @@ public static class ProcessRunner
                 return new ProcessResult(-1, ReadSink(stdout), ReadSink(stderr)) { TimedOut = true };
             }
 
-            return new ProcessResult(process.ExitCode, ReadSink(stdout), ReadSink(stderr));
+            return new ProcessResult(process.ExitCode, ReadSink(stdout), ReadSink(stderr))
+            {
+                TreeLeftRunning = waitForTree && process.ActiveJobProcesses > 0,
+            };
         }
         finally
         {
@@ -591,6 +596,36 @@ public static class ProcessRunner
     /// <summary>Test seam: stands in for the system look at the process tree.</summary>
     internal static readonly AsyncLocal<Func<int, TreeActivity>?> TreeSamplerForTest = new();
 
+    /// <summary>Test seam: stands in for the look at whether the Windows Installer is busy.</summary>
+    internal static readonly AsyncLocal<Func<bool>?> InstallerBusyProbeForTest = new();
+
+    /// <summary>True while a Windows Installer transaction is running anywhere on the machine (the
+    /// <c>_MSIExecute</c> mutex is held). The work of an MSI removal runs in the installer service, outside the
+    /// tool's tree, so a tree that only waits for it looks idle although the removal is mid-transaction.</summary>
+    internal static bool IsWindowsInstallerBusy()
+    {
+        if (InstallerBusyProbeForTest.Value is { } probe)
+            return probe();
+
+        try
+        {
+            if (!Mutex.TryOpenExisting(@"Global\_MSIExecute", out var mutex))
+                return false;
+
+            mutex.Dispose();
+            return true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // The mutex exists and cannot be opened: the installer is busy.
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or WaitHandleCannotBeOpenedException or ArgumentException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// Looks at the tool's whole process tree every sample interval; once <see cref="StallDetector"/> says
     /// it has shown no life for the whole window (or <paramref name="stopWhenIdle"/> was cancelled and it has shown none
@@ -599,7 +634,7 @@ public static class ProcessRunner
     /// </summary>
     private static async Task WatchForStallAsync(
         StallWatchOptions options, int rootId, Action markStalled, CancellationTokenSource timeoutCts,
-        CancellationToken stopToken, CancellationToken stopWhenIdle)
+        CancellationToken stopToken, CancellationToken stopWhenIdle, bool watchInstallerService = false)
     {
         var detector = new StallDetector(options);
         var sampler = TreeSamplerForTest.Value ?? ProcessTreeSampler.Sample;
@@ -610,7 +645,7 @@ public static class ProcessRunner
             {
                 var activity = await Task.Run(() => sampler(rootId), CancellationToken.None);
                 var now = Environment.TickCount64;
-                var stalled = detector.Observe(now, activity);
+                var stalled = detector.Observe(now, activity, externalLife: watchInstallerService && IsWindowsInstallerBusy());
 
                 // A stop by the person ends only a tree that is waiting right now: a removal that is still working
                 // is left to finish (ending it halfway leaves a program neither installed nor gone).
